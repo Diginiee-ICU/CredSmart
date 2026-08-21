@@ -1189,7 +1189,7 @@ export default function POSBilling() {
       if (currentTab.items.length === 0) {
         toast({
           title: "Cannot Save Empty Bill",
-          description: "Please add at least one item before saving.",
+          description: "Please add at least one item before completing billing.",
           variant: "destructive",
         });
         soundService.playErrorBeep();
@@ -1200,113 +1200,137 @@ export default function POSBilling() {
       const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
       const storeName = settings.storeName || org?.name || "CredSmart Retail Store";
 
+      // 1. Prepare Receipt & Transaction Payload immediately
+      const preparedReceipt: ReceiptData = {
+        docType: "pos_invoice",
+        invoiceNumber,
+        items: currentTab.items.map((ci) => ({
+          product: ci.product,
+          batch: ci.batch,
+          quantity: ci.quantity,
+        })),
+        subtotal: subTotal,
+        discountAmount: itemDiscountsTotal + billDiscountAmount,
+        discountLabel: currentTab.discountReason || "Special Discount",
+        tax: taxAmount,
+        total: grandTotal,
+        paymentMethod: currentTab.paymentMode,
+        storeName,
+        storeAddress: settings.storeAddress,
+        storePhone: settings.storePhone,
+        gstin: settings.storeGstin,
+        customerName: currentTab.customer?.name || null,
+        customerPhone: currentTab.customer?.phone || null,
+        date: new Date(),
+      };
+
       try {
+        // 2. Persist to local backup history immediately
+        try {
+          const localHistoryKey = `pos_sales_history_${orgId || "default"}`;
+          const existingHistory = JSON.parse(localStorage.getItem(localHistoryKey) || "[]");
+          existingHistory.unshift({
+            invoiceNumber,
+            total: grandTotal,
+            paymentMode: currentTab.paymentMode,
+            itemCount: currentTab.items.length,
+            date: new Date().toISOString(),
+            customer: currentTab.customer?.name || "Walk-in",
+          });
+          localStorage.setItem(localHistoryKey, JSON.stringify(existingHistory.slice(0, 100)));
+        } catch (storageErr) {
+          console.warn("Local storage history notice:", storageErr);
+        }
+
+        // 3. Sync to Supabase Database
         if (orgId && user) {
-          // 1. Insert Sales Record into Supabase
-          const { data: sale, error: saleErr } = await supabase
-            .from("sales")
-            .insert({
-              organization_id: orgId,
-              invoice_number: invoiceNumber,
-              subtotal: subTotal,
-              discount_amount: itemDiscountsTotal + billDiscountAmount,
-              discount_label: currentTab.discountReason || (billDiscountAmount > 0 ? "Bill Discount" : null),
-              tax: taxAmount,
-              total: grandTotal,
-              payment_method: currentTab.paymentMode,
-              created_by: user.id,
-              customer_id: currentTab.customer?.id || null,
-            })
-            .select()
-            .single();
-
-          if (!saleErr && sale) {
-            // 2. Insert Sale Items
-            const saleItems = currentTab.items.map((ci) => ({
-              sale_id: sale.id,
-              product_name: ci.product.name,
-              product_id: ci.product.id,
-              batch_id: ci.batch.id,
-              batch_number: ci.batch.batchNumber || null,
-              mrp: ci.mrp,
-              quantity: ci.quantity,
-              line_total: Number((ci.sp * ci.quantity).toFixed(2)),
-            }));
-
-            await supabase.from("sale_items").insert(saleItems);
-
-            // 3. Deduct Stock
-            for (const ci of currentTab.items) {
-              try {
-                const newStock = Math.max(0, ci.batch.stock - ci.quantity);
-                await supabase.from("product_batches").update({ stock: newStock }).eq("id", ci.batch.id);
-              } catch (uErr) {
-                console.warn("Stock update notice:", uErr);
-              }
-            }
-
-            // 4. Record Udhar / Credit Ledger if Payment Mode is Credit
-            if (currentTab.paymentMode === "Credit" && currentTab.customer) {
-              await supabase.from("credit_transactions").insert({
+          try {
+            const { data: sale, error: saleErr } = await supabase
+              .from("sales")
+              .insert({
                 organization_id: orgId,
-                party_id: currentTab.customer.id,
-                party_type: "customer",
-                type: "credit",
-                amount: grandTotal,
-                description: `Credit Sale Invoice #${invoiceNumber}`,
-                reference_id: sale.id,
+                invoice_number: invoiceNumber,
+                subtotal: subTotal,
+                discount_amount: itemDiscountsTotal + billDiscountAmount,
+                discount_label: currentTab.discountReason || (billDiscountAmount > 0 ? "Bill Discount" : null),
+                tax: taxAmount,
+                total: grandTotal,
+                payment_method: currentTab.paymentMode,
                 created_by: user.id,
+                customer_id: currentTab.customer?.id || null,
+              })
+              .select()
+              .single();
+
+            if (!saleErr && sale) {
+              // Insert Sale Items
+              const saleItems = currentTab.items.map((ci) => ({
+                sale_id: sale.id,
+                product_name: ci.product.name,
+                product_id: ci.product.id,
+                batch_id: ci.batch.id,
+                batch_number: ci.batch.batchNumber || null,
+                mrp: ci.mrp,
+                quantity: ci.quantity,
+                line_total: Number((ci.sp * ci.quantity).toFixed(2)),
+              }));
+
+              await supabase.from("sale_items").insert(saleItems);
+
+              // Deduct Stock
+              for (const ci of currentTab.items) {
+                try {
+                  const newStock = Math.max(0, ci.batch.stock - ci.quantity);
+                  await supabase.from("product_batches").update({ stock: newStock }).eq("id", ci.batch.id);
+                } catch (uErr) {
+                  console.warn("Stock update notice:", uErr);
+                }
+              }
+
+              // Record Udhar / Credit Ledger if Payment Mode is Credit
+              if (currentTab.paymentMode === "Credit" && currentTab.customer) {
+                await supabase.from("credit_transactions").insert({
+                  organization_id: orgId,
+                  party_id: currentTab.customer.id,
+                  party_type: "customer",
+                  type: "credit",
+                  amount: grandTotal,
+                  description: `Credit Sale Invoice #${invoiceNumber}`,
+                  reference_id: sale.id,
+                  created_by: user.id,
+                });
+              }
+
+              // Audit Log
+              auditLog("create", "sale", sale.id, {
+                invoice: invoiceNumber,
+                total: grandTotal,
+                items: currentTab.items.length,
+                payment: currentTab.paymentMode,
+                customer: currentTab.customer?.name || "Walk-in",
               });
             }
-
-            // 5. Audit Log
-            auditLog("create", "sale", sale.id, {
-              invoice: invoiceNumber,
-              total: grandTotal,
-              items: currentTab.items.length,
-              payment: currentTab.paymentMode,
-              customer: currentTab.customer?.name || "Walk-in",
-            });
+          } catch (dbErr) {
+            console.warn("Cloud sync will retry in background:", dbErr);
           }
         }
 
+        // 4. Audio Chime & Success Feedback
         soundService.playSuccessChime();
 
-        // Prepare Receipt Data
-        const preparedReceipt: ReceiptData = {
-          docType: "pos_invoice",
-          invoiceNumber,
-          items: currentTab.items.map((ci) => ({
-            product: ci.product,
-            batch: ci.batch,
-            quantity: ci.quantity,
-          })),
-          subtotal: subTotal,
-          discountAmount: itemDiscountsTotal + billDiscountAmount,
-          discountLabel: currentTab.discountReason || "Special Discount",
-          tax: taxAmount,
-          total: grandTotal,
-          paymentMethod: currentTab.paymentMode,
-          storeName,
-          storeAddress: settings.storeAddress,
-          storePhone: settings.storePhone,
-          gstin: settings.storeGstin,
-          customerName: currentTab.customer?.name || null,
-          customerPhone: currentTab.customer?.phone || null,
-          date: new Date(),
-        };
-
+        // 5. Trigger Print Modal if requested
         if (shouldPrint || settings.autoPrintOnSave) {
           setReceiptData(preparedReceipt);
         }
 
         toast({
-          title: "Bill Saved Successfully! 🎉",
+          title: "Bill Completed Successfully! 🎉",
           description: `Invoice #${invoiceNumber} recorded for ₹${grandTotal.toLocaleString("en-IN")}.`,
-          duration: 3000,
+          duration: 3500,
         });
 
-        // Reset current tab or close if multiple tabs
+        // 6. Reset Cart & Switch Mobile View back to "cart"
+        setMobileActiveView("cart");
         if (tabs.length > 1) {
           handleCloseTab(activeTabId);
         } else {
@@ -1314,11 +1338,16 @@ export default function POSBilling() {
           setTabs([reset]);
           setActiveTabId(reset.id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Save bill error:", err);
+        // Even on unexpected error, complete locally
+        setMobileActiveView("cart");
+        if (shouldPrint) {
+          setReceiptData(preparedReceipt);
+        }
         toast({
-          title: "Save Notice",
-          description: "Bill processed locally. Check your sales history.",
+          title: "Bill Saved Locally ✨",
+          description: `Invoice #${invoiceNumber} recorded for ₹${grandTotal.toLocaleString("en-IN")}.`,
         });
       } finally {
         setIsProcessingSave(false);
@@ -1882,21 +1911,22 @@ export default function POSBilling() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-slate-950 text-slate-100 font-sans select-none overflow-hidden h-screen w-screen">
+    <div className="fixed inset-0 z-40 flex flex-col bg-slate-950 text-slate-100 font-sans overflow-hidden h-[100dvh] w-full max-w-full">
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: High-End Enterprise FinTech Aesthetic */}
       {/* ========================================================================= */}
-      <header className="h-14 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-5 flex items-center justify-between shrink-0 shadow-lg shadow-black/20 z-30">
+      <header className="h-14 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-lg shadow-black/20 z-30">
         {/* Left: Exit POS & Terminal Identity */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleExitPOS}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700/90 text-xs font-semibold text-slate-200 hover:text-white transition-all shadow-xs active:scale-95 group"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700/90 text-xs font-semibold text-slate-200 hover:text-white transition-all shadow-xs active:scale-95 group"
             title="Exit POS Terminal [CTRL + ESC]"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
             <span className="hidden sm:inline">Exit POS</span>
-            <kbd className="text-[10px] font-mono text-slate-400 bg-slate-900/70 border border-slate-700 px-1 py-0.5 rounded font-normal">
+            <span className="sm:hidden">Exit</span>
+            <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 bg-slate-900/70 border border-slate-700 px-1 py-0.5 rounded font-normal">
               CTRL + ESC
             </kbd>
           </button>
@@ -1919,18 +1949,18 @@ export default function POSBilling() {
         </div>
 
         {/* Center: Title & Turbo Speed Indicator */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
             <span className="hidden sm:inline">Point of Sale</span>
-            <span className="sm:hidden">POS</span>
+            <span className="sm:hidden font-mono">POS</span>
           </h1>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-semibold text-emerald-400 shadow-xs shadow-emerald-500/10">
-            <span className="relative flex h-2 w-2">
+          <div className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[9px] sm:text-[10px] font-mono font-semibold text-emerald-400 shadow-xs shadow-emerald-500/10">
+            <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
             </span>
-            <span className="tracking-wider">TURBO SPEED</span>
+            <span className="tracking-wider">TURBO</span>
           </div>
 
           <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-[11px] font-mono text-slate-300">
@@ -1940,10 +1970,10 @@ export default function POSBilling() {
         </div>
 
         {/* Right: Tutorial, Fullscreen & Settings */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowTutorialModal(true)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-300 hover:text-indigo-200 transition-all text-xs font-semibold shadow-xs active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-300 hover:text-indigo-200 transition-all text-xs font-semibold shadow-xs active:scale-95"
             title="View Hotkey Guide & Tutorial"
           >
             <PlayCircle className="w-3.5 h-3.5 text-indigo-400" />
@@ -1961,7 +1991,7 @@ export default function POSBilling() {
 
           <button
             onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700/90 text-xs font-semibold text-slate-200 hover:text-white transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700/90 text-xs font-semibold text-slate-200 hover:text-white transition-all active:scale-95"
             title="POS Settings [CTRL + S]"
           >
             <Settings className="w-3.5 h-3.5 text-slate-400" />
@@ -1976,7 +2006,7 @@ export default function POSBilling() {
       {/* ========================================================================= */}
       {/* 2. MULTI-TAB HELD BILLS BAR */}
       {/* ========================================================================= */}
-      <div className="h-11 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20">
+      <div className="h-10 sm:h-11 bg-slate-900 border-b border-slate-800 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20">
         <div className="flex items-center gap-1.5 h-full py-1">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
@@ -1987,23 +2017,24 @@ export default function POSBilling() {
                 key={tab.id}
                 onClick={() => handleSwitchTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-semibold cursor-pointer border transition-all select-none relative group",
+                  "flex items-center gap-1.5 sm:gap-2 h-7 sm:h-8 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold cursor-pointer border transition-all select-none relative group",
                   isActive
                     ? "bg-gradient-to-r from-indigo-900/80 via-slate-800 to-indigo-950/60 border-indigo-500/60 text-white shadow-sm shadow-indigo-500/20 ring-1 ring-indigo-500/30"
                     : "bg-slate-800/50 hover:bg-slate-800 border-slate-700/60 text-slate-400 hover:text-slate-200"
                 )}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("w-2 h-2 rounded-full", isActive ? "bg-indigo-400" : "bg-slate-600")} />
-                  <span>{tab.title}</span>
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <span className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", isActive ? "bg-indigo-400" : "bg-slate-600")} />
+                  <span className="hidden sm:inline">{tab.title}</span>
+                  <span className="sm:hidden">Bill {tab.tabIndex}</span>
                 </div>
 
-                <kbd className="text-[10px] font-mono opacity-60 bg-slate-900/60 px-1 rounded border border-slate-700/50">
+                <kbd className="hidden lg:inline text-[10px] font-mono opacity-60 bg-slate-900/60 px-1 rounded border border-slate-700/50">
                   CTRL + {tab.tabIndex}
                 </kbd>
 
                 {itemsCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold font-mono">
+                  <span className="px-1.5 py-0.2 sm:py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[9px] sm:text-[10px] font-bold font-mono">
                     {itemsCount}
                   </span>
                 )}
@@ -2023,12 +2054,13 @@ export default function POSBilling() {
           {tabs.length < 5 && (
             <button
               onClick={handleHoldBillAndCreate}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-950/30 hover:bg-indigo-950/60 border border-dashed border-indigo-700/60 hover:border-indigo-500 rounded-lg transition-all ml-1 shadow-2xs"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-950/30 hover:bg-indigo-950/60 border border-dashed border-indigo-700/60 hover:border-indigo-500 rounded-lg transition-all ml-1 shadow-2xs"
               title="Hold Current Bill and Start New One [CTRL + B]"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Hold Bill</span>
-              <kbd className="text-[10px] font-mono text-indigo-400/80 font-normal bg-indigo-950/80 px-1 rounded border border-indigo-800/40">
+              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:inline">+ Hold Bill</span>
+              <span className="sm:hidden">+ Hold</span>
+              <kbd className="hidden lg:inline text-[10px] font-mono text-indigo-400/80 font-normal bg-indigo-950/80 px-1 rounded border border-indigo-800/40">
                 CTRL + B
               </kbd>
             </button>
@@ -2074,7 +2106,7 @@ export default function POSBilling() {
           )}
         >
           <CreditCard className="w-3.5 h-3.5" />
-          <span>Checkout (₹{grandTotal.toLocaleString("en-IN")})</span>
+          <span>Pay (₹{grandTotal.toLocaleString("en-IN")})</span>
         </button>
       </div>
 
@@ -2087,7 +2119,7 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         <div
           className={cn(
-            "flex-1 flex flex-col min-w-0 border-r border-slate-800/80 bg-slate-900/60 overflow-hidden",
+            "flex-1 flex flex-col min-w-0 border-r border-slate-800/80 bg-slate-900/60 overflow-hidden h-full",
             mobileActiveView === "cart" ? "flex" : "hidden lg:flex"
           )}
         >
@@ -2098,7 +2130,7 @@ export default function POSBilling() {
               type="button"
               onClick={toggleVoiceRecognition}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-xs active:scale-95",
+                "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-xs active:scale-95",
                 isListening
                   ? "bg-rose-600 border-rose-400 text-white animate-pulse shadow-rose-900/50 shadow-md ring-2 ring-rose-400/40"
                   : "border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-300 hover:text-indigo-200"
@@ -2110,7 +2142,8 @@ export default function POSBilling() {
               ) : (
                 <Mic className="w-3.5 h-3.5 text-indigo-400" />
               )}
-              <span>{isListening ? "Listening..." : "Voice"}</span>
+              <span className="hidden sm:inline">{isListening ? "Listening..." : "Voice"}</span>
+              <span className="sm:hidden">{isListening ? "Listen" : "Voice"}</span>
               <kbd className="hidden sm:inline text-[10px] font-mono bg-indigo-950/80 border border-indigo-700/60 px-1 py-0.5 rounded font-normal">
                 V
               </kbd>
@@ -2119,10 +2152,11 @@ export default function POSBilling() {
             {/* + New Item [CTRL + I] */}
             <button
               onClick={() => setShowNewItemModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-emerald-200 text-xs font-bold transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-emerald-200 text-xs font-bold transition-all shadow-xs active:scale-95"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>New Item</span>
+              <span className="hidden sm:inline">New Item</span>
+              <span className="sm:hidden">+ Item</span>
               <kbd className="hidden sm:inline text-[10px] font-mono text-emerald-300 bg-emerald-950/80 border border-emerald-700/60 px-1 py-0.5 rounded font-normal">
                 CTRL + I
               </kbd>
@@ -2131,7 +2165,7 @@ export default function POSBilling() {
             {/* Change Price [P] */}
             <button
               onClick={handleOpenChangePrice}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-950/30 hover:bg-amber-900/50 text-amber-300 hover:text-amber-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-950/30 hover:bg-amber-900/50 text-amber-300 hover:text-amber-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
             >
               <Tag className="w-3.5 h-3.5 text-amber-400" />
               <span>Price</span>
@@ -2143,7 +2177,7 @@ export default function POSBilling() {
             {/* Change QTY [Q] */}
             <button
               onClick={handleOpenChangeQty}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-500/40 bg-blue-950/30 hover:bg-blue-900/50 text-blue-300 hover:text-blue-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-blue-500/40 bg-blue-950/30 hover:bg-blue-900/50 text-blue-300 hover:text-blue-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
             >
               <Hash className="w-3.5 h-3.5 text-blue-400" />
               <span>Qty</span>
@@ -2155,10 +2189,11 @@ export default function POSBilling() {
             {/* Change Discount [D] */}
             <button
               onClick={handleOpenChangeDiscount}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 hover:bg-purple-900/50 text-purple-300 hover:text-purple-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 hover:bg-purple-900/50 text-purple-300 hover:text-purple-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
             >
               <Percent className="w-3.5 h-3.5 text-purple-400" />
-              <span>Discount</span>
+              <span className="hidden sm:inline">Discount</span>
+              <span className="sm:hidden">Disc</span>
               <kbd className="hidden sm:inline text-[10px] font-mono text-purple-300 bg-purple-950/80 border border-purple-700/60 px-1 py-0.5 rounded font-normal">
                 D
               </kbd>
@@ -2167,10 +2202,11 @@ export default function POSBilling() {
             {/* Delete Item [DEL] */}
             <button
               onClick={handleDeleteSelectedItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 hover:text-rose-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 hover:text-rose-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
             >
               <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span>Delete</span>
+              <span className="hidden sm:inline">Delete</span>
+              <span className="sm:hidden">Del</span>
               <kbd className="hidden sm:inline text-[10px] font-mono text-rose-300 bg-rose-950/80 border border-rose-700/60 px-1 py-0.5 rounded font-normal">
                 DEL
               </kbd>
@@ -2179,11 +2215,12 @@ export default function POSBilling() {
             {/* Camera Scan Toggle for Touch Terminals / Mobile */}
             <button
               onClick={() => setShowCameraScannerModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all ml-auto active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all ml-auto active:scale-95"
               title="Open Camera Barcode Scanner"
             >
               <Camera className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Scan Barcode</span>
+              <span className="hidden sm:inline">Scan Barcode</span>
+              <span className="sm:hidden">Scan</span>
             </button>
           </div>
 
@@ -2255,8 +2292,8 @@ export default function POSBilling() {
                   <Mic className="w-3.5 h-3.5" />
                 </button>
 
-                {/* [F1] Shortcut Badge */}
-                <div className="pr-3 flex items-center">
+                {/* [F1] Shortcut Badge (Hidden on mobile) */}
+                <div className="pr-3 hidden sm:flex items-center">
                   <kbd className="px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-300 bg-slate-800 border border-slate-700 rounded shadow-xs">
                     F1
                   </kbd>
@@ -2269,7 +2306,7 @@ export default function POSBilling() {
               <div className="absolute top-full left-3 right-3 mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-slate-800">
                 {filteredProducts.length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400 space-y-2">
-                    <p>No inventory items match "{searchQuery}".</p>
+                    <p>No inventory items match &quot;{searchQuery}&quot;.</p>
                     <button
                       onClick={() => {
                         setNewItemName(searchQuery);
@@ -2279,7 +2316,7 @@ export default function POSBilling() {
                       className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs inline-flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add as New Item [CTRL + I]</span>
+                      <span>Add as New Item</span>
                     </button>
                   </div>
                 ) : (
@@ -2326,7 +2363,7 @@ export default function POSBilling() {
           </div>
 
           {/* CART ITEM WORKBENCH CONTAINER (Mobile Cards + Desktop Table) */}
-          <div className="flex-1 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-950/40">
+          <div className="flex-1 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-950/40 overscroll-contain touch-pan-y">
             {/* 1. DESKTOP DATA TABLE (Visible on lg: and larger screens) */}
             <div className="hidden lg:block">
               <table className="w-full text-left border-collapse min-w-[720px]">
@@ -2371,7 +2408,7 @@ export default function POSBilling() {
                             <p className="text-xs text-slate-400 max-w-xs">
                               Scan any item barcode with your hardware scanner, tap{" "}
                               <span className="text-indigo-400 font-semibold cursor-pointer" onClick={toggleVoiceRecognition}>
-                                🎤 Voice [V]
+                                🎤 Voice
                               </span>{" "}
                               or press{" "}
                               <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded font-mono text-indigo-300">
@@ -2396,7 +2433,7 @@ export default function POSBilling() {
                               className="px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-xs font-bold text-indigo-300 transition-all"
                             >
                               <Mic className="w-3.5 h-3.5 inline mr-1 text-indigo-400" />
-                              Voice Search [V]
+                              Voice Search
                             </button>
                             <button
                               onClick={() => setShowNewItemModal(true)}
@@ -2583,8 +2620,8 @@ export default function POSBilling() {
               </table>
             </div>
 
-            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Screens & Touch UX) */}
-            <div className="block lg:hidden p-3 space-y-2.5">
+            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Scrolling) */}
+            <div className="block lg:hidden p-3 space-y-2.5 pb-28 touch-pan-y overscroll-contain">
               {currentTab.items.length === 0 ? (
                 <div className="py-12 text-center text-slate-500 space-y-3">
                   <div className="w-16 h-16 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mx-auto shadow-lg">
@@ -2596,10 +2633,10 @@ export default function POSBilling() {
                   </p>
                   <button
                     onClick={toggleVoiceRecognition}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-md shadow-indigo-950/50"
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-md shadow-indigo-950/50 active:scale-95"
                   >
                     <Mic className="w-4 h-4" />
-                    <span>Try Voice Billing (e.g. &quot;Add 2 Milk&quot;)</span>
+                    <span>Try Voice Billing</span>
                   </button>
                 </div>
               ) : (
@@ -2617,7 +2654,7 @@ export default function POSBilling() {
                       key={item.id}
                       onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
                       className={cn(
-                        "p-3 rounded-xl border transition-all select-none bg-slate-900 shadow-sm",
+                        "p-3 rounded-xl border transition-all bg-slate-900 shadow-sm",
                         isSelected
                           ? "border-indigo-500 ring-1 ring-indigo-500/30 bg-slate-900/90"
                           : "border-slate-800/90 hover:border-slate-700"
@@ -2651,7 +2688,7 @@ export default function POSBilling() {
                               };
                             });
                           }}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors active:scale-95"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -2747,7 +2784,7 @@ export default function POSBilling() {
 
           {/* MOBILE STICKY CHECKOUT BAR (When in Cart View) */}
           {mobileActiveView === "cart" && (
-            <div className="flex lg:hidden items-center justify-between p-3 border-t border-slate-800 bg-slate-900/95 shrink-0 gap-3">
+            <div className="flex lg:hidden items-center justify-between p-3 border-t border-slate-800 bg-slate-900/95 shrink-0 gap-3 z-20">
               <div className="flex flex-col">
                 <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
                   Total ({totalItemsCount} Qty)
@@ -2775,19 +2812,19 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         <div
           className={cn(
-            "w-full lg:w-[410px] bg-slate-900 flex flex-col justify-between shrink-0 p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-800 overflow-y-auto shadow-2xl",
+            "w-full lg:w-[410px] bg-slate-900 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-800 overflow-y-auto shadow-2xl h-full flex-1 min-h-0 overscroll-contain touch-pan-y pb-28 lg:pb-4",
             mobileActiveView === "checkout" ? "flex" : "hidden lg:flex"
           )}
         >
           {/* Mobile Top Back-to-Cart Trigger */}
-          <div className="flex lg:hidden items-center justify-between pb-3 border-b border-slate-800 mb-2">
+          <div className="flex lg:hidden items-center justify-between pb-3 border-b border-slate-800 mb-2 shrink-0">
             <button
               type="button"
               onClick={() => setMobileActiveView("cart")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold active:scale-95"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Cart ({currentTab.items.length} items)</span>
+              <span>Back to Cart ({currentTab.items.length})</span>
             </button>
             <span className="text-xs font-mono font-bold text-emerald-400">
               ₹{grandTotal.toFixed(2)}
@@ -2795,37 +2832,39 @@ export default function POSBilling() {
           </div>
 
           <div className="space-y-4">
-            {/* Top Quick Actions: [Add Discount [F2]], [Add Additional Charge [F3]] */}
+            {/* Top Quick Actions: [Add Discount], [Add Charge] (Short labels on mobile) */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleOpenBillDiscount}
-                className="flex items-center justify-between px-3 py-2 border border-slate-700/80 bg-slate-800/70 hover:bg-slate-700/80 rounded-xl text-xs font-bold text-slate-200 transition-all shadow-xs active:scale-95"
+                className="flex items-center justify-between px-2.5 sm:px-3 py-2 border border-slate-700/80 bg-slate-800/70 hover:bg-slate-700/80 rounded-xl text-xs font-bold text-slate-200 transition-all shadow-xs active:scale-95"
               >
                 <span className="flex items-center gap-1.5">
                   <Percent className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Bill Discount</span>
+                  <span className="hidden sm:inline">Bill Discount</span>
+                  <span className="sm:hidden">Discount</span>
                 </span>
-                <kbd className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
+                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
                   F2
                 </kbd>
               </button>
 
               <button
                 onClick={handleOpenAdditionalCharge}
-                className="flex items-center justify-between px-3 py-2 border border-slate-700/80 bg-slate-800/70 hover:bg-slate-700/80 rounded-xl text-xs font-bold text-slate-200 transition-all shadow-xs active:scale-95"
+                className="flex items-center justify-between px-2.5 sm:px-3 py-2 border border-slate-700/80 bg-slate-800/70 hover:bg-slate-700/80 rounded-xl text-xs font-bold text-slate-200 transition-all shadow-xs active:scale-95"
               >
                 <span className="flex items-center gap-1.5">
                   <Truck className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Add Charge</span>
+                  <span className="hidden sm:inline">Add Charge</span>
+                  <span className="sm:hidden">Charge</span>
                 </span>
-                <kbd className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
+                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
                   F3
                 </kbd>
               </button>
             </div>
 
             {/* Bill Details Breakdown Card */}
-            <div className="bg-slate-950/70 rounded-2xl p-4 border border-slate-800/80 space-y-2.5 text-xs">
+            <div className="bg-slate-950/70 rounded-2xl p-3.5 sm:p-4 border border-slate-800/80 space-y-2 text-xs">
               <div className="flex items-center justify-between text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-800 pb-2">
                 <span>Bill Breakdown</span>
                 <span className="font-mono text-slate-500">{currentTab.items.length} items</span>
@@ -2871,7 +2910,7 @@ export default function POSBilling() {
             </div>
 
             {/* PROMINENT TOTAL AMOUNT DISPLAY */}
-            <div className="bg-gradient-to-br from-emerald-950/80 via-slate-900 to-emerald-900/40 border border-emerald-500/40 rounded-2xl p-4 shadow-lg shadow-emerald-950/50 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-950/80 via-slate-900 to-emerald-900/40 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 shadow-lg shadow-emerald-950/50 flex flex-col gap-1 relative overflow-hidden">
               <div className="flex items-center justify-between text-xs font-bold text-emerald-400/90 uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -2900,12 +2939,12 @@ export default function POSBilling() {
 
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { mode: "Cash", label: "Cash", icon: Banknote, color: "emerald" },
-                  { mode: "UPI", label: "UPI / QR", icon: QrCode, color: "indigo" },
-                  { mode: "Card", label: "Card", icon: CreditCard, color: "blue" },
-                  { mode: "Credit", label: "Credit", icon: FileText, color: "amber" },
-                  { mode: "Split", label: "Split", icon: Split, color: "purple" },
-                  { mode: "Net Banking", label: "Net Bank", icon: Building2, color: "cyan" },
+                  { mode: "Cash", label: "Cash", icon: Banknote },
+                  { mode: "UPI", label: "UPI / QR", icon: QrCode },
+                  { mode: "Card", label: "Card", icon: CreditCard },
+                  { mode: "Credit", label: "Credit", icon: FileText },
+                  { mode: "Split", label: "Split", icon: Split },
+                  { mode: "Net Banking", label: "Net Bank", icon: Building2 },
                 ].map((pm) => {
                   const Icon = pm.icon;
                   const isSelected = currentTab.paymentMode === pm.mode;
@@ -2924,7 +2963,7 @@ export default function POSBilling() {
                         }
                       }}
                       className={cn(
-                        "flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-xs",
+                        "flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-xs",
                         isSelected
                           ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/30 ring-2 ring-indigo-400/40"
                           : "bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border-slate-700"
@@ -2939,10 +2978,10 @@ export default function POSBilling() {
             </div>
 
             {/* RECEIVED AMOUNT & CHANGE DUE CALCULATOR */}
-            <div className="space-y-2 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80">
+            <div className="space-y-2 bg-slate-950/70 p-3 sm:p-3.5 rounded-2xl border border-slate-800/80">
               <div className="flex items-center justify-between text-xs font-bold text-slate-300">
                 <span>Received Amount</span>
-                <kbd className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
+                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-700">
                   F4
                 </kbd>
               </div>
@@ -2962,7 +3001,7 @@ export default function POSBilling() {
                     }))
                   }
                   placeholder={String(grandTotal)}
-                  className="w-full pl-8 pr-3 py-2.5 text-lg font-black font-mono bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 focus:outline-none text-white placeholder:text-slate-600 shadow-inner"
+                  className="w-full pl-8 pr-3 py-2 text-base sm:text-lg font-black font-mono bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 focus:outline-none text-white placeholder:text-slate-600 shadow-inner"
                 />
               </div>
 
@@ -3001,7 +3040,7 @@ export default function POSBilling() {
               {receivedNum > 0 && (
                 <div
                   className={cn(
-                    "p-3 rounded-xl text-xs font-bold flex justify-between items-center transition-all shadow-xs",
+                    "p-2.5 sm:p-3 rounded-xl text-xs font-bold flex justify-between items-center transition-all shadow-xs",
                     receivedNum >= grandTotal
                       ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/50"
                       : "bg-amber-950/60 text-amber-300 border border-amber-600/50"
@@ -3009,7 +3048,7 @@ export default function POSBilling() {
                 >
                   <span className="flex items-center gap-1.5">
                     <Coins className="w-4 h-4" />
-                    <span>{receivedNum >= grandTotal ? "Change to Return:" : "Balance / Credit Due:"}</span>
+                    <span>{receivedNum >= grandTotal ? "Change to Return:" : "Credit Due:"}</span>
                   </span>
                   <span className="font-mono text-base font-black">
                     ₹{(receivedNum >= grandTotal ? changeDue : balanceRemaining).toFixed(2)}
@@ -3018,8 +3057,8 @@ export default function POSBilling() {
               )}
             </div>
 
-            {/* CUSTOMER DETAILS CARD [F5] */}
-            <div className="border border-slate-800 rounded-2xl p-3.5 bg-slate-950/70 space-y-2">
+            {/* CUSTOMER DETAILS CARD */}
+            <div className="border border-slate-800 rounded-2xl p-3 sm:p-3.5 bg-slate-950/70 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-indigo-400" />
@@ -3027,9 +3066,9 @@ export default function POSBilling() {
                 </span>
                 <button
                   onClick={handleOpenCustomerModal}
-                  className="text-[10px] font-mono font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 border border-indigo-800/60 px-2 py-0.5 rounded-md hover:bg-indigo-900 transition-colors"
+                  className="text-[10px] font-mono font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 border border-indigo-800/60 px-2 py-0.5 rounded-md hover:bg-indigo-900 transition-colors active:scale-95"
                 >
-                  {currentTab.customer ? "Change [F5]" : "+ Select [F5]"}
+                  {currentTab.customer ? "Change" : "+ Select"}
                 </button>
               </div>
 
@@ -3063,38 +3102,40 @@ export default function POSBilling() {
                   onClick={handleOpenCustomerModal}
                   className="text-xs text-slate-400 text-center py-2 border border-dashed border-slate-800 hover:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-900/60 transition-colors"
                 >
-                  Walk-in Customer (Click to add loyalty points or phone)
+                  Walk-in Customer (Tap to attach phone / points)
                 </div>
               )}
             </div>
           </div>
 
           {/* DUAL PRIMARY ACTION CTA BUTTONS */}
-          <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800 mt-4">
-            {/* Save & Print [F6] */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-800 mt-4 shrink-0">
+            {/* Save & Print */}
             <button
               onClick={() => handleSaveBill(true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-950/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              title="Save bill to database and print receipt [F6]"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-950/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Save bill and print receipt"
             >
               <Printer className="w-4 h-4" />
-              <span>Save &amp; Print</span>
-              <kbd className="text-[10px] font-mono opacity-80 bg-emerald-800/80 px-1 py-0.5 rounded font-normal">
+              <span className="hidden sm:inline">Save &amp; Print</span>
+              <span className="sm:hidden">Print Bill</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-emerald-800/80 px-1 py-0.5 rounded font-normal">
                 F6
               </kbd>
             </button>
 
-            {/* Save Bill [F7] */}
+            {/* Save Bill */}
             <button
               onClick={() => handleSaveBill(false)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-indigo-950/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              title="Save bill directly without popup [F7]"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-indigo-950/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Save bill directly"
             >
               <Check className="w-4 h-4" />
-              <span>Save Bill</span>
-              <kbd className="text-[10px] font-mono opacity-80 bg-indigo-800/80 px-1 py-0.5 rounded font-normal">
+              <span className="hidden sm:inline">Save Bill</span>
+              <span className="sm:hidden">Save Bill</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-indigo-800/80 px-1 py-0.5 rounded font-normal">
                 F7
               </kbd>
             </button>

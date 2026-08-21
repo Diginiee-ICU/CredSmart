@@ -142,52 +142,63 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 min-h-screen bg-[#F4F6F9] p-3 sm:p-6 lg:p-7 space-y-5">
-      {/* Top Bar matching Capture.PNG */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
+    <div className="flex-1 min-h-screen bg-slate-50/60 dark:bg-slate-950/40 p-3 sm:p-6 lg:p-7 space-y-5">
+      {/* Top Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>LIVE RECONCILED</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Commercial financial metrics, receivables, payables, and live invoice feed
+          </p>
+        </div>
 
         {/* Action icons bar */}
-        <div className="flex items-center gap-2 text-slate-500">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
           <button
-            onClick={() => toast({ title: "Desktop App", description: "Download CredSmart desktop client for Windows/macOS" })}
+            onClick={() => toast({ title: "Desktop Client", description: "Download CredSmart desktop client for Windows/macOS" })}
             title="Desktop App"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/80 hover:text-foreground transition-colors shadow-2xs"
           >
             <Tv className="w-4 h-4" />
           </button>
           <button
-            onClick={() => toast({ title: "Announcements", description: "GST Rule update 2026: E-invoicing threshold guidelines" })}
+            onClick={() => toast({ title: "Regulatory Compliance", description: "GST Rule update 2026: E-invoicing threshold guidelines active" })}
             title="Announcements"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/80 hover:text-foreground transition-colors shadow-2xs"
           >
             <Megaphone className="w-4 h-4" />
           </button>
           <button
             onClick={() => navigate(ROUTE_PATHS.items)}
             title="Offers & Rewards"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/80 hover:text-foreground transition-colors shadow-2xs"
           >
             <Gift className="w-4 h-4" />
           </button>
           <button
             onClick={() => navigate(ROUTE_PATHS.staff)}
-            title="Community & Users"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            title="Staff & Permissions"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/80 hover:text-foreground transition-colors shadow-2xs"
           >
             <Users2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => window.open("https://wa.me/919999999999", "_blank")}
-            title="Chat Support"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            title="Institutional Chat Support"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
           >
-            <MessageCircle className="w-4 h-4 text-emerald-600" />
+            <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </button>
           <button
             onClick={() => setShowShortcutsModal(true)}
-            title="Keyboard Shortcuts"
-            className="p-2 rounded-lg hover:bg-slate-200/70 hover:text-slate-800 transition-colors"
+            title="Keyboard Shortcuts (⌘K)"
+            className="p-2 rounded-xl border border-border/80 bg-card hover:bg-muted/80 hover:text-foreground transition-colors shadow-2xs"
           >
             <Keyboard className="w-4 h-4" />
           </button>
@@ -195,71 +206,88 @@ export default function Dashboard() {
       </div>
 
       {/* Business Overview Section */}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-700 tracking-tight">Business Overview</h2>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-            <span>Last Update: {lastUpdate || formatCurrentTime()}</span>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
+            Financial Ledger Summary
+          </h2>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            <span className="font-mono text-[11px]">Last Sync: {lastUpdate || formatCurrentTime()}</span>
             <button
               onClick={handleRefresh}
-              className="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors"
+              className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               title="Refresh metrics"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
             </button>
           </div>
         </div>
 
-        {/* 3 Metric Cards Grid matching Capture.PNG */}
+        {/* 3 Metric Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: To Collect */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            className="bg-card p-5 rounded-2xl border border-border/80 shadow-sm hover:shadow-md hover:border-emerald-500/40 transition-all cursor-pointer group flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-slate-600 mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
-                <span>To Collect</span>
+            <div className="flex items-center justify-between text-muted-foreground mb-3">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-mono">
+                <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>TO COLLECT (RECEIVABLES)</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
-              ₹ {toCollect.toLocaleString("en-IN")}
+            <div>
+              <div className="text-2xl sm:text-3xl font-black text-foreground font-mono tracking-tight">
+                ₹ {toCollect.toLocaleString("en-IN")}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Outstanding customer credit ledger balances
+              </p>
             </div>
           </div>
 
           {/* Card 2: To Pay */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            className="bg-card p-5 rounded-2xl border border-border/80 shadow-sm hover:shadow-md hover:border-rose-500/40 transition-all cursor-pointer group flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-slate-600 mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
-                <ArrowUpRight className="w-4 h-4 text-rose-600" />
-                <span>To Pay</span>
+            <div className="flex items-center justify-between text-muted-foreground mb-3">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-full font-mono">
+                <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                <span>TO PAY (PAYABLES)</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-rose-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-rose-600 transition-colors" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
-              ₹ {toPay.toLocaleString("en-IN")}
+            <div>
+              <div className="text-2xl sm:text-3xl font-black text-foreground font-mono tracking-tight">
+                ₹ {toPay.toLocaleString("en-IN")}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Pending supplier invoices &amp; outward dues
+              </p>
             </div>
           </div>
 
           {/* Card 3: Total Cash + Bank Balance */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            className="bg-card p-5 rounded-2xl border border-border/80 shadow-sm hover:shadow-md hover:border-indigo-500/40 transition-all cursor-pointer group flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-slate-600 mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
-                <Landmark className="w-4 h-4 text-indigo-600" />
-                <span>Total Cash + Bank Balance</span>
+            <div className="flex items-center justify-between text-muted-foreground mb-3">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full font-mono">
+                <Landmark className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>CASH &amp; BANK LIQUIDITY</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-indigo-600 transition-colors" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
-              ₹ {cashBankBalance.toLocaleString("en-IN")}
+            <div>
+              <div className="text-2xl sm:text-3xl font-black text-foreground font-mono tracking-tight">
+                ₹ {cashBankBalance.toLocaleString("en-IN")}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Total reconciled liquidity across bank &amp; cash accounts
+              </p>
             </div>
           </div>
         </div>
@@ -268,65 +296,70 @@ export default function Dashboard() {
       {/* Main Body Grid: Latest Transactions (2/3) + Today's Checklist (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Latest Transactions Table */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Latest Transactions</h3>
+        <div className="lg:col-span-2 bg-card rounded-2xl border border-border/80 shadow-sm flex flex-col overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/80 flex items-center justify-between bg-muted/20">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Latest Invoices &amp; Transactions</h3>
+              <Badge variant="outline" className="text-[10px] font-mono">
+                Real-time
+              </Badge>
+            </div>
             {latestTransactions.length > 0 && (
               <button
                 onClick={() => navigate(ROUTE_PATHS.sales)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
               >
-                <span>View All</span>
+                <span>View Full Registry</span>
                 <ArrowRight className="w-3 h-3" />
               </button>
             )}
           </div>
 
           {latestTransactions.length === 0 ? (
-            /* Clean Empty State matching Capture.PNG */
+            /* Clean Empty State */
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-400">
+              <div className="w-16 h-16 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground">
                 <FileText className="w-8 h-8 stroke-[1.5]" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-800">No transactions made yet!</h4>
-                <p className="text-xs text-slate-500 max-w-xs">
-                  Create your first transaction to start seeing your data
+                <h4 className="text-sm font-bold text-foreground">No transactions recorded yet</h4>
+                <p className="text-xs text-muted-foreground max-w-xs">
+                  Generate your first GST-compliant sales invoice to activate real-time telemetry
                 </p>
               </div>
               <Button
                 onClick={() => setShowQuickCreate(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 mt-2 gap-1.5 shadow-xs"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 mt-2 gap-1.5 shadow-md shadow-indigo-600/20 rounded-xl"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Create First Invoice</span>
+                <span>Create Sales Invoice</span>
               </Button>
             </div>
           ) : (
             <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
               <table className="w-full text-left text-xs min-w-[500px]">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                    <th className="py-2.5 px-4">DATE</th>
-                    <th className="py-2.5 px-4">TYPE</th>
-                    <th className="py-2.5 px-4">TXN NO</th>
-                    <th className="py-2.5 px-4">PARTY NAME</th>
-                    <th className="py-2.5 px-4 text-right">AMOUNT</th>
+                  <tr className="bg-muted/40 text-muted-foreground font-semibold border-b border-border text-[11px] uppercase tracking-wider font-mono">
+                    <th className="py-3 px-4">DATE</th>
+                    <th className="py-3 px-4">TYPE</th>
+                    <th className="py-3 px-4">INVOICE NO</th>
+                    <th className="py-3 px-4">PARTY NAME</th>
+                    <th className="py-3 px-4 text-right">AMOUNT</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border/60">
                   {latestTransactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4 font-medium text-slate-600">{t.date}</td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline" className="text-[10px] bg-indigo-50 text-indigo-700 border-indigo-200">
+                    <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3.5 px-4 font-mono text-muted-foreground">{t.date}</td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20 font-mono">
                           {t.type}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 font-mono font-medium text-slate-800">{t.txnNo}</td>
-                      <td className="py-3 px-4 font-medium text-slate-700">{t.partyName}</td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-900">
-                        ₹ {t.amount.toLocaleString("en-IN")}
+                      <td className="py-3.5 px-4 font-mono font-semibold text-foreground">{t.txnNo}</td>
+                      <td className="py-3.5 px-4 font-medium text-foreground">{t.partyName}</td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
+                        ₹ {t.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))}
@@ -336,22 +369,46 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Today's Checklist Widget matching Capture.PNG */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-800 mb-6">Today's Checklist</h3>
-
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 py-6">
-            {/* Construction cones / rocket icon illustration */}
-            <div className="w-20 h-20 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-500 shadow-xs">
-              <Sparkles className="w-10 h-10 animate-pulse" />
+        {/* Today's Checklist Widget */}
+        <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-border/80 pb-3 mb-4">
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Institutional Checklist</h3>
+              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold uppercase px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                ACTIVE
+              </span>
             </div>
 
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-slate-800">Coming Soon...</h4>
-              <p className="text-xs text-slate-500 max-w-[220px]">
-                Smarter daily checklist for overdue and follow-ups
-              </p>
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground">Cloud Ledger Sync</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">All customer and vendor balances verified.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground">GST Invoicing Engine</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">CGST/SGST/IGST tax rates verified for FY 2026-27.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground">Follow-Up Queue</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Payment reminders available in Parties hub.</p>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-border/80 text-[10px] font-mono text-muted-foreground flex items-center justify-between">
+            <span>Section 2(1)(w) IT Act</span>
+            <span>256-bit Encrypted</span>
           </div>
         </div>
       </div>

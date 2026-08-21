@@ -694,54 +694,57 @@ export default function Landing() {
         </section>
 
         {/* ── FINAL CTA BANNER ── */}
-        <section className="py-20 bg-primary text-primary-foreground relative overflow-hidden border-t border-primary/20">
-          <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-gold/20 blur-3xl" />
+        <section className="py-20 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white relative overflow-hidden border-t border-slate-800">
+          <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
 
           <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-            <span className="font-mono text-xs uppercase tracking-wider text-accent font-semibold px-3.5 py-1 rounded-full bg-accent/15 border border-accent/30 inline-block mb-6">
-              INSTANT SETUP IN UNDER 30 SECONDS
+            <span className="font-mono text-xs uppercase tracking-wider text-emerald-400 font-semibold px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 inline-block mb-6">
+              INSTANT ZERO-COST ONBOARDING
             </span>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-5">
-              Empower Your Store with CredSmart Today
+              Empower Your Commercial Trade with CredSmart
             </h2>
             <p className="text-slate-300 text-base sm:text-lg mb-10 max-w-xl mx-auto">
-              Join thousands of Indian store owners who have streamlined their billing, eliminated software subscription costs, and automated GST compliance.
+              Join thousands of Indian enterprises and store owners who have streamlined their billing, eliminated software license fees, and secured their commercial ledger.
             </p>
             <Button
               size="lg"
               onClick={goToAuth}
-              className="rounded-full px-10 py-7 text-base font-bold bg-accent hover:bg-accent/90 text-white shadow-2xl shadow-accent/40 transition-all hover:scale-105 active:scale-95"
+              className="rounded-full px-10 py-7 text-base font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xl shadow-indigo-600/50 transition-all hover:scale-105 active:scale-95"
             >
               Get Started Completely Free <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
             <p className="mt-4 text-xs text-slate-400 font-mono">
-              No credit card required · Instant web &amp; mobile access · Export for CA anytime
+              Zero credit card required • Instant web &amp; mobile access • Section 2(1)(w) IT Act Ready
             </p>
           </div>
         </section>
 
-        {/* ── DEEP MIDNIGHT SLATE FOOTER ── */}
-        <footer className="bg-[#12131A] text-slate-400 pt-16 pb-12 border-t border-white/5 font-sans">
+        {/* ── DEEP MIDNIGHT OBSIDIAN FOOTER ── */}
+        <footer className="bg-[#0B1120] text-slate-400 pt-16 pb-12 border-t border-slate-800 font-sans">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
               <div className="md:col-span-2">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center border border-gold/30 p-0.5 overflow-hidden">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center border border-indigo-400/30 p-0.5 overflow-hidden shadow-md">
                     <img
                       src="/favicon.png"
                       alt="CredSmart POS logo"
                       className="w-full h-full object-contain rounded-lg"
                     />
                   </div>
-                  <span className="font-bold text-white text-lg tracking-tight">CredSmart POS</span>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-white text-lg tracking-tight">CredSmart</span>
+                    <span className="text-[10px] text-slate-500 font-mono">Commercial Infrastructure by CredAlert</span>
+                  </div>
                 </div>
                 <p className="text-sm leading-relaxed text-slate-400 max-w-sm mb-4">
-                  India's high-performance, 100% free GST billing &amp; point-of-sale infrastructure for retail stores, supermarkets, pharmacies, and wholesale distributors.
+                  India's high-performance, 100% free GST billing, customer credit ledger, and commercial reputation infrastructure for retail stores, supermarkets, pharmacies, and wholesale distributors.
                 </p>
-                <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>ALL SERVERS OPERATIONAL · SUPABASE ENCRYPTED</span>
+                <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>ALL SYSTEMS OPERATIONAL • 256-BIT ENCRYPTION • SECTION 2(1)(w) IT ACT</span>
                 </div>
               </div>
 
@@ -756,7 +759,7 @@ export default function Landing() {
               </div>
 
               <div>
-                <h4 className="text-white font-mono font-semibold mb-4 text-xs uppercase tracking-wider">Legal &amp; Policy</h4>
+                <h4 className="text-white font-mono font-semibold mb-4 text-xs uppercase tracking-wider">Legal &amp; Compliance</h4>
                 <ul className="space-y-2.5 text-sm">
                   <li><Link to={ROUTE_PATHS.privacyPolicy} className="hover:text-white transition-colors">Privacy Policy</Link></li>
                   <li><Link to={ROUTE_PATHS.termsOfService} className="hover:text-white transition-colors">Terms of Service</Link></li>
@@ -766,9 +769,9 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-              <p>© {new Date().getFullYear()} CredSmart POS. Free GST Billing Software for Indian Businesses. All rights reserved.</p>
-              <p className="font-mono text-[11px] text-slate-400">Design language inspired by credalert.business</p>
+            <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+              <p>© {new Date().getFullYear()} CredSmart. Free GST Billing Software for Indian Businesses. All rights reserved.</p>
+              <p className="font-mono text-[11px] text-slate-400">CredAlert — India's commercial reputation infrastructure • Section 2(1)(w) IT Act • 256-bit Encrypted</p>
             </div>
           </div>
         </footer>

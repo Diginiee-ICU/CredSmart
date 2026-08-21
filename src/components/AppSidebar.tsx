@@ -300,105 +300,110 @@ export function AppSidebar() {
     );
   }
 
-  // Desktop Sidebar matching Capture.PNG, Capture12.PNG, 11Capture.PNG
+  // Desktop Sidebar matching institutional CredAlert aesthetic
   return (
     <aside
       className={cn(
-        "flex flex-col h-[100dvh] min-h-0 bg-[#0F172A] text-slate-300 border-r border-slate-800/80 shadow-2xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-30 font-sans",
-        collapsed ? "w-[72px]" : "w-[240px]"
+        "flex flex-col h-[100dvh] min-h-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/80 shadow-2xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-30 font-sans",
+        collapsed ? "w-[72px]" : "w-[244px]"
       )}
     >
-      {/* Top Store Header matching Capture.PNG ("B Business Name 7409200341") */}
-      <div className="p-3.5 border-b border-slate-800/90 shrink-0 bg-[#0B1120]">
+      {/* Top Store Header */}
+      <div className="p-3.5 border-b border-slate-800/80 shrink-0 bg-[#080D1A]">
         <div className="flex items-center gap-3">
-          {/* Yellow/Amber Avatar with first letter "B" */}
-          <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-extrabold flex items-center justify-center text-lg shadow-md shrink-0 ring-2 ring-amber-400/30">
-            {org?.name ? org.name.charAt(0).toUpperCase() : "B"}
+          {/* Amber/Gold Avatar with initials */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-lg shadow-md shrink-0 ring-2 ring-amber-400/30">
+            {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
           </div>
 
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-bold text-white truncate tracking-tight">
-                {org?.name || "Business Name"}
-              </h2>
-              <p className="text-xs text-slate-400 font-mono tracking-tight truncate">
-                {org?.phone || "7409200341"}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-sm font-bold text-white truncate tracking-tight">
+                  {org?.name || "CredAlert Business"}
+                </h2>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <p className="text-[11px] text-slate-400 font-mono tracking-tight truncate">
+                  {org?.phone || "7409200341"}
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* "+ Create Sales Invoice" Dropdown Button matching 11Capture.PNG */}
+        {/* "+ Create Sales Invoice" Dropdown Button */}
         {!collapsed && (
           <div className="relative mt-3" ref={quickCreateRef}>
             <button
               type="button"
               onClick={() => setQuickCreateOpen(!quickCreateOpen)}
-              className="flex items-center justify-between w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-900/40 transition-all font-medium text-xs py-2.5 px-3 select-none"
+              className="flex items-center justify-between w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-950/60 transition-all font-semibold text-xs py-2.5 px-3 select-none ring-1 ring-indigo-400/30"
               aria-expanded={quickCreateOpen}
             >
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
-                <span className="font-semibold tracking-tight truncate">Create Sales Invoice</span>
+                <span className="tracking-tight truncate font-bold">Create Invoice</span>
               </div>
               <ChevronDown
-                className={cn("w-4 h-4 transition-transform duration-200 shrink-0 ml-1", quickCreateOpen ? "rotate-180" : "")}
+                className={cn("w-4 h-4 transition-transform duration-200 shrink-0 ml-1 text-indigo-200", quickCreateOpen ? "rotate-180" : "")}
               />
             </button>
 
-            {/* Comprehensive Quick Action Flyout Menu matching 11Capture.PNG & 123Capture.PNG */}
+            {/* Comprehensive Quick Action Flyout Menu */}
             {quickCreateOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[72vh] overflow-y-auto scrollbar-thin">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900 text-slate-200 rounded-2xl shadow-2xl border border-slate-700/80 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[72vh] overflow-y-auto scrollbar-thin">
                 {/* View All Options Popup Trigger */}
-                <div className="px-2 pb-1.5 border-b border-slate-100">
+                <div className="px-2 pb-1.5 border-b border-slate-800">
                   <button
                     type="button"
                     onClick={() => {
                       setQuickCreateOpen(false);
                       setUniversalModalOpen(true);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 font-bold text-[11px] transition-colors"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40"
                   >
                     <div className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                       <span>All Creation Options</span>
                     </div>
-                    <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-indigo-200 text-indigo-900 font-mono">
-                      Popup
+                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                      Hub
                     </span>
                   </button>
                 </div>
 
                 {/* GENERAL */}
-                <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
                   GENERAL
                 </div>
                 <button
                   onClick={() => handleQuickAction("party")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <UserPlus className="w-4 h-4 text-indigo-500" />
+                  <UserPlus className="w-4 h-4 text-indigo-400" />
                   <span>Create Party</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("item")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <PackagePlus className="w-4 h-4 text-indigo-500" />
+                  <PackagePlus className="w-4 h-4 text-indigo-400" />
                   <span>Create Item</span>
                 </button>
 
-                <div className="my-1.5 border-t border-slate-100" />
+                <div className="my-1.5 border-t border-slate-800" />
 
                 {/* SALES TRANSACTIONS */}
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
                   SALES TRANSACTIONS
                 </div>
                 <button
                   onClick={() => handleQuickAction("sales_invoice")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left font-semibold"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-200 hover:bg-indigo-950/60 hover:text-indigo-300 transition-colors text-left font-semibold"
                 >
-                  <FileText className="w-4 h-4 text-indigo-600" />
+                  <FileText className="w-4 h-4 text-indigo-400" />
                   <span>Sales Invoice</span>
                 </button>
                 <button
@@ -406,104 +411,104 @@ export function AppSidebar() {
                     setQuickCreateOpen(false);
                     navigate(ROUTE_PATHS.pos);
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left font-semibold"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-emerald-300 hover:bg-emerald-950/60 transition-colors text-left font-semibold"
                 >
-                  <ShoppingCart className="w-4 h-4 text-emerald-600" />
+                  <ShoppingCart className="w-4 h-4 text-emerald-400" />
                   <span>POS Billing (Counter Sale)</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("quotation")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                  <FileSpreadsheet className="w-4 h-4 text-slate-400" />
                   <span>Quotation / Estimate</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("payment_in")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <Receipt className="w-4 h-4 text-emerald-600" />
+                  <Receipt className="w-4 h-4 text-emerald-400" />
                   <span>Payment In</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("sales_return")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <RotateCcw className="w-4 h-4 text-rose-500" />
+                  <RotateCcw className="w-4 h-4 text-rose-400" />
                   <span>Sales Return</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("credit_note")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <CreditCard className="w-4 h-4 text-indigo-500" />
+                  <CreditCard className="w-4 h-4 text-indigo-400" />
                   <span>Credit Note</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("delivery_challan")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <Truck className="w-4 h-4 text-amber-500" />
+                  <Truck className="w-4 h-4 text-amber-400" />
                   <span>Delivery Challan</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("proforma")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <FileText className="w-4 h-4 text-slate-500" />
+                  <FileText className="w-4 h-4 text-slate-400" />
                   <span>Proforma Invoice</span>
                 </button>
 
-                <div className="my-1.5 border-t border-slate-100" />
+                <div className="my-1.5 border-t border-slate-800" />
 
                 {/* PURCHASE TRANSACTIONS */}
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
                   PURCHASE TRANSACTIONS
                 </div>
                 <button
                   onClick={() => handleQuickAction("purchase")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left font-semibold"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-200 hover:bg-indigo-950/60 hover:text-indigo-300 transition-colors text-left font-semibold"
                 >
-                  <Truck className="w-4 h-4 text-blue-500" />
+                  <Truck className="w-4 h-4 text-blue-400" />
                   <span>Purchase Invoice</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("payment_out")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <Receipt className="w-4 h-4 text-rose-500" />
+                  <Receipt className="w-4 h-4 text-rose-400" />
                   <span>Payment Out</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("purchase_return")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <RotateCcw className="w-4 h-4 text-amber-600" />
+                  <RotateCcw className="w-4 h-4 text-amber-400" />
                   <span>Purchase Return</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("debit_note")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <FileCheck className="w-4 h-4 text-slate-500" />
+                  <FileCheck className="w-4 h-4 text-slate-400" />
                   <span>Debit Note</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("purchase_orders")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <Building2 className="w-4 h-4 text-slate-500" />
+                  <Building2 className="w-4 h-4 text-slate-400" />
                   <span>Purchase Orders</span>
                 </button>
 
-                <div className="my-1.5 border-t border-slate-100" />
+                <div className="my-1.5 border-t border-slate-800" />
 
                 {/* EXPENSES */}
                 <button
                   onClick={() => handleQuickAction("expense")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
                 >
-                  <Receipt className="w-4 h-4 text-purple-500" />
+                  <Receipt className="w-4 h-4 text-purple-400" />
                   <span>Create Expense</span>
                 </button>
               </div>
@@ -512,12 +517,12 @@ export function AppSidebar() {
         )}
       </div>
 
-      {/* Main Navigation List matching Capture.PNG */}
+      {/* Main Navigation List */}
       <nav className="flex-1 min-h-0 px-2.5 py-3 space-y-4 overflow-y-auto scrollbar-thin text-xs">
         {filteredNavRouteGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-0.5">
             {!collapsed && (
-              <p className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/80">
+              <p className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/90 font-mono">
                 {group.group}
               </p>
             )}
@@ -531,17 +536,13 @@ export function AppSidebar() {
                 <div key={item.url} className="space-y-0.5">
                   <div
                     onClick={() => {
-                      if (hasChildren && !collapsed) {
-                        navigate(item.url);
-                      } else {
-                        navigate(item.url);
-                      }
+                      navigate(item.url);
                     }}
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer font-medium select-none group",
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer font-medium select-none group relative",
                       active
-                        ? "bg-indigo-600 text-white font-semibold shadow-sm shadow-indigo-950"
-                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                        ? "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-950/80 ring-1 ring-indigo-400/40"
+                        : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                     )}
                     title={collapsed ? item.title : undefined}
                   >
@@ -556,7 +557,7 @@ export function AppSidebar() {
                       <div className="flex items-center justify-between flex-1 min-w-0">
                         <span className="truncate">{item.title}</span>
                         {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono">
                             {item.badge}
                           </span>
                         )}
@@ -603,17 +604,22 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      {/* Footer Security Badges & Sign Out matching Capture.PNG */}
-      <div className="p-3 border-t border-slate-800/90 bg-[#0B1120] space-y-2 shrink-0 text-xs">
+      {/* Footer Security Badges & Sign Out */}
+      <div className="p-3 border-t border-slate-800/80 bg-[#080D1A] space-y-2 shrink-0 text-xs">
         {!collapsed && (
-          <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 py-1 font-medium">
-            <div className="flex items-center gap-1 text-emerald-400">
-              <Shield className="w-3 h-3" />
-              <span>100% Secure</span>
+          <div className="space-y-1 px-1 py-0.5">
+            <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+              <div className="flex items-center gap-1 text-emerald-400">
+                <Shield className="w-3 h-3" />
+                <span>IT Act 2000 Ready</span>
+              </div>
+              <div className="flex items-center gap-1 text-indigo-300 font-mono">
+                <span>256-bit SSL</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-indigo-300 font-mono">
-              <span>ISO Certified</span>
-            </div>
+            <p className="text-[9px] text-slate-500 font-mono truncate">
+              CredAlert B2B Infrastructure
+            </p>
           </div>
         )}
 

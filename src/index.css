@@ -16,10 +16,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Sleek Indigo */
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
-    --primary-soft: 243 75% 95%;
+    /* CredAlert Institutional Indigo */
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 239 84% 96%;
 
     --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
@@ -27,25 +27,25 @@
     --muted: 214 32% 91%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 243 75% 59%;
-    --accent-foreground: 210 40% 98%;
-    --accent-soft: 243 75% 95%;
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+    --accent-soft: 239 84% 96%;
 
     --ruby: 346 87% 43%;
     --ruby-foreground: 0 0% 100%;
     --ruby-soft: 346 87% 95%;
 
-    --gold: 43 74% 49%;
+    --gold: 38 92% 50%;
     --gold-foreground: 222 47% 11%;
-    --gold-soft: 43 74% 95%;
+    --gold-soft: 48 96% 95%;
 
     --destructive: 346 87% 43%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 158 64% 42%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 43 74% 49%;
+    --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
 
     --info: 217 91% 60%;
@@ -53,41 +53,41 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 243 75% 59%;
+    --ring: 239 84% 67%;
 
     --radius: 0.75rem;
 
-    --glass: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass: rgba(255, 255, 255, 0.82);
+    --glass-border: rgba(226, 232, 240, 0.8);
 
     --surface: 0 0% 100%;
     --surface-raised: 0 0% 100%;
     --surface-overlay: 222 47% 11%;
 
-    /* Layered subtle shadows */
+    /* CredAlert Institutional Layered Shadows */
     --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
-    --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
-    --shadow-glow: 0 0 20px -4px hsl(243 75% 59% / 0.25);
-    --shadow-glow-emerald: 0 0 20px -4px hsl(160 84% 39% / 0.35);
-    --shadow-glow-gold: 0 0 20px -4px hsl(43 74% 49% / 0.30);
+    --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
+    --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.08);
+    --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08), 0 4px 6px -4px rgb(15 23 42 / 0.08);
+    --shadow-glow: 0 0 20px -4px hsl(239 84% 67% / 0.25);
+    --shadow-glow-emerald: 0 0 20px -4px hsl(158 64% 42% / 0.30);
+    --shadow-glow-gold: 0 0 20px -4px hsl(38 92% 50% / 0.25);
 
-    /* Deep Slate Sidebar */
-    --sidebar-background: 222 47% 11%;
+    /* Deep Obsidian Slate Sidebar */
+    --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent: 222 47% 11%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 239 84% 67%;
     --sidebar-muted: 215 16% 65%;
   }
 
   .dark {
-    --ivory: 222 47% 11%;
-    --background: 222 47% 11%;
+    --ivory: 224 71% 4%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
 
     --card: 222 47% 11%;
@@ -96,8 +96,8 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
     --primary-soft: 226 71% 20%;
 
     --secondary: 217 33% 17%;
@@ -106,36 +106,36 @@
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 243 75% 59%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
     --accent-soft: 226 71% 20%;
 
     --ruby: 346 87% 60%;
     --ruby-foreground: 0 0% 100%;
     --ruby-soft: 346 87% 20%;
 
-    --gold: 43 74% 60%;
+    --gold: 38 92% 55%;
     --gold-foreground: 222 47% 11%;
-    --gold-soft: 43 74% 20%;
+    --gold-soft: 38 92% 20%;
 
     --destructive: 346 87% 60%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 243 75% 59%;
+    --ring: 239 84% 67%;
 
-    --glass: rgba(15, 23, 42, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass: rgba(11, 17, 32, 0.82);
+    --glass-border: rgba(51, 65, 85, 0.5);
 
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 47% 11%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 11%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 239 84% 67%;
     --sidebar-muted: 215 20% 65%;
   }
 }
@@ -328,6 +328,37 @@
 
   .gradient-sidebar {
     background: linear-gradient(180deg, hsl(232 35% 14%) 0%, hsl(232 35% 9%) 100%);
+  }
+
+  /* Institutional Hairline Borders & Indicators */
+  .hairline-border {
+    border-width: 1px;
+    border-color: hsl(var(--border) / 0.8);
+  }
+
+  .mono-numeric {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .badge-institutional {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium tracking-tight border transition-all;
+  }
+
+  .badge-institutional-emerald {
+    @apply badge-institutional bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25;
+  }
+
+  .badge-institutional-indigo {
+    @apply badge-institutional bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25;
+  }
+
+  .badge-institutional-amber {
+    @apply badge-institutional bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25;
+  }
+
+  .badge-institutional-rose {
+    @apply badge-institutional bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25;
   }
 
   /* Safe Area & Scrollbars */
