@@ -99,17 +99,46 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       `;
     } else {
       printStyles = `
-        @page { margin: 10mm; size: A4 portrait; }
+        @page { size: A4 portrait; margin: 5mm 7mm 5mm 7mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 210mm; margin: 0 auto; padding: 15px; color: #000; background: #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 12px; }
-        th, td { border: 1px solid #333; padding: 6px 8px; font-size: 12px; }
+        html, body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          width: 100%;
+          max-width: 196mm;
+          height: 100%;
+          max-height: 284mm;
+          margin: 0 auto;
+          padding: 0;
+          color: #000;
+          background: #fff;
+          font-size: 11px;
+          line-height: 1.3;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          page-break-after: avoid;
+          page-break-before: avoid;
+          page-break-inside: avoid;
+          break-after: avoid;
+          break-inside: avoid;
+          overflow: hidden;
+        }
+        .invoice-wrapper {
+          max-height: 282mm;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; margin-bottom: 6px; page-break-inside: avoid; break-inside: avoid; }
+        th, td { border: 1px solid #444; padding: 3.5px 6px; font-size: 11px; }
         th { background-color: #f3f4f6; font-weight: bold; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .text-right { text-align: right !important; }
         .text-center { text-align: center !important; }
         .fw-bold { font-weight: bold; }
         .no-print { display: none !important; }
-        h1, h2, h3, h4 { margin-bottom: 4px; }
+        h1, h2, h3, h4 { margin-bottom: 2px; }
       `;
     }
 
@@ -380,15 +409,15 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           {/* ─── A4 / BILL BOOK INVOICE LAYOUT ─── */}
           {layout === "a4" && (
             <div
-              className="bg-white text-black rounded-xl border border-neutral-300 p-6 sm:p-8 shadow-sm w-full max-w-[720px] transition-all"
+              className="bg-white text-black rounded-xl border border-neutral-300 p-4 sm:p-6 shadow-sm w-full max-w-[720px] transition-all"
               style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
             >
-              <div ref={receiptRef}>
+              <div ref={receiptRef} className="invoice-wrapper">
                 {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
                   <div>
-                    <h1 style={{ fontSize: "22px", fontWeight: "bold", margin: "0 0 4px", color: "#111" }}>{storeName}</h1>
-                    <div style={{ fontSize: "12px", color: "#444", lineHeight: "1.4", maxWidth: "300px" }}>
+                    <h1 style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 2px", color: "#111" }}>{storeName}</h1>
+                    <div style={{ fontSize: "11px", color: "#444", lineHeight: "1.35", maxWidth: "300px" }}>
                       {storeAddress && <div>{storeAddress}</div>}
                       {storePhone && <div>Ph: {storePhone}</div>}
                       {gstin && <div style={{ fontWeight: "bold", color: "#111" }}>GSTIN: {gstin}</div>}
@@ -396,22 +425,22 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                   </div>
 
                   <div style={{ textAlign: "right" }}>
-                    <h2 style={{ fontSize: "22px", color: "#222", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 8px" }}>
+                    <h2 style={{ fontSize: "18px", color: "#222", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 6px" }}>
                       {data.isEstimate ? "ESTIMATE" : "TAX INVOICE"}
                     </h2>
-                    <table style={{ width: "220px", borderCollapse: "collapse", marginLeft: "auto", border: "1px solid #ccc", fontSize: "11px" }}>
+                    <table style={{ width: "210px", borderCollapse: "collapse", marginLeft: "auto", border: "1px solid #ccc", fontSize: "10.5px" }}>
                       <tbody>
                         <tr>
-                          <td style={{ padding: "4px 6px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Invoice No</td>
-                          <td style={{ padding: "4px 6px", border: "1px solid #ccc", fontWeight: "bold" }}>{data.invoiceNumber}</td>
+                          <td style={{ padding: "3px 5px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Invoice No</td>
+                          <td style={{ padding: "3px 5px", border: "1px solid #ccc", fontWeight: "bold" }}>{data.invoiceNumber}</td>
                         </tr>
                         <tr>
-                          <td style={{ padding: "4px 6px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Date & Time</td>
-                          <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>{formattedDate} {formattedTime}</td>
+                          <td style={{ padding: "3px 5px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Date & Time</td>
+                          <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>{formattedDate} {formattedTime}</td>
                         </tr>
                         <tr>
-                          <td style={{ padding: "4px 6px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Payment Mode</td>
-                          <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>{data.paymentMethod}</td>
+                          <td style={{ padding: "3px 5px", backgroundColor: "#f5f5f5", fontWeight: "bold", border: "1px solid #ccc" }}>Payment Mode</td>
+                          <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>{data.paymentMethod}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -419,78 +448,67 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 </div>
 
                 {/* Billed To Section */}
-                <div style={{ marginBottom: "16px", padding: "8px 12px", backgroundColor: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "6px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#666", textTransform: "uppercase", marginBottom: "2px" }}>
+                <div style={{ marginBottom: "10px", padding: "6px 10px", backgroundColor: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "5px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "bold", color: "#666", textTransform: "uppercase", marginBottom: "1px" }}>
                     Billed To:
                   </div>
-                  <div style={{ fontSize: "13px", fontWeight: "bold", color: "#111" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#111" }}>
                     {data.customerName || "Walk-in Customer"}
                   </div>
-                  {data.customerPhone && <div style={{ fontSize: "12px", color: "#444" }}>Phone: {data.customerPhone}</div>}
+                  {data.customerPhone && <div style={{ fontSize: "11px", color: "#444" }}>Phone: {data.customerPhone}</div>}
                 </div>
 
                 {/* Items Table */}
-                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "16px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "10px" }}>
                   <thead>
                     <tr>
-                      <th style={{ border: "1px solid #333", padding: "6px 8px", backgroundColor: "#f5f5f5", width: "35px", textAlign: "center" }}>#</th>
-                      <th style={{ border: "1px solid #333", padding: "6px 8px", backgroundColor: "#f5f5f5", textAlign: "left" }}>Description of Goods</th>
-                      <th style={{ border: "1px solid #333", padding: "6px 8px", backgroundColor: "#f5f5f5", width: "80px", textAlign: "right" }}>Rate (₹)</th>
-                      <th style={{ border: "1px solid #333", padding: "6px 8px", backgroundColor: "#f5f5f5", width: "50px", textAlign: "center" }}>Qty</th>
-                      <th style={{ border: "1px solid #333", padding: "6px 8px", backgroundColor: "#f5f5f5", width: "95px", textAlign: "right" }}>Amount (₹)</th>
+                      <th style={{ border: "1px solid #333", padding: "4px 6px", backgroundColor: "#f5f5f5", width: "30px", textAlign: "center" }}>#</th>
+                      <th style={{ border: "1px solid #333", padding: "4px 6px", backgroundColor: "#f5f5f5", textAlign: "left" }}>Description of Goods</th>
+                      <th style={{ border: "1px solid #333", padding: "4px 6px", backgroundColor: "#f5f5f5", width: "75px", textAlign: "right" }}>Rate (₹)</th>
+                      <th style={{ border: "1px solid #333", padding: "4px 6px", backgroundColor: "#f5f5f5", width: "45px", textAlign: "center" }}>Qty</th>
+                      <th style={{ border: "1px solid #333", padding: "4px 6px", backgroundColor: "#f5f5f5", width: "85px", textAlign: "right" }}>Amount (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.items.map((item, idx) => (
                       <tr key={idx}>
-                        <td style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center", fontSize: "11px" }}>{idx + 1}</td>
-                        <td style={{ border: "1px solid #ccc", padding: "6px 8px" }}>
-                          <div style={{ fontWeight: "bold", fontSize: "12px" }}>{item.product.name}</div>
-                          <div style={{ fontSize: "10px", color: "#666" }}>
+                        <td style={{ border: "1px solid #ccc", padding: "4px 6px", textAlign: "center", fontSize: "10.5px" }}>{idx + 1}</td>
+                        <td style={{ border: "1px solid #ccc", padding: "4px 6px" }}>
+                          <div style={{ fontWeight: "bold", fontSize: "11.5px" }}>{item.product.name}</div>
+                          <div style={{ fontSize: "9.5px", color: "#666" }}>
                             {item.product.brand && `${item.product.brand} · `}
                             {item.product.category && `${item.product.category} · `}
                             {item.batch.batchNumber ? `Batch: ${item.batch.batchNumber}` : ""}
                           </div>
                         </td>
-                        <td style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "right", fontSize: "12px" }}>
+                        <td style={{ border: "1px solid #ccc", padding: "4px 6px", textAlign: "right", fontSize: "11px" }}>
                           {item.batch.mrp.toFixed(2)}
                         </td>
-                        <td style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center", fontSize: "12px", fontWeight: "bold" }}>
+                        <td style={{ border: "1px solid #ccc", padding: "4px 6px", textAlign: "center", fontSize: "11px", fontWeight: "bold" }}>
                           {item.quantity}
                         </td>
-                        <td style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "right", fontWeight: "bold", fontSize: "12px" }}>
+                        <td style={{ border: "1px solid #ccc", padding: "4px 6px", textAlign: "right", fontWeight: "bold", fontSize: "11px" }}>
                           {(item.batch.mrp * item.quantity).toFixed(2)}
                         </td>
-                      </tr>
-                    ))}
-                    
-                    {/* Fillers for bill book aesthetic */}
-                    {Array.from({ length: Math.max(0, 4 - data.items.length) }).map((_, i) => (
-                      <tr key={`blank-${i}`}>
-                        <td style={{ border: "1px solid #eee", padding: "10px 8px" }}></td>
-                        <td style={{ border: "1px solid #eee", padding: "10px 8px" }}></td>
-                        <td style={{ border: "1px solid #eee", padding: "10px 8px" }}></td>
-                        <td style={{ border: "1px solid #eee", padding: "10px 8px" }}></td>
-                        <td style={{ border: "1px solid #eee", padding: "10px 8px" }}></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
                 {/* Summary & Terms */}
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "4px" }}>
                   {/* Left Side */}
                   <div style={{ flex: 1 }}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <div style={{ fontSize: "11px", color: "#666" }}>Amount in Words:</div>
-                      <div style={{ fontSize: "12px", fontWeight: "bold", color: "#111", textTransform: "capitalize" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={{ fontSize: "10px", color: "#666" }}>Amount in Words:</div>
+                      <div style={{ fontSize: "11px", fontWeight: "bold", color: "#111", textTransform: "capitalize" }}>
                         Rupees {numberToWords(data.total)} Only
                       </div>
                     </div>
 
-                    <div style={{ fontSize: "10px", color: "#555", borderTop: "1px solid #eee", paddingTop: "8px" }}>
-                      <strong style={{ color: "#222" }}>Terms & Conditions:</strong>
-                      <ul style={{ paddingLeft: "14px", margin: "4px 0 0" }}>
+                    <div style={{ fontSize: "9.5px", color: "#555", borderTop: "1px solid #eee", paddingTop: "6px" }}>
+                      <strong style={{ color: "#222" }}>Terms &amp; Conditions:</strong>
+                      <ul style={{ paddingLeft: "12px", margin: "2px 0 0" }}>
                         <li>Goods once sold cannot be returned without original receipt.</li>
                         <li>Subject to local jurisdiction.</li>
                         <li>This is a computer generated invoice.</li>
@@ -499,19 +517,19 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                   </div>
 
                   {/* Right Side Totals Table */}
-                  <div style={{ width: "240px", shrink: 0 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                  <div style={{ width: "220px", shrink: 0 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                       <tbody>
                         <tr>
-                          <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>Subtotal</td>
-                          <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right", fontWeight: "bold" }}>
+                          <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>Subtotal</td>
+                          <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right", fontWeight: "bold" }}>
                             ₹{data.subtotal.toFixed(2)}
                           </td>
                         </tr>
                         {data.discountAmount > 0 && (
                           <tr>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>Discount ({data.discountLabel})</td>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right", color: "#16a34a" }}>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>Discount ({data.discountLabel})</td>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right", color: "#16a34a" }}>
                               -₹{data.discountAmount.toFixed(2)}
                             </td>
                           </tr>
@@ -519,14 +537,14 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                         {data.tax > 0 && (
                           <>
                             <tr>
-                              <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>CGST</td>
-                              <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right" }}>
+                              <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>CGST</td>
+                              <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right" }}>
                                 ₹{cgst.toFixed(2)}
                               </td>
                             </tr>
                             <tr>
-                              <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>SGST</td>
-                              <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right" }}>
+                              <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>SGST</td>
+                              <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right" }}>
                                 ₹{sgst.toFixed(2)}
                               </td>
                             </tr>
@@ -534,32 +552,32 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                         )}
                         {data.creditApplied && data.creditApplied > 0 ? (
                           <tr>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>Credit Applied</td>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right" }}>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>Credit Applied</td>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right" }}>
                               -₹{data.creditApplied.toFixed(2)}
                             </td>
                           </tr>
                         ) : null}
                         {Math.abs(roundOffAmount) > 0.001 && (
                           <tr>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc" }}>Round Off</td>
-                            <td style={{ padding: "4px 6px", border: "1px solid #ccc", textAlign: "right" }}>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc" }}>Round Off</td>
+                            <td style={{ padding: "3px 5px", border: "1px solid #ccc", textAlign: "right" }}>
                               {roundOffAmount > 0 ? "+" : ""}₹{roundOffAmount.toFixed(2)}
                             </td>
                           </tr>
                         )}
                         <tr>
-                          <td style={{ padding: "6px 8px", border: "1px solid #111", backgroundColor: "#f5f5f5", fontWeight: "bold", fontSize: "14px" }}>
+                          <td style={{ padding: "4px 6px", border: "1px solid #111", backgroundColor: "#f5f5f5", fontWeight: "bold", fontSize: "12.5px" }}>
                             Grand Total
                           </td>
-                          <td style={{ padding: "6px 8px", border: "1px solid #111", backgroundColor: "#f5f5f5", textAlign: "right", fontWeight: "bold", fontSize: "14px" }}>
+                          <td style={{ padding: "4px 6px", border: "1px solid #111", backgroundColor: "#f5f5f5", textAlign: "right", fontWeight: "bold", fontSize: "12.5px" }}>
                             ₹{data.total.toFixed(2)}
                           </td>
                         </tr>
                       </tbody>
                     </table>
 
-                    <div style={{ marginTop: "32px", textAlign: "center", borderTop: "1px solid #333", paddingTop: "4px", fontSize: "11px", fontWeight: "bold" }}>
+                    <div style={{ marginTop: "18px", textAlign: "center", borderTop: "1px solid #333", paddingTop: "2px", fontSize: "10px", fontWeight: "bold" }}>
                       Authorized Signatory
                     </div>
                   </div>

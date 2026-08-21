@@ -1,7 +1,9 @@
+import { useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { InvoiceSettingsState, COLOR_SWATCHES } from "@/types/invoice-settings";
 import { cn } from "@/lib/utils";
-import { Sparkles, Award, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Sparkles, Award, ShieldCheck, CheckCircle2, Printer, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LiveInvoicePreviewProps {
   settings: InvoiceSettingsState;
@@ -125,6 +127,82 @@ export function LiveInvoicePreview({
     accountHolder: businessName,
   };
 
+  const invoiceRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    const content = invoiceRef.current;
+    if (!content) return;
+
+    const printWindow = window.open("", "_blank", "width=850,height=900");
+    if (!printWindow) return;
+
+    const printStyles = `
+      @page { size: A4 portrait; margin: 5mm 7mm 5mm 7mm; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        width: 100%;
+        max-width: 196mm;
+        height: 100%;
+        max-height: 284mm;
+        margin: 0 auto;
+        padding: 0;
+        color: #000;
+        background: #fff;
+        font-size: 10.5px;
+        line-height: 1.3;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        page-break-after: avoid;
+        page-break-before: avoid;
+        page-break-inside: avoid;
+        break-after: avoid;
+        break-inside: avoid;
+        overflow: hidden;
+      }
+      .one-page-invoice {
+        max-height: 282mm;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      table { width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
+      th, td { padding: 3px 5px; font-size: 10.5px; }
+      th { font-weight: bold; text-align: left; }
+      .text-right { text-align: right !important; }
+      .text-center { text-align: center !important; }
+      .no-print { display: none !important; }
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Tax Invoice - 1 Page Fit</title>
+        <style>${printStyles}</style>
+      </head>
+      <body>
+        ${content.innerHTML}
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              window.close();
+            }, 250);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const isLuxury = settings.theme === "luxury" || settings.autoApplyLuxury;
   const isAdvancedGst = settings.theme === "advanced_gst";
   const isModern = settings.theme === "modern";
@@ -132,17 +210,38 @@ export function LiveInvoicePreview({
   const isStylish = settings.theme === "stylish" && !isLuxury;
 
   return (
-    <div className="w-full bg-slate-100 dark:bg-slate-900/60 p-2 sm:p-4 rounded-2xl border border-border/70 overflow-x-auto shadow-inner">
-      {/* Invoice Document Paper Container */}
-      <div
-        id="live-invoice-paper"
-        className={cn(
-          "bg-white text-slate-800 rounded-xl shadow-xl min-w-[620px] max-w-[780px] mx-auto p-5 sm:p-7 transition-all duration-300 relative border",
-          isLuxury && "border-amber-300/80 shadow-amber-900/10 font-serif",
-          isAdvancedGst && "border-slate-800 font-mono text-[11px]",
-          !isLuxury && !isAdvancedGst && "border-slate-200"
-        )}
-      >
+    <div className="w-full space-y-3">
+      {/* Top Preview Status & 1-Page Print Bar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-card rounded-xl border border-border shadow-xs text-xs">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-semibold text-foreground">Live Single-Page Preview</span>
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-bold">
+            1-Page A4 Guarantee
+          </span>
+        </div>
+        <Button
+          size="sm"
+          onClick={handlePrint}
+          className="h-7 px-2.5 text-xs gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          Print 1-Page Invoice
+        </Button>
+      </div>
+
+      <div className="w-full bg-slate-100 dark:bg-slate-900/60 p-2 sm:p-4 rounded-2xl border border-border/70 overflow-x-auto shadow-inner">
+        {/* Invoice Document Paper Container */}
+        <div
+          ref={invoiceRef}
+          id="live-invoice-paper"
+          className={cn(
+            "bg-white text-slate-800 rounded-xl shadow-xl min-w-[620px] max-w-[780px] mx-auto p-4 sm:p-6 transition-all duration-300 relative border one-page-invoice",
+            isLuxury && "border-amber-300/80 shadow-amber-900/10 font-serif",
+            isAdvancedGst && "border-slate-800 font-mono text-[11px]",
+            !isLuxury && !isAdvancedGst && "border-slate-200"
+          )}
+        >
         {/* Luxury Ribbon / Crest */}
         {isLuxury && (
           <div className="absolute top-0 right-0 overflow-hidden w-28 h-28 pointer-events-none">
