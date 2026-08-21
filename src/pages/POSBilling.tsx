@@ -51,6 +51,9 @@ import {
   Eye,
   Sliders,
   Building2,
+  Mic,
+  MicOff,
+  Radio,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -66,6 +69,13 @@ import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
 import { STANDARD_PRODUCT_CATALOG, STANDARD_PARTY_SUGGESTIONS } from "@/utils/suggestionData";
+import {
+  createSpeechRecognizer,
+  parsePOSVoiceCommand,
+  speakPOSMessage,
+  isVoiceSupported,
+  ParsedVoiceCommand,
+} from "@/utils/posVoiceService";
 
 // --- Types ---
 
