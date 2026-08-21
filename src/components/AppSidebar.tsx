@@ -21,6 +21,7 @@ import {
   BadgeAlert,
   HelpCircle,
   Sparkles,
+  ShoppingCart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
