@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/utils/escpos";
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
+import { cn } from "@/lib/utils";
 
 export interface ReceiptData {
   invoiceNumber: string;
