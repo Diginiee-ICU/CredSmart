@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   Plus,
   Search,
@@ -395,7 +395,19 @@ export default function AppLayout() {
             isMobile && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]"
           )}
         >
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] w-full flex flex-col items-center justify-center p-8 select-none animate-in fade-in duration-200">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 border-r-emerald-500 animate-spin" />
+                  <div className="absolute w-2 h-2 rounded-full bg-emerald-500" />
+                </div>
+                <p className="mt-3 text-[11px] font-mono text-muted-foreground">Loading view...</p>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

@@ -63,6 +63,7 @@ import { PurchaseInvoiceModal } from "@/components/PurchaseInvoiceModal";
 import { SalesSettingsModal } from "@/components/SalesSettingsModal";
 import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 import { MobileScanModal } from "@/components/MobileScanModal";
+import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 
 const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any }[] = [
   { id: "purchase_invoice", label: "Purchase Invoices", icon: Truck },
@@ -116,6 +117,7 @@ export default function Purchases() {
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<BusinessDocument | null>(null);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [mobileScanModalOpen, setMobileScanModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
@@ -252,6 +254,48 @@ export default function Purchases() {
       toast.success(`${doc.documentNumber} deleted`);
       loadDocuments();
     }
+  };
+
+  const handleOpenReceipt = (doc: BusinessDocument) => {
+    const receipt: ReceiptData = {
+      docType: doc.docType || "purchase_invoice",
+      invoiceNumber: doc.documentNumber,
+      referenceNumber: doc.referenceNumber,
+      items: doc.items.map((it) => ({
+        product: {
+          name: it.productName,
+          brand: "",
+          category: "",
+          unit: it.unit || "PCS",
+          hsn: it.hsn || "",
+          gstRate: it.taxRate || 0,
+        },
+        batch: {
+          mrp: it.rate,
+          batchNumber: it.batchNumber || "BATCH-01",
+          expiryDate: it.expiryDate,
+        },
+        quantity: it.quantity,
+      })),
+      subtotal: doc.subtotal,
+      discountAmount: doc.discountTotal,
+      discountLabel: "Discount",
+      tax: doc.taxTotal,
+      total: doc.grandTotal,
+      roundOff: doc.roundOff,
+      customerName: doc.partyName,
+      customerPhone: doc.partyPhone,
+      partyAddress: doc.partyAddress,
+      partyGstin: doc.partyGstin,
+      partyEmail: doc.partyEmail,
+      paymentMethod: doc.paymentMethod || "Bank Transfer",
+      storeName: org?.name || "CredSmart Enterprises",
+      date: doc.docDate,
+      dueDate: doc.dueDate,
+      notes: doc.notes,
+      terms: doc.terms,
+    };
+    setReceiptData(receipt);
   };
 
   const activeTabMeta = PURCHASE_TABS.find((t) => t.id === activeTab) || PURCHASE_TABS[0];
@@ -663,7 +707,14 @@ export default function Purchases() {
                                   <MoreVertical className="w-3.5 h-3.5" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenReceipt(doc)}
+                                  className="gap-2"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                  <span>View &amp; Print Bill</span>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setEditingDoc(doc);
@@ -767,6 +818,19 @@ export default function Purchases() {
         open={shortcutsModalOpen}
         onOpenChange={setShortcutsModalOpen}
       />
+
+      {/* Receipt / Invoice Modal */}
+      {receiptData && (
+        <ReceiptModal
+          data={receiptData}
+          onClose={() => setReceiptData(null)}
+          onNewSale={() => {
+            setReceiptData(null);
+            setEditingDoc(null);
+            setCreateModalOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

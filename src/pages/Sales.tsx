@@ -255,7 +255,9 @@ export default function Sales() {
 
   const handleOpenReceipt = (doc: BusinessDocument) => {
     const receipt: ReceiptData = {
+      docType: doc.docType,
       invoiceNumber: doc.documentNumber,
+      referenceNumber: doc.referenceNumber,
       items: doc.items.map((it) => ({
         product: {
           id: it.productId || it.id,
@@ -263,6 +265,9 @@ export default function Sales() {
           barcode: it.barcode || "",
           brand: "",
           category: "",
+          unit: it.unit || "PCS",
+          hsn: it.hsn || "",
+          gstRate: it.taxRate || 0,
           batches: [],
         },
         batch: {
@@ -271,6 +276,7 @@ export default function Sales() {
           mrp: it.rate,
           stock: 100,
           batchNumber: it.batchNumber || "BATCH-01",
+          expiryDate: it.expiryDate,
         },
         quantity: it.quantity,
       })),
@@ -282,14 +288,16 @@ export default function Sales() {
       roundOff: doc.roundOff,
       customerName: doc.partyName,
       customerPhone: doc.partyPhone,
+      partyAddress: doc.partyAddress,
+      partyGstin: doc.partyGstin,
+      partyEmail: doc.partyEmail,
       paymentMethod: doc.paymentMethod || "Cash",
-      storeName: org?.name || "CredSmart POS",
-      storeAddress: "",
-      storePhone: "",
-      gstin: doc.partyGstin,
+      storeName: org?.name || "CredSmart Enterprises",
       date: doc.docDate,
+      dueDate: doc.dueDate,
       isEstimate: doc.docType === "quotation",
       notes: doc.notes,
+      terms: doc.terms,
     };
     setReceiptData(receipt);
   };

@@ -48,6 +48,7 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
+import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
 
 // --- Types ---
 
@@ -112,6 +113,7 @@ interface PosSettings {
   upiId: string;
   barcodeScannerPrefix: string;
   autoFocusSearch: boolean;
+  directEscPosPrint?: boolean;
 }
 
 const DEFAULT_SETTINGS: PosSettings = {
@@ -127,9 +129,11 @@ const DEFAULT_SETTINGS: PosSettings = {
   upiId: "credsmart@upi",
   barcodeScannerPrefix: "",
   autoFocusSearch: true,
+  directEscPosPrint: false,
 };
 
 const getTabsStorageKey = (orgId: string | null) => `credsmart_pos_tabs_${orgId || "default"}`;
+const GLOBAL_BACKUP_STORAGE_KEY = "credsmart_pos_tabs_backup";
 const getSettingsStorageKey = (orgId: string | null) => `credsmart_pos_settings_${orgId || "default"}`;
 
 function createNewTab(tabIndex: number): BillingTab {
@@ -173,10 +177,10 @@ export default function POSBilling() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  // Multi-Tab Held Bills State
+  // Multi-Tab Held Bills State with local cart restoration
   const [tabs, setTabs] = useState<BillingTab[]>(() => {
     try {
-      const saved = localStorage.getItem(getTabsStorageKey(orgId));
+      const saved = localStorage.getItem(getTabsStorageKey(orgId)) || localStorage.getItem(GLOBAL_BACKUP_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -191,6 +195,31 @@ export default function POSBilling() {
 
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || "");
 
+  // Auto-restore carts if orgId loads after initial render
+  useEffect(() => {
+    if (!orgId) return;
+    try {
+      const savedOrgTabs = localStorage.getItem(getTabsStorageKey(orgId));
+      if (savedOrgTabs) {
+        const parsed = JSON.parse(savedOrgTabs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const totalItems = parsed.reduce((sum: number, t: BillingTab) => sum + (t.items?.length || 0), 0);
+          if (totalItems > 0 && tabs.every((t) => t.items.length === 0)) {
+            setTabs(parsed);
+            if (parsed[0]?.id) setActiveTabId(parsed[0].id);
+            toast({
+              title: "🛒 Active Cart Restored",
+              description: `Recovered ${totalItems} unbilled items across ${parsed.length} tab(s) from previous session.`,
+              duration: 3000,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Cart auto-sync error:", e);
+    }
+  }, [orgId]);
+
   // Ensure active tab id is valid
   useEffect(() => {
     if (!tabs.find((t) => t.id === activeTabId)) {
@@ -204,13 +233,40 @@ export default function POSBilling() {
     }
   }, [tabs, activeTabId]);
 
-  // Persist tabs to localStorage
+  // Robust Persist tabs to localStorage & global backup
   useEffect(() => {
     try {
-      localStorage.setItem(getTabsStorageKey(orgId), JSON.stringify(tabs));
+      const payload = JSON.stringify(tabs);
+      localStorage.setItem(getTabsStorageKey(orgId), payload);
+      // Also persist to global backup if tabs contain items
+      const hasItems = tabs.some((t) => t.items && t.items.length > 0);
+      if (hasItems) {
+        localStorage.setItem(GLOBAL_BACKUP_STORAGE_KEY, payload);
+      }
     } catch (e) {
       console.warn("Failed to persist POS tabs:", e);
     }
+  }, [tabs, orgId]);
+
+  // BeforeUnload safety prompt and emergency local sync
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      try {
+        const payload = JSON.stringify(tabs);
+        localStorage.setItem(getTabsStorageKey(orgId), payload);
+        localStorage.setItem(GLOBAL_BACKUP_STORAGE_KEY, payload);
+      } catch {}
+
+      const hasItems = tabs.some((t) => t.items && t.items.length > 0);
+      if (hasItems) {
+        e.preventDefault();
+        e.returnValue = "You have active unbilled cart items. Your cart is saved, but are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [tabs, orgId]);
 
   // Active Tab Reference Helper
@@ -1116,6 +1172,7 @@ export default function POSBilling() {
 
         // Prepare Receipt Data
         const preparedReceipt: ReceiptData = {
+          docType: "pos_invoice",
           invoiceNumber,
           items: currentTab.items.map((ci) => ({
             product: ci.product,
@@ -1182,6 +1239,88 @@ export default function POSBilling() {
       handleCloseTab,
     ]
   );
+
+  // ESC/POS Thermal Test Print Helper
+  const handleTestEscPosPrint = async (directUsb = false) => {
+    try {
+      const printerWidth = settings.receiptFormat === "58mm" ? "58mm" : "80mm";
+      const sampleData: ReceiptData = {
+        invoiceNumber: "TEST-001",
+        items: [
+          {
+            product: {
+              id: "test-1",
+              name: "Thermal Printer Test",
+              brand: "CredSmart",
+              category: "Hardware",
+              barcode: "890123456789",
+              batches: [],
+            },
+            batch: {
+              id: "b-1",
+              mrp: 100,
+              costPrice: 80,
+              stock: 99,
+              batchNumber: "TEST",
+            },
+            quantity: 1,
+          },
+        ],
+        subtotal: 100,
+        discountAmount: 0,
+        discountLabel: "None",
+        tax: 5,
+        total: 105,
+        paymentMethod: "Cash",
+        storeName: settings.storeName || "CredSmart Retail Store",
+        storeAddress: settings.storeAddress || "Hardware Terminal Integration",
+        storePhone: settings.storePhone || "+91 98765 43210",
+        gstin: settings.storeGstin || "29AAAAA0000A1Z5",
+        date: new Date(),
+      };
+
+      const bytes = buildReceiptEscPos(sampleData, {
+        width: printerWidth,
+        openCashDrawer: true,
+        cut: true,
+        beep: true,
+        printQr: true,
+        printBarcode: true,
+        footerText: "ESC/POS Thermal Hardware Test Passed!",
+      });
+
+      if (directUsb && "usb" in navigator) {
+        toast({ title: "Connecting USB Printer...", description: "Please select your thermal printer from device list." });
+        const res = await printViaWebUSB(bytes);
+        if (res.success) {
+          toast({ title: "⚡ Test Receipt Printed", description: `ESC/POS test output sent to ${printerWidth} printer.` });
+          return;
+        } else {
+          toast({ title: "USB Notice", description: res.error || "WebUSB failed, downloading .bin stream.", variant: "destructive" });
+        }
+      }
+
+      // Download raw .bin binary stream
+      const blob = new Blob([bytes], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `escpos_test_${printerWidth}.bin`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 200);
+
+      toast({
+        title: "⚡ ESC/POS Test Stream Generated",
+        description: `Downloaded ${printerWidth} raw byte stream (${bytes.length} bytes) for spooling.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Test Print Failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   // Exit POS Navigation [CTRL + ESC]
   const handleExitPOS = useCallback(() => {
@@ -2259,6 +2398,39 @@ export default function POSBilling() {
                   }
                   className="w-4 h-4 rounded text-primary"
                 />
+              </div>
+
+              {/* ESC/POS Thermal Hardware Section */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                  <span>⚡ Thermal Printer (ESC/POS)</span>
+                  <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                    USB / BT / Serial
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Direct ESC/POS commands produce zero-latency thermal printing with automated paper cut, barcode, and cash drawer kick.
+                </p>
+
+                <div className="flex items-center gap-2 pt-1">
+                  {"usb" in navigator && (
+                    <button
+                      type="button"
+                      onClick={() => handleTestEscPosPrint(true)}
+                      className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-xs"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Test USB Print</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleTestEscPosPrint(false)}
+                    className="flex-1 py-1.5 px-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-300 dark:border-slate-700"
+                  >
+                    <span>Download .BIN Test</span>
+                  </button>
+                </div>
               </div>
             </div>
 

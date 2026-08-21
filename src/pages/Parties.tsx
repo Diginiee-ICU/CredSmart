@@ -27,6 +27,9 @@ import {
   AlertCircle,
   HelpCircle,
   Zap,
+  ShieldCheck,
+  RefreshCw,
+  CheckCheck,
 } from "lucide-react";
 import { Party, PartyType } from "@/types/parties";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +42,13 @@ import { PartySettingsModal } from "@/components/parties/PartySettingsModal";
 import { PartyExcelUploadModal } from "@/components/parties/PartyExcelUploadModal";
 import { PartyHelpTooltip } from "@/components/parties/PartyHelpTooltip";
 import { exportPartiesToCSV, downloadCSV } from "@/utils/excelImportExport";
+import {
+  performFullLedgerReconciliation,
+  downloadReconciliationAuditCSV,
+  downloadPartyStatementCSV,
+  reconcilePartyLedger,
+  OrganizationReconciliationAudit,
+} from "@/utils/ledgerReconciliation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -225,11 +235,21 @@ export default function Parties() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
   const [showExcelUploadModal, setShowExcelUploadModal] = useState(false);
+  const [showReconciliationModal, setShowReconciliationModal] = useState(false);
+  const [auditResult, setAuditResult] = useState<OrganizationReconciliationAudit | null>(null);
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [rawCreditTransactions, setRawCreditTransactions] = useState<any[]>([]);
 
   // Fetch Parties from Supabase (customers + suppliers + credit balances)
   const fetchParties = useCallback(async () => {
     if (!orgId) {
       setParties(DEFAULT_SAMPLE_PARTIES);
+      const audit = performFullLedgerReconciliation({
+        orgName: "CredSmart Demo",
+        parties: DEFAULT_SAMPLE_PARTIES,
+        creditTransactions: [],
+      });
+      setAuditResult(audit);
       setLoading(false);
       return;
     }
@@ -251,8 +271,10 @@ export default function Parties() {
       // 3. Fetch Credit Transactions
       const { data: credits, error: creditErr } = await supabase
         .from("credit_transactions")
-        .select("party_id, party_type, amount, type")
+        .select("party_id, party_type, amount, type, created_at, reference_id, description")
         .eq("organization_id", orgId);
+
+      setRawCreditTransactions(credits || []);
 
       const creditBalanceMap: Record<string, number> = {};
       (credits || []).forEach((c) => {
@@ -309,18 +331,45 @@ export default function Parties() {
         });
       });
 
-      if (mergedParties.length === 0) {
-        setParties(DEFAULT_SAMPLE_PARTIES);
-      } else {
-        setParties(mergedParties);
-      }
+      const finalParties = mergedParties.length === 0 ? DEFAULT_SAMPLE_PARTIES : mergedParties;
+      setParties(finalParties);
+
+      // Perform Automated Ledger Reconciliation Audit
+      const audit = performFullLedgerReconciliation({
+        orgId,
+        orgName: "CredSmart Business",
+        parties: finalParties,
+        creditTransactions: credits || [],
+      });
+      setAuditResult(audit);
     } catch (err) {
       console.error("Error fetching parties:", err);
       setParties(DEFAULT_SAMPLE_PARTIES);
+      const audit = performFullLedgerReconciliation({
+        orgName: "CredSmart Business",
+        parties: DEFAULT_SAMPLE_PARTIES,
+        creditTransactions: [],
+      });
+      setAuditResult(audit);
     } finally {
       setLoading(false);
     }
   }, [orgId]);
+
+  const handleRunAudit = () => {
+    setIsAuditing(true);
+    setTimeout(() => {
+      const audit = performFullLedgerReconciliation({
+        orgId,
+        orgName: "CredSmart Business",
+        parties,
+        creditTransactions: rawCreditTransactions,
+      });
+      setAuditResult(audit);
+      setIsAuditing(false);
+      toast.success("Automated Ledger Integrity Verification completed!");
+    }, 500);
+  };
 
   useEffect(() => {
     fetchParties();
@@ -630,6 +679,22 @@ export default function Parties() {
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Reconcile Ledgers Button */}
+          <Button
+            onClick={() => {
+              handleRunAudit();
+              setShowReconciliationModal(true);
+            }}
+            variant="outline"
+            className="gap-1.5 text-xs font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 shadow-xs"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Reconcile Ledgers</span>
+            <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0 h-4 uppercase">
+              {auditResult?.integrityScore ?? 100}% Health
+            </Badge>
+          </Button>
+
           {/* SharedLedger Portal Button */}
           <Button
             onClick={() => {
@@ -652,8 +717,40 @@ export default function Parties() {
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel className="text-xs">Party Reports</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-xs">Party Reports & Audits</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  handleRunAudit();
+                  setShowReconciliationModal(true);
+                }}
+                className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-semibold"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 mr-2" />
+                Ledger Integrity Audit & Hub
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  if (auditResult) {
+                    downloadReconciliationAuditCSV(auditResult, org);
+                    toast.success("CA Reconciliation Audit Package downloaded!");
+                  } else {
+                    const audit = performFullLedgerReconciliation({
+                      orgId,
+                      orgName: org?.name || "CredSmart Business",
+                      parties,
+                      creditTransactions: rawCreditTransactions,
+                    });
+                    downloadReconciliationAuditCSV(audit, org);
+                    toast.success("CA Reconciliation Audit Package downloaded!");
+                  }
+                }}
+                className="text-xs cursor-pointer font-semibold"
+              >
+                <Download className="w-3.5 h-3.5 mr-2 text-primary" />
+                Download CA Audit Package (CSV)
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
@@ -1207,6 +1304,46 @@ export default function Parties() {
                               </DropdownMenuItem>
                             )}
 
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const partyTxns = rawCreditTransactions.filter(
+                                  (t) => (t.party_id || t.partyId) === party.id
+                                );
+                                downloadPartyStatementCSV(party, partyTxns, org);
+                                toast.success(`Statement for "${party.name}" downloaded as CSV!`);
+                              }}
+                              className="text-xs cursor-pointer font-medium"
+                            >
+                              <Download className="w-3.5 h-3.5 mr-2 text-primary" />
+                              Download Statement (CSV)
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const partyTxns = rawCreditTransactions.filter(
+                                  (t) => (t.party_id || t.partyId) === party.id
+                                );
+                                const res = reconcilePartyLedger(party, partyTxns);
+                                if (res.isReconciled) {
+                                  toast.success(
+                                    `Reconciled: "${party.name}" ledger is verified with 0 discrepancy (Balance: ₹${Math.abs(
+                                      res.calculatedBalance
+                                    ).toLocaleString("en-IN")}).`
+                                  );
+                                } else {
+                                  toast.warning(
+                                    `Discrepancy: "${party.name}" has variance ₹${Math.abs(
+                                      res.variance
+                                    ).toLocaleString("en-IN")}.`
+                                  );
+                                }
+                              }}
+                              className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-medium"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 mr-2" />
+                              Verify & Reconcile
+                            </DropdownMenuItem>
+
                             {party.phone && (
                               <DropdownMenuItem
                                 onClick={() => {
@@ -1313,6 +1450,7 @@ export default function Parties() {
         }}
         parties={parties}
         selectedParty={sharedLedgerSelectedParty}
+        orgInfo={org}
       />
 
       {/* 3. Reports Modal */}
@@ -1371,6 +1509,154 @@ export default function Parties() {
               </kbd>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 7. Ledger Reconciliation & Audit Dialog */}
+      <Dialog open={showReconciliationModal} onOpenChange={setShowReconciliationModal}>
+        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-base font-bold">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                Automated Ledger Integrity & Reconciliation Hub
+              </DialogTitle>
+              {auditResult && (
+                <Badge className="bg-emerald-600 text-white text-xs font-bold">
+                  Score: {auditResult.integrityScore}/100 ({auditResult.integrityStatus.toUpperCase()})
+                </Badge>
+              )}
+            </div>
+          </DialogHeader>
+
+          {auditResult ? (
+            <div className="space-y-5 pt-2 text-xs">
+              {/* Stat Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Audited Parties</span>
+                  <p className="text-xl font-black text-foreground mt-0.5">{auditResult.totalPartiesAudited}</p>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                    {auditResult.reconciledPartiesCount} Verified Reconciled
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Trial Balance</span>
+                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {auditResult.trialBalance.isBalanced ? "Balanced ✓" : "Variance"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Diff: ₹{auditResult.trialBalance.netDifference.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Receivables</span>
+                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                    ₹{auditResult.totalReceivables.toLocaleString("en-IN")}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">To Collect (Dr)</p>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Payables</span>
+                  <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono">
+                    ₹{auditResult.totalPayables.toLocaleString("en-IN")}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">To Pay (Cr)</p>
+                </div>
+              </div>
+
+              {/* Party Reconciliation Table */}
+              <div className="border border-border rounded-xl overflow-hidden bg-card">
+                <div className="p-3 bg-muted/40 border-b border-border flex items-center justify-between">
+                  <span className="font-bold text-foreground">Party Balances & Variance Verification</span>
+                  <span className="text-[10px] text-muted-foreground font-semibold">Zero-Tolerance Double Entry</span>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/20 border-b border-border text-muted-foreground font-semibold uppercase text-[10px]">
+                      <tr>
+                        <th className="px-3 py-2">Party Name</th>
+                        <th className="px-3 py-2">Type</th>
+                        <th className="px-3 py-2 text-right">Calculated Bal</th>
+                        <th className="px-3 py-2 text-right">Recorded Bal</th>
+                        <th className="px-3 py-2 text-right">Variance</th>
+                        <th className="px-3 py-2 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {auditResult.partyResults.map((p) => (
+                        <tr key={p.partyId} className="hover:bg-muted/20">
+                          <td className="px-3 py-2 font-semibold text-foreground">{p.partyName}</td>
+                          <td className="px-3 py-2 capitalize">
+                            <Badge variant="outline" className="text-[9px] py-0">
+                              {p.partyType}
+                            </Badge>
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono font-bold">
+                            ₹{Math.abs(p.calculatedBalance).toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono">
+                            ₹{Math.abs(p.recordedBalance).toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            ₹{Math.abs(p.variance).toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <Badge
+                              className={cn(
+                                "text-[9px] py-0",
+                                p.isReconciled
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              )}
+                            >
+                              {p.isReconciled ? "Reconciled ✓" : "Variance"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Action Buttons in Modal Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRunAudit}
+                  disabled={isAuditing}
+                  className="gap-1.5 text-xs h-8"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5 text-primary", isAuditing && "animate-spin")} />
+                  {isAuditing ? "Re-Auditing..." : "Re-Verify All Ledgers"}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      downloadReconciliationAuditCSV(auditResult, org);
+                      toast.success("Complete Reconciliation Audit Package downloaded as CSV!");
+                    }}
+                    className="gap-1.5 text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download CA Audit CSV
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => setShowReconciliationModal(false)} className="h-8 text-xs">
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground">
+              <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-primary opacity-50" />
+              <p>Auditing and verifying ledger records...</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
