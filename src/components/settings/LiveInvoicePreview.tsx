@@ -93,68 +93,68 @@ export function LiveInvoicePreview({
     const content = invoiceRef.current;
     if (!content) return;
 
-    const printWindow = window.open("", "_blank", "width=850,height=900");
+    const printWindow = window.open("", "_blank", "width=850,height=950");
     if (!printWindow) return;
 
-    const printStyles = `
-      @page { size: A4 portrait; margin: 5mm 7mm 5mm 7mm; }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+    const headStyles = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+      .map((el) => el.outerHTML)
+      .join("\n");
+
+    const printSpecificStyles = `
+      @page {
+        size: A4 portrait;
+        margin: 5mm 7mm;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box !important;
+      }
       html, body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        width: 100%;
-        max-width: 196mm;
-        height: 100%;
-        max-height: 284mm;
-        margin: 0 auto;
-        padding: 0;
-        color: #000;
-        background: #fff;
-        font-size: 10.5px;
-        line-height: 1.3;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        page-break-after: avoid;
-        page-break-before: avoid;
-        page-break-inside: avoid;
-        break-after: avoid;
-        break-inside: avoid;
-        overflow: hidden;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        font-size: 10px !important;
+        line-height: 1.25 !important;
       }
-      .one-page-invoice {
-        max-height: 282mm;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        page-break-inside: avoid;
-        break-inside: avoid;
+      #unified-invoice-document {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
-      table { width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
-      th, td { padding: 3px 5px; font-size: 10.5px; }
-      th { font-weight: bold; text-align: left; }
-      .text-right { text-align: right !important; }
-      .text-center { text-align: center !important; }
-      .no-print { display: none !important; }
     `;
 
     printWindow.document.open();
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
         <meta charset="utf-8">
         <title>Tax Invoice - 1 Page Fit</title>
-        <style>${printStyles}</style>
+        ${headStyles}
+        <style>${printSpecificStyles}</style>
       </head>
-      <body>
-        ${content.innerHTML}
+      <body class="bg-white p-0 m-0">
+        <div class="w-full flex justify-center">
+          ${content.outerHTML}
+        </div>
         <script>
           window.onload = function() {
             setTimeout(function() {
               window.focus();
               window.print();
               window.close();
-            }, 250);
+            }, 300);
           };
         <\/script>
       </body>

@@ -125,124 +125,110 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
     const content = receiptRef.current;
     if (!content) return;
 
-    const printWindow = window.open("", "_blank", "width=850,height=900");
+    const printWindow = window.open("", "_blank", "width=850,height=950");
     if (!printWindow) {
       toast({
-        title: "Print popup blocked",
-        description: "Please allow popups in your browser to print receipts.",
+        title: "Pop-up Blocked",
+        description: "Please allow pop-ups for this site to print receipts.",
         variant: "destructive",
       });
       return;
     }
 
-    let printStyles = "";
+    // Grab all stylesheet links and style tags from current document so all Tailwind & theme styling applies 1:1
+    const headStyles = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+      .map((el) => el.outerHTML)
+      .join("\n");
+
+    let printSpecificStyles = "";
+
     if (layout === "58mm") {
-      printStyles = `
+      printSpecificStyles = `
         @page { margin: 0; size: 58mm auto; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         html, body {
           font-family: 'Courier New', Courier, monospace;
           width: 56mm;
           max-width: 56mm;
           margin: 0 auto;
-          padding: 4px;
-          font-size: 10.5px;
+          padding: 2mm;
+          font-size: 10px;
           color: #000;
           background: #fff;
-          page-break-after: avoid;
-          page-break-before: avoid;
-          page-break-inside: avoid;
-          break-after: avoid;
-          break-inside: avoid;
-          overflow: visible;
         }
-        .no-print { display: none !important; }
-        table { width: 100%; border-collapse: collapse; page-break-inside: avoid; break-inside: avoid; }
       `;
     } else if (layout === "80mm") {
-      printStyles = `
+      printSpecificStyles = `
         @page { margin: 0; size: 80mm auto; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         html, body {
           font-family: 'Courier New', Courier, monospace;
           width: 76mm;
           max-width: 76mm;
           margin: 0 auto;
-          padding: 6px;
-          font-size: 11.5px;
+          padding: 3mm;
+          font-size: 11px;
           color: #000;
           background: #fff;
-          page-break-after: avoid;
-          page-break-before: avoid;
-          page-break-inside: avoid;
-          break-after: avoid;
-          break-inside: avoid;
-          overflow: visible;
         }
-        .no-print { display: none !important; }
-        table { width: 100%; border-collapse: collapse; page-break-inside: avoid; break-inside: avoid; }
       `;
     } else {
-      printStyles = `
-        @page { size: A4 portrait; margin: 6mm 8mm 6mm 8mm; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      printSpecificStyles = `
+        @page {
+          size: A4 portrait;
+          margin: 5mm 7mm;
+        }
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          box-sizing: border-box !important;
+        }
         html, body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-          width: 100%;
-          max-width: 196mm;
-          height: auto;
-          max-height: 284mm;
-          margin: 0 auto;
-          padding: 0;
-          color: #000;
-          background: #fff;
-          font-size: 11px;
-          line-height: 1.3;
-          page-break-after: avoid;
-          page-break-before: avoid;
-          page-break-inside: avoid;
-          break-after: avoid;
-          break-inside: avoid;
-          overflow: hidden;
+          width: 100% !important;
+          height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+          font-size: 10px !important;
+          line-height: 1.25 !important;
         }
-        .invoice-wrapper {
-          max-height: 280mm;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          page-break-inside: avoid;
-          break-inside: avoid;
+        #unified-invoice-document {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-shadow: none !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 auto !important;
+          page-break-after: avoid !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
-        table { width: 100%; border-collapse: collapse; margin-top: 6px; margin-bottom: 6px; page-break-inside: avoid; break-inside: avoid; }
-        th, td { border: 1px solid #444; padding: 3.5px 6px; font-size: 11px; }
-        th { background-color: #f3f4f6; font-weight: bold; text-align: left; }
-        .text-right { text-align: right !important; }
-        .text-center { text-align: center !important; }
-        .fw-bold { font-weight: bold; }
-        .no-print { display: none !important; }
-        h1, h2, h3, h4 { margin-bottom: 2px; }
       `;
     }
 
     printWindow.document.open();
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
         <meta charset="utf-8">
         <title>Invoice - ${data.invoiceNumber}</title>
-        <style>${printStyles}</style>
+        ${headStyles}
+        <style>${printSpecificStyles}</style>
       </head>
-      <body>
-        ${content.innerHTML}
+      <body class="bg-white p-0 m-0">
+        <div class="w-full flex justify-center">
+          ${content.outerHTML}
+        </div>
         <script>
           window.onload = function() {
             setTimeout(function() {
               window.focus();
               window.print();
               window.close();
-            }, 250);
+            }, 300);
           };
         <\/script>
       </body>

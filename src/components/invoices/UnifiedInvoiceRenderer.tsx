@@ -319,17 +319,17 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         ref={ref}
         id="unified-invoice-document"
         className={cn(
-          "bg-white text-slate-800 rounded-xl shadow-xl min-w-[620px] max-w-[780px] mx-auto p-4 sm:p-6 transition-all duration-300 relative border one-page-invoice",
+          "bg-white text-slate-800 rounded-xl shadow-xl w-full max-w-[740px] mx-auto p-3.5 sm:p-4.5 transition-all duration-300 relative border one-page-invoice box-border",
           isLuxury && "border-amber-300/80 shadow-amber-900/10 font-serif",
-          isAdvancedGst && "border-slate-800 font-mono text-[11px]",
+          isAdvancedGst && "border-slate-800 font-mono text-[10.5px]",
           !isLuxury && !isAdvancedGst && "border-slate-200",
           className
         )}
       >
         {/* Luxury Gold Badge */}
         {isLuxury && (
-          <div className="absolute top-0 right-0 overflow-hidden w-24 h-24 pointer-events-none">
-            <div className="bg-gradient-to-r from-amber-600 to-yellow-500 text-white font-sans text-[8.5px] font-bold py-1 px-8 transform rotate-45 translate-x-6 translate-y-2 shadow-md uppercase tracking-wider text-center">
+          <div className="absolute top-0 right-0 overflow-hidden w-20 h-20 pointer-events-none">
+            <div className="bg-gradient-to-r from-amber-600 to-yellow-500 text-white font-sans text-[8px] font-bold py-0.5 px-7 transform rotate-45 translate-x-5 translate-y-2 shadow-md uppercase tracking-wider text-center">
               LUXURY
             </div>
           </div>
@@ -338,28 +338,28 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         {/* Invoice Top Header */}
         <div
           className={cn(
-            "pb-3 border-b transition-colors",
+            "pb-2.5 border-b transition-colors",
             activeSettings.styling === "uttarakhand" && "border-b-4",
-            activeSettings.styling === "uttarakhand_2" && "border-b-2 bg-gradient-to-r from-slate-50 to-white -mx-4 -mt-4 p-4 mb-3 rounded-t-xl",
+            activeSettings.styling === "uttarakhand_2" && "border-b-2 bg-gradient-to-r from-slate-50 to-white -mx-3.5 -mt-3.5 p-3 mb-2 rounded-t-xl",
             activeSettings.styling === "jagganth" && "border-b-2 border-dashed",
             activeSettings.styling === "uttar_pradesh" && "border-b-2 shadow-xs",
             activeSettings.styling === "maharashtra" && "border-b-2",
-            activeSettings.styling === "gujarat" && "border-b-2 bg-slate-50/70 -mx-4 -mt-4 p-4 mb-3 rounded-t-xl"
+            activeSettings.styling === "gujarat" && "border-b-2 bg-slate-50/70 -mx-3.5 -mt-3.5 p-3 mb-2 rounded-t-xl"
           )}
           style={{ borderColor: primaryHex }}
         >
           <div className="flex items-start justify-between gap-3">
             {/* Store / Business Info */}
-            <div className="flex items-start gap-3 max-w-[60%]">
+            <div className="flex items-start gap-2.5 max-w-[62%]">
               {storeInfo.logoUrl ? (
                 <img
                   src={storeInfo.logoUrl}
                   alt="Store Logo"
-                  className="w-12 h-12 object-contain rounded-lg border border-slate-200 p-0.5 shrink-0 bg-white"
+                  className="w-10 h-10 object-contain rounded-lg border border-slate-200 p-0.5 shrink-0 bg-white"
                 />
               ) : (
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-base shrink-0 shadow-xs"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 shadow-xs"
                   style={{ backgroundColor: bgLightHex, color: primaryHex }}
                 >
                   {storeInfo.name.charAt(0).toUpperCase()}
@@ -369,7 +369,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
               <div className="min-w-0">
                 <h2
                   className={cn(
-                    "text-base font-black tracking-tight leading-tight",
+                    "text-sm sm:text-base font-black tracking-tight leading-tight",
                     isLuxury ? "font-serif text-slate-900" : "font-sans"
                   )}
                   style={{ color: isLuxury ? undefined : primaryHex }}
@@ -377,9 +377,9 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                   {storeInfo.name}
                 </h2>
                 {storeInfo.address && (
-                  <p className="text-[10px] text-slate-600 mt-0.5 leading-snug">{storeInfo.address}</p>
+                  <p className="text-[9.5px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{storeInfo.address}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9.5px] text-slate-600 mt-0.5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-slate-600 mt-0.5">
                   {storeInfo.phone && (
                     <span>
                       Phone: <strong className="font-semibold text-slate-800">{storeInfo.phone}</strong>
@@ -640,25 +640,25 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         </div>
 
         {/* Bottom Section: Notes & Terms on Left, Calculations & Total on Right */}
-        <div className="grid grid-cols-12 gap-3 mt-2 pt-2 border-t border-slate-200">
+        <div className="grid grid-cols-12 gap-2.5 mt-1.5 pt-1.5 border-t border-slate-200">
           {/* Left Notes, Bank, Terms */}
-          <div className="col-span-7 space-y-2 text-[9.5px]">
+          <div className="col-span-7 space-y-1.5 text-[9px]">
             {notes && (
               <div>
                 <p className="font-bold uppercase tracking-wider text-slate-700">NOTES</p>
-                <p className="text-slate-600">{notes}</p>
+                <p className="text-slate-600 line-clamp-2">{notes}</p>
               </div>
             )}
 
             <div>
               <p className="font-bold uppercase tracking-wider text-slate-700">TERMS AND CONDITIONS</p>
-              <p className="text-slate-600 whitespace-pre-line leading-snug">{currentTerms}</p>
+              <p className="text-slate-600 whitespace-pre-line leading-tight line-clamp-3">{currentTerms}</p>
             </div>
 
             {/* Bank details card */}
-            <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-              <div className="space-y-0.5">
-                <p className="font-bold text-slate-800 text-[9.5px]">Bank Details for NEFT/RTGS/IMPS:</p>
+            <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <div className="space-y-0.5 leading-tight">
+                <p className="font-bold text-slate-800 text-[9px]">Bank Details for NEFT/RTGS/IMPS:</p>
                 <p className="text-slate-600">Bank: <strong className="text-slate-900">{selectedBank.bankName}</strong></p>
                 <p className="text-slate-600">A/C No: <strong className="font-mono text-slate-900">{selectedBank.accountNumber}</strong></p>
                 <p className="text-slate-600">IFSC: <strong className="font-mono text-slate-900">{selectedBank.ifsc}</strong> ({selectedBank.branch})</p>
@@ -666,15 +666,15 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
               {/* Dynamic QR Code */}
               <div className="text-center shrink-0 p-1 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                <QRCodeSVG value={upiPayload} size={48} level="M" />
-                <p className="text-[7.5px] font-bold text-slate-700 mt-0.5">Scan &amp; Pay UPI</p>
+                <QRCodeSVG value={upiPayload} size={42} level="M" />
+                <p className="text-[7px] font-bold text-slate-700 mt-0.5">Scan &amp; Pay UPI</p>
               </div>
             </div>
           </div>
 
           {/* Right Calculations & Grand Total */}
-          <div className="col-span-5 space-y-1 text-[10.5px] text-right">
-            <div className="space-y-0.5 text-[10px] pb-1.5 border-b border-slate-200">
+          <div className="col-span-5 space-y-1 text-[10px] text-right">
+            <div className="space-y-0.5 text-[9.5px] pb-1 border-b border-slate-200">
               <div className="flex justify-between">
                 <span className="text-slate-600">Taxable Amount:</span>
                 <span className="font-mono font-semibold text-slate-800">
@@ -708,49 +708,49 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             </div>
 
             <div
-              className="p-1.5 rounded-lg flex items-center justify-between text-xs font-black shadow-xs"
+              className="p-1 rounded-md flex items-center justify-between text-[11px] font-black shadow-2xs"
               style={{ backgroundColor: bgLightHex, color: primaryHex }}
             >
               <span>Grand Total:</span>
-              <span className="font-mono text-sm">₹{totals.grandTotal.toFixed(2)}</span>
+              <span className="font-mono text-xs">₹{totals.grandTotal.toFixed(2)}</span>
             </div>
 
             {totals.paidAmount !== undefined && (
-              <div className="flex justify-between text-[10px] text-slate-600 pt-0.5">
+              <div className="flex justify-between text-[9px] text-slate-600 pt-0.5">
                 <span>Received Amount:</span>
                 <span className="font-mono font-semibold text-slate-800">₹{Number(totals.paidAmount || 0).toFixed(2)}</span>
               </div>
             )}
 
             {totals.balanceDue !== undefined && totals.balanceDue > 0 && (
-              <div className="flex justify-between text-[10px] text-rose-600 font-bold">
+              <div className="flex justify-between text-[9px] text-rose-600 font-bold">
                 <span>Balance Due:</span>
                 <span className="font-mono">₹{Number(totals.balanceDue).toFixed(2)}</span>
               </div>
             )}
 
             {/* Total Amount in Words */}
-            <div className="pt-1.5 text-left">
-              <p className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Amount (in words):</p>
-              <p className="text-[9.5px] font-medium text-slate-800 italic leading-snug">
+            <div className="pt-1 text-left">
+              <p className="text-[7.5px] font-bold uppercase tracking-wider text-slate-500">Amount (in words):</p>
+              <p className="text-[8.5px] font-medium text-slate-800 italic leading-tight line-clamp-2">
                 Rupees {numberToWords(totals.grandTotal)} Only
               </p>
             </div>
 
             {/* Signature Box */}
-            <div className="pt-2 text-center flex flex-col items-end">
-              <div className="w-32 min-h-[40px] border-b border-slate-400 flex items-center justify-center p-0.5">
+            <div className="pt-1.5 text-center flex flex-col items-end">
+              <div className="w-28 min-h-[32px] border-b border-slate-400 flex items-center justify-center p-0.5">
                 {activeSettings.signatureDataUrl ? (
                   <img
                     src={activeSettings.signatureDataUrl}
                     alt="Authorized Signature"
-                    className="max-h-9 max-w-full object-contain filter contrast-125"
+                    className="max-h-7 max-w-full object-contain filter contrast-125"
                   />
                 ) : (
-                  <span className="text-[8.5px] font-serif italic text-slate-400">For {storeInfo.name}</span>
+                  <span className="text-[8px] font-serif italic text-slate-400">For {storeInfo.name}</span>
                 )}
               </div>
-              <p className="text-[9px] font-bold text-slate-700 mt-0.5 text-right w-32">
+              <p className="text-[8.5px] font-bold text-slate-700 mt-0.5 text-right w-28">
                 {activeSettings.signatoryTitle || "Authorized Signatory"}
               </p>
             </div>
@@ -758,7 +758,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         </div>
 
         {/* Invoice Footer Branding */}
-        <div className="mt-3 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[9px] text-slate-400">
+        <div className="mt-2 pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[8px] text-slate-400">
           <div className="flex items-center gap-1">
             <span>Invoice created using</span>
             <strong className="font-bold text-slate-700">CredSmart POS</strong>
