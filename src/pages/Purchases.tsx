@@ -575,7 +575,7 @@ export default function Purchases() {
         {/* Transactions Table Card matching Capture5.PNG */}
         <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs">
           <div className="overflow-x-auto w-full pb-2 scrollbar-thin min-h-[380px] flex flex-col justify-between">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[640px]">
               <thead>
                 <tr className="bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-border">
                   <th className="py-3 px-4 w-10">

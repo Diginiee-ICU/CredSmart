@@ -875,7 +875,7 @@ export default function Reports() {
                       <span>Total Value: ₹{gstr1Data.summary.totalGrandValue.toLocaleString("en-IN")}</span>
                     </div>
                     <div className="max-h-60 overflow-y-auto overflow-x-auto w-full pb-2 scrollbar-thin">
-                      <table className="w-full text-xs text-left">
+                      <table className="w-full text-xs text-left min-w-[550px]">
                         <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
                           <tr>
                             <th className="px-3 py-2">HSN</th>

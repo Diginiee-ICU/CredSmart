@@ -263,32 +263,32 @@ export function CreateItemModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
+      <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-muted/40 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-              <Package className="w-5 h-5" />
+            <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary">
+              <Package className="w-4 sm:w-5 h-4 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 className="text-base sm:text-lg font-bold text-foreground">
                 {initialData ? "Edit Product / Item" : "Create New Item"}
               </h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
                 GST tax rates, HSN code lookup, pricing slabs, stock units & batch tracking
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center border-b border-border px-6 bg-muted/20 gap-1 overflow-x-auto">
+        <div className="flex items-center border-b border-border px-3 sm:px-6 bg-muted/20 gap-1 overflow-x-auto scrollbar-none shrink-0">
           {[
             { id: "basic", label: "Basic Details" },
             { id: "pricing", label: "Pricing & GST Tax" },
@@ -300,7 +300,7 @@ export function CreateItemModal({
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                "px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap",
+                "px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap",
                 activeTab === tab.id
                   ? "border-primary text-primary bg-primary/5"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
@@ -312,7 +312,7 @@ export function CreateItemModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
           {/* TAB 1: Basic Details */}
           {activeTab === "basic" && (
             <div className="space-y-5">

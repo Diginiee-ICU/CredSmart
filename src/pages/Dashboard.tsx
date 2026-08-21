@@ -304,7 +304,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[500px]">
                 <thead>
                   <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
                     <th className="py-2.5 px-4">DATE</th>

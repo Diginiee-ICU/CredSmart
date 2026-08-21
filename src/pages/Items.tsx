@@ -900,7 +900,7 @@ export default function Items() {
       {/* ------------------------------------------------------------- */}
       <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
         <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left min-w-[640px]">
             <thead className="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="px-4 py-3.5 w-10 text-center">
