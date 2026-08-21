@@ -643,5 +643,6 @@ export function LiveInvoicePreview({
         </div>
       </div>
     </div>
+  </div>
   );
 }
