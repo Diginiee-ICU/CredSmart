@@ -85,7 +85,9 @@ export const ROUTE_PATHS = {
 
 export type AppRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
 
-export const MANAGER_ROLES = ["super_admin", "store_owner", "manager"] as const;
+export const STORE_OWNER_ROLES = ["store_owner", "super_admin"] as const;
+export const FULL_ACCESS_ROLES = ["store_owner", "super_admin"] as const;
+export const MANAGER_ROLES = FULL_ACCESS_ROLES;
 
 export const RESTRICTED_ROUTES: ReadonlySet<string> = new Set([
   ROUTE_PATHS.dashboard,
@@ -111,11 +113,12 @@ export const RESTRICTED_ROUTES: ReadonlySet<string> = new Set([
 
 export function isRouteAllowedForRole(url: string, role: string | null | undefined): boolean {
   if (!role) return false;
-  if (MANAGER_ROLES.includes(role as any)) return true;
+  // Store Owner / Super Admin has 100% complete access to everything
+  if (role === "store_owner" || role === "super_admin" || role === "owner" || role === "admin" || role === "manager") return true;
   if (role === "cashier") {
     return !RESTRICTED_ROUTES.has(url);
   }
-  return !RESTRICTED_ROUTES.has(url);
+  return false;
 }
 
 export interface NavRouteChild {

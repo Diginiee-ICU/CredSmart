@@ -347,15 +347,16 @@ export default function Items() {
       });
 
       const formatted: InventoryItem[] = dbProducts.map((p) => {
-        const itemBatches = batchMap[p.id] || [];
-        const totalStock = itemBatches.reduce((sum, b) => sum + b.stock, 0);
-        const tags = (p.tags as Record<string, any>) || {};
-        const firstBatch = itemBatches[0] || {};
+        const rawSPrice = Number(tags.selling_price) || Number(firstBatch.sellingPrice) || Number(firstBatch.mrp) || 100;
+        const sPrice = isNaN(rawSPrice) || rawSPrice <= 0 ? 100 : rawSPrice;
 
-        const sPrice = tags.selling_price ? Number(tags.selling_price) : firstBatch.sellingPrice || 100;
-        const pPrice = firstBatch.costPrice || tags.purchase_price ? Number(tags.purchase_price) : sPrice * 0.8;
-        const mrpVal = firstBatch.mrp || sPrice;
-        const minAlert = tags.min_stock_alert ? Number(tags.min_stock_alert) : 10;
+        const rawPPrice = Number(tags.purchase_price) || Number(firstBatch.costPrice) || Math.round(sPrice * 0.8) || 80;
+        const pPrice = isNaN(rawPPrice) || rawPPrice <= 0 ? Math.round(sPrice * 0.8) : rawPPrice;
+
+        const rawMrp = Number(firstBatch.mrp) || Number(tags.mrp) || sPrice;
+        const mrpVal = isNaN(rawMrp) ? sPrice : rawMrp;
+
+        const minAlert = Number(tags.min_stock_alert) || 10;
         const unitVal: ItemUnit = (tags.unit as ItemUnit) || "PCS";
         const gstRateVal: GSTRate = tags.gst_rate ? Number(tags.gst_rate) as GSTRate : 18;
 
@@ -1097,11 +1098,11 @@ export default function Items() {
                       {/* Selling Price */}
                       <td className="px-4 py-3.5 text-right font-mono">
                         <span className="font-bold text-foreground text-sm">
-                          ₹ {item.sellingPrice.toLocaleString("en-IN")}
+                          ₹ {(Number(item.sellingPrice) || 0).toLocaleString("en-IN")}
                         </span>
-                        {item.mrp > item.sellingPrice && (
+                        {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
                           <p className="text-[10px] text-muted-foreground line-through">
-                            MRP ₹{item.mrp}
+                            MRP ₹{Number(item.mrp || 0)}
                           </p>
                         )}
                       </td>
@@ -1109,10 +1110,10 @@ export default function Items() {
                       {/* Purchase Price */}
                       <td className="px-4 py-3.5 text-right font-mono text-muted-foreground">
                         <span className="font-semibold text-xs">
-                          ₹ {item.purchasePrice.toLocaleString("en-IN")}
+                          ₹ {(Number(item.purchasePrice) || 0).toLocaleString("en-IN")}
                         </span>
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                          Margin: ₹ {(item.sellingPrice - item.purchasePrice).toFixed(0)}
+                          Margin: ₹ {Math.max(0, (Number(item.sellingPrice) || 0) - (Number(item.purchasePrice) || 0)).toFixed(0)}
                         </p>
                       </td>
 

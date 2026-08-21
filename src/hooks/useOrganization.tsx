@@ -147,7 +147,14 @@ const fetchMembership = async (userId: string) => {
     return null;
   }
 
-  return data;
+  if (data) {
+    return {
+      organization_id: data.organization_id,
+      role: data.role === "cashier" ? "cashier" : "store_owner",
+    };
+  }
+
+  return null;
 };
 
 const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData) => {
@@ -418,12 +425,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (!membership) {
         setOrg(null);
         setOrgId(null);
-        setUserRole(null);
+        setUserRole("store_owner");
         return;
       }
 
       setOrgId(membership.organization_id);
-      setUserRole(membership.role);
+      const finalRole = membership.role === "cashier" ? "cashier" : "store_owner";
+      setUserRole(finalRole);
 
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")

@@ -46,23 +46,23 @@ interface Invitation {
 }
 
 const roleLabels: Record<AppRole, string> = {
-  super_admin: "Super Admin",
-  store_owner: "Store Owner",
-  manager: "Store Manager",
+  super_admin: "Store Owner (Super Admin)",
+  store_owner: "Store Owner (Super Admin)",
+  manager: "Store Owner (Super Admin)",
   cashier: "Cashier",
 };
 
 const roleIcons: Record<AppRole, React.ReactNode> = {
   super_admin: <Crown className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />,
   store_owner: <ShieldCheck className="w-3.5 h-3.5 text-primary" />,
-  manager: <Briefcase className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
+  manager: <ShieldCheck className="w-3.5 h-3.5 text-primary" />,
   cashier: <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
 };
 
 const roleBadgeClasses: Record<AppRole, string> = {
   super_admin: "badge-danger",
   store_owner: "badge-info",
-  manager: "badge-warning",
+  manager: "badge-info",
   cashier: "badge-success",
 };
 
@@ -357,7 +357,7 @@ export default function Staff() {
 
         {!canManageStaff && (
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-medium">
-            Read-only mode: Store Owner or Manager privileges are required to invite new staff members or update roles.
+            Read-only mode: Store Owner privileges are required to invite new staff members or update roles.
           </div>
         )}
 
@@ -379,11 +379,10 @@ export default function Staff() {
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as AppRole)}
             disabled={!canManageStaff}
-            className="h-10 px-3 rounded-xl border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-44 disabled:opacity-60"
+            className="h-10 px-3 rounded-xl border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-48 disabled:opacity-60"
           >
-            <option value="cashier">Cashier</option>
-            <option value="manager">Store Manager</option>
-            <option value="store_owner">Store Owner</option>
+            <option value="cashier">Cashier (POS & Billing)</option>
+            <option value="store_owner">Store Owner (Super Admin - Full Access)</option>
           </select>
 
           <Button
@@ -533,10 +532,8 @@ export default function Staff() {
                           isCurrentUser && "opacity-70 cursor-not-allowed"
                         )}
                       >
-                        <option value="cashier">Cashier</option>
-                        <option value="manager">Store Manager</option>
-                        <option value="store_owner">Store Owner</option>
-                        <option value="super_admin">Super Admin</option>
+                        <option value="cashier">Cashier (POS & Billing)</option>
+                        <option value="store_owner">Store Owner (Super Admin - Full Access)</option>
                       </select>
                     </div>
 

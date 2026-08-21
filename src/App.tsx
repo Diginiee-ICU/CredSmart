@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
@@ -121,66 +121,68 @@ function HomeRoute() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <OrgProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <Routes>
-            <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
-            <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
-            <Route path={ROUTE_PATHS.privacyPolicy} element={<PrivacyPolicy />} />
-            <Route path={ROUTE_PATHS.termsOfService} element={<TermsOfService />} />
+      <AuthProvider>
+        <OrgProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <Routes>
+              <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
+              <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
+              <Route path={ROUTE_PATHS.privacyPolicy} element={<PrivacyPolicy />} />
+              <Route path={ROUTE_PATHS.termsOfService} element={<TermsOfService />} />
 
-            <Route element={<ProtectedRoutes />}> 
-              <Route element={<AppLayout />}> 
-                
-                {/* Available to everyone (including cashiers) */}
-                <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
-                <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
-                <Route path={ROUTE_PATHS.parties} element={<Parties />} />
-                <Route path={ROUTE_PATHS.items} element={<Items />} />
-                <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />
-                <Route path={ROUTE_PATHS.godown} element={<Godown />} />
-                <Route path={ROUTE_PATHS.customers} element={<Customers />} />
-                <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
-                <Route path={ROUTE_PATHS.sales} element={<Sales />} />
-                <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
+              <Route element={<ProtectedRoutes />}> 
+                <Route element={<AppLayout />}> 
+                  
+                  {/* Available to everyone (including cashiers) */}
+                  <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
+                  <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
+                  <Route path={ROUTE_PATHS.parties} element={<Parties />} />
+                  <Route path={ROUTE_PATHS.items} element={<Items />} />
+                  <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />
+                  <Route path={ROUTE_PATHS.godown} element={<Godown />} />
+                  <Route path={ROUTE_PATHS.customers} element={<Customers />} />
+                  <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
+                  <Route path={ROUTE_PATHS.sales} element={<Sales />} />
+                  <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
 
-                {/* Restricted to Managers & Owners & Super Admin */}
-                <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>
-                  <Route path={ROUTE_PATHS.dashboard} element={<Dashboard />} />
-                  <Route path={ROUTE_PATHS.purchases} element={<Purchases />} />
-                  <Route path={ROUTE_PATHS.discovery} element={<VendorDiscovery />} />
-                  <Route path={ROUTE_PATHS.suppliers} element={<Suppliers />} />
-                  <Route path={ROUTE_PATHS.purchaseReturns} element={<PurchaseReturns />} />
-                  <Route path={ROUTE_PATHS.analytics} element={<Analytics />} />
-                  <Route path={ROUTE_PATHS.reports} element={<Reports />} />
-                  <Route path={ROUTE_PATHS.cashBank} element={<CashAndBank />} />
-                  <Route path={ROUTE_PATHS.eInvoicing} element={<EInvoicing />} />
-                  <Route path={ROUTE_PATHS.automatedBills} element={<AutomatedBills />} />
-                  <Route path={ROUTE_PATHS.expenses} element={<Expenses />} />
-                  <Route path={ROUTE_PATHS.barcode} element={<BarcodeGenerator />} />
-                  <Route path={ROUTE_PATHS.settings} element={<BusinessSettings />} />
-                  <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
-                  <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
-                  <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
-                  <Route path={ROUTE_PATHS.staff} element={<Staff />} />
-                  <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                  {/* Restricted to Managers & Owners & Super Admin */}
+                  <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>
+                    <Route path={ROUTE_PATHS.dashboard} element={<Dashboard />} />
+                    <Route path={ROUTE_PATHS.purchases} element={<Purchases />} />
+                    <Route path={ROUTE_PATHS.discovery} element={<VendorDiscovery />} />
+                    <Route path={ROUTE_PATHS.suppliers} element={<Suppliers />} />
+                    <Route path={ROUTE_PATHS.purchaseReturns} element={<PurchaseReturns />} />
+                    <Route path={ROUTE_PATHS.analytics} element={<Analytics />} />
+                    <Route path={ROUTE_PATHS.reports} element={<Reports />} />
+                    <Route path={ROUTE_PATHS.cashBank} element={<CashAndBank />} />
+                    <Route path={ROUTE_PATHS.eInvoicing} element={<EInvoicing />} />
+                    <Route path={ROUTE_PATHS.automatedBills} element={<AutomatedBills />} />
+                    <Route path={ROUTE_PATHS.expenses} element={<Expenses />} />
+                    <Route path={ROUTE_PATHS.barcode} element={<BarcodeGenerator />} />
+                    <Route path={ROUTE_PATHS.settings} element={<BusinessSettings />} />
+                    <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
+                    <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
+                    <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
+                    <Route path={ROUTE_PATHS.staff} element={<Staff />} />
+                    <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                  </Route>
+
                 </Route>
-
               </Route>
-            </Route>
 
-            {/* Global 404 Catch-All */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </OrgProvider>
+              {/* Global 404 Catch-All */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </OrgProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

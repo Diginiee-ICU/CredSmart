@@ -90,7 +90,14 @@ export default function ItemMaster() {
       const batchMap: Record<string, ProductRow["batches"]> = {};
       (batches || []).forEach((b) => {
         if (!batchMap[b.product_id]) batchMap[b.product_id] = [];
-        batchMap[b.product_id].push({ id: b.id, mrp: Number(b.mrp), stock: b.stock, costPrice: Number(b.cost_price), batchNumber: b.batch_number, expiryDate: b.expiry_date });
+        batchMap[b.product_id].push({
+          id: b.id,
+          mrp: Number(b.mrp) || 0,
+          stock: Number(b.stock) || 0,
+          costPrice: Number(b.cost_price) || 0,
+          batchNumber: b.batch_number || "BATCH-01",
+          expiryDate: b.expiry_date,
+        });
       });
 
       const enriched: ProductRow[] = prods.map((p) => ({

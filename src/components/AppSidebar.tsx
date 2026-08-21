@@ -119,11 +119,10 @@ export function AppSidebar() {
 
   const roleLabel =
     {
-      super_admin: "Super Admin",
+      super_admin: "Store Owner (Super Admin)",
       store_owner: "Store Owner",
-      manager: "Manager",
       cashier: "Cashier",
-    }[userRole || ""] || "Staff";
+    }[userRole || ""] || "Store Owner";
 
   // Quick action options matching 11Capture.PNG & 123Capture.PNG
   const handleQuickAction = (action: string) => {
