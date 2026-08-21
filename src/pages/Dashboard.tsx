@@ -27,6 +27,7 @@ import { ROUTE_PATHS } from "@/config/routes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 
 interface TransactionRow {
   id: string;
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
 
   const formatCurrentTime = () => {
     const now = new Date();
@@ -293,7 +295,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Button
-                onClick={() => navigate(ROUTE_PATHS.pos)}
+                onClick={() => setShowQuickCreate(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 mt-2 gap-1.5 shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -376,6 +378,12 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Universal Quick Create Modal */}
+      <UniversalQuickCreateModal
+        open={showQuickCreate}
+        onOpenChange={setShowQuickCreate}
+      />
     </div>
   );
 }

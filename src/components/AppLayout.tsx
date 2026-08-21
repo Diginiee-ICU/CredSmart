@@ -28,6 +28,7 @@ import {
   Globe,
 } from "lucide-react";
 import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
+import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 import {
   CommandDialog,
   CommandEmpty,
@@ -192,6 +193,7 @@ export default function AppLayout() {
   const [openCommand, setOpenCommand] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [quickCreateModalOpen, setQuickCreateModalOpen] = useState(false);
 
   const { title, subtitle } = getPageMeta(location.pathname);
 
@@ -254,8 +256,8 @@ export default function AppLayout() {
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
-              onClick={() => navigate(ROUTE_PATHS.checkout)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-accent hover:bg-accent/90 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-accent/25 hover:shadow-lg hover:shadow-accent/35 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => setQuickCreateModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-indigo-600/25 hover:shadow-lg hover:shadow-indigo-600/35 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Invoice</span>
@@ -398,6 +400,11 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      <UniversalQuickCreateModal
+        open={quickCreateModalOpen}
+        onOpenChange={setQuickCreateModalOpen}
+      />
     </div>
   );
 }

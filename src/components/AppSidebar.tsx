@@ -38,12 +38,14 @@ import {
 } from "@/components/ui/sheet";
 import { NAV_ROUTES, ROUTE_PATHS, isRouteAllowedForRole } from "@/config/routes";
 import { toast } from "sonner";
+import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [universalModalOpen, setUniversalModalOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     Parties: true,
     Items: true,
@@ -329,30 +331,46 @@ export function AppSidebar() {
         {/* "+ Create Sales Invoice" Dropdown Button matching 11Capture.PNG */}
         {!collapsed && (
           <div className="relative mt-3" ref={quickCreateRef}>
-            <div className="flex items-center w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-900/40 transition-all font-medium text-xs overflow-hidden">
-              <button
-                onClick={() => navigate(ROUTE_PATHS.pos)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 hover:bg-indigo-700 transition-colors"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span className="font-semibold tracking-tight">Create Sales Invoice</span>
-              </button>
-              <button
-                onClick={() => setQuickCreateOpen(!quickCreateOpen)}
-                className="px-2.5 py-2.5 bg-indigo-700 hover:bg-indigo-800 border-l border-indigo-500/40 transition-colors"
-                aria-label="More creation options"
-              >
-                <ChevronDown
-                  className={cn("w-4 h-4 transition-transform duration-200", quickCreateOpen ? "rotate-180" : "")}
-                />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setQuickCreateOpen(!quickCreateOpen)}
+              className="flex items-center justify-between w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-900/40 transition-all font-medium text-xs py-2.5 px-3 select-none"
+              aria-expanded={quickCreateOpen}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
+                <span className="font-semibold tracking-tight truncate">Create Sales Invoice</span>
+              </div>
+              <ChevronDown
+                className={cn("w-4 h-4 transition-transform duration-200 shrink-0 ml-1", quickCreateOpen ? "rotate-180" : "")}
+              />
+            </button>
 
             {/* Comprehensive Quick Action Flyout Menu matching 11Capture.PNG & 123Capture.PNG */}
             {quickCreateOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[70vh] overflow-y-auto scrollbar-thin">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[72vh] overflow-y-auto scrollbar-thin">
+                {/* View All Options Popup Trigger */}
+                <div className="px-2 pb-1.5 border-b border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuickCreateOpen(false);
+                      setUniversalModalOpen(true);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 font-bold text-[11px] transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>All Creation Options</span>
+                    </div>
+                    <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-indigo-200 text-indigo-900 font-mono">
+                      Popup
+                    </span>
+                  </button>
+                </div>
+
                 {/* GENERAL */}
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
                   GENERAL
                 </div>
                 <button
@@ -377,11 +395,28 @@ export function AppSidebar() {
                   SALES TRANSACTIONS
                 </div>
                 <button
+                  onClick={() => handleQuickAction("sales_invoice")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left font-semibold"
+                >
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                  <span>Sales Invoice</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setQuickCreateOpen(false);
+                    navigate(ROUTE_PATHS.pos);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left font-semibold"
+                >
+                  <ShoppingCart className="w-4 h-4 text-emerald-600" />
+                  <span>POS Billing (Counter Sale)</span>
+                </button>
+                <button
                   onClick={() => handleQuickAction("quotation")}
                   className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-slate-500" />
-                  <span>Quotation</span>
+                  <span>Quotation / Estimate</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("payment_in")}
@@ -427,10 +462,10 @@ export function AppSidebar() {
                 </div>
                 <button
                   onClick={() => handleQuickAction("purchase")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left font-semibold"
                 >
                   <Truck className="w-4 h-4 text-blue-500" />
-                  <span>Purchase</span>
+                  <span>Purchase Invoice</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("payment_out")}
@@ -605,6 +640,11 @@ export function AppSidebar() {
           </button>
         </div>
       </div>
+
+      <UniversalQuickCreateModal
+        open={universalModalOpen}
+        onOpenChange={setUniversalModalOpen}
+      />
     </aside>
   );
 }
