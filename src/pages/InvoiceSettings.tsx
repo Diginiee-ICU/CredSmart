@@ -90,7 +90,7 @@ const defaultInitialSettings: InvoiceSettingsState = {
       bankName: "HDFC Bank Ltd.",
       accountNumber: "50200084920194",
       ifsc: "HDFC0001429",
-      branch: "Rajpur Road Branch",
+      branch: "Main Branch",
       isDefault: true,
     },
     {
@@ -98,10 +98,10 @@ const defaultInitialSettings: InvoiceSettingsState = {
       bankName: "State Bank of India",
       accountNumber: "30491029384",
       ifsc: "SBIN0000624",
-      branch: "Clock Tower Branch",
+      branch: "City Branch",
     },
   ],
-  selectedPaymentQrUpi: "7409200341@okhdfcbank",
+  selectedPaymentQrUpi: "",
   termsAndConditionsType: "Sales Invoices",
   termsAndConditions: {
     "Sales Invoices":
@@ -128,6 +128,7 @@ export default function InvoiceSettings() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"customize" | "preview">("customize");
   const stylingScrollRef = useRef<HTMLDivElement>(null);
 
   // Accordion Sections State
@@ -259,45 +260,82 @@ export default function InvoiceSettings() {
   ];
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden max-w-[1700px] mx-auto w-full">
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch overflow-hidden">
+    <div className="min-h-full h-auto lg:h-full flex flex-col p-2 sm:p-4 space-y-2 sm:space-y-3 overflow-y-auto lg:overflow-hidden max-w-[1700px] mx-auto w-full">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch overflow-visible lg:overflow-hidden">
         {/* Left Navigation Sidebar Matching in.PNG */}
-        <div className="shrink-0 lg:w-56 overflow-y-auto">
+        <div className="shrink-0 w-full lg:w-56 overflow-visible lg:overflow-y-auto">
           <SettingsNavSidebar activeItem="invoice" />
         </div>
 
         {/* Main Split-Screen Customizer Area */}
-        <main className="flex-1 min-h-0 w-full bg-card rounded-xl border border-border/80 p-3.5 sm:p-5 shadow-2xs flex flex-col overflow-hidden">
-          {/* Top Header Bar - Compact */}
-          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-border/70 shrink-0">
+        <main className="flex-1 min-h-0 w-full bg-card rounded-2xl border border-border/80 p-3 sm:p-5 shadow-2xs flex flex-col overflow-hidden">
+          {/* Top Header Bar - Compact & Responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-border/70 shrink-0">
             <div>
               <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
                 Invoice Settings
               </h1>
-              <p className="text-[11px] text-muted-foreground truncate">
+              <p className="text-[11px] text-muted-foreground">
                 Live interactive theme customizer with real-time tax template rendering
               </p>
             </div>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              size="sm"
-              className="h-8 px-4 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-2xs gap-1.5 transition-transform active:scale-[0.98] shrink-0"
-            >
-              {saving ? (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Save className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                size="sm"
+                className="h-8 px-4 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-xs gap-1.5 transition-transform active:scale-[0.98] shrink-0"
+              >
+                {saving ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>Save Changes</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Tab Toggle (< xl) */}
+          <div className="xl:hidden flex items-center p-1 bg-muted/60 rounded-xl border border-border/80 my-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setMobileTab("customize")}
+              className={cn(
+                "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                mobileTab === "customize"
+                  ? "bg-card text-foreground shadow-xs border border-border/60"
+                  : "text-muted-foreground hover:text-foreground"
               )}
-              <span>Save Changes</span>
-            </Button>
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#6366F1]" />
+              <span>Customize Options</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("preview")}
+              className={cn(
+                "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                mobileTab === "preview"
+                  ? "bg-[#6366F1] text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Live Invoice Preview</span>
+            </button>
           </div>
 
           {/* Split-Screen: Live Preview Left (7 Cols) & Configuration Right (5 Cols) */}
-          <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch overflow-hidden pt-2">
+          <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch overflow-hidden pt-1 sm:pt-2">
             {/* Left Column: Live Interactive Invoice Preview */}
-            <div className="xl:col-span-7 h-full flex flex-col overflow-hidden">
+            <div
+              className={cn(
+                "xl:col-span-7 h-full flex-col overflow-hidden min-h-[480px] xl:min-h-0",
+                mobileTab === "preview" ? "flex" : "hidden xl:flex"
+              )}
+            >
               <div className="flex items-center justify-between px-1 pb-1.5 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -312,20 +350,25 @@ export default function InvoiceSettings() {
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto rounded-xl border border-border/70 p-2 sm:p-3 bg-muted/20 scrollbar-thin">
                 <LiveInvoicePreview
                   settings={settings}
-                  businessName={org?.name || "CREDSMART ENTERPRISES"}
-                  businessPhone={org?.phone || "7409200341"}
-                  businessEmail={org?.email || "billing@credsmart.in"}
-                  businessAddress={org?.address || "Shop 14, Main Market, Rajpur Road, Dehradun, Uttarakhand - 248001"}
-                  businessGstin={org?.gstin || "05AAAAA0000A1Z5"}
+                  businessName={org?.name || "Business Store"}
+                  businessPhone={org?.phone || ""}
+                  businessEmail={org?.email || ""}
+                  businessAddress={org?.address || ""}
+                  businessGstin={org?.gstin || ""}
                   businessLogo={org?.logo_url || ""}
                 />
               </div>
             </div>
 
             {/* Right Column: Configuration Panels */}
-            <div className="xl:col-span-5 h-full overflow-y-auto pr-1 space-y-3.5 scrollbar-thin">
+            <div
+              className={cn(
+                "xl:col-span-5 h-full overflow-y-auto pr-0 sm:pr-1 space-y-3.5 scrollbar-thin",
+                mobileTab === "customize" ? "block" : "hidden xl:block"
+              )}
+            >
               {/* Themes Card */}
-              <div className="p-4 rounded-2xl border border-border/90 bg-card shadow-xs space-y-3.5">
+              <div className="p-3.5 sm:p-4 rounded-2xl border border-border/90 bg-card shadow-xs space-y-3.5">
                 <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                   <div className="w-3.5 h-3.5 rounded-full border-2 border-[#6366F1] flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#6366F1]" />
@@ -334,7 +377,7 @@ export default function InvoiceSettings() {
                 </div>
 
                 {/* Theme Thumbnails / Buttons Grid */}
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                   {themes.slice(0, 3).map((thm) => {
                     const isSelected = settings.theme === thm.id;
                     return (
@@ -350,7 +393,7 @@ export default function InvoiceSettings() {
                         )}
                       >
                         {/* Mini Simulated Invoice Card Preview */}
-                        <div className="w-full h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
+                        <div className="w-full h-14 sm:h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
                           <div className="flex justify-between items-center border-b border-slate-100 pb-0.5">
                             <div className="w-4 h-1.5 rounded-xs bg-slate-300" />
                             <div
@@ -391,7 +434,7 @@ export default function InvoiceSettings() {
                 </div>
 
                 {/* Second row of themes */}
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                   {themes.slice(3).map((thm) => {
                     const isSelected = settings.theme === thm.id;
                     return (
@@ -406,7 +449,7 @@ export default function InvoiceSettings() {
                             : "border-border/80 hover:border-border"
                         )}
                       >
-                        <div className="w-full h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
+                        <div className="w-full h-14 sm:h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
                           <div className="w-6 h-1.5 rounded-xs bg-slate-300" />
                           <div className="space-y-0.5">
                             <div className="w-full h-1 bg-slate-100 rounded-xs" />
@@ -436,7 +479,7 @@ export default function InvoiceSettings() {
                   </button>
                 </div>
 
-                {/* Theme Styling Carousel matching in.PNG */}
+                {/* Theme Styling Carousel */}
                 <div className="pt-2 border-t border-border/70 space-y-2">
                   <div className="flex items-center gap-2">
                     <Palette className="w-3.5 h-3.5 text-[#6366F1]" />
@@ -500,10 +543,10 @@ export default function InvoiceSettings() {
                   </Button>
                 </div>
 
-                {/* Select Color Swatches matching in.PNG */}
+                {/* Select Color Swatches */}
                 <div className="pt-2 border-t border-border/70 space-y-2">
                   <span className="text-xs font-bold text-foreground">Select Color</span>
-                  <div className="grid grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {COLOR_SWATCHES.map((swatch) => {
                       const isSelected =
                         settings.primaryColor.toLowerCase() === swatch.hex.toLowerCase();
@@ -1012,7 +1055,7 @@ export default function InvoiceSettings() {
                       <Input
                         value={settings.selectedPaymentQrUpi}
                         onChange={(e) => updateSetting("selectedPaymentQrUpi", e.target.value)}
-                        placeholder="7409200341@okhdfcbank"
+                        placeholder="yourname@bank"
                         className="h-9 rounded-xl font-mono text-xs"
                       />
                     </div>

@@ -149,7 +149,7 @@ export default function BusinessSettings() {
         if (parsed.bankAccounts?.length) setBankAccounts(parsed.bankAccounts);
       } else if (org) {
         setBusinessName(org.name || "Business Name");
-        setPhone(org.phone || "7409200341");
+        setPhone(org.phone || "");
         setEmail(org.email || "");
         setBillingAddress(org.address || "");
         setGstin(org.gstin || "");
@@ -379,15 +379,18 @@ export default function BusinessSettings() {
                 <Keyboard className="w-3.5 h-3.5" />
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setChatSupportModal(true)}
-                className="h-8 px-2.5 rounded-lg text-[#0284C7] hover:text-[#0369A1] hover:bg-sky-50 dark:hover:bg-sky-950/30 border-sky-200 dark:border-sky-800 text-xs font-semibold gap-1"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-[#0284C7]" />
-                <span>Chat Support</span>
-              </Button>
+              {/* Chat Support hidden as requested */}
+              {false && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setChatSupportModal(true)}
+                  className="h-8 px-2.5 rounded-lg text-[#0284C7] hover:text-[#0369A1] hover:bg-sky-50 dark:hover:bg-sky-950/30 border-sky-200 dark:border-sky-800 text-xs font-semibold gap-1"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#0284C7]" />
+                  <span>Chat Support</span>
+                </Button>
+              )}
 
               <Button
                 variant="outline"
@@ -506,7 +509,7 @@ export default function BusinessSettings() {
                   <Input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="7409200341"
+                    placeholder="Enter phone number"
                     className="h-10 rounded-xl font-mono"
                   />
                 </div>
@@ -798,7 +801,7 @@ export default function BusinessSettings() {
                   <Input
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value)}
-                    placeholder="merchant@okhdfcbank"
+                    placeholder="merchant@upi"
                     className="h-9 rounded-xl text-xs font-mono"
                   />
                   <Button
@@ -928,16 +931,16 @@ export default function BusinessSettings() {
           <div className="space-y-3 py-2 text-xs">
             <div className="p-3 bg-muted/40 rounded-xl space-y-1.5 border">
               <p className="text-muted-foreground">Our support engineers are available 24x7 to assist you.</p>
-              <p className="font-bold text-foreground">Direct Hotline: +91 74092 00341</p>
+              <p className="font-bold text-foreground">Support Desk: support@credalert.business</p>
             </div>
             <Button
               className="w-full text-xs h-9 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
               onClick={() => {
-                window.open("https://wa.me/917409200341", "_blank");
+                window.open("https://credalert.business", "_blank");
                 setChatSupportModal(false);
               }}
             >
-              Open WhatsApp Support Desk
+              Open Support Desk
             </Button>
           </div>
         </DialogContent>

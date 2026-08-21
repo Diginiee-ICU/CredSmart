@@ -42,7 +42,7 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettingsState = {
       bankName: "HDFC Bank Ltd.",
       accountNumber: "50200084920194",
       ifsc: "HDFC0001429",
-      branch: "Rajpur Road Branch",
+      branch: "Main Branch",
       isDefault: true,
     },
     {
@@ -50,11 +50,11 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettingsState = {
       bankName: "State Bank of India",
       accountNumber: "30491029384",
       ifsc: "SBIN0000624",
-      branch: "Clock Tower Branch",
+      branch: "City Branch",
       isDefault: false,
     },
   ],
-  selectedPaymentQrUpi: "credsmart@hdfcbank",
+  selectedPaymentQrUpi: "",
   termsAndConditionsType: "Sales Invoices",
   termsAndConditions: {
     "Sales Invoices":

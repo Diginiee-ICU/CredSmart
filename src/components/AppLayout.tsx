@@ -276,14 +276,17 @@ export default function AppLayout() {
 
             <div className="h-5 w-[1px] bg-border/80 mx-1 hidden sm:block" />
 
-            <button
-              onClick={() => setHelpOpen(true)}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors hidden sm:flex items-center justify-center"
-              title="Help & Documentation"
-              aria-label="Help & Documentation"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
+            {/* Help button hidden as requested */}
+            {false && (
+              <button
+                onClick={() => setHelpOpen(true)}
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors hidden sm:flex items-center justify-center"
+                title="Help & Documentation"
+                aria-label="Help & Documentation"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            )}
 
             <button
               onClick={() => setNotifOpen(true)}

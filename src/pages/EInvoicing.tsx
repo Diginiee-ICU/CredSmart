@@ -236,20 +236,22 @@ export default function EInvoicing() {
             onClick={() => setIsExplainerOpen(true)}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-2xs hover:bg-blue-50/50 transition-colors"
           >
-            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
+            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:fill-blue-400" />
             <span>What is e-Invoicing</span>
           </button>
         </div>
 
-        {/* [Chat Support] button */}
-        <button
-          type="button"
-          onClick={() => setIsChatSupportOpen(true)}
-          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 text-xs font-semibold shadow-2xs transition-colors shrink-0"
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>Chat Support</span>
-        </button>
+        {/* [Chat Support] button - Hidden as requested */}
+        {false && (
+          <button
+            type="button"
+            onClick={() => setIsChatSupportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Chat Support</span>
+          </button>
+        )}
       </header>
 
       {/* Main Content Area - Fits Screen */}

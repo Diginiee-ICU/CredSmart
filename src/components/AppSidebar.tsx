@@ -253,7 +253,7 @@ export function AppSidebar() {
                       </span>
                     </SheetTitle>
                     <SheetDescription className="text-xs text-slate-400 mt-0.5">
-                      {org?.phone || "7409200341"}
+                      {org?.phone || "Active Store"}
                     </SheetDescription>
                   </div>
                 </div>

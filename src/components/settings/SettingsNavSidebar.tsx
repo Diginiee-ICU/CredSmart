@@ -55,7 +55,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
   const [helpModal, setHelpModal] = useState(false);
 
   const businessInitial = (org?.name || "Business Name").charAt(0).toUpperCase() || "B";
-  const businessPhone = org?.phone || "7409200341";
+  const businessPhone = org?.phone || "";
   const businessName = org?.name || "Business Name";
 
   const handleNavClick = (id: string, url?: string) => {
@@ -145,18 +145,77 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
       active: false,
       isModal: true,
     },
-    {
-      id: "help",
-      label: "Help And Support",
-      icon: HelpCircle,
-      active: false,
-      isModal: true,
-    },
-  ];
+    // Filter out hidden pages: pricing, refer & earn, help & support
+    // (Preserved in code for future re-enablement)
+  ].filter(
+    (item) => !["pricing", "refer", "help"].includes(item.id)
+  );
 
   return (
     <>
-      <aside className="w-full lg:w-64 shrink-0 bg-card rounded-2xl border border-border/80 p-4 shadow-sm flex flex-col justify-between select-none">
+      {/* Mobile Top Navigation Ribbon (< lg) */}
+      <div className="lg:hidden w-full bg-card rounded-xl border border-border/80 p-2.5 shadow-xs space-y-2 select-none">
+        <div className="flex items-center justify-between gap-2">
+          {/* Business Info & Avatar */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#EAB308] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+              {businessInitial}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs text-foreground truncate leading-tight">
+                {businessName}
+              </h3>
+              {businessPhone && (
+                <p className="text-[10px] text-muted-foreground truncate">{businessPhone}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Back to Dashboard */}
+          <button
+            onClick={() => navigate(ROUTE_PATHS.dashboard)}
+            className="h-7 px-2.5 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            <span>Dashboard</span>
+          </button>
+        </div>
+
+        {/* Horizontal Scrolling Settings Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+          {navItems.map((item) => {
+            const isActive = item.active;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id, item.url)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shrink-0 border",
+                  isActive
+                    ? "bg-[#6366F1] text-white border-[#6366F1] shadow-xs"
+                    : "bg-muted/40 text-muted-foreground hover:text-foreground border-border/70 hover:bg-muted/70"
+                )}
+              >
+                <item.icon className="w-3.5 h-3.5" />
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span
+                    className={cn(
+                      "text-[9px] font-bold px-1 py-0.2 rounded",
+                      isActive ? "bg-white/20 text-white" : "bg-rose-500 text-white"
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop Full Sidebar (>= lg) */}
+      <aside className="hidden lg:flex w-full lg:w-64 shrink-0 bg-card rounded-2xl border border-border/80 p-4 shadow-sm flex-col justify-between select-none">
         <div className="space-y-4">
           {/* Business Profile Card */}
           <div className="flex items-center gap-3 px-1 py-1">
@@ -167,7 +226,9 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
               <h3 className="font-bold text-sm text-foreground truncate leading-snug">
                 {businessName}
               </h3>
-              <p className="text-xs text-muted-foreground truncate">{businessPhone}</p>
+              {businessPhone && (
+                <p className="text-xs text-muted-foreground truncate">{businessPhone}</p>
+              )}
             </div>
           </div>
 

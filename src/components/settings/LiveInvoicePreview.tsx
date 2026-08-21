@@ -16,11 +16,11 @@ interface LiveInvoicePreviewProps {
 
 export function LiveInvoicePreview({
   settings,
-  businessName = "CREDSMART ENTERPRISES",
-  businessPhone = "+91 7409200341",
-  businessEmail = "billing@credsmart.in",
-  businessAddress = "Shop 14, Main Market, Rajpur Road, Dehradun, Uttarakhand - 248001",
-  businessGstin = "05AAAAA0000A1Z5",
+  businessName = "Business Store",
+  businessPhone = "",
+  businessEmail = "",
+  businessAddress = "",
+  businessGstin = "",
   businessLogo = "",
 }: LiveInvoicePreviewProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -203,11 +203,11 @@ export function LiveInvoicePreview({
             logoUrl: businessLogo,
           }}
           partyInfo={{
-            name: "M/s Sharma Retailers & Traders",
-            phone: "+91 9897123450",
-            email: "sharma.traders@gmail.com",
-            address: "42 Subhash Nagar, Dehradun, Uttarakhand - 248002",
-            gstin: "05ABCDE1234F1Z5",
+            name: "Sample Customer / Client",
+            phone: "",
+            email: "",
+            address: "",
+            gstin: "",
             balance: 14500,
             type: "customer",
           }}

@@ -188,13 +188,16 @@ export default function Dashboard() {
           >
             <Users2 className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={() => window.open("https://wa.me/919999999999", "_blank")}
-            title="Institutional Chat Support"
-            className="p-1.5 rounded-lg border border-border/80 bg-card hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
-          >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          </button>
+          {/* Chat Support hidden as requested */}
+          {false && (
+            <button
+              onClick={() => window.open("https://credalert.business", "_blank")}
+              title="Institutional Chat Support"
+              className="p-1.5 rounded-lg border border-border/80 bg-card hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            </button>
+          )}
           <button
             onClick={() => setShowShortcutsModal(true)}
             title="Keyboard Shortcuts (⌘K)"
