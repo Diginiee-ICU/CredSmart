@@ -219,12 +219,12 @@ export default function AppLayout() {
     <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background overflow-hidden">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Global Top Header */}
-        <header className="h-16 shrink-0 bg-card/90 backdrop-blur-md border-b border-border/80 flex items-center justify-between px-4 sm:px-6 z-10 shadow-xs">
+        {/* Global Top Header - Compact for Single-Screen View */}
+        <header className="h-13 sm:h-14 shrink-0 bg-card/90 backdrop-blur-md border-b border-border/80 flex items-center justify-between px-3 sm:px-5 z-10 shadow-xs">
           {/* Dynamic Page Header Info */}
-          <div className="flex flex-col justify-center min-w-0 mr-4">
+          <div className="flex flex-col justify-center min-w-0 mr-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight truncate">
+              <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
                 {title}
               </h1>
               <div className="hidden xl:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400">

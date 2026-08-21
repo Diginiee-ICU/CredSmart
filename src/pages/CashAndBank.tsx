@@ -535,60 +535,63 @@ export default function CashAndBank() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F8FAFC] dark:bg-background text-foreground flex flex-col font-sans">
-      {/* Top Header matching Capture7.PNG */}
-      <header className="bg-white dark:bg-card border-b border-border/80 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+    <div className="h-full flex flex-col bg-[#F8FAFC] dark:bg-background text-foreground overflow-hidden font-sans">
+      {/* Top Header - Compact */}
+      <header className="bg-white dark:bg-card border-b border-border/80 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
             Cash and Bank
           </h1>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2.5">
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => {
               setMoneyActionType("add");
               setIsAddMoneyModalOpen(true);
             }}
-            className="h-9 px-3.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+            className="h-8 px-2.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs rounded-lg shadow-2xs transition-colors"
           >
-            <Plus className="w-4 h-4 mr-1.5 text-slate-500" />
+            <Plus className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Add/Reduce Money
           </Button>
 
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => setIsTransferModalOpen(true)}
-            className="h-9 px-3.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+            className="h-8 px-2.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs rounded-lg shadow-2xs transition-colors"
           >
-            <ArrowLeftRight className="w-4 h-4 mr-1.5 text-slate-500" />
+            <ArrowLeftRight className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Transfer Money
           </Button>
 
           <Button
             type="button"
+            size="sm"
             onClick={() => setIsAddBankModalOpen(true)}
-            className="h-9 px-4 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs sm:text-sm rounded-lg shadow-sm transition-all"
+            className="h-8 px-3 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs rounded-lg shadow-xs transition-all"
           >
-            <Plus className="w-4 h-4 mr-1.5" />
+            <Plus className="w-3.5 h-3.5 mr-1" />
             Add New Account
           </Button>
         </div>
       </header>
 
-      {/* Main 2-Column Dashboard Layout matching Capture7.PNG */}
-      <div className="flex-1 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-border bg-white dark:bg-card">
+      {/* Main 2-Column Dashboard Layout - Single-Screen View */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-border bg-white dark:bg-card overflow-hidden">
         {/* Left Side Panel: Balances & Accounts */}
-        <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 p-0 flex flex-col bg-white dark:bg-card border-r border-slate-200 dark:border-border">
+        <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 p-0 flex flex-col bg-white dark:bg-card border-r border-slate-200 dark:border-border overflow-y-auto">
           {/* Total Balance Card */}
-          <div className="p-5 border-b border-slate-200 dark:border-border flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+          <div className="p-3.5 border-b border-slate-200 dark:border-border flex items-center justify-between shrink-0">
+            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
               Total Balance:
             </span>
-            <span className="text-lg font-bold text-slate-900 dark:text-foreground">
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-foreground font-mono">
               ₹ {totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
             </span>
           </div>

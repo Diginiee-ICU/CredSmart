@@ -389,27 +389,28 @@ export default function Expenses() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white dark:bg-background text-foreground flex flex-col font-sans">
-      {/* Top Header matching Capture10.PNG */}
-      <header className="border-b border-slate-200 dark:border-border px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-card shadow-xs">
+    <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans">
+      {/* Top Header - Compact */}
+      <header className="border-b border-slate-200 dark:border-border px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-card shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
             Expenses
           </h1>
         </div>
 
-        {/* Action Controls matching Capture10.PNG */}
-        <div className="flex items-center flex-wrap gap-2.5">
+        {/* Action Controls */}
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
           {/* [Reports v] Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-9 px-3.5 bg-white dark:bg-card border-blue-300 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50/60 font-semibold text-xs rounded-lg shadow-xs flex items-center gap-1.5"
+                size="sm"
+                className="h-8 px-2.5 bg-white dark:bg-card border-blue-300 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50/60 font-semibold text-xs rounded-lg shadow-2xs flex items-center gap-1.5"
               >
-                <BarChart3 className="w-4 h-4 text-blue-600" />
+                <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
                 <span>Reports</span>
-                <ChevronDown className="w-3.5 h-3.5 ml-0.5 opacity-70" />
+                <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
@@ -433,9 +434,9 @@ export default function Expenses() {
             type="button"
             onClick={() => setIsSettingsModalOpen(true)}
             title="Expense Settings"
-            className="w-9 h-9 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+            className="w-8 h-8 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5" />
           </button>
 
           {/* [Keyboard Icon] button */}
@@ -443,49 +444,50 @@ export default function Expenses() {
             type="button"
             onClick={() => setIsShortcutsModalOpen(true)}
             title="Keyboard Shortcuts"
-            className="w-9 h-9 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+            className="w-8 h-8 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs"
           >
-            <Keyboard className="w-4 h-4" />
+            <Keyboard className="w-3.5 h-3.5" />
           </button>
 
           {/* [Create Expense] Primary Button */}
           <Button
             type="button"
+            size="sm"
             onClick={openCreateModal}
-            className="h-9 px-4 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs sm:text-sm rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+            className="h-8 px-3 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs rounded-lg shadow-xs transition-all flex items-center gap-1.5"
           >
             <span>Create Expense</span>
           </Button>
         </div>
       </header>
 
-      {/* Filter Bar matching Capture10.PNG */}
-      <div className="px-6 py-3 border-b border-slate-200 dark:border-border bg-white dark:bg-card flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      {/* Filter Bar - Compact */}
+      <div className="px-4 sm:px-5 py-2 border-b border-slate-200 dark:border-border bg-white dark:bg-card flex flex-col md:flex-row items-stretch md:items-center gap-2 shrink-0">
         {/* Search icon button / input */}
         <div className="relative w-full md:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search expenses..."
-            className="w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
+            className="w-full h-8 pl-8 pr-3 text-xs bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
           />
         </div>
 
-        {/* Date Filter Dropdown with calendar icons [ 📅 Last 365 Days 📅 ∨ ] */}
+        {/* Date Filter Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-9 px-3.5 bg-white dark:bg-card border-slate-200 dark:border-border text-slate-700 dark:text-foreground text-xs font-semibold rounded-lg flex items-center justify-between gap-2.5 hover:bg-slate-50"
+              size="sm"
+              className="h-8 px-2.5 bg-white dark:bg-card border-slate-200 dark:border-border text-slate-700 dark:text-foreground text-xs font-semibold rounded-lg flex items-center justify-between gap-2 hover:bg-slate-50"
             >
-              <CalendarIcon className="w-4 h-4 text-slate-400" />
+              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
               <span>
                 {DATE_RANGE_PRESETS.find((d) => d.id === selectedDatePreset)?.label || "Last 365 Days"}
               </span>
-              <CalendarIcon className="w-4 h-4 text-slate-400" />
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+              <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
@@ -505,12 +507,12 @@ export default function Expenses() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Category Dropdown [ All Expenses Categories ∨ ] */}
-        <div className="w-full md:w-60">
+        {/* Category Dropdown */}
+        <div className="w-full md:w-56">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full h-9 px-3 bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-xs font-medium text-slate-700 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
+            className="w-full h-8 px-2.5 bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-xs font-medium text-slate-700 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
           >
             {categoriesList.map((cat) => (
               <option key={cat} value={cat}>
@@ -523,15 +525,15 @@ export default function Expenses() {
         {/* Summary Info */}
         {filteredExpenses.length > 0 && (
           <div className="ml-auto text-xs font-semibold text-slate-600 dark:text-slate-300">
-            Total: <span className="font-bold text-rose-600">₹{totalFilteredAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            Total: <span className="font-bold text-rose-600 font-mono">₹{totalFilteredAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
           </div>
         )}
       </div>
 
-      {/* Main Table & Empty State Area matching Capture10.PNG */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-card overflow-hidden">
+      {/* Main Table & Empty State Area - Single-Screen View */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-card overflow-hidden">
         {/* Table Header Bar */}
-        <div className="bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-6 py-3">
+        <div className="bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-4 sm:px-6 py-2.5 shrink-0">
           <div
             onClick={() => {
               setSortField("date");

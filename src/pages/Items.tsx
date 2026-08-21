@@ -652,72 +652,29 @@ export default function Items() {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortDirection("asc");
+  setSortDirection("asc");
     }
   };
 
   return (
-    <div className="space-y-6 p-3 sm:p-6 pb-12">
-      {/* ------------------------------------------------------------- */}
-      {/* TOP BANNER: Launch Offers on Your Items [Create Offer Now] [X] */}
-      {/* ------------------------------------------------------------- */}
-      {showOfferBanner && (
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent p-4 sm:p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-foreground">Launch Offers on Your Items</h3>
-                  <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] uppercase font-bold border-amber-500/30">
-                    Boost Sales
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-                  Run attractive seasonal discounts, category percentage offers, and Buy-1-Get-1 schemes to accelerate stock turnover.
-                </p>
-                <div className="pt-2 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setShowOfferModal(true)}
-                    className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white gap-1.5 shadow-sm"
-                  >
-                    <Percent className="w-3.5 h-3.5" />
-                    Create Offer Now →
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowOfferBanner(false)}
-              className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-background/40 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
         {/* Card 1: Total Stock Value */}
-        <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/40 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Total Stock Value
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs hover:border-primary/40 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Stock Value
             </span>
-            <p className="text-2xl sm:text-3xl font-black text-foreground font-mono">
+            <p className="text-base sm:text-lg font-black text-foreground font-mono">
               ₹ {totalStockValue.toLocaleString("en-IN")}
             </p>
-            <p className="text-[11px] text-muted-foreground">Valuation at purchase cost</p>
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Purchase valuation</p>
           </div>
-          <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-            <Package className="w-6 h-6" />
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <Package className="w-4 h-4" />
           </div>
         </div>
 
@@ -725,148 +682,141 @@ export default function Items() {
         <div
           onClick={() => setLowStockOnly((prev) => !prev)}
           className={cn(
-            "p-5 rounded-2xl border cursor-pointer shadow-sm transition-all flex items-center justify-between",
+            "p-2.5 sm:p-3 rounded-xl border cursor-pointer shadow-2xs transition-all flex items-center justify-between",
             lowStockOnly
-              ? "border-amber-500 bg-amber-500/15 shadow-amber-500/10"
+              ? "border-amber-500 bg-amber-500/15"
               : "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50"
           )}
         >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                Low Stock Alert
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                Low Stock
               </span>
-              {lowStockOnly && <Badge className="text-[9px] h-4">Active Filter</Badge>}
+              {lowStockOnly && <Badge className="text-[8px] h-3.5 px-1 py-0">Active</Badge>}
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">
+            <p className="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono">
               {lowStockCount} Items
             </p>
-            <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
-              Click to {lowStockOnly ? "clear filter" : "filter low stock"}
+            <p className="text-[9px] sm:text-[10px] text-amber-700/80 dark:text-amber-400/80 truncate">
+              {lowStockOnly ? "Clear filter" : "Filter low stock"}
             </p>
           </div>
-          <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-            <AlertTriangle className="w-6 h-6" />
+          <div className="p-2 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 3: Total Items Count */}
-        <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/40 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Total Catalog Items
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs hover:border-primary/40 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Total Items
             </span>
-            <p className="text-2xl sm:text-3xl font-black text-foreground">{totalItemsCount}</p>
-            <p className="text-[11px] text-muted-foreground">Active SKUs across warehouses</p>
+            <p className="text-base sm:text-lg font-black text-foreground">{totalItemsCount}</p>
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Active catalog SKUs</p>
           </div>
-          <div className="p-3 rounded-2xl bg-muted text-muted-foreground">
-            <Layers className="w-6 h-6" />
+          <div className="p-2 rounded-lg bg-muted text-muted-foreground">
+            <Layers className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 4: Out of Stock Count */}
-        <div className="p-5 rounded-2xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 shadow-sm hover:border-rose-500/50 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+        <div className="p-2.5 sm:p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 shadow-2xs hover:border-rose-500/50 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
               Out of Stock
             </span>
-            <p className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 font-mono">
+            <p className="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
               {outOfStockCount} Items
             </p>
-            <p className="text-[11px] text-rose-700/80 dark:text-rose-400/80">0 available quantity</p>
+            <p className="text-[9px] sm:text-[10px] text-rose-700/80 dark:text-rose-400/80 truncate">0 available qty</p>
           </div>
-          <div className="p-3 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
-            <X className="w-6 h-6" />
+          <div className="p-2 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">
+            <X className="w-4 h-4" />
           </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* FILTER & SEARCH BAR: Search by SKU / Barcode, Categories dropdown, Low Stock button, Bulk Actions, "+ Create Item" */}
+      {/* FILTER & SEARCH BAR - Compact */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-xl border border-border shadow-2xs shrink-0">
         {/* Left: Search input */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by Item Name, SKU Code, Barcode, HSN..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 text-xs bg-muted/30 border-border/80 focus:bg-background"
+            className="pl-8 h-8 text-xs bg-muted/30 border-border/80 focus:bg-background"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* Categories dropdown */}
-        <div className="w-full sm:w-52 shrink-0">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-10 text-xs">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {DEFAULT_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Categories Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs justify-between font-normal">
+              <span className="truncate">
+                {categoryFilter === "all" ? "All Categories" : categoryFilter}
+              </span>
+              <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setCategoryFilter("all")}>
+              All Categories
+            </DropdownMenuItem>
+            {DEFAULT_CATEGORIES.map((c) => (
+              <DropdownMenuItem key={c} onClick={() => setCategoryFilter(c)}>
+                {c}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        {/* Low Stock Filter Button */}
-        <Button
-          variant={lowStockOnly ? "default" : "outline"}
-          onClick={() => setLowStockOnly((prev) => !prev)}
-          className={cn(
-            "h-10 text-xs font-semibold gap-1.5 shrink-0",
-            lowStockOnly
-              ? "bg-amber-600 hover:bg-amber-700 text-white"
-              : "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
-          )}
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          Low Stock ({lowStockCount})
-        </Button>
-
-        {/* Bulk Actions Dropdown */}
+        {/* Bulk Action Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-10 text-xs font-semibold gap-1.5 shrink-0"
+              size="sm"
+              className="h-8 gap-1 text-xs font-semibold"
               disabled={selectedIds.size === 0}
             >
-              Bulk Actions ({selectedIds.size})
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Bulk Action ({selectedIds.size})</span>
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel className="text-xs">Inventory Operations</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleBulkExport} className="text-xs cursor-pointer">
-              <Download className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-              Export Selected to CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigate(ROUTE_PATHS.barcode)}
-              className="text-xs cursor-pointer"
-            >
-              <Barcode className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-              Print Barcode Labels
+            <DropdownMenuItem onClick={handleBulkExport} className="text-xs">
+              <Download className="w-3.5 h-3.5 mr-2" />
+              Export Selected (CSV)
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                toast.success(`Updated prices for ${selectedIds.size} items.`);
+                const percent = prompt("Enter price adjustment percentage (e.g. 5 for +5%, -10 for -10%):");
+                if (percent && !isNaN(Number(percent))) {
+                  const factor = 1 + Number(percent) / 100;
+                  setItems((prev) =>
+                    prev.map((it) =>
+                      selectedIds.has(it.id)
+                        ? { ...it, sellingPrice: Math.round(it.sellingPrice * factor) }
+                        : it
+                    )
+                  );
+                  toast.success(`Updated prices for ${selectedIds.size} items by ${percent}%`);
+                }
               }}
-              className="text-xs cursor-pointer"
+              className="text-xs"
             >
               <Percent className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
               Bulk Adjust Prices (+/- %)
@@ -888,31 +838,32 @@ export default function Items() {
             setEditingItem(null);
             setShowCreateModal(true);
           }}
-          className="h-10 gap-2 font-bold text-xs shrink-0 shadow-md shadow-primary/20"
+          size="sm"
+          className="h-8 gap-1.5 font-bold text-xs shrink-0 shadow-xs"
         >
-          <Plus className="w-4 h-4" />
-          + Create Item
+          <Plus className="w-3.5 h-3.5" />
+          <span>+ Create Item</span>
         </Button>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* ITEMS TABLE: Checkbox, Item Name (sortable), Item Code, Stock QTY & unit (sortable), Selling Price, Purchase Price, Actions */}
+      {/* ITEMS TABLE - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
-      <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
-        <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
+      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
-            <thead className="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[11px]">
+            <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[10px] sm:text-[11px] z-10">
               <tr>
-                <th className="px-4 py-3.5 w-10 text-center">
+                <th className="px-3 py-2.5 w-10 text-center">
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className="p-1 rounded hover:bg-muted text-foreground"
+                    className="p-0.5 rounded hover:bg-muted text-foreground"
                   >
                     {selectedIds.size > 0 && selectedIds.size === filteredItems.length ? (
-                      <CheckSquare className="w-4 h-4 text-primary" />
+                      <CheckSquare className="w-3.5 h-3.5 text-primary" />
                     ) : (
-                      <Square className="w-4 h-4 text-muted-foreground" />
+                      <Square className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </button>
                 </th>

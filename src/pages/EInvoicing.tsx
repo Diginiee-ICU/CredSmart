@@ -222,42 +222,42 @@ export default function EInvoicing() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white dark:bg-background text-foreground flex flex-col font-sans relative">
-      {/* Top Header matching Capture8.PNG */}
-      <header className="border-b border-slate-200 dark:border-border px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-card">
-        <div className="flex items-center gap-4 flex-wrap">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+    <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans relative">
+      {/* Top Header - Compact */}
+      <header className="border-b border-slate-200 dark:border-border px-4 sm:px-6 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-card shadow-xs">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
             e-Invoicing
           </h1>
 
-          {/* [What is e-Invoicing] pill button matching mockup */}
+          {/* [What is e-Invoicing] pill button */}
           <button
             type="button"
             onClick={() => setIsExplainerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-xs hover:bg-blue-50/50 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-2xs hover:bg-blue-50/50 transition-colors"
           >
-            <Play className="w-3.5 h-3.5 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
+            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
             <span>What is e-Invoicing</span>
           </button>
         </div>
 
-        {/* [Chat Support] button matching mockup top right */}
+        {/* [Chat Support] button */}
         <button
           type="button"
           onClick={() => setIsChatSupportOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 text-xs font-semibold shadow-xs transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 text-xs font-semibold shadow-2xs transition-colors shrink-0"
         >
           <MessageSquare className="w-3.5 h-3.5" />
           <span>Chat Support</span>
         </button>
       </header>
 
-      {/* Main Content Area */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-between">
-        {/* 3 Feature Cards matching Capture8.PNG */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+      {/* Main Content Area - Fits Screen */}
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col justify-between scrollbar-thin">
+        {/* 3 Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {/* CARD 1: Automatic e-invoice generation */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-8 flex flex-col items-center justify-between text-center min-h-[300px]">
+          <div className="bg-white dark:bg-card rounded-xl border border-slate-200 dark:border-border/80 shadow-2xs hover:shadow-xs transition-all p-4 sm:p-5 flex flex-col items-center justify-between text-center min-h-[220px]">
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with QR & lines */}
               <div className="relative w-28 h-36 bg-slate-50 dark:bg-muted/40 border-2 border-slate-700 dark:border-slate-300 rounded-lg p-3 shadow-sm flex flex-col justify-between">

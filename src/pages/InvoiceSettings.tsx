@@ -259,20 +259,22 @@ export default function InvoiceSettings() {
   ];
 
   return (
-    <div className="w-full max-w-[1700px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden max-w-[1700px] mx-auto w-full">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch overflow-hidden">
         {/* Left Navigation Sidebar Matching in.PNG */}
-        <SettingsNavSidebar activeItem="invoice" />
+        <div className="shrink-0 lg:w-56 overflow-y-auto">
+          <SettingsNavSidebar activeItem="invoice" />
+        </div>
 
         {/* Main Split-Screen Customizer Area */}
-        <main className="flex-1 w-full bg-card rounded-2xl border border-border/80 p-5 sm:p-7 shadow-sm space-y-6">
-          {/* Top Header Bar matching in.PNG */}
-          <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/70">
+        <main className="flex-1 min-h-0 w-full bg-card rounded-xl border border-border/80 p-3.5 sm:p-5 shadow-2xs flex flex-col overflow-hidden">
+          {/* Top Header Bar - Compact */}
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-border/70 shrink-0">
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
                 Invoice Settings
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-[11px] text-muted-foreground truncate">
                 Live interactive theme customizer with real-time tax template rendering
               </p>
             </div>
@@ -280,7 +282,8 @@ export default function InvoiceSettings() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="h-9 px-6 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-sm gap-1.5 transition-transform active:scale-[0.98]"
+              size="sm"
+              className="h-8 px-4 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-2xs gap-1.5 transition-transform active:scale-[0.98] shrink-0"
             >
               {saving ? (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -292,33 +295,35 @@ export default function InvoiceSettings() {
           </div>
 
           {/* Split-Screen: Live Preview Left (7 Cols) & Configuration Right (5 Cols) */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch overflow-hidden pt-2">
             {/* Left Column: Live Interactive Invoice Preview */}
-            <div className="xl:col-span-7 space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
+            <div className="xl:col-span-7 h-full flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between px-1 pb-1.5 shrink-0">
+                <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-bold text-foreground">Live Interactive Invoice Preview</span>
+                  <span className="text-xs font-bold text-foreground">Live Invoice Preview</span>
                 </div>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground">
                   Theme: <strong className="text-foreground capitalize">{settings.theme}</strong> ({settings.styling})
                 </span>
               </div>
 
-              {/* Render Preview Component */}
-              <LiveInvoicePreview
-                settings={settings}
-                businessName={org?.name || "CREDSMART ENTERPRISES"}
-                businessPhone={org?.phone || "7409200341"}
-                businessEmail={org?.email || "billing@credsmart.in"}
-                businessAddress={org?.address || "Shop 14, Main Market, Rajpur Road, Dehradun, Uttarakhand - 248001"}
-                businessGstin={org?.gstin || "05AAAAA0000A1Z5"}
-                businessLogo={org?.logo_url || ""}
-              />
+              {/* Render Preview Component in Scrollable Viewport */}
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto rounded-xl border border-border/70 p-2 sm:p-3 bg-muted/20 scrollbar-thin">
+                <LiveInvoicePreview
+                  settings={settings}
+                  businessName={org?.name || "CREDSMART ENTERPRISES"}
+                  businessPhone={org?.phone || "7409200341"}
+                  businessEmail={org?.email || "billing@credsmart.in"}
+                  businessAddress={org?.address || "Shop 14, Main Market, Rajpur Road, Dehradun, Uttarakhand - 248001"}
+                  businessGstin={org?.gstin || "05AAAAA0000A1Z5"}
+                  businessLogo={org?.logo_url || ""}
+                />
+              </div>
             </div>
 
-            {/* Right Column: Configuration Panels matching in.PNG, in2.PNG, in3.PNG, inn.PNG, nii.PNG, iii.PNG */}
-            <div className="xl:col-span-5 space-y-5">
+            {/* Right Column: Configuration Panels */}
+            <div className="xl:col-span-5 h-full overflow-y-auto pr-1 space-y-3.5 scrollbar-thin">
               {/* Themes Card */}
               <div className="p-4 rounded-2xl border border-border/90 bg-card shadow-xs space-y-3.5">
                 <div className="flex items-center gap-2 text-xs font-bold text-foreground">

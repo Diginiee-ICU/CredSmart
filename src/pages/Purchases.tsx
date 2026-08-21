@@ -312,10 +312,10 @@ export default function Purchases() {
   };
 
   return (
-    <div className="flex flex-col min-h-full w-full bg-slate-50/60 dark:bg-slate-950/40 select-none pb-12">
-      {/* Sub-document Tabs Navigation Bar */}
-      <div className="w-full bg-card/95 border-b border-border/80 px-4 sm:px-6 pt-2 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1 min-w-max pb-2">
+    <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden">
+      {/* Sub-document Tabs Navigation Bar - Compact */}
+      <div className="w-full bg-card/95 border-b border-border/80 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-10 flex items-center">
+        <div className="flex items-center gap-1 min-w-max">
           {PURCHASE_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -324,9 +324,9 @@ export default function Purchases() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 relative",
+                  "flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold transition-all duration-150 relative",
                   isActive
-                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
+                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
@@ -338,28 +338,28 @@ export default function Purchases() {
         </div>
       </div>
 
-      {/* Main Container */}
-      <div className="flex-1 px-3 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 max-w-7xl w-full mx-auto">
-        {/* Top Header matching Capture5.PNG */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Main Container - Fitted to Screen */}
+      <div className="flex-1 min-h-0 flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 max-w-7xl w-full mx-auto overflow-hidden">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
               {activeTabMeta.label}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Reports Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 text-xs font-semibold gap-1.5 border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs"
+                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Reports</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -385,81 +385,78 @@ export default function Purchases() {
             {/* Settings Cog with Red Dot */}
             <button
               onClick={() => setSettingsModalOpen(true)}
-              className="relative p-2 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              className="relative p-1.5 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
               title="Purchase Preferences"
               aria-label="Purchase Preferences"
             >
-              <Settings className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+              <Settings className="w-3.5 h-3.5" />
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
             </button>
 
             {/* Keyboard Shortcuts Button */}
             <button
               onClick={() => setShortcutsModalOpen(true)}
-              className="p-2 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
               title="Keyboard Shortcuts"
               aria-label="Keyboard Shortcuts"
             >
-              <Keyboard className="w-4 h-4" />
+              <Keyboard className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Top Dark Banner matching Capture5.PNG */}
+        {/* Top Dark Banner - Compact */}
         {bannerVisible && (
-          <div className="relative rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-3.5 sm:p-4 shadow-xl border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
+          <div className="relative rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-2.5 sm:p-3 shadow-md border border-slate-700/60 flex items-center justify-between gap-3 shrink-0 overflow-hidden">
             {/* Left side: Icon + Text */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shrink-0">
-                <Sparkles className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xs shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-slate-200">
-                  Skip typing - <span className="font-bold text-amber-400">Add purchases from your phone</span>
-                </p>
-                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
-                  Upload photo/pdf, purchase made in seconds.
+              <div className="truncate">
+                <p className="text-xs font-medium text-slate-200 truncate">
+                  Skip typing - <span className="font-bold text-amber-400">Add purchases from phone</span>
                 </p>
               </div>
             </div>
 
             {/* Right side: Try on Mobile button & Close button */}
-            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setMobileScanModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95"
+                className="px-2.5 py-1 rounded-lg bg-white text-slate-900 hover:bg-slate-100 font-bold text-[11px] shadow-xs transition-all active:scale-95"
               >
                 Try on Mobile
               </button>
               <button
                 onClick={() => setBannerVisible(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 title="Dismiss Banner"
                 aria-label="Dismiss Banner"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* 3 Metric Cards matching Capture5.PNG */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        {/* 3 Metric Cards - Compact */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
           {/* Total Purchases */}
           <div
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
               statusFilter === "all"
-                ? "border-indigo-500/80 ring-2 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
+                ? "border-indigo-500/80 ring-1 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
                 : "border-border/80 hover:border-indigo-300"
             )}
           >
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-              <Truck className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+              <Truck className="w-3.5 h-3.5" />
               <span>Total Purchases</span>
             </div>
-            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
               ₹ {metrics.totalAmount.toLocaleString("en-IN")}
             </div>
           </div>
@@ -468,17 +465,17 @@ export default function Purchases() {
           <div
             onClick={() => setStatusFilter("paid")}
             className={cn(
-              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
               statusFilter === "paid"
-                ? "border-emerald-500/80 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20"
+                ? "border-emerald-500/80 ring-1 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20"
                 : "border-border/80 hover:border-emerald-300"
             )}
           >
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Paid</span>
             </div>
-            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
               ₹ {metrics.paidAmount.toLocaleString("en-IN")}
             </div>
           </div>
@@ -487,34 +484,34 @@ export default function Purchases() {
           <div
             onClick={() => setStatusFilter("unpaid")}
             className={cn(
-              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
               statusFilter === "unpaid"
-                ? "border-rose-500/80 ring-2 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20"
+                ? "border-rose-500/80 ring-1 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20"
                 : "border-border/80 hover:border-rose-300"
             )}
           >
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
-              <AlertCircle className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+              <AlertCircle className="w-3.5 h-3.5" />
               <span>Unpaid</span>
             </div>
-            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
               ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
             </div>
           </div>
         </div>
 
-        {/* Filter Bar matching Capture5.PNG */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Filter Bar - Compact */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 bg-card rounded-xl border border-border/80 shadow-2xs shrink-0">
           {/* Left: Search & Date Picker */}
-          <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+          <div className="flex items-center gap-2 flex-1 max-w-xl">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by bill #, supplier name, mobile..."
-                className="pl-9 h-9 text-xs bg-card border-border/80 shadow-2xs"
+                className="pl-8 h-8 text-xs bg-card border-border/80 shadow-2xs"
               />
             </div>
 
@@ -524,11 +521,11 @@ export default function Purchases() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 text-xs font-medium border-border/80 bg-card gap-2 shadow-2xs shrink-0"
+                  className="h-8 px-2.5 text-xs font-medium border-border/80 bg-card gap-1.5 shadow-2xs shrink-0"
                 >
                   <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>{selectedPreset}</span>
-                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground ml-1" />
+                  <CalendarIcon className="w-3 h-3 text-muted-foreground ml-0.5" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-auto p-3">
@@ -564,21 +561,21 @@ export default function Purchases() {
                 setCreateModalOpen(true);
               }}
               size="sm"
-              className="h-9 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 gap-1.5"
+              className="h-8 px-3 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 gap-1.5"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
             </Button>
           </div>
         </div>
 
-        {/* Transactions Table Card matching Capture5.PNG */}
-        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto w-full pb-2 scrollbar-thin min-h-[380px] flex flex-col justify-between">
+        {/* Transactions Table Card - Fits Remaining Height */}
+        <div className="flex-1 min-h-0 rounded-xl border border-border/80 bg-card flex flex-col overflow-hidden shadow-2xs">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse min-w-[640px]">
-              <thead>
-                <tr className="bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-border">
-                  <th className="py-3 px-4 w-10">
+              <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
+                <tr className="text-slate-700 dark:text-slate-300 font-semibold border-b border-border text-[10px] sm:text-[11px] uppercase tracking-wider font-mono">
+                  <th className="py-2.5 px-3 w-10">
                     <input
                       type="checkbox"
                       checked={

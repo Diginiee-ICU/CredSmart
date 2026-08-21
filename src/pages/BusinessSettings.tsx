@@ -323,47 +323,51 @@ export default function BusinessSettings() {
   };
 
   return (
-    <div className="w-full max-w-[1550px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden max-w-[1550px] mx-auto w-full">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch overflow-hidden">
         {/* Left Navigation Sidebar Matching Capture12.PNG */}
-        <SettingsNavSidebar activeItem="business" />
+        <div className="shrink-0 lg:w-56 overflow-y-auto">
+          <SettingsNavSidebar activeItem="business" />
+        </div>
 
-        {/* Main Content Area */}
-        <main className="flex-1 w-full bg-card rounded-2xl border border-border/80 p-5 sm:p-7 shadow-sm space-y-6">
-          {/* Top Header Bar matching Capture12.PNG */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/70">
+        {/* Main Content Area - Single Screen View */}
+        <main className="flex-1 min-h-0 w-full bg-card rounded-xl border border-border/80 p-3.5 sm:p-5 shadow-2xs flex flex-col overflow-hidden">
+          {/* Top Header Bar - Compact */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-border/70 shrink-0">
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
                 Business Settings
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-[11px] text-muted-foreground truncate">
                 Edit Your Company Settings And Information
               </p>
             </div>
 
             {/* Header Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
               <Button
                 onClick={() => setNewBusinessModal(true)}
-                className="h-9 px-3.5 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold shadow-xs transition-transform active:scale-[0.98]"
+                size="sm"
+                className="h-8 px-2.5 rounded-lg bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold shadow-2xs transition-transform active:scale-[0.98]"
               >
                 Create new business
               </Button>
 
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={() => setShortcutsModal(true)}
-                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground"
+                className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground"
                 title="Keyboard Shortcuts"
               >
-                <Keyboard className="w-4 h-4" />
+                <Keyboard className="w-3.5 h-3.5" />
               </Button>
 
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setChatSupportModal(true)}
-                className="h-9 px-3 rounded-xl text-[#0284C7] hover:text-[#0369A1] hover:bg-sky-50 dark:hover:bg-sky-950/30 border-sky-200 dark:border-sky-800 text-xs font-semibold gap-1.5"
+                className="h-8 px-2.5 rounded-lg text-[#0284C7] hover:text-[#0369A1] hover:bg-sky-50 dark:hover:bg-sky-950/30 border-sky-200 dark:border-sky-800 text-xs font-semibold gap-1"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-[#0284C7]" />
                 <span>Chat Support</span>
@@ -371,17 +375,19 @@ export default function BusinessSettings() {
 
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setCloseFyModal(true)}
-                className="h-9 px-3 rounded-xl text-xs font-semibold gap-1.5"
+                className="h-8 px-2.5 rounded-lg text-xs font-semibold gap-1"
               >
                 <Calendar className="w-3.5 h-3.5" />
-                <span>Close Financial Year</span>
+                <span>Close FY</span>
               </Button>
 
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => navigate(ROUTE_PATHS.dashboard)}
-                className="h-9 px-3.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground"
+                className="h-8 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
@@ -389,7 +395,8 @@ export default function BusinessSettings() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="h-9 px-5 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-sm gap-1.5 transition-transform active:scale-[0.98]"
+                size="sm"
+                className="h-8 px-3 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-2xs gap-1.5 transition-transform active:scale-[0.98]"
               >
                 {saving ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -401,12 +408,13 @@ export default function BusinessSettings() {
             </div>
           </div>
 
-          {/* Form 2-Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Form Scrollable 2-Column Layout */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full pt-3 pr-1 scrollbar-thin">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Form Column (7 Cols) */}
-            <div className="lg:col-span-7 space-y-5">
+            <div className="lg:col-span-7 space-y-4">
               {/* Logo Upload Box + Business Name */}
-              <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="flex flex-col sm:flex-row items-start gap-3">
                 {/* Logo Uploader */}
                 <div className="w-36 shrink-0">
                   <input

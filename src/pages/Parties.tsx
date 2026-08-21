@@ -650,35 +650,35 @@ export default function Parties() {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortDirection("asc");
+setSortDirection("asc");
     }
   };
 
   return (
-    <div className="space-y-6 p-3 sm:p-6 pb-12">
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
       {/* ------------------------------------------------------------- */}
       {/* HEADER: Parties, [SharedLedger Portal], [Reports v], [Settings], [Keyboard] */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/20">
-            <Users2 className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <Users2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight text-foreground">Parties</h1>
-              <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Parties</h1>
+              <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.2">
                 {parties.length} Total
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground truncate">
               Manage customers, suppliers, balances, and real-time SharedLedger synchronization
             </p>
           </div>
         </div>
 
         {/* Header Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
           {/* Reconcile Ledgers Button */}
           <Button
             onClick={() => {
@@ -686,12 +686,13 @@ export default function Parties() {
               setShowReconciliationModal(true);
             }}
             variant="outline"
-            className="gap-1.5 text-xs font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 shadow-xs"
+            size="sm"
+            className="h-8 gap-1 text-xs font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 shadow-2xs px-2.5"
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Reconcile Ledgers</span>
-            <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0 h-4 uppercase">
-              {auditResult?.integrityScore ?? 100}% Health
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Reconcile</span>
+            <Badge className="bg-emerald-600 text-white text-[9px] px-1 py-0 h-3.5 uppercase">
+              {auditResult?.integrityScore ?? 100}%
             </Badge>
           </Button>
 
@@ -701,20 +702,21 @@ export default function Parties() {
               setSharedLedgerSelectedParty(null);
               setShowSharedLedgerModal(true);
             }}
-            className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md shadow-emerald-500/20 font-bold text-xs"
+            size="sm"
+            className="h-8 gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-xs font-bold text-xs px-2.5"
           >
-            <Share2 className="w-4 h-4" />
-            <span>SharedLedger Portal</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            <Share2 className="w-3.5 h-3.5" />
+            <span>SharedLedger</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
           </Button>
 
           {/* Reports Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-1.5 text-xs font-semibold">
-                <FileSpreadsheet className="w-4 h-4 text-primary" />
-                Reports
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs font-semibold px-2.5">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
+                <span>Reports</span>
+                <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -799,254 +801,201 @@ export default function Parties() {
           {/* Settings Cog */}
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
             onClick={() => setShowSettingsModal(true)}
-            className="text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
             title="Party Settings"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5" />
           </Button>
 
           {/* Keyboard Icon */}
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
             onClick={() => setShowKeyboardModal(true)}
-            className="text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
             title="Keyboard Shortcuts (Alt+K)"
           >
-            <Keyboard className="w-4 h-4" />
+            <Keyboard className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* BANNER: Are you Tired of asking Party's Ledger? */}
-      {/* ------------------------------------------------------------- */}
-      {showLedgerBanner && (
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-transparent p-4 sm:p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-foreground">
-                  Are you Tired of asking Party's Ledger?
-                </h3>
-                <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-                  Access sharedledgers and turn invoices into purchases instantly with automatic 2-way sync and instant dispute resolution.
-                </p>
-                <div className="pt-2">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setSharedLedgerSelectedParty(null);
-                      setShowSharedLedgerModal(true);
-                    }}
-                    className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
-                  >
-                    View SharedLedgers →
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowLedgerBanner(false)}
-              className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-background/40 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: All Parties count, To Collect (green), To Pay (red) */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/40 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="p-3 sm:p-3.5 rounded-xl border border-border bg-card shadow-2xs hover:border-primary/40 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               All Parties
             </span>
-            <p className="text-3xl font-black text-foreground">{totalPartiesCount}</p>
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <p className="text-xl sm:text-2xl font-black text-foreground">{totalPartiesCount}</p>
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span>{parties.filter((p) => p.partyType === "customer").length} Customers</span>
               <span>·</span>
               <span>{parties.filter((p) => p.partyType === "supplier").length} Suppliers</span>
             </div>
           </div>
-          <div className="p-3.5 rounded-2xl bg-primary/10 text-primary">
-            <Users2 className="w-6 h-6" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <Users2 className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 2: To Collect (Green) */}
-        <div className="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-sm hover:border-emerald-500/50 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+        <div className="p-3 sm:p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-2xs hover:border-emerald-500/50 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                 To Collect (Receivable)
               </span>
             </div>
-            <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
               ₹ {toCollectTotal.toLocaleString("en-IN")}
             </p>
-            <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-medium">
+            <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 font-medium">
               From {parties.filter((p) => p.balance > 0).length} customer ledgers
             </p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <CreditCard className="w-6 h-6" />
+          <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+            <CreditCard className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 3: To Pay (Red) */}
-        <div className="p-5 rounded-2xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 shadow-sm hover:border-rose-500/50 transition-all flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+        <div className="p-3 sm:p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 shadow-2xs hover:border-rose-500/50 transition-all flex items-center justify-between">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
                 To Pay (Payable)
               </span>
             </div>
-            <p className="text-3xl font-black text-rose-600 dark:text-rose-400 font-mono">
+            <p className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
               ₹ {toPayTotal.toLocaleString("en-IN")}
             </p>
-            <p className="text-[11px] text-rose-700/80 dark:text-rose-400/80 font-medium">
+            <p className="text-[10px] text-rose-700/80 dark:text-rose-400/80 font-medium">
               To {parties.filter((p) => p.balance < 0).length} supplier bills
             </p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
-            <CreditCard className="w-6 h-6" />
+          <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
+            <CreditCard className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* FILTER & SEARCH BAR: Search bar, Categories dropdown, Bulk Action, "+ Create Party" */}
+      {/* FILTER & SEARCH BAR - Compact */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-xl border border-border shadow-2xs shrink-0">
         {/* Left: Search input */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by party name, phone, GSTIN, city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 text-xs bg-muted/30 border-border/80 focus:bg-background"
+            className="pl-8 h-8 text-xs bg-muted/30 border-border/80 focus:bg-background"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* Middle: Category / Type Filter Dropdown */}
-        <div className="w-full sm:w-56 shrink-0">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-10 text-xs">
-              <SelectValue placeholder="Filter Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Parties & Types</SelectItem>
-              <SelectItem value="customer">Customers Only</SelectItem>
-              <SelectItem value="supplier">Suppliers Only</SelectItem>
-              <SelectItem value="both">Both (Customer & Supplier)</SelectItem>
-              <SelectItem value="to_collect">To Collect (Receivables)</SelectItem>
-              <SelectItem value="to_pay">To Pay (Payables)</SelectItem>
-              <SelectItem value="zero_balance">Zero Balance (Settled)</SelectItem>
-              <SelectItem value="Wholesaler">Category: Wholesaler</SelectItem>
-              <SelectItem value="Retailer">Category: Retailer</SelectItem>
-              <SelectItem value="Distributor">Category: Distributor</SelectItem>
-              <SelectItem value="Manufacturer">Category: Manufacturer</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Categories Dropdown Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs justify-between font-normal">
+              <span className="truncate">
+                {categoryFilter === "all" ? "All Categories" : categoryFilter}
+              </span>
+              <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setCategoryFilter("all")}>
+              All Categories
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCategoryFilter("Wholesaler")}>Wholesaler</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCategoryFilter("Retailer")}>Retailer</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCategoryFilter("Distributor")}>Distributor</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCategoryFilter("Manufacturer")}>Manufacturer</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Bulk Action Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-10 text-xs font-semibold gap-1.5 shrink-0"
+              size="sm"
+              className="h-8 gap-1 text-xs font-semibold"
               disabled={selectedIds.size === 0}
             >
-              Bulk Action ({selectedIds.size})
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Bulk Action ({selectedIds.size})</span>
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel className="text-xs">Selected Parties Action</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleBulkExport} className="text-xs cursor-pointer">
-              <Download className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-              Export Selected (CSV)
+            <DropdownMenuItem onClick={handleBulkExport} className="text-xs">
+              <Download className="w-3.5 h-3.5 mr-2" />
+              Export Selected to Excel
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                toast.success(`WhatsApp reminder queued for ${selectedIds.size} parties.`);
+                toast.success(`Queued reminders for ${selectedIds.size} parties`);
               }}
-              className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400"
+              className="text-xs text-emerald-600"
             >
-              <MessageSquare className="w-3.5 h-3.5 mr-2" />
-              Bulk WhatsApp Reminders
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => window.print()}
-              className="text-xs cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-              Print Ledger Statements
+              <Share2 className="w-3.5 h-3.5 mr-2" />
+              Send WhatsApp Reminders
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleBulkDelete}
-              className="text-xs cursor-pointer text-rose-600 dark:text-rose-400"
-            >
+            <DropdownMenuItem onClick={handleBulkDelete} className="text-xs text-destructive">
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Delete Selected
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Primary "+ Create Party" button */}
+        {/* "+ Create Party" Button */}
         <Button
           onClick={() => {
             setEditingParty(null);
             setShowCreateModal(true);
           }}
-          className="h-10 gap-2 font-bold text-xs shrink-0 shadow-md shadow-primary/20"
+          size="sm"
+          className="h-8 gap-1.5 font-bold text-xs shrink-0 shadow-xs"
         >
-          <Plus className="w-4 h-4" />
-          + Create Party
+          <Plus className="w-3.5 h-3.5" />
+          <span>+ Create Party</span>
         </Button>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* PARTIES TABLE: Checkbox, Party Name (sortable), Category, Mobile Number, Party type, Balance (sortable), Actions */}
+      {/* PARTIES TABLE - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
-      <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
-        <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
+      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
-            <thead className="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[11px]">
+            <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[10px] sm:text-[11px] z-10">
               <tr>
-                <th className="px-4 py-3.5 w-10 text-center">
+                <th className="px-3 py-2.5 w-10 text-center">
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className="p-1 rounded hover:bg-muted text-foreground"
+                    className="p-0.5 rounded hover:bg-muted text-foreground"
                   >
                     {selectedIds.size > 0 && selectedIds.size === filteredParties.length ? (
-                      <CheckSquare className="w-4 h-4 text-primary" />
+                      <CheckSquare className="w-3.5 h-3.5 text-primary" />
                     ) : (
-                      <Square className="w-4 h-4 text-muted-foreground" />
+                      <Square className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </button>
                 </th>

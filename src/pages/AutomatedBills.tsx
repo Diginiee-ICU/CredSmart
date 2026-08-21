@@ -212,43 +212,44 @@ export default function AutomatedBills() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white dark:bg-background text-foreground flex flex-col font-sans">
-      {/* Top Header matching Capture9.PNG */}
-      <header className="border-b border-slate-200 dark:border-border px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-card">
-        <div className="flex items-center gap-4 flex-wrap">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+    <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans">
+      {/* Top Header - Compact */}
+      <header className="border-b border-slate-200 dark:border-border px-4 sm:px-6 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-card shadow-xs">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
             Automated Bills
           </h1>
 
-          {/* [What is Automated Bills] pill button matching mockup */}
+          {/* [What is Automated Bills] pill button */}
           <button
             type="button"
             onClick={() => setIsExplainerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-xs hover:bg-blue-50/50 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-2xs hover:bg-blue-50/50 transition-colors"
           >
-            <Play className="w-3.5 h-3.5 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
+            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
             <span>What is Automated Bills</span>
           </button>
         </div>
 
         {recurringBills.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               onClick={() => setIsCreateModalOpen(true)}
-              className="h-9 px-4 bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-lg shadow-sm"
+              size="sm"
+              className="h-8 px-3 bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-lg shadow-xs"
             >
-              <Plus className="w-4 h-4 mr-1" /> New Automated Bill
+              <Plus className="w-3.5 h-3.5 mr-1" /> New Automated Bill
             </Button>
           </div>
         )}
       </header>
 
-      {/* Main Content Area matching Capture9.PNG */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-between">
-        {/* 3 Feature Cards matching Capture9.PNG */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+      {/* Main Content Area - Fits Screen */}
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col justify-between scrollbar-thin">
+        {/* 3 Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {/* CARD 1: Creating repeated bills? */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-6 sm:p-8 flex flex-col items-center justify-between text-center min-h-[340px]">
+          <div className="bg-white dark:bg-card rounded-xl border border-slate-200 dark:border-border/80 shadow-2xs hover:shadow-xs transition-all p-4 sm:p-5 flex flex-col items-center justify-between text-center min-h-[250px]">
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized illustration matching mockup */}
               <div className="relative w-full max-w-[200px] h-36 flex items-center justify-center">
