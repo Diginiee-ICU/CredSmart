@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CredSmart</string>
+    <string name="title_activity_main">CredSmart</string>
+    <string name="package_name">com.credsmart.pos</string>
+    <string name="custom_url_scheme">com.credsmart.pos</string>
+</resources>

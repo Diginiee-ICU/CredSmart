@@ -1,0 +1,1029 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  X,
+  Save,
+  Users2,
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
+  IndianRupee,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Truck,
+  FileSpreadsheet,
+  CheckCircle2,
+  ShieldCheck,
+  Calendar,
+  ExternalLink,
+  ShoppingBag,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useNavigate, Link } from "react-router-dom";
+import { ROUTE_PATHS } from "@/config/routes";
+
+interface Supplier {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  gstin: string | null;
+  address: string | null;
+  created_at: string;
+  balance: number;
+}
+
+interface FormData {
+  name: string;
+  phone: string;
+  email: string;
+  gstin: string;
+  address: string;
+}
+
+const emptyForm: FormData = { name: "", phone: "", email: "", gstin: "", address: "" };
+
+export default function Suppliers() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { orgId, loading: orgLoading } = useOrganization();
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "gst" | "credit">("all");
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Credit modal
+  const [creditModal, setCreditModal] = useState<{ supplierId: string; name: string } | null>(null);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditDesc, setCreditDesc] = useState("");
+  const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
+  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+
+  const fetchSuppliers = useCallback(async () => {
+    if (!orgId) {
+      setSuppliers([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name, phone, email, gstin, address, created_at")
+        .eq("organization_id", orgId)
+        .order("name");
+
+      if (error) {
+        console.error("fetchSuppliers error:", error);
+        setSuppliers([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: credits, error: creditsError } = await supabase
+        .from("credit_transactions")
+        .select("party_id, amount, type")
+        .eq("organization_id", orgId)
+        .eq("party_type", "supplier");
+
+      if (creditsError) {
+        console.error("fetchSuppliers credits error:", creditsError);
+      }
+
+      const balanceMap: Record<string, number> = {};
+      (credits || []).forEach((c) => {
+        if (!balanceMap[c.party_id]) balanceMap[c.party_id] = 0;
+        balanceMap[c.party_id] += c.type === "credit" ? Number(c.amount || 0) : -Number(c.amount || 0);
+      });
+
+      if (data) setSuppliers(data.map((s) => ({ ...s, balance: balanceMap[s.id] || 0 })));
+    } catch (err) {
+      console.error("fetchSuppliers unexpected error:", err);
+      setSuppliers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId]);
+
+  useEffect(() => {
+    if (orgLoading) return;
+    fetchSuppliers();
+  }, [fetchSuppliers, orgLoading]);
+
+  const filtered = useMemo(() => {
+    return suppliers.filter((s) => {
+      const matchSearch =
+        !search ||
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        (s.phone && s.phone.includes(search)) ||
+        (s.gstin && s.gstin.toLowerCase().includes(search.toLowerCase())) ||
+        (s.email && s.email.toLowerCase().includes(search.toLowerCase()));
+
+      const matchFilter =
+        filterType === "all" ||
+        (filterType === "gst" && s.gstin && s.gstin.trim().length > 0) ||
+        (filterType === "credit" && s.balance > 0);
+
+      return matchSearch && matchFilter;
+    });
+  }, [suppliers, search, filterType]);
+
+  const gstinSuppliersCount = useMemo(() => {
+    return suppliers.filter((s) => s.gstin && s.gstin.trim().length > 0).length;
+  }, [suppliers]);
+
+  const totalCreditPayables = useMemo(() => {
+    return suppliers.reduce((s, sup) => s + Math.max(sup.balance, 0), 0);
+  }, [suppliers]);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (s: Supplier) => {
+    setEditingId(s.id);
+    setForm({
+      name: s.name,
+      phone: s.phone || "",
+      email: s.email || "",
+      gstin: s.gstin || "",
+      address: s.address || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleQuickPurchase = (s: Supplier) => {
+    navigate(ROUTE_PATHS.purchases, {
+      state: {
+        openForm: true,
+        supplierId: s.id,
+        supplierName: s.name,
+      },
+    });
+  };
+
+  const handleSave = async () => {
+    const nameTrimmed = form.name.trim();
+    if (!nameTrimmed) {
+      toast.error("Supplier name is required");
+      return;
+    }
+
+    const gstinTrimmed = form.gstin.trim().toUpperCase();
+    if (gstinTrimmed) {
+      const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstinRegex.test(gstinTrimmed)) {
+        toast.error("Invalid GSTIN format. Expected 15 characters (e.g. 29AAAAA0000A1Z5)");
+        return;
+      }
+    }
+
+    const emailTrimmed = form.email.trim();
+    if (emailTrimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (!orgId) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from("suppliers")
+          .update({
+            name: nameTrimmed,
+            phone: form.phone.trim(),
+            email: emailTrimmed,
+            gstin: gstinTrimmed,
+            address: form.address.trim(),
+          })
+          .eq("id", editingId);
+        if (error) throw error;
+        toast.success("Supplier updated successfully");
+      } else {
+        const { error } = await supabase.from("suppliers").insert({
+          organization_id: orgId,
+          name: nameTrimmed,
+          phone: form.phone.trim(),
+          email: emailTrimmed,
+          gstin: gstinTrimmed,
+          address: form.address.trim(),
+        });
+        if (error) throw error;
+        toast.success("Supplier created successfully");
+      }
+      setShowForm(false);
+      fetchSuppliers();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save supplier");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      if (error) {
+        toast.error(
+          error.message.includes("violates foreign key")
+            ? "Cannot delete — supplier has linked invoices/purchases"
+            : error.message
+        );
+      } else {
+        toast.success("Supplier deleted");
+        fetchSuppliers();
+      }
+    } catch (err: any) {
+      console.error("handleDelete error:", err);
+      toast.error(err.message || "Failed to delete");
+    }
+    setDeleteConfirm(null);
+  };
+
+  const openCreditModal = async (s: Supplier) => {
+    setCreditModal({ supplierId: s.id, name: s.name });
+    setCreditAmount("");
+    setCreditDesc("");
+    setCreditType("credit");
+    try {
+      const { data, error } = await supabase
+        .from("credit_transactions")
+        .select("id, amount, type, description, created_at")
+        .eq("party_id", s.id)
+        .eq("party_type", "supplier")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) {
+        console.error("openCreditModal error:", error);
+        setCreditHistory([]);
+      } else {
+        setCreditHistory(data || []);
+      }
+    } catch (err) {
+      console.error("openCreditModal unexpected error:", err);
+      setCreditHistory([]);
+    }
+  };
+
+  const handleCreditSubmit = async () => {
+    const amt = parseFloat(creditAmount);
+    if (!amt || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!orgId || !user || !creditModal) return;
+    try {
+      const { error } = await supabase.from("credit_transactions").insert({
+        organization_id: orgId,
+        party_type: "supplier",
+        party_id: creditModal.supplierId,
+        amount: amt,
+        type: creditType,
+        description: creditDesc,
+        created_by: user.id,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success(creditType === "credit" ? "Credit recorded" : "Payment recorded");
+      setCreditModal(null);
+      fetchSuppliers();
+    } catch (err: any) {
+      console.error("handleCreditSubmit error:", err);
+      toast.error(err.message || "Failed to save credit transaction");
+    }
+  };
+
+  if (orgLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Truck className="w-7 h-7 text-primary" />
+            Suppliers & Vendors
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your procurement directory, GSTIN numbers, and supplier payables
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            asChild
+            variant="outline"
+            className="gap-2 font-medium"
+          >
+            <Link to={ROUTE_PATHS.discovery}>
+              <Building2 className="w-4 h-4 text-primary" /> Discover 3M+ Vendors
+            </Link>
+          </Button>
+          <Button onClick={openCreate} className="gap-2 shadow-sm font-semibold">
+            <Plus className="w-4 h-4" /> Add Supplier
+          </Button>
+        </div>
+      </div>
+
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Suppliers */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Suppliers</span>
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Truck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{suppliers.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Active vendor partners</p>
+          </div>
+        </div>
+
+        {/* GST Registered */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">GST Registered</span>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
+              {gstinSuppliersCount}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">With valid GSTIN on file</p>
+          </div>
+        </div>
+
+        {/* Total Payables / Credit */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Supplier Payables</span>
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <IndianRupee className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">
+              ₹{totalCreditPayables.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Outstanding payable credit</p>
+          </div>
+        </div>
+
+        {/* Recently Added */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">New (Last 30 Days)</span>
+            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <Calendar className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              {
+                suppliers.filter((s) => {
+                  const d = new Date(s.created_at);
+                  return Date.now() - d.getTime() < 30 * 24 * 60 * 60 * 1000;
+                }).length
+              }
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Recently onboarded</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Filters */}
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by supplier name, phone, email, or GSTIN..."
+              className="w-full h-11 pl-10 pr-10 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 overflow-x-auto">
+            {([
+              { id: "all", label: "All Suppliers", count: suppliers.length },
+              { id: "gst", label: "GST Registered", count: gstinSuppliersCount },
+              { id: "credit", label: "Has Balance", count: suppliers.filter((s) => s.balance > 0).length },
+            ] as const).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterType(f.id)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5",
+                  filterType === f.id
+                    ? "bg-background text-foreground shadow-sm border border-border/60"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {f.label}
+                <span
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    filterType === f.id ? "bg-primary/10 text-primary font-bold" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Supplier List / Table */}
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center px-4">
+            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
+              <Truck className="w-7 h-7 opacity-50" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No Suppliers Found</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+              {suppliers.length === 0
+                ? "You haven't registered any suppliers yet. Add your first supplier to track purchases."
+                : "No supplier records matched your search term or filter criteria."}
+            </p>
+            {suppliers.length === 0 && (
+              <Button onClick={openCreate} size="sm" className="mt-4 gap-1.5 text-xs font-semibold">
+                <Plus className="w-4 h-4" /> Add First Supplier
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Mobile View: Cards */}
+            <div className="block md:hidden divide-y divide-border">
+              {filtered.map((s) => (
+                <div key={s.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{s.name}</p>
+                        {s.gstin && (
+                          <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 mt-0.5 bg-background">
+                            GST: {s.gstin}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {s.balance > 0 && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                        ₹{s.balance.toFixed(2)} Due
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    {s.phone && (
+                      <p className="flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5" /> {s.phone}
+                      </p>
+                    )}
+                    {s.email && (
+                      <p className="flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5" /> {s.email}
+                      </p>
+                    )}
+                    {s.address && (
+                      <p className="flex items-center gap-1.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" /> {s.address}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                      onClick={() => handleQuickPurchase(s)}
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" /> New Purchase
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        onClick={() => openCreditModal(s)}
+                        title="Manage Credit"
+                      >
+                        <IndianRupee className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(s)} title="Edit Supplier">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleteConfirm(s.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {deleteConfirm === s.id && (
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 mt-2">
+                      <span className="text-xs font-medium text-destructive">Delete this supplier?</span>
+                      <div className="flex gap-2">
+                        <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(s.id)}>
+                          Delete
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setDeleteConfirm(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[880px] text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
+                    <th className="text-left px-5 py-3.5">Supplier Name</th>
+                    <th className="text-left px-5 py-3.5">Contact Details</th>
+                    <th className="text-left px-5 py-3.5">GSTIN</th>
+                    <th className="text-left px-5 py-3.5">Address</th>
+                    <th className="text-right px-5 py-3.5">Payable Balance</th>
+                    <th className="text-right px-5 py-3.5">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filtered.map((s) => (
+                    <tr key={s.id} className="hover:bg-muted/30 transition-colors group">
+                      {/* Name */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Added {new Date(s.created_at).toLocaleDateString("en-IN")}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="px-5 py-4">
+                        <div className="space-y-0.5 text-xs">
+                          {s.phone && (
+                            <p className="font-mono text-foreground flex items-center gap-1.5">
+                              <Phone className="w-3 h-3 text-muted-foreground" /> {s.phone}
+                            </p>
+                          )}
+                          {s.email && (
+                            <p className="text-muted-foreground flex items-center gap-1.5 truncate max-w-[170px]">
+                              <Mail className="w-3 h-3 text-muted-foreground" /> {s.email}
+                            </p>
+                          )}
+                          {!s.phone && !s.email && <span className="text-muted-foreground">—</span>}
+                        </div>
+                      </td>
+
+                      {/* GSTIN */}
+                      <td className="px-5 py-4">
+                        {s.gstin ? (
+                          <Badge
+                            variant="outline"
+                            className="font-mono text-xs px-2.5 py-1 bg-background border-border/80 text-foreground font-semibold gap-1"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            {s.gstin}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs font-medium">Unregistered</span>
+                        )}
+                      </td>
+
+                      {/* Address */}
+                      <td className="px-5 py-4">
+                        {s.address ? (
+                          <span className="text-muted-foreground text-xs truncate max-w-[180px] block" title={s.address}>
+                            {s.address}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </td>
+
+                      {/* Balance */}
+                      <td className="px-5 py-4 text-right">
+                        {s.balance > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            ₹{s.balance.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground font-medium">Settled (₹0)</span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2.5 text-xs gap-1.5 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-semibold"
+                            onClick={() => handleQuickPurchase(s)}
+                            title="Create Purchase from Supplier"
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span className="hidden xl:inline">+ Purchase</span>
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-xs gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                            title="Manage Credit"
+                            onClick={() => openCreditModal(s)}
+                          >
+                            <IndianRupee className="w-3.5 h-3.5" />
+                          </Button>
+
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(s)} title="Edit Supplier">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+
+                          {deleteConfirm === s.id ? (
+                            <div className="flex items-center gap-1 bg-destructive/10 p-1 rounded-lg border border-destructive/20">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-6 text-[11px] px-2"
+                                onClick={() => handleDelete(s.id)}
+                              >
+                                Confirm
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-[11px] px-2"
+                                onClick={() => setDeleteConfirm(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setDeleteConfirm(s.id)}
+                              title="Delete Supplier"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Create / Edit Supplier Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">
+                    {editingId ? "Edit Supplier Record" : "Add New Supplier"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Register vendor details and tax credentials</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowForm(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Name */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Supplier / Company Name *
+                </Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    className="pl-9 h-10 rounded-xl"
+                    placeholder="e.g. Apex Wholesalers Pvt Ltd"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Phone & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Phone Number
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9 h-10 rounded-xl"
+                      placeholder="+91 98765 43210"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Email Address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9 h-10 rounded-xl"
+                      type="email"
+                      placeholder="vendor@company.com"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* GSTIN */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  GST Identification Number (GSTIN)
+                </Label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    className="pl-9 h-10 rounded-xl font-mono uppercase"
+                    placeholder="e.g. 29AAAAA0000A1Z5"
+                    value={form.gstin}
+                    onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase() })}
+                  />
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Vendor Address / Warehouse Location
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <textarea
+                    className="w-full rounded-xl border border-input bg-background pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none transition-all"
+                    rows={2}
+                    placeholder="Full business address, state, pin code"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="rounded-xl font-semibold gap-1.5">
+                  {saving ? (
+                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {editingId ? "Update Supplier" : "Save Supplier"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Modal */}
+      {creditModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <IndianRupee className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Supplier Credit & Payables</h2>
+                  <p className="text-xs text-muted-foreground truncate max-w-[240px]">Supplier: {creditModal.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCreditModal(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Type Toggle */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-muted/50 rounded-xl border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setCreditType("credit")}
+                  className={cn(
+                    "py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all",
+                    creditType === "credit"
+                      ? "bg-amber-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <ArrowUpCircle className="w-4 h-4" />
+                  Supplier Credit (Payable)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreditType("payment")}
+                  className={cn(
+                    "py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all",
+                    creditType === "payment"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <ArrowDownCircle className="w-4 h-4" />
+                  Made Payment (Settlement)
+                </button>
+              </div>
+
+              {/* Amount & Description */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Transaction Amount (₹) *
+                  </Label>
+                  <div className="relative mt-1">
+                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="0.00"
+                      value={creditAmount}
+                      onChange={(e) => setCreditAmount(e.target.value)}
+                      className="pl-9 h-10 rounded-xl font-bold text-base"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Particulars / Reference (Optional)
+                  </Label>
+                  <Input
+                    placeholder="e.g. PO #892 goods delivered on credit, Bank Transfer ref..."
+                    value={creditDesc}
+                    onChange={(e) => setCreditDesc(e.target.value)}
+                    className="mt-1 h-10 rounded-xl"
+                  />
+                </div>
+
+                <Button className="w-full h-10 rounded-xl font-semibold gap-1.5 mt-2" onClick={handleCreditSubmit}>
+                  {creditType === "credit" ? "Record Payable Credit" : "Confirm Payment to Supplier"}
+                </Button>
+              </div>
+
+              {/* History */}
+              {creditHistory.length > 0 && (
+                <div className="pt-3 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> Recent Credit History
+                  </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {creditHistory.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50 text-xs"
+                      >
+                        <div>
+                          <span
+                            className={cn(
+                              "font-bold px-2 py-0.5 rounded-full text-[10px]",
+                              t.type === "credit"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            )}
+                          >
+                            {t.type === "credit" ? "Credit Payable" : "Payment Made"}
+                          </span>
+                          {t.description && <p className="text-muted-foreground mt-1 font-medium">{t.description}</p>}
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {new Date(t.created_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "font-bold text-sm",
+                            t.type === "credit" ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                          )}
+                        >
+                          {t.type === "credit" ? "+" : "-"}₹{Number(t.amount).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

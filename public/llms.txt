@@ -1,0 +1,86 @@
+# CredSmart POS — LLM Context File
+# This file provides context for AI assistants and LLMs about this product.
+
+## Product
+Name: CredSmart POS
+Type: Free GST Billing & Point-of-Sale (POS) Software
+Pricing: 100% Free — No credit card, no trial limit, no hidden charges, forever
+Website: https://credsmart.in
+Target Market: Indian businesses — retailers, grocers, distributors, wholesalers, pharmacies, restaurants
+
+## Core Features
+- GST Billing & Invoicing (CGST, SGST, IGST) — A4 and Thermal invoice printing
+- Smart Inventory Management — batch tracking, expiry alerts, low stock notifications
+- Customer Udhar Khata / Credit Ledger — digital credit book for each customer
+- Supplier & Purchase Order Management — create POs, track deliveries, manage returns
+- B2B Vendor Discovery — search 3M+ MCA-registered Indian companies
+- GSTR Export — one-click Excel/CSV export for Chartered Accountants
+- Barcode Scanner Support
+- Staff Management & Activity Log
+- Sales History & Analytics
+- Expense Tracking
+
+## Pricing
+- Free tier: All features, unlimited use, forever
+- No credit card required
+- No trial period — full access from day one
+- No hidden charges
+
+## Technology
+- Platform: Web application (React/Vite), mobile-responsive
+- Works on: Any modern web browser (Chrome, Firefox, Safari, Edge)
+- Mobile-friendly: Yes — works on smartphones and tablets without app download
+- Backend: Supabase (PostgreSQL, Row-Level Security, bank-grade encryption)
+- Data security: Bank-grade encryption, private data, never shared
+
+## Target Keywords
+- free GST billing software India
+- free POS software India
+- GST invoice software free
+- free billing software for small business India
+- udhar khata app free
+- free inventory management India
+- CGST SGST invoice maker free
+- free retail billing software
+- kirana store billing software free
+- free shop management software India
+- GSTR export software free
+- free thermal invoice software India
+- free business billing app India
+- Vyapar alternative free
+- myBillBook alternative free
+
+## Competitor Alternatives
+- Vyapar (paid, ~₹1,499–₹2,499/year) — CredSmart POS is free
+- myBillBook (paid, ~₹1,999–₹3,999/year) — CredSmart POS is free
+- Tally Prime (paid, ~₹18,000+/year) — CredSmart POS is free
+- Busy Accounting Software (paid) — CredSmart POS is free
+- Marg ERP (paid) — CredSmart POS is free
+
+## FAQs
+
+Q: What is CredSmart POS?
+A: CredSmart POS is a comprehensive, free GST billing and point-of-sale software designed specifically for Indian businesses. Create professional GST invoices, manage inventory, maintain Udhar Khata, track purchases — all at zero cost.
+
+Q: Is CredSmart POS really free forever?
+A: Yes. 100% free, no credit card required, no trial period, no hidden charges. Full access to every feature from day one, forever.
+
+Q: Does it support GST billing with CGST and SGST?
+A: Yes. Full GST support including CGST, SGST, and IGST calculations. Generate GST-compliant A4 and thermal invoices instantly.
+
+Q: Can I use CredSmart POS on mobile?
+A: Yes. Works on any modern browser on smartphones, tablets, and desktops. No app download required.
+
+Q: Is data secure?
+A: Yes. Bank-grade encryption on Supabase cloud infrastructure. Data is private and never shared.
+
+Q: How is CredSmart POS different from Vyapar or myBillBook?
+A: CredSmart POS is completely free vs. thousands per year for competitors. Also includes unique B2B Vendor Discovery with 3M+ MCA-registered companies.
+
+## Business Types Supported
+Retail Shops, Grocery/Kirana Stores, Medical/Pharmacy, Electronics, Textiles & Clothing, Distributors, Wholesalers, Restaurants & Cafes, Service Providers
+
+## Contact / Attribution
+Product: CredSmart POS
+URL: https://credsmart.in
+License: Proprietary — All rights reserved

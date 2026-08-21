@@ -1,0 +1,116 @@
+# CredSmart POS — Free GST Billing & Point of Sale for Indian Businesses
+
+**CredSmart POS** is a modern, blazing-fast, and comprehensive GST billing, inventory management, and point-of-sale platform tailored specifically for Indian retail, wholesale, and MSME businesses (Kirana stores, Supermarkets, Electronics, Garments, Pharmacies, Hardware, etc.).
+
+---
+
+## 🚀 Key Features
+
+- **⚡ Lightning-Fast POS Terminal**
+  - Instant barcode and QR code scanning with camera or dedicated hardware scanners.
+  - Hold & resume multiple customer carts seamlessly.
+  - Multi-tender split payment support (Cash, UPI/QR code, Card, and Udhar/Credit).
+  - Customizable 80mm/58mm thermal receipts and full A4 GST tax invoices.
+
+- **📜 100% GST Compliant Billing**
+  - Automated CGST, SGST, and IGST calculations.
+  - HSN/SAC code management and GSTIN verification.
+  - Real-time tax breakdowns per line item.
+
+- **📦 Inventory & Batch Management**
+  - Multi-batch tracking with expiry dates and custom batch numbers.
+  - MRP, selling price, and wholesale purchase price tracking.
+  - Low-stock warnings and real-time inventory adjustments with audit trail.
+  - CSV bulk product import & barcode label generator.
+
+- **📒 Udhar Khata & Customer Ledger**
+  - Track customer & supplier credit balances (Udhar Khata).
+  - Partial payments, credit limits, and full transaction history.
+
+- **🔍 B2B Vendor Discovery**
+  - Integrated vendor discovery to explore MCA-registered suppliers and manufacturers across India.
+
+- **📊 Analytics & Business Reports**
+  - Daily/monthly sales velocity, revenue, profit margins, and tax liability summaries.
+  - Top-selling items and cashier performance metrics.
+  - Comprehensive activity and audit logs for store accountability.
+
+- **📱 Multi-Platform Ready**
+  - Runs in any modern web browser.
+  - Packaged for Android & iOS via Capacitor.
+  - Offline-resilient local state with automatic sync.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** [React 18](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Styling & UI:** [Tailwind CSS](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Radix UI](https://www.radix-ui.com/), [Lucide Icons](https://lucide.dev/)
+- **Backend / Database:** [Supabase](https://supabase.com/) (PostgreSQL, Row-Level Security, Auth)
+- **State & Data Fetching:** [TanStack Query v5](https://tanstack.com/query/latest)
+- **Mobile Runtime:** [Capacitor](https://capacitorjs.com/) (Android / iOS)
+- **Testing:** [Vitest](https://vitest.dev/), [Testing Library](https://testing-library.com/)
+
+---
+
+## 🏁 Getting Started
+
+### Prerequisites
+- Node.js (v18 or newer)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <REPO_URL>
+   cd CREDSMART
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:8080` in your browser.
+
+---
+
+## 🧪 Scripts
+
+- `npm run dev` — Start Vite development server
+- `npm run build` — Build production bundle
+- `npm run build:dev` — Build development bundle
+- `npm run lint` — Run ESLint
+- `npm run test` — Run unit and integration tests with Vitest
+- `npm run test:watch` — Run tests in watch mode
+- `npm run preview` — Preview the production build locally
+
+---
+
+## 📱 Mobile App (Capacitor)
+
+To sync and build the Android application:
+
+```bash
+npm run build
+npx cap sync
+npx cap open android
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.

@@ -1,0 +1,982 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  X,
+  Save,
+  Users2,
+  Phone,
+  Mail,
+  MapPin,
+  IndianRupee,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  FileText,
+  CreditCard,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Sparkles,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { ROUTE_PATHS } from "@/config/routes";
+import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
+
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  created_at: string;
+  balance: number;
+}
+
+interface FormData {
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+const emptyForm: FormData = { name: "", phone: "", email: "", address: "" };
+
+export default function Customers() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { orgId, loading: orgLoading } = useOrganization();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [search, setSearch] = useState("");
+  const [creditFilter, setCreditFilter] = useState<"all" | "due" | "clear">("all");
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Credit modal
+  const [creditModal, setCreditModal] = useState<{ customerId: string; name: string } | null>(null);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditDesc, setCreditDesc] = useState("");
+  const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
+  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+
+  const fetchCustomers = useCallback(async () => {
+    if (!orgId) {
+      setCustomers([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data: custs, error } = await supabase
+        .from("customers")
+        .select("id, name, phone, email, address, created_at")
+        .eq("organization_id", orgId)
+        .order("name");
+
+      if (error) {
+        console.error("fetchCustomers error:", error);
+        setCustomers([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: credits, error: creditsError } = await supabase
+        .from("credit_transactions")
+        .select("party_id, amount, type")
+        .eq("organization_id", orgId)
+        .eq("party_type", "customer");
+
+      if (creditsError) {
+        console.error("fetchCustomers credits error:", creditsError);
+      }
+
+      const balanceMap: Record<string, number> = {};
+      (credits || []).forEach((c) => {
+        if (!balanceMap[c.party_id]) balanceMap[c.party_id] = 0;
+        balanceMap[c.party_id] += c.type === "credit" ? Number(c.amount || 0) : -Number(c.amount || 0);
+      });
+
+      if (custs) {
+        setCustomers(custs.map((c) => ({ ...c, balance: balanceMap[c.id] || 0 })));
+      }
+    } catch (err) {
+      console.error("fetchCustomers unexpected error:", err);
+      setCustomers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId]);
+
+  useEffect(() => {
+    if (orgLoading) return;
+    fetchCustomers();
+  }, [fetchCustomers, orgLoading]);
+
+  const filtered = useMemo(() => {
+    return customers.filter((c) => {
+      const matchSearch =
+        !search ||
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.phone && c.phone.includes(search)) ||
+        (c.email && c.email.toLowerCase().includes(search.toLowerCase()));
+
+      const matchCredit =
+        creditFilter === "all" ||
+        (creditFilter === "due" && c.balance > 0) ||
+        (creditFilter === "clear" && c.balance <= 0);
+
+      return matchSearch && matchCredit;
+    });
+  }, [customers, search, creditFilter]);
+
+  const totalOutstandingCredit = useMemo(() => {
+    return customers.reduce((s, c) => s + Math.max(c.balance, 0), 0);
+  }, [customers]);
+
+  const customersWithDue = useMemo(() => {
+    return customers.filter((c) => c.balance > 0).length;
+  }, [customers]);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (c: Customer) => {
+    setEditingId(c.id);
+    setForm({
+      name: c.name,
+      phone: c.phone || "",
+      email: c.email || "",
+      address: c.address || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast.error("Customer name is required");
+      return;
+    }
+    if (!orgId) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from("customers")
+          .update({
+            name: form.name.trim(),
+            phone: form.phone,
+            email: form.email,
+            address: form.address,
+          })
+          .eq("id", editingId);
+        if (error) throw error;
+        toast.success("Customer updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("customers")
+          .insert({
+            organization_id: orgId,
+            name: form.name.trim(),
+            phone: form.phone,
+            email: form.email,
+            address: form.address,
+          });
+        if (error) throw error;
+        toast.success("Customer created successfully");
+      }
+      setShowForm(false);
+      fetchCustomers();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save customer");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from("customers").delete().eq("id", id);
+      if (error) toast.error(error.message);
+      else {
+        toast.success("Customer deleted");
+        fetchCustomers();
+      }
+    } catch (err: any) {
+      console.error("handleDelete error:", err);
+      toast.error(err.message || "Failed to delete");
+    }
+    setDeleteConfirm(null);
+  };
+
+  const openCreditModal = async (c: Customer) => {
+    setCreditModal({ customerId: c.id, name: c.name });
+    setCreditAmount("");
+    setCreditDesc("");
+    setCreditType("credit");
+    try {
+      const { data, error } = await supabase
+        .from("credit_transactions")
+        .select("id, amount, type, description, created_at")
+        .eq("party_id", c.id)
+        .eq("party_type", "customer")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) {
+        console.error("openCreditModal error:", error);
+        setCreditHistory([]);
+      } else {
+        setCreditHistory(data || []);
+      }
+    } catch (err) {
+      console.error("openCreditModal unexpected error:", err);
+      setCreditHistory([]);
+    }
+  };
+
+  const handleCreditSubmit = async () => {
+    const amt = parseFloat(creditAmount);
+    if (!amt || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!orgId || !user || !creditModal) return;
+    try {
+      const { error } = await supabase.from("credit_transactions").insert({
+        organization_id: orgId,
+        party_type: "customer",
+        party_id: creditModal.customerId,
+        amount: amt,
+        type: creditType,
+        description: creditDesc,
+        created_by: user.id,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success(creditType === "credit" ? "Credit given recorded" : "Payment received recorded");
+      setCreditModal(null);
+      fetchCustomers();
+    } catch (err: any) {
+      console.error("handleCreditSubmit error:", err);
+      toast.error(err.message || "Failed to save transaction");
+    }
+  };
+
+  if (orgLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Users2 className="w-7 h-7 text-primary" />
+            Customer Directory
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track customer contact details, credit ledger, and payment balances
+          </p>
+        </div>
+        <Button onClick={openCreate} className="self-start sm:self-auto gap-2 shadow-sm font-semibold">
+          <Plus className="w-4 h-4" /> Add Customer
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Total Customers */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Customers</span>
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Users2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{customers.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Active customer profiles</p>
+          </div>
+        </div>
+
+        {/* Total Outstanding Credit */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-rose-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding Due</span>
+            <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              <IndianRupee className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400 tracking-tight">
+              ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Pending payments from customers</p>
+          </div>
+        </div>
+
+        {/* Customers with Balance */}
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm col-span-2 lg:col-span-1 group">
+          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">With Balance Due</span>
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{customersWithDue}</p>
+              <span className="text-xs text-muted-foreground">/ {customers.length} total</span>
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
+              {customers.length > 0 ? `${Math.round((customersWithDue / customers.length) * 100)}% have debit balance` : "No debit balance"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Credit Filters */}
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by customer name, phone number, or email..."
+              className="w-full h-11 pl-10 pr-10 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Credit status filter pills */}
+          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 overflow-x-auto">
+            {([
+              { id: "all", label: "All Customers", count: customers.length },
+              { id: "due", label: "Balance Due", count: customersWithDue },
+              { id: "clear", label: "Settled / Clear", count: customers.length - customersWithDue },
+            ] as const).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setCreditFilter(f.id)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5",
+                  creditFilter === f.id
+                    ? "bg-background text-foreground shadow-sm border border-border/60"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {f.label}
+                <span
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    creditFilter === f.id ? "bg-primary/10 text-primary font-bold" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Customer List Container */}
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center px-4">
+            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
+              <Users2 className="w-7 h-7 opacity-50" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No Customers Found</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+              {customers.length === 0
+                ? "Start building your customer base by clicking the Add Customer button above."
+                : "No customer records matched your search or credit filter."}
+            </p>
+            {customers.length === 0 && (
+              <Button onClick={openCreate} size="sm" className="mt-4 gap-1.5 text-xs font-semibold">
+                <Plus className="w-4 h-4" /> Add First Customer
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Mobile View: Cards */}
+            <div className="block md:hidden divide-y divide-border">
+              {filtered.map((c) => {
+                const hasDue = c.balance > 0;
+                return (
+                  <div key={c.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                          {c.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">{c.name}</p>
+                          {c.phone && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <Phone className="w-3 h-3 text-muted-foreground" /> {c.phone}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Balance Badge */}
+                      <span
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs font-bold shrink-0",
+                          hasDue
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        )}
+                      >
+                        {hasDue ? `₹${c.balance.toFixed(2)} Due` : "Clear (₹0)"}
+                      </span>
+                    </div>
+
+                    {c.address && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 truncate">
+                        <MapPin className="w-3 h-3 shrink-0" /> {c.address}
+                      </p>
+                    )}
+
+                    {/* Actions row */}
+                    <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/40 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                        onClick={() => navigate(`/customers/${c.id}/ledger`)}
+                      >
+                        <FileText className="w-3.5 h-3.5" /> Ledger Statement
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                          onClick={() => openCreditModal(c)}
+                          title="Manage Credit"
+                        >
+                          <IndianRupee className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => openEdit(c)}
+                          title="Edit Customer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteConfirm(c.id)}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {deleteConfirm === c.id && (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 mt-2">
+                        <span className="text-xs font-medium text-destructive">Delete this customer?</span>
+                        <div className="flex gap-2">
+                          <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(c.id)}>
+                            Delete
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setDeleteConfirm(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[780px] text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
+                    <th className="text-left px-5 py-3.5">Customer Name</th>
+                    <th className="text-left px-5 py-3.5">Phone Number</th>
+                    <th className="text-left px-5 py-3.5">Email Address</th>
+                    <th className="text-left px-5 py-3.5">City / Address</th>
+                    <th className="text-right px-5 py-3.5">Credit Balance</th>
+                    <th className="text-right px-5 py-3.5">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filtered.map((c) => {
+                    const hasDue = c.balance > 0;
+                    return (
+                      <tr key={c.id} className="hover:bg-muted/30 transition-colors group">
+                        {/* Name */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                              {c.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">{c.name}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Added {new Date(c.created_at).toLocaleDateString("en-IN")}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Phone */}
+                        <td className="px-5 py-4">
+                          {c.phone ? (
+                            <span className="text-foreground font-mono text-xs flex items-center gap-1.5">
+                              <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                              {c.phone}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </td>
+
+                        {/* Email */}
+                        <td className="px-5 py-4">
+                          {c.email ? (
+                            <span className="text-muted-foreground text-xs truncate max-w-[180px] block">
+                              {c.email}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </td>
+
+                        {/* Address */}
+                        <td className="px-5 py-4">
+                          {c.address ? (
+                            <span className="text-muted-foreground text-xs truncate max-w-[160px] block" title={c.address}>
+                              {c.address}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </td>
+
+                        {/* Credit Balance */}
+                        <td className="px-5 py-4 text-right">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold",
+                              hasDue
+                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            )}
+                          >
+                            {hasDue ? (
+                              <>
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                ₹{c.balance.toFixed(2)}
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Clear (₹0)
+                              </>
+                            )}
+                          </span>
+                        </td>
+
+                        {/* Action buttons */}
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2.5 text-xs gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                              title="View Ledger Statement"
+                              onClick={() => navigate(`/customers/${c.id}/ledger`)}
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">Ledger</span>
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2.5 text-xs gap-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                              title="Manage Credit"
+                              onClick={() => openCreditModal(c)}
+                            >
+                              <IndianRupee className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">Credit</span>
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => openEdit(c)}
+                              title="Edit Customer"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+
+                            {deleteConfirm === c.id ? (
+                              <div className="flex items-center gap-1 bg-destructive/10 p-1 rounded-lg border border-destructive/20">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-6 text-[11px] px-2"
+                                  onClick={() => handleDelete(c.id)}
+                                >
+                                  Confirm
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 text-[11px] px-2"
+                                  onClick={() => setDeleteConfirm(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setDeleteConfirm(c.id)}
+                                title="Delete Customer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Create/Edit Customer Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Users2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">
+                    {editingId ? "Edit Customer Details" : "Create New Customer"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Add contact and billing information</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowForm(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Smart Auto-fill */}
+              {!editingId && (
+                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Smart MCA Auto-fill</span>
+                  </div>
+                  <CompanySearchAutocomplete
+                    onSelect={(comp) =>
+                      setForm({
+                        ...form,
+                        name: comp.name,
+                        phone: comp.phone || form.phone,
+                        address: comp.address || form.address,
+                      })
+                    }
+                  />
+                </div>
+              )}
+
+              {/* Customer Name */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Customer Name *
+                </Label>
+                <Input
+                  placeholder="e.g. Ramesh Traders, John Doe"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="h-10 rounded-xl"
+                  autoFocus
+                />
+              </div>
+
+              {/* Phone & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Phone Number
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9 h-10 rounded-xl"
+                      placeholder="+91 98765 43210"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Email Address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9 h-10 rounded-xl"
+                      type="email"
+                      placeholder="customer@domain.com"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Billing / Delivery Address
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <textarea
+                    className="w-full rounded-xl border border-input bg-background pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none transition-all"
+                    rows={2}
+                    placeholder="Enter complete street address, city, pin code"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="rounded-xl font-semibold gap-1.5">
+                  {saving ? (
+                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {editingId ? "Update Customer" : "Save Customer"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Modal */}
+      {creditModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <IndianRupee className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Record Credit Transaction</h2>
+                  <p className="text-xs text-muted-foreground truncate max-w-[240px]">Customer: {creditModal.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCreditModal(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Type Toggle */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-muted/50 rounded-xl border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setCreditType("credit")}
+                  className={cn(
+                    "py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all",
+                    creditType === "credit"
+                      ? "bg-rose-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <ArrowUpCircle className="w-4 h-4" />
+                  Give Credit (Debit Customer)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreditType("payment")}
+                  className={cn(
+                    "py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all",
+                    creditType === "payment"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <ArrowDownCircle className="w-4 h-4" />
+                  Record Payment (Received)
+                </button>
+              </div>
+
+              {/* Amount & Description */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Transaction Amount (₹) *
+                  </Label>
+                  <div className="relative mt-1">
+                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="0.00"
+                      value={creditAmount}
+                      onChange={(e) => setCreditAmount(e.target.value)}
+                      className="pl-9 h-10 rounded-xl font-bold text-base"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Particulars / Note (Optional)
+                  </Label>
+                  <Input
+                    placeholder="e.g. Bill #1042 partial payment, UPI ref, etc."
+                    value={creditDesc}
+                    onChange={(e) => setCreditDesc(e.target.value)}
+                    className="mt-1 h-10 rounded-xl"
+                  />
+                </div>
+
+                <Button className="w-full h-10 rounded-xl font-semibold gap-1.5 mt-2" onClick={handleCreditSubmit}>
+                  {creditType === "credit" ? "Record Credit Amount" : "Confirm Payment Received"}
+                </Button>
+              </div>
+
+              {/* Recent History */}
+              {creditHistory.length > 0 && (
+                <div className="pt-3 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" /> Recent Credit History
+                  </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {creditHistory.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50 text-xs"
+                      >
+                        <div>
+                          <span
+                            className={cn(
+                              "font-bold px-2 py-0.5 rounded-full text-[10px]",
+                              t.type === "credit"
+                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            )}
+                          >
+                            {t.type === "credit" ? "Credit Given" : "Payment Received"}
+                          </span>
+                          {t.description && <p className="text-muted-foreground mt-1 font-medium">{t.description}</p>}
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {new Date(t.created_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "font-bold text-sm",
+                            t.type === "credit" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+                          )}
+                        >
+                          {t.type === "credit" ? "+" : "-"}₹{Number(t.amount).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

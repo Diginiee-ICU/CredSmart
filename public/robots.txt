@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /auth
+Disallow: /checkout
+Sitemap: https://credsmart.in/sitemap.xml
