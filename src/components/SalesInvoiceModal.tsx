@@ -51,6 +51,16 @@ import {
   INDIAN_STATES,
   PAYMENT_TERMS_OPTIONS,
 } from "@/types/documents";
+import {
+  STANDARD_PRODUCT_CATALOG,
+  STANDARD_PARTY_SUGGESTIONS,
+  STANDARD_HSN_CODES,
+  STANDARD_GST_UNITS,
+  INDIAN_STATES_AND_CODES,
+  PAYMENT_TERMS_SUGGESTIONS,
+  SuggestionProduct,
+  SuggestionParty,
+} from "@/utils/suggestionData";
 import { documentsService } from "@/services/documentsService";
 import { numberToWords } from "@/lib/numberToWords";
 import { cn } from "@/lib/utils";
@@ -68,9 +78,11 @@ interface CustomerOption {
 interface ProductCatalogOption {
   id: string;
   name: string;
+  category?: string;
   barcode: string | null;
   brand: string | null;
   sku?: string;
+  unit?: string;
   selling_price?: number;
   tax_rate?: number;
   product_batches?: {
@@ -80,6 +92,22 @@ interface ProductCatalogOption {
     stock: number;
     expiry_date: string | null;
   }[];
+}
+
+interface UnifiedProductSuggestion {
+  id: string;
+  name: string;
+  category: string;
+  barcode?: string;
+  sku?: string;
+  hsn?: string;
+  unit: string;
+  rate: number;
+  mrp?: number;
+  gstRate: number;
+  stock: number;
+  batchNumber?: string;
+  isDb?: boolean;
 }
 
 interface SalesInvoiceModalProps {
@@ -291,6 +319,114 @@ export function SalesInvoiceModal({
     setShowCustomerDropdown(false);
   };
 
+  // Combine database customers with standard party suggestions
+  const combinedCustomers = useMemo(() => {
+    const list: CustomerOption[] = [];
+    const names = new Set<string>();
+
+    customers.forEach((c) => {
+      names.add(c.name.toLowerCase().trim());
+      list.push(c);
+    });
+
+    STANDARD_PARTY_SUGGESTIONS
+      .filter((p) => p.type === "customer" || p.type === "both")
+      .forEach((sp) => {
+        if (!names.has(sp.name.toLowerCase().trim())) {
+          list.push({
+            id: sp.id,
+            name: sp.name,
+            phone: sp.phone,
+            email: sp.email,
+            gstin: sp.gstin,
+            address: sp.address,
+            balance: sp.balance,
+          });
+        }
+      });
+
+    return list;
+  }, [customers]);
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.toLowerCase().trim();
+    if (!q) {
+      return combinedCustomers.slice(0, 10);
+    }
+    return combinedCustomers
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          (c.phone && c.phone.includes(q)) ||
+          (c.gstin && c.gstin.toLowerCase().includes(q))
+      )
+      .slice(0, 12);
+  }, [combinedCustomers, customerSearch]);
+
+  // Combine database products with standard product catalog
+  const combinedProducts = useMemo(() => {
+    const list: UnifiedProductSuggestion[] = [];
+    const names = new Set<string>();
+
+    productsCatalog.forEach((p) => {
+      const defaultBatch = p.product_batches?.[0];
+      const rate = defaultBatch?.mrp || p.selling_price || 0;
+      const stock = p.product_batches?.reduce((acc, b) => acc + (b.stock || 0), 0) ?? 0;
+      names.add(p.name.toLowerCase().trim());
+      list.push({
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        barcode: p.barcode || undefined,
+        sku: p.sku,
+        unit: p.unit || "Pcs",
+        rate,
+        mrp: defaultBatch?.mrp || rate,
+        gstRate: p.tax_rate ?? 18,
+        stock,
+        batchNumber: defaultBatch?.batch_number,
+        isDb: true,
+      });
+    });
+
+    STANDARD_PRODUCT_CATALOG.forEach((sp) => {
+      if (!names.has(sp.name.toLowerCase().trim())) {
+        list.push({
+          id: sp.id,
+          name: sp.name,
+          category: sp.category,
+          barcode: sp.barcode,
+          sku: sp.sku,
+          hsn: sp.hsn,
+          unit: sp.unit || "Pcs",
+          rate: sp.sellingPrice,
+          mrp: sp.mrp,
+          gstRate: sp.gstRate,
+          stock: sp.stock,
+          isDb: false,
+        });
+      }
+    });
+
+    return list;
+  }, [productsCatalog]);
+
+  const getFilteredProducts = (query: string) => {
+    const q = (query || "").toLowerCase().trim();
+    if (!q) {
+      return combinedProducts.slice(0, 15);
+    }
+    return combinedProducts
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.barcode && p.barcode.includes(q)) ||
+          (p.sku && p.sku.toLowerCase().includes(q)) ||
+          (p.category && p.category.toLowerCase().includes(q))
+      )
+      .slice(0, 15);
+  };
+
   const handleCreateCustomerInline = async () => {
     if (!newCustName.trim()) {
       toast.error("Customer name is required");
@@ -417,10 +553,7 @@ export function SalesInvoiceModal({
     });
   };
 
-  const handleSelectProduct = (index: number, product: ProductCatalogOption) => {
-    const defaultBatch = product.product_batches?.[0];
-    const rate = defaultBatch?.mrp || product.selling_price || 0;
-
+  const handleSelectProduct = (index: number, product: UnifiedProductSuggestion) => {
     setItems((prev) => {
       const copy = [...prev];
       copy[index] = {
@@ -428,9 +561,24 @@ export function SalesInvoiceModal({
         productId: product.id,
         productName: product.name,
         barcode: product.barcode || undefined,
-        rate: rate,
-        batchNumber: defaultBatch?.batch_number || undefined,
-        taxRate: product.tax_rate || 18,
+        hsn: product.hsn || copy[index].hsn || undefined,
+        unit: product.unit || copy[index].unit || "Pcs",
+        rate: product.rate,
+        batchNumber: product.batchNumber || undefined,
+        taxRate: product.gstRate !== undefined ? product.gstRate : 18,
+      };
+      return copy;
+    });
+    setActiveItemDropdown(null);
+  };
+
+  const handleAddCustomItem = (index: number, customName: string) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      copy[index] = {
+        ...copy[index],
+        productName: customName,
+        rate: copy[index].rate || 0,
       };
       return copy;
     });
@@ -529,12 +677,6 @@ export function SalesInvoiceModal({
     }
   };
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-      c.phone?.includes(customerSearch)
-  );
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -620,26 +762,42 @@ export function SalesInvoiceModal({
                         setShowCustomerDropdown(true);
                       }}
                       onFocus={() => setShowCustomerDropdown(true)}
-                      placeholder="e.g. Acme Corp / Walk-in"
+                      onBlur={() => {
+                        setTimeout(() => setShowCustomerDropdown(false), 200);
+                      }}
+                      placeholder="e.g. Sharma Retailers / Walk-in"
                       className="mt-1 text-xs font-medium"
                     />
 
                     {showCustomerDropdown && filteredCustomers.length > 0 && (
-                      <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto p-1">
+                      <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-56 overflow-y-auto p-1.5 divide-y divide-slate-100 dark:divide-slate-800">
                         {filteredCustomers.map((c) => (
                           <button
                             key={c.id}
                             type="button"
-                            onClick={() => handleSelectCustomer(c)}
-                            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectCustomer(c);
+                            }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 transition-colors flex items-center justify-between group"
                           >
                             <div>
-                              <span className="font-semibold text-foreground">{c.name}</span>
-                              {c.phone && <span className="text-[11px] text-muted-foreground ml-2">({c.phone})</span>}
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                  {c.name}
+                                </span>
+                                {c.gstin && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 font-mono text-muted-foreground">
+                                    {c.gstin}
+                                  </span>
+                                )}
+                              </div>
+                              {c.phone && <span className="text-[11px] text-muted-foreground font-mono">Ph: {c.phone}</span>}
+                              {c.address && <p className="text-[10px] text-muted-foreground/80 truncate max-w-[240px]">{c.address}</p>}
                             </div>
                             {c.balance !== undefined && c.balance > 0 && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-mono">
-                                Due: ₹{c.balance}
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-mono font-bold shrink-0">
+                                Due: ₹{c.balance.toLocaleString("en-IN")}
                               </span>
                             )}
                           </button>
@@ -675,7 +833,7 @@ export function SalesInvoiceModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="max-h-56">
-                        {INDIAN_STATES.map((st) => (
+                        {INDIAN_STATES_AND_CODES.map((st) => (
                           <SelectItem key={st} value={st}>
                             {st}
                           </SelectItem>
@@ -720,7 +878,7 @@ export function SalesInvoiceModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {PAYMENT_TERMS_OPTIONS.map((opt) => (
+                        {PAYMENT_TERMS_SUGGESTIONS.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </SelectItem>
@@ -766,7 +924,7 @@ export function SalesInvoiceModal({
             </div>
 
             {/* Line Items Table */}
-            <div className="rounded-xl border border-border overflow-hidden bg-card shadow-2xs">
+            <div className="rounded-xl border border-border bg-card shadow-2xs">
               <div className="p-3 bg-slate-100/70 dark:bg-slate-900/80 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground uppercase tracking-wider">
@@ -784,14 +942,15 @@ export function SalesInvoiceModal({
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Table wrapper with min-h and pb-36 to prevent clipping of absolute popover dropdowns */}
+              <div className="overflow-x-auto min-h-[300px] pb-36">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-muted/40 text-muted-foreground font-semibold text-[11px] border-b border-border">
                       <th className="py-2.5 px-3 w-10 text-center">#</th>
-                      <th className="py-2.5 px-3 min-w-[280px]">Item Description</th>
+                      <th className="py-2.5 px-3 min-w-[320px]">Item Description</th>
                       <th className="py-2.5 px-2 w-24 text-center">Qty</th>
-                      <th className="py-2.5 px-2 w-24">Unit</th>
+                      <th className="py-2.5 px-2 w-28">Unit</th>
                       <th className="py-2.5 px-3 w-32 text-right">Rate (₹)</th>
                       <th className="py-2.5 px-2 w-24 text-center">Disc (%)</th>
                       <th className="py-2.5 px-2 w-28 text-center">GST (%)</th>
@@ -811,38 +970,87 @@ export function SalesInvoiceModal({
                             value={item.productName}
                             onChange={(e) => {
                               handleUpdateItem(idx, "productName", e.target.value);
-                              setItemSearchText({ ...itemSearchText, [idx]: e.target.value });
+                              setItemSearchText((prev) => ({ ...prev, [idx]: e.target.value }));
                               setActiveItemDropdown(idx);
                             }}
-                            onFocus={() => setActiveItemDropdown(idx)}
+                            onFocus={() => {
+                              setActiveItemDropdown(idx);
+                              if (!itemSearchText[idx] && item.productName) {
+                                setItemSearchText((prev) => ({ ...prev, [idx]: item.productName }));
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setActiveItemDropdown((current) => (current === idx ? null : current));
+                              }, 220);
+                            }}
                             placeholder="Type product name or scan barcode..."
                             className="h-8 text-xs font-medium"
                           />
 
-                          {activeItemDropdown === idx && productsCatalog.length > 0 && (
-                            <div className="absolute z-30 left-3 right-3 top-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto p-1">
-                              {productsCatalog
-                                .filter((p) =>
-                                  p.name.toLowerCase().includes((itemSearchText[idx] || "").toLowerCase()) ||
-                                  p.barcode?.includes(itemSearchText[idx] || "")
-                                )
-                                .slice(0, 10)
-                                .map((prod) => (
+                          {activeItemDropdown === idx && (
+                            <div className="absolute z-50 left-3 top-full mt-1 w-[380px] sm:w-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800/80">
+                              <div className="p-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                <span>Suggested Products</span>
+                                <span className="font-mono">
+                                  {getFilteredProducts(itemSearchText[idx] || item.productName).length} items
+                                </span>
+                              </div>
+                              <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                                {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
                                   <button
                                     key={prod.id}
                                     type="button"
-                                    onClick={() => handleSelectProduct(idx, prod)}
-                                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleSelectProduct(idx, prod);
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 transition-colors flex items-center justify-between gap-3 group"
                                   >
-                                    <div>
-                                      <p className="font-semibold text-foreground">{prod.name}</p>
-                                      {prod.barcode && <span className="text-[10px] text-muted-foreground font-mono">Barcode: {prod.barcode}</span>}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate">
+                                          {prod.name}
+                                        </span>
+                                        {prod.category && (
+                                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-medium shrink-0 border border-indigo-200/60 dark:border-indigo-800/60">
+                                            {prod.category}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground mt-0.5 font-mono">
+                                        {prod.barcode && <span>Code: {prod.barcode}</span>}
+                                        {prod.sku && !prod.barcode && <span>SKU: {prod.sku}</span>}
+                                        <span className={cn("font-medium", prod.stock > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+                                          Stock: {prod.stock} {prod.unit}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground">
-                                      ₹{prod.product_batches?.[0]?.mrp || prod.selling_price || 0}
-                                    </span>
+                                    <div className="text-right shrink-0">
+                                      <div className="font-mono font-bold text-foreground text-xs">
+                                        ₹{prod.rate}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground font-mono">
+                                        {prod.gstRate}% GST
+                                      </div>
+                                    </div>
                                   </button>
                                 ))}
+
+                                {itemSearchText[idx]?.trim() && (
+                                  <button
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleAddCustomItem(idx, itemSearchText[idx].trim());
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 transition-colors flex items-center gap-1.5"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>+ Add &ldquo;{itemSearchText[idx].trim()}&rdquo; as custom item (₹0)</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )}
                         </td>
@@ -863,13 +1071,12 @@ export function SalesInvoiceModal({
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Pcs">Pcs</SelectItem>
-                              <SelectItem value="Box">Box</SelectItem>
-                              <SelectItem value="Kg">Kg</SelectItem>
-                              <SelectItem value="Ltr">Ltr</SelectItem>
-                              <SelectItem value="Mtr">Mtr</SelectItem>
-                              <SelectItem value="Pack">Pack</SelectItem>
+                            <SelectContent className="max-h-56">
+                              {STANDARD_GST_UNITS.map((u) => (
+                                <SelectItem key={u.value} value={u.value}>
+                                  {u.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </td>

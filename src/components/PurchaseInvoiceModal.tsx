@@ -47,6 +47,16 @@ import {
   INDIAN_STATES,
   PAYMENT_TERMS_OPTIONS,
 } from "@/types/documents";
+import {
+  STANDARD_PRODUCT_CATALOG,
+  STANDARD_PARTY_SUGGESTIONS,
+  STANDARD_HSN_CODES,
+  STANDARD_GST_UNITS,
+  INDIAN_STATES_AND_CODES,
+  PAYMENT_TERMS_SUGGESTIONS,
+  SuggestionProduct,
+  SuggestionParty,
+} from "@/utils/suggestionData";
 import { documentsService } from "@/services/documentsService";
 import { numberToWords } from "@/lib/numberToWords";
 import { cn } from "@/lib/utils";
@@ -57,6 +67,7 @@ interface SupplierOption {
   phone: string;
   gstin?: string;
   address?: string;
+  balance?: number;
 }
 
 interface ProductCatalogOption {
@@ -64,6 +75,9 @@ interface ProductCatalogOption {
   name: string;
   barcode: string | null;
   sku?: string;
+  category?: string;
+  unit?: string;
+  tax_rate?: number;
   selling_price?: number;
   product_batches?: {
     id: string;
@@ -72,6 +86,22 @@ interface ProductCatalogOption {
     mrp: number;
     stock: number;
   }[];
+}
+
+interface UnifiedPurchaseProduct {
+  id: string;
+  name: string;
+  category: string;
+  barcode?: string;
+  sku?: string;
+  hsn?: string;
+  unit: string;
+  costPrice: number;
+  mrp: number;
+  gstRate: number;
+  stock: number;
+  batchNumber: string;
+  isDb?: boolean;
 }
 
 interface PurchaseInvoiceModalProps {
@@ -282,6 +312,114 @@ export function PurchaseInvoiceModal({
     setShowSupplierDropdown(false);
   };
 
+  // Combine database suppliers with standard supplier suggestions
+  const combinedSuppliers = useMemo(() => {
+    const list: SupplierOption[] = [];
+    const names = new Set<string>();
+
+    suppliers.forEach((s) => {
+      names.add(s.name.toLowerCase().trim());
+      list.push(s);
+    });
+
+    STANDARD_PARTY_SUGGESTIONS
+      .filter((p) => p.type === "supplier" || p.type === "both")
+      .forEach((sp) => {
+        if (!names.has(sp.name.toLowerCase().trim())) {
+          list.push({
+            id: sp.id,
+            name: sp.name,
+            phone: sp.phone,
+            gstin: sp.gstin,
+            address: sp.address,
+            balance: sp.balance,
+          });
+        }
+      });
+
+    return list;
+  }, [suppliers]);
+
+  const filteredSuppliers = useMemo(() => {
+    const q = supplierSearch.toLowerCase().trim();
+    if (!q) {
+      return combinedSuppliers.slice(0, 10);
+    }
+    return combinedSuppliers
+      .filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          (s.phone && s.phone.includes(q)) ||
+          (s.gstin && s.gstin.toLowerCase().includes(q))
+      )
+      .slice(0, 12);
+  }, [combinedSuppliers, supplierSearch]);
+
+  // Combine database products with standard product catalog for inward purchases
+  const combinedProducts = useMemo(() => {
+    const list: UnifiedPurchaseProduct[] = [];
+    const names = new Set<string>();
+
+    productsCatalog.forEach((p) => {
+      const defaultBatch = p.product_batches?.[0];
+      const cost = defaultBatch?.cost_price || p.selling_price || 0;
+      const stock = p.product_batches?.reduce((acc, b) => acc + (b.stock || 0), 0) ?? 0;
+      names.add(p.name.toLowerCase().trim());
+      list.push({
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        barcode: p.barcode || undefined,
+        sku: p.sku,
+        unit: p.unit || "Pcs",
+        costPrice: cost,
+        mrp: defaultBatch?.mrp || p.selling_price || cost,
+        gstRate: p.tax_rate ?? 18,
+        stock,
+        batchNumber: defaultBatch?.batch_number || `BATCH-${new Date().getFullYear()}-01`,
+        isDb: true,
+      });
+    });
+
+    STANDARD_PRODUCT_CATALOG.forEach((sp) => {
+      if (!names.has(sp.name.toLowerCase().trim())) {
+        list.push({
+          id: sp.id,
+          name: sp.name,
+          category: sp.category,
+          barcode: sp.barcode,
+          sku: sp.sku,
+          hsn: sp.hsn,
+          unit: sp.unit || "Pcs",
+          costPrice: sp.purchasePrice,
+          mrp: sp.mrp,
+          gstRate: sp.gstRate,
+          stock: sp.stock,
+          batchNumber: `BATCH-${new Date().getFullYear()}-01`,
+          isDb: false,
+        });
+      }
+    });
+
+    return list;
+  }, [productsCatalog]);
+
+  const getFilteredProducts = (query: string) => {
+    const q = (query || "").toLowerCase().trim();
+    if (!q) {
+      return combinedProducts.slice(0, 15);
+    }
+    return combinedProducts
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.barcode && p.barcode.includes(q)) ||
+          (p.sku && p.sku.toLowerCase().includes(q)) ||
+          (p.category && p.category.toLowerCase().includes(q))
+      )
+      .slice(0, 15);
+  };
+
   const handleCreateSupplierInline = async () => {
     if (!newSuppName.trim()) {
       toast.error("Supplier name is required");
@@ -466,10 +604,7 @@ export function PurchaseInvoiceModal({
     });
   };
 
-  const handleSelectProduct = (index: number, product: ProductCatalogOption) => {
-    const defaultBatch = product.product_batches?.[0];
-    const cost = defaultBatch?.cost_price || 0;
-
+  const handleSelectProduct = (index: number, product: UnifiedPurchaseProduct) => {
     setItems((prev) => {
       const copy = [...prev];
       copy[index] = {
@@ -477,8 +612,24 @@ export function PurchaseInvoiceModal({
         productId: product.id,
         productName: product.name,
         barcode: product.barcode || undefined,
-        rate: cost,
-        batchNumber: defaultBatch?.batch_number || "BATCH-01",
+        hsn: product.hsn || copy[index].hsn || undefined,
+        unit: product.unit || copy[index].unit || "Pcs",
+        rate: product.costPrice || 0,
+        batchNumber: product.batchNumber || copy[index].batchNumber || `BATCH-${new Date().getFullYear()}-01`,
+        taxRate: product.gstRate !== undefined ? product.gstRate : 18,
+      };
+      return copy;
+    });
+    setActiveItemDropdown(null);
+  };
+
+  const handleAddCustomItem = (index: number, customName: string) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      copy[index] = {
+        ...copy[index],
+        productName: customName,
+        rate: copy[index].rate || 0,
       };
       return copy;
     });
@@ -557,12 +708,6 @@ export function PurchaseInvoiceModal({
       setSaving(false);
     }
   };
-
-  const filteredSuppliers = suppliers.filter(
-    (s) =>
-      s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
-      s.phone?.includes(supplierSearch)
-  );
 
   return (
     <>
@@ -716,26 +861,42 @@ export function PurchaseInvoiceModal({
                         setShowSupplierDropdown(true);
                       }}
                       onFocus={() => setShowSupplierDropdown(true)}
-                      placeholder="e.g. Metro Wholesale / Tata Consumer"
+                      onBlur={() => {
+                        setTimeout(() => setShowSupplierDropdown(false), 200);
+                      }}
+                      placeholder="e.g. Metro Wholesale / Kisan Agro"
                       className="mt-1 text-xs font-medium"
                     />
 
                     {showSupplierDropdown && filteredSuppliers.length > 0 && (
-                      <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto p-1">
+                      <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-56 overflow-y-auto p-1.5 divide-y divide-slate-100 dark:divide-slate-800">
                         {filteredSuppliers.map((s) => (
                           <button
                             key={s.id}
                             type="button"
-                            onClick={() => handleSelectSupplier(s)}
-                            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectSupplier(s);
+                            }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 transition-colors flex items-center justify-between group"
                           >
                             <div>
-                              <span className="font-semibold text-foreground">{s.name}</span>
-                              {s.phone && <span className="text-[11px] text-muted-foreground ml-2">({s.phone})</span>}
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                  {s.name}
+                                </span>
+                                {s.gstin && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 font-mono text-muted-foreground">
+                                    {s.gstin}
+                                  </span>
+                                )}
+                              </div>
+                              {s.phone && <span className="text-[11px] text-muted-foreground font-mono">Ph: {s.phone}</span>}
+                              {s.address && <p className="text-[10px] text-muted-foreground/80 truncate max-w-[240px]">{s.address}</p>}
                             </div>
-                            {s.gstin && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
-                                {s.gstin}
+                            {s.balance !== undefined && s.balance > 0 && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-mono font-bold shrink-0">
+                                Bal: ₹{s.balance.toLocaleString("en-IN")}
                               </span>
                             )}
                           </button>
@@ -771,7 +932,7 @@ export function PurchaseInvoiceModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="max-h-56">
-                        {INDIAN_STATES.map((st) => (
+                        {INDIAN_STATES_AND_CODES.map((st) => (
                           <SelectItem key={st} value={st}>
                             {st}
                           </SelectItem>
@@ -833,7 +994,7 @@ export function PurchaseInvoiceModal({
             </div>
 
             {/* Line items table */}
-            <div className="rounded-xl border border-border overflow-hidden bg-card shadow-2xs">
+            <div className="rounded-xl border border-border bg-card shadow-2xs">
               <div className="p-3 bg-slate-100/70 dark:bg-slate-900/80 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground uppercase tracking-wider">
@@ -851,15 +1012,16 @@ export function PurchaseInvoiceModal({
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Table wrapper with min-h and pb-36 to prevent clipping */}
+              <div className="overflow-x-auto min-h-[300px] pb-36">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-muted/40 text-muted-foreground font-semibold text-[11px] border-b border-border">
                       <th className="py-2.5 px-3 w-10 text-center">#</th>
-                      <th className="py-2.5 px-3 min-w-[280px]">Product Name</th>
-                      <th className="py-2.5 px-2 w-28">Batch #</th>
+                      <th className="py-2.5 px-3 min-w-[320px]">Product Name</th>
+                      <th className="py-2.5 px-2 w-32">Batch #</th>
                       <th className="py-2.5 px-2 w-24 text-center">Qty</th>
-                      <th className="py-2.5 px-2 w-24">Unit</th>
+                      <th className="py-2.5 px-2 w-28">Unit</th>
                       <th className="py-2.5 px-3 w-32 text-right">Cost (₹)</th>
                       <th className="py-2.5 px-2 w-28 text-center">GST (%)</th>
                       <th className="py-2.5 px-3 w-32 text-right">Taxable</th>
@@ -878,34 +1040,87 @@ export function PurchaseInvoiceModal({
                             value={item.productName}
                             onChange={(e) => {
                               handleUpdateItem(idx, "productName", e.target.value);
-                              setItemSearchText({ ...itemSearchText, [idx]: e.target.value });
+                              setItemSearchText((prev) => ({ ...prev, [idx]: e.target.value }));
                               setActiveItemDropdown(idx);
                             }}
-                            onFocus={() => setActiveItemDropdown(idx)}
-                            placeholder="Type product name..."
+                            onFocus={() => {
+                              setActiveItemDropdown(idx);
+                              if (!itemSearchText[idx] && item.productName) {
+                                setItemSearchText((prev) => ({ ...prev, [idx]: item.productName }));
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setActiveItemDropdown((current) => (current === idx ? null : current));
+                              }, 220);
+                            }}
+                            placeholder="Type product name or select..."
                             className="h-8 text-xs font-medium"
                           />
 
-                          {activeItemDropdown === idx && productsCatalog.length > 0 && (
-                            <div className="absolute z-30 left-3 right-3 top-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto p-1">
-                              {productsCatalog
-                                .filter((p) =>
-                                  p.name.toLowerCase().includes((itemSearchText[idx] || "").toLowerCase())
-                                )
-                                .slice(0, 10)
-                                .map((prod) => (
+                          {activeItemDropdown === idx && (
+                            <div className="absolute z-50 left-3 top-full mt-1 w-[380px] sm:w-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800/80">
+                              <div className="p-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                <span>Suggested Inward Items</span>
+                                <span className="font-mono">
+                                  {getFilteredProducts(itemSearchText[idx] || item.productName).length} items
+                                </span>
+                              </div>
+                              <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                                {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
                                   <button
                                     key={prod.id}
                                     type="button"
-                                    onClick={() => handleSelectProduct(idx, prod)}
-                                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleSelectProduct(idx, prod);
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 transition-colors flex items-center justify-between gap-3 group"
                                   >
-                                    <span className="font-semibold text-foreground">{prod.name}</span>
-                                    <span className="font-mono text-muted-foreground text-[11px]">
-                                      MRP: ₹{prod.selling_price || 0}
-                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate">
+                                          {prod.name}
+                                        </span>
+                                        {prod.category && (
+                                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-medium shrink-0 border border-indigo-200/60 dark:border-indigo-800/60">
+                                            {prod.category}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground mt-0.5 font-mono">
+                                        {prod.barcode && <span>Code: {prod.barcode}</span>}
+                                        <span className={cn("font-medium", prod.stock > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+                                          Stock: {prod.stock} {prod.unit}
+                                        </span>
+                                        <span>MRP: ₹{prod.mrp}</span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <div className="font-mono font-bold text-foreground text-xs">
+                                        Cost: ₹{prod.costPrice}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground font-mono">
+                                        {prod.gstRate}% GST
+                                      </div>
+                                    </div>
                                   </button>
                                 ))}
+
+                                {itemSearchText[idx]?.trim() && (
+                                  <button
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleAddCustomItem(idx, itemSearchText[idx].trim());
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 transition-colors flex items-center gap-1.5"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>+ Add &ldquo;{itemSearchText[idx].trim()}&rdquo; as custom item (₹0)</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )}
                         </td>
@@ -913,7 +1128,7 @@ export function PurchaseInvoiceModal({
                           <Input
                             value={item.batchNumber || ""}
                             onChange={(e) => handleUpdateItem(idx, "batchNumber", e.target.value)}
-                            placeholder="BATCH-01"
+                            placeholder={`BATCH-${new Date().getFullYear()}-01`}
                             className="h-8 text-xs font-mono"
                           />
                         </td>
@@ -934,12 +1149,12 @@ export function PurchaseInvoiceModal({
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Pcs">Pcs</SelectItem>
-                              <SelectItem value="Box">Box</SelectItem>
-                              <SelectItem value="Kg">Kg</SelectItem>
-                              <SelectItem value="Ltr">Ltr</SelectItem>
-                              <SelectItem value="Pack">Pack</SelectItem>
+                            <SelectContent className="max-h-56">
+                              {STANDARD_GST_UNITS.map((u) => (
+                                <SelectItem key={u.value} value={u.value}>
+                                  {u.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </td>

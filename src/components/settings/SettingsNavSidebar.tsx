@@ -118,13 +118,6 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
       url: ROUTE_PATHS.printSettings,
     },
     {
-      id: "users",
-      label: "Manage Users",
-      icon: Users,
-      active: activeItem === "users",
-      url: ROUTE_PATHS.staff,
-    },
-    {
       id: "reminders",
       label: "Reminders",
       icon: AlarmClock,

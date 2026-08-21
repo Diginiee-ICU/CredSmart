@@ -17,7 +17,8 @@ import {
   DollarSign,
 } from "lucide-react";
 import { InventoryItem, ItemUnit, GSTRate, ItemBatch } from "@/types/inventory";
-import { searchHSNCodes, HSNRecord } from "@/utils/hsnLookup";
+import { searchHSNCodes, HSNRecord, COMMON_HSN_CODES } from "@/utils/hsnLookup";
+import { STANDARD_GST_UNITS, STANDARD_HSN_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,20 @@ interface CreateItemModalProps {
   categories: string[];
   godowns?: { id: string; name: string }[];
 }
+
+const DEFAULT_CATEGORY_SUGGESTIONS = [
+  "Groceries & Staples",
+  "Dairy & Bakery",
+  "Instant Food & Snacks",
+  "Personal Care",
+  "Household Cleaning",
+  "Beverages & Tea",
+  "Electronics & Accessories",
+  "Hardware & Tools",
+  "Apparel",
+  "Pharmacy & Health",
+  "General",
+];
 
 const UNIT_OPTIONS: ItemUnit[] = [
   "PCS",
@@ -66,7 +81,7 @@ export function CreateItemModal({
   onClose,
   onSave,
   initialData,
-  categories,
+  categories = [],
   godowns = [
     { id: "g-main", name: "Main Central Godown" },
     { id: "g-north", name: "North Branch Warehouse" },
@@ -75,11 +90,16 @@ export function CreateItemModal({
 }: CreateItemModalProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "stock" | "batch">("basic");
 
+  // Merge default categories with custom categories
+  const allCategories = Array.from(
+    new Set([...categories.filter(Boolean), ...DEFAULT_CATEGORY_SUGGESTIONS])
+  );
+
   // Basic Info
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [barcode, setBarcode] = useState("");
-  const [category, setCategory] = useState("Grocery");
+  const [category, setCategory] = useState(allCategories[0] || "General");
   const [brand, setBrand] = useState("");
   const [unit, setUnit] = useState<ItemUnit>("PCS");
 
@@ -111,7 +131,7 @@ export function CreateItemModal({
       setName(initialData.name || "");
       setSku(initialData.sku || "");
       setBarcode(initialData.barcode || "");
-      setCategory(initialData.category || "Grocery");
+      setCategory(initialData.category || allCategories[0] || "General");
       setBrand(initialData.brand || "");
       setUnit(initialData.unit || "PCS");
       setSellingPrice(initialData.sellingPrice?.toString() || "");
@@ -138,7 +158,7 @@ export function CreateItemModal({
       setName("");
       setSku(`SKU-${Math.floor(100000 + Math.random() * 900000)}`);
       setBarcode("");
-      setCategory(categories[0] || "Grocery");
+      setCategory(allCategories[0] || "General");
       setBrand("");
       setUnit("PCS");
       setSellingPrice("");
@@ -154,7 +174,7 @@ export function CreateItemModal({
       setExpiryDate("");
       setManufacturingDate("");
     }
-  }, [initialData, categories, godowns, isOpen]);
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -167,14 +187,9 @@ export function CreateItemModal({
   const handleHsnSearchChange = (query: string) => {
     setHsnSearchQuery(query);
     setHsnCode(query);
-    if (query.trim().length >= 2) {
-      const results = searchHSNCodes(query);
-      setHsnSuggestions(results);
-      setShowHsnDropdown(true);
-    } else {
-      setHsnSuggestions([]);
-      setShowHsnDropdown(false);
-    }
+    const results = searchHSNCodes(query);
+    setHsnSuggestions(results);
+    setShowHsnDropdown(true);
   };
 
   const handleSelectHsn = (rec: HSNRecord) => {
@@ -371,8 +386,8 @@ export function CreateItemModal({
                     <SelectTrigger>
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => (
+                    <SelectContent className="max-h-56">
+                      {allCategories.map((c) => (
                         <SelectItem key={c} value={c}>
                           {c}
                         </SelectItem>

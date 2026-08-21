@@ -12,9 +12,6 @@ import {
   Receipt,
   Monitor,
   CalendarCheck,
-  UserCog,
-  Globe,
-  MessageSquare,
   Settings,
   Warehouse,
   FileSpreadsheet,
@@ -66,9 +63,6 @@ export const ROUTE_PATHS = {
 
   // BUSINESS TOOLS
   staff: "/staff",
-  manageUsers: "/manage-users",
-  onlineOrders: "/online-orders",
-  smsMarketing: "/sms-marketing",
   activityLog: "/activity-log",
 
   // SETTINGS & HELP
@@ -107,7 +101,6 @@ export const RESTRICTED_ROUTES: ReadonlySet<string> = new Set([
   ROUTE_PATHS.invoiceSettings,
   ROUTE_PATHS.printSettings,
   ROUTE_PATHS.staff,
-  ROUTE_PATHS.manageUsers,
   ROUTE_PATHS.activityLog,
 ]);
 
@@ -215,9 +208,6 @@ export const NAV_ROUTES: NavRouteGroup[] = [
     group: "BUSINESS TOOLS",
     items: [
       { title: "Staff Attendance & Payroll", url: ROUTE_PATHS.staff, icon: CalendarCheck },
-      { title: "Manage Users", url: ROUTE_PATHS.manageUsers, icon: UserCog },
-      { title: "Online Orders", url: ROUTE_PATHS.onlineOrders, icon: Globe, badge: "New" },
-      { title: "SMS Marketing", url: ROUTE_PATHS.smsMarketing, icon: MessageSquare },
     ],
   },
   {

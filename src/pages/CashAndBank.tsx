@@ -69,20 +69,9 @@ export interface BankTransaction {
   createdAt: string;
 }
 
-const DEFAULT_BANKS_LIST = [
-  "State Bank of India (SBI)",
-  "HDFC Bank",
-  "ICICI Bank",
-  "Axis Bank",
-  "Kotak Mahindra Bank",
-  "Punjab National Bank (PNB)",
-  "Bank of Baroda",
-  "Canara Bank",
-  "Union Bank of India",
-  "IndusInd Bank",
-  "IDFC FIRST Bank",
-  "Federal Bank",
-];
+import { POPULAR_BANKS_LIST } from "@/utils/suggestionData";
+
+const DEFAULT_BANKS_LIST = POPULAR_BANKS_LIST;
 
 const DATE_FILTER_OPTIONS = [
   { id: "today", label: "Today" },

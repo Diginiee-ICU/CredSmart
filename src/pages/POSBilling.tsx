@@ -49,6 +49,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
+import { STANDARD_PRODUCT_CATALOG, STANDARD_PARTY_SUGGESTIONS } from "@/utils/suggestionData";
 
 // --- Types ---
 
@@ -406,6 +407,29 @@ export default function POSBilling() {
           };
         });
 
+        const names = new Set(mapped.map((p) => p.name.toLowerCase().trim()));
+        STANDARD_PRODUCT_CATALOG.forEach((sp) => {
+          if (!names.has(sp.name.toLowerCase().trim())) {
+            mapped.push({
+              id: sp.id,
+              barcode: sp.barcode,
+              name: sp.name,
+              brand: "Popular",
+              category: sp.category,
+              batches: [
+                {
+                  id: `batch-${sp.id}`,
+                  costPrice: sp.purchasePrice,
+                  mrp: sp.mrp,
+                  stock: sp.stock,
+                  batchNumber: "LOT-01",
+                },
+              ],
+              sku: sp.sku,
+            });
+          }
+        });
+
         setProducts(mapped);
 
         // Extract unique categories
@@ -433,18 +457,32 @@ export default function POSBilling() {
           .eq("organization_id", orgId)
           .order("name");
 
-        if (!error && data) {
-          setCustomers(
-            data.map((c) => ({
-              id: c.id,
-              name: c.name,
-              phone: c.phone,
-              email: c.email,
-              balance: 0,
-              loyaltyPoints: Math.floor(Math.random() * 250),
-            }))
-          );
-        }
+        const list = (data || []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          email: c.email,
+          balance: 0,
+          loyaltyPoints: Math.floor(Math.random() * 250),
+        }));
+
+        const custNames = new Set(list.map((c) => c.name.toLowerCase().trim()));
+        STANDARD_PARTY_SUGGESTIONS
+          .filter((p) => p.type === "customer" || p.type === "both")
+          .forEach((sp) => {
+            if (!custNames.has(sp.name.toLowerCase().trim())) {
+              list.push({
+                id: sp.id,
+                name: sp.name,
+                phone: sp.phone,
+                email: sp.email,
+                balance: sp.balance || 0,
+                loyaltyPoints: 120,
+              });
+            }
+          });
+
+        setCustomers(list);
       } catch (e) {
         console.warn("Customers load error:", e);
       }

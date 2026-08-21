@@ -52,6 +52,8 @@ import {
   HelpCircle,
 } from "lucide-react";
 
+import { EXPENSE_CATEGORY_SUGGESTIONS } from "@/utils/suggestionData";
+
 export interface ExpenseRecord {
   id: string;
   expense_number?: string;
@@ -66,17 +68,7 @@ export interface ExpenseRecord {
 
 const DEFAULT_EXPENSE_CATEGORIES = [
   "All Expenses Categories",
-  "Rent",
-  "Electricity/Utilities",
-  "Tea & Snacks",
-  "Office Supplies",
-  "Transport/Delivery",
-  "Salaries & Wages",
-  "Maintenance & Repair",
-  "Advertising & Marketing",
-  "Packaging Materials",
-  "Internet & Phone",
-  "Miscellaneous",
+  ...EXPENSE_CATEGORY_SUGGESTIONS,
 ];
 
 const DATE_RANGE_PRESETS = [

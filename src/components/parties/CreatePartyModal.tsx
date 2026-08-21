@@ -19,6 +19,7 @@ import {
 import { Party, PartyType, PartyCategory } from "@/types/parties";
 import { lookupGSTIN, isValidGSTIN } from "@/utils/gstinLookup";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
+import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,10 +42,12 @@ interface CreatePartyModalProps {
   defaultType?: PartyType;
 }
 
-const CATEGORY_OPTIONS: PartyCategory[] = [
+const CATEGORY_OPTIONS: string[] = [
   "Retailer",
   "Wholesaler",
   "Distributor",
+  "Walk-in Customer",
+  "Corporate",
   "Manufacturer",
   "End Consumer",
   "Vendor",
@@ -490,14 +493,20 @@ export function CreatePartyModal({
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="state" className="text-xs font-semibold">
-                    State
+                    State / Place of Supply
                   </Label>
-                  <Input
-                    id="state"
-                    placeholder="e.g. Maharashtra"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                  />
+                  <Select value={state} onValueChange={setState}>
+                    <SelectTrigger id="state">
+                      <SelectValue placeholder="Select State" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-56">
+                      {INDIAN_STATES_AND_CODES.map((st) => (
+                        <SelectItem key={st} value={st}>
+                          {st}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="pincode" className="text-xs font-semibold">
