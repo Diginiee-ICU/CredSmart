@@ -163,22 +163,78 @@ const isMissingBootstrapFunction = (error: { code?: string; message?: string } |
   );
 };
 
-const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => {
-  const { data, error } = await supabase
-    .from("organization_memberships")
-    .select("organization_id, role")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+interface LocalOrgRecord {
+  id: string;
+  name: string;
+  business_type?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  gstin?: string;
+  pan?: string;
+  tax_rate?: number;
+  invoice_prefix?: string;
+  logo_url?: string;
+  role?: string;
+}
 
-  if (error) {
-    console.warn("Failed to fetch organization memberships:", error.message);
+export const getLocalOrgRegistry = (userId: string): LocalOrgRecord[] => {
+  try {
+    const raw = localStorage.getItem(`credsmart_org_registry_${userId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
     return [];
   }
+};
 
-  return (data || []).map((d) => ({
-    organization_id: d.organization_id,
-    role: d.role === "cashier" ? "cashier" : "store_owner",
+export const saveLocalOrgRegistry = (userId: string, org: LocalOrgRecord) => {
+  try {
+    const current = getLocalOrgRegistry(userId);
+    const exists = current.find((o) => o.id === org.id);
+    const updated = exists
+      ? current.map((o) => (o.id === org.id ? { ...o, ...org } : o))
+      : [org, ...current];
+    localStorage.setItem(`credsmart_org_registry_${userId}`, JSON.stringify(updated));
+  } catch {}
+};
+
+const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => {
+  const localList = getLocalOrgRegistry(userId);
+  const localMemberships: MembershipRow[] = localList.map((o) => ({
+    organization_id: o.id,
+    role: o.role === "cashier" ? "cashier" : "store_owner",
   }));
+
+  try {
+    const { data, error } = await supabase
+      .from("organization_memberships")
+      .select("organization_id, role")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Notice reading organization memberships:", error.message);
+      return localMemberships;
+    }
+
+    const remoteMemberships = (data || []).map((d) => ({
+      organization_id: d.organization_id,
+      role: d.role === "cashier" ? "cashier" : "store_owner",
+    }));
+
+    // Merge remote and local without duplicates
+    const map = new Map<string, MembershipRow>();
+    remoteMemberships.forEach((m) => map.set(m.organization_id, m));
+    localMemberships.forEach((m) => {
+      if (!map.has(m.organization_id)) map.set(m.organization_id, m);
+    });
+
+    return Array.from(map.values());
+  } catch {
+    return localMemberships;
+  }
 };
 
 const fetchMembership = async (userId: string) => {
@@ -226,50 +282,50 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
 
   if (uniqueCandidates.length === 0) return;
 
-  const { data: insertedProducts, error: insertProductsError } = await supabase
-    .from("products")
-    .insert(
-      uniqueCandidates.map((product) => ({
-        name: product.name,
-        barcode: product.barcode,
-        brand: product.brand,
-        category: product.category,
-        organization_id: orgId,
-      }))
-    )
-    .select("id, name, barcode");
+  try {
+    const { data: insertedProducts, error: insertProductsError } = await supabase
+      .from("products")
+      .insert(
+        uniqueCandidates.map((product) => ({
+          name: product.name,
+          barcode: product.barcode,
+          brand: product.brand,
+          category: product.category,
+          organization_id: orgId,
+        }))
+      )
+      .select("id, name, barcode");
 
-  if (insertProductsError) {
-    console.warn(`Product seed notice: ${insertProductsError.message}`);
-    return;
-  }
+    if (insertProductsError) {
+      console.warn(`Product seed notice: ${insertProductsError.message}`);
+      return;
+    }
 
-  if (!insertedProducts || insertedProducts.length === 0) return;
+    if (!insertedProducts || insertedProducts.length === 0) return;
 
-  const batchesToInsert = insertedProducts
-    .map((product) => {
-      const match = uniqueCandidates.find(
-        (candidate) => productKey(candidate.name, candidate.barcode) === productKey(product.name, product.barcode || "")
+    const batchesToInsert = insertedProducts
+      .map((product) => {
+        const match = uniqueCandidates.find(
+          (candidate) => productKey(candidate.name, candidate.barcode) === productKey(product.name, product.barcode || "")
+        );
+
+        if (!match) return null;
+
+        return {
+          product_id: product.id,
+          batch_number: match.batchNumber,
+          cost_price: match.costPrice,
+          mrp: match.mrp,
+          stock: match.stock,
+        };
+      })
+      .filter(
+        (batch): batch is { product_id: string; batch_number: string; cost_price: number; mrp: number; stock: number } =>
+          Boolean(batch)
       );
 
-      if (!match) return null;
+    if (batchesToInsert.length === 0) return;
 
-      return {
-        product_id: product.id,
-        batch_number: match.batchNumber,
-        cost_price: match.costPrice,
-        mrp: match.mrp,
-        stock: match.stock,
-      };
-    })
-    .filter(
-      (batch): batch is { product_id: string; batch_number: string; cost_price: number; mrp: number; stock: number } =>
-        Boolean(batch)
-    );
-
-  if (batchesToInsert.length === 0) return;
-
-  try {
     await supabase.from("product_batches").insert(batchesToInsert);
   } catch (err) {
     console.warn("Batch seed notice:", err);
@@ -339,7 +395,83 @@ const provisionOrganization = async (
   user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
   payload: PendingOnboardingData
 ) => {
-  const richOrganizationInsert = {
+  const generatedOrgId = crypto.randomUUID();
+  let orgId: string = generatedOrgId;
+
+  // 1. Try bootstrap RPC first
+  try {
+    const { data: bootstrapData } = await supabase.rpc(
+      "bootstrap_organization" as never,
+      {
+        p_name: payload.storeName || "My Store",
+        p_business_type: payload.businessType || DEFAULT_BUSINESS_TYPE,
+        p_address: payload.storeAddress || "",
+        p_phone: payload.storePhone || "",
+        p_email: payload.storeEmail || payload.email || user.email || "",
+        p_gstin: payload.gstin || "",
+        p_pan: payload.pan || "",
+        p_tax_rate: payload.taxRate || DEFAULT_TAX_RATE,
+        p_invoice_prefix: payload.invoicePrefix || DEFAULT_INVOICE_PREFIX,
+        p_logo_url: "",
+      } as never
+    ).maybeSingle<BootstrapOrgResult>();
+
+    if (bootstrapData?.organization_id) {
+      orgId = bootstrapData.organization_id;
+    }
+  } catch {
+    // Ignore RPC missing error
+  }
+
+  // 2. If RPC did not create org, perform direct insert without .select()
+  if (orgId === generatedOrgId) {
+    try {
+      const { error: insertErr } = await supabase.from("organizations").insert({
+        id: generatedOrgId,
+        name: payload.storeName || "My Store",
+        business_type: payload.businessType || DEFAULT_BUSINESS_TYPE,
+        address: payload.storeAddress || "",
+        phone: payload.storePhone || "",
+        email: payload.storeEmail || payload.email || user.email || "",
+        gstin: payload.gstin || "",
+        pan: payload.pan || "",
+        tax_rate: payload.taxRate || DEFAULT_TAX_RATE,
+        invoice_prefix: payload.invoicePrefix || DEFAULT_INVOICE_PREFIX,
+        logo_url: "",
+      });
+
+      if (insertErr) {
+        console.warn("Direct org insert fallback notice:", insertErr.message);
+        await supabase.from("organizations").insert({
+          id: generatedOrgId,
+          name: payload.storeName || "My Store",
+        });
+      }
+    } catch (err) {
+      console.warn("Direct org provision catch notice:", err);
+    }
+  }
+
+  // 3. Ensure membership is created
+  try {
+    await supabase.from("organization_memberships").upsert(
+      {
+        organization_id: orgId,
+        user_id: user.id,
+        role: "store_owner",
+      },
+      {
+        onConflict: "organization_id,user_id,role",
+        ignoreDuplicates: true,
+      }
+    );
+  } catch (e) {
+    console.warn("Membership provision upsert notice:", e);
+  }
+
+  // 4. Save to local org registry
+  saveLocalOrgRegistry(user.id, {
+    id: orgId,
     name: payload.storeName || "My Store",
     business_type: payload.businessType || DEFAULT_BUSINESS_TYPE,
     address: payload.storeAddress || "",
@@ -350,50 +482,10 @@ const provisionOrganization = async (
     tax_rate: payload.taxRate || DEFAULT_TAX_RATE,
     invoice_prefix: payload.invoicePrefix || DEFAULT_INVOICE_PREFIX,
     logo_url: "",
-  };
+    role: "store_owner",
+  });
 
-  let orgId: string | null = null;
-
-  const { data: richOrgData, error: richOrgError } = await supabase
-    .from("organizations")
-    .insert(richOrganizationInsert)
-    .select("id")
-    .single();
-
-  if (richOrgData?.id) {
-    orgId = richOrgData.id;
-  } else {
-    const { data: fallbackOrgData } = await supabase
-      .from("organizations")
-      .insert({ name: richOrganizationInsert.name })
-      .select("id")
-      .single();
-
-    if (fallbackOrgData?.id) {
-      orgId = fallbackOrgData.id;
-    } else {
-      console.error(
-        "Organization provisioning failed:",
-        richOrgError?.message || "Unknown error"
-      );
-      return null;
-    }
-  }
-
-  // Create membership
-  await supabase.from("organization_memberships").upsert(
-    {
-      organization_id: orgId,
-      user_id: user.id,
-      role: "store_owner",
-    },
-    {
-      onConflict: "organization_id,user_id,role,location_id",
-      ignoreDuplicates: true,
-    }
-  );
-
-  // Save Bank & UPI Details
+  // 5. Save Bank & UPI Details
   saveOrgBankAndUpi(orgId, {
     businessName: payload.storeName,
     phone: payload.storePhone,
@@ -423,7 +515,7 @@ const provisionOrganization = async (
     await wait(300 * (i + 1));
   }
 
-  return null;
+  return { organization_id: orgId, role: "store_owner" };
 };
 
 const OrgContext = createContext<OrgContextValue>({
@@ -499,19 +591,30 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(ACTIVE_ORG_KEY, currentActiveOrgId);
       setUserRole(matchedMembership.role === "cashier" ? "cashier" : "store_owner");
 
-      // Fetch all organizations user has access to
+      // Fetch all organizations user has access to from DB
       const orgIds = memberships.map((m) => m.organization_id);
-      const { data: orgRows, error: orgError } = await supabase
-        .from("organizations")
-        .select("*")
-        .in("id", orgIds);
+      let orgRows: any[] = [];
+      try {
+        const { data: dbRows, error: orgError } = await supabase
+          .from("organizations")
+          .select("*")
+          .in("id", orgIds);
 
-      if (orgError) {
-        console.warn("Failed to load organization details:", orgError.message);
+        if (!orgError && dbRows) {
+          orgRows = dbRows;
+        } else if (orgError) {
+          console.warn("Notice loading remote organization details:", orgError.message);
+        }
+      } catch (e) {
+        console.warn("Error querying organizations:", e);
       }
 
-      const allOrgs: OrgData[] = (orgRows || []).map((row) => {
-        // Retrieve local bank & upi details if cached
+      const localRegistry = getLocalOrgRegistry(user.id);
+
+      const allOrgs: OrgData[] = memberships.map((membership) => {
+        const row = orgRows.find((r) => r.id === membership.organization_id);
+        const local = localRegistry.find((l) => l.id === membership.organization_id);
+
         let bankName = "";
         let accountNumber = "";
         let ifsc = "";
@@ -519,8 +622,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         let upiId = "";
 
         try {
-          const cached = localStorage.getItem(`credsmart_business_settings_${row.id}`) ||
-            (row.id === currentActiveOrgId ? localStorage.getItem("credsmart_business_settings") : null);
+          const cached =
+            localStorage.getItem(`credsmart_business_settings_${membership.organization_id}`) ||
+            (membership.organization_id === currentActiveOrgId
+              ? localStorage.getItem("credsmart_business_settings")
+              : null);
           if (cached) {
             const parsed = JSON.parse(cached);
             upiId = parsed.upiId || "";
@@ -534,18 +640,29 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           }
         } catch {}
 
+        const name = row?.name || local?.name || "My Store";
+        const address = row?.address || local?.address || "";
+        const phone = row?.phone || local?.phone || "";
+        const email = row?.email || local?.email || "";
+        const gstin = row?.gstin || local?.gstin || "";
+        const pan = row?.pan || local?.pan || "";
+        const invoice_prefix = row?.invoice_prefix || local?.invoice_prefix || "INV";
+        const logo_url = row?.logo_url || local?.logo_url || "";
+        const tax_rate = row?.tax_rate ?? local?.tax_rate ?? 18;
+        const business_type = row?.business_type || local?.business_type || DEFAULT_BUSINESS_TYPE;
+
         return {
-          id: row.id,
-          name: row.name || "My Store",
-          address: row.address || "",
-          phone: row.phone || "",
-          email: row.email || "",
-          gstin: row.gstin || "",
-          pan: row.pan || "",
-          invoice_prefix: row.invoice_prefix || "INV",
-          logo_url: row.logo_url || "",
-          tax_rate: row.tax_rate ?? 18,
-          business_type: row.business_type || DEFAULT_BUSINESS_TYPE,
+          id: membership.organization_id,
+          name,
+          address,
+          phone,
+          email,
+          gstin,
+          pan,
+          invoice_prefix,
+          logo_url,
+          tax_rate,
+          business_type,
           bank_name: bankName,
           account_number: accountNumber,
           ifsc,
@@ -602,37 +719,71 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     try {
-      const { data: newOrg, error: orgError } = await supabase
-        .from("organizations")
-        .insert({
-          name: data.name.trim(),
-          business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
-          address: data.address?.trim() || "",
-          phone: data.phone?.trim() || "",
-          email: data.email?.trim() || user.email || "",
-          gstin: data.gstin?.trim() || "",
-          pan: data.pan?.trim() || "",
-          tax_rate: data.tax_rate || DEFAULT_TAX_RATE,
-          invoice_prefix: data.invoice_prefix?.trim() || DEFAULT_INVOICE_PREFIX,
-          logo_url: data.logo_url || "",
-        })
-        .select("id")
-        .single();
+      const newId = crypto.randomUUID();
 
-      if (orgError || !newOrg?.id) {
-        throw new Error(orgError?.message || "Failed to create store record");
+      // 1. Try to create organization in Supabase without .select() (avoids SELECT RLS constraint on insert)
+      try {
+        const { error: orgError } = await supabase
+          .from("organizations")
+          .insert({
+            id: newId,
+            name: data.name.trim(),
+            business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
+            address: data.address?.trim() || "",
+            phone: data.phone?.trim() || "",
+            email: data.email?.trim() || user.email || "",
+            gstin: data.gstin?.trim() || "",
+            pan: data.pan?.trim() || "",
+            tax_rate: data.tax_rate || DEFAULT_TAX_RATE,
+            invoice_prefix: data.invoice_prefix?.trim() || DEFAULT_INVOICE_PREFIX,
+            logo_url: data.logo_url || "",
+          });
+
+        if (orgError) {
+          console.warn("Direct org insert fallback notice:", orgError.message);
+          await supabase.from("organizations").insert({
+            id: newId,
+            name: data.name.trim(),
+          });
+        }
+      } catch (err) {
+        console.warn("Direct org creation catch notice:", err);
       }
 
-      const newId = newOrg.id;
+      // 2. Add owner membership
+      try {
+        await supabase.from("organization_memberships").upsert(
+          {
+            organization_id: newId,
+            user_id: user.id,
+            role: "store_owner",
+          },
+          {
+            onConflict: "organization_id,user_id,role",
+            ignoreDuplicates: true,
+          }
+        );
+      } catch (err) {
+        console.warn("Membership insert catch notice:", err);
+      }
 
-      // Add owner membership
-      await supabase.from("organization_memberships").insert({
-        organization_id: newId,
-        user_id: user.id,
+      // 3. Save to local org registry
+      saveLocalOrgRegistry(user.id, {
+        id: newId,
+        name: data.name.trim(),
+        business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
+        address: data.address?.trim() || "",
+        phone: data.phone?.trim() || "",
+        email: data.email?.trim() || user.email || "",
+        gstin: data.gstin?.trim() || "",
+        pan: data.pan?.trim() || "",
+        tax_rate: data.tax_rate || DEFAULT_TAX_RATE,
+        invoice_prefix: data.invoice_prefix?.trim() || DEFAULT_INVOICE_PREFIX,
+        logo_url: data.logo_url || "",
         role: "store_owner",
       });
 
-      // Save Bank & UPI Details for the new store
+      // 4. Save Bank & UPI Details for the new store
       saveOrgBankAndUpi(newId, {
         businessName: data.name,
         phone: data.phone,
@@ -647,7 +798,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         upiId: data.upiId,
       });
 
-      // Seed standard inventory
+      // 5. Seed standard inventory
       try {
         await seedOrgProducts(newId, {
           businessType: data.business_type || DEFAULT_BUSINESS_TYPE,
@@ -656,7 +807,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         console.warn("Product seed for new store notice:", seedErr);
       }
 
-      // Switch active organization
+      // 6. Switch active organization
       localStorage.setItem(ACTIVE_ORG_KEY, newId);
       setOrgId(newId);
       window.dispatchEvent(new CustomEvent("credsmart_org_changed", { detail: { orgId: newId } }));
