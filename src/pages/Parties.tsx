@@ -209,7 +209,7 @@ const DEFAULT_SAMPLE_PARTIES: Party[] = [
 
 export default function Parties() {
   const navigate = useNavigate();
-  const { orgId, loading: orgLoading } = useOrganization();
+  const { orgId, org, loading: orgLoading } = useOrganization();
   const { user } = useAuth();
 
   const [parties, setParties] = useState<Party[]>([]);
