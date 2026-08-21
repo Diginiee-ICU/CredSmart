@@ -365,6 +365,15 @@ export default function POSBilling() {
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [isProcessingSave, setIsProcessingSave] = useState(false);
 
+  // Mobile Layout & Voice Assistant State
+  const [mobileActiveView, setMobileActiveView] = useState<"cart" | "checkout">("cart");
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [voiceFeedback, setVoiceFeedback] = useState("");
+  const [voiceLang, setVoiceLang] = useState<string>("en-IN");
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const speechRecognizerRef = useRef<any>(null);
+
   // Price/Qty/Discount Modal Form States
   const [modalPriceValue, setModalPriceValue] = useState("");
   const [modalQtyValue, setModalQtyValue] = useState("");
@@ -1415,6 +1424,248 @@ export default function POSBilling() {
     }
   };
 
+  // Speech Recognition / Voice Billing Function
+  const handleExecuteVoiceCommand = useCallback(
+    (cmd: ParsedVoiceCommand) => {
+      setVoiceFeedback(`Command: ${cmd.intent} (${cmd.rawTranscript})`);
+
+      if (cmd.intent === "ADD_ITEM" && cmd.itemName) {
+        const query = cmd.itemName.toLowerCase().trim();
+        const qty = cmd.quantity || 1;
+
+        // Search products from catalog or standard suggestions
+        const match = products.find(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            (p.barcode && p.barcode.toLowerCase() === query) ||
+            (p.sku && p.sku.toLowerCase() === query) ||
+            (p.category && p.category.toLowerCase().includes(query))
+        );
+
+        if (match) {
+          const batch = match.batches[0] || {
+            id: `batch-${match.id}`,
+            mrp: 100,
+            costPrice: 0,
+            stock: 99,
+            batchNumber: "Default",
+          };
+
+          soundService.playScanBeep();
+
+          updateCurrentTab((tab) => {
+            const existingIdx = tab.items.findIndex(
+              (it) => it.product.id === match.id && it.batch.id === batch.id
+            );
+
+            let newItems: POSCartItem[];
+            if (existingIdx >= 0) {
+              newItems = tab.items.map((it, idx) =>
+                idx === existingIdx ? { ...it, quantity: it.quantity + qty } : it
+              );
+            } else {
+              const newItem: POSCartItem = {
+                id: `row-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                product: match,
+                batch,
+                mrp: batch.mrp,
+                sp: batch.mrp,
+                discountPercent: 0,
+                discountType: "percent",
+                quantity: qty,
+                itemCode: match.barcode || match.sku || `ITEM-${match.id.slice(0, 5)}`,
+              };
+              newItems = [newItem, ...tab.items];
+            }
+
+            return { ...tab, items: newItems, selectedItemIndex: 0 };
+          });
+
+          const msg = `Added ${qty} ${match.name}`;
+          setVoiceFeedback(msg);
+          speakPOSMessage(msg, settings.soundEnabled);
+          toast({
+            title: "🎙️ Voice: Item Added",
+            description: `${qty}x ${match.name} (₹${(batch.mrp * qty).toFixed(2)})`,
+          });
+        } else {
+          const notFoundMsg = `Item "${cmd.itemName}" not found`;
+          setVoiceFeedback(notFoundMsg);
+          speakPOSMessage(notFoundMsg, settings.soundEnabled);
+          toast({
+            title: "🎙️ Item Not Found",
+            description: `No inventory matches "${cmd.itemName}".`,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      if (cmd.intent === "SET_QUANTITY" && cmd.quantity) {
+        const qty = cmd.quantity;
+        updateCurrentTab((tab) => {
+          if (tab.items.length === 0 || tab.selectedItemIndex < 0) return tab;
+          const newItems = tab.items.map((it, idx) =>
+            idx === tab.selectedItemIndex ? { ...it, quantity: Math.max(1, qty) } : it
+          );
+          return { ...tab, items: newItems };
+        });
+        const msg = `Quantity changed to ${qty}`;
+        setVoiceFeedback(msg);
+        speakPOSMessage(msg, settings.soundEnabled);
+        toast({ title: "🎙️ Voice Command", description: msg });
+        return;
+      }
+
+      if (cmd.intent === "SET_PRICE" && cmd.price !== undefined) {
+        const price = cmd.price;
+        updateCurrentTab((tab) => {
+          if (tab.items.length === 0 || tab.selectedItemIndex < 0) return tab;
+          const newItems = tab.items.map((it, idx) =>
+            idx === tab.selectedItemIndex ? { ...it, sp: price } : it
+          );
+          return { ...tab, items: newItems };
+        });
+        const msg = `Price set to ₹${price}`;
+        setVoiceFeedback(msg);
+        speakPOSMessage(msg, settings.soundEnabled);
+        toast({ title: "🎙️ Voice Command", description: msg });
+        return;
+      }
+
+      if (cmd.intent === "SET_DISCOUNT" && cmd.discountValue !== undefined) {
+        const dVal = cmd.discountValue;
+        const dType = cmd.discountType || "percent";
+        updateCurrentTab((tab) => ({
+          ...tab,
+          discountValue: dVal,
+          discountType: dType,
+        }));
+        const msg = `Discount set to ${dVal}${dType === "percent" ? "%" : " rupees"}`;
+        setVoiceFeedback(msg);
+        speakPOSMessage(msg, settings.soundEnabled);
+        toast({ title: "🎙️ Voice Command", description: msg });
+        return;
+      }
+
+      if (cmd.intent === "SET_PAYMENT_MODE" && cmd.paymentMode) {
+        const mode = cmd.paymentMode;
+        updateCurrentTab((tab) => ({ ...tab, paymentMode: mode as any }));
+        const msg = `Payment mode set to ${mode}`;
+        setVoiceFeedback(msg);
+        speakPOSMessage(msg, settings.soundEnabled);
+        toast({ title: "🎙️ Voice Command", description: msg });
+        return;
+      }
+
+      if (cmd.intent === "SAVE_BILL") {
+        speakPOSMessage("Saving bill", settings.soundEnabled);
+        handleSaveBill(false);
+        return;
+      }
+
+      if (cmd.intent === "SAVE_AND_PRINT") {
+        speakPOSMessage("Saving and printing bill", settings.soundEnabled);
+        handleSaveBill(true);
+        return;
+      }
+
+      if (cmd.intent === "HOLD_BILL") {
+        speakPOSMessage("Bill put on hold", settings.soundEnabled);
+        handleHoldBillAndCreate();
+        return;
+      }
+
+      if (cmd.intent === "CLEAR_CART") {
+        updateCurrentTab((tab) => ({ ...tab, items: [], selectedItemIndex: -1 }));
+        const msg = "Cart cleared";
+        setVoiceFeedback(msg);
+        speakPOSMessage(msg, settings.soundEnabled);
+        toast({ title: "🎙️ Voice Command", description: msg });
+        return;
+      }
+
+      // Default fallback
+      setVoiceFeedback(`Heard: "${cmd.rawTranscript}"`);
+      toast({
+        title: "🎙️ Voice Heard",
+        description: `"${cmd.rawTranscript}". Try saying "Add Maggi" or "Save Bill".`,
+      });
+    },
+    [products, settings.soundEnabled, updateCurrentTab, handleSaveBill, handleHoldBillAndCreate]
+  );
+
+  const startVoiceListening = useCallback(
+    (lang: string = voiceLang) => {
+      if (!isVoiceSupported()) {
+        toast({
+          title: "🎙️ Voice Not Supported",
+          description: "Your browser does not support the Web Speech API. Please use Chrome, Edge, or Safari.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        if (speechRecognizerRef.current) {
+          speechRecognizerRef.current.abort();
+        }
+
+        const recognizer = createSpeechRecognizer(
+          (transcript, isFinal) => {
+            setVoiceTranscript(transcript);
+            if (isFinal) {
+              const cmd = parsePOSVoiceCommand(transcript);
+              handleExecuteVoiceCommand(cmd);
+              setIsListening(false);
+            }
+          },
+          (err) => {
+            setIsListening(false);
+            if (err !== "no-speech") {
+              setVoiceFeedback(`Voice Notice: ${err}`);
+            }
+          },
+          () => {
+            setIsListening(false);
+          },
+          lang
+        );
+
+        if (recognizer) {
+          speechRecognizerRef.current = recognizer;
+          recognizer.start();
+          setIsListening(true);
+          setVoiceTranscript("");
+          setVoiceFeedback("Listening... Say item name, quantity, or command");
+          soundService.playScanBeep();
+        }
+      } catch (err) {
+        console.error("Speech start error:", err);
+        setIsListening(false);
+      }
+    },
+    [voiceLang, handleExecuteVoiceCommand]
+  );
+
+  const stopVoiceListening = useCallback(() => {
+    if (speechRecognizerRef.current) {
+      try {
+        speechRecognizerRef.current.stop();
+      } catch {}
+      speechRecognizerRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
+  const toggleVoiceRecognition = useCallback(() => {
+    if (isListening) {
+      stopVoiceListening();
+    } else {
+      startVoiceListening();
+    }
+  }, [isListening, startVoiceListening, stopVoiceListening]);
+
   // Exit POS Navigation [CTRL + ESC]
   const handleExitPOS = useCallback(() => {
     if (currentTab.items.length > 0 || tabs.some((t) => t.items.length > 0)) {
@@ -1533,6 +1784,13 @@ export default function POSBilling() {
 
       // Single Key shortcuts (when not typing in an input field)
       if (!isInputActive) {
+        // [V] -> Toggle Voice Assistant
+        if (e.key === "v" || e.key === "V") {
+          e.preventDefault();
+          toggleVoiceRecognition();
+          return;
+        }
+
         // [P] -> Change Price
         if (e.key === "p" || e.key === "P") {
           e.preventDefault();
@@ -1600,6 +1858,7 @@ export default function POSBilling() {
     handleOpenCustomerModal,
     handleSaveBill,
     updateCurrentTab,
+    toggleVoiceRecognition,
   ]);
 
   // Search Input Keydown for dropdown navigation
@@ -1788,6 +2047,37 @@ export default function POSBilling() {
         </div>
       </div>
 
+      {/* MOBILE VIEW TOGGLE BAR (Cart vs Checkout) */}
+      <div className="flex lg:hidden items-center border-b border-slate-800 bg-slate-900/95 shrink-0 px-2.5 py-2 gap-2 z-20">
+        <button
+          type="button"
+          onClick={() => setMobileActiveView("cart")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
+            mobileActiveView === "cart"
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400"
+              : "bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700/60"
+          )}
+        >
+          <ShoppingBag className="w-3.5 h-3.5" />
+          <span>Cart ({currentTab.items.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileActiveView("checkout")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
+            mobileActiveView === "checkout"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-900/40 ring-1 ring-emerald-400"
+              : "bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700/60"
+          )}
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Checkout (₹{grandTotal.toLocaleString("en-IN")})</span>
+        </button>
+      </div>
+
       {/* ========================================================================= */}
       {/* 3. MAIN TERMINAL WORKSPACE (LEFT WORKBENCH + RIGHT SUMMARY) */}
       {/* ========================================================================= */}
@@ -1795,9 +2085,37 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         {/* LEFT COLUMN: ACTION RIBBON + SEARCH/BARCODE + CART ITEMS TABLE */}
         {/* ========================================================================= */}
-        <div className="flex-1 flex flex-col min-w-0 border-r border-slate-800/80 bg-slate-900/60 overflow-hidden">
+        <div
+          className={cn(
+            "flex-1 flex flex-col min-w-0 border-r border-slate-800/80 bg-slate-900/60 overflow-hidden",
+            mobileActiveView === "cart" ? "flex" : "hidden lg:flex"
+          )}
+        >
           {/* QUICK ACTION HOTKEY RIBBON */}
-          <div className="p-2.5 sm:p-3 border-b border-slate-800 bg-slate-900/90 flex items-center gap-2 flex-wrap shrink-0">
+          <div className="p-2 sm:p-3 border-b border-slate-800 bg-slate-900/90 flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0 overflow-x-auto scrollbar-none">
+            {/* 🎙️ Voice Assistant [V] */}
+            <button
+              type="button"
+              onClick={toggleVoiceRecognition}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-xs active:scale-95",
+                isListening
+                  ? "bg-rose-600 border-rose-400 text-white animate-pulse shadow-rose-900/50 shadow-md ring-2 ring-rose-400/40"
+                  : "border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-300 hover:text-indigo-200"
+              )}
+              title="Voice Assistant: speak to add items, change price, quantity or payment mode [V]"
+            >
+              {isListening ? (
+                <Radio className="w-3.5 h-3.5 text-white animate-spin" />
+              ) : (
+                <Mic className="w-3.5 h-3.5 text-indigo-400" />
+              )}
+              <span>{isListening ? "Listening..." : "Voice"}</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono bg-indigo-950/80 border border-indigo-700/60 px-1 py-0.5 rounded font-normal">
+                V
+              </kbd>
+            </button>
+
             {/* + New Item [CTRL + I] */}
             <button
               onClick={() => setShowNewItemModal(true)}
@@ -1805,7 +2123,7 @@ export default function POSBilling() {
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>New Item</span>
-              <kbd className="text-[10px] font-mono text-emerald-300 bg-emerald-950/80 border border-emerald-700/60 px-1 py-0.5 rounded font-normal">
+              <kbd className="hidden sm:inline text-[10px] font-mono text-emerald-300 bg-emerald-950/80 border border-emerald-700/60 px-1 py-0.5 rounded font-normal">
                 CTRL + I
               </kbd>
             </button>
@@ -1817,7 +2135,7 @@ export default function POSBilling() {
             >
               <Tag className="w-3.5 h-3.5 text-amber-400" />
               <span>Price</span>
-              <kbd className="text-[10px] font-mono text-amber-300 bg-amber-950/80 border border-amber-700/60 px-1 py-0.5 rounded font-normal">
+              <kbd className="hidden sm:inline text-[10px] font-mono text-amber-300 bg-amber-950/80 border border-amber-700/60 px-1 py-0.5 rounded font-normal">
                 P
               </kbd>
             </button>
@@ -1829,7 +2147,7 @@ export default function POSBilling() {
             >
               <Hash className="w-3.5 h-3.5 text-blue-400" />
               <span>Qty</span>
-              <kbd className="text-[10px] font-mono text-blue-300 bg-blue-950/80 border border-blue-700/60 px-1 py-0.5 rounded font-normal">
+              <kbd className="hidden sm:inline text-[10px] font-mono text-blue-300 bg-blue-950/80 border border-blue-700/60 px-1 py-0.5 rounded font-normal">
                 Q
               </kbd>
             </button>
@@ -1841,7 +2159,7 @@ export default function POSBilling() {
             >
               <Percent className="w-3.5 h-3.5 text-purple-400" />
               <span>Discount</span>
-              <kbd className="text-[10px] font-mono text-purple-300 bg-purple-950/80 border border-purple-700/60 px-1 py-0.5 rounded font-normal">
+              <kbd className="hidden sm:inline text-[10px] font-mono text-purple-300 bg-purple-950/80 border border-purple-700/60 px-1 py-0.5 rounded font-normal">
                 D
               </kbd>
             </button>
@@ -1849,11 +2167,11 @@ export default function POSBilling() {
             {/* Delete Item [DEL] */}
             <button
               onClick={handleDeleteSelectedItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 hover:text-rose-200 text-xs font-semibold transition-all shadow-xs active:scale-95 ml-auto sm:ml-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 hover:text-rose-200 text-xs font-semibold transition-all shadow-xs active:scale-95"
             >
               <Trash2 className="w-3.5 h-3.5 text-rose-400" />
               <span>Delete</span>
-              <kbd className="text-[10px] font-mono text-rose-300 bg-rose-950/80 border border-rose-700/60 px-1 py-0.5 rounded font-normal">
+              <kbd className="hidden sm:inline text-[10px] font-mono text-rose-300 bg-rose-950/80 border border-rose-700/60 px-1 py-0.5 rounded font-normal">
                 DEL
               </kbd>
             </button>
@@ -1861,11 +2179,11 @@ export default function POSBilling() {
             {/* Camera Scan Toggle for Touch Terminals / Mobile */}
             <button
               onClick={() => setShowCameraScannerModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all ml-auto hidden sm:flex active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all ml-auto active:scale-95"
               title="Open Camera Barcode Scanner"
             >
               <Camera className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Camera Scan</span>
+              <span>Scan Barcode</span>
             </button>
           </div>
 
@@ -1921,6 +2239,21 @@ export default function POSBilling() {
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
+
+                {/* Voice Search Trigger */}
+                <button
+                  type="button"
+                  onClick={toggleVoiceRecognition}
+                  className={cn(
+                    "p-1.5 rounded-lg mr-1.5 transition-all flex items-center justify-center",
+                    isListening
+                      ? "bg-rose-500 text-white animate-pulse shadow-xs"
+                      : "text-indigo-400 hover:text-indigo-300 hover:bg-slate-800"
+                  )}
+                  title="Voice Command & Search [V]"
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                </button>
 
                 {/* [F1] Shortcut Badge */}
                 <div className="pr-3 flex items-center">
