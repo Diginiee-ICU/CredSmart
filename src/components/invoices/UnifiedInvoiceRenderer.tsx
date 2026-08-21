@@ -83,6 +83,14 @@ export interface UnifiedInvoiceProps {
   notes?: string;
   terms?: string;
   settings?: InvoiceSettingsState;
+  bankDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    accountHolder?: string;
+    branch?: string;
+  };
+  upiId?: string;
   layout?: "a4" | "80mm" | "58mm";
   className?: string;
 }
@@ -117,6 +125,8 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       notes,
       terms,
       settings: propSettings,
+      bankDetails: propBankDetails,
+      upiId: propUpiId,
       layout = "a4",
       className,
     },
@@ -150,16 +160,27 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const igstVal = totals.igst || 0;
 
     const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
-    const selectedBank = activeSettings.bankAccounts.find((b) => b.id === activeSettings.selectedBankAccountId) ||
-      activeSettings.bankAccounts[0] || {
-        bankName: "HDFC Bank Ltd.",
-        accountNumber: "50200084920194",
-        ifsc: "HDFC0001429",
-        branch: "Main Branch",
-      };
+    const selectedBank = propBankDetails?.accountNumber
+      ? {
+          bankName: propBankDetails.bankName || "HDFC Bank Ltd.",
+          accountNumber: propBankDetails.accountNumber,
+          ifsc: propBankDetails.ifsc || "HDFC0001429",
+          branch: propBankDetails.branch || "Main Branch",
+          accountHolder: propBankDetails.accountHolder || storeInfo.name,
+        }
+      : activeSettings.bankAccounts.find((b) => b.id === activeSettings.selectedBankAccountId) ||
+        activeSettings.bankAccounts[0] || {
+          bankName: "HDFC Bank Ltd.",
+          accountNumber: "50200084920194",
+          ifsc: "HDFC0001429",
+          branch: "Main Branch",
+          accountHolder: storeInfo.name,
+        };
+
+    const activeUpiId = propUpiId || activeSettings.selectedPaymentQrUpi || "credsmart@upi";
 
     const upiPayload = `upi://pay?pa=${encodeURIComponent(
-      activeSettings.selectedPaymentQrUpi || "credsmart@upi"
+      activeUpiId
     )}&pn=${encodeURIComponent(storeInfo.name)}&am=${totals.grandTotal}&cu=INR&tn=${encodeURIComponent(
       `Inv ${invoiceNumber}`
     )}`;
@@ -299,12 +320,21 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             </div>
           </div>
 
+          {/* Payment & Bank Details on Thermal Receipt */}
+          <div className="border-t border-dashed border-neutral-400 pt-1.5 mt-1.5 text-[9.5px] space-y-0.5 text-left leading-tight">
+            <p className="font-bold uppercase tracking-wider text-neutral-800 text-[8.5px]">Payment &amp; Bank Details:</p>
+            {selectedBank.bankName && <p className="text-neutral-700">Bank: <strong className="text-neutral-900">{selectedBank.bankName}</strong></p>}
+            {selectedBank.accountNumber && <p className="text-neutral-700">A/C: <strong className="text-neutral-900 font-mono">{selectedBank.accountNumber}</strong></p>}
+            {selectedBank.ifsc && <p className="text-neutral-700">IFSC: <strong className="text-neutral-900 font-mono">{selectedBank.ifsc}</strong></p>}
+            {activeUpiId && <p className="text-neutral-700">UPI ID: <strong className="text-neutral-900 font-mono">{activeUpiId}</strong></p>}
+          </div>
+
           {/* Footer QR & Message */}
-          <div className="text-center pt-3 mt-2 border-t border-dashed border-neutral-400">
+          <div className="text-center pt-2 mt-1.5 border-t border-dashed border-neutral-400">
             <div className="inline-block p-1 bg-white border border-neutral-300 rounded mb-1">
-              <QRCodeSVG value={upiPayload} size={50} level="L" />
+              <QRCodeSVG value={upiPayload} size={52} level="M" />
             </div>
-            <p className="text-[9px] font-bold text-neutral-700">Scan &amp; Pay via UPI</p>
+            <p className="text-[9px] font-bold text-neutral-800">Scan &amp; Pay via UPI ({activeUpiId})</p>
             <p className="text-[9px] text-neutral-500 mt-1 italic">Thank you for your business!</p>
           </div>
         </div>

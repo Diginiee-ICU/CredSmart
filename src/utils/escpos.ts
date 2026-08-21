@@ -592,12 +592,24 @@ export function buildReceiptEscPos(data: ReceiptData, options?: EscPosOptions): 
     builder.newline(1);
   }
 
+  // Bank & UPI Details on Thermal Receipt
+  const effectiveUpi = data.upiId || "credsmart@upi";
+  if (data.bankName || data.accountNumber || data.upiId) {
+    builder.align("left");
+    builder.textLine("--- BANK & UPI DETAILS ---");
+    if (data.bankName) builder.textLine(`Bank: ${data.bankName}`);
+    if (data.accountNumber) builder.textLine(`A/C: ${data.accountNumber}`);
+    if (data.ifsc) builder.textLine(`IFSC: ${data.ifsc}`);
+    if (data.upiId) builder.textLine(`UPI ID: ${data.upiId}`);
+    builder.newline(1);
+  }
+
   // 8. UPI QR Code or Verification QR Code
   builder.align("center");
   if (options?.printQr !== false) {
-    const qrData = `upi://pay?pa=credsmart@upi&pn=${encodeURIComponent(data.storeName || "CredSmart")}&am=${data.total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(data.invoiceNumber)}`;
+    const qrData = `upi://pay?pa=${encodeURIComponent(effectiveUpi)}&pn=${encodeURIComponent(data.storeName || "CredSmart")}&am=${data.total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(data.invoiceNumber)}`;
     builder.qrCode(qrData, { size: is80mm ? 6 : 4, errorLevel: "M" });
-    builder.textLine("Scan UPI QR to Pay / Verify");
+    builder.textLine(`Scan UPI QR to Pay (${effectiveUpi})`);
     builder.newline(1);
   }
 

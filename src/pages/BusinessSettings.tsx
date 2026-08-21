@@ -53,6 +53,8 @@ import {
 } from "@/types/invoice-settings";
 import { cn } from "@/lib/utils";
 
+import { CreateBusinessModal } from "@/components/CreateBusinessModal";
+
 const STORAGE_KEY = "credsmart_business_settings";
 
 export default function BusinessSettings() {
@@ -287,6 +289,20 @@ export default function BusinessSettings() {
 
       // Save to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      if (orgId) {
+        localStorage.setItem(`credsmart_business_settings_${orgId}`, JSON.stringify(payload));
+      }
+
+      // Sync bank & UPI to invoice settings
+      try {
+        const invRaw = localStorage.getItem("credsmart_invoice_settings");
+        if (invRaw) {
+          const parsed = JSON.parse(invRaw);
+          parsed.bankAccounts = bankAccounts;
+          if (upiId) parsed.selectedPaymentQrUpi = upiId.trim();
+          localStorage.setItem("credsmart_invoice_settings", JSON.stringify(parsed));
+        }
+      } catch {}
 
       // Also sync to Supabase organization record if orgId is available
       if (orgId) {
@@ -889,48 +905,13 @@ export default function BusinessSettings() {
       </div>
 
       {/* Create New Business Modal */}
-      <Dialog open={newBusinessModal} onOpenChange={setNewBusinessModal}>
-        <DialogContent className="max-w-lg sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#EA580C]" />
-              Create New Business / Branch
-            </DialogTitle>
-            <DialogDescription>
-              Add another store or company under your CredSmart account
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2 text-xs">
-            <div className="space-y-1.5">
-              <Label className="font-semibold text-foreground">New Business / Branch Name</Label>
-              <Input
-                placeholder="e.g. CredSmart Wholesale Depot"
-                value={newBusinessName}
-                onChange={(e) => setNewBusinessName(e.target.value)}
-                className="h-10 rounded-xl"
-              />
-            </div>
-            <Button
-              className="w-full h-10 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white font-bold"
-              onClick={() => {
-                if (!newBusinessName.trim()) {
-                  toast({ title: "Please enter business name", variant: "destructive" });
-                  return;
-                }
-                toast({
-                  title: "New business profile initialized!",
-                  description: `Switched to ${newBusinessName}`,
-                });
-                setBusinessName(newBusinessName);
-                setNewBusinessName("");
-                setNewBusinessModal(false);
-              }}
-            >
-              Create Business
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateBusinessModal
+        open={newBusinessModal}
+        onOpenChange={setNewBusinessModal}
+        onSuccess={() => {
+          refresh();
+        }}
+      />
 
       {/* Chat Support Modal */}
       <Dialog open={chatSupportModal} onOpenChange={setChatSupportModal}>

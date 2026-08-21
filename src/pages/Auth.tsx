@@ -4,14 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, Lock, User, Building2, ArrowRight, Phone, MapPin,
   ArrowLeft, Upload, FileText, Image as ImageIcon, X, Globe,
-  KeyRound, CheckCircle2,
+  KeyRound, CheckCircle2, Landmark, CreditCard, QrCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { seedProductsByBusinessType } from "@/data/seed-products";
 import { WebsiteProductImport } from "@/components/WebsiteProductImport";
 import { ROUTE_PATHS } from "@/config/routes";
-import { useOrganization, getPendingOnboarding, setPendingOnboarding, clearPendingOnboarding } from "@/hooks/useOrganization";
+import { useOrganization, getPendingOnboarding, setPendingOnboarding, clearPendingOnboarding, PendingOnboardingData } from "@/hooks/useOrganization";
 import {
   Dialog,
   DialogContent,
@@ -43,38 +43,6 @@ const isMissingBootstrapFunction = (error: { code?: string; message?: string } |
   );
 };
 
-interface OnboardingProductSeed {
-  name: string;
-  barcode: string;
-  brand: string;
-  category: string;
-  costPrice: number;
-  mrp: number;
-  stock: number;
-  batchNumber: string;
-}
-
-interface PendingOnboardingData {
-  email: string;
-  storeName: string;
-  businessType: string;
-  storeAddress: string;
-  storePhone: string;
-  storeEmail: string;
-  gstin: string;
-  pan: string;
-  taxRate: number;
-  invoicePrefix: string;
-  scrapedProducts: Array<{
-    name: string;
-    barcode: string;
-    brand: string;
-    category: string;
-    costPrice: number;
-    mrp: number;
-  }>;
-}
-
 export default function Auth() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState(1);
@@ -97,6 +65,13 @@ export default function Auth() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [scrapedProducts, setScrapedProducts] = useState<any[]>([]);
+
+  // Bank & UPI Details
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifsc, setIfsc] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
+  const [upiId, setUpiId] = useState("");
 
   // Password reset state
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -201,6 +176,11 @@ export default function Auth() {
     pan: pan.trim().toUpperCase(),
     taxRate: parseFloat(taxRate) || 18,
     invoicePrefix: (invoicePrefix || "INV").trim().toUpperCase(),
+    bankName: bankName.trim(),
+    accountNumber: accountNumber.trim(),
+    ifsc: ifsc.trim().toUpperCase(),
+    accountHolder: accountHolder.trim() || storeName.trim(),
+    upiId: upiId.trim(),
     scrapedProducts: scrapedProducts.map((sp) => ({
       name: String(sp.name || "").trim(),
       barcode: String(sp.barcode || "").trim(),
@@ -722,25 +702,67 @@ export default function Auth() {
             </form>
           )}
 
-          {/* SIGNUP STEP 3: Invoicing */}
+          {/* SIGNUP STEP 3: Invoicing, Bank & UPI */}
           {mode === "signup" && step === 3 && (
             <form onSubmit={handleFinalSubmit} className="space-y-4">
               <button type="button" onClick={() => setStep(2)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Back to Store Setup
               </button>
-              <p className="text-xs font-mono font-semibold text-accent uppercase tracking-wider">Step 3 of {totalSteps} — Invoicing &amp; GST Details</p>
+              <p className="text-xs font-mono font-semibold text-accent uppercase tracking-wider">Step 3 of {totalSteps} — Invoicing, Bank &amp; UPI Setup</p>
 
-              <div className="relative">
-                <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input type="text" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''))} placeholder="GSTIN (optional, 15 chars)" maxLength={15} className={cn(inputClass, "font-mono")} />
-              </div>
-
-              <div className="relative">
-                <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input type="text" value={pan} onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''))} placeholder="PAN (optional, 10 chars)" maxLength={10} className={cn(inputClass, "font-mono")} />
-              </div>
-
+              {/* GST & PAN */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input type="text" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''))} placeholder="GSTIN (optional)" maxLength={15} className={cn(inputClass, "font-mono text-xs")} />
+                </div>
+                <div className="relative">
+                  <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input type="text" value={pan} onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''))} placeholder="PAN (optional)" maxLength={10} className={cn(inputClass, "font-mono text-xs")} />
+                </div>
+              </div>
+
+              {/* Bank Account Details */}
+              <div className="pt-2 border-t border-border/60">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <Landmark className="w-4 h-4 text-gold" />
+                  <span className="text-xs font-bold text-foreground">Bank Account Details (for Invoices)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank name (e.g. HDFC, SBI)" className={cn(inputClass, "text-xs")} />
+                  </div>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.trim())} placeholder="Account number" className={cn(inputClass, "font-mono text-xs")} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                  <div className="relative">
+                    <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input type="text" value={ifsc} onChange={(e) => setIfsc(e.target.value.toUpperCase().trim())} placeholder="IFSC Code (e.g. HDFC0001429)" maxLength={11} className={cn(inputClass, "font-mono text-xs uppercase")} />
+                  </div>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input type="text" value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} placeholder="Account holder name" className={cn(inputClass, "text-xs")} />
+                  </div>
+                </div>
+              </div>
+
+              {/* UPI ID for Dynamic QR */}
+              <div className="pt-2 border-t border-border/60">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <QrCode className="w-4 h-4 text-emerald-500" />
+                  <span className="text-xs font-bold text-foreground">UPI ID for Instant QR Payment</span>
+                </div>
+                <div className="relative">
+                  <QrCode className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value.trim())} placeholder="UPI ID (e.g. storename@okaxis, 9876543210@paytm)" className={cn(inputClass, "font-mono text-xs")} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Tax Rate (%)</label>
                   <input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} min={0} max={100} step={0.5}
@@ -753,8 +775,8 @@ export default function Auth() {
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/80 text-xs text-muted-foreground">
-                💡 Invoicing parameters can be tuned anytime in Store Settings.
+              <div className="p-3 rounded-xl bg-secondary/50 border border-border/80 text-xs text-muted-foreground">
+                💡 Bank &amp; UPI details are automatically rendered on printed invoices &amp; thermal POS receipts.
               </div>
 
               <button type="submit" disabled={loading} className="w-full h-11 rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] ripple-surface">

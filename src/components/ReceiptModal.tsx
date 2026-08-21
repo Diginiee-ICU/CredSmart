@@ -33,6 +33,12 @@ export interface ReceiptData {
   storeEmail?: string;
   storeLogoUrl?: string;
   gstin?: string;
+  upiId?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifsc?: string;
+  accountHolder?: string;
+  branch?: string;
   date: Date | string;
   dueDate?: string;
   isEstimate?: boolean;

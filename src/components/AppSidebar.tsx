@@ -39,6 +39,7 @@ import {
 import { NAV_ROUTES, ROUTE_PATHS, isRouteAllowedForRole } from "@/config/routes";
 import { toast } from "sonner";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
+import { CreateBusinessModal } from "@/components/CreateBusinessModal";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ export function AppSidebar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [universalModalOpen, setUniversalModalOpen] = useState(false);
+  const [createBusinessModalOpen, setCreateBusinessModalOpen] = useState(false);
+  const [businessSwitcherOpen, setBusinessSwitcherOpen] = useState(false);
+  const businessSwitcherRef = useRef<HTMLDivElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     Parties: true,
     Items: true,
@@ -56,14 +60,17 @@ export function AppSidebar() {
   const quickCreateRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
-  const { org, userRole } = useOrganization();
+  const { org, orgId, organizations, switchOrganization, userRole } = useOrganization();
   const location = useLocation();
 
-  // Close quick create dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (quickCreateRef.current && !quickCreateRef.current.contains(event.target as Node)) {
         setQuickCreateOpen(false);
+      }
+      if (businessSwitcherRef.current && !businessSwitcherRef.current.contains(event.target as Node)) {
+        setBusinessSwitcherOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -308,9 +315,16 @@ export function AppSidebar() {
         collapsed ? "w-[72px]" : "w-[244px]"
       )}
     >
-      {/* Top Store Header */}
-      <div className="p-3.5 border-b border-slate-800/80 shrink-0 bg-[#080D1A]">
-        <div className="flex items-center gap-3">
+      {/* Top Store Header with Multi-Business Switcher */}
+      <div className="p-3.5 border-b border-slate-800/80 shrink-0 bg-[#080D1A] relative" ref={businessSwitcherRef}>
+        <div
+          onClick={() => !collapsed && setBusinessSwitcherOpen(!businessSwitcherOpen)}
+          className={cn(
+            "flex items-center gap-3 rounded-xl p-1 -m-1 transition-colors cursor-pointer group",
+            !collapsed && "hover:bg-slate-800/50"
+          )}
+          title="Switch Business / Branch"
+        >
           {/* Amber/Gold Avatar with initials */}
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-lg shadow-md shrink-0 ring-2 ring-amber-400/30">
             {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
@@ -318,20 +332,83 @@ export function AppSidebar() {
 
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-bold text-white truncate tracking-tight">
+              <div className="flex items-center justify-between gap-1">
+                <h2 className="text-sm font-bold text-white truncate tracking-tight group-hover:text-amber-400 transition-colors">
                   {org?.name || "CredAlert Business"}
                 </h2>
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0",
+                    businessSwitcherOpen && "rotate-180 text-amber-400"
+                  )}
+                />
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                 <p className="text-[11px] text-slate-400 font-mono tracking-tight truncate">
-                  {org?.phone || "7409200341"}
+                  {org?.phone || "Active Store"}
                 </p>
               </div>
             </div>
           )}
         </div>
+
+        {/* Multi-Business Switcher Popover Menu */}
+        {businessSwitcherOpen && !collapsed && (
+          <div className="absolute left-3 right-3 top-full mt-2 bg-slate-900 text-slate-200 rounded-2xl shadow-2xl border border-slate-700/80 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
+              <span>Your Businesses</span>
+              <span className="text-amber-400">{organizations.length} Store(s)</span>
+            </div>
+
+            <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
+              {organizations.map((business) => {
+                const isActive = business.id === orgId;
+                return (
+                  <button
+                    key={business.id}
+                    type="button"
+                    onClick={() => {
+                      switchOrganization(business.id);
+                      setBusinessSwitcherOpen(false);
+                      toast.success(`Switched to "${business.name}"`);
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all",
+                      isActive
+                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold"
+                        : "hover:bg-slate-800 text-slate-300 hover:text-white"
+                    )}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="truncate text-xs">{business.name}</p>
+                      <p className="text-[10px] text-slate-500 font-mono truncate">
+                        {business.business_type || "Retail"} {business.gstin ? `• ${business.gstin}` : ""}
+                      </p>
+                    </div>
+                    {isActive && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 shadow-sm shadow-amber-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pt-1.5 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setBusinessSwitcherOpen(false);
+                  setCreateBusinessModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Business / Branch</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* "+ Create Sales Invoice" Dropdown Button */}
         {!collapsed && (
@@ -650,6 +727,11 @@ export function AppSidebar() {
       <UniversalQuickCreateModal
         open={universalModalOpen}
         onOpenChange={setUniversalModalOpen}
+      />
+
+      <CreateBusinessModal
+        open={createBusinessModalOpen}
+        onOpenChange={setCreateBusinessModalOpen}
       />
     </aside>
   );
