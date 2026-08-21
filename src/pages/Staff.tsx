@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MANAGER_ROLES } from "@/config/routes";
 
 type AppRole = "super_admin" | "store_owner" | "manager" | "cashier";
 type InviteStatus = "pending" | "accepted" | "expired" | "cancelled";
@@ -82,7 +83,7 @@ export default function Staff() {
   const [inviteRole, setInviteRole] = useState<AppRole>("cashier");
   const [inviting, setInviting] = useState(false);
 
-  const canManageStaff = userRole === "store_owner" || userRole === "super_admin" || userRole === "manager" || !userRole;
+  const canManageStaff = MANAGER_ROLES.includes(userRole as (typeof MANAGER_ROLES)[number]);
 
   useEffect(() => {
     if (orgLoading) return;
@@ -603,17 +604,17 @@ export default function Staff() {
             {
               role: "manager" as AppRole,
               title: "Store Manager",
-              perms: "POS billing + inventory adjustments, supplier purchases, debit returns, stock.",
+              perms: "Full store access: POS, inventory, purchases, reports, settings, and staff management.",
             },
             {
               role: "store_owner" as AppRole,
               title: "Store Owner",
-              perms: "All manager rights + financial reports, analytics, staff invites, shop settings.",
+              perms: "Same full store access as Store Manager and Super Admin.",
             },
             {
               role: "super_admin" as AppRole,
               title: "Super Admin",
-              perms: "Unrestricted master access across all multi-outlet branches & databases.",
+              perms: "Same full store access as Store Owner and Store Manager.",
             },
           ].map(({ role, title, perms }) => (
             <div
