@@ -2325,256 +2325,475 @@ export default function POSBilling() {
             )}
           </div>
 
-          {/* CART ITEM TABLE */}
+          {/* CART ITEM WORKBENCH CONTAINER (Mobile Cards + Desktop Table) */}
           <div className="flex-1 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-950/40">
-            <table className="w-full text-left border-collapse min-w-[720px]">
-              <thead className="bg-slate-900/90 backdrop-blur-xs sticky top-0 z-10 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                <tr>
-                  <th className="py-3 px-3 w-12 text-center">#</th>
-                  <th className="py-3 px-3">ITEM &amp; DETAILS</th>
-                  <th className="py-3 px-3">BARCODE / SKU</th>
-                  <th className="py-3 px-3 text-right">MRP (₹)</th>
-                  <th className="py-3 px-3 text-right">SP (₹)</th>
-                  <th className="py-3 px-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <span>DISC</span>
-                      <Info className="w-3 h-3 text-slate-500" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 text-center w-32">QUANTITY</th>
-                  <th className="py-3 px-3 text-right">TOTAL (₹)</th>
-                  <th className="py-3 px-3 text-center w-12">ACT</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-800/60 text-xs">
-                {currentTab.items.length === 0 ? (
+            {/* 1. DESKTOP DATA TABLE (Visible on lg: and larger screens) */}
+            <div className="hidden lg:block">
+              <table className="w-full text-left border-collapse min-w-[720px]">
+                <thead className="bg-slate-900/90 backdrop-blur-xs sticky top-0 z-10 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                   <tr>
-                    <td colSpan={9} className="py-24 text-center">
-                      {/* High-End Empty State Wireframe */}
-                      <div className="flex flex-col items-center justify-center max-w-md mx-auto text-slate-500 space-y-4">
-                        <div className="relative">
-                          <div className="w-20 h-20 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-xl shadow-indigo-950/50">
-                            <ScanLine className="w-10 h-10 animate-pulse" />
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs shadow-md">
-                            +
-                          </div>
-                        </div>
-
-                        <div className="space-y-1 text-center">
-                          <p className="text-sm font-bold text-slate-200">
-                            Cart is empty &amp; scanner is ready
-                          </p>
-                          <p className="text-xs text-slate-400 max-w-xs">
-                            Scan any item barcode with your hardware scanner, or press{" "}
-                            <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded font-mono text-indigo-300">
-                              F1
-                            </kbd>{" "}
-                            to search catalog.
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2">
-                          <button
-                            onClick={() => {
-                              searchInputRef.current?.focus();
-                            }}
-                            className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-all"
-                          >
-                            <Search className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
-                            Search Products
-                          </button>
-                          <button
-                            onClick={() => setShowNewItemModal(true)}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-all shadow-md shadow-indigo-500/20"
-                          >
-                            <Plus className="w-3.5 h-3.5 inline mr-1" />
-                            + New Item
-                          </button>
-                        </div>
+                    <th className="py-3 px-3 w-12 text-center">#</th>
+                    <th className="py-3 px-3">ITEM &amp; DETAILS</th>
+                    <th className="py-3 px-3">BARCODE / SKU</th>
+                    <th className="py-3 px-3 text-right">MRP (₹)</th>
+                    <th className="py-3 px-3 text-right">SP (₹)</th>
+                    <th className="py-3 px-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <span>DISC</span>
+                        <Info className="w-3 h-3 text-slate-500" />
                       </div>
-                    </td>
+                    </th>
+                    <th className="py-3 px-3 text-center w-32">QUANTITY</th>
+                    <th className="py-3 px-3 text-right">TOTAL (₹)</th>
+                    <th className="py-3 px-3 text-center w-12">ACT</th>
                   </tr>
-                ) : (
-                  currentTab.items.map((item, idx) => {
-                    const isSelected = idx === currentTab.selectedItemIndex;
-                    const lineAmount =
-                      (item.sp -
-                        (item.discountType === "percent"
-                          ? (item.sp * item.discountPercent) / 100
-                          : item.discountPercent)) *
-                      item.quantity;
+                </thead>
 
-                    return (
-                      <tr
-                        key={item.id}
-                        onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
-                        className={cn(
-                          "transition-all cursor-pointer group",
-                          isSelected
-                            ? "bg-indigo-950/40 border-l-4 border-indigo-500 text-white font-medium"
-                            : "hover:bg-slate-900/60 text-slate-300"
-                        )}
-                      >
-                        {/* NO */}
-                        <td className="py-3 px-3 text-center text-slate-500 font-mono">
-                          {idx + 1}
-                        </td>
-
-                        {/* ITEMS */}
-                        <td className="py-3 px-3 font-semibold text-white">
-                          <div className="flex flex-col">
-                            <span className="text-sm">{item.product.name}</span>
-                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-normal">
-                              {item.product.brand && (
-                                <span className="bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700/60 text-slate-300">
-                                  {item.product.brand}
-                                </span>
-                              )}
-                              {item.batch.batchNumber && (
-                                <span className="font-mono text-slate-400">
-                                  Batch: {item.batch.batchNumber}
-                                </span>
-                              )}
+                <tbody className="divide-y divide-slate-800/60 text-xs">
+                  {currentTab.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-24 text-center">
+                        {/* High-End Empty State Wireframe */}
+                        <div className="flex flex-col items-center justify-center max-w-md mx-auto text-slate-500 space-y-4">
+                          <div className="relative">
+                            <div className="w-20 h-20 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-xl shadow-indigo-950/50">
+                              <ScanLine className="w-10 h-10 animate-pulse" />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs shadow-md">
+                              +
                             </div>
                           </div>
-                        </td>
 
-                        {/* ITEM CODE */}
-                        <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">
-                          <span className="bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-800">
-                            {item.itemCode}
-                          </span>
-                        </td>
+                          <div className="space-y-1 text-center">
+                            <p className="text-sm font-bold text-slate-200">
+                              Cart is empty &amp; scanner is ready
+                            </p>
+                            <p className="text-xs text-slate-400 max-w-xs">
+                              Scan any item barcode with your hardware scanner, tap{" "}
+                              <span className="text-indigo-400 font-semibold cursor-pointer" onClick={toggleVoiceRecognition}>
+                                🎤 Voice [V]
+                              </span>{" "}
+                              or press{" "}
+                              <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded font-mono text-indigo-300">
+                                F1
+                              </kbd>{" "}
+                              to search catalog.
+                            </p>
+                          </div>
 
-                        {/* MRP */}
-                        <td className="py-3 px-3 text-right text-slate-400 font-mono">
-                          ₹{item.mrp.toFixed(2)}
-                        </td>
-
-                        {/* SP (₹) */}
-                        <td className="py-3 px-3 text-right font-mono font-bold text-white">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                              handleOpenChangePrice();
-                            }}
-                            className="hover:underline hover:text-indigo-400 cursor-pointer bg-slate-900 px-2 py-1 rounded border border-slate-800 inline-block"
-                            title="Click or press [P] to edit price"
-                          >
-                            ₹{item.sp.toFixed(2)}
-                          </span>
-                        </td>
-
-                        {/* DISC */}
-                        <td className="py-3 px-3 text-right text-slate-300 font-mono">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                              handleOpenChangeDiscount();
-                            }}
-                            className={cn(
-                              "cursor-pointer hover:underline px-2 py-0.5 rounded text-xs font-semibold",
-                              item.discountPercent > 0
-                                ? "bg-emerald-950/60 text-emerald-400 border border-emerald-700/60"
-                                : "text-slate-500 hover:text-slate-300"
-                            )}
-                            title="Click or press [D] to edit discount"
-                          >
-                            {item.discountPercent > 0
-                              ? `${item.discountPercent}${item.discountType === "percent" ? "%" : "₹"}`
-                              : "0%"}
-                          </span>
-                        </td>
-
-                        {/* QUANTITY +/- */}
-                        <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="inline-flex items-center border border-slate-700 rounded-lg bg-slate-900 shadow-inner overflow-hidden">
+                          <div className="flex items-center gap-2 pt-2">
                             <button
                               onClick={() => {
-                                updateCurrentTab((tab) => {
-                                  const newItems = tab.items.map((it, i) => {
-                                    if (i === idx) {
-                                      return { ...it, quantity: Math.max(1, it.quantity - 1) };
-                                    }
-                                    return it;
-                                  });
-                                  return { ...tab, items: newItems };
-                                });
+                                searchInputRef.current?.focus();
                               }}
-                              className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                              className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-all"
                             >
-                              <Minus className="w-3.5 h-3.5" />
+                              <Search className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+                              Search Products
                             </button>
-                            <span
-                              onClick={() => {
-                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                                handleOpenChangeQty();
-                              }}
-                              className="px-3 py-0.5 text-xs font-extrabold font-mono min-w-[32px] text-center cursor-pointer hover:bg-slate-800/80 text-white"
-                              title="Click or press [Q] to change quantity"
-                            >
-                              {item.quantity}
-                            </span>
                             <button
-                              onClick={() => {
-                                updateCurrentTab((tab) => {
-                                  const newItems = tab.items.map((it, i) => {
-                                    if (i === idx) {
-                                      return { ...it, quantity: it.quantity + 1 };
-                                    }
-                                    return it;
-                                  });
-                                  return { ...tab, items: newItems };
-                                });
-                              }}
-                              className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                              onClick={toggleVoiceRecognition}
+                              className="px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60 text-xs font-bold text-indigo-300 transition-all"
                             >
-                              <Plus className="w-3.5 h-3.5" />
+                              <Mic className="w-3.5 h-3.5 inline mr-1 text-indigo-400" />
+                              Voice Search [V]
+                            </button>
+                            <button
+                              onClick={() => setShowNewItemModal(true)}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-all shadow-md shadow-indigo-500/20"
+                            >
+                              <Plus className="w-3.5 h-3.5 inline mr-1" />
+                              + New Item
                             </button>
                           </div>
-                        </td>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentTab.items.map((item, idx) => {
+                      const isSelected = idx === currentTab.selectedItemIndex;
+                      const lineAmount =
+                        (item.sp -
+                          (item.discountType === "percent"
+                            ? (item.sp * item.discountPercent) / 100
+                            : item.discountPercent)) *
+                        item.quantity;
 
-                        {/* AMOUNT */}
-                        <td className="py-3 px-3 text-right font-mono font-black text-white text-sm">
-                          ₹{lineAmount.toFixed(2)}
-                        </td>
+                      return (
+                        <tr
+                          key={item.id}
+                          onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
+                          className={cn(
+                            "transition-all cursor-pointer group",
+                            isSelected
+                              ? "bg-indigo-950/40 border-l-4 border-indigo-500 text-white font-medium"
+                              : "hover:bg-slate-900/60 text-slate-300"
+                          )}
+                        >
+                          {/* NO */}
+                          <td className="py-3 px-3 text-center text-slate-500 font-mono">
+                            {idx + 1}
+                          </td>
 
-                        {/* DELETE ACTION */}
-                        <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          {/* ITEMS */}
+                          <td className="py-3 px-3 font-semibold text-white">
+                            <div className="flex flex-col">
+                              <span className="text-sm">{item.product.name}</span>
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-normal">
+                                {item.product.brand && (
+                                  <span className="bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700/60 text-slate-300">
+                                    {item.product.brand}
+                                  </span>
+                                )}
+                                {item.batch.batchNumber && (
+                                  <span className="font-mono text-slate-400">
+                                    Batch: {item.batch.batchNumber}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* ITEM CODE */}
+                          <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">
+                            <span className="bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-800">
+                              {item.itemCode}
+                            </span>
+                          </td>
+
+                          {/* MRP */}
+                          <td className="py-3 px-3 text-right text-slate-400 font-mono">
+                            ₹{item.mrp.toFixed(2)}
+                          </td>
+
+                          {/* SP (₹) */}
+                          <td className="py-3 px-3 text-right font-mono font-bold text-white">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                handleOpenChangePrice();
+                              }}
+                              className="hover:underline hover:text-indigo-400 cursor-pointer bg-slate-900 px-2 py-1 rounded border border-slate-800 inline-block"
+                              title="Click or press [P] to edit price"
+                            >
+                              ₹{item.sp.toFixed(2)}
+                            </span>
+                          </td>
+
+                          {/* DISC */}
+                          <td className="py-3 px-3 text-right text-slate-300 font-mono">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                handleOpenChangeDiscount();
+                              }}
+                              className={cn(
+                                "cursor-pointer hover:underline px-2 py-0.5 rounded text-xs font-semibold",
+                                item.discountPercent > 0
+                                  ? "bg-emerald-950/60 text-emerald-400 border border-emerald-700/60"
+                                  : "text-slate-500 hover:text-slate-300"
+                              )}
+                              title="Click or press [D] to edit discount"
+                            >
+                              {item.discountPercent > 0
+                                ? `${item.discountPercent}${item.discountType === "percent" ? "%" : "₹"}`
+                                : "0%"}
+                            </span>
+                          </td>
+
+                          {/* QUANTITY +/- */}
+                          <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-flex items-center border border-slate-700 rounded-lg bg-slate-900 shadow-inner overflow-hidden">
+                              <button
+                                onClick={() => {
+                                  updateCurrentTab((tab) => {
+                                    const newItems = tab.items.map((it, i) => {
+                                      if (i === idx) {
+                                        return { ...it, quantity: Math.max(1, it.quantity - 1) };
+                                      }
+                                      return it;
+                                    });
+                                    return { ...tab, items: newItems };
+                                  });
+                                }}
+                                className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </button>
+                              <span
+                                onClick={() => {
+                                  updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                  handleOpenChangeQty();
+                                }}
+                                className="px-3 py-0.5 text-xs font-extrabold font-mono min-w-[32px] text-center cursor-pointer hover:bg-slate-800/80 text-white"
+                                title="Click or press [Q] to change quantity"
+                              >
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  updateCurrentTab((tab) => {
+                                    const newItems = tab.items.map((it, i) => {
+                                      if (i === idx) {
+                                        return { ...it, quantity: it.quantity + 1 };
+                                      }
+                                      return it;
+                                    });
+                                    return { ...tab, items: newItems };
+                                  });
+                                }}
+                                className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+
+                          {/* AMOUNT */}
+                          <td className="py-3 px-3 text-right font-mono font-black text-white text-sm">
+                            ₹{lineAmount.toFixed(2)}
+                          </td>
+
+                          {/* DELETE ACTION */}
+                          <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                updateCurrentTab((tab) => {
+                                  const newItems = tab.items.filter((_, i) => i !== idx);
+                                  return {
+                                    ...tab,
+                                    items: newItems,
+                                    selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
+                                  };
+                                });
+                              }}
+                              className="p-1 hover:bg-rose-950/60 rounded text-slate-500 hover:text-rose-400 transition-colors"
+                              title="Remove item"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Screens & Touch UX) */}
+            <div className="block lg:hidden p-3 space-y-2.5">
+              {currentTab.items.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 space-y-3">
+                  <div className="w-16 h-16 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mx-auto shadow-lg">
+                    <ScanLine className="w-8 h-8 animate-pulse" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-200">Cart is empty</p>
+                  <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                    Search item above, scan barcode, or speak command via 🎤 Voice button
+                  </p>
+                  <button
+                    onClick={toggleVoiceRecognition}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-md shadow-indigo-950/50"
+                  >
+                    <Mic className="w-4 h-4" />
+                    <span>Try Voice Billing (e.g. &quot;Add 2 Milk&quot;)</span>
+                  </button>
+                </div>
+              ) : (
+                currentTab.items.map((item, idx) => {
+                  const isSelected = idx === currentTab.selectedItemIndex;
+                  const lineAmount =
+                    (item.sp -
+                      (item.discountType === "percent"
+                        ? (item.sp * item.discountPercent) / 100
+                        : item.discountPercent)) *
+                    item.quantity;
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
+                      className={cn(
+                        "p-3 rounded-xl border transition-all select-none bg-slate-900 shadow-sm",
+                        isSelected
+                          ? "border-indigo-500 ring-1 ring-indigo-500/30 bg-slate-900/90"
+                          : "border-slate-800/90 hover:border-slate-700"
+                      )}
+                    >
+                      {/* Header: Item Name + Delete Button */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
+                              #{idx + 1}
+                            </span>
+                            <h4 className="text-xs font-bold text-white truncate">{item.product.name}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-400">
+                            <span>{item.itemCode}</span>
+                            {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateCurrentTab((tab) => {
+                              const newItems = tab.items.filter((_, i) => i !== idx);
+                              return {
+                                ...tab,
+                                items: newItems,
+                                selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
+                              };
+                            });
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Price, Steppers, & Line Amount */}
+                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800/80">
+                        {/* Selling Price & Discount */}
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                handleOpenChangePrice();
+                              }}
+                              className="text-xs font-bold text-white font-mono hover:text-indigo-400 cursor-pointer underline decoration-dotted"
+                            >
+                              ₹{item.sp.toFixed(2)}
+                            </span>
+                            {item.discountPercent > 0 && (
+                              <span className="text-[9px] font-bold px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-700/60">
+                                -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-mono line-through">
+                            MRP: ₹{item.mrp.toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* Touch-Friendly Quantity Stepper */}
+                        <div className="flex items-center border border-slate-700 rounded-lg bg-slate-950 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                           <button
+                            type="button"
                             onClick={() => {
                               updateCurrentTab((tab) => {
-                                const newItems = tab.items.filter((_, i) => i !== idx);
-                                return {
-                                  ...tab,
-                                  items: newItems,
-                                  selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
-                                };
+                                const newItems = tab.items.map((it, i) => {
+                                  if (i === idx) {
+                                    return { ...it, quantity: Math.max(1, it.quantity - 1) };
+                                  }
+                                  return it;
+                                });
+                                return { ...tab, items: newItems };
                               });
                             }}
-                            className="p-1 hover:bg-rose-950/60 rounded text-slate-500 hover:text-rose-400 transition-colors"
-                            title="Remove item"
+                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700 transition-colors"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Minus className="w-3.5 h-3.5" />
                           </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          <span
+                            onClick={() => {
+                              updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                              handleOpenChangeQty();
+                            }}
+                            className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-white cursor-pointer hover:bg-slate-800/80"
+                          >
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCurrentTab((tab) => {
+                                const newItems = tab.items.map((it, i) => {
+                                  if (i === idx) {
+                                    return { ...it, quantity: it.quantity + 1 };
+                                  }
+                                  return it;
+                                });
+                                return { ...tab, items: newItems };
+                              });
+                            }}
+                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Line Total */}
+                        <div className="text-right">
+                          <span className="text-sm font-black font-mono text-emerald-400">
+                            ₹{lineAmount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
+
+          {/* MOBILE STICKY CHECKOUT BAR (When in Cart View) */}
+          {mobileActiveView === "cart" && (
+            <div className="flex lg:hidden items-center justify-between p-3 border-t border-slate-800 bg-slate-900/95 shrink-0 gap-3">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
+                  Total ({totalItemsCount} Qty)
+                </span>
+                <span className="text-xl font-black font-mono text-emerald-400 leading-none">
+                  ₹{grandTotal.toLocaleString("en-IN")}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileActiveView("checkout")}
+                disabled={currentTab.items.length === 0}
+                className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-950/40 disabled:opacity-50 active:scale-95 transition-all"
+              >
+                <span>Proceed to Pay</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ========================================================================= */}
         {/* RIGHT SUMMARY & CHECKOUT PANEL: Enterprise FinTech Layout */}
         {/* ========================================================================= */}
-        <div className="w-full lg:w-[410px] bg-slate-900 flex flex-col justify-between shrink-0 p-4 border-t lg:border-t-0 lg:border-l border-slate-800 overflow-y-auto shadow-2xl">
+        <div
+          className={cn(
+            "w-full lg:w-[410px] bg-slate-900 flex flex-col justify-between shrink-0 p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-800 overflow-y-auto shadow-2xl",
+            mobileActiveView === "checkout" ? "flex" : "hidden lg:flex"
+          )}
+        >
+          {/* Mobile Top Back-to-Cart Trigger */}
+          <div className="flex lg:hidden items-center justify-between pb-3 border-b border-slate-800 mb-2">
+            <button
+              type="button"
+              onClick={() => setMobileActiveView("cart")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Cart ({currentTab.items.length} items)</span>
+            </button>
+            <span className="text-xs font-mono font-bold text-emerald-400">
+              ₹{grandTotal.toFixed(2)}
+            </span>
+          </div>
+
           <div className="space-y-4">
             {/* Top Quick Actions: [Add Discount [F2]], [Add Additional Charge [F3]] */}
             <div className="grid grid-cols-2 gap-2">
@@ -3769,6 +3988,193 @@ export default function POSBilling() {
                 className="py-2.5 px-3 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-xl"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5. LIVE VOICE ASSISTANT FLOATING BAR & MODAL */}
+      {/* ========================================================================= */}
+
+      {/* Floating Active Voice Listening Bar */}
+      {isListening && (
+        <div className="fixed bottom-20 lg:bottom-8 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[92vw] sm:w-auto bg-slate-900/95 backdrop-blur-xl border border-rose-500/60 rounded-2xl p-3.5 shadow-2xl shadow-rose-950/80 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Pulsing Animated Mic */}
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-600/40">
+                <Mic className="w-5 h-5 animate-pulse" />
+              </div>
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+              </span>
+            </div>
+
+            {/* Live Transcript & Soundwave */}
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Voice Assistant Active</span>
+                  <span className="text-[10px] font-mono font-normal text-rose-400 bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800/60">
+                    {voiceLang === "hi-IN" ? "हिंदी" : "English"}
+                  </span>
+                </span>
+              </div>
+              <p className="text-xs text-rose-200 font-medium truncate mt-0.5">
+                {voiceTranscript ? `"${voiceTranscript}"` : voiceFeedback || "Listening for command (e.g. 'Add 2 Milk', 'Save Bill')..."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Lang Switcher */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextLang = voiceLang === "en-IN" ? "hi-IN" : "en-IN";
+                setVoiceLang(nextLang);
+                startVoiceListening(nextLang);
+              }}
+              className="px-2.5 py-1 text-[11px] font-bold font-mono rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Switch Speech Language (English / हिंदी)"
+            >
+              {voiceLang === "en-IN" ? "HI" : "EN"}
+            </button>
+
+            {/* Stop Mic */}
+            <button
+              type="button"
+              onClick={stopVoiceListening}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title="Stop Listening"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Assistant Commands Cheat Sheet & Manual Trigger Modal */}
+      {showVoiceModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-white animate-scale-in">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                  <Mic className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    POS Voice Billing Assistant
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Touchless billing via Web Speech recognition
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowVoiceModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mic Trigger Center Card */}
+            <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-3">
+              <button
+                type="button"
+                onClick={toggleVoiceRecognition}
+                className={cn(
+                  "w-16 h-16 rounded-3xl mx-auto flex items-center justify-center text-white transition-all shadow-xl active:scale-95 cursor-pointer",
+                  isListening
+                    ? "bg-rose-600 animate-pulse ring-4 ring-rose-500/40 shadow-rose-900/50"
+                    : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/40"
+                )}
+              >
+                <Mic className="w-8 h-8" />
+              </button>
+
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-slate-200">
+                  {isListening ? "Listening... Speak your command" : "Tap Microphone to Speak or Press [V]"}
+                </p>
+                <p className="text-xs text-slate-400 font-mono">
+                  {voiceTranscript ? `Heard: "${voiceTranscript}"` : voiceFeedback || "Supports item names, quantities, discounts, & payment triggers."}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Command Examples Chips */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Supported Voice Commands:
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {[
+                  { cmd: "Add 2 Maggi", desc: "Adds item with quantity" },
+                  { cmd: "3 Basmati Rice", desc: "Fast quantity item add" },
+                  { cmd: "Quantity 5", desc: "Updates active item qty" },
+                  { cmd: "Price 120", desc: "Changes line selling price" },
+                  { cmd: "Discount 10 percent", desc: "Applies bill discount" },
+                  { cmd: "Payment UPI", desc: "Sets payment to UPI/QR" },
+                  { cmd: "Payment Cash", desc: "Sets payment to Cash" },
+                  { cmd: "Save and Print", desc: "Completes & prints bill" },
+                  { cmd: "Save Bill", desc: "Directly saves transaction" },
+                  { cmd: "Hold Bill", desc: "Parks bill into new tab" },
+                ].map((c, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      const parsed = parsePOSVoiceCommand(c.cmd);
+                      handleExecuteVoiceCommand(parsed);
+                    }}
+                    className="p-2 rounded-xl bg-slate-800/70 border border-slate-700/60 hover:border-indigo-500 hover:bg-slate-800 cursor-pointer transition-all flex flex-col"
+                  >
+                    <span className="font-bold text-indigo-300 font-mono">
+                      &quot;{c.cmd}&quot;
+                    </span>
+                    <span className="text-[10px] text-slate-400">{c.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Language:</span>
+                <button
+                  type="button"
+                  onClick={() => setVoiceLang("en-IN")}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-bold rounded-lg transition-colors",
+                    voiceLang === "en-IN" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+                  )}
+                >
+                  English (India)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVoiceLang("hi-IN")}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-bold rounded-lg transition-colors",
+                    voiceLang === "hi-IN" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+                  )}
+                >
+                  हिंदी (Hindi)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowVoiceModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs"
+              >
+                Close
               </button>
             </div>
           </div>
