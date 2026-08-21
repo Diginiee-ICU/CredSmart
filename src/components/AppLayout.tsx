@@ -63,6 +63,12 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Fast checkout, barcode scan & instant invoice generation",
     };
   }
+  if (pathname === ROUTE_PATHS.parties) {
+    return {
+      title: "Parties & SharedLedger Hub",
+      subtitle: "Customers, suppliers, balances, and real-time SharedLedger synchronization",
+    };
+  }
   if (pathname === ROUTE_PATHS.items) {
     return {
       title: "Items Master Catalog",
@@ -73,6 +79,12 @@ function getPageMeta(pathname: string): PageMeta {
     return {
       title: "Inventory Management",
       subtitle: "Live stock levels, low-stock warnings, and stock adjustments",
+    };
+  }
+  if (pathname === ROUTE_PATHS.godown) {
+    return {
+      title: "Godown & Multi-Warehouse Hub",
+      subtitle: "Multi-warehouse tracking, capacity metrics, and stock transfers",
     };
   }
   if (pathname === ROUTE_PATHS.barcode) {
@@ -117,10 +129,10 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Manage supplier return notes and inventory deductions",
     };
   }
-  if (pathname === ROUTE_PATHS.salesHistory) {
+  if (pathname === ROUTE_PATHS.sales || pathname === ROUTE_PATHS.salesHistory) {
     return {
-      title: "Sales Invoices & History",
-      subtitle: "Review past transactions, thermal receipts, and refunds",
+      title: "Sales Multi-Document Hub",
+      subtitle: "Manage Sales Invoices, Quotations, Credit Notes, Delivery Challans & Returns",
     };
   }
   if (pathname === ROUTE_PATHS.expenses) {
@@ -147,10 +159,22 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Monitor system operations, cashier logs, and security events",
     };
   }
-  if (pathname === ROUTE_PATHS.settings) {
+  if (pathname === ROUTE_PATHS.settings || pathname === ROUTE_PATHS.businessSettings) {
     return {
-      title: "Store Settings & Preferences",
-      subtitle: "Configure store details, tax rules, thermal printer & backups",
+      title: "Business Settings",
+      subtitle: "Edit Your Company Settings And Information",
+    };
+  }
+  if (pathname === ROUTE_PATHS.invoiceSettings) {
+    return {
+      title: "Invoice Settings",
+      subtitle: "Live interactive invoice theme customizer and print layouts",
+    };
+  }
+  if (pathname === ROUTE_PATHS.printSettings) {
+    return {
+      title: "Print Settings",
+      subtitle: "Configure thermal printer, barcode hardware, and digital scales",
     };
   }
 

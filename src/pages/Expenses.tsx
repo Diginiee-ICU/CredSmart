@@ -1,538 +1,965 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Plus,
-  Receipt,
-  Trash2,
-  Calendar,
-  IndianRupee,
-  Search,
-  Filter,
-  Layers,
-  PieChart,
-  Tag,
-  X,
-} from "lucide-react";
-import { format } from "date-fns";
+  format,
+  subDays,
+  startOfDay,
+  endOfDay,
+  isWithinInterval,
+  parseISO,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Plus,
+  Receipt,
+  Search,
+  Calendar as CalendarIcon,
+  ChevronDown,
+  ArrowUpDown,
+  Settings,
+  Keyboard,
+  BarChart3,
+  FileSpreadsheet,
+  Printer,
+  Trash2,
+  Tag,
+  IndianRupee,
+  Building,
+  CreditCard,
+  X,
+  FileText,
+  Check,
+  PieChart,
+  HelpCircle,
+} from "lucide-react";
 
-interface Expense {
+export interface ExpenseRecord {
   id: string;
+  expense_number?: string;
+  party_name?: string;
   category: string;
   amount: number;
   date: string;
-  description: string;
+  description?: string;
+  payment_method?: string;
+  created_at?: string;
 }
 
-const EXPENSE_CATEGORIES = [
+const DEFAULT_EXPENSE_CATEGORIES = [
+  "All Expenses Categories",
   "Rent",
   "Electricity/Utilities",
   "Tea & Snacks",
   "Office Supplies",
   "Transport/Delivery",
-  "Salaries",
-  "Maintenance",
+  "Salaries & Wages",
+  "Maintenance & Repair",
+  "Advertising & Marketing",
+  "Packaging Materials",
+  "Internet & Phone",
   "Miscellaneous",
 ];
 
-const categoryColors: Record<string, string> = {
-  Rent: "badge-purple",
-  "Electricity/Utilities": "badge-info",
-  "Tea & Snacks": "badge-warning",
-  "Office Supplies": "badge-info",
-  "Transport/Delivery": "badge-neutral",
-  Salaries: "badge-success",
-  Maintenance: "badge-warning",
-  Miscellaneous: "badge-neutral",
-};
+const DATE_RANGE_PRESETS = [
+  { id: "today", label: "Today" },
+  { id: "yesterday", label: "Yesterday" },
+  { id: "last7", label: "Last 7 Days" },
+  { id: "last30", label: "Last 30 Days" },
+  { id: "thisMonth", label: "This Month" },
+  { id: "lastMonth", label: "Last Month" },
+  { id: "last365", label: "Last 365 Days" },
+  { id: "all", label: "All Time" },
+];
 
 export default function Expenses() {
-  const { orgId } = useOrganization();
+  const { orgId, org } = useOrganization();
   const { toast } = useToast();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Form State
+  const storageKeyLocalExpenses = `credsmart_expenses_${orgId || "default"}`;
+  const storageKeyCategories = `credsmart_expense_categories_${orgId || "default"}`;
+
+  // Main State
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDatePreset, setSelectedDatePreset] = useState("last365");
+  const [selectedCategory, setSelectedCategory] = useState("All Expenses Categories");
+  const [categoriesList, setCategoriesList] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
+
+  // Sorting
+  const [sortField, setSortField] = useState<"date" | "amount">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Modals state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Form State for New Expense
+  const [expenseNumber, setExpenseNumber] = useState("");
+  const [partyName, setPartyName] = useState("");
+  const [formCategory, setFormCategory] = useState("Tea & Snacks");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [paymentMethod, setPaymentMethod] = useState("Cash in Hand");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const fetchExpenses = async () => {
-    if (!orgId) return;
-    try {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("organization_id", orgId)
-        .order("date", { ascending: false });
+  // Settings State
+  const [newCustomCategory, setNewCustomCategory] = useState("");
+  const [expensePrefix, setExpensePrefix] = useState("EXP-");
 
-      if (error) throw error;
-      setExpenses(data || []);
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        title: "Error fetching expenses",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+  // Keyboard Shortcuts Listener (Alt+N, etc.)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.altKey && e.key.toLowerCase() === "n") || (e.ctrlKey && e.key.toLowerCase() === "e")) {
+        e.preventDefault();
+        openCreateModal();
+      } else if (e.key === "?" && !e.ctrlKey && !e.altKey) {
+        const active = document.activeElement;
+        const isInput = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+        if (!isInput) {
+          e.preventDefault();
+          setIsShortcutsModalOpen(true);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expenses]);
+
+  // Load Categories & Expenses
+  const fetchExpenses = async () => {
+    setLoading(true);
+    let loadedFromDb = false;
+
+    if (orgId) {
+      try {
+        const { data, error } = await supabase
+          .from("expenses")
+          .select("*")
+          .eq("organization_id", orgId)
+          .order("date", { ascending: false });
+
+        if (!error && data) {
+          const mapped: ExpenseRecord[] = data.map((d: any, idx: number) => ({
+            id: d.id,
+            expense_number: d.expense_number || `EXP-${String(data.length - idx).padStart(3, "0")}`,
+            party_name: d.party_name || d.description?.split(" - ")[0] || "Vendor / Store",
+            category: d.category || "Miscellaneous",
+            amount: Number(d.amount || 0),
+            date: d.date ? d.date.slice(0, 10) : format(new Date(), "yyyy-MM-dd"),
+            description: d.description || "",
+            payment_method: d.payment_method || "Cash",
+            created_at: d.created_at,
+          }));
+          setExpenses(mapped);
+          loadedFromDb = true;
+        }
+      } catch (err) {
+        console.warn("Supabase fetch failed, falling back to local persistence:", err);
+      }
     }
+
+    if (!loadedFromDb) {
+      try {
+        const local = localStorage.getItem(storageKeyLocalExpenses);
+        if (local) {
+          setExpenses(JSON.parse(local));
+        } else {
+          // Initialize with empty array matching Capture10.PNG initial state
+          setExpenses([]);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load custom categories if any
+    try {
+      const storedCats = localStorage.getItem(storageKeyCategories);
+      if (storedCats) {
+        setCategoriesList(JSON.parse(storedCats));
+      }
+    } catch {}
+
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchExpenses();
   }, [orgId]);
 
+  const persistExpensesLocally = (newList: ExpenseRecord[]) => {
+    setExpenses(newList);
+    localStorage.setItem(storageKeyLocalExpenses, JSON.stringify(newList));
+  };
+
+  const openCreateModal = () => {
+    const nextSeq = expenses.length + 1;
+    setExpenseNumber(`${expensePrefix}${String(nextSeq).padStart(3, "0")}`);
+    setPartyName("");
+    setFormCategory("Tea & Snacks");
+    setAmount("");
+    setDate(format(new Date(), "yyyy-MM-dd"));
+    setDescription("");
+    setPaymentMethod("Cash in Hand");
+    setIsCreateModalOpen(true);
+  };
+
+  // Add Expense
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgId) return;
-    setSaving(true);
-    
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.from("expenses").insert({
-        organization_id: orgId,
-        category,
-        amount: Number(amount),
-        date,
-        description,
-        created_by: userData.user.id,
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid expense amount.",
+        variant: "destructive",
       });
-
-      if (error) throw error;
-      
-      toast({ title: "Expense Added", description: `Recorded ₹${amount} for ${category}` });
-      setShowModal(false);
-      setAmount("");
-      setDescription("");
-      fetchExpenses();
-    } catch (err: any) {
-      toast({ title: "Failed to add expense", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
+      return;
     }
-  };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
-      if (error) throw error;
-      setDeletingId(null);
-      fetchExpenses();
-      toast({ title: "Expense deleted" });
-    } catch (err: any) {
-      toast({ title: "Error deleting", description: err.message, variant: "destructive" });
-    }
-  };
+    setSaving(true);
 
-  const [dateFilter, setDateFilter] = useState<"all" | "thisMonth" | "today">("all");
-
-  const totalExpenses = useMemo(() => {
-    return expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-  }, [expenses]);
-
-  const todayStr = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
-  const thisMonthStr = useMemo(() => format(new Date(), "yyyy-MM"), []);
-
-  const todayExpenses = useMemo(() => {
-    return expenses
-      .filter((e) => (e.date || "").slice(0, 10) === todayStr)
-      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
-  }, [expenses, todayStr]);
-
-  const thisMonthExpenses = useMemo(() => {
-    return expenses
-      .filter((e) => (e.date || "").slice(0, 7) === thisMonthStr)
-      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
-  }, [expenses, thisMonthStr]);
-
-  const categoryBreakdown = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach((e) => {
-      map[e.category] = (map[e.category] || 0) + Number(e.amount || 0);
-    });
-    const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
-    return {
-      topCategory: sorted[0] ? sorted[0][0] : "None",
-      topAmount: sorted[0] ? sorted[0][1] : 0,
+    const newExpense: ExpenseRecord = {
+      id: `exp_${Date.now()}`,
+      expense_number: expenseNumber.trim() || `EXP-${Date.now().toString().slice(-4)}`,
+      party_name: partyName.trim() || "General Expense Payee",
+      category: formCategory,
+      amount: numAmount,
+      date,
+      description: description.trim() || undefined,
+      payment_method: paymentMethod,
+      created_at: new Date().toISOString(),
     };
-  }, [expenses]);
 
-  const filtered = useMemo(() => {
-    return expenses.filter((e) => {
-      const matchesSearch =
-        !search ||
-        (e.description && e.description.toLowerCase().includes(search.toLowerCase())) ||
-        e.category.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "all" || e.category === selectedCategory;
-
-      let matchesDate = true;
-      if (dateFilter === "today") {
-        matchesDate = (e.date || "").slice(0, 10) === todayStr;
-      } else if (dateFilter === "thisMonth") {
-        matchesDate = (e.date || "").slice(0, 7) === thisMonthStr;
+    // Save to Supabase if orgId is available
+    if (orgId) {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          await supabase.from("expenses").insert({
+            organization_id: orgId,
+            category: formCategory,
+            amount: numAmount,
+            date,
+            description: `${newExpense.party_name} - ${newExpense.description || formCategory}`,
+            created_by: userData.user.id,
+          });
+        }
+      } catch (err) {
+        console.warn("Could not insert directly to Supabase table, saving locally:", err);
       }
+    }
 
-      return matchesSearch && matchesCategory && matchesDate;
+    const updated = [newExpense, ...expenses];
+    persistExpensesLocally(updated);
+
+    toast({
+      title: "Expense Created",
+      description: `Recorded ₹${numAmount.toLocaleString("en-IN")} for ${newExpense.category}.`,
     });
-  }, [expenses, search, selectedCategory, dateFilter, todayStr, thisMonthStr]);
+
+    setSaving(false);
+    setIsCreateModalOpen(false);
+  };
+
+  // Delete Expense
+  const handleDelete = async (id: string) => {
+    if (orgId) {
+      try {
+        await supabase.from("expenses").delete().eq("id", id);
+      } catch {}
+    }
+    const updated = expenses.filter((e) => e.id !== id);
+    persistExpensesLocally(updated);
+    setDeletingId(null);
+    toast({ title: "Expense Deleted" });
+  };
+
+  // Filtering & Sorting
+  const filteredExpenses = useMemo(() => {
+    const now = new Date();
+    let startDate = subDays(now, 365);
+    let endDate = endOfDay(now);
+
+    if (selectedDatePreset === "today") {
+      startDate = startOfDay(now);
+      endDate = endOfDay(now);
+    } else if (selectedDatePreset === "yesterday") {
+      startDate = startOfDay(subDays(now, 1));
+      endDate = endOfDay(subDays(now, 1));
+    } else if (selectedDatePreset === "last7") {
+      startDate = subDays(now, 7);
+    } else if (selectedDatePreset === "last30") {
+      startDate = subDays(now, 30);
+    } else if (selectedDatePreset === "thisMonth") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (selectedDatePreset === "lastMonth") {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    } else if (selectedDatePreset === "last365") {
+      startDate = subDays(now, 365);
+    } else if (selectedDatePreset === "all") {
+      startDate = new Date(2000, 0, 1);
+    }
+
+    return expenses
+      .filter((exp) => {
+        // Category Filter
+        if (selectedCategory !== "All Expenses Categories" && exp.category !== selectedCategory) {
+          return false;
+        }
+
+        // Date Filter
+        try {
+          const expDate = parseISO(exp.date);
+          const inRange = isWithinInterval(expDate, { start: startDate, end: endDate });
+          if (!inRange) return false;
+        } catch {
+          // Ignore parse errors
+        }
+
+        // Search Query Filter
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matches =
+            (exp.expense_number && exp.expense_number.toLowerCase().includes(q)) ||
+            (exp.party_name && exp.party_name.toLowerCase().includes(q)) ||
+            (exp.category && exp.category.toLowerCase().includes(q)) ||
+            (exp.description && exp.description.toLowerCase().includes(q));
+          if (!matches) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortField === "date") {
+          const diff = new Date(b.date).getTime() - new Date(a.date).getTime();
+          return sortOrder === "desc" ? diff : -diff;
+        } else {
+          const diff = Number(b.amount) - Number(a.amount);
+          return sortOrder === "desc" ? diff : -diff;
+        }
+      });
+  }, [expenses, selectedDatePreset, selectedCategory, searchQuery, sortField, sortOrder]);
+
+  const totalFilteredAmount = useMemo(() => {
+    return filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  }, [filteredExpenses]);
+
+  // Export
+  const handleExportCSV = () => {
+    if (filteredExpenses.length === 0) {
+      toast({ title: "No data to export", description: "Current filter has no transactions." });
+      return;
+    }
+    const headers = ["Date", "Expense Number", "Party Name", "Category", "Amount (₹)", "Payment Method", "Remarks"];
+    const rows = filteredExpenses.map((e) => [
+      format(new Date(e.date), "dd/MM/yyyy"),
+      e.expense_number || "-",
+      e.party_name || "-",
+      e.category,
+      e.amount,
+      e.payment_method || "Cash",
+      e.description || "-",
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.map((val) => `"${val}"`).join(","))].join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `Expenses_Report_${format(new Date(), "yyyyMMdd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Expense Report Downloaded" });
+  };
 
   return (
-    <div className="page-wrapper space-y-6">
-      
-      {/* Header */}
-      <div className="page-header">
+    <div className="min-h-[calc(100vh-4rem)] bg-white dark:bg-background text-foreground flex flex-col font-sans">
+      {/* Top Header matching Capture10.PNG */}
+      <header className="border-b border-slate-200 dark:border-border px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-card shadow-xs">
         <div>
-          <h1 className="page-title">
-            <Receipt className="w-6 h-6 text-primary" />
-            Daily Store Expenses
+          <h1 className="text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+            Expenses
           </h1>
-          <p className="page-subtitle">
-            Track daily operational expenditures, utilities, tea, supplies & overheads
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowModal(true)}
-          className="self-start sm:self-auto shadow-sm"
-        >
-          <Plus className="w-4 h-4 mr-1.5" /> Add Expense
-        </Button>
-      </div>
-
-      {/* Stats Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Today's Expenses */}
-        <div className="card-base p-5 flex flex-col justify-between border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-card to-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-              Today's Expenses
-            </span>
-            <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              ₹{todayExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Disbursed today ({format(new Date(), "dd MMM")})</p>
-          </div>
         </div>
 
-        {/* This Month's Expenses */}
-        <div className="card-base p-5 flex flex-col justify-between border-rose-500/20 bg-gradient-to-br from-rose-500/10 via-card to-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
-              This Month
-            </span>
-            <div className="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
-              <IndianRupee className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              ₹{thisMonthExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{format(new Date(), "MMMM yyyy")} expenses</p>
-          </div>
-        </div>
+        {/* Action Controls matching Capture10.PNG */}
+        <div className="flex items-center flex-wrap gap-2.5">
+          {/* [Reports v] Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-9 px-3.5 bg-white dark:bg-card border-blue-300 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50/60 font-semibold text-xs rounded-lg shadow-xs flex items-center gap-1.5"
+              >
+                <BarChart3 className="w-4 h-4 text-blue-600" />
+                <span>Reports</span>
+                <ChevronDown className="w-3.5 h-3.5 ml-0.5 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="text-xs">
+                <PieChart className="w-4 h-4 mr-2 text-purple-600" />
+                <span>Category Breakdown</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV} className="text-xs">
+                <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-600" />
+                <span>Export to CSV / Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.print()} className="text-xs">
+                <Printer className="w-4 h-4 mr-2 text-indigo-600" />
+                <span>Print Expense Sheet</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* Total Expenses (All Time) */}
-        <div className="card-base p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              Total Expenses
-            </span>
-            <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              ₹{totalExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{expenses.length} total entries recorded</p>
-          </div>
-        </div>
+          {/* [Settings Cog] button */}
+          <button
+            type="button"
+            onClick={() => setIsSettingsModalOpen(true)}
+            title="Expense Settings"
+            className="w-9 h-9 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
 
-        {/* Top Expense Category */}
-        <div className="card-base p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-              Top Category
-            </span>
-            <div className="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
-              <PieChart className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
-              {categoryBreakdown.topCategory}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              ₹{categoryBreakdown.topAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} total
-            </p>
-          </div>
-        </div>
-      </div>
+          {/* [Keyboard Icon] button */}
+          <button
+            type="button"
+            onClick={() => setIsShortcutsModalOpen(true)}
+            title="Keyboard Shortcuts"
+            className="w-9 h-9 border border-slate-200 dark:border-border bg-white dark:bg-card rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+          >
+            <Keyboard className="w-4 h-4" />
+          </button>
 
-      {/* Filters Bar */}
-      <div className="card-base p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {/* [Create Expense] Primary Button */}
+          <Button
+            type="button"
+            onClick={openCreateModal}
+            className="h-9 px-4 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs sm:text-sm rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+          >
+            <span>Create Expense</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* Filter Bar matching Capture10.PNG */}
+      <div className="px-6 py-3 border-b border-slate-200 dark:border-border bg-white dark:bg-card flex flex-col md:flex-row items-stretch md:items-center gap-3">
+        {/* Search icon button / input */}
+        <div className="relative w-full md:w-64">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search expenses by category or note description..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search expenses..."
+            className="w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
           />
         </div>
 
-        {/* Date Filter Pills */}
-        <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0">
-          {([
-            { id: "all", label: "All" },
-            { id: "thisMonth", label: "This Month" },
-            { id: "today", label: "Today" },
-          ] as const).map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setDateFilter(f.id)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                dateFilter === f.id
-                  ? "bg-card text-foreground shadow-sm border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
+        {/* Date Filter Dropdown with calendar icons [ 📅 Last 365 Days 📅 ∨ ] */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-9 px-3.5 bg-white dark:bg-card border-slate-200 dark:border-border text-slate-700 dark:text-foreground text-xs font-semibold rounded-lg flex items-center justify-between gap-2.5 hover:bg-slate-50"
             >
-              {f.label}
-            </button>
-          ))}
-        </div>
+              <CalendarIcon className="w-4 h-4 text-slate-400" />
+              <span>
+                {DATE_RANGE_PRESETS.find((d) => d.id === selectedDatePreset)?.label || "Last 365 Days"}
+              </span>
+              <CalendarIcon className="w-4 h-4 text-slate-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {DATE_RANGE_PRESETS.map((p) => (
+              <DropdownMenuItem
+                key={p.id}
+                onClick={() => setSelectedDatePreset(p.id)}
+                className={cn(
+                  "text-xs flex items-center justify-between",
+                  selectedDatePreset === p.id ? "font-bold text-[#5046E5]" : ""
+                )}
+              >
+                <span>{p.label}</span>
+                {selectedDatePreset === p.id && <Check className="w-3.5 h-3.5 text-[#5046E5]" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        {/* Category Dropdown [ All Expenses Categories ∨ ] */}
+        <div className="w-full md:w-60">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-auto"
+            className="w-full h-9 px-3 bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-xs font-medium text-slate-700 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
           >
-            <option value="all">All Categories</option>
-            {EXPENSE_CATEGORIES.map((cat) => (
+            {categoriesList.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
             ))}
           </select>
         </div>
-      </div>
 
-      {/* Expenses Log Table */}
-      <div className="card-base p-0 overflow-hidden">
-        {loading ? (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            Loading expenses log...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            <Receipt className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
-            <p className="font-semibold text-foreground">No expenses recorded</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {expenses.length === 0
-                ? "Click 'Add Expense' above to log operational costs like tea, rent, and supplies."
-                : "No expenses match your current filters."}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th className="text-right">Amount</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((expense) => (
-                  <tr key={expense.id}>
-                    <td className="font-medium text-foreground text-xs whitespace-nowrap">
-                      {format(new Date(expense.date), "dd MMM yyyy")}
-                    </td>
-                    <td>
-                      <span
-                        className={cn(
-                          "badge text-xs font-semibold",
-                          categoryColors[expense.category] || "badge-neutral"
-                        )}
-                      >
-                        <Tag className="w-3 h-3" />
-                        {expense.category}
-                      </span>
-                    </td>
-                    <td className="text-muted-foreground text-sm">
-                      {expense.description || "—"}
-                    </td>
-                    <td className="text-right font-bold text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
-                      ₹{Number(expense.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="text-right">
-                      {deletingId === expense.id ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleDelete(expense.id)}
-                            className="text-xs text-rose-600 font-bold hover:underline"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => setDeletingId(null)}
-                            className="text-xs text-muted-foreground hover:underline"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeletingId(expense.id)}
-                          className="p-1.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors"
-                          title="Delete Expense"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Summary Info */}
+        {filteredExpenses.length > 0 && (
+          <div className="ml-auto text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Total: <span className="font-bold text-rose-600">₹{totalFilteredAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
           </div>
         )}
       </div>
 
-      {/* Add Expense Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border overflow-hidden animate-scale-in">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/20">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                  <Receipt className="w-4 h-4" />
-                </div>
-                <h2 className="text-base font-bold text-foreground">Add Daily Expense</h2>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      {/* Main Table & Empty State Area matching Capture10.PNG */}
+      <div className="flex-1 flex flex-col bg-white dark:bg-card overflow-hidden">
+        {/* Table Header Bar */}
+        <div className="bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-6 py-3">
+          <div
+            onClick={() => {
+              setSortField("date");
+              setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+            }}
+            className="col-span-2 flex items-center gap-1 cursor-pointer select-none hover:text-slate-900"
+          >
+            <span>Date</span>
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+          </div>
+          <div className="col-span-3">Expense Number</div>
+          <div className="col-span-3">Party Name</div>
+          <div className="col-span-2">Category</div>
+          <div
+            onClick={() => {
+              setSortField("amount");
+              setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+            }}
+            className="col-span-2 flex items-center justify-end gap-1 cursor-pointer select-none hover:text-slate-900 text-right pr-4"
+          >
+            <span>Amount</span>
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+          </div>
+        </div>
+
+        {/* Content Body: Empty State vs Rows */}
+        <div className="flex-1 flex flex-col justify-center items-center overflow-y-auto">
+          {loading ? (
+            <div className="py-20 text-center text-xs text-slate-400">
+              <div className="w-7 h-7 border-2 border-[#5046E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              Loading expenses...
             </div>
-
-            <form onSubmit={handleAddExpense} className="p-5 space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Amount (₹) *
-                </Label>
+          ) : filteredExpenses.length === 0 ? (
+            // Empty State matching Capture10.PNG Icon (Document with rupee & cross) + Text
+            <div className="py-24 flex flex-col items-center justify-center text-center max-w-md px-4">
+              {/* Stylized Document Icon with Rupee and Cross */}
+              <div className="w-20 h-20 mb-4 rounded-2xl bg-slate-50 dark:bg-muted/40 border border-slate-200 dark:border-border flex items-center justify-center text-slate-400 relative">
                 <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    required
-                    min="0.01"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="pl-9 h-10 rounded-xl"
-                    placeholder="0.00"
-                  />
+                  <FileText className="w-10 h-10 stroke-[1.3] text-slate-400" />
+                  <div className="absolute -bottom-1 -right-1 bg-white dark:bg-card rounded-full p-0.5 border border-slate-300">
+                    <X className="w-3.5 h-3.5 text-slate-500" />
+                  </div>
                 </div>
               </div>
-              
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Expense Category *
-                </Label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full h-10 px-3 bg-background border border-input rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+
+              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                No Transactions Matching the current filter
+              </h3>
+
+              <div className="mt-6">
+                <Button
+                  onClick={openCreateModal}
+                  className="bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs h-8 px-4 rounded-lg font-medium"
                 >
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Add New Expense
+                </Button>
               </div>
+            </div>
+          ) : (
+            // Active Table Rows
+            <div className="w-full h-full divide-y divide-slate-100 dark:divide-border/60">
+              {filteredExpenses.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="grid grid-cols-12 items-center text-xs px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors"
+                >
+                  <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                    {format(new Date(exp.date), "dd MMM yyyy")}
+                  </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Date of Expense *
-                </Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="pl-9 h-10 rounded-xl"
-                  />
+                  <div className="col-span-3 font-mono font-semibold text-slate-900 dark:text-foreground truncate">
+                    {exp.expense_number || "—"}
+                  </div>
+
+                  <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
+                    <p className="truncate">{exp.party_name || "—"}</p>
+                    {exp.description && (
+                      <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
+                      <Tag className="w-2.5 h-2.5 text-slate-400" />
+                      {exp.category}
+                    </span>
+                  </div>
+
+                  <div className="col-span-2 flex items-center justify-end gap-3 text-right pr-2">
+                    <span className="font-bold text-rose-600 dark:text-rose-400 text-xs whitespace-nowrap">
+                      ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
+
+                    {deletingId === exp.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleDelete(exp.id)}
+                          className="text-[10px] text-rose-600 font-bold hover:underline"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="text-[10px] text-slate-400 hover:underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDeletingId(exp.id)}
+                        className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        title="Delete Expense"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Description / Remarks (Optional)
+      {/* MODAL 1: Create Expense Dialog */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+          <DialogHeader className="border-b border-border/70 pb-3">
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-[#5046E5]" />
+              <span>Create Store Expense</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleAddExpense} className="space-y-3.5 mt-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Expense Number *
                 </Label>
                 <Input
                   type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="h-10 rounded-xl"
-                  placeholder="e.g. Daily milk, tea & biscuits for customers"
+                  required
+                  value={expenseNumber}
+                  onChange={(e) => setExpenseNumber(e.target.value)}
+                  className="mt-1 h-9 text-xs font-mono"
                 />
               </div>
 
-              <div className="pt-2 flex gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Date *
+                </Label>
+                <Input
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="mt-1 h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Party / Vendor Name *
+              </Label>
+              <Input
+                type="text"
+                required
+                placeholder="e.g. Sharma Stationery / Electric Board"
+                value={partyName}
+                onChange={(e) => setPartyName(e.target.value)}
+                className="mt-1 h-9 text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Category *
+                </Label>
+                <select
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                >
+                  {categoriesList
+                    .filter((c) => c !== "All Expenses Categories")
+                    .map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Amount (₹) *
+                </Label>
+                <div className="relative mt-1">
+                  <IndianRupee className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="pl-8 h-9 text-xs font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Payment Mode
+              </Label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+              >
+                <option value="Cash in Hand">Cash in Hand</option>
+                <option value="Bank Account Transfer">Bank Account Transfer</option>
+                <option value="UPI / QR">UPI / QR</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Credit Card">Credit Card</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Remarks / Description (Optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="e.g. Daily office tea, snacks & biscuits for clients"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="mt-1 h-9 text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-xs h-9"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving}
+                className="text-xs h-9 bg-[#5046E5] hover:bg-[#4338CA] text-white font-semibold"
+              >
+                {saving ? "Saving..." : "Save Expense"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: Settings Dialog */}
+      <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+          <DialogHeader className="border-b border-border/70 pb-3">
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Settings className="w-4 h-4 text-[#5046E5]" />
+              <span>Expense Settings & Categories</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-3 text-xs">
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Expense Number Prefix
+              </Label>
+              <Input
+                type="text"
+                value={expensePrefix}
+                onChange={(e) => setExpensePrefix(e.target.value)}
+                placeholder="EXP-"
+                className="mt-1 h-9 text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Add Custom Category
+              </Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  type="text"
+                  placeholder="e.g. Staff Uniforms"
+                  value={newCustomCategory}
+                  onChange={(e) => setNewCustomCategory(e.target.value)}
+                  className="h-9 text-xs flex-1"
+                />
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 h-10 rounded-xl"
+                  onClick={() => {
+                    if (newCustomCategory.trim() && !categoriesList.includes(newCustomCategory.trim())) {
+                      const updated = [...categoriesList, newCustomCategory.trim()];
+                      setCategoriesList(updated);
+                      localStorage.setItem(storageKeyCategories, JSON.stringify(updated));
+                      setNewCustomCategory("");
+                      toast({ title: "Category Added" });
+                    }
+                  }}
+                  className="h-9 px-3 text-xs bg-[#5046E5] text-white"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={saving || !amount}
-                  className="flex-1 h-10 rounded-xl"
-                >
-                  {saving ? "Saving..." : "Save Expense"}
+                  Add
                 </Button>
               </div>
-            </form>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Current Categories ({categoriesList.length - 1})
+              </Label>
+              <div className="flex flex-wrap gap-1.5 mt-2 max-h-36 overflow-y-auto pr-1">
+                {categoriesList
+                  .filter((c) => c !== "All Expenses Categories")
+                  .map((cat) => (
+                    <span
+                      key={cat}
+                      className="px-2 py-1 bg-slate-100 dark:bg-muted rounded text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                    >
+                      <span>{cat}</span>
+                    </span>
+                  ))}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 3: Keyboard Shortcuts Dialog */}
+      <Dialog open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen}>
+        <DialogContent className="max-w-sm bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+          <DialogHeader className="border-b border-border/70 pb-3">
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Keyboard className="w-4 h-4 text-[#5046E5]" />
+              <span>Keyboard Shortcuts</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-2.5 mt-3 text-xs">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-muted/50">
+              <span className="text-slate-700 dark:text-slate-300">Create New Expense</span>
+              <kbd className="px-2 py-1 rounded bg-white dark:bg-card border border-slate-200 dark:border-border font-mono font-bold text-[11px]">
+                Alt + N
+              </kbd>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-muted/50">
+              <span className="text-slate-700 dark:text-slate-300">Open Reports</span>
+              <kbd className="px-2 py-1 rounded bg-white dark:bg-card border border-slate-200 dark:border-border font-mono font-bold text-[11px]">
+                F8
+              </kbd>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-muted/50">
+              <span className="text-slate-700 dark:text-slate-300">Show Shortcuts Help</span>
+              <kbd className="px-2 py-1 rounded bg-white dark:bg-card border border-slate-200 dark:border-border font-mono font-bold text-[11px]">
+                ?
+              </kbd>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 4: Category Breakdown Report */}
+      <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+          <DialogHeader className="border-b border-border/70 pb-3">
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-[#5046E5]" />
+              <span>Expense Category Summary</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 mt-3 text-xs max-h-80 overflow-y-auto pr-1">
+            {categoriesList
+              .filter((c) => c !== "All Expenses Categories")
+              .map((cat) => {
+                const total = expenses
+                  .filter((e) => e.category === cat)
+                  .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                if (total === 0) return null;
+                const pct = totalFilteredAmount > 0 ? (total / totalFilteredAmount) * 100 : 0;
+                return (
+                  <div key={cat} className="space-y-1">
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>{cat}</span>
+                      <span>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#5046E5] rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border">
+            <Button onClick={handleExportCSV} className="bg-[#5046E5] text-white text-xs h-9">
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Export Full Report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

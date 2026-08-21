@@ -1,14 +1,28 @@
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Store,
+  ChevronDown,
   LogOut,
   Menu,
   Shield,
   User,
+  Plus,
+  UserPlus,
+  PackagePlus,
+  FileSpreadsheet,
+  Receipt,
+  RotateCcw,
+  CreditCard,
+  Truck,
+  FileCheck,
+  Building2,
+  FileText,
+  BadgeAlert,
+  HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,16 +36,37 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
+import { NAV_ROUTES, ROUTE_PATHS, isRouteAllowedForRole } from "@/config/routes";
+import { toast } from "sonner";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    Parties: true,
+    Items: true,
+    Sales: true,
+    Purchases: true,
+  });
+
+  const quickCreateRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
   const { org, userRole } = useOrganization();
   const location = useLocation();
+
+  // Close quick create dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (quickCreateRef.current && !quickCreateRef.current.contains(event.target as Node)) {
+        setQuickCreateOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Filter groups and items based on role permissions
   const filteredNavRouteGroups = NAV_ROUTES.map((group) => ({
@@ -42,7 +77,7 @@ export function AppSidebar() {
   const allAllowedNavItems = filteredNavRouteGroups.flatMap((g) => g.items);
   const mobilePrimaryNavItems = allAllowedNavItems.filter((item) => item.mobilePrimary);
 
-  // Global Keyboard Shortcuts Listener (F1-F10)
+  // Global Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -53,7 +88,6 @@ export function AppSidebar() {
           activeEl.tagName === "SELECT" ||
           (activeEl as HTMLElement).isContentEditable);
 
-      // Allow F-keys even if focus is in input (except typing regular text)
       const isFKey = /^F([1-9]|1[0-2])$/i.test(e.key);
       if (isInput && !isFKey) return;
 
@@ -76,21 +110,81 @@ export function AppSidebar() {
       ? location.pathname === "/"
       : location.pathname === url || location.pathname.startsWith(`${url}/`);
 
-  const hasPrimaryNavMatch = mobilePrimaryNavItems.some((item) => isRouteActive(item.url));
+  const toggleSubmenu = (title: string) => {
+    setExpandedMenus((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
 
-  const roleLabel = {
-    super_admin: "Super Admin",
-    store_owner: "Store Owner",
-    manager: "Manager",
-    cashier: "Cashier",
-  }[userRole || ""] || "Staff";
+  const roleLabel =
+    {
+      super_admin: "Super Admin",
+      store_owner: "Store Owner",
+      manager: "Manager",
+      cashier: "Cashier",
+    }[userRole || ""] || "Staff";
+
+  // Quick action options matching 11Capture.PNG & 123Capture.PNG
+  const handleQuickAction = (action: string) => {
+    setQuickCreateOpen(false);
+    switch (action) {
+      case "party":
+        navigate(ROUTE_PATHS.parties);
+        break;
+      case "item":
+        navigate(ROUTE_PATHS.items);
+        break;
+      case "sales_invoice":
+        navigate("/sales?tab=sales_invoice");
+        break;
+      case "quotation":
+        navigate("/sales?tab=quotation");
+        break;
+      case "payment_in":
+        navigate("/sales?tab=payment_in");
+        break;
+      case "sales_return":
+        navigate("/sales?tab=sales_return");
+        break;
+      case "credit_note":
+        navigate("/sales?tab=credit_note");
+        break;
+      case "delivery_challan":
+        navigate("/sales?tab=delivery_challan");
+        break;
+      case "proforma":
+        navigate("/sales?tab=proforma_invoice");
+        break;
+      case "purchase":
+        navigate("/purchases?tab=purchase_invoice");
+        break;
+      case "payment_out":
+        navigate("/purchases?tab=payment_out");
+        break;
+      case "purchase_return":
+        navigate("/purchases?tab=purchase_return");
+        break;
+      case "debit_note":
+        navigate("/purchases?tab=debit_note");
+        break;
+      case "purchase_orders":
+        navigate("/purchases?tab=purchase_order");
+        break;
+      case "expense":
+        navigate(ROUTE_PATHS.expenses);
+        break;
+      default:
+        navigate(ROUTE_PATHS.pos);
+    }
+  };
 
   // Mobile Bottom Navigation Bar & Sheet
   if (isMobile) {
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/80 shadow-lg px-2 py-1 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-[#141B2D]/95 backdrop-blur-md border-t border-slate-800 shadow-lg px-2 py-1 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-300"
           aria-label="Mobile Bottom Navigation"
         >
           {mobilePrimaryNavItems.map((item) => {
@@ -102,16 +196,14 @@ export function AppSidebar() {
                 end={item.url === "/"}
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl transition-all duration-200 min-w-[52px]",
-                  active
-                    ? "text-accent font-bold"
-                    : "text-muted-foreground hover:text-foreground"
+                  active ? "text-indigo-400 font-bold" : "text-slate-400 hover:text-white"
                 )}
-                activeClassName="text-accent font-bold"
+                activeClassName="text-indigo-400 font-bold"
               >
                 <div
                   className={cn(
                     "p-1 rounded-lg transition-all",
-                    active ? "bg-accent/10 text-accent shadow-xs" : ""
+                    active ? "bg-indigo-500/20 text-indigo-400" : ""
                   )}
                 >
                   <item.icon className="w-5 h-5" />
@@ -126,20 +218,10 @@ export function AppSidebar() {
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl transition-all duration-200 min-w-[52px]",
-                  !hasPrimaryNavMatch
-                    ? "text-accent font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                className="flex-1 flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl text-slate-400 hover:text-white transition-all min-w-[52px]"
                 aria-label="Open all navigation links"
               >
-                <div
-                  className={cn(
-                    "p-1 rounded-lg transition-all",
-                    !hasPrimaryNavMatch ? "bg-accent/10 text-accent" : ""
-                  )}
-                >
+                <div className="p-1 rounded-lg">
                   <Menu className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-medium leading-tight whitespace-nowrap tracking-tight">
@@ -150,28 +232,28 @@ export function AppSidebar() {
 
             <SheetContent
               side="bottom"
-              className="h-[min(85dvh,42rem)] rounded-t-3xl border-x border-t border-border bg-card/95 backdrop-blur-xl px-4 sm:px-6 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-2xl flex flex-col"
+              className="h-[min(85dvh,44rem)] rounded-t-3xl border-t border-slate-700 bg-[#141B2D] text-slate-200 px-4 sm:px-6 pb-6 shadow-2xl flex flex-col"
             >
               <SheetHeader className="mb-3 text-left shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
-                    <SheetTitle className="text-base font-bold flex items-center gap-2">
-                      <span>Navigation</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold/15 text-gold border border-gold/30">
+                    <SheetTitle className="text-base font-bold text-white flex items-center gap-2">
+                      <span>{org?.name || "CredSmart"}</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                         {roleLabel}
                       </span>
                     </SheetTitle>
-                    <SheetDescription className="text-xs text-muted-foreground mt-0.5">
-                      {org?.name || "CredSmart POS System"}
+                    <SheetDescription className="text-xs text-slate-400 mt-0.5">
+                      {org?.phone || "7409200341"}
                     </SheetDescription>
                   </div>
                 </div>
               </SheetHeader>
 
-              <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
                 {filteredNavRouteGroups.map((group, gIdx) => (
                   <div key={gIdx} className="space-y-1.5">
-                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       {group.group}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -181,15 +263,13 @@ export function AppSidebar() {
                           to={item.url}
                           end={item.url === "/"}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-muted/70 transition-colors border border-transparent hover:border-border/50 text-sm"
-                          activeClassName="bg-accent/15 text-accent font-bold border-accent/30 shadow-xs"
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-colors text-sm"
+                          activeClassName="bg-indigo-600 text-white font-bold"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-                            <item.icon className="w-4 h-4" />
-                          </div>
+                          <item.icon className="w-4 h-4 text-indigo-400" />
                           <span className="font-medium flex-1">{item.title}</span>
                           {item.shortcut && (
-                            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300">
                               {item.shortcut}
                             </kbd>
                           )}
@@ -200,13 +280,13 @@ export function AppSidebar() {
                 ))}
               </div>
 
-              <div className="pt-3 border-t border-border/80 shrink-0">
+              <div className="pt-3 border-t border-slate-700/80 shrink-0">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     signOut();
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 transition-colors font-semibold text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 font-semibold text-sm"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
@@ -219,147 +299,297 @@ export function AppSidebar() {
     );
   }
 
-  // Desktop Sidebar
+  // Desktop Sidebar matching Capture.PNG, Capture12.PNG, 11Capture.PNG
   return (
     <aside
       className={cn(
-        "flex flex-col h-[100dvh] min-h-0 gradient-sidebar border-r border-sidebar-border/70 shadow-xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-20",
-        collapsed ? "w-[72px]" : "w-[256px]"
+        "flex flex-col h-[100dvh] min-h-0 bg-[#0F172A] text-slate-300 border-r border-slate-800/80 shadow-2xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-30 font-sans",
+        collapsed ? "w-[72px]" : "w-[240px]"
       )}
     >
-      {/* Brand Header */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border/60 shrink-0">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0 p-1 bg-gradient-to-br from-indigo-500/25 to-gold/25 border border-gold/30 shadow-sm">
-          <img
-            src="/favicon.png"
-            alt="CredSmart logo"
-            className="w-full h-full object-contain rounded-lg drop-shadow-sm"
-          />
+      {/* Top Store Header matching Capture.PNG ("B Business Name 7409200341") */}
+      <div className="p-3.5 border-b border-slate-800/90 shrink-0 bg-[#0B1120]">
+        <div className="flex items-center gap-3">
+          {/* Yellow/Amber Avatar with first letter "B" */}
+          <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-extrabold flex items-center justify-center text-lg shadow-md shrink-0 ring-2 ring-amber-400/30">
+            {org?.name ? org.name.charAt(0).toUpperCase() : "B"}
+          </div>
+
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm font-bold text-white truncate tracking-tight">
+                {org?.name || "Business Name"}
+              </h2>
+              <p className="text-xs text-slate-400 font-mono tracking-tight truncate">
+                {org?.phone || "7409200341"}
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* "+ Create Sales Invoice" Dropdown Button matching 11Capture.PNG */}
         {!collapsed && (
-          <div className="animate-fade-in min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-extrabold text-white tracking-wider">
-                CredSmart
-              </h1>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-accent/20 text-accent border border-accent/30">
-                POS
-              </span>
+          <div className="relative mt-3" ref={quickCreateRef}>
+            <div className="flex items-center w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-900/40 transition-all font-medium text-xs overflow-hidden">
+              <button
+                onClick={() => navigate(ROUTE_PATHS.pos)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 hover:bg-indigo-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span className="font-semibold tracking-tight">Create Sales Invoice</span>
+              </button>
+              <button
+                onClick={() => setQuickCreateOpen(!quickCreateOpen)}
+                className="px-2.5 py-2.5 bg-indigo-700 hover:bg-indigo-800 border-l border-indigo-500/40 transition-colors"
+                aria-label="More creation options"
+              >
+                <ChevronDown
+                  className={cn("w-4 h-4 transition-transform duration-200", quickCreateOpen ? "rotate-180" : "")}
+                />
+              </button>
             </div>
-            <p className="text-[10px] text-sidebar-muted font-medium tracking-tight truncate">
-              Next-Gen Retail
-            </p>
+
+            {/* Comprehensive Quick Action Flyout Menu matching 11Capture.PNG & 123Capture.PNG */}
+            {quickCreateOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[70vh] overflow-y-auto scrollbar-thin">
+                {/* GENERAL */}
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                  GENERAL
+                </div>
+                <button
+                  onClick={() => handleQuickAction("party")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <UserPlus className="w-4 h-4 text-indigo-500" />
+                  <span>Create Party</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("item")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <PackagePlus className="w-4 h-4 text-indigo-500" />
+                  <span>Create Item</span>
+                </button>
+
+                <div className="my-1.5 border-t border-slate-100" />
+
+                {/* SALES TRANSACTIONS */}
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                  SALES TRANSACTIONS
+                </div>
+                <button
+                  onClick={() => handleQuickAction("quotation")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                  <span>Quotation</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("payment_in")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Receipt className="w-4 h-4 text-emerald-600" />
+                  <span>Payment In</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("sales_return")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <RotateCcw className="w-4 h-4 text-rose-500" />
+                  <span>Sales Return</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("credit_note")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <CreditCard className="w-4 h-4 text-indigo-500" />
+                  <span>Credit Note</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("delivery_challan")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Truck className="w-4 h-4 text-amber-500" />
+                  <span>Delivery Challan</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("proforma")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  <span>Proforma Invoice</span>
+                </button>
+
+                <div className="my-1.5 border-t border-slate-100" />
+
+                {/* PURCHASE TRANSACTIONS */}
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                  PURCHASE TRANSACTIONS
+                </div>
+                <button
+                  onClick={() => handleQuickAction("purchase")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Truck className="w-4 h-4 text-blue-500" />
+                  <span>Purchase</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("payment_out")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Receipt className="w-4 h-4 text-rose-500" />
+                  <span>Payment Out</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("purchase_return")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <RotateCcw className="w-4 h-4 text-amber-600" />
+                  <span>Purchase Return</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("debit_note")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <FileCheck className="w-4 h-4 text-slate-500" />
+                  <span>Debit Note</span>
+                </button>
+                <button
+                  onClick={() => handleQuickAction("purchase_orders")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Building2 className="w-4 h-4 text-slate-500" />
+                  <span>Purchase Orders</span>
+                </button>
+
+                <div className="my-1.5 border-t border-slate-100" />
+
+                {/* EXPENSES */}
+                <button
+                  onClick={() => handleQuickAction("expense")}
+                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                >
+                  <Receipt className="w-4 h-4 text-purple-500" />
+                  <span>Create Expense</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Store / Organization Card */}
-      {!collapsed ? (
-        <div className="mx-3 mt-3 mb-1 p-2.5 rounded-xl bg-white/[0.04] border border-gold/20 hover:border-gold/40 transition-colors shrink-0 animate-fade-in">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shrink-0">
-              <Store className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-sidebar-primary-foreground truncate">
-                {org?.name || "My Store"}
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                <p className="text-[10px] text-sidebar-muted truncate font-medium capitalize font-mono">
-                  {org?.business_type || "Retail Store"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="mx-auto mt-3 mb-1 w-10 h-10 rounded-xl bg-white/[0.04] border border-gold/20 flex items-center justify-center text-gold shrink-0" title={org?.name || "Store"}>
-          <Store className="w-4 h-4" />
-        </div>
-      )}
-
-      {/* Main Navigation Links */}
-      <nav className="flex-1 min-h-0 mt-2 px-2.5 pb-2 space-y-4 overflow-y-auto scrollbar-thin">
+      {/* Main Navigation List matching Capture.PNG */}
+      <nav className="flex-1 min-h-0 px-2.5 py-3 space-y-4 overflow-y-auto scrollbar-thin text-xs">
         {filteredNavRouteGroups.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1">
-            {!collapsed && group.group !== "Home" && (
-              <p className="px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-sidebar-muted/80 mb-1.5 mt-2">
+          <div key={gIdx} className="space-y-0.5">
+            {!collapsed && (
+              <p className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/80">
                 {group.group}
               </p>
             )}
 
-            {group.items.map((item) => (
-              <NavLink
-                key={item.url}
-                to={item.url}
-                end={item.url === "/"}
-                title={collapsed ? item.title : undefined}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl transition-all duration-200 group relative text-sm font-medium",
-                  collapsed
-                    ? "justify-center p-2.5 text-sidebar-foreground hover:bg-white/[0.08] hover:text-white"
-                    : "px-3 py-2 text-sidebar-foreground hover:bg-white/[0.07] hover:text-white"
-                )}
-                activeClassName="bg-accent text-white font-bold shadow-md shadow-accent/30 hover:bg-accent hover:text-white glow-accent"
-              >
-                <item.icon className="w-[18px] h-[18px] shrink-0 transition-transform duration-200 group-hover:scale-105" />
-                {!collapsed && (
-                  <div className="flex items-center justify-between flex-1 min-w-0">
-                    <span className="truncate animate-fade-in tracking-tight">
-                      {item.title}
-                    </span>
-                    {item.shortcut && (
-                      <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-sidebar-muted group-hover:text-white border border-white/10 shrink-0">
-                        {item.shortcut}
-                      </kbd>
+            {group.items.map((item) => {
+              const active = isRouteActive(item.url);
+              const hasChildren = Boolean(item.children && item.children.length > 0);
+              const isExpanded = expandedMenus[item.title];
+
+              return (
+                <div key={item.url} className="space-y-0.5">
+                  <div
+                    onClick={() => {
+                      if (hasChildren && !collapsed) {
+                        navigate(item.url);
+                      } else {
+                        navigate(item.url);
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer font-medium select-none group",
+                      active
+                        ? "bg-indigo-600 text-white font-semibold shadow-sm shadow-indigo-950"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                    )}
+                    title={collapsed ? item.title : undefined}
+                  >
+                    <item.icon
+                      className={cn(
+                        "w-4 h-4 shrink-0 transition-transform group-hover:scale-105",
+                        active ? "text-white" : "text-slate-400 group-hover:text-white"
+                      )}
+                    />
+
+                    {!collapsed && (
+                      <div className="flex items-center justify-between flex-1 min-w-0">
+                        <span className="truncate">{item.title}</span>
+                        {item.badge && (
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                            {item.badge}
+                          </span>
+                        )}
+                        {hasChildren && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSubmenu(item.title);
+                            }}
+                            className="p-1 rounded hover:bg-white/10 text-slate-400 group-hover:text-white transition-transform"
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "w-3.5 h-3.5 transition-transform duration-200",
+                                isExpanded ? "rotate-180" : ""
+                              )}
+                            />
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </NavLink>
-            ))}
+
+                  {/* Submenu Children when expanded */}
+                  {hasChildren && !collapsed && isExpanded && (
+                    <div className="pl-6 pr-1 space-y-0.5 pt-0.5 animate-in slide-in-from-top-1 duration-150">
+                      {item.children?.map((child) => (
+                        <NavLink
+                          key={child.title}
+                          to={child.url}
+                          className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                          activeClassName="text-indigo-400 font-semibold bg-indigo-500/10"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-slate-500" />
+                          <span className="truncate">{child.title}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </nav>
 
-      {/* User Organization Avatar Card & Footer Actions */}
-      <div className="px-2.5 pt-2 pb-3 border-t border-sidebar-border/60 space-y-2 shrink-0 bg-black/20">
-        {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-            <div className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shrink-0 font-semibold text-xs">
-              {user?.email ? user.email.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+      {/* Footer Security Badges & Sign Out matching Capture.PNG */}
+      <div className="p-3 border-t border-slate-800/90 bg-[#0B1120] space-y-2 shrink-0 text-xs">
+        {!collapsed && (
+          <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 py-1 font-medium">
+            <div className="flex items-center gap-1 text-emerald-400">
+              <Shield className="w-3 h-3" />
+              <span>100% Secure</span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-white truncate">
-                {user?.email?.split("@")[0] || "User"}
-              </p>
-              <div className="flex items-center gap-1">
-                <Shield className="w-2.5 h-2.5 text-accent" />
-                <span className="text-[10px] text-sidebar-muted font-mono font-medium truncate">
-                  {roleLabel}
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center py-1">
-            <div
-              className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shrink-0 font-semibold text-xs"
-              title={`${user?.email || "User"} (${roleLabel})`}
-            >
-              {user?.email ? user.email.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+            <div className="flex items-center gap-1 text-indigo-300 font-mono">
+              <span>ISO Certified</span>
             </div>
           </div>
         )}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between gap-1 pt-1">
           <button
             onClick={signOut}
             title="Sign Out"
             className={cn(
-              "flex items-center gap-2.5 rounded-xl hover:bg-white/[0.08] text-sidebar-muted hover:text-rose-300 transition-colors text-xs font-medium",
-              collapsed ? "w-full justify-center py-2" : "flex-1 px-3 py-2"
+              "flex items-center gap-2 rounded-xl text-slate-400 hover:text-rose-300 hover:bg-slate-800/80 px-2.5 py-1.5 transition-colors font-medium text-xs",
+              collapsed ? "w-full justify-center p-2" : "flex-1"
             )}
           >
             <LogOut className="w-4 h-4 shrink-0" />
@@ -369,26 +599,12 @@ export function AppSidebar() {
           <button
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className={cn(
-              "flex items-center justify-center rounded-xl hover:bg-white/[0.08] text-sidebar-muted hover:text-white transition-colors",
-              collapsed ? "hidden" : "p-2"
-            )}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <ChevronLeft className="w-4 h-4" />
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
-
-        {collapsed && (
-          <button
-            onClick={() => setCollapsed(false)}
-            title="Expand Sidebar"
-            className="flex items-center justify-center w-full py-1.5 rounded-xl hover:bg-white/[0.08] text-sidebar-muted hover:text-white transition-colors"
-            aria-label="Expand sidebar"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        )}
       </div>
     </aside>
   );

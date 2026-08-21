@@ -1,0 +1,872 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import {
+  Search,
+  ChevronDown,
+  Calendar as CalendarIcon,
+  Filter,
+  FileSpreadsheet,
+  Settings,
+  Keyboard,
+  Plus,
+  ArrowUpDown,
+  Download,
+  Printer,
+  Trash2,
+  Share2,
+  FileText,
+  Receipt,
+  Wallet,
+  RotateCcw,
+  FileCheck,
+  Truck,
+  HelpCircle,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  MoreVertical,
+  ArrowRightLeft,
+  Eye,
+  Sparkles,
+  Layers,
+} from "lucide-react";
+import { useOrganization } from "@/hooks/useOrganization";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { toast } from "sonner";
+import { cn, exportToCSV } from "@/lib/utils";
+import {
+  BusinessDocument,
+  SalesDocumentType,
+  DocumentStatus,
+} from "@/types/documents";
+import { documentsService } from "@/services/documentsService";
+import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
+import { SalesSettingsModal } from "@/components/SalesSettingsModal";
+import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
+import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+
+const TABS: { id: SalesDocumentType; label: string; icon: any }[] = [
+  { id: "sales_invoice", label: "Sales Invoices", icon: Receipt },
+  { id: "quotation", label: "Quotation / Estimate", icon: FileText },
+  { id: "payment_in", label: "Payment In", icon: Wallet },
+  { id: "sales_return", label: "Sales Return", icon: RotateCcw },
+  { id: "credit_note", label: "Credit Note", icon: FileCheck },
+  { id: "delivery_challan", label: "Delivery Challan", icon: Truck },
+  { id: "proforma_invoice", label: "Proforma Invoice", icon: FileText },
+];
+
+const DATE_PRESETS = [
+  { label: "Today", days: 0 },
+  { label: "Yesterday", days: 1 },
+  { label: "This Week", days: 7 },
+  { label: "This Month", days: 30 },
+  { label: "Last 365 Days", days: 365 },
+  { label: "All Time", days: 9999 },
+];
+
+export default function Sales() {
+  const { org, orgId } = useOrganization();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Active Tab / Sub-view
+  const tabParam = searchParams.get("tab") as SalesDocumentType | null;
+  const activeTab: SalesDocumentType =
+    tabParam && TABS.some((t) => t.id === tabParam) ? tabParam : "sales_invoice";
+
+  const setActiveTab = (tab: SalesDocumentType) => {
+    setSearchParams({ tab });
+  };
+
+  // State
+  const [documents, setDocuments] = useState<BusinessDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState("Last 365 Days");
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+    to: new Date(),
+  });
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<"docDate" | "grandTotal">("docDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+
+  // Modals
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<BusinessDocument | null>(null);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+  // Fetch Documents
+  const loadDocuments = useCallback(async () => {
+    if (!orgId) {
+      setDocuments([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await documentsService.fetchSalesDocuments(orgId, activeTab);
+      setDocuments(data);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId, activeTab]);
+
+  useEffect(() => {
+    loadDocuments();
+    setSelectedDocIds(new Set());
+  }, [loadDocuments]);
+
+  // Global Keyboard Shortcuts (Alt+N, F4, etc.)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setEditingDoc(null);
+        setCreateModalOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Filter & Sort Documents
+  const filteredDocuments = useMemo(() => {
+    return documents
+      .filter((doc) => {
+        // Search query
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matches =
+            doc.documentNumber.toLowerCase().includes(q) ||
+            doc.partyName.toLowerCase().includes(q) ||
+            (doc.partyPhone && doc.partyPhone.includes(q)) ||
+            (doc.partyGstin && doc.partyGstin.toLowerCase().includes(q));
+          if (!matches) return false;
+        }
+
+        // Status filter
+        if (statusFilter !== "all" && doc.status !== statusFilter) {
+          return false;
+        }
+
+        // Date range
+        if (dateRange.from && doc.docDate) {
+          const docTime = new Date(doc.docDate).getTime();
+          const fromTime = new Date(dateRange.from).setHours(0, 0, 0, 0);
+          if (docTime < fromTime) return false;
+        }
+        if (dateRange.to && doc.docDate) {
+          const docTime = new Date(doc.docDate).getTime();
+          const toTime = new Date(dateRange.to).setHours(23, 59, 59, 999);
+          if (docTime > toTime) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortField === "docDate") {
+          const timeA = new Date(a.docDate).getTime();
+          const timeB = new Date(b.docDate).getTime();
+          return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+        } else {
+          return sortOrder === "asc" ? a.grandTotal - b.grandTotal : b.grandTotal - a.grandTotal;
+        }
+      });
+  }, [documents, searchQuery, statusFilter, dateRange, sortField, sortOrder]);
+
+  // Metrics
+  const metrics = useMemo(() => {
+    return documentsService.calculateMetrics(filteredDocuments);
+  }, [filteredDocuments]);
+
+  // Bulk Actions
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDocIds(new Set(filteredDocuments.map((d) => d.id)));
+    } else {
+      setSelectedDocIds(new Set());
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedDocIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleExportCSV = () => {
+    const rows = [
+      ["Date", "Document Number", "Document Type", "Party Name", "Phone", "GSTIN", "Taxable", "Tax", "Grand Total", "Paid", "Balance Due", "Status"],
+      ...filteredDocuments.map((d) => [
+        d.docDate,
+        d.documentNumber,
+        d.docType,
+        d.partyName,
+        d.partyPhone || "",
+        d.partyGstin || "",
+        d.taxableTotal,
+        d.taxTotal,
+        d.grandTotal,
+        d.paidAmount,
+        d.balanceDue,
+        d.status,
+      ]),
+    ];
+    exportToCSV(`Sales_${activeTab}_${new Date().toISOString().split("T")[0]}.csv`, rows);
+    toast.success("Sales transactions exported to CSV");
+  };
+
+  const handleDeleteDocument = async (doc: BusinessDocument) => {
+    if (!orgId) return;
+    if (confirm(`Are you sure you want to delete ${doc.documentNumber}?`)) {
+      await documentsService.deleteDocument(orgId, doc.docType, doc.id);
+      toast.success(`${doc.documentNumber} deleted`);
+      loadDocuments();
+    }
+  };
+
+  const handleOpenReceipt = (doc: BusinessDocument) => {
+    const receipt: ReceiptData = {
+      invoiceNumber: doc.documentNumber,
+      items: doc.items.map((it) => ({
+        product: {
+          id: it.productId || it.id,
+          name: it.productName,
+          barcode: it.barcode || "",
+          brand: "",
+          category: "",
+          batches: [],
+        },
+        batch: {
+          id: it.id,
+          costPrice: 0,
+          mrp: it.rate,
+          stock: 100,
+          batchNumber: it.batchNumber || "BATCH-01",
+        },
+        quantity: it.quantity,
+      })),
+      subtotal: doc.subtotal,
+      discountAmount: doc.discountTotal,
+      discountLabel: "Discount",
+      tax: doc.taxTotal,
+      total: doc.grandTotal,
+      roundOff: doc.roundOff,
+      customerName: doc.partyName,
+      customerPhone: doc.partyPhone,
+      paymentMethod: doc.paymentMethod || "Cash",
+      storeName: org?.name || "CredSmart POS",
+      storeAddress: "",
+      storePhone: "",
+      gstin: doc.partyGstin,
+      date: doc.docDate,
+      isEstimate: doc.docType === "quotation",
+      notes: doc.notes,
+    };
+    setReceiptData(receipt);
+  };
+
+  const activeTabMeta = TABS.find((t) => t.id === activeTab) || TABS[0];
+
+  const calculateDueInText = (doc: BusinessDocument) => {
+    if (doc.status === "paid") return "Paid";
+    if (!doc.dueDate) return "Immediate";
+    const dueTime = new Date(doc.dueDate).getTime();
+    const today = new Date().setHours(0, 0, 0, 0);
+    const diffDays = Math.round((dueTime - today) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Due Today";
+    if (diffDays > 0) return `Due in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
+    return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? "s" : ""}`;
+  };
+
+  return (
+    <div className="flex flex-col min-h-full w-full bg-slate-50/60 dark:bg-slate-950/40 select-none pb-12">
+      {/* Sub-document Tabs Navigation Bar */}
+      <div className="w-full bg-card/95 border-b border-border/80 px-4 sm:px-6 pt-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 min-w-max pb-2">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 relative",
+                  isActive
+                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <div className="flex-1 px-4 sm:px-6 py-5 space-y-5 max-w-7xl w-full mx-auto">
+        {/* Top Header matching Capture4.PNG */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+              {activeTabMeta.label}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Reports Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 text-xs font-semibold gap-1.5 border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Reports</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => navigate("/analytics")}>
+                  Sales Summary Report
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/analytics")}>
+                  GSTR-1 Sales Report
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/customers")}>
+                  Customer Receivable Aging
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/items")}>
+                  Item-wise Sales Report
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  Export All Transactions (CSV)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Settings Cog with Red Notification Dot */}
+            <button
+              onClick={() => setSettingsModalOpen(true)}
+              className="relative p-2 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              title="Sales & Invoicing Preferences"
+              aria-label="Sales Preferences"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+            </button>
+
+            {/* Keyboard Shortcuts Button */}
+            <button
+              onClick={() => setShortcutsModalOpen(true)}
+              className="p-2 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              title="Keyboard Shortcuts"
+              aria-label="Keyboard Shortcuts"
+            >
+              <Keyboard className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Metric Cards matching Capture4.PNG */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+          {/* Total Sales */}
+          <div
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              statusFilter === "all"
+                ? "border-indigo-500/80 ring-2 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
+                : "border-border/80 hover:border-indigo-300"
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+              <Receipt className="w-4 h-4" />
+              <span>Total Sales</span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          {/* Paid */}
+          <div
+            onClick={() => setStatusFilter("paid")}
+            className={cn(
+              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              statusFilter === "paid"
+                ? "border-emerald-500/80 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20"
+                : "border-border/80 hover:border-emerald-300"
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Paid</span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          {/* Unpaid */}
+          <div
+            onClick={() => setStatusFilter("unpaid")}
+            className={cn(
+              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              statusFilter === "unpaid"
+                ? "border-rose-500/80 ring-2 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20"
+                : "border-border/80 hover:border-rose-300"
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
+              <AlertCircle className="w-4 h-4" />
+              <span>Unpaid</span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          {/* Cancelled */}
+          <div
+            onClick={() => setStatusFilter("cancelled")}
+            className={cn(
+              "p-4 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs",
+              statusFilter === "cancelled"
+                ? "border-slate-500/80 ring-2 ring-slate-500/20 bg-slate-50/20 dark:bg-slate-900/20"
+                : "border-border/80 hover:border-slate-300"
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <XCircle className="w-4 h-4" />
+              <span>Cancelled</span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-bold text-foreground font-mono">
+              {metrics.cancelledAmount > 0 ? `₹ ${metrics.cancelledAmount.toLocaleString("en-IN")}` : "—"}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Bar matching Capture4.PNG */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Search & Date Picker */}
+          <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by invoice #, party name, mobile..."
+                className="pl-9 h-9 text-xs bg-card border-border/80 shadow-2xs"
+              />
+            </div>
+
+            {/* Date Range Selector matching "Last 365 Days" button */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 text-xs font-medium border-border/80 bg-card gap-2 shadow-2xs shrink-0"
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>{selectedPreset}</span>
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground ml-1" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-3">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {DATE_PRESETS.map((p) => (
+                      <Button
+                        key={p.label}
+                        variant={selectedPreset === p.label ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPreset(p.label);
+                          const to = new Date();
+                          const from = new Date(Date.now() - p.days * 24 * 60 * 60 * 1000);
+                          setDateRange({ from, to });
+                        }}
+                        className="text-xs h-7"
+                      >
+                        {p.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Right: Bulk Actions & Create Button */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Bulk Actions Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 text-xs font-semibold gap-1.5 border-border bg-card shadow-2xs"
+                >
+                  <Layers className="w-4 h-4 text-muted-foreground" />
+                  <span>Bulk Actions</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  <span>Export to Excel/CSV</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (selectedDocIds.size === 0) {
+                      toast.info("Please select at least one document");
+                      return;
+                    }
+                    toast.success(`Exporting ${selectedDocIds.size} selected documents`);
+                  }}
+                  className="gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Selected ({selectedDocIds.size})</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (selectedDocIds.size === 0) {
+                      toast.info("Please select at least one document");
+                      return;
+                    }
+                    toast.success(`Payment reminders queued for ${selectedDocIds.size} customers`);
+                  }}
+                  className="gap-2 text-emerald-600"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Send Reminders</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* + Create Sales Invoice Button */}
+            <Button
+              onClick={() => {
+                setEditingDoc(null);
+                setCreateModalOpen(true);
+              }}
+              size="sm"
+              className="h-9 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Transactions Table Card matching Capture4.PNG */}
+        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto min-h-[380px] flex flex-col justify-between">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-border">
+                  <th className="py-3 px-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredDocuments.length > 0 &&
+                        selectedDocIds.size === filteredDocuments.length
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="rounded border-border"
+                    />
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSortField("docDate");
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    }}
+                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Date</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  </th>
+                  <th className="py-3 px-3">Invoice Number</th>
+                  <th className="py-3 px-3">Party Name</th>
+                  <th className="py-3 px-3">Due In</th>
+                  <th
+                    onClick={() => {
+                      setSortField("grandTotal");
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    }}
+                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Amount</span>
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  </th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3 w-16 text-right">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-border/60">
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((doc) => {
+                    const isSelected = selectedDocIds.has(doc.id);
+                    return (
+                      <tr
+                        key={doc.id}
+                        className={cn(
+                          "hover:bg-muted/30 transition-colors group",
+                          isSelected && "bg-indigo-50/30 dark:bg-indigo-950/20"
+                        )}
+                      >
+                        <td className="py-3 px-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(doc.id)}
+                            className="rounded border-border"
+                          />
+                        </td>
+                        <td className="py-3 px-3 font-mono text-muted-foreground">
+                          {doc.docDate}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-mono font-semibold text-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50 text-[11px]">
+                            {doc.documentNumber}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div>
+                            <span className="font-semibold text-foreground">{doc.partyName}</span>
+                            {doc.partyPhone && (
+                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                {doc.partyPhone}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={cn(
+                              "text-[11px] font-medium",
+                              doc.status === "paid"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : calculateDueInText(doc).includes("Overdue")
+                                ? "text-rose-600 font-semibold"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {calculateDueInText(doc)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 font-mono font-bold text-foreground">
+                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
+                              doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
+                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
+                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
+                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
+                              doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
+                            )}
+                          >
+                            {doc.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReceipt(doc)}
+                              className="p-1.5 text-muted-foreground hover:text-indigo-600 rounded transition-colors"
+                              title="Print / View Receipt"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                >
+                                  <MoreVertical className="w-3.5 h-3.5" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingDoc(doc);
+                                    setCreateModalOpen(true);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Edit Document</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenReceipt(doc)} className="gap-2">
+                                  <Printer className="w-3.5 h-3.5" />
+                                  <span>Print Tax Invoice</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    const url = `https://wa.me/?text=Invoice%20${doc.documentNumber}%20amount%20Rs.${doc.grandTotal}`;
+                                    window.open(url, "_blank");
+                                  }}
+                                  className="gap-2 text-emerald-600"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>Share on WhatsApp</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteDocument(doc)}
+                                  className="gap-2 text-rose-600"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  // Empty State matching Capture4.PNG exactly
+                  <tr>
+                    <td colSpan={8} className="py-20 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
+                        {/* Empty Icon matching Capture4.PNG */}
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400">
+                          <svg
+                            className="w-10 h-10 stroke-current"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="8" y1="13" x2="16" y2="13" />
+                            <line x1="8" y1="17" x2="12" y2="17" />
+                            <path d="M16 17l4 4m0-4l-4 4" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                          No Transactions Matching the current filter
+                        </p>
+                        <Button
+                          onClick={() => {
+                            setEditingDoc(null);
+                            setCreateModalOpen(true);
+                          }}
+                          size="sm"
+                          className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs gap-1 mt-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Create Sales Invoice
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Help (?) Button at bottom right matching Capture4 */}
+      <button
+        onClick={() => setShortcutsModalOpen(true)}
+        className="fixed bottom-5 right-5 w-10 h-10 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xl hover:scale-105 transition-all z-30 font-bold"
+        title="Help & Shortcuts"
+        aria-label="Help & Shortcuts"
+      >
+        <span className="text-base font-semibold">?</span>
+      </button>
+
+      {/* Sales Invoice & Document Creation Modal */}
+      <SalesInvoiceModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        orgId={orgId || ""}
+        initialDocType={activeTab}
+        editingDoc={editingDoc}
+        onSaved={() => loadDocuments()}
+        onPrintRequest={(doc) => handleOpenReceipt(doc)}
+      />
+
+      {/* Sales Settings Modal */}
+      <SalesSettingsModal
+        open={settingsModalOpen}
+        onOpenChange={setSettingsModalOpen}
+        orgId={orgId || ""}
+      />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        open={shortcutsModalOpen}
+        onOpenChange={setShortcutsModalOpen}
+      />
+
+      {/* Receipt Modal */}
+      {receiptData && (
+        <ReceiptModal
+          data={receiptData}
+          onClose={() => setReceiptData(null)}
+          onNewSale={() => {
+            setReceiptData(null);
+            setEditingDoc(null);
+            setCreateModalOpen(true);
+          }}
+        />
+      )}
+    </div>
+  );
+}

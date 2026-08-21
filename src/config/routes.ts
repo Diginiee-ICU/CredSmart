@@ -1,21 +1,30 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Activity,
-  BarChart3,
-  Globe,
-  History,
   LayoutDashboard,
+  Users2,
   Package,
-  RotateCcw,
-  Settings,
   ShoppingCart,
   Truck,
+  BarChart3,
+  Landmark,
+  FileCheck,
+  Repeat,
+  Receipt,
+  Monitor,
+  CalendarCheck,
+  UserCog,
+  Globe,
+  MessageSquare,
+  Settings,
+  Warehouse,
+  FileSpreadsheet,
+  RotateCcw,
+  Barcode,
+  History,
   UserCircle,
   Users,
-  Users2,
-  Warehouse,
-  Receipt,
-  Barcode,
+  Activity,
+  FileText,
 } from "lucide-react";
 
 export const ROUTE_PATHS = {
@@ -23,24 +32,55 @@ export const ROUTE_PATHS = {
   auth: "/auth",
   privacyPolicy: "/privacy-policy",
   termsOfService: "/terms-of-service",
+  
+  // GENERAL
   dashboard: "/dashboard",
-  checkout: "/checkout",
-  items: "/items",
-  inventory: "/inventory",
-  purchases: "/purchases",
-  suppliers: "/suppliers",
-  discovery: "/discovery",
-  vendorDiscovery: "/discovery",
+  parties: "/parties",
   customers: "/customers",
   customerLedger: "/customers/:id/ledger",
-  purchaseReturns: "/purchase-returns",
-  salesHistory: "/sales-history",
-  staff: "/staff",
-  activityLog: "/activity-log",
-  analytics: "/analytics",
-  settings: "/settings",
-  expenses: "/expenses",
+  suppliers: "/suppliers",
+  
+  items: "/items",
+  inventory: "/inventory",
+  godown: "/godown",
   barcode: "/barcode",
+
+  sales: "/sales",
+  salesHistory: "/sales-history",
+  checkout: "/checkout",
+  pos: "/pos",
+
+  purchases: "/purchases",
+  purchaseReturns: "/purchase-returns",
+  discovery: "/discovery",
+  vendorDiscovery: "/discovery",
+
+  reports: "/reports",
+  analytics: "/analytics",
+
+  // ACCOUNTING SOLUTIONS
+  cashBank: "/cash-bank",
+  eInvoicing: "/e-invoicing",
+  automatedBills: "/automated-bills",
+  expenses: "/expenses",
+
+  // BUSINESS TOOLS
+  staff: "/staff",
+  manageUsers: "/manage-users",
+  onlineOrders: "/online-orders",
+  smsMarketing: "/sms-marketing",
+  activityLog: "/activity-log",
+
+  // SETTINGS & HELP
+  settings: "/settings",
+  businessSettings: "/settings/business",
+  invoiceSettings: "/settings/invoice",
+  printSettings: "/settings/print",
+  settingsReminders: "/settings/reminders",
+  settingsCaSharing: "/settings/ca-sharing",
+  settingsPricing: "/settings/pricing",
+  settingsRefer: "/settings/refer",
+  settingsHelp: "/settings/help",
 } as const;
 
 export type AppRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
@@ -54,10 +94,18 @@ export const RESTRICTED_ROUTES: ReadonlySet<string> = new Set([
   ROUTE_PATHS.suppliers,
   ROUTE_PATHS.purchaseReturns,
   ROUTE_PATHS.analytics,
+  ROUTE_PATHS.reports,
+  ROUTE_PATHS.cashBank,
+  ROUTE_PATHS.eInvoicing,
+  ROUTE_PATHS.automatedBills,
   ROUTE_PATHS.expenses,
   ROUTE_PATHS.barcode,
   ROUTE_PATHS.settings,
+  ROUTE_PATHS.businessSettings,
+  ROUTE_PATHS.invoiceSettings,
+  ROUTE_PATHS.printSettings,
   ROUTE_PATHS.staff,
+  ROUTE_PATHS.manageUsers,
   ROUTE_PATHS.activityLog,
 ]);
 
@@ -70,12 +118,19 @@ export function isRouteAllowedForRole(url: string, role: string | null | undefin
   return !RESTRICTED_ROUTES.has(url);
 }
 
+export interface NavRouteChild {
+  title: string;
+  url: AppRoutePath | string;
+}
+
 export interface NavRouteItem {
   title: string;
   url: AppRoutePath;
   icon: LucideIcon;
   mobilePrimary?: boolean;
   shortcut?: string;
+  badge?: string;
+  children?: NavRouteChild[];
 }
 
 export interface NavRouteGroup {
@@ -85,49 +140,87 @@ export interface NavRouteGroup {
 
 export const NAV_ROUTES: NavRouteGroup[] = [
   {
-    group: "Home",
+    group: "GENERAL",
     items: [
       { title: "Dashboard", url: ROUTE_PATHS.dashboard, icon: LayoutDashboard, mobilePrimary: true, shortcut: "F1" },
-    ]
+      { 
+        title: "Parties", 
+        url: ROUTE_PATHS.parties, 
+        icon: Users2, 
+        mobilePrimary: true, 
+        shortcut: "F2",
+        children: [
+          { title: "All Parties", url: ROUTE_PATHS.parties },
+          { title: "Customers", url: ROUTE_PATHS.customers },
+          { title: "Suppliers", url: ROUTE_PATHS.suppliers },
+        ]
+      },
+      { 
+        title: "Items", 
+        url: ROUTE_PATHS.items, 
+        icon: Package, 
+        mobilePrimary: true, 
+        shortcut: "F3",
+        children: [
+          { title: "Inventory", url: ROUTE_PATHS.items },
+          { title: "Godown (Warehouse)", url: ROUTE_PATHS.godown },
+          { title: "Print Barcode Labels", url: ROUTE_PATHS.barcode },
+        ]
+      },
+      { 
+        title: "Sales", 
+        url: ROUTE_PATHS.sales, 
+        icon: ShoppingCart, 
+        shortcut: "F4",
+        children: [
+          { title: "Sales Invoices", url: "/sales?tab=sales_invoice" },
+          { title: "Quotation / Estimate", url: "/sales?tab=quotation" },
+          { title: "Payment In", url: "/sales?tab=payment_in" },
+          { title: "Sales Return", url: "/sales?tab=sales_return" },
+          { title: "Credit Note", url: "/sales?tab=credit_note" },
+          { title: "Delivery Challan", url: "/sales?tab=delivery_challan" },
+          { title: "Proforma Invoice", url: "/sales?tab=proforma_invoice" },
+        ]
+      },
+      { 
+        title: "Purchases", 
+        url: ROUTE_PATHS.purchases, 
+        icon: Truck, 
+        shortcut: "F5",
+        children: [
+          { title: "Purchase Invoices", url: "/purchases?tab=purchase_invoice" },
+          { title: "Payment Out", url: "/purchases?tab=payment_out" },
+          { title: "Purchase Return", url: "/purchases?tab=purchase_return" },
+          { title: "Debit Note", url: "/purchases?tab=debit_note" },
+          { title: "Purchase Orders", url: "/purchases?tab=purchase_order" },
+        ]
+      },
+      { title: "Reports", url: ROUTE_PATHS.reports, icon: FileSpreadsheet, shortcut: "F6" },
+    ],
   },
   {
-    group: "Sales",
+    group: "ACCOUNTING SOLUTIONS",
     items: [
-      { title: "POS Billing", url: ROUTE_PATHS.checkout, icon: ShoppingCart, mobilePrimary: true, shortcut: "F2" },
-      { title: "Sales History", url: ROUTE_PATHS.salesHistory, icon: History, shortcut: "F6" },
-    ]
-  },
-  {
-    group: "Parties",
-    items: [
-      { title: "Customers", url: ROUTE_PATHS.customers, icon: UserCircle, mobilePrimary: true, shortcut: "F5" },
-      { title: "Suppliers", url: ROUTE_PATHS.suppliers, icon: Users2 },
-      { title: "Staff", url: ROUTE_PATHS.staff, icon: Users },
-    ]
-  },
-  {
-    group: "Items",
-    items: [
-      { title: "Items", url: ROUTE_PATHS.items, icon: Package, mobilePrimary: true, shortcut: "F3" },
-      { title: "Inventory", url: ROUTE_PATHS.inventory, icon: Warehouse, shortcut: "F4" },
-      { title: "Print Labels", url: ROUTE_PATHS.barcode, icon: Barcode },
-    ]
-  },
-  {
-    group: "Purchases",
-    items: [
-      { title: "Purchases", url: ROUTE_PATHS.purchases, icon: Truck, shortcut: "F7" },
-      { title: "B2B Vendor Discovery", url: ROUTE_PATHS.discovery, icon: Globe },
-      { title: "Purchase Returns", url: ROUTE_PATHS.purchaseReturns, icon: RotateCcw },
-    ]
-  },
-  {
-    group: "Reports & More",
-    items: [
+      { title: "Cash & Bank", url: ROUTE_PATHS.cashBank, icon: Landmark, shortcut: "F7" },
+      { title: "E-Invoicing", url: ROUTE_PATHS.eInvoicing, icon: FileCheck },
+      { title: "Automated Bills", url: ROUTE_PATHS.automatedBills, icon: Repeat },
       { title: "Expenses", url: ROUTE_PATHS.expenses, icon: Receipt, shortcut: "F8" },
-      { title: "Analytics", url: ROUTE_PATHS.analytics, icon: BarChart3, shortcut: "F9" },
-      { title: "Activity Log", url: ROUTE_PATHS.activityLog, icon: Activity },
+      { title: "POS Billing", url: ROUTE_PATHS.pos, icon: Monitor, mobilePrimary: true, shortcut: "F9" },
+    ],
+  },
+  {
+    group: "BUSINESS TOOLS",
+    items: [
+      { title: "Staff Attendance & Payroll", url: ROUTE_PATHS.staff, icon: CalendarCheck },
+      { title: "Manage Users", url: ROUTE_PATHS.manageUsers, icon: UserCog },
+      { title: "Online Orders", url: ROUTE_PATHS.onlineOrders, icon: Globe, badge: "New" },
+      { title: "SMS Marketing", url: ROUTE_PATHS.smsMarketing, icon: MessageSquare },
+    ],
+  },
+  {
+    group: "SETTINGS",
+    items: [
       { title: "Settings", url: ROUTE_PATHS.settings, icon: Settings, shortcut: "F10" },
-    ]
-  }
+    ],
+  },
 ];

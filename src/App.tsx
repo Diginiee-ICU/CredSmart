@@ -8,15 +8,24 @@ import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Checkout from "@/pages/Checkout";
+import POSBilling from "@/pages/POSBilling";
 import ItemMaster from "@/pages/ItemMaster";
 import Analytics from "@/pages/Analytics";
 import SettingsPage from "@/pages/Settings";
+import BusinessSettings from "@/pages/BusinessSettings";
+import InvoiceSettings from "@/pages/InvoiceSettings";
+import PrintSettings from "@/pages/PrintSettings";
+import Reports from "@/pages/Reports";
 import Purchases from "@/pages/Purchases";
 import VendorDiscovery from "@/pages/VendorDiscovery";
 import Inventory from "@/pages/Inventory";
+import Parties from "@/pages/Parties";
+import Items from "@/pages/Items";
+import Godown from "@/pages/Godown";
 import Staff from "@/pages/Staff";
 import Suppliers from "@/pages/Suppliers";
 import PurchaseReturns from "@/pages/PurchaseReturns";
+import Sales from "@/pages/Sales";
 import SalesHistory from "@/pages/SalesHistory";
 import Customers from "@/pages/Customers";
 import CustomerLedger from "@/pages/CustomerLedger";
@@ -24,6 +33,9 @@ import Auth from "@/pages/Auth";
 import ActivityLog from "@/pages/ActivityLog";
 import NotFound from "@/pages/NotFound";
 import Expenses from "@/pages/Expenses";
+import CashAndBank from "@/pages/CashAndBank";
+import EInvoicing from "@/pages/EInvoicing";
+import AutomatedBills from "@/pages/AutomatedBills";
 import BarcodeGenerator from "@/pages/BarcodeGenerator";
 import Landing from "@/pages/Landing";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
@@ -128,12 +140,16 @@ const App = () => (
               <Route element={<AppLayout />}> 
                 
                 {/* Available to everyone (including cashiers) */}
-                <Route path={ROUTE_PATHS.checkout} element={<Checkout />} />
-                <Route path={ROUTE_PATHS.items} element={<ItemMaster />} />
+                <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
+                <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
+                <Route path={ROUTE_PATHS.parties} element={<Parties />} />
+                <Route path={ROUTE_PATHS.items} element={<Items />} />
                 <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />
+                <Route path={ROUTE_PATHS.godown} element={<Godown />} />
                 <Route path={ROUTE_PATHS.customers} element={<Customers />} />
                 <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
-                <Route path={ROUTE_PATHS.salesHistory} element={<SalesHistory />} />
+                <Route path={ROUTE_PATHS.sales} element={<Sales />} />
+                <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
 
                 {/* Restricted to Managers & Owners & Super Admin */}
                 <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>
@@ -143,9 +159,16 @@ const App = () => (
                   <Route path={ROUTE_PATHS.suppliers} element={<Suppliers />} />
                   <Route path={ROUTE_PATHS.purchaseReturns} element={<PurchaseReturns />} />
                   <Route path={ROUTE_PATHS.analytics} element={<Analytics />} />
+                  <Route path={ROUTE_PATHS.reports} element={<Reports />} />
+                  <Route path={ROUTE_PATHS.cashBank} element={<CashAndBank />} />
+                  <Route path={ROUTE_PATHS.eInvoicing} element={<EInvoicing />} />
+                  <Route path={ROUTE_PATHS.automatedBills} element={<AutomatedBills />} />
                   <Route path={ROUTE_PATHS.expenses} element={<Expenses />} />
                   <Route path={ROUTE_PATHS.barcode} element={<BarcodeGenerator />} />
-                  <Route path={ROUTE_PATHS.settings} element={<SettingsPage />} />
+                  <Route path={ROUTE_PATHS.settings} element={<BusinessSettings />} />
+                  <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
+                  <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
+                  <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
                   <Route path={ROUTE_PATHS.staff} element={<Staff />} />
                   <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
                 </Route>
