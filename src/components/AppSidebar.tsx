@@ -185,7 +185,7 @@ export function AppSidebar() {
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 bg-[#141B2D]/95 backdrop-blur-md border-t border-slate-800 shadow-lg px-2 py-1 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-300"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-[#141B2D]/85 backdrop-blur-xl border-t border-slate-700/50 shadow-[0_-8px_30px_rgb(0,0,0,0.3)] px-2 pt-1.5 pb-[env(safe-area-inset-bottom)] flex items-center justify-around text-slate-300"
           aria-label="Mobile Bottom Navigation"
         >
           {mobilePrimaryNavItems.map((item) => {

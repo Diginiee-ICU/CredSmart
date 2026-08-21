@@ -657,7 +657,7 @@ export default function Items() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 p-3 sm:p-6 pb-12">
       {/* ------------------------------------------------------------- */}
       {/* TOP BANNER: Launch Offers on Your Items [Create Offer Now] [X] */}
       {/* ------------------------------------------------------------- */}
@@ -899,7 +899,7 @@ export default function Items() {
       {/* ITEMS TABLE: Checkbox, Item Name (sortable), Item Code, Stock QTY & unit (sortable), Selling Price, Purchase Price, Actions */}
       {/* ------------------------------------------------------------- */}
       <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
           <table className="w-full text-xs text-left">
             <thead className="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[11px]">
               <tr>

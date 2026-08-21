@@ -655,7 +655,7 @@ export default function Parties() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 p-3 sm:p-6 pb-12">
       {/* ------------------------------------------------------------- */}
       {/* HEADER: Parties, [SharedLedger Portal], [Reports v], [Settings], [Keyboard] */}
       {/* ------------------------------------------------------------- */}
@@ -1033,7 +1033,7 @@ export default function Parties() {
       {/* PARTIES TABLE: Checkbox, Party Name (sortable), Category, Mobile Number, Party type, Balance (sortable), Actions */}
       {/* ------------------------------------------------------------- */}
       <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
           <table className="w-full text-xs text-left">
             <thead className="bg-muted/50 border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[11px]">
               <tr>
@@ -1571,7 +1571,7 @@ export default function Parties() {
                   <span className="font-bold text-foreground">Party Balances & Variance Verification</span>
                   <span className="text-[10px] text-muted-foreground font-semibold">Zero-Tolerance Double Entry</span>
                 </div>
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto overflow-x-auto w-full pb-2 scrollbar-thin">
                   <table className="w-full text-xs text-left">
                     <thead className="bg-muted/20 border-b border-border text-muted-foreground font-semibold uppercase text-[10px]">
                       <tr>

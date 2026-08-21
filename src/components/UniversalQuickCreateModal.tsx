@@ -311,7 +311,7 @@ export function UniversalQuickCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-5xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl rounded-2xl">
+      <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col gap-0 overflow-hidden bg-card shadow-2xl">
         {/* Header with Search */}
         <div className="p-5 sm:p-6 border-b border-border/80 bg-slate-50/50 dark:bg-slate-900/40 space-y-4">
           <div className="flex items-center justify-between">

@@ -142,7 +142,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 min-h-screen bg-[#F4F6F9] p-4 sm:p-6 lg:p-7 space-y-5">
+    <div className="flex-1 min-h-screen bg-[#F4F6F9] p-3 sm:p-6 lg:p-7 space-y-5">
       {/* Top Bar matching Capture.PNG */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
@@ -303,7 +303,7 @@ export default function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto w-full pb-2 scrollbar-thin">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">

@@ -408,7 +408,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="flex-1 min-h-screen bg-slate-50/70 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 min-h-screen bg-slate-50/70 p-3 sm:p-6 lg:p-8 space-y-6">
       {/* Top Header with Quick Action Bar */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
@@ -874,7 +874,7 @@ export default function Reports() {
                       <span>Table 12 HSN Summary ({gstr1Data.hsn.data.length} Categories)</span>
                       <span>Total Value: ₹{gstr1Data.summary.totalGrandValue.toLocaleString("en-IN")}</span>
                     </div>
-                    <div className="max-h-60 overflow-y-auto">
+                    <div className="max-h-60 overflow-y-auto overflow-x-auto w-full pb-2 scrollbar-thin">
                       <table className="w-full text-xs text-left">
                         <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
                           <tr>

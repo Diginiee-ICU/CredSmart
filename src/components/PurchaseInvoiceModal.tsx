@@ -712,7 +712,7 @@ export function PurchaseInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-7xl w-[96vw] max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[96vw] sm:h-auto sm:max-h-[95vh] sm:rounded-2xl sm:border flex flex-col gap-0 overflow-hidden">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex flex-row items-center justify-between shrink-0">
             <div className="flex items-center gap-3">

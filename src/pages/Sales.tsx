@@ -343,7 +343,7 @@ export default function Sales() {
       </div>
 
       {/* Main Container */}
-      <div className="flex-1 px-4 sm:px-6 py-5 space-y-5 max-w-7xl w-full mx-auto">
+      <div className="flex-1 px-3 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 max-w-7xl w-full mx-auto">
         {/* Top Header matching Capture4.PNG */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -608,7 +608,7 @@ export default function Sales() {
 
         {/* Transactions Table Card matching Capture4.PNG */}
         <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto min-h-[380px] flex flex-col justify-between">
+          <div className="overflow-x-auto w-full pb-2 scrollbar-thin min-h-[380px] flex flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-border">

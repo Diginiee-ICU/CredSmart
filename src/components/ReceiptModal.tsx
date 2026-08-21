@@ -263,8 +263,8 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/65 backdrop-blur-xs px-2 sm:px-4 pt-3 sm:pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
-      <div className="bg-card rounded-2xl card-shadow-lg max-w-[760px] w-full max-h-[calc(100dvh-0.75rem)] sm:max-h-[92vh] flex flex-col animate-fade-in border border-border">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/65 backdrop-blur-xs p-0 sm:px-4 sm:pt-4 sm:pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
+      <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-[760px] sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col animate-fade-in card-shadow-lg">
         
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 border-b border-border bg-card">
