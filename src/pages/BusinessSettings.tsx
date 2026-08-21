@@ -884,6 +884,7 @@ export default function BusinessSettings() {
               </div>
             </div>
           </div>
+          </div>
         </main>
       </div>
 
