@@ -763,7 +763,7 @@ export default function GodownPage() {
       {/* MODAL 1: ADD / EDIT GODOWN */}
       {/* ------------------------------------------------------------- */}
       <Dialog open={showGodownModal} onOpenChange={setShowGodownModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Warehouse className="w-5 h-5 text-primary" />
@@ -874,7 +874,7 @@ export default function GodownPage() {
       {/* MODAL 2: TRANSFER STOCK */}
       {/* ------------------------------------------------------------- */}
       <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl sm:max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <ArrowRightLeft className="w-5 h-5 text-primary" />

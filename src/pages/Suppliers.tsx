@@ -756,7 +756,7 @@ export default function Suppliers() {
       {/* Create / Edit Supplier Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-scale-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
               <div className="flex items-center gap-2.5">
@@ -885,7 +885,7 @@ export default function Suppliers() {
       {/* Credit Modal */}
       {creditModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
               <div className="flex items-center gap-2.5">

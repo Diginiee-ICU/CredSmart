@@ -333,7 +333,7 @@ export default function AppLayout() {
 
         {/* Help & Support Dialog */}
         <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg sm:max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-primary" />
@@ -367,7 +367,7 @@ export default function AppLayout() {
 
         {/* Notifications Dialog */}
         <Dialog open={notifOpen} onOpenChange={setNotifOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg sm:max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" />

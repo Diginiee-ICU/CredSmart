@@ -668,7 +668,7 @@ export default function Expenses() {
 
       {/* MODAL 1: Create Expense Dialog */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Receipt className="w-4 h-4 text-[#5046E5]" />
@@ -812,7 +812,7 @@ export default function Expenses() {
 
       {/* MODAL 2: Settings Dialog */}
       <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-lg sm:max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Settings className="w-4 h-4 text-[#5046E5]" />
@@ -887,7 +887,7 @@ export default function Expenses() {
 
       {/* MODAL 3: Keyboard Shortcuts Dialog */}
       <Dialog open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen}>
-        <DialogContent className="max-w-sm bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-md sm:max-w-lg bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Keyboard className="w-4 h-4 text-[#5046E5]" />
@@ -922,7 +922,7 @@ export default function Expenses() {
 
       {/* MODAL 4: Category Breakdown Report */}
       <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-lg sm:max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <PieChart className="w-4 h-4 text-[#5046E5]" />

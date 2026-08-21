@@ -538,7 +538,7 @@ export function SalesInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-7xl w-[96vw] max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex flex-row items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
@@ -788,16 +788,16 @@ export function SalesInvoiceModal({
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-muted/40 text-muted-foreground font-semibold text-[11px] border-b border-border">
-                      <th className="py-2.5 px-3 w-10">#</th>
-                      <th className="py-2.5 px-3 min-w-[200px]">Item Description</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Qty</th>
-                      <th className="py-2.5 px-2 w-20">Unit</th>
-                      <th className="py-2.5 px-3 w-28 text-right">Rate (₹)</th>
+                      <th className="py-2.5 px-3 w-10 text-center">#</th>
+                      <th className="py-2.5 px-3 min-w-[280px]">Item Description</th>
+                      <th className="py-2.5 px-2 w-24 text-center">Qty</th>
+                      <th className="py-2.5 px-2 w-24">Unit</th>
+                      <th className="py-2.5 px-3 w-32 text-right">Rate (₹)</th>
                       <th className="py-2.5 px-2 w-24 text-center">Disc (%)</th>
-                      <th className="py-2.5 px-2 w-24 text-center">GST (%)</th>
-                      <th className="py-2.5 px-3 w-28 text-right">Taxable</th>
-                      <th className="py-2.5 px-3 w-28 text-right">Total (₹)</th>
-                      <th className="py-2.5 px-2 w-10 text-center"></th>
+                      <th className="py-2.5 px-2 w-28 text-center">GST (%)</th>
+                      <th className="py-2.5 px-3 w-32 text-right">Taxable</th>
+                      <th className="py-2.5 px-3 w-32 text-right">Total (₹)</th>
+                      <th className="py-2.5 px-2 w-12 text-center"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -1119,7 +1119,7 @@ export function SalesInvoiceModal({
 
       {/* Inline Quick Add Customer Modal */}
       <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-indigo-600" />

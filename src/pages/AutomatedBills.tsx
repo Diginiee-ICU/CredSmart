@@ -515,7 +515,7 @@ export default function AutomatedBills() {
 
       {/* MODAL 1: What is Automated Bills Dialog */}
       <Dialog open={isExplainerOpen} onOpenChange={setIsExplainerOpen}>
-        <DialogContent className="max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Repeat className="w-5 h-5 text-[#5046E5]" />
@@ -567,7 +567,7 @@ export default function AutomatedBills() {
 
       {/* MODAL 2: Create Automated Bill Setup Dialog */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl sm:max-w-4xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#5046E5]" />

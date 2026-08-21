@@ -253,7 +253,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* Account Info Modal */}
       <Dialog open={accountModal} onOpenChange={setAccountModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCircle className="w-5 h-5 text-[#6366F1]" />
@@ -286,7 +286,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* Reminders Modal */}
       <Dialog open={remindersModal} onOpenChange={setRemindersModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlarmClock className="w-5 h-5 text-[#6366F1]" />
@@ -321,7 +321,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* CA Reports Sharing Modal */}
       <Dialog open={caReportsModal} onOpenChange={setCaReportsModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-[#6366F1]" />
@@ -369,7 +369,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* Pricing Modal */}
       <Dialog open={pricingModal} onOpenChange={setPricingModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <IndianRupee className="w-5 h-5 text-[#6366F1]" />
@@ -396,7 +396,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* Refer & Earn Modal */}
       <Dialog open={referModal} onOpenChange={setReferModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gift className="w-5 h-5 text-rose-500" />
@@ -430,7 +430,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
       {/* Help & Support Modal */}
       <Dialog open={helpModal} onOpenChange={setHelpModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-[#6366F1]" />

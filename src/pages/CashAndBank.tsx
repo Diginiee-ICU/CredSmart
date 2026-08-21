@@ -960,7 +960,7 @@ export default function CashAndBank() {
 
       {/* MODAL 1: Add / Reduce Money Dialog */}
       <Dialog open={isAddMoneyModalOpen} onOpenChange={setIsAddMoneyModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center justify-between">
               <span>{moneyActionType === "add" ? "Add Money (Cash / Bank In)" : "Reduce Money (Cash / Bank Out)"}</span>
@@ -1135,7 +1135,7 @@ export default function CashAndBank() {
 
       {/* MODAL 2: Transfer Money Dialog */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4 text-[#5046E5]" />
@@ -1277,7 +1277,7 @@ export default function CashAndBank() {
 
       {/* MODAL 3: Add Bank Account Dialog */}
       <Dialog open={isAddBankModalOpen} onOpenChange={setIsAddBankModalOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Landmark className="w-4 h-4 text-[#5046E5]" />

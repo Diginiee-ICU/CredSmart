@@ -1295,7 +1295,7 @@ export default function Items() {
 
       {/* 5. Quick Stock Adjustment Dialog */}
       <Dialog open={!!adjustingItem} onOpenChange={() => setAdjustingItem(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <ArrowRightLeft className="w-5 h-5 text-primary" />

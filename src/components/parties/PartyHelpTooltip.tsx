@@ -78,7 +78,7 @@ export function PartyHelpTooltip({ onOpenDetailedGuide }: PartyHelpTooltipProps)
 
       {/* FAQ & Walkthrough Dialog */}
       <Dialog open={showFaqModal} onOpenChange={setShowFaqModal}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <BookOpen className="w-5 h-5 text-primary" />

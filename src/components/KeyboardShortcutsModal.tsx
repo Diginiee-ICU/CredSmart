@@ -35,7 +35,7 @@ const SHORTCUTS = [
 export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcutsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-indigo-600">
@@ -50,7 +50,7 @@ export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcuts
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
           {SHORTCUTS.map((grp, idx) => (
             <div key={idx} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border/80">
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -59,9 +59,9 @@ export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcuts
               </h4>
               <div className="space-y-2">
                 {grp.items.map((item, iIdx) => (
-                  <div key={iIdx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
+                  <div key={iIdx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0 gap-2">
                     <span className="text-muted-foreground">{item.desc}</span>
-                    <kbd className="px-2 py-0.5 rounded bg-background border border-border font-mono text-[11px] font-semibold shadow-2xs text-foreground">
+                    <kbd className="px-2 py-0.5 rounded bg-background border border-border font-mono text-[11px] font-semibold shadow-2xs text-foreground shrink-0">
                       {item.key}
                     </kbd>
                   </div>

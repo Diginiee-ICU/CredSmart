@@ -881,7 +881,7 @@ export default function BusinessSettings() {
 
       {/* Create New Business Modal */}
       <Dialog open={newBusinessModal} onOpenChange={setNewBusinessModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-[#EA580C]" />
@@ -925,7 +925,7 @@ export default function BusinessSettings() {
 
       {/* Chat Support Modal */}
       <Dialog open={chatSupportModal} onOpenChange={setChatSupportModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[#0284C7]" />
@@ -955,7 +955,7 @@ export default function BusinessSettings() {
 
       {/* Close Financial Year Modal */}
       <Dialog open={closeFyModal} onOpenChange={setCloseFyModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <Calendar className="w-5 h-5" />
@@ -996,7 +996,7 @@ export default function BusinessSettings() {
 
       {/* Shortcuts Modal */}
       <Dialog open={shortcutsModal} onOpenChange={setShortcutsModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Keyboard className="w-5 h-5 text-primary" />

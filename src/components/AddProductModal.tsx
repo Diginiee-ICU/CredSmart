@@ -171,7 +171,7 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-3 sm:px-4 pt-3 sm:pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
       <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-2xl card-shadow-lg w-full max-w-2xl max-h-[calc(100dvh-0.75rem)] sm:max-h-[90vh] overflow-auto z-10 animate-scale-in">
+      <div className="relative bg-card rounded-2xl card-shadow-lg w-full max-w-3xl sm:max-w-4xl max-h-[calc(100dvh-0.75rem)] sm:max-h-[92vh] overflow-auto z-10 animate-scale-in">
         <div className="sticky top-0 bg-card border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="text-lg font-bold text-foreground">{isEditing ? "Edit Product" : "Add New Product"}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">

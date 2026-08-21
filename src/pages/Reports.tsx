@@ -653,7 +653,7 @@ export default function Reports() {
 
       {/* CA Sharing Dialog */}
       <Dialog open={showCaModal} onOpenChange={setShowCaModal}>
-        <DialogContent className="sm:max-w-lg bg-white">
+        <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
               <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
@@ -767,7 +767,7 @@ export default function Reports() {
       {/* Individual Report Preview / Download Modal */}
       {selectedReport && (
         <Dialog open={Boolean(selectedReport)} onOpenChange={() => setSelectedReport(null)}>
-          <DialogContent className="sm:max-w-3xl bg-white max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl sm:max-w-6xl w-[95vw] bg-white dark:bg-card max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center justify-between pr-6">
                 <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">

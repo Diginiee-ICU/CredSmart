@@ -383,7 +383,7 @@ export default function EInvoicing() {
 
       {/* MODAL 1: What is e-Invoicing Dialog */}
       <Dialog open={isExplainerOpen} onOpenChange={setIsExplainerOpen}>
-        <DialogContent className="max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#5046E5]" />
@@ -442,7 +442,7 @@ export default function EInvoicing() {
 
       {/* MODAL 2: Interactive Generator & E-Invoice Management */}
       <Dialog open={isGeneratorOpen} onOpenChange={setIsGeneratorOpen}>
-        <DialogContent className="max-w-3xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl sm:max-w-6xl w-[95vw] bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -795,7 +795,7 @@ export default function EInvoicing() {
       {/* MODAL 3: Live Preview of Signed E-Invoice & IRN QR */}
       {selectedInvoice && (
         <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
-          <DialogContent className="max-w-lg bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-2xl">
+          <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
             <DialogHeader className="border-b border-border/70 pb-3">
               <DialogTitle className="text-base font-bold text-foreground flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -888,7 +888,7 @@ export default function EInvoicing() {
 
       {/* MODAL 4: Chat Support Dialog */}
       <Dialog open={isChatSupportOpen} onOpenChange={setIsChatSupportOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-5 rounded-2xl shadow-xl flex flex-col h-[520px]">
+        <DialogContent className="max-w-lg sm:max-w-xl bg-white dark:bg-card border border-border p-5 rounded-2xl shadow-xl flex flex-col h-[560px]">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-sm font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-blue-600" />
@@ -932,7 +932,7 @@ export default function EInvoicing() {
 
       {/* MODAL 5: Floating Help & FAQ Dialog */}
       <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-[#5046E5]" />

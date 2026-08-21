@@ -1476,7 +1476,7 @@ export default function Parties() {
 
       {/* 6. Keyboard Shortcuts Modal */}
       <Dialog open={showKeyboardModal} onOpenChange={setShowKeyboardModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Keyboard className="w-5 h-5 text-primary" />
@@ -1514,7 +1514,7 @@ export default function Parties() {
 
       {/* 7. Ledger Reconciliation & Audit Dialog */}
       <Dialog open={showReconciliationModal} onOpenChange={setShowReconciliationModal}>
-        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl sm:max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2 text-base font-bold">

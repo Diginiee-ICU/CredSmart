@@ -266,7 +266,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center px-3 sm:px-4 pt-3 sm:pt-8 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] overflow-y-auto">
-      <div className="bg-card border border-border rounded-xl sm:rounded-2xl shadow-xl w-full max-w-4xl mb-0 sm:mb-8 max-h-[calc(100dvh-0.75rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col">
+      <div className="bg-card border border-border rounded-xl sm:rounded-2xl shadow-xl w-full max-w-6xl w-[95vw] mb-0 sm:mb-8 max-h-[calc(100dvh-0.75rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border">
           <h2 className="text-lg font-bold text-foreground">New Purchase Invoice</h2>
