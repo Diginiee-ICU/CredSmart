@@ -223,23 +223,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 3 Metric Cards Grid - Compact */}
+        {/* 3 Metric Cards Grid - CredAlert Liquid Glass */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
           {/* Card 1: To Collect */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="bg-card p-3 sm:p-3.5 rounded-xl border border-border/80 shadow-2xs hover:shadow-sm hover:border-emerald-500/40 transition-all cursor-pointer group flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
               <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
                 <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>TO COLLECT</span>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-accent transition-colors" />
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-foreground font-mono tracking-tight">
-                ₹ {toCollect.toLocaleString("en-IN")}
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+                ₹ <span className="tabular-nums">{toCollect.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                 Outstanding customer credit ledger balances
@@ -250,18 +250,18 @@ export default function Dashboard() {
           {/* Card 2: To Pay */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="bg-card p-3 sm:p-3.5 rounded-xl border border-border/80 shadow-2xs hover:shadow-sm hover:border-rose-500/40 transition-all cursor-pointer group flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
-              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full font-mono">
-                <ArrowUpRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full font-mono">
+                <ArrowUpRight className="w-3 h-3 text-accent" />
                 <span>TO PAY</span>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-rose-600 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-accent transition-colors" />
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-foreground font-mono tracking-tight">
-                ₹ {toPay.toLocaleString("en-IN")}
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+                ₹ <span className="tabular-nums">{toPay.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                 Pending supplier invoices &amp; outward dues
@@ -272,18 +272,18 @@ export default function Dashboard() {
           {/* Card 3: Total Cash + Bank Balance */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="bg-card p-3 sm:p-3.5 rounded-xl border border-border/80 shadow-2xs hover:shadow-sm hover:border-indigo-500/40 transition-all cursor-pointer group flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
-              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">
-                <Landmark className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full font-mono">
+                <Landmark className="w-3 h-3 text-gold" />
                 <span>CASH &amp; BANK</span>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-indigo-600 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-accent transition-colors" />
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-foreground font-mono tracking-tight">
-                ₹ {cashBankBalance.toLocaleString("en-IN")}
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+                ₹ <span className="tabular-nums">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                 Total reconciled liquidity across accounts
@@ -293,10 +293,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Body Grid: Latest Transactions (2/3) + Today's Checklist (1/3) - Single-Screen View */}
+      {/* Main Body Grid: Latest Transactions (2/3) + Today's Checklist (1/3) */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-2.5 sm:gap-3 overflow-hidden">
         {/* Latest Transactions Table */}
-        <div className="lg:col-span-2 bg-card rounded-xl border border-border/80 shadow-2xs flex flex-col min-h-0 overflow-hidden">
+        <div className="lg:col-span-2 liquid-glass-soft flex flex-col min-h-0 overflow-hidden">
           <div className="px-3.5 py-2.5 border-b border-border/80 flex items-center justify-between bg-muted/20 shrink-0">
             <div className="flex items-center gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-foreground tracking-tight">Latest Invoices &amp; Transactions</h3>

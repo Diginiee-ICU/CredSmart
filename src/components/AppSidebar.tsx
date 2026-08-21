@@ -339,7 +339,7 @@ export function AppSidebar() {
             <button
               type="button"
               onClick={() => setQuickCreateOpen(!quickCreateOpen)}
-              className="flex items-center justify-between w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-950/60 transition-all font-semibold text-xs py-2.5 px-3 select-none ring-1 ring-indigo-400/30"
+              className="flex items-center justify-between w-full rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift transition-all font-semibold text-xs py-2.5 px-4 select-none border border-white/10 ripple-surface"
               aria-expanded={quickCreateOpen}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -347,7 +347,7 @@ export function AppSidebar() {
                 <span className="tracking-tight truncate font-bold">Create Invoice</span>
               </div>
               <ChevronDown
-                className={cn("w-4 h-4 transition-transform duration-200 shrink-0 ml-1 text-indigo-200", quickCreateOpen ? "rotate-180" : "")}
+                className={cn("w-4 h-4 transition-transform duration-200 shrink-0 ml-1 text-slate-300", quickCreateOpen ? "rotate-180" : "")}
               />
             </button>
 
@@ -539,9 +539,9 @@ export function AppSidebar() {
                       navigate(item.url);
                     }}
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer font-medium select-none group relative",
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer font-medium select-none group relative",
                       active
-                        ? "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-950/80 ring-1 ring-indigo-400/40"
+                        ? "bg-accent/15 text-accent font-bold border border-accent/30 shadow-glow"
                         : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                     )}
                     title={collapsed ? item.title : undefined}
@@ -549,7 +549,7 @@ export function AppSidebar() {
                     <item.icon
                       className={cn(
                         "w-4 h-4 shrink-0 transition-transform group-hover:scale-105",
-                        active ? "text-white" : "text-slate-400 group-hover:text-white"
+                        active ? "text-accent" : "text-slate-400 group-hover:text-white"
                       )}
                     />
 
@@ -589,7 +589,7 @@ export function AppSidebar() {
                           key={child.title}
                           to={child.url}
                           className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
-                          activeClassName="text-indigo-400 font-semibold bg-indigo-500/10"
+                          activeClassName="text-accent font-semibold bg-accent/10 border border-accent/20"
                         >
                           <span className="w-1 h-1 rounded-full bg-slate-500" />
                           <span className="truncate">{child.title}</span>

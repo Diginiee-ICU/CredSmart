@@ -31,7 +31,7 @@ const businessTypes = [
   "Other",
 ];
 
-const inputClass = "w-full h-11 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all text-sm font-sans";
+const inputClass = "w-full h-11 pl-10 pr-4 rounded-xl glass-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all text-sm font-sans";
 
 const isMissingBootstrapFunction = (error: { code?: string; message?: string } | null) => {
   if (!error) return false;
@@ -499,18 +499,15 @@ export default function Auth() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-gold/30 bg-card/95 backdrop-blur-xl card-shadow p-6 sm:p-8 relative overflow-hidden">
-          {/* Subtle top accent border line */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-gold" />
-
+        <div className="liquid-glass glass-shimmer p-6 sm:p-8 relative overflow-hidden">
           {/* Tabs — only show on step 1 */}
           {step === 1 && (
-            <div className="flex gap-1.5 p-1.5 bg-muted/70 border border-border/60 rounded-2xl mb-6">
+            <div className="flex gap-1.5 p-1.5 glass-input rounded-full mb-6">
               <button
                 onClick={() => { setMode("login"); setStep(1); }}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl transition-all ${
+                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
                   mode === "login"
-                    ? "bg-card text-foreground card-shadow border border-gold/30"
+                    ? "text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] font-bold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -518,9 +515,9 @@ export default function Auth() {
               </button>
               <button
                 onClick={() => setMode("signup")}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl transition-all ${
+                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
                   mode === "signup"
-                    ? "bg-card text-foreground card-shadow border border-gold/30"
+                    ? "text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] font-bold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -589,7 +586,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 rounded-xl bg-accent text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/90 transition-all disabled:opacity-50 shadow-lg shadow-accent/25 active:scale-[0.99]"
+                className="w-full h-11 rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] ripple-surface"
               >
                 {loading ? "Signing in..." : "Sign In to POS"} {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
@@ -599,7 +596,7 @@ export default function Auth() {
           {/* SIGNUP STEP 1: Account */}
           {mode === "signup" && step === 1 && (
             <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="space-y-4">
-              <p className="text-xs font-mono font-semibold text-accent uppercase tracking-wider">Step 1 of {totalSteps} — Store Owner Account</p>
+              <p className="text-xs font-mono font-semibold text-accent uppercase tracking-wider">Step 1 of {totalSteps} — Account Credentials</p>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" required className={inputClass} />
@@ -616,7 +613,7 @@ export default function Auth() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (min 6 chars)" required minLength={6} className={inputClass} />
               </div>
-              <button type="submit" className="w-full h-11 rounded-xl bg-accent text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/90 transition-all shadow-lg shadow-accent/25 active:scale-[0.99]">
+              <button type="submit" className="w-full h-11 rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] ripple-surface">
                 Continue to Store Setup <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -719,7 +716,7 @@ export default function Auth() {
                 )}
               </div>
 
-              <button type="submit" disabled={!businessType} className="w-full h-11 rounded-xl bg-accent text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/90 transition-all disabled:opacity-50 shadow-lg shadow-accent/25 active:scale-[0.99]">
+              <button type="submit" disabled={!businessType} className="w-full h-11 rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] ripple-surface">
                 Continue to Invoicing <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -747,20 +744,20 @@ export default function Auth() {
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Tax Rate (%)</label>
                   <input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} min={0} max={100} step={0.5}
-                    className="w-full h-11 px-4 rounded-xl bg-background border border-border text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                    className="w-full h-11 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Invoice Prefix</label>
                   <input type="text" value={invoicePrefix} onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase().replace(/[^0-9A-Z_-]/g, ''))} maxLength={6} placeholder="INV"
-                    className="w-full h-11 px-4 rounded-xl bg-background border border-border text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                    className="w-full h-11 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-muted/60 border border-border/80 text-xs text-muted-foreground">
+              <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/80 text-xs text-muted-foreground">
                 💡 Invoicing parameters can be tuned anytime in Store Settings.
               </div>
 
-              <button type="submit" disabled={loading} className="w-full h-11 rounded-xl bg-accent text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/90 transition-all disabled:opacity-50 shadow-lg shadow-accent/25 active:scale-[0.99]">
+              <button type="submit" disabled={loading} className="w-full h-11 rounded-full text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] ripple-surface">
                 {loading ? "Initializing Store Infrastructure..." : "Launch My Store Free"}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>

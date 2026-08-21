@@ -5,22 +5,37 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer ripple-surface",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md",
-        outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default:
+          "text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift",
+        ruby:
+          "text-white shadow-soft [background-image:var(--gradient-ruby)] hover:-translate-y-0.5 hover:shadow-lift",
+        gold:
+          "text-foreground shadow-soft [background-image:var(--gradient-gold)] hover:-translate-y-0.5 hover:shadow-lift",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-soft hover:bg-destructive/90 hover:shadow-lift",
+        outline:
+          "glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent",
+        secondary:
+          "bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/60",
+        ghost:
+          "hover:bg-accent/10 hover:text-accent",
+        link:
+          "text-accent underline-offset-4 hover:underline",
+        glass:
+          "liquid-glass-soft text-foreground hover:border-accent/40 hover:text-accent shadow-xs",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-lg px-3",
-        lg: "h-11 rounded-xl px-8",
-        icon: "h-10 w-10",
+        default: "h-9 px-4 py-2 text-xs font-semibold rounded-xl",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-11 rounded-full px-8 text-sm font-semibold",
+        pill: "h-9 px-5 rounded-full text-xs font-semibold",
+        "pill-lg": "h-11 px-8 rounded-full text-sm font-semibold",
+        icon: "h-9 w-9 rounded-xl",
+        "icon-sm": "h-8 w-8 rounded-lg",
       },
     },
     defaultVariants: {

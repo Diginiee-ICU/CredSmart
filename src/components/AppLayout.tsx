@@ -219,29 +219,29 @@ export default function AppLayout() {
     <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background overflow-hidden">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Global Top Header - Compact for Single-Screen View */}
-        <header className="h-13 sm:h-14 shrink-0 bg-card/90 backdrop-blur-md border-b border-border/80 flex items-center justify-between px-3 sm:px-5 z-10 shadow-xs">
+        {/* Global Top Header - CredAlert Glass Shell */}
+        <header className="h-14 sm:h-16 shrink-0 bg-card/75 backdrop-blur-xl border-b border-border/70 flex items-center justify-between px-3 sm:px-6 z-10 shadow-xs">
           {/* Dynamic Page Header Info */}
           <div className="flex flex-col justify-center min-w-0 mr-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
                 {title}
               </h1>
-              <div className="hidden xl:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
+              <div className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>SYNC LIVE</span>
+                <span className="tracking-wide">SYNC LIVE</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground truncate hidden sm:block font-normal">
+            <p className="text-xs text-muted-foreground truncate hidden sm:block font-normal mt-0.5">
               {subtitle}
             </p>
           </div>
 
           {/* Center Search Input / Command Trigger */}
-          <div className="flex-1 flex items-center justify-center max-w-md hidden md:flex mx-2">
+          <div className="flex-1 flex items-center justify-center max-w-md hidden md:flex mx-3">
             <button
               onClick={() => setOpenCommand(true)}
-              className="relative w-full flex items-center bg-muted/50 hover:bg-muted/80 border border-border/70 hover:border-gold/50 rounded-full pl-9 pr-14 py-2 text-xs text-muted-foreground hover:text-foreground transition-all text-left shadow-2xs group"
+              className="relative w-full flex items-center glass-input hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] rounded-full pl-9 pr-14 py-2 text-xs text-muted-foreground hover:text-foreground transition-all text-left shadow-2xs group"
             >
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
               <span>Search pages, items, customers...</span>
@@ -254,11 +254,11 @@ export default function AppLayout() {
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Mobile Search Button */}
             <button
               onClick={() => setOpenCommand(true)}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-xl transition-colors md:hidden flex items-center justify-center"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors md:hidden flex items-center justify-center"
               title="Search"
               aria-label="Search"
             >
@@ -267,18 +267,18 @@ export default function AppLayout() {
 
             <button
               onClick={() => setQuickCreateModalOpen(true)}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-indigo-600/25 hover:shadow-lg hover:shadow-indigo-600/35 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-primary-foreground text-xs sm:text-sm font-semibold rounded-full shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift transition-all active:scale-[0.98] ripple-surface"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Invoice</span>
               <span className="sm:hidden">Invoice</span>
             </button>
 
-            <div className="h-5 w-[1px] bg-border/80 mx-0.5 hidden sm:block" />
+            <div className="h-5 w-[1px] bg-border/80 mx-1 hidden sm:block" />
 
             <button
               onClick={() => setHelpOpen(true)}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-xl transition-colors hidden sm:flex items-center justify-center"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors hidden sm:flex items-center justify-center"
               title="Help & Documentation"
               aria-label="Help & Documentation"
             >
