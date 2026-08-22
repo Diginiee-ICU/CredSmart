@@ -923,10 +923,10 @@ export default function CashAndBank() {
                   })}
                 </div>
 
-                {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+                {/* DESKTOP VIEW: Data Table (Visible on md: and above) */}
                 <div className="hidden md:block overflow-x-auto w-full pb-2 scrollbar-thin border border-slate-200 dark:border-border rounded-xl">
                   <table className="w-full text-xs text-left min-w-[650px]">
-                    <thead className="bg-slate-50 dark:bg-muted/60 text-slate-500 font-semibold border-b border-slate-200 dark:border-border">
+                    <thead className="sticky top-0 bg-slate-50/95 dark:bg-card/95 backdrop-blur-xs text-slate-500 font-semibold border-b border-slate-200 dark:border-border z-10">
                       <tr>
                         <th className="px-4 py-3">Date</th>
                         <th className="px-4 py-3">Type</th>

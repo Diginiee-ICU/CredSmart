@@ -542,116 +542,118 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Categorized 3-Column Report Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Col 1: Favourite */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 bg-slate-50/90 border-b border-slate-200 font-semibold text-sm text-slate-800">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>Favourite & GST Returns</span>
-          </div>
-          <div className="divide-y divide-slate-100 flex-1">
-            {favouriteReports.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400">No favourite reports matched</div>
-            ) : (
-              favouriteReports.map((report) => (
-                <div
-                  key={report.id}
-                  onClick={() => setSelectedReport(report)}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-indigo-50/50 transition-colors cursor-pointer group"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
-                        {report.name}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{report.description}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Crown className="w-3.5 h-3.5 text-amber-500" />
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Col 2: GST */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 bg-slate-50/90 border-b border-slate-200 font-semibold text-sm text-slate-800">
-            <Percent className="w-4 h-4 text-emerald-600" />
-            <span>GST & Tax Compliance</span>
-          </div>
-          <div className="divide-y divide-slate-100 flex-1">
-            {gstReports.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400">No GST reports matched</div>
-            ) : (
-              gstReports.map((report) => (
-                <div
-                  key={report.id}
-                  onClick={() => setSelectedReport(report)}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-emerald-50/50 transition-colors cursor-pointer group"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-800 group-hover:text-emerald-700 transition-colors">
-                        {report.name}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{report.description}</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Crown className="w-3.5 h-3.5 text-amber-500" />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Col 3: Transaction */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 bg-slate-50/90 border-b border-slate-200 font-semibold text-sm text-slate-800">
-            <Receipt className="w-4 h-4 text-blue-600" />
-            <span>Transaction & P&L</span>
-          </div>
-          <div className="divide-y divide-slate-100 flex-1">
-            {txnReports.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400">No transaction reports matched</div>
-            ) : (
-              (showSeeMoreTxn ? txnReports : txnReports.slice(0, 6)).map((report) => (
-                <div
-                  key={report.id}
-                  onClick={() => setSelectedReport(report)}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
-                        {report.name}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{report.description}</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {report.isPro && <Crown className="w-3.5 h-3.5 text-amber-500" />}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          {txnReports.length > 6 && (
-            <div className="p-2.5 bg-slate-50/80 border-t border-slate-100 text-center">
-              <button
-                onClick={() => setShowSeeMoreTxn(!showSeeMoreTxn)}
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-              >
-                {showSeeMoreTxn ? "See less ^" : `See ${txnReports.length - 6} more v`}
-              </button>
+      {/* Categorized 3-Column Report Grid - Scrollable Desktop Container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pr-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
+          {/* Col 1: Favourite */}
+          <div className="bg-white dark:bg-card rounded-xl border border-border shadow-xs flex flex-col overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b border-border font-semibold text-sm text-foreground">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Favourite & GST Returns</span>
             </div>
-          )}
+            <div className="divide-y divide-border/60 flex-1">
+              {favouriteReports.length === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground">No favourite reports matched</div>
+              ) : (
+                favouriteReports.map((report) => (
+                  <div
+                    key={report.id}
+                    onClick={() => setSelectedReport(report)}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {report.name}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{report.description}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Crown className="w-3.5 h-3.5 text-amber-500" />
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Col 2: GST */}
+          <div className="bg-white dark:bg-card rounded-xl border border-border shadow-xs flex flex-col overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b border-border font-semibold text-sm text-foreground">
+              <Percent className="w-4 h-4 text-emerald-600" />
+              <span>GST & Tax Compliance</span>
+            </div>
+            <div className="divide-y divide-border/60 flex-1">
+              {gstReports.length === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground">No GST reports matched</div>
+              ) : (
+                gstReports.map((report) => (
+                  <div
+                    key={report.id}
+                    onClick={() => setSelectedReport(report)}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                          {report.name}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{report.description}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Crown className="w-3.5 h-3.5 text-amber-500" />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Col 3: Transaction */}
+          <div className="bg-white dark:bg-card rounded-xl border border-border shadow-xs flex flex-col overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b border-border font-semibold text-sm text-foreground">
+              <Receipt className="w-4 h-4 text-blue-600" />
+              <span>Transaction & P&L</span>
+            </div>
+            <div className="divide-y divide-border/60 flex-1">
+              {txnReports.length === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground">No transaction reports matched</div>
+              ) : (
+                (showSeeMoreTxn ? txnReports : txnReports.slice(0, 6)).map((report) => (
+                  <div
+                    key={report.id}
+                    onClick={() => setSelectedReport(report)}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
+                          {report.name}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{report.description}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {report.isPro && <Crown className="w-3.5 h-3.5 text-amber-500" />}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {txnReports.length > 6 && (
+              <div className="p-2.5 bg-muted/30 border-t border-border text-center">
+                <button
+                  onClick={() => setShowSeeMoreTxn(!showSeeMoreTxn)}
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline transition-colors"
+                >
+                  {showSeeMoreTxn ? "See less ^" : `See ${txnReports.length - 6} more v`}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

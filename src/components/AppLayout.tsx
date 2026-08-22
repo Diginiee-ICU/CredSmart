@@ -406,7 +406,7 @@ export default function AppLayout() {
         {/* Main Content Viewport */}
         <main
           className={cn(
-            "flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-slate-50/60 dark:bg-slate-950/40 scrollbar-thin",
+            "flex-1 min-w-0 overflow-y-auto md:overflow-hidden md:flex md:flex-col bg-slate-50/60 dark:bg-slate-950/40 scrollbar-thin",
             isMobile && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]"
           )}
         >
