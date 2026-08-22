@@ -142,8 +142,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2.5 sm:space-y-3 overflow-hidden">
-      {/* Top Bar - Compact for Single-Screen */}
+    <div className="h-auto md:h-full flex flex-col p-2.5 sm:p-4 space-y-3 overflow-y-auto md:overflow-hidden pb-24 md:pb-0">
+      {/* Top Bar - Compact */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
         <div>
           <div className="flex items-center gap-2">
@@ -188,16 +188,6 @@ export default function Dashboard() {
           >
             <Users2 className="w-3.5 h-3.5" />
           </button>
-          {/* Chat Support hidden as requested */}
-          {false && (
-            <button
-              onClick={() => window.open("https://credalert.business", "_blank")}
-              title="Institutional Chat Support"
-              className="p-1.5 rounded-lg border border-border/80 bg-card hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            </button>
-          )}
           <button
             onClick={() => setShowShortcutsModal(true)}
             title="Keyboard Shortcuts (⌘K)"
@@ -226,12 +216,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 3 Metric Cards Grid - CredAlert Liquid Glass */}
+        {/* 3 Metric Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
           {/* Card 1: To Collect */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between active:scale-[0.99] transition-all"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
               <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
@@ -253,7 +243,7 @@ export default function Dashboard() {
           {/* Card 2: To Pay */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between active:scale-[0.99] transition-all"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
               <div className="inline-flex items-center gap-1 text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full font-mono">
@@ -275,7 +265,7 @@ export default function Dashboard() {
           {/* Card 3: Total Cash + Bank Balance */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between"
+            className="liquid-glass-soft p-3.5 sm:p-4 hover-lift cursor-pointer flex flex-col justify-between active:scale-[0.99] transition-all"
           >
             <div className="flex items-center justify-between text-muted-foreground mb-1.5">
               <div className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full font-mono">
@@ -296,9 +286,77 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Body Grid: Latest Transactions (2/3) + Today's Checklist (1/3) */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-2.5 sm:gap-3 overflow-hidden">
-        {/* Latest Transactions Table */}
+      {/* MOBILE ONLY: Quick Action Touch Tiles (2x3 Grid) */}
+      <div className="block md:hidden space-y-1.5 shrink-0">
+        <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => navigate(ROUTE_PATHS.checkout)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-indigo-600 text-white mb-1 shadow-xs">
+              <Plus className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">POS Bill</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTE_PATHS.items)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-emerald-600 text-white mb-1 shadow-xs">
+              <Gift className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">Add Item</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTE_PATHS.parties)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-purple-600 text-white mb-1 shadow-xs">
+              <Users2 className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">Khata Hub</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTE_PATHS.expenses)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-rose-600 text-white mb-1 shadow-xs">
+              <FileText className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">Expense</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTE_PATHS.purchases)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-amber-600 text-white mb-1 shadow-xs">
+              <Clock className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">Purchase</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTE_PATHS.reports)}
+            className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 active:scale-95 transition-all text-center"
+          >
+            <div className="p-1.5 rounded-xl bg-blue-600 text-white mb-1 shadow-xs">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-bold leading-tight">Reports</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Body Grid: Latest Transactions + Today's Checklist */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-2.5 sm:gap-3">
+        {/* Latest Transactions Card */}
         <div className="lg:col-span-2 liquid-glass-soft flex flex-col min-h-0 overflow-hidden">
           <div className="px-3.5 py-2.5 border-b border-border/80 flex items-center justify-between bg-muted/20 shrink-0">
             <div className="flex items-center gap-2">
@@ -339,36 +397,67 @@ export default function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
-              <table className="w-full text-left text-xs min-w-[480px]">
-                <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
-                  <tr className="text-muted-foreground font-semibold border-b border-border text-[10px] uppercase tracking-wider font-mono">
-                    <th className="py-2.5 px-3">DATE</th>
-                    <th className="py-2.5 px-3">TYPE</th>
-                    <th className="py-2.5 px-3">INVOICE NO</th>
-                    <th className="py-2.5 px-3">PARTY NAME</th>
-                    <th className="py-2.5 px-3 text-right">AMOUNT</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {latestTransactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-mono text-muted-foreground text-[11px]">{t.date}</td>
-                      <td className="py-2.5 px-3">
+            <>
+              {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
+              <div className="block md:hidden divide-y divide-border/60 overflow-y-auto">
+                {latestTransactions.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => navigate(ROUTE_PATHS.sales)}
+                    className="p-3 hover:bg-muted/30 transition-colors cursor-pointer space-y-1.5 active:bg-muted/50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold text-xs text-foreground truncate">{t.partyName}</span>
                         <Badge variant="outline" className="text-[9px] bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20 font-mono py-0">
                           {t.type}
                         </Badge>
-                      </td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-foreground text-[11px]">{t.txnNo}</td>
-                      <td className="py-2.5 px-3 font-medium text-foreground text-[11px] truncate max-w-[140px]">{t.partyName}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-foreground text-[11px]">
+                      </div>
+                      <span className="font-mono font-bold text-xs text-foreground shrink-0">
                         ₹ {t.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>{t.txnNo}</span>
+                      <span>{t.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP VIEW: Untouched Desktop Data Table (Visible on md: and above) */}
+              <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
+                <table className="w-full text-left text-xs min-w-[480px]">
+                  <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
+                    <tr className="text-muted-foreground font-semibold border-b border-border text-[10px] uppercase tracking-wider font-mono">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">TYPE</th>
+                      <th className="py-2.5 px-3">INVOICE NO</th>
+                      <th className="py-2.5 px-3">PARTY NAME</th>
+                      <th className="py-2.5 px-3 text-right">AMOUNT</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {latestTransactions.map((t) => (
+                      <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3 font-mono text-muted-foreground text-[11px]">{t.date}</td>
+                        <td className="py-2.5 px-3">
+                          <Badge variant="outline" className="text-[9px] bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20 font-mono py-0">
+                            {t.type}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-semibold text-foreground text-[11px]">{t.txnNo}</td>
+                        <td className="py-2.5 px-3 font-medium text-foreground text-[11px] truncate max-w-[140px]">{t.partyName}</td>
+                        <td className="py-2.5 px-3 text-right font-mono font-bold text-foreground text-[11px]">
+                          ₹ {t.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 

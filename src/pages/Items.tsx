@@ -847,10 +847,166 @@ export default function Items() {
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* ITEMS TABLE - Fits Remaining Height */}
+      {/* ITEMS TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
+        {/* MOBILE VIEW: Touch Item Cards (Visible on screens < md) */}
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+          {loading ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              Loading items catalog...
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="py-16 text-center space-y-3">
+              <Package className="w-10 h-10 mx-auto text-muted-foreground/50" />
+              <p className="text-sm font-semibold text-foreground">No inventory items found</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {search ? `No items match "${search}".` : "Create your first product or import from product library."}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowCreateModal(true);
+                }}
+                className="gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                Create New Item
+              </Button>
+            </div>
+          ) : (
+            filteredItems.map((item) => {
+              const isSelected = selectedIds.has(item.id);
+              const isZero = item.currentStock <= 0;
+              const isLow = item.isLowStock && !isZero;
+
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "p-3.5 rounded-2xl border transition-all bg-card space-y-2.5 shadow-2xs active:scale-[0.99]",
+                    isSelected ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                        <Package className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4
+                          onClick={() => {
+                            setEditingItem(item);
+                            setShowCreateModal(true);
+                          }}
+                          className="font-bold text-sm text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                        >
+                          {item.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                          <span className="bg-muted px-1.5 py-0.2 rounded text-[10px] font-mono">
+                            {item.sku}
+                          </span>
+                          <span>•</span>
+                          <span className="truncate">{item.category}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="font-mono font-bold text-sm text-foreground">
+                        ₹ {(Number(item.sellingPrice) || 0).toLocaleString("en-IN")}
+                      </span>
+                      <div className="mt-0.5">
+                        {isZero ? (
+                          <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[9px] py-0">
+                            Out of Stock
+                          </Badge>
+                        ) : isLow ? (
+                          <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 text-[9px] py-0">
+                            Low: {item.currentStock} {item.unit}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[9px] py-0">
+                            {item.currentStock} {item.unit}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono">
+                      {item.barcode && (
+                        <span className="flex items-center gap-1">
+                          <QrCode className="w-3 h-3 text-indigo-600" />
+                          <span>{item.barcode}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setAdjustingItem(item);
+                          setAdjustType("add");
+                          setAdjustQty("1");
+                        }}
+                        className="h-7 px-2.5 text-[11px] font-semibold"
+                      >
+                        Adjust Stock
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingItem(item);
+                              setShowCreateModal(true);
+                            }}
+                            className="text-xs cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                            Edit Item
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedBarcodeItem(item);
+                              setShowBarcodeModal(true);
+                            }}
+                            className="text-xs cursor-pointer"
+                          >
+                            <Barcode className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                            Print Barcode
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteItem(item)}
+                            className="text-xs cursor-pointer text-rose-600"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-2" />
+                            Delete Item
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+        <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
             <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[10px] sm:text-[11px] z-10">
               <tr>

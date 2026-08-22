@@ -979,10 +979,192 @@ setSortDirection("asc");
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* PARTIES TABLE - Fits Remaining Height */}
+      {/* PARTIES TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
+        {/* MOBILE VIEW: High-Touch Party Cards (Visible on screens < md) */}
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+          {loading ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              Loading parties...
+            </div>
+          ) : filteredParties.length === 0 ? (
+            <div className="py-16 text-center space-y-3">
+              <Users2 className="w-10 h-10 mx-auto text-muted-foreground/50" />
+              <p className="text-sm font-semibold text-foreground">No parties found</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {search ? `No records match "${search}".` : "Create your first party to manage ledgers and billing."}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditingParty(null);
+                  setShowCreateModal(true);
+                }}
+                className="gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                Create New Party
+              </Button>
+            </div>
+          ) : (
+            filteredParties.map((party) => {
+              const isSelected = selectedIds.has(party.id);
+              const isCustomer = party.partyType === "customer";
+              const isSupplier = party.partyType === "supplier";
+
+              return (
+                <div
+                  key={party.id}
+                  className={cn(
+                    "p-3.5 rounded-2xl border transition-all bg-card space-y-3 shadow-2xs active:scale-[0.99]",
+                    isSelected ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm flex items-center justify-center border border-primary/20 shrink-0">
+                        {party.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4
+                            onClick={() => {
+                              if (party.partyType === "customer") {
+                                navigate(`/customers/${party.id}/ledger`);
+                              } else {
+                                setSharedLedgerSelectedParty(party);
+                                setShowSharedLedgerModal(true);
+                              }
+                            }}
+                            className="font-bold text-sm text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                          >
+                            {party.name}
+                          </h4>
+                          {party.sharedLedgerEnabled && (
+                            <Zap className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500 shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                          <span className="bg-muted px-1.5 py-0.2 rounded text-[10px] font-medium uppercase font-mono">
+                            {party.category || "General"}
+                          </span>
+                          <span>•</span>
+                          <span className="truncate">{party.city || party.state || "India"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span
+                        className={cn(
+                          "font-mono font-bold text-sm",
+                          party.balance > 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : party.balance < 0
+                            ? "text-rose-600 dark:text-rose-400"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {party.balance > 0
+                          ? `+ ₹ ${party.balance.toLocaleString("en-IN")}`
+                          : party.balance < 0
+                          ? `- ₹ ${Math.abs(party.balance).toLocaleString("en-IN")}`
+                          : "₹ 0.00"}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                        {party.balance > 0 ? "To Collect" : party.balance < 0 ? "To Pay" : "Settled"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Mobile Quick Action Strip */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                    <div className="flex items-center gap-1.5">
+                      {party.phone && (
+                        <>
+                          <a
+                            href={`tel:${party.phone}`}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground text-[11px] font-medium"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>Call</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const clean = party.phone?.replace(/[^0-9]/g, "");
+                              const text = `Hello ${party.name}, your account balance on CredSmart is ₹${Math.abs(party.balance).toLocaleString("en-IN")}.`;
+                              window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(text)}`, "_blank");
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-medium"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>WhatsApp</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {isCustomer && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/customers/${party.id}/ledger`)}
+                          className="h-7 px-2.5 text-[11px] font-semibold"
+                        >
+                          Ledger
+                        </Button>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingParty(party);
+                              setShowCreateModal(true);
+                            }}
+                            className="text-xs cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSharedLedgerSelectedParty(party);
+                              setShowSharedLedgerModal(true);
+                            }}
+                            className="text-xs cursor-pointer text-emerald-600"
+                          >
+                            <Share2 className="w-3.5 h-3.5 mr-2" />
+                            SharedLedger
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteParty(party)}
+                            className="text-xs cursor-pointer text-rose-600"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-2" />
+                            Delete Party
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+        <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
             <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[10px] sm:text-[11px] z-10">
               <tr>

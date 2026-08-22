@@ -2306,6 +2306,25 @@ export default function POSBilling() {
               </div>
             </div>
 
+            {/* Mobile Category Chips Carousel */}
+            <div className="flex lg:hidden items-center gap-1.5 pt-2.5 overflow-x-auto scrollbar-none pb-0.5">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95",
+                    selectedCategory === cat
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             {/* Instant Search Dropdown Auto-suggest */}
             {searchFocused && searchQuery.trim().length > 0 && (
               <div className="absolute top-full left-3 right-3 mt-1.5 bg-white backdrop-blur-md border border-slate-200 rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-slate-100">

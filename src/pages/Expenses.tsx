@@ -532,8 +532,8 @@ export default function Expenses() {
 
       {/* Main Table & Empty State Area - Single-Screen View */}
       <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-card overflow-hidden">
-        {/* Table Header Bar */}
-        <div className="bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-4 sm:px-6 py-2.5 shrink-0">
+        {/* DESKTOP Table Header Bar (Visible on md: and above) */}
+        <div className="hidden md:grid bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-4 sm:px-6 py-2.5 shrink-0">
           <div
             onClick={() => {
               setSortField("date");
@@ -560,16 +560,15 @@ export default function Expenses() {
         </div>
 
         {/* Content Body: Empty State vs Rows */}
-        <div className="flex-1 flex flex-col justify-center items-center overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-start overflow-y-auto">
           {loading ? (
-            <div className="py-20 text-center text-xs text-slate-400">
+            <div className="py-20 text-center text-xs text-slate-400 my-auto">
               <div className="w-7 h-7 border-2 border-[#5046E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               Loading expenses...
             </div>
           ) : filteredExpenses.length === 0 ? (
-            // Empty State matching Capture10.PNG Icon (Document with rupee & cross) + Text
-            <div className="py-24 flex flex-col items-center justify-center text-center max-w-md px-4">
-              {/* Stylized Document Icon with Rupee and Cross */}
+            // Empty State
+            <div className="py-24 flex flex-col items-center justify-center text-center max-w-md px-4 mx-auto my-auto">
               <div className="w-20 h-20 mb-4 rounded-2xl bg-slate-50 dark:bg-muted/40 border border-slate-200 dark:border-border flex items-center justify-center text-slate-400 relative">
                 <div className="relative">
                   <FileText className="w-10 h-10 stroke-[1.3] text-slate-400" />
@@ -593,69 +592,142 @@ export default function Expenses() {
               </div>
             </div>
           ) : (
-            // Active Table Rows
-            <div className="w-full h-full divide-y divide-slate-100 dark:divide-border/60">
-              {filteredExpenses.map((exp) => (
-                <div
-                  key={exp.id}
-                  className="grid grid-cols-12 items-center text-xs px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors"
-                >
-                  <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                    {format(new Date(exp.date), "dd MMM yyyy")}
-                  </div>
-
-                  <div className="col-span-3 font-mono font-semibold text-slate-900 dark:text-foreground truncate">
-                    {exp.expense_number || "—"}
-                  </div>
-
-                  <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
-                    <p className="truncate">{exp.party_name || "—"}</p>
-                    {exp.description && (
-                      <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
-                    )}
-                  </div>
-
-                  <div className="col-span-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
-                      <Tag className="w-2.5 h-2.5 text-slate-400" />
-                      {exp.category}
-                    </span>
-                  </div>
-
-                  <div className="col-span-2 flex items-center justify-end gap-3 text-right pr-2">
-                    <span className="font-bold text-rose-600 dark:text-rose-400 text-xs whitespace-nowrap">
-                      ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-
-                    {deletingId === exp.id ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleDelete(exp.id)}
-                          className="text-[10px] text-rose-600 font-bold hover:underline"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="text-[10px] text-slate-400 hover:underline"
-                        >
-                          Cancel
-                        </button>
+            <>
+              {/* MOBILE VIEW: Touch Expense Cards (Visible on screens < md) */}
+              <div className="block md:hidden p-2.5 space-y-2.5">
+                {filteredExpenses.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className="p-3.5 rounded-2xl border border-slate-200 dark:border-border bg-card space-y-2.5 shadow-2xs active:scale-[0.99]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-muted px-2 py-0.5 rounded border border-slate-200 dark:border-border text-foreground">
+                            {exp.expense_number || "EXP"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
+                            <Tag className="w-2.5 h-2.5 text-slate-400" />
+                            {exp.category}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-foreground mt-1">{exp.party_name || "General Payee"}</h4>
+                        {exp.description && (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{exp.description}</p>
+                        )}
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setDeletingId(exp.id)}
-                        className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Delete Expense"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+
+                      <div className="text-right">
+                        <span className="text-base font-black font-mono text-rose-600 dark:text-rose-400">
+                          ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </span>
+                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                          {format(new Date(exp.date), "dd MMM yyyy")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-border/60">
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        Method: {exp.payment_method || "Cash"}
+                      </span>
+
+                      <div>
+                        {deletingId === exp.id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleDelete(exp.id)}
+                              className="text-xs text-rose-600 font-bold hover:underline"
+                            >
+                              Confirm Delete
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(null)}
+                              className="text-xs text-slate-400 hover:underline"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setDeletingId(exp.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Delete Expense"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              {/* DESKTOP VIEW: Active Table Rows (Visible on md: and above) */}
+              <div className="hidden md:block w-full h-full divide-y divide-slate-100 dark:divide-border/60">
+                {filteredExpenses.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className="grid grid-cols-12 items-center text-xs px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                      {format(new Date(exp.date), "dd MMM yyyy")}
+                    </div>
+
+                    <div className="col-span-3 font-mono font-semibold text-slate-900 dark:text-foreground truncate">
+                      {exp.expense_number || "—"}
+                    </div>
+
+                    <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
+                      <p className="truncate">{exp.party_name || "—"}</p>
+                      {exp.description && (
+                        <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
+                      )}
+                    </div>
+
+                    <div className="col-span-2">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
+                        <Tag className="w-2.5 h-2.5 text-slate-400" />
+                        {exp.category}
+                      </span>
+                    </div>
+
+                    <div className="col-span-2 flex items-center justify-end gap-3 text-right pr-2">
+                      <span className="font-bold text-rose-600 dark:text-rose-400 text-xs whitespace-nowrap">
+                        ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </span>
+
+                      {deletingId === exp.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleDelete(exp.id)}
+                            className="text-[10px] text-rose-600 font-bold hover:underline"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(null)}
+                            className="text-[10px] text-slate-400 hover:underline"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDeletingId(exp.id)}
+                          className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Delete Expense"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

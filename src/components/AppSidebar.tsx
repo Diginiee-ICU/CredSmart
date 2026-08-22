@@ -190,79 +190,174 @@ export function AppSidebar() {
 
   // Mobile Bottom Navigation Bar & Sheet
   if (isMobile) {
+    const isDashboardActive = isRouteActive(ROUTE_PATHS.dashboard) || (location.pathname === "/" && userRole !== "cashier");
+    const isPosActive = isRouteActive(ROUTE_PATHS.checkout) || isRouteActive(ROUTE_PATHS.pos);
+    const isSalesActive = isRouteActive(ROUTE_PATHS.sales) || isRouteActive(ROUTE_PATHS.salesHistory);
+    const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
+
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 bg-[#141B2D]/85 backdrop-blur-xl border-t border-slate-700/50 shadow-[0_-8px_30px_rgb(0,0,0,0.3)] px-2 pt-1.5 pb-[env(safe-area-inset-bottom)] flex items-center justify-around text-slate-300"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B1120]/95 backdrop-blur-2xl border-t border-slate-800/90 shadow-[0_-10px_35px_rgba(0,0,0,0.5)] px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-400 select-none"
           aria-label="Mobile Bottom Navigation"
         >
-          {mobilePrimaryNavItems.map((item) => {
-            const active = isRouteActive(item.url);
-            return (
-              <NavLink
-                key={item.url}
-                to={item.url}
-                end={item.url === "/"}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl transition-all duration-200 min-w-[52px]",
-                  active ? "text-indigo-400 font-bold" : "text-slate-400 hover:text-white"
-                )}
-                activeClassName="text-indigo-400 font-bold"
-              >
-                <div
-                  className={cn(
-                    "p-1 rounded-lg transition-all",
-                    active ? "bg-indigo-500/20 text-indigo-400" : ""
-                  )}
-                >
-                  <item.icon className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] font-medium leading-tight whitespace-nowrap tracking-tight">
-                  {item.title}
-                </span>
-              </NavLink>
-            );
-          })}
+          {/* Tab 1: Dashboard */}
+          <NavLink
+            to={ROUTE_PATHS.dashboard}
+            end={true}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all duration-200 min-w-[50px] touch-target",
+              isDashboardActive ? "text-amber-400 font-bold" : "hover:text-white text-slate-400"
+            )}
+            activeClassName="text-amber-400 font-bold"
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl transition-all duration-200",
+                isDashboardActive ? "bg-amber-400/15 text-amber-400 shadow-glow" : ""
+              )}
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-medium leading-none tracking-tight">Home</span>
+          </NavLink>
 
+          {/* Tab 2: Sales Hub */}
+          <NavLink
+            to={ROUTE_PATHS.sales}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all duration-200 min-w-[50px] touch-target",
+              isSalesActive ? "text-indigo-400 font-bold" : "hover:text-white text-slate-400"
+            )}
+            activeClassName="text-indigo-400 font-bold"
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl transition-all duration-200",
+                isSalesActive ? "bg-indigo-500/20 text-indigo-400 shadow-glow" : ""
+              )}
+            >
+              <Receipt className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-medium leading-none tracking-tight">Sales</span>
+          </NavLink>
+
+          {/* Tab 3: Center Elevated POS Terminal Button */}
+          <NavLink
+            to={ROUTE_PATHS.checkout}
+            className="flex flex-col items-center justify-center -mt-5 px-1 group z-10"
+            aria-label="Open POS Billing Terminal"
+          >
+            <div
+              className={cn(
+                "w-13 h-13 rounded-2xl flex items-center justify-center shadow-lift transition-all duration-200 ring-4 ring-[#0B1120] active:scale-95",
+                isPosActive
+                  ? "bg-gradient-to-tr from-amber-500 to-amber-400 text-slate-950 shadow-amber-500/40"
+                  : "bg-gradient-to-tr from-indigo-600 to-violet-500 text-white hover:brightness-110"
+              )}
+            >
+              <ShoppingCart className="w-6 h-6 stroke-[2.2]" />
+            </div>
+            <span
+              className={cn(
+                "text-[10px] font-bold mt-1 tracking-tight",
+                isPosActive ? "text-amber-400" : "text-slate-300"
+              )}
+            >
+              POS Billing
+            </span>
+          </NavLink>
+
+          {/* Tab 4: Items & Inventory */}
+          <NavLink
+            to={ROUTE_PATHS.items}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all duration-200 min-w-[50px] touch-target",
+              isItemsActive ? "text-emerald-400 font-bold" : "hover:text-white text-slate-400"
+            )}
+            activeClassName="text-emerald-400 font-bold"
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl transition-all duration-200",
+                isItemsActive ? "bg-emerald-500/20 text-emerald-400 shadow-glow" : ""
+              )}
+            >
+              <Package className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-medium leading-none tracking-tight">Items</span>
+          </NavLink>
+
+          {/* Tab 5: More Drawer Sheet */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button
-                className="flex-1 flex flex-col items-center justify-center gap-1 px-1 py-1.5 rounded-xl text-slate-400 hover:text-white transition-all min-w-[52px]"
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-xl text-slate-400 hover:text-white transition-all min-w-[50px] touch-target"
                 aria-label="Open all navigation links"
               >
-                <div className="p-1 rounded-lg">
+                <div className="p-1.5 rounded-xl">
                   <Menu className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-medium leading-tight whitespace-nowrap tracking-tight">
-                  More
-                </span>
+                <span className="text-[10px] font-medium leading-none tracking-tight">More</span>
               </button>
             </SheetTrigger>
 
             <SheetContent
               side="bottom"
-              className="h-[min(85dvh,44rem)] rounded-t-3xl border-t border-slate-700 bg-[#141B2D] text-slate-200 px-4 sm:px-6 pb-6 shadow-2xl flex flex-col"
+              className="h-[min(88dvh,48rem)] rounded-t-3xl border-t border-slate-800 bg-[#0B1120] text-slate-200 px-4 sm:px-6 pb-6 shadow-2xl flex flex-col overflow-hidden"
             >
-              <SheetHeader className="mb-3 text-left shrink-0">
+              <SheetHeader className="mb-3 text-left shrink-0 pb-3 border-b border-slate-800/80">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <SheetTitle className="text-base font-bold text-white flex items-center gap-2">
-                      <span>{org?.name || "CredSmart"}</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        {roleLabel}
-                      </span>
-                    </SheetTitle>
-                    <SheetDescription className="text-xs text-slate-400 mt-0.5">
-                      {org?.phone || "Active Store"}
-                    </SheetDescription>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-lg shadow-md shrink-0">
+                      {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
+                    </div>
+                    <div>
+                      <SheetTitle className="text-base font-bold text-white flex items-center gap-2">
+                        <span>{org?.name || "CredSmart POS"}</span>
+                      </SheetTitle>
+                      <SheetDescription className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span>{org?.phone || "Active Store"}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-500" />
+                        <span className="text-amber-400 font-mono text-[11px] font-semibold">{roleLabel}</span>
+                      </SheetDescription>
+                    </div>
                   </div>
                 </div>
               </SheetHeader>
 
-              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+              {/* Quick Actions Bar inside Drawer */}
+              <div className="grid grid-cols-2 gap-2 mb-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setUniversalModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs hover:bg-indigo-600/30 transition-all active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <span>+ Quick Create Hub</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setCreateBusinessModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs hover:bg-amber-500/25 transition-all active:scale-95"
+                >
+                  <Building2 className="w-4 h-4 text-amber-400" />
+                  <span>Add Branch / Store</span>
+                </button>
+              </div>
+
+              {/* Full Route Groups */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
                 {filteredNavRouteGroups.map((group, gIdx) => (
                   <div key={gIdx} className="space-y-1.5">
-                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
                       {group.group}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -272,15 +367,15 @@ export function AppSidebar() {
                           to={item.url}
                           end={item.url === "/"}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-colors text-sm"
-                          activeClassName="bg-indigo-600 text-white font-bold"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors text-xs font-medium"
+                          activeClassName="bg-indigo-600 text-white font-bold shadow-xs"
                         >
-                          <item.icon className="w-4 h-4 text-indigo-400" />
-                          <span className="font-medium flex-1">{item.title}</span>
-                          {item.shortcut && (
-                            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300">
-                              {item.shortcut}
-                            </kbd>
+                          <item.icon className="w-4 h-4 text-indigo-400 shrink-0" />
+                          <span className="flex-1 truncate">{item.title}</span>
+                          {item.badge && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono">
+                              {item.badge}
+                            </span>
                           )}
                         </NavLink>
                       ))}
@@ -289,16 +384,17 @@ export function AppSidebar() {
                 ))}
               </div>
 
-              <div className="pt-3 border-t border-slate-700/80 shrink-0">
+              {/* Footer Sign Out */}
+              <div className="pt-3 border-t border-slate-800/80 shrink-0">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     signOut();
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 font-semibold text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 font-semibold text-xs transition-all active:scale-95"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span>Sign Out of CredSmart</span>
                 </button>
               </div>
             </SheetContent>

@@ -486,6 +486,35 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-pb-nav {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .safe-pt-header {
+    padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* Mobile Touch Targets & Ergonomic Cards */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-touch-card {
+    @apply bg-card text-card-foreground rounded-2xl border border-border/80 p-3.5 shadow-2xs transition-all duration-150 active:scale-[0.99] active:bg-muted/40;
+  }
+
+  .mobile-sticky-footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;

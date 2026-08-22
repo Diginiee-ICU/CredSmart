@@ -843,9 +843,88 @@ export default function CashAndBank() {
                 </div>
               </div>
             ) : (
-              // Active Transactions Table
+              // Active Transactions (Mobile Cards + Desktop Table)
               <div className="w-full h-full flex flex-col">
-                <div className="overflow-x-auto w-full pb-2 scrollbar-thin border border-slate-200 dark:border-border rounded-xl">
+                {/* MOBILE VIEW: Touch Bank Transaction Cards (Visible on screens < md) */}
+                <div className="block md:hidden space-y-2.5 w-full">
+                  {filteredTransactions.map((txn) => {
+                    const isMoneyIn = txn.type === "money_in";
+                    const isTransfer = txn.type === "transfer";
+
+                    return (
+                      <div
+                        key={txn.id}
+                        className="p-3.5 rounded-2xl border border-slate-200 dark:border-border bg-card space-y-2.5 shadow-2xs active:scale-[0.99]"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              {isTransfer ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300">
+                                  <ArrowLeftRight className="w-3 h-3" /> Transfer
+                                </span>
+                              ) : isMoneyIn ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                  <ArrowDownLeft className="w-3 h-3" /> Money In
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
+                                  <ArrowUpRight className="w-3 h-3" /> Money Out
+                                </span>
+                              )}
+                              <span className="text-[11px] font-medium text-muted-foreground">
+                                {getAccountLabel(txn.accountId)}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-sm text-foreground mt-1">
+                              {txn.partyName || txn.category || "General"}
+                            </h4>
+                            {txn.notes && (
+                              <p className="text-[11px] text-muted-foreground mt-0.5">{txn.notes}</p>
+                            )}
+                          </div>
+
+                          <div className="text-right">
+                            <span
+                              className={cn(
+                                "text-base font-black font-mono",
+                                isMoneyIn
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : isTransfer
+                                  ? "text-blue-600 dark:text-blue-400"
+                                  : "text-rose-600 dark:text-rose-400"
+                              )}
+                            >
+                              {isMoneyIn ? "+ " : isTransfer ? "⇄ " : "- "}₹{" "}
+                              {txn.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                              {format(new Date(txn.date), "dd MMM yyyy")}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-border/60">
+                          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                            {txn.paymentMode.replace("_", " ")} {txn.referenceNo ? `• #${txn.referenceNo}` : ""}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTransaction(txn.id)}
+                            title="Delete Record"
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+                <div className="hidden md:block overflow-x-auto w-full pb-2 scrollbar-thin border border-slate-200 dark:border-border rounded-xl">
                   <table className="w-full text-xs text-left min-w-[650px]">
                     <thead className="bg-slate-50 dark:bg-muted/60 text-slate-500 font-semibold border-b border-slate-200 dark:border-border">
                       <tr>
@@ -853,7 +932,7 @@ export default function CashAndBank() {
                         <th className="px-4 py-3">Type</th>
                         <th className="px-4 py-3">Account</th>
                         <th className="px-4 py-3">Category / Party</th>
-                        <th className="px-4 py-3">Mode & Ref</th>
+                        <th className="px-4 py-3">Mode &amp; Ref</th>
                         <th className="px-4 py-3 text-right">Amount (₹)</th>
                         <th className="px-4 py-3 text-right">Action</th>
                       </tr>

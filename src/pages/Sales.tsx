@@ -617,9 +617,140 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Transactions Table Card - Fits Remaining Height */}
+        {/* Transactions Table Card / Mobile Card Stream - Fits Remaining Height */}
         <div className="flex-1 min-h-0 rounded-xl border border-border/80 bg-card flex flex-col overflow-hidden shadow-2xs">
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex flex-col justify-between">
+          {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+            {filteredDocuments.length === 0 ? (
+              <div className="py-16 text-center space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
+                  <FileText className="w-7 h-7 stroke-[1.5]" />
+                </div>
+                <p className="text-xs font-bold text-foreground">No Transactions Found</p>
+                <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                  No records match current filter. Tap below to create your first {activeTabMeta.label.replace(/s$/, "")}.
+                </p>
+                <Button
+                  onClick={() => {
+                    setEditingDoc(null);
+                    setCreateModalOpen(true);
+                  }}
+                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 mt-1 gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
+                </Button>
+              </div>
+            ) : (
+              filteredDocuments.map((doc) => {
+                const isSelected = selectedDocIds.has(doc.id);
+                return (
+                  <div
+                    key={doc.id}
+                    className={cn(
+                      "p-3.5 rounded-2xl border transition-all bg-card space-y-2.5 shadow-2xs active:scale-[0.99]",
+                      isSelected
+                        ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+                        : "border-border/80 hover:border-border"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded border border-border/60 text-foreground">
+                            {doc.documentNumber}
+                          </span>
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
+                              doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
+                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
+                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
+                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
+                              doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
+                            )}
+                          >
+                            {doc.status}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-foreground mt-1">{doc.partyName}</h4>
+                        {doc.partyPhone && (
+                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{doc.partyPhone}</p>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-base font-black font-mono text-foreground">
+                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </span>
+                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{doc.docDate}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {calculateDueInText(doc)}
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenReceipt(doc)}
+                          className="h-7 px-2.5 text-[11px] font-semibold gap-1 border-border"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Print</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const url = `https://wa.me/?text=Invoice%20${doc.documentNumber}%20amount%20Rs.${doc.grandTotal}`;
+                            window.open(url, "_blank");
+                          }}
+                          className="h-7 px-2 text-[11px] font-semibold border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingDoc(doc);
+                                setCreateModalOpen(true);
+                              }}
+                              className="gap-2"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Edit Document</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="gap-2 text-rose-600"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+          <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse min-w-[640px]">
               <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
                 <tr className="text-slate-700 dark:text-slate-300 font-semibold border-b border-border text-[10px] sm:text-[11px] uppercase tracking-wider font-mono">
