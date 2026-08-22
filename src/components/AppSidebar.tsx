@@ -10,6 +10,8 @@ import {
   Plus,
   UserPlus,
   PackagePlus,
+  Package,
+  LayoutDashboard,
   FileSpreadsheet,
   Receipt,
   RotateCcw,
