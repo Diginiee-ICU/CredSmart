@@ -48,7 +48,7 @@ export const documentsService = {
             payment_method,
             created_at,
             customer_id,
-            customers ( name, phone, gstin )
+            customers ( name, phone )
           `)
           .eq("organization_id", orgId)
           .order("created_at", { ascending: false });
