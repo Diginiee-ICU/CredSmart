@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { SettingsNavSidebar } from "@/components/settings/SettingsNavSidebar";
 import { SignaturePad } from "@/components/settings/SignaturePad";
-import { useOrganization } from "@/hooks/useOrganization";
+import { useOrganization, saveLocalOrgRegistry } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -121,26 +121,27 @@ export default function BusinessSettings() {
   const [shortcutsModal, setShortcutsModal] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState("");
 
-  // Initialize from organization & localStorage
+  // Initialize from organization & localStorage per active org
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const orgStorageKey = orgId ? `credsmart_business_settings_${orgId}` : STORAGE_KEY;
+      const saved = localStorage.getItem(orgStorageKey) || (orgId ? null : localStorage.getItem(STORAGE_KEY));
       if (saved) {
         const parsed: BusinessSettingsState = JSON.parse(saved);
-        if (parsed.businessName) setBusinessName(parsed.businessName);
-        if (parsed.phone) setPhone(parsed.phone);
-        if (parsed.email) setEmail(parsed.email);
-        if (parsed.billingAddress) setBillingAddress(parsed.billingAddress);
-        if (parsed.state) setState(parsed.state);
-        if (parsed.pincode) setPincode(parsed.pincode);
-        if (parsed.city) setCity(parsed.city);
+        setBusinessName(parsed.businessName || org?.name || "");
+        setPhone(parsed.phone || org?.phone || "");
+        setEmail(parsed.email || org?.email || "");
+        setBillingAddress(parsed.billingAddress || org?.address || "");
+        setState(parsed.state || "");
+        setPincode(parsed.pincode || "");
+        setCity(parsed.city || "");
         if (typeof parsed.isGstRegistered === "boolean") setIsGstRegistered(parsed.isGstRegistered);
-        if (parsed.gstin) setGstin(parsed.gstin);
-        if (parsed.pan) setPan(parsed.pan);
+        setGstin(parsed.gstin || org?.gstin || "");
+        setPan(parsed.pan || org?.pan || "");
         if (parsed.businessTypes?.length) setSelectedBusinessTypes(parsed.businessTypes);
         if (parsed.industryType) setIndustryType(parsed.industryType);
         if (parsed.businessRegistrationType) setRegistrationType(parsed.businessRegistrationType);
-        if (parsed.logoUrl) setLogoUrl(parsed.logoUrl);
+        setLogoUrl(parsed.logoUrl || org?.logo_url || "");
         if (parsed.signatureDataUrl) setSignatureUrl(parsed.signatureDataUrl);
         if (parsed.signatoryTitle) setSignatoryTitle(parsed.signatoryTitle);
         if (parsed.website) setWebsite(parsed.website);
@@ -148,7 +149,7 @@ export default function BusinessSettings() {
         if (parsed.upiId) setUpiId(parsed.upiId);
         if (parsed.bankAccounts?.length) setBankAccounts(parsed.bankAccounts);
       } else if (org) {
-        setBusinessName(org.name || "Business Name");
+        setBusinessName(org.name || "");
         setPhone(org.phone || "");
         setEmail(org.email || "");
         setBillingAddress(org.address || "");
@@ -159,7 +160,7 @@ export default function BusinessSettings() {
     } catch {
       // fallback
     }
-  }, [org]);
+  }, [org, orgId]);
 
   // Auto extract PAN and state from GSTIN
   const handleGstinChange = (val: string) => {
@@ -304,21 +305,42 @@ export default function BusinessSettings() {
         }
       } catch {}
 
-      // Also sync to Supabase organization record if orgId is available
+      // Update Supabase organization record & local registry
       if (orgId) {
-        await supabase
-          .from("organizations")
-          .update({
-            name: businessName.trim(),
-            phone: phone.trim(),
-            email: email.trim(),
-            address: billingAddress.trim(),
-            gstin: gstin.trim(),
-            pan: pan.trim(),
-            logo_url: finalLogoUrl,
-            business_type: selectedBusinessTypes.join(", "),
-          })
-          .eq("id", orgId);
+        try {
+          await supabase
+            .from("organizations")
+            .update({
+              name: businessName.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              address: billingAddress.trim(),
+              gstin: gstin.trim(),
+              pan: pan.trim(),
+              logo_url: finalLogoUrl,
+              business_type: selectedBusinessTypes.join(", "),
+            })
+            .eq("id", orgId);
+        } catch (dbErr) {
+          console.warn("Supabase organization update notice:", dbErr);
+        }
+
+        try {
+          const { data: authData } = await supabase.auth.getUser();
+          if (authData?.user) {
+            saveLocalOrgRegistry(authData.user.id, {
+              id: orgId,
+              name: businessName.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              address: billingAddress.trim(),
+              gstin: gstin.trim(),
+              pan: pan.trim(),
+              logo_url: finalLogoUrl,
+              business_type: selectedBusinessTypes.join(", "),
+            });
+          }
+        } catch {}
 
         await refresh();
       }

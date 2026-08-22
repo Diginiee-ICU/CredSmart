@@ -530,7 +530,7 @@ const OrgContext = createContext<OrgContextValue>({
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [org, setOrg] = useState<OrgData | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<OrgData[]>([]);
@@ -539,6 +539,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const provisionAttemptedRef = useRef<Set<string>>(new Set());
 
   const fetchOrg = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     setLoading(true);
 
     if (!user) {
@@ -684,7 +689,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const switchOrganization = useCallback(async (newOrgId: string) => {
     localStorage.setItem(ACTIVE_ORG_KEY, newOrgId);

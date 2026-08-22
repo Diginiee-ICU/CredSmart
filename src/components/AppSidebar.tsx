@@ -480,6 +480,16 @@ export function AppSidebar() {
             </SheetContent>
           </Sheet>
         </nav>
+
+        <UniversalQuickCreateModal
+          open={universalModalOpen}
+          onOpenChange={setUniversalModalOpen}
+        />
+
+        <CreateBusinessModal
+          open={createBusinessModalOpen}
+          onOpenChange={setCreateBusinessModalOpen}
+        />
       </>
     );
   }

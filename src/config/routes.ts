@@ -29,6 +29,14 @@ export const ROUTE_PATHS = {
   auth: "/auth",
   privacyPolicy: "/privacy-policy",
   termsOfService: "/terms-of-service",
+  features: "/features",
+  pricing: "/pricing",
+  gstBillingGuide: "/gst-billing-guide",
+  compareVyapar: "/compare-vyapar",
+  about: "/about",
+  contact: "/contact",
+  security: "/security",
+  faq: "/faq",
   
   // GENERAL
   dashboard: "/dashboard",

@@ -1,94 +1,86 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Store } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Shield, Lock, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PublicLayout } from "@/components/public/PublicLayout";
+import { SEOHead } from "@/components/public/SEOHead";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function PrivacyPolicy() {
-  const navigate = useNavigate();
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Privacy Policy — CredSmart POS",
+    description: "CredSmart POS privacy policy, data protection rules, and DPDP Act 2023 compliance.",
+    url: "https://credsmart.in/privacy-policy",
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-slate-200 shadow-xs">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <button
-            onClick={() => navigate(ROUTE_PATHS.landing)}
-            className="flex items-center gap-2 text-slate-700 hover:text-primary transition-colors font-medium text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
-              <Store className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-slate-900">CredSmart POS</span>
+    <PublicLayout>
+      <SEOHead
+        title="Privacy Policy — Data Protection & DPDP 2023 | CredSmart POS"
+        description="Read CredSmart's Privacy Policy. Learn how we safeguard your GST billing, customer ledgers, and inventory records under Indian data protection laws."
+        keywords="CredSmart privacy policy, DPDP Act compliance, data security billing app, GST invoice data privacy"
+        canonicalUrl="https://credsmart.in/privacy-policy"
+        structuredData={structuredData}
+      />
+
+      <section className="py-16 max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="border-b border-slate-800 pb-6 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">
+            <Shield className="w-3.5 h-3.5" />
+            DPDP Act, 2023 &amp; IT Act Aligned
           </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Privacy Policy</h1>
+          <p className="text-xs text-slate-400">Last Updated: August 2026</p>
         </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-10 space-y-8">
-          <div className="border-b border-slate-100 pb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-3">
-              <Shield className="w-3.5 h-3.5" />
-              Privacy & Security
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Privacy Policy</h1>
-            <p className="text-sm text-slate-500 mt-1">Last Updated: August 2025</p>
-          </div>
-
+        <div className="space-y-8 text-xs sm:text-sm text-slate-300 leading-relaxed">
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">1. Information We Collect</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <h2 className="text-base sm:text-lg font-bold text-white">1. Information We Collect</h2>
+            <p>
               When you use CredSmart POS, we collect information necessary to provide you with point-of-sale, GST billing, and inventory services. This includes:
             </p>
-            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1.5 leading-relaxed">
+            <ul className="list-disc pl-5 space-y-1 text-slate-400">
               <li><strong>Account Information:</strong> Your name, email address, phone number, and authentication credentials.</li>
-              <li><strong>Business Information:</strong> Store name, business address, GSTIN, PAN, and contact details.</li>
-              <li><strong>Store Operational Data:</strong> Item master catalogs, inventory levels, sale invoices, customer records, and supplier purchase records.</li>
+              <li><strong>Business Information:</strong> Store legal name, business trade name, address, GSTIN, PAN, and contact details.</li>
+              <li><strong>Store Operational Data:</strong> Item catalogs, inventory levels, sales invoices, customer credit records, and supplier purchase records.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">2. How We Use Your Data</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <h2 className="text-base sm:text-lg font-bold text-white">2. How We Use Your Data</h2>
+            <p>
               Your business and transactional data belongs exclusively to you. We use this data solely to:
             </p>
-            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1.5 leading-relaxed">
+            <ul className="list-disc pl-5 space-y-1 text-slate-400">
               <li>Process POS billing, invoice generation, tax reporting, and inventory reconciliation.</li>
-              <li>Authenticate your account securely across devices.</li>
-              <li>Provide customer support and critical service notifications.</li>
+              <li>Authenticate your account securely across desktop and mobile devices.</li>
+              <li>Provide customer support and critical statutory service notifications.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">3. Data Security & Storage</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              We employ enterprise-grade security protocols, encryption in transit (HTTPS/TLS), and secure cloud storage provided by Supabase. Your database is isolated with strict Row-Level Security (RLS) policies ensuring no unauthorized access.
+            <h2 className="text-base sm:text-lg font-bold text-white">3. Data Security &amp; Storage</h2>
+            <p>
+              We employ enterprise-grade security protocols, encryption in transit (HTTPS/TLS 1.3), and secure cloud storage. Your database is isolated with strict Row-Level Security (RLS) policies ensuring no unauthorized access or data leakage between merchants.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">4. Third-Party Sharing</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <h2 className="text-base sm:text-lg font-bold text-white">4. Third-Party Sharing</h2>
+            <p>
               We do not sell, rent, or monetize your store data or customer details to any third-party advertisers or data brokers.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">5. Contact Us</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              If you have any questions regarding your data privacy or security, please contact our support team at <a href="mailto:support@credsmart.in" className="text-primary underline">support@credsmart.in</a>.
+            <h2 className="text-base sm:text-lg font-bold text-white">5. Contact &amp; Grievance Redressal</h2>
+            <p>
+              If you have any questions regarding your data privacy or rights under the Digital Personal Data Protection Act, 2023, please contact our Grievance Officer at <a href="mailto:support@credalert.business" className="text-amber-400 font-mono underline">support@credalert.business</a>.
             </p>
           </section>
-
-          <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <Button onClick={() => navigate(ROUTE_PATHS.auth)} className="rounded-xl">
-              Get Started with CredSmart POS
-            </Button>
-          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </PublicLayout>
   );
 }

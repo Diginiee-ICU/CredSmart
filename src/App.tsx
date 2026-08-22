@@ -41,6 +41,14 @@ import BarcodeGenerator from "@/pages/BarcodeGenerator";
 import Landing from "@/pages/Landing";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import Features from "@/pages/public/Features";
+import Pricing from "@/pages/public/Pricing";
+import GstBillingGuide from "@/pages/public/GstBillingGuide";
+import CompareVyapar from "@/pages/public/CompareVyapar";
+import About from "@/pages/public/About";
+import Contact from "@/pages/public/Contact";
+import Security from "@/pages/public/Security";
+import FaqPage from "@/pages/public/FaqPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,13 +94,19 @@ function ProtectedRoutes() {
 }
 
 function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] | string[] }) {
-  const { userRole, loading } = useOrganization();
+  const { user, loading: authLoading } = useAuth();
+  const { userRole, loading: orgLoading } = useOrganization();
 
-  if (loading) {
+  if (authLoading || orgLoading) {
     return <SleekRouteLoader />;
   }
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!user) {
+    return <Navigate to={ROUTE_PATHS.landing} replace />;
+  }
+
+  const effectiveRole = userRole || "store_owner";
+  if (!allowedRoles.includes(effectiveRole)) {
     return <Navigate to={ROUTE_PATHS.checkout} replace />;
   }
 
@@ -144,6 +158,14 @@ const App = () => (
                 {/* Public Routes */}
                 <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                 <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
+                <Route path={ROUTE_PATHS.features} element={<Features />} />
+                <Route path={ROUTE_PATHS.pricing} element={<Pricing />} />
+                <Route path={ROUTE_PATHS.gstBillingGuide} element={<GstBillingGuide />} />
+                <Route path={ROUTE_PATHS.compareVyapar} element={<CompareVyapar />} />
+                <Route path={ROUTE_PATHS.about} element={<About />} />
+                <Route path={ROUTE_PATHS.contact} element={<Contact />} />
+                <Route path={ROUTE_PATHS.security} element={<Security />} />
+                <Route path={ROUTE_PATHS.faq} element={<FaqPage />} />
                 <Route path={ROUTE_PATHS.privacyPolicy} element={<PrivacyPolicy />} />
                 <Route path={ROUTE_PATHS.termsOfService} element={<TermsOfService />} />
 

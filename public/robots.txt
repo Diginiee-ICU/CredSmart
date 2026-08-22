@@ -1,6 +1,50 @@
+# CredSmart POS & ERP Robots.txt
+# https://credsmart.in
+
 User-agent: *
 Allow: /
+Allow: /features
+Allow: /pricing
+Allow: /gst-billing-guide
+Allow: /compare-vyapar
+Allow: /about
+Allow: /contact
+Allow: /security
+Allow: /faq
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /auth
+
+# Disallow internal authenticated app routes from indexing
 Disallow: /dashboard
-Disallow: /auth
 Disallow: /checkout
+Disallow: /pos
+Disallow: /sales
+Disallow: /sales-history
+Disallow: /purchases
+Disallow: /purchase-returns
+Disallow: /items
+Disallow: /inventory
+Disallow: /godown
+Disallow: /parties
+Disallow: /customers
+Disallow: /customer-ledger
+Disallow: /suppliers
+Disallow: /discovery
+Disallow: /cash-bank
+Disallow: /expenses
+Disallow: /reports
+Disallow: /analytics
+Disallow: /e-invoicing
+Disallow: /automated-bills
+Disallow: /barcode
+Disallow: /settings
+Disallow: /business-settings
+Disallow: /invoice-settings
+Disallow: /print-settings
+Disallow: /staff
+Disallow: /activity-log
+
+# Host & Sitemap
+Host: https://credsmart.in
 Sitemap: https://credsmart.in/sitemap.xml

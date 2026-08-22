@@ -582,10 +582,10 @@ export default function CashAndBank() {
         </div>
       </header>
 
-      {/* Main 2-Column Dashboard Layout - Single-Screen View */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-border bg-white dark:bg-card overflow-hidden">
+      {/* Main 2-Column Dashboard Layout - Single-Screen View on Desktop, Scrollable on Mobile */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-border bg-white dark:bg-card overflow-y-auto lg:overflow-hidden">
         {/* Left Side Panel: Balances & Accounts */}
-        <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 p-0 flex flex-col bg-white dark:bg-card border-r border-slate-200 dark:border-border overflow-y-auto">
+        <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 p-0 flex flex-col bg-white dark:bg-card border-r border-slate-200 dark:border-border lg:overflow-y-auto scrollbar-thin">
           {/* Total Balance Card */}
           <div className="p-3.5 border-b border-slate-200 dark:border-border flex items-center justify-between shrink-0">
             <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -715,7 +715,7 @@ export default function CashAndBank() {
         </div>
 
         {/* Right Side Panel: Transactions Feed & Table */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-card min-w-0">
+        <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-card min-w-0 lg:overflow-hidden">
           {/* Transactions Tab Header */}
           <div className="border-b border-slate-200 dark:border-border px-6 pt-4 flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -816,7 +816,7 @@ export default function CashAndBank() {
           </div>
 
           {/* Transactions List / Empty State */}
-          <div className="flex-1 p-6 flex flex-col justify-center items-center overflow-auto">
+          <div className={cn("flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 scrollbar-thin", filteredTransactions.length === 0 && "flex flex-col justify-center items-center")}>
             {filteredTransactions.length === 0 ? (
               // Empty State matching Capture7.PNG Shield Icon & Text
               <div className="py-16 flex flex-col items-center justify-center text-center max-w-sm">
