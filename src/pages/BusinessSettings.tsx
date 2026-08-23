@@ -89,17 +89,7 @@ export default function BusinessSettings() {
   const [website, setWebsite] = useState("");
   const [msmeNumber, setMsmeNumber] = useState("");
   const [upiId, setUpiId] = useState("");
-  const [bankAccounts, setBankAccounts] = useState<BankAccountDetails[]>([
-    {
-      id: "bank_1",
-      bankName: "HDFC Bank Ltd.",
-      accountNumber: "50200084920194",
-      ifsc: "HDFC0001429",
-      branch: "Main Branch",
-      accountHolder: "",
-      isDefault: true,
-    },
-  ]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountDetails[]>([]);
 
   // Bank Form State
   const [showAddBank, setShowAddBank] = useState(false);

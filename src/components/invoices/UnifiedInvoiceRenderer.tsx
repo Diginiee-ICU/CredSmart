@@ -162,22 +162,25 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
     const selectedBank = propBankDetails?.accountNumber
       ? {
-          bankName: propBankDetails.bankName || "HDFC Bank Ltd.",
+          bankName: propBankDetails.bankName || "",
           accountNumber: propBankDetails.accountNumber,
-          ifsc: propBankDetails.ifsc || "HDFC0001429",
-          branch: propBankDetails.branch || "Main Branch",
+          ifsc: propBankDetails.ifsc || "",
+          branch: propBankDetails.branch || "",
           accountHolder: propBankDetails.accountHolder || storeInfo.name,
         }
       : activeSettings.bankAccounts.find((b) => b.id === activeSettings.selectedBankAccountId) ||
-        activeSettings.bankAccounts[0] || {
-          bankName: "HDFC Bank Ltd.",
-          accountNumber: "50200084920194",
-          ifsc: "HDFC0001429",
-          branch: "Main Branch",
-          accountHolder: storeInfo.name,
-        };
+        activeSettings.bankAccounts[0] ||
+        (storeInfo.account_number
+          ? {
+              bankName: storeInfo.bank_name || "",
+              accountNumber: storeInfo.account_number,
+              ifsc: storeInfo.ifsc || "",
+              branch: "",
+              accountHolder: storeInfo.account_holder || storeInfo.name,
+            }
+          : null);
 
-    const activeUpiId = propUpiId || activeSettings.selectedPaymentQrUpi || "credsmart@upi";
+    const activeUpiId = propUpiId || activeSettings.selectedPaymentQrUpi || storeInfo.upi_id || "";
 
     const upiPayload = `upi://pay?pa=${encodeURIComponent(
       activeUpiId
@@ -321,20 +324,24 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           </div>
 
           {/* Payment & Bank Details on Thermal Receipt */}
-          <div className="border-t border-dashed border-neutral-400 pt-1.5 mt-1.5 text-[9.5px] space-y-0.5 text-left leading-tight">
-            <p className="font-bold uppercase tracking-wider text-neutral-800 text-[8.5px]">Payment &amp; Bank Details:</p>
-            {selectedBank.bankName && <p className="text-neutral-700">Bank: <strong className="text-neutral-900">{selectedBank.bankName}</strong></p>}
-            {selectedBank.accountNumber && <p className="text-neutral-700">A/C: <strong className="text-neutral-900 font-mono">{selectedBank.accountNumber}</strong></p>}
-            {selectedBank.ifsc && <p className="text-neutral-700">IFSC: <strong className="text-neutral-900 font-mono">{selectedBank.ifsc}</strong></p>}
-            {activeUpiId && <p className="text-neutral-700">UPI ID: <strong className="text-neutral-900 font-mono">{activeUpiId}</strong></p>}
-          </div>
+          {(selectedBank?.accountNumber || activeUpiId) && (
+            <div className="border-t border-dashed border-neutral-400 pt-1.5 mt-1.5 text-[9.5px] space-y-0.5 text-left leading-tight">
+              <p className="font-bold uppercase tracking-wider text-neutral-800 text-[8.5px]">Payment &amp; Bank Details:</p>
+              {selectedBank?.bankName && <p className="text-neutral-700">Bank: <strong className="text-neutral-900">{selectedBank.bankName}</strong></p>}
+              {selectedBank?.accountNumber && <p className="text-neutral-700">A/C: <strong className="text-neutral-900 font-mono">{selectedBank.accountNumber}</strong></p>}
+              {selectedBank?.ifsc && <p className="text-neutral-700">IFSC: <strong className="text-neutral-900 font-mono">{selectedBank.ifsc}</strong></p>}
+              {activeUpiId && <p className="text-neutral-700">UPI ID: <strong className="text-neutral-900 font-mono">{activeUpiId}</strong></p>}
+            </div>
+          )}
 
           {/* Footer QR & Message */}
           <div className="text-center pt-2 mt-1.5 border-t border-dashed border-neutral-400">
-            <div className="inline-block p-1 bg-white border border-neutral-300 rounded mb-1">
-              <QRCodeSVG value={upiPayload} size={52} level="M" />
-            </div>
-            <p className="text-[9px] font-bold text-neutral-800">Scan &amp; Pay via UPI ({activeUpiId})</p>
+            {activeUpiId && (
+              <div className="inline-block p-1 bg-white border border-neutral-300 rounded mb-1">
+                <QRCodeSVG value={upiPayload} size={52} level="M" />
+                <p className="text-[9px] font-bold text-neutral-800">Scan &amp; Pay via UPI ({activeUpiId})</p>
+              </div>
+            )}
             <p className="text-[9px] text-neutral-500 mt-1 italic">Thank you for your business!</p>
           </div>
         </div>
@@ -686,20 +693,25 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             </div>
 
             {/* Bank details card */}
-            <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-              <div className="space-y-0.5 leading-tight">
-                <p className="font-bold text-slate-800 text-[9px]">Bank Details for NEFT/RTGS/IMPS:</p>
-                <p className="text-slate-600">Bank: <strong className="text-slate-900">{selectedBank.bankName}</strong></p>
-                <p className="text-slate-600">A/C No: <strong className="font-mono text-slate-900">{selectedBank.accountNumber}</strong></p>
-                <p className="text-slate-600">IFSC: <strong className="font-mono text-slate-900">{selectedBank.ifsc}</strong> ({selectedBank.branch})</p>
-              </div>
+            {(selectedBank?.accountNumber || activeUpiId) && (
+              <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                <div className="space-y-0.5 leading-tight">
+                  <p className="font-bold text-slate-800 text-[9px]">Bank Details for NEFT/RTGS/IMPS:</p>
+                  {selectedBank?.bankName && <p className="text-slate-600">Bank: <strong className="text-slate-900">{selectedBank.bankName}</strong></p>}
+                  {selectedBank?.accountNumber && <p className="text-slate-600">A/C No: <strong className="font-mono text-slate-900">{selectedBank.accountNumber}</strong></p>}
+                  {selectedBank?.ifsc && <p className="text-slate-600">IFSC: <strong className="font-mono text-slate-900">{selectedBank.ifsc}</strong> {selectedBank.branch ? `(${selectedBank.branch})` : ""}</p>}
+                  {activeUpiId && <p className="text-slate-600">UPI ID: <strong className="font-mono text-slate-900">{activeUpiId}</strong></p>}
+                </div>
 
-              {/* Dynamic QR Code */}
-              <div className="text-center shrink-0 p-1 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                <QRCodeSVG value={upiPayload} size={42} level="M" />
-                <p className="text-[7px] font-bold text-slate-700 mt-0.5">Scan &amp; Pay UPI</p>
+                {/* Dynamic QR Code */}
+                {activeUpiId && (
+                  <div className="text-center shrink-0 p-1 bg-white rounded-lg border border-slate-200 shadow-2xs">
+                    <QRCodeSVG value={upiPayload} size={42} level="M" />
+                    <p className="text-[7px] font-bold text-slate-700 mt-0.5">Scan &amp; Pay UPI</p>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Calculations & Grand Total */}

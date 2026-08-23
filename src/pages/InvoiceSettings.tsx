@@ -83,24 +83,8 @@ const defaultInitialSettings: InvoiceSettingsState = {
     customColumns: [],
   },
 
-  selectedBankAccountId: "bank_1",
-  bankAccounts: [
-    {
-      id: "bank_1",
-      bankName: "HDFC Bank Ltd.",
-      accountNumber: "50200084920194",
-      ifsc: "HDFC0001429",
-      branch: "Main Branch",
-      isDefault: true,
-    },
-    {
-      id: "bank_2",
-      bankName: "State Bank of India",
-      accountNumber: "30491029384",
-      ifsc: "SBIN0000624",
-      branch: "City Branch",
-    },
-  ],
+  selectedBankAccountId: "",
+  bankAccounts: [],
   selectedPaymentQrUpi: "",
   termsAndConditionsType: "Sales Invoices",
   termsAndConditions: {

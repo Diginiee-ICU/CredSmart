@@ -349,15 +349,19 @@ const saveOrgBankAndUpi = (
   }
 ) => {
   try {
-    const bankAccount = {
-      id: `bank_${Date.now()}`,
-      bankName: details.bankName || "HDFC Bank Ltd.",
-      accountNumber: details.accountNumber || "50200084920194",
-      ifsc: details.ifsc || "HDFC0001429",
-      branch: "Main Branch",
-      accountHolder: details.accountHolder || details.businessName,
-      isDefault: true,
-    };
+    const bankAccounts = details.accountNumber
+      ? [
+          {
+            id: `bank_${Date.now()}`,
+            bankName: details.bankName || "",
+            accountNumber: details.accountNumber,
+            ifsc: details.ifsc || "",
+            branch: "",
+            accountHolder: details.accountHolder || details.businessName,
+            isDefault: true,
+          },
+        ]
+      : [];
 
     const businessSettings = {
       businessName: details.businessName,
@@ -367,7 +371,7 @@ const saveOrgBankAndUpi = (
       gstin: details.gstin || "",
       pan: details.pan || "",
       upiId: details.upiId || "",
-      bankAccounts: [bankAccount],
+      bankAccounts,
     };
 
     localStorage.setItem(`credsmart_business_settings_${orgId}`, JSON.stringify(businessSettings));

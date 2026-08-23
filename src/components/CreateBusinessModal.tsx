@@ -359,7 +359,7 @@ export function CreateBusinessModal({
               <div className="space-y-1.5">
                 <Label className="font-semibold text-slate-700 dark:text-slate-300">Bank Name</Label>
                 <Input
-                  placeholder="e.g. HDFC Bank Ltd."
+                  placeholder="e.g. State Bank of India, HDFC, ICICI"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
                   className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800"
@@ -381,7 +381,7 @@ export function CreateBusinessModal({
               <div className="space-y-1.5">
                 <Label className="font-semibold text-slate-700 dark:text-slate-300">Bank Account Number</Label>
                 <Input
-                  placeholder="50200084920194"
+                  placeholder="e.g. 123456789012"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value.trim())}
                   className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 font-mono"
@@ -391,7 +391,7 @@ export function CreateBusinessModal({
               <div className="space-y-1.5">
                 <Label className="font-semibold text-slate-700 dark:text-slate-300">IFSC Code</Label>
                 <Input
-                  placeholder="HDFC0001429"
+                  placeholder="e.g. SBIN0001234"
                   value={ifsc}
                   onChange={(e) => setIfsc(e.target.value.toUpperCase().trim())}
                   className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 font-mono uppercase"
