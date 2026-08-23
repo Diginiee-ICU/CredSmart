@@ -76,199 +76,7 @@ const DEFAULT_CATEGORIES = [
   "General",
 ];
 
-const DEFAULT_SAMPLE_ITEMS: InventoryItem[] = [
-  {
-    id: "item-01",
-    name: "Amul Butter Pasteurised (500g)",
-    sku: "AML-BUT-500",
-    barcode: "8901030728563",
-    category: "Dairy",
-    brand: "Amul",
-    unit: "PCS",
-    sellingPrice: 280,
-    purchasePrice: 240,
-    mrp: 285,
-    gstRate: 12,
-    hsnCode: "0402",
-    currentStock: 45,
-    openingStock: 50,
-    minStockAlert: 15,
-    isLowStock: false,
-    godownName: "Main Warehouse",
-    batches: [
-      {
-        id: "b-01",
-        productId: "item-01",
-        batchNumber: "BATCH-D01",
-        mrp: 285,
-        sellingPrice: 280,
-        costPrice: 240,
-        stock: 45,
-        expiryDate: "2026-11-30",
-      },
-    ],
-    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-  },
-  {
-    id: "item-02",
-    name: "Dettol Antiseptic Liquid (500ml)",
-    sku: "DET-LIQ-500",
-    barcode: "8901058851403",
-    category: "Hygiene",
-    brand: "Dettol",
-    unit: "BTL",
-    sellingPrice: 195,
-    purchasePrice: 160,
-    mrp: 210,
-    gstRate: 18,
-    hsnCode: "3808",
-    currentStock: 6,
-    openingStock: 25,
-    minStockAlert: 10,
-    isLowStock: true,
-    godownName: "Main Warehouse",
-    batches: [
-      {
-        id: "b-02",
-        productId: "item-02",
-        batchNumber: "BATCH-H01",
-        mrp: 210,
-        sellingPrice: 195,
-        costPrice: 160,
-        stock: 6,
-        expiryDate: "2027-04-30",
-      },
-    ],
-    created_at: new Date(Date.now() - 45 * 86400000).toISOString(),
-  },
-  {
-    id: "item-03",
-    name: "Tata Salt Vacuum Evaporated (1kg)",
-    sku: "TAT-SLT-1KG",
-    barcode: "8901030615863",
-    category: "Grocery",
-    brand: "Tata",
-    unit: "KG",
-    sellingPrice: 28,
-    purchasePrice: 22,
-    mrp: 30,
-    gstRate: 5,
-    hsnCode: "1006",
-    currentStock: 120,
-    openingStock: 150,
-    minStockAlert: 25,
-    isLowStock: false,
-    godownName: "North Branch Godown",
-    batches: [
-      {
-        id: "b-03",
-        productId: "item-03",
-        batchNumber: "BATCH-GR01",
-        mrp: 30,
-        sellingPrice: 28,
-        costPrice: 22,
-        stock: 120,
-        expiryDate: "2027-08-31",
-      },
-    ],
-    created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
-  },
-  {
-    id: "item-04",
-    name: "Paracetamol 500mg IP (Strip of 10)",
-    sku: "CIP-PCM-500",
-    barcode: "8906002410507",
-    category: "Pharmacy",
-    brand: "Cipla",
-    unit: "PKT",
-    sellingPrice: 22,
-    purchasePrice: 14,
-    mrp: 25,
-    gstRate: 12,
-    hsnCode: "3004",
-    currentStock: 300,
-    openingStock: 300,
-    minStockAlert: 50,
-    isLowStock: false,
-    godownName: "Main Warehouse",
-    batches: [
-      {
-        id: "b-04",
-        productId: "item-04",
-        batchNumber: "BATCH-P01",
-        mrp: 25,
-        sellingPrice: 22,
-        costPrice: 14,
-        stock: 300,
-        expiryDate: "2028-02-28",
-      },
-    ],
-    created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
-  },
-  {
-    id: "item-05",
-    name: "Coca-Cola Original 300ml Can",
-    sku: "COK-CAN-300",
-    barcode: "8901491101356",
-    category: "Beverages",
-    brand: "Coca-Cola",
-    unit: "CAN",
-    sellingPrice: 40,
-    purchasePrice: 28,
-    mrp: 40,
-    gstRate: 28,
-    hsnCode: "2202",
-    currentStock: 0,
-    openingStock: 48,
-    minStockAlert: 12,
-    isLowStock: true,
-    godownName: "Cold Storage Unit 1",
-    batches: [
-      {
-        id: "b-05",
-        productId: "item-05",
-        batchNumber: "BATCH-BV01",
-        mrp: 40,
-        sellingPrice: 40,
-        costPrice: 28,
-        stock: 0,
-        expiryDate: "2026-10-31",
-      },
-    ],
-    created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-  },
-  {
-    id: "item-06",
-    name: "Supreme PVC Elbow Joint (1 inch)",
-    sku: "SUP-ELB-1IN",
-    barcode: "8901063010222",
-    category: "Hardware",
-    brand: "Supreme",
-    unit: "PCS",
-    sellingPrice: 25,
-    purchasePrice: 16,
-    mrp: 28,
-    gstRate: 18,
-    hsnCode: "7307",
-    currentStock: 140,
-    openingStock: 150,
-    minStockAlert: 30,
-    isLowStock: false,
-    godownName: "North Branch Godown",
-    batches: [
-      {
-        id: "b-06",
-        productId: "item-06",
-        batchNumber: "BATCH-HW01",
-        mrp: 28,
-        sellingPrice: 25,
-        costPrice: 16,
-        stock: 140,
-      },
-    ],
-    created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-  },
-];
+const DEFAULT_SAMPLE_ITEMS: InventoryItem[] = [];
 
 export default function Items() {
   const navigate = useNavigate();
@@ -305,7 +113,7 @@ export default function Items() {
   // Fetch Items & Batches from Supabase
   const fetchItems = useCallback(async () => {
     if (!orgId) {
-      setItems(DEFAULT_SAMPLE_ITEMS);
+      setItems([]);
       setLoading(false);
       return;
     }
@@ -319,7 +127,7 @@ export default function Items() {
         .order("name");
 
       if (prodErr || !dbProducts || dbProducts.length === 0) {
-        setItems(DEFAULT_SAMPLE_ITEMS);
+        setItems([]);
         setLoading(false);
         return;
       }

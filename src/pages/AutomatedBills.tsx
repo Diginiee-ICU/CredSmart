@@ -99,25 +99,7 @@ export default function AutomatedBills() {
       if (stored) {
         setRecurringBills(JSON.parse(stored));
       } else {
-        // Initial sample data for demonstration
-        const sample: RecurringBill = {
-          id: "rec_sample_1",
-          customerName: "Sharma Enterprises",
-          customerPhone: "+91 9876543210",
-          customerEmail: "contact@sharmaent.com",
-          frequency: "monthly",
-          repeatDay: 1,
-          startDate: format(new Date(), "yyyy-MM-dd"),
-          amount: 5000,
-          description: "Monthly Software & IT Maintenance Retainer",
-          items: [{ name: "IT Support Retainer", quantity: 1, unitPrice: 5000 }],
-          channels: { sms: true, whatsapp: true, email: true, paymentLink: true },
-          status: "active",
-          nextRunDate: format(addMonths(new Date(), 1), "yyyy-MM-01"),
-          lastRunDate: format(new Date(), "yyyy-MM-01"),
-          createdAt: new Date().toISOString(),
-        };
-        setRecurringBills([sample]);
+        setRecurringBills([]);
       }
     } catch (e) {
       console.error(e);

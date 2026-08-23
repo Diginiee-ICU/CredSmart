@@ -286,27 +286,18 @@ export default function Reports() {
 
       const allCredit = [...cn, ...sr];
 
-      if (sales.length === 0 && pi.length === 0 && allCredit.length === 0) {
-        // Use realistic GST sample documents for immediate live preview
-        const samples = generateSampleGSTDocuments(currentOrgId, org?.gstin || "27AAPFU0939F1ZV");
-        setSalesDocs(samples.sales);
-        setCreditNotes(samples.creditNotes);
-        setPurchaseDocs(samples.purchases);
-        setDebitNotes([]);
-        setChallans([]);
-      } else {
-        setSalesDocs(sales);
-        setCreditNotes(allCredit);
-        setPurchaseDocs(pi);
-        setDebitNotes(dn);
-        setChallans(dc);
-      }
+      setSalesDocs(sales);
+      setCreditNotes(allCredit);
+      setPurchaseDocs(pi);
+      setDebitNotes(dn);
+      setChallans(dc);
     } catch (e) {
       console.warn("Failed to load documents for reports:", e);
-      const samples = generateSampleGSTDocuments(orgId || "default", org?.gstin || "27AAPFU0939F1ZV");
-      setSalesDocs(samples.sales);
-      setCreditNotes(samples.creditNotes);
-      setPurchaseDocs(samples.purchases);
+      setSalesDocs([]);
+      setCreditNotes([]);
+      setPurchaseDocs([]);
+      setDebitNotes([]);
+      setChallans([]);
     } finally {
       setLoading(false);
     }

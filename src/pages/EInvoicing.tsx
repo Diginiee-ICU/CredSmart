@@ -66,21 +66,21 @@ export default function EInvoicing() {
   const [activeTab, setActiveTab] = useState<"workbench" | "config" | "history">("workbench");
 
   // Config State
-  const [gstin, setGstin] = useState(org?.gstin || "27ABCDE1234F1Z5");
-  const [nicUsername, setNicUsername] = useState("CREDSMART_API");
-  const [nicPassword, setNicPassword] = useState("••••••••••••");
+  const [gstin, setGstin] = useState(org?.gstin || "");
+  const [nicUsername, setNicUsername] = useState("");
+  const [nicPassword, setNicPassword] = useState("");
   const [isProduction, setIsProduction] = useState(false);
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
 
   // New E-Invoice Form
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${format(new Date(), "yyyyMMdd")}-01`);
-  const [buyerName, setBuyerName] = useState("Apex Traders Private Limited");
-  const [buyerGstin, setBuyerGstin] = useState("29ABCDE5678G2Z1");
-  const [taxableAmount, setTaxableAmount] = useState("10000");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerGstin, setBuyerGstin] = useState("");
+  const [taxableAmount, setTaxableAmount] = useState("");
   const [gstRate, setGstRate] = useState("18");
-  const [generateEwayBill, setGenerateEwayBill] = useState(true);
-  const [vehicleNumber, setVehicleNumber] = useState("MH-12-AB-1234");
-  const [distanceKm, setDistanceKm] = useState("140");
+  const [generateEwayBill, setGenerateEwayBill] = useState(false);
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [distanceKm, setDistanceKm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Active Generated Invoice Preview Modal
@@ -106,27 +106,12 @@ export default function EInvoicing() {
       if (stored) {
         setEInvoices(JSON.parse(stored));
       } else {
-        // Initialize with default demo record
-        const sampleRecord: EInvoiceRecord = {
-          id: "einv_sample_1",
-          invoiceNumber: "INV-2026-0891",
-          irn: "e7d4a1b8c9e0f23456789abcdef1234567890abcdef1234567890abcdef123456",
-          ackNumber: "112609876543",
-          ackDate: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-          buyerName: "Mahindra Logistics Hub",
-          buyerGstin: "27AABCM1234Q1Z8",
-          totalAmount: 118000,
-          taxAmount: 18000,
-          status: "active",
-          ewayBillNo: "241098765432",
-          qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=IRN:e7d4a1b8c9e0f23456789abcdef1234567890abcdef1234567890abcdef123456|GSTIN:${org?.gstin || "27ABCDE1234F1Z5"}|Total:118000`,
-        };
-        setEInvoices([sampleRecord]);
+        setEInvoices([]);
       }
     } catch (e) {
       console.error(e);
     }
-  }, [storageKeyEInvoices, org?.gstin]);
+  }, [storageKeyEInvoices]);
 
   const persistRecords = (records: EInvoiceRecord[]) => {
     setEInvoices(records);
