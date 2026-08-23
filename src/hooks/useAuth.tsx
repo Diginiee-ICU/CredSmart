@@ -24,14 +24,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Fetch current session once
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (isMounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Safety timeout to prevent any infinite spinner if supabase client takes time
+    const safetyTimer = setTimeout(() => {
+      if (isMounted && loading) {
         setLoading(false);
       }
-    });
+    }, 1500);
+
+    // 1. Fetch current session once
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn("Session check error:", err);
+        if (isMounted) setLoading(false);
+      });
 
     // 2. Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -46,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);

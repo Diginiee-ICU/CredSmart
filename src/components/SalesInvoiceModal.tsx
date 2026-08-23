@@ -40,7 +40,9 @@ import {
   Percent,
   IndianRupee,
   X,
+  ShieldCheck,
 } from "lucide-react";
+import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -425,6 +427,31 @@ export function SalesInvoiceModal({
           (p.category && p.category.toLowerCase().includes(q))
       )
       .slice(0, 15);
+  };
+
+  const handleQuickCustGstinChange = async (val: string) => {
+    const clean = val.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
+    setNewCustGstin(clean);
+    if ((clean.length === 15 && isValidGSTIN(clean)) || (clean.length === 10 && isValidPAN(clean))) {
+      try {
+        const res = await lookupTaxIdentifier(clean);
+        if (res.legalName) {
+          setNewCustName(res.legalName);
+        }
+        if (res.address) {
+          setNewCustAddress(res.address);
+        }
+        if (res.phone && !newCustPhone) {
+          setNewCustPhone(res.phone);
+        }
+        if (res.stateCode && res.state) {
+          setPlaceOfSupply(`${res.stateCode}-${res.state}`);
+        }
+        toast.success(`Auto-filled details for ${res.legalName}!`);
+      } catch {
+        // silent fail on fast typing
+      }
+    }
   };
 
   const handleCreateCustomerInline = async () => {
@@ -1338,11 +1365,24 @@ export function SalesInvoiceModal({
           </DialogHeader>
           <div className="space-y-3 py-2 text-xs">
             <div>
-              <Label className="text-xs">Customer Name *</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">GSTIN (Optional)</Label>
+                <span className="text-[10px] text-muted-foreground">Auto-fills name & address</span>
+              </div>
+              <Input
+                value={newCustGstin}
+                onChange={(e) => handleQuickCustGstinChange(e.target.value)}
+                placeholder="e.g. 27AAPFU0939F1ZV"
+                className="mt-1 text-xs font-mono uppercase tracking-wider"
+                maxLength={15}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Customer / Business Name *</Label>
               <Input
                 value={newCustName}
                 onChange={(e) => setNewCustName(e.target.value)}
-                placeholder="e.g. Rajesh Kumar"
+                placeholder="e.g. Rajesh Kumar or Company Name"
                 className="mt-1 text-xs"
               />
             </div>
@@ -1353,15 +1393,6 @@ export function SalesInvoiceModal({
                 onChange={(e) => setNewCustPhone(e.target.value)}
                 placeholder="10-digit mobile"
                 className="mt-1 text-xs font-mono"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">GSTIN (Optional)</Label>
-              <Input
-                value={newCustGstin}
-                onChange={(e) => setNewCustGstin(e.target.value.toUpperCase())}
-                placeholder="27ABCDE1234F1Z5"
-                className="mt-1 text-xs font-mono uppercase"
               />
             </div>
             <div>

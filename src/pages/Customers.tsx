@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
+import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -48,9 +50,10 @@ interface FormData {
   phone: string;
   email: string;
   address: string;
+  gstin?: string;
 }
 
-const emptyForm: FormData = { name: "", phone: "", email: "", address: "" };
+const emptyForm: FormData = { name: "", phone: "", email: "", address: "", gstin: "" };
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -65,6 +68,8 @@ export default function Customers() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isLookingUpGst, setIsLookingUpGst] = useState(false);
+  const [gstLookupSuccess, setGstLookupSuccess] = useState<string | null>(null);
 
   // Credit modal
   const [creditModal, setCreditModal] = useState<{ customerId: string; name: string } | null>(null);
@@ -72,6 +77,55 @@ export default function Customers() {
   const [creditDesc, setCreditDesc] = useState("");
   const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
   const [creditHistory, setCreditHistory] = useState<any[]>([]);
+
+  const triggerGstAutoFill = async (targetId: string, showToast = true) => {
+    const clean = targetId.trim().toUpperCase();
+    if (!clean) {
+      if (showToast) toast.error("Please enter a valid 15-character GSTIN or 10-character PAN.");
+      return;
+    }
+    if (!isValidGSTIN(clean) && !isValidPAN(clean)) {
+      if (showToast) toast.error("Invalid format. Expected 15-char GSTIN (e.g. 27AAPFU0939F1ZV) or 10-char PAN (e.g. AAPFU0939F)");
+      return;
+    }
+
+    setIsLookingUpGst(true);
+    setGstLookupSuccess(null);
+    try {
+      const result = await lookupTaxIdentifier(clean);
+      setForm((prev) => ({
+        ...prev,
+        name: result.legalName || prev.name,
+        address: result.address || prev.address,
+        phone: result.phone || prev.phone,
+        email: result.email || prev.email,
+        gstin: result.gstin || clean,
+      }));
+      setGstLookupSuccess(`Verified: ${result.legalName} • PAN: ${result.pan} (${result.state})`);
+      if (showToast) {
+        toast.success(`Details auto-filled for ${result.legalName}!`);
+      }
+    } catch (err: any) {
+      if (showToast) {
+        toast.error(err?.message || "Failed to fetch tax details.");
+      }
+    } finally {
+      setIsLookingUpGst(false);
+    }
+  };
+
+  const handleGstinChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
+    setForm((prev) => ({ ...prev, gstin: clean }));
+
+    if (clean.length === 10 && isValidPAN(clean)) {
+      triggerGstAutoFill(clean, false);
+    } else if (clean.length === 15 && isValidGSTIN(clean)) {
+      triggerGstAutoFill(clean, false);
+    } else if (clean.length < 10) {
+      setGstLookupSuccess(null);
+    }
+  };
 
   const fetchCustomers = useCallback(async () => {
     if (!orgId) {
@@ -731,13 +785,81 @@ export default function Customers() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Smart Auto-fill */}
-              {!editingId && (
-                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Smart MCA Auto-fill</span>
+              {/* GSTIN Fast Auto-Lookup Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/10 to-transparent border border-blue-500/20 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <span className="text-xs font-bold text-foreground">GSTIN Auto-Lookup & Instant Fill</span>
                   </div>
+                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                    Auto-fills on typing 15 chars
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9 h-10 rounded-xl font-mono uppercase tracking-wider text-xs"
+                      placeholder="e.g. 27AAPFU0939F1ZV"
+                      value={form.gstin || ""}
+                      onChange={(e) => handleGstinChange(e.target.value)}
+                      maxLength={15}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => triggerGstAutoFill(form.gstin || "", true)}
+                    disabled={isLookingUpGst || !form.gstin || form.gstin.length < 15}
+                    className="shrink-0 gap-1.5 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground text-xs rounded-xl h-10 px-3"
+                  >
+                    {isLookingUpGst ? (
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    Autofill
+                  </Button>
+                </div>
+
+                {/* Quick Test Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] text-muted-foreground font-medium">Quick Test:</span>
+                  {[
+                    { label: "Reliance Retail", gstin: "27AAPFU0939F1ZV" },
+                    { label: "Infosys Ltd", gstin: "29AABCU9603R1ZX" },
+                    { label: "Airtel Delhi", gstin: "07AAAAA0000A1Z5" },
+                    { label: "TCS Mumbai", gstin: "27AAACT2727Q1ZW" },
+                  ].map((sample) => (
+                    <button
+                      key={sample.gstin}
+                      type="button"
+                      onClick={() => {
+                        handleGstinChange(sample.gstin);
+                        triggerGstAutoFill(sample.gstin, true);
+                      }}
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-background border border-border hover:border-primary text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      + {sample.label}
+                    </button>
+                  ))}
+                </div>
+
+                {gstLookupSuccess && (
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{gstLookupSuccess}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Smart MCA Auto-fill */}
+              {!editingId && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">
+                    Or Search MCA Registered Company
+                  </Label>
                   <CompanySearchAutocomplete
                     onSelect={(comp) =>
                       setForm({

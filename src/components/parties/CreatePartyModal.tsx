@@ -17,7 +17,7 @@ import {
   Search,
 } from "lucide-react";
 import { Party, PartyType, PartyCategory } from "@/types/parties";
-import { lookupGSTIN, isValidGSTIN } from "@/utils/gstinLookup";
+import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
 import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
@@ -147,34 +147,86 @@ export function CreatePartyModal({
 
   if (!isOpen) return null;
 
-  const handleGSTLookup = async () => {
-    if (!gstin.trim()) {
-      toast.error("Please enter a valid 15-character GSTIN first.");
+  const triggerAutoFill = async (targetId: string, showToast = true) => {
+    const clean = targetId.trim().toUpperCase();
+    if (!clean) {
+      if (showToast) toast.error("Please enter a valid 15-character GSTIN or 10-character PAN.");
       return;
     }
-    if (!isValidGSTIN(gstin.trim())) {
-      toast.error("GSTIN format is invalid. Must be 15 characters (e.g. 27AAPFU0939F1ZV).");
+    if (!isValidGSTIN(clean) && !isValidPAN(clean)) {
+      if (showToast) toast.error("Invalid format. Enter 15-char GSTIN (e.g. 27AAPFU0939F1ZV) or 10-char PAN (e.g. AAPFU0939F).");
       return;
     }
 
     setIsLookingUpGst(true);
     setGstLookupSuccess(null);
     try {
-      const result = await lookupGSTIN(gstin.trim());
+      const result = await lookupTaxIdentifier(clean);
       setName(result.legalName);
-      setTradeName(result.tradeName);
+      setTradeName(result.tradeName || result.legalName);
       setPan(result.pan);
+      if (isValidGSTIN(result.gstin) && (!gstin || gstin.length < 15)) {
+        setGstin(result.gstin);
+      }
       setState(result.state);
       setCity(result.city);
       setPincode(result.pincode);
       setAddress(result.address);
-      setGstLookupSuccess(`Verified: ${result.legalName} (${result.state})`);
-      toast.success(`GST Details auto-filled for ${result.legalName}!`);
+      if (sameShipping) {
+        setShippingAddress(result.address);
+      }
+      if (result.category && CATEGORY_OPTIONS.includes(result.category)) {
+        setCategory(result.category);
+      }
+      if (result.phone && !phone) {
+        setPhone(result.phone);
+      }
+      if (result.email && !email) {
+        setEmail(result.email);
+      }
+
+      setGstLookupSuccess(`Verified: ${result.legalName} • PAN: ${result.pan} (${result.state})`);
+      if (showToast) {
+        toast.success(`Details auto-filled for ${result.legalName}!`);
+      }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to fetch GST details.");
+      if (showToast) {
+        toast.error(err?.message || "Failed to fetch tax details.");
+      }
     } finally {
       setIsLookingUpGst(false);
     }
+  };
+
+  const handleGstinChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
+    setGstin(clean);
+
+    // Auto-detect 10-char PAN
+    if (clean.length === 10 && isValidPAN(clean)) {
+      setPan(clean);
+      triggerAutoFill(clean, false);
+      return;
+    }
+
+    // Auto-extract PAN from 12+ chars of GSTIN
+    if (clean.length >= 12) {
+      const extractedPan = clean.substring(2, 12);
+      if (extractedPan && !pan) {
+        setPan(extractedPan);
+      }
+    }
+
+    // Auto-trigger on full 15-char GSTIN
+    if (clean.length === 15 && isValidGSTIN(clean)) {
+      triggerAutoFill(clean, false);
+    } else if (clean.length < 10) {
+      setGstLookupSuccess(null);
+    }
+  };
+
+  const handleGSTLookup = () => {
+    triggerAutoFill(gstin || pan, true);
   };
 
   const handleCompanySelect = (comp: { name: string; phone: string; address: string; cin: string }) => {
@@ -248,7 +300,7 @@ export function CreatePartyModal({
                 {initialData ? "Edit Party" : "Create New Party"}
               </h2>
               <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Customer, Supplier, GSTIN verification & SharedLedger connection
+                Customer, Supplier, GSTIN/PAN verification & SharedLedger connection
               </p>
             </div>
           </div>
@@ -263,7 +315,7 @@ export function CreatePartyModal({
         {/* Tab Navigation */}
         <div className="flex items-center border-b border-border px-3 sm:px-6 bg-muted/20 gap-1 overflow-x-auto scrollbar-none shrink-0">
           {[
-            { id: "general", label: "General & GSTIN" },
+            { id: "general", label: "General & GSTIN/PAN" },
             { id: "address", label: "Address & Shipping" },
             { id: "credit", label: "Balance & Credit Limit" },
             { id: "custom", label: "Bank & Custom Fields" },
@@ -318,23 +370,23 @@ export function CreatePartyModal({
                 </div>
               </div>
 
-              {/* GSTIN Auto Lookup Banner */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/10 to-transparent border border-blue-500/20 space-y-2">
+              {/* GSTIN / PAN Auto Lookup Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/10 to-transparent border border-blue-500/20 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs font-bold text-foreground">GSTIN Fast Auto-Lookup</span>
+                    <span className="text-xs font-bold text-foreground">GSTIN / PAN Instant Auto-Lookup</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/60 px-2 py-0.5 rounded border border-border">
-                    15 Chars GSTIN
+                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                    Paste 15-char GSTIN or 10-char PAN
                   </span>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
-                      placeholder="e.g. 27AAPFU0939F1ZV"
+                      placeholder="Enter 15-char GSTIN or 10-char PAN (e.g. AAPFU0939F)"
                       value={gstin}
-                      onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                      onChange={(e) => handleGstinChange(e.target.value)}
                       className="uppercase font-mono text-sm tracking-wider"
                       maxLength={15}
                     />
@@ -343,7 +395,7 @@ export function CreatePartyModal({
                     type="button"
                     variant="outline"
                     onClick={handleGSTLookup}
-                    disabled={isLookingUpGst || gstin.length < 15}
+                    disabled={isLookingUpGst || (gstin.length < 10 && pan.length < 10)}
                     className="shrink-0 gap-2 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground"
                   >
                     {isLookingUpGst ? (
@@ -351,13 +403,38 @@ export function CreatePartyModal({
                     ) : (
                       <Search className="w-4 h-4" />
                     )}
-                    Verify & Autofill
+                    Autofill
                   </Button>
                 </div>
+
+                {/* Quick Test Samples */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] text-muted-foreground font-medium">Quick Test:</span>
+                  {[
+                    { label: "Reliance GSTIN", id: "27AAPFU0939F1ZV" },
+                    { label: "Infosys PAN", id: "AABCU9603R" },
+                    { label: "Amul PAN", id: "AABCA1234F" },
+                    { label: "Airtel Delhi", id: "07AAAAA0000A1Z5" },
+                    { label: "TCS PAN", id: "AAACT2727Q" },
+                  ].map((sample) => (
+                    <button
+                      key={sample.id}
+                      type="button"
+                      onClick={() => {
+                        setGstin(sample.id);
+                        triggerAutoFill(sample.id, true);
+                      }}
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-background border border-border hover:border-primary text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      + {sample.label}
+                    </button>
+                  ))}
+                </div>
+
                 {gstLookupSuccess && (
                   <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium pt-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {gstLookupSuccess}
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{gstLookupSuccess}</span>
                   </div>
                 )}
               </div>

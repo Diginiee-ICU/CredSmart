@@ -58,6 +58,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { Product, Batch } from "@/types/pos";
+import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,6 +401,22 @@ export default function POSBilling() {
   // New Customer Quick Form State
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerGstin, setNewCustomerGstin] = useState("");
+
+  const handleQuickGstinChange = async (val: string) => {
+    const clean = val.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
+    setNewCustomerGstin(clean);
+    if ((clean.length === 15 && isValidGSTIN(clean)) || (clean.length === 10 && isValidPAN(clean))) {
+      try {
+        const res = await lookupTaxIdentifier(clean);
+        if (res.legalName) setNewCustomerName(res.legalName);
+        if (res.phone && !newCustomerPhone) setNewCustomerPhone(res.phone);
+        toast({ title: "Auto-fill ✨", description: `Details populated for ${res.legalName}` });
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   // Customer search inside Customer Modal
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
@@ -1177,6 +1194,7 @@ export default function POSBilling() {
       setShowQuickAddCustomerModal(false);
       setNewCustomerName("");
       setNewCustomerPhone("");
+      setNewCustomerGstin("");
       toast({ title: "Customer Added ✨", description: `${newCustomerName} saved & selected.` });
     } catch (e) {
       console.error("Failed to add customer:", e);
@@ -3795,11 +3813,25 @@ export default function POSBilling() {
               </button>
             </div>
             <div>
-              <label className="text-xs text-slate-600 mb-1.5 block font-semibold">Customer Name *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-slate-600 font-semibold">GSTIN (Optional)</label>
+                <span className="text-[10px] text-slate-400">Auto-fills name</span>
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. 27AAPFU0939F1ZV"
+                value={newCustomerGstin}
+                onChange={(e) => handleQuickGstinChange(e.target.value)}
+                maxLength={15}
+                className="w-full text-xs p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 uppercase font-mono tracking-wider focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-600 mb-1.5 block font-semibold">Customer / Business Name *</label>
               <input
                 type="text"
                 autoFocus
-                placeholder="Ramesh Kumar"
+                placeholder="Ramesh Kumar or Company Name"
                 value={newCustomerName}
                 onChange={(e) => setNewCustomerName(e.target.value)}
                 className="w-full text-xs p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
