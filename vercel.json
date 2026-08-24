@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/tally-gst",
+      "destination": "https://tallysolutions.com/wp-content/themes/tally/api/gstin-serach-api.php"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
