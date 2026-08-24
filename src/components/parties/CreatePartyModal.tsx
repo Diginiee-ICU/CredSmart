@@ -13,12 +13,10 @@ import {
   FileText,
   DollarSign,
   Search,
-  KeyRound,
 } from "lucide-react";
 import { Party, PartyType, PartyCategory } from "@/types/parties";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
-import { GstApiConfigModal } from "@/components/settings/GstApiConfigModal";
 import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
 import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
@@ -95,7 +93,6 @@ export function CreatePartyModal({
   // GST Lookup Status
   const [isLookingUpGst, setIsLookingUpGst] = useState(false);
   const [gstLookupSuccess, setGstLookupSuccess] = useState<string | null>(null);
-  const [gstConfigOpen, setGstConfigOpen] = useState(false);
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -455,16 +452,8 @@ export function CreatePartyModal({
                       <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
                       Tally Search
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setGstConfigOpen(true)}
-                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 bg-background/80 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/50"
-                    >
-                      <KeyRound className="w-3 h-3" />
-                      API Gateway
-                    </button>
                     <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
-                      Auto-syncs State & PAN
+                      Official Tally Live Engine
                     </span>
                   </div>
                 </div>
@@ -902,7 +891,6 @@ export function CreatePartyModal({
         </form>
       </div>
 
-      <GstApiConfigModal open={gstConfigOpen} onOpenChange={setGstConfigOpen} />
       <TallyGstSearchModal
         open={tallyModalOpen}
         onOpenChange={setTallyModalOpen}

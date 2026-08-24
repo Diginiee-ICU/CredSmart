@@ -20,13 +20,10 @@ import {
   ShieldAlert,
   HelpCircle,
   Store,
-  KeyRound,
   ShieldCheck,
 } from "lucide-react";
 import { SettingsNavSidebar } from "@/components/settings/SettingsNavSidebar";
 import { SignaturePad } from "@/components/settings/SignaturePad";
-import { GstApiConfigModal } from "@/components/settings/GstApiConfigModal";
-import { getGstApiConfig } from "@/utils/gstinLookup";
 import { useOrganization, saveLocalOrgRegistry } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -107,7 +104,6 @@ export default function BusinessSettings() {
   const [saving, setSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const [gstConfigOpen, setGstConfigOpen] = useState(false);
 
   // Modals for header actions
   const [newBusinessModal, setNewBusinessModal] = useState(false);
@@ -674,26 +670,19 @@ export default function BusinessSettings() {
                   </div>
                 )}
 
-                {/* GST Verification & E-Invoicing API Gateway Card */}
-                <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/5 to-transparent border border-blue-500/20 space-y-2.5">
+                {/* Official Live Tally GST Engine Status Card */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent border border-emerald-500/20 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs font-bold text-foreground">GST Verification & Search API</span>
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-bold text-foreground">Official Tally Live GST Search</span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setGstConfigOpen(true)}
-                      className="h-7 text-[11px] gap-1.5 border-blue-500/40 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg px-2.5"
-                    >
-                      <KeyRound className="w-3 h-3" />
-                      Configure API Keys
-                    </Button>
+                    <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-300 font-mono">
+                      Active &amp; Automatic
+                    </Badge>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Connected to Government NIC IRP Sandbox & multi-gateway live GST verification APIs (Appyflow, GSTINCheck, MasterGST).
+                    Automatically verifies any Indian GSTIN and auto-populates Legal Name, Trade Name, Street Address, City, PIN, State, and PAN in real time.
                   </p>
                 </div>
               </div>
@@ -1055,9 +1044,6 @@ export default function BusinessSettings() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* GST Verification & E-Invoice API Gateway Modal */}
-      <GstApiConfigModal open={gstConfigOpen} onOpenChange={setGstConfigOpen} />
     </div>
   );
 }

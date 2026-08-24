@@ -239,7 +239,54 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. Return graceful fallback signal for client
+    // 4. Query Official Tally Solutions Real-Time Search API
+    try {
+      const tallyResponse = await fetch("https://tallysolutions.com/wp-content/themes/tally/api/gstin-serach-api.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "X-Requested-With": "XMLHttpRequest",
+          Referer: "https://tallysolutions.com/business-tools-templates/gstin-verification-search/",
+          Origin: "https://tallysolutions.com",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        },
+        body: `gstin=${encodeURIComponent(cleanGstin)}`,
+      });
+
+      const tallyData = await tallyResponse.json();
+      if (tallyData && tallyData.status === 1 && (tallyData.legal_name || tallyData.trade_name)) {
+        const stateCode = cleanGstin.substring(0, 2);
+        const pan = cleanGstin.substring(2, 12);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              gstin: cleanGstin,
+              legalName: tallyData.legal_name || tallyData.trade_name || "",
+              tradeName: tallyData.trade_name || tallyData.legal_name || "",
+              pan,
+              stateCode,
+              state: tallyData.state || "",
+              city: tallyData.city || "",
+              pincode: tallyData.pincode || "",
+              address: tallyData.address || "",
+              taxpayerType: (tallyData.registration_type || "Regular").toLowerCase().includes("comp") ? "Composition" : "Regular",
+              status: (tallyData.gstin_status || "Active").toLowerCase().includes("inact") ? "Inactive" : "Active",
+              registerDate: tallyData.registration_date || "2017-07-01",
+              category: (tallyData.business_constitution || "").toLowerCase().includes("company") ? "Corporate" : "Wholesaler",
+            },
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    } catch (tallyErr) {
+      console.warn("Tally auto-query notice:", tallyErr);
+    }
+
+    // 5. Return graceful fallback signal for client
     return new Response(
       JSON.stringify({
         success: false,

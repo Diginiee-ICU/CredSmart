@@ -376,107 +376,51 @@ export function getEntityCategoryFromPAN(pan: string): string {
   }
 }
 
-export interface GstApiConfig {
-  provider: "irp" | "appyflow" | "gstincheck" | "mastergst" | "custom";
-  apiKey?: string;
-  apiSecret?: string;
-  clientId?: string;
-  environment: "sandbox" | "production";
-  customEndpoint?: string;
-  autoLookupEnabled: boolean;
-}
-
-export const DEFAULT_GST_API_CONFIG: GstApiConfig = {
-  provider: "irp",
-  apiKey: "",
-  apiSecret: "",
-  clientId: "",
-  environment: "sandbox",
-  autoLookupEnabled: true,
-};
-
-export function getGstApiConfig(): GstApiConfig {
+async function fetchFromTallyApi(gstin: string): Promise<GSTLookupResult | null> {
   try {
-    const raw = localStorage.getItem("credsmart_gst_api_config");
-    if (raw) return { ...DEFAULT_GST_API_CONFIG, ...JSON.parse(raw) };
-  } catch {}
-  return {
-    ...DEFAULT_GST_API_CONFIG,
-    apiKey: (import.meta as any).env?.VITE_GST_API_KEY || "",
-    provider: ((import.meta as any).env?.VITE_GST_API_PROVIDER as any) || "irp",
-  };
-}
+    const res = await fetch("/api/tally-gst", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: "gstin=" + encodeURIComponent(gstin),
+    });
 
-export function saveGstApiConfig(config: Partial<GstApiConfig>): GstApiConfig {
-  const current = getGstApiConfig();
-  const updated: GstApiConfig = { ...current, ...config };
-  localStorage.setItem("credsmart_gst_api_config", JSON.stringify(updated));
-  return updated;
-}
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.status === 1 || data.status === "1") && (data.legal_name || data.trade_name)) {
+        const stateCode = gstin.substring(0, 2);
+        const pan = gstin.substring(2, 12);
+        const address = data.address || "";
+        const pinMatch = address.match(/\b[1-9][0-9]{5}\b/);
+        const pincode = data.pincode || (pinMatch ? pinMatch[0] : "");
 
-async function fetchFromAppyflow(gstin: string, apiKey: string): Promise<GSTLookupResult | null> {
-  try {
-    const res = await fetch(`https://appyflow.in/api/verifyGST?gstNo=${gstin}&key_secret=${apiKey}`);
-    const data = await res.json();
-    if (data && !data.error && data.taxpayerDetails) {
-      const tp = data.taxpayerDetails;
-      const addr = tp.pradr?.addr;
-      const addrStr = [addr?.bno, addr?.bnm, addr?.st, addr?.loc, addr?.dst].filter(Boolean).join(", ");
-      return {
-        gstin,
-        legalName: tp.lgnm || tp.tradeNam || "",
-        tradeName: tp.tradeNam || tp.lgnm || "",
-        pan: gstin.substring(2, 12),
-        state: STATE_CODE_MAP[gstin.substring(0, 2)] || addr?.stcd || "Maharashtra",
-        stateCode: gstin.substring(0, 2),
-        city: addr?.city || addr?.dst || addr?.loc || "",
-        pincode: addr?.pncd || "",
-        address: addrStr || "",
-        taxpayerType: (tp.dty?.toLowerCase().includes("comp") ? "Composition" : "Regular") as any,
-        status: (tp.sts?.toLowerCase() === "active" ? "Active" : "Inactive") as any,
-        registerDate: tp.rgdt || "2017-07-01",
-        category: getEntityCategoryFromPAN(gstin.substring(2, 12)),
-        source: "live_api",
-      };
+        return {
+          gstin,
+          legalName: data.legal_name || data.trade_name || "",
+          tradeName: data.trade_name || data.legal_name || "",
+          pan,
+          state: data.state || STATE_CODE_MAP[stateCode] || "Maharashtra",
+          stateCode,
+          city: data.city || "",
+          pincode,
+          address,
+          taxpayerType: (data.registration_type || "Regular").toLowerCase().includes("comp") ? "Composition" : "Regular",
+          status: (data.gstin_status || "Active").toLowerCase().includes("inact") ? "Inactive" : "Active",
+          registerDate: data.registration_date || "2017-07-01",
+          category: (data.business_constitution || "").toLowerCase().includes("company") ? "Corporate" : "Wholesaler",
+          source: "live_api",
+        };
+      }
     }
   } catch (e) {
-    console.warn("Appyflow fetch notice:", e);
+    console.warn("Tally direct proxy notice:", e);
   }
   return null;
 }
 
-async function fetchFromGSTINCheck(gstin: string, apiKey: string): Promise<GSTLookupResult | null> {
-  try {
-    const res = await fetch(`https://sheet.gstincheck.co.in/check/${apiKey}/${gstin}`);
-    const data = await res.json();
-    if (data && (data.flag || data.success) && (data.data || data.taxpayerDetails)) {
-      const tp = data.data || data.taxpayerDetails;
-      const addr = tp.pradr?.addr;
-      const addrStr = [addr?.bno, addr?.bnm, addr?.st, addr?.loc, addr?.dst].filter(Boolean).join(", ");
-      return {
-        gstin,
-        legalName: tp.lgnm || tp.tradeNam || "",
-        tradeName: tp.tradeNam || tp.lgnm || "",
-        pan: gstin.substring(2, 12),
-        state: STATE_CODE_MAP[gstin.substring(0, 2)] || addr?.stcd || "Maharashtra",
-        stateCode: gstin.substring(0, 2),
-        city: addr?.city || addr?.dst || addr?.loc || "",
-        pincode: addr?.pncd || "",
-        address: addrStr || "",
-        taxpayerType: (tp.dty?.toLowerCase().includes("comp") ? "Composition" : "Regular") as any,
-        status: (tp.sts?.toLowerCase() === "active" ? "Active" : "Inactive") as any,
-        registerDate: tp.rgdt || "2017-07-01",
-        category: getEntityCategoryFromPAN(gstin.substring(2, 12)),
-        source: "live_api",
-      };
-    }
-  } catch (e) {
-    console.warn("GSTINCheck fetch notice:", e);
-  }
-  return null;
-}
-
-export async function lookupGSTIN(gstinInput: string, environment?: "sandbox" | "production"): Promise<GSTLookupResult> {
+export async function lookupGSTIN(gstinInput: string): Promise<GSTLookupResult> {
   const clean = gstinInput.trim().toUpperCase();
 
   if (!isValidGSTIN(clean)) {
@@ -487,25 +431,17 @@ export async function lookupGSTIN(gstinInput: string, environment?: "sandbox" | 
   const pan = clean.substring(2, 12);
   const state = STATE_CODE_MAP[stateCode] || "Maharashtra";
   const category = getEntityCategoryFromPAN(pan);
-  const config = getGstApiConfig();
-  const env = environment || config.environment || "sandbox";
 
-  // 1. If Appyflow API Key is configured
-  if (config.provider === "appyflow" && config.apiKey) {
-    const liveRes = await fetchFromAppyflow(clean, config.apiKey);
-    if (liveRes) return liveRes;
+  // 1. Automatic Live Free GST Lookup via Official Tally Engine
+  const tallyRes = await fetchFromTallyApi(clean);
+  if (tallyRes && tallyRes.legalName) {
+    return tallyRes;
   }
 
-  // 2. If GSTINCheck API Key is configured
-  if (config.provider === "gstincheck" && config.apiKey) {
-    const liveRes = await fetchFromGSTINCheck(clean, config.apiKey);
-    if (liveRes) return liveRes;
-  }
-
-  // 3. Try Live IRP Gateway (using Client ID, Client Secret, App Key, and RSA Keys via Edge Function)
+  // 2. Try Edge Function / IRP Gateway Fallback
   try {
     const { data: edgeRes, error: edgeErr } = await supabase.functions.invoke("irp-gst-lookup", {
-      body: { gstin: clean, environment: env },
+      body: { gstin: clean },
     });
 
     if (!edgeErr && edgeRes?.success && edgeRes?.data && edgeRes?.data?.legalName) {
