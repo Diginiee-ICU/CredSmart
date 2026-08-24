@@ -12,13 +12,14 @@ import {
   HelpCircle,
   FileText,
   DollarSign,
-  Plus,
-  Trash2,
   Search,
+  KeyRound,
 } from "lucide-react";
 import { Party, PartyType, PartyCategory } from "@/types/parties";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
+import { GstApiConfigModal } from "@/components/settings/GstApiConfigModal";
+import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
 import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,8 @@ export function CreatePartyModal({
   // GST Lookup Status
   const [isLookingUpGst, setIsLookingUpGst] = useState(false);
   const [gstLookupSuccess, setGstLookupSuccess] = useState<string | null>(null);
+  const [gstConfigOpen, setGstConfigOpen] = useState(false);
+  const [tallyModalOpen, setTallyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -162,18 +165,30 @@ export function CreatePartyModal({
     setGstLookupSuccess(null);
     try {
       const result = await lookupTaxIdentifier(clean);
-      setName(result.legalName);
-      setTradeName(result.tradeName || result.legalName);
-      setPan(result.pan);
+      if (result.legalName) {
+        setName(result.legalName);
+        setTradeName(result.tradeName || result.legalName);
+      }
+      if (result.pan) {
+        setPan(result.pan);
+      }
       if (isValidGSTIN(result.gstin) && (!gstin || gstin.length < 15)) {
         setGstin(result.gstin);
       }
-      setState(result.state);
-      setCity(result.city);
-      setPincode(result.pincode);
-      setAddress(result.address);
-      if (sameShipping) {
-        setShippingAddress(result.address);
+      if (result.state) {
+        setState(result.state);
+      }
+      if (result.city) {
+        setCity(result.city);
+      }
+      if (result.pincode) {
+        setPincode(result.pincode);
+      }
+      if (result.address) {
+        setAddress(result.address);
+        if (sameShipping) {
+          setShippingAddress(result.address);
+        }
       }
       if (result.category && CATEGORY_OPTIONS.includes(result.category)) {
         setCategory(result.category);
@@ -185,9 +200,16 @@ export function CreatePartyModal({
         setEmail(result.email);
       }
 
-      setGstLookupSuccess(`Verified: ${result.legalName} • PAN: ${result.pan} (${result.state})`);
-      if (showToast) {
-        toast.success(`Details auto-filled for ${result.legalName}!`);
+      if (result.legalName) {
+        setGstLookupSuccess(`Verified: ${result.legalName} • ${result.state} (${result.category || "Active"})`);
+        if (showToast) {
+          toast.success(`Verified details loaded for ${result.legalName}!`);
+        }
+      } else {
+        setGstLookupSuccess(`State: ${result.state} (Code ${result.stateCode}) • PAN: ${result.pan} • Category: ${result.category}`);
+        if (showToast) {
+          toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
+        }
       }
     } catch (err: any) {
       if (showToast) {
@@ -229,12 +251,45 @@ export function CreatePartyModal({
     triggerAutoFill(gstin || pan, true);
   };
 
-  const handleCompanySelect = (comp: { name: string; phone: string; address: string; cin: string }) => {
+  const handleCompanySelect = (comp: any) => {
     setName(comp.name);
-    setTradeName(comp.name);
+    setTradeName(comp.tradeName || comp.name);
     if (comp.phone) setPhone(comp.phone);
-    if (comp.address) setAddress(comp.address);
-    toast.success(`Selected company: ${comp.name}`);
+    if (comp.address) {
+      setAddress(comp.address);
+      if (sameShipping) setShippingAddress(comp.address);
+    }
+    if (comp.pincode) setPincode(comp.pincode);
+    if (comp.city) setCity(comp.city);
+    if (comp.state) setState(comp.state);
+    if (comp.category && CATEGORY_OPTIONS.includes(comp.category as any)) {
+      setCategory(comp.category as any);
+    }
+    if (comp.cin) {
+      setNotes((prev) => (prev ? `${prev} | CIN: ${comp.cin}` : `CIN: ${comp.cin}`));
+    }
+    setGstLookupSuccess(`Selected: ${comp.name} • ${comp.state || "India"} (${comp.cin || "Registered"})`);
+    toast.success(`Loaded verified company: ${comp.name}`);
+  };
+
+  const handleApplyTallyResult = (result: GSTLookupResult) => {
+    if (result.legalName) {
+      setName(result.legalName);
+      setTradeName(result.tradeName || result.legalName);
+    }
+    if (result.pan) setPan(result.pan);
+    if (result.gstin && isValidGSTIN(result.gstin)) setGstin(result.gstin);
+    if (result.address) {
+      setAddress(result.address);
+      if (sameShipping) setShippingAddress(result.address);
+    }
+    if (result.pincode) setPincode(result.pincode);
+    if (result.city) setCity(result.city);
+    if (result.state) setState(result.state);
+    if (result.category && CATEGORY_OPTIONS.includes(result.category as any)) {
+      setCategory(result.category as any);
+    }
+    setGstLookupSuccess(`Verified via Tally: ${result.legalName} • ${result.state} (${result.status})`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -300,7 +355,7 @@ export function CreatePartyModal({
                 {initialData ? "Edit Party" : "Create New Party"}
               </h2>
               <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Customer, Supplier, GSTIN/PAN verification & SharedLedger connection
+                Customer, Supplier, MCA Directory Search & GSTIN/PAN Verification
               </p>
             </div>
           </div>
@@ -370,21 +425,53 @@ export function CreatePartyModal({
                 </div>
               </div>
 
+              {/* MCA 3M+ Live Company Search Bar */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground">Live MCA Company Directory (3 Million+ Indian Companies)</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                    Auto-fills Name, Address, City, PIN & State
+                  </span>
+                </div>
+                <CompanySearchAutocomplete onSelect={handleCompanySelect} placeholder="Search any company by Name (e.g. Reliance, Haldiram, Apollo, Balaji) or CIN..." />
+              </div>
+
               {/* GSTIN / PAN Auto Lookup Banner */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/10 to-transparent border border-blue-500/20 space-y-3">
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs font-bold text-foreground">GSTIN / PAN Instant Auto-Lookup</span>
+                    <span className="text-xs font-bold text-foreground">GSTIN / PAN Tax Verification</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
-                    Paste 15-char GSTIN or 10-char PAN
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTallyModalOpen(true)}
+                      className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 bg-[#FCB316]/15 px-2 py-0.5 rounded border border-amber-500/30"
+                    >
+                      <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
+                      Tally Search
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGstConfigOpen(true)}
+                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 bg-background/80 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/50"
+                    >
+                      <KeyRound className="w-3 h-3" />
+                      API Gateway
+                    </button>
+                    <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
+                      Auto-syncs State & PAN
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
-                      placeholder="Enter 15-char GSTIN or 10-char PAN (e.g. AAPFU0939F)"
+                      placeholder="Enter 15-character GSTIN or 10-character PAN..."
                       value={gstin}
                       onChange={(e) => handleGstinChange(e.target.value)}
                       className="uppercase font-mono text-sm tracking-wider"
@@ -396,39 +483,15 @@ export function CreatePartyModal({
                     variant="outline"
                     onClick={handleGSTLookup}
                     disabled={isLookingUpGst || (gstin.length < 10 && pan.length < 10)}
-                    className="shrink-0 gap-2 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground"
+                    className="shrink-0 gap-2 border-blue-500/40 text-blue-600 hover:bg-blue-500 hover:text-white"
                   >
                     {isLookingUpGst ? (
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Search className="w-4 h-4" />
                     )}
-                    Autofill
+                    Verify
                   </Button>
-                </div>
-
-                {/* Quick Test Samples */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Quick Test:</span>
-                  {[
-                    { label: "Reliance GSTIN", id: "27AAPFU0939F1ZV" },
-                    { label: "Infosys PAN", id: "AABCU9603R" },
-                    { label: "Amul PAN", id: "AABCA1234F" },
-                    { label: "Airtel Delhi", id: "07AAAAA0000A1Z5" },
-                    { label: "TCS PAN", id: "AAACT2727Q" },
-                  ].map((sample) => (
-                    <button
-                      key={sample.id}
-                      type="button"
-                      onClick={() => {
-                        setGstin(sample.id);
-                        triggerAutoFill(sample.id, true);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-background border border-border hover:border-primary text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      + {sample.label}
-                    </button>
-                  ))}
                 </div>
 
                 {gstLookupSuccess && (
@@ -437,14 +500,6 @@ export function CreatePartyModal({
                     <span>{gstLookupSuccess}</span>
                   </div>
                 )}
-              </div>
-
-              {/* MCA / Turso Autocomplete Search */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">
-                  Or Search Registered Company (MCA Directory)
-                </Label>
-                <CompanySearchAutocomplete onSelect={handleCompanySelect} />
               </div>
 
               {/* Name & Trade Name */}
@@ -846,6 +901,14 @@ export function CreatePartyModal({
           </div>
         </form>
       </div>
+
+      <GstApiConfigModal open={gstConfigOpen} onOpenChange={setGstConfigOpen} />
+      <TallyGstSearchModal
+        open={tallyModalOpen}
+        onOpenChange={setTallyModalOpen}
+        initialGstin={gstin}
+        onApply={handleApplyTallyResult}
+      />
     </div>
   );
 }

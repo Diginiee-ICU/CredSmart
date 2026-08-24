@@ -20,6 +20,7 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,8 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
+import { GstApiConfigModal } from "@/components/settings/GstApiConfigModal";
+import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
 
 interface Customer {
   id: string;
@@ -70,6 +73,8 @@ export default function Customers() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isLookingUpGst, setIsLookingUpGst] = useState(false);
   const [gstLookupSuccess, setGstLookupSuccess] = useState<string | null>(null);
+  const [gstConfigOpen, setGstConfigOpen] = useState(false);
+  const [tallyModalOpen, setTallyModalOpen] = useState(false);
 
   // Credit modal
   const [creditModal, setCreditModal] = useState<{ customerId: string; name: string } | null>(null);
@@ -101,9 +106,17 @@ export default function Customers() {
         email: result.email || prev.email,
         gstin: result.gstin || clean,
       }));
-      setGstLookupSuccess(`Verified: ${result.legalName} • PAN: ${result.pan} (${result.state})`);
-      if (showToast) {
-        toast.success(`Details auto-filled for ${result.legalName}!`);
+
+      if (result.legalName) {
+        setGstLookupSuccess(`Verified: ${result.legalName} • ${result.state} (Active)`);
+        if (showToast) {
+          toast.success(`Verified details auto-filled for ${result.legalName}!`);
+        }
+      } else {
+        setGstLookupSuccess(`State: ${result.state} • PAN: ${result.pan} (${result.category})`);
+        if (showToast) {
+          toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
+        }
       }
     } catch (err: any) {
       if (showToast) {
@@ -785,23 +798,67 @@ export default function Customers() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* GSTIN Fast Auto-Lookup Banner */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-primary/10 to-transparent border border-blue-500/20 space-y-2.5">
+              {/* MCA 3M+ Live Company Search */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground">Live MCA Company Search (3M+ Indian Companies)</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                    Auto-fills Name & Address
+                  </span>
+                </div>
+                <CompanySearchAutocomplete
+                  onSelect={(comp) => {
+                    setForm((prev) => ({
+                      ...prev,
+                      name: comp.name,
+                      address: comp.address || prev.address,
+                      phone: comp.phone || prev.phone,
+                    }));
+                    setGstLookupSuccess(`Selected: ${comp.name} • ${comp.state || "India"}`);
+                    toast.success(`Loaded verified company: ${comp.name}`);
+                  }}
+                  placeholder="Search any registered company by name or CIN..."
+                />
+              </div>
+
+              {/* GSTIN / PAN Auto Lookup Banner */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs font-bold text-foreground">GSTIN Auto-Lookup & Instant Fill</span>
+                    <span className="text-xs font-bold text-foreground">GSTIN / PAN Tax Verification</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
-                    Auto-fills on typing 15 chars
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTallyModalOpen(true)}
+                      className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 bg-[#FCB316]/15 px-2 py-0.5 rounded border border-amber-500/30"
+                    >
+                      <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
+                      Tally Search
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGstConfigOpen(true)}
+                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 bg-background/80 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/50"
+                    >
+                      <KeyRound className="w-3 h-3" />
+                      API Gateway
+                    </button>
+                    <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
+                      Auto-syncs State & PAN
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       className="pl-9 h-10 rounded-xl font-mono uppercase tracking-wider text-xs"
-                      placeholder="e.g. 27AAPFU0939F1ZV"
+                      placeholder="Enter 15-char GSTIN or 10-char PAN..."
                       value={form.gstin || ""}
                       onChange={(e) => handleGstinChange(e.target.value)}
                       maxLength={15}
@@ -811,39 +868,16 @@ export default function Customers() {
                     type="button"
                     variant="outline"
                     onClick={() => triggerGstAutoFill(form.gstin || "", true)}
-                    disabled={isLookingUpGst || !form.gstin || form.gstin.length < 15}
-                    className="shrink-0 gap-1.5 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground text-xs rounded-xl h-10 px-3"
+                    disabled={isLookingUpGst || !form.gstin || form.gstin.length < 10}
+                    className="shrink-0 gap-1.5 border-blue-500/40 text-blue-600 hover:bg-blue-500 hover:text-white text-xs rounded-xl h-10 px-3"
                   >
                     {isLookingUpGst ? (
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Search className="w-4 h-4" />
                     )}
-                    Autofill
+                    Verify
                   </Button>
-                </div>
-
-                {/* Quick Test Chips */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Quick Test:</span>
-                  {[
-                    { label: "Reliance Retail", gstin: "27AAPFU0939F1ZV" },
-                    { label: "Infosys Ltd", gstin: "29AABCU9603R1ZX" },
-                    { label: "Airtel Delhi", gstin: "07AAAAA0000A1Z5" },
-                    { label: "TCS Mumbai", gstin: "27AAACT2727Q1ZW" },
-                  ].map((sample) => (
-                    <button
-                      key={sample.gstin}
-                      type="button"
-                      onClick={() => {
-                        handleGstinChange(sample.gstin);
-                        triggerGstAutoFill(sample.gstin, true);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-background border border-border hover:border-primary text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      + {sample.label}
-                    </button>
-                  ))}
                 </div>
 
                 {gstLookupSuccess && (
@@ -853,25 +887,6 @@ export default function Customers() {
                   </div>
                 )}
               </div>
-
-              {/* Smart MCA Auto-fill */}
-              {!editingId && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">
-                    Or Search MCA Registered Company
-                  </Label>
-                  <CompanySearchAutocomplete
-                    onSelect={(comp) =>
-                      setForm({
-                        ...form,
-                        name: comp.name,
-                        phone: comp.phone || form.phone,
-                        address: comp.address || form.address,
-                      })
-                    }
-                  />
-                </div>
-              )}
 
               {/* Customer Name */}
               <div className="space-y-1.5">
@@ -1099,6 +1114,23 @@ export default function Customers() {
           </div>
         </div>
       )}
+
+      <GstApiConfigModal open={gstConfigOpen} onOpenChange={setGstConfigOpen} />
+      <TallyGstSearchModal
+        open={tallyModalOpen}
+        onOpenChange={setTallyModalOpen}
+        initialGstin={form.gstin}
+        onApply={(result) => {
+          setForm((prev) => ({
+            ...prev,
+            name: result.legalName || prev.name,
+            address: result.address || prev.address,
+            phone: result.phone || prev.phone,
+            gstin: result.gstin || prev.gstin,
+          }));
+          setGstLookupSuccess(`Verified via Tally: ${result.legalName} • ${result.state} (${result.status})`);
+        }}
+      />
     </div>
   );
 }
