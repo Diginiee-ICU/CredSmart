@@ -241,7 +241,7 @@ export function AddItemsToBillModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onKeyDown={handleKeyDown}
-        className="bill-items-modal w-[80vw] max-w-3xl max-h-[68vh] p-0 rounded-none flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl"
+        className="bill-items-modal z-[70] w-[calc(100vw-1rem)] sm:w-[80vw] max-w-3xl h-[calc(100dvh-2rem)] sm:h-auto max-h-[92vh] p-0 rounded-none flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl"
       >
         {/* ───────────────────────────────────────────────────────────── */}
         {/* MODAL HEADER */}
@@ -335,9 +335,9 @@ export function AddItemsToBillModal({
         {/* ───────────────────────────────────────────────────────────── */}
         <div
           ref={listContainerRef}
-          className="flex-1 overflow-y-auto min-h-0 scrollbar-thin bg-white dark:bg-slate-950"
+          className="flex-1 min-h-0 overflow-auto scrollbar-thin bg-white dark:bg-slate-950"
         >
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full min-w-[640px] text-left text-xs border-collapse">
             <thead className="sticky top-0 z-10 bg-slate-100/90 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300">
               <tr>
                 <th className="py-2 px-3 min-w-[260px] font-semibold text-slate-800 dark:text-slate-200">Item Name</th>

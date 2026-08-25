@@ -29,6 +29,7 @@ import {
   Store,
   ArrowRight,
   Landmark,
+  Settings,
 } from "lucide-react";
 import { CredsmartLogo } from "@/components/ui/Liquid3DCardGraphics";
 import { NavLink } from "@/components/NavLink";
@@ -551,6 +552,43 @@ export function AppSidebar() {
                                     : "bg-slate-800/80 border-slate-700/80 text-blue-400"
                                 )}
                               >
+                                <item.icon className="w-4 h-4" />
+                              </div>
+                              <span className="truncate">{item.title}</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                          </NavLink>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                {/* Section 3: SETTINGS & USER */}
+                <div className="space-y-1.5">
+                  <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    ACCOUNT
+                  </p>
+                  <div className="space-y-1.5">
+                    {[
+                      { url: ROUTE_PATHS.settings, title: "Settings", icon: Settings },
+                      { url: ROUTE_PATHS.staff, title: "Manager User", icon: User },
+                    ]
+                      .filter((item) => isRouteAllowedForRole(item.url, userRole))
+                      .map((item) => {
+                        const active = isRouteActive(item.url);
+                        return (
+                          <NavLink
+                            key={item.url}
+                            to={item.url}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={cn(
+                              "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
+                              active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                            )}
+                            activeClassName="glowing-nav-purple"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="p-1.5 rounded-xl border bg-slate-800/80 border-slate-700/80 text-indigo-400">
                                 <item.icon className="w-4 h-4" />
                               </div>
                               <span className="truncate">{item.title}</span>

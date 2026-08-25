@@ -829,7 +829,7 @@ export function SalesInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bill-editor-shell w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950">
+        <DialogContent className="bill-editor-shell z-[60] w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-visible bg-white dark:bg-slate-950">
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
@@ -976,7 +976,7 @@ export function SalesInvoiceModal({
               </div>
             </div>
           ) : (
-            <div className="bill-editor-body flex-1 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
+            <div className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill To (Dropdown Format) & Invoice Details */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* ───────────────────────────────────────────────────────────── */}
@@ -1027,7 +1027,7 @@ export function SalesInvoiceModal({
                     </div>
 
                     {showCustomerDropdown && (
-                      <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+                      <div className="absolute z-[70] left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                         {/* Table Header Strip */}
                         <div className="px-3.5 py-2 bg-slate-100/90 dark:bg-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                           <span>Party Name</span>
@@ -1349,7 +1349,7 @@ export function SalesInvoiceModal({
                             />
 
                             {activeItemDropdown === idx && (
-                              <div className="absolute z-50 left-3 top-full mt-1 w-[380px] sm:w-[440px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
+                              <div className="absolute z-[70] left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
                                 {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
                                   <>
                                     <div className="space-y-0.5 pb-1">
