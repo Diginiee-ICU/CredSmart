@@ -372,27 +372,34 @@ export default function BarcodeGenerator() {
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
+    <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5 font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
-            <BarcodeIcon className="w-6 h-6 text-primary" />
-            Barcode & MRP Label Studio
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
+              <BarcodeIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              Barcode &amp; MRP Label Studio
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>LABEL ENGINE</span>
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Batch-generate and print barcode stickers for thermal roll printers or A4 sticker sheets.
           </p>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
+          <button
             onClick={handlePrint}
             disabled={selectedLabels.length === 0}
-            className="rounded-xl font-bold gap-2 shadow-sm h-10 px-5 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 flex-1 sm:flex-none"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-40 flex-1 sm:flex-none"
           >
-            <Printer className="w-4 h-4" /> Print Labels ({totalLabelCount})
-          </Button>
+            <Printer className="w-4 h-4 stroke-[2.5]" />
+            <span>Print Labels ({totalLabelCount})</span>
+          </button>
         </div>
       </div>
 
@@ -400,11 +407,11 @@ export default function BarcodeGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Left Column: Product Selector (5 Cols) */}
-        <div className="lg:col-span-5 bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col h-[640px]">
+        <div className="lg:col-span-5 glass-card-3d rounded-2xl shadow-sm overflow-hidden flex flex-col h-[640px]">
           {/* Header & Search */}
-          <div className="p-3.5 sm:p-4 border-b border-border bg-muted/20 space-y-2.5">
+          <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-mono">
                 1. Select Products
               </span>
               <div className="flex items-center gap-1.5">

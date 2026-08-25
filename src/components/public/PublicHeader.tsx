@@ -135,9 +135,9 @@ export function PublicHeader() {
         <div className="hidden sm:flex items-center gap-3">
           {user ? (
             <Link to={ROUTE_PATHS.dashboard}>
-              <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
-                Open Workspace <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
+              <button className="h-10 px-5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                Open Workspace <ArrowRight className="w-4 h-4 ml-1.5 stroke-[2.5]" />
+              </button>
             </Link>
           ) : (
             <>
@@ -150,9 +150,9 @@ export function PublicHeader() {
                 </Button>
               </Link>
               <Link to={ROUTE_PATHS.auth}>
-                <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
-                  Start Free Billing <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
+                <button className="h-10 px-5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                  Start Free Billing <ArrowRight className="w-4 h-4 ml-1.5 stroke-[2.5]" />
+                </button>
               </Link>
             </>
           )}

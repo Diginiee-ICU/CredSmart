@@ -150,64 +150,73 @@ export default function ActivityLog() {
   }
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
-      {/* Page Header */}
+    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Activity className="w-7 h-7 text-primary" />
-            Audit & Activity Timeline
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
+              <ShieldAlert className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              Security Audit &amp; Activity Log
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>IMMUTABLE AUDIT TRAIL</span>
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Immutable operational logs, staff action timestamps, and critical system events
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Badge variant="outline" className="px-3 py-1.5 bg-card border-border text-xs font-semibold gap-1.5 shadow-sm">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 mr-1" />
             {logs.length} Recorded Events
           </Badge>
         </div>
       </div>
 
-      {/* Summary KPI Bar */}
+      {/* Summary KPI Bar - 3D Frosted Glass */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total Events */}
-        <div className="p-4 rounded-2xl border border-border bg-card shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-primary/10 text-primary">
+        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+          <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Logged Actions</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">{logs.length}</p>
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Logged Actions</span>
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{logs.length}</p>
           </div>
         </div>
 
         {/* Active Staff */}
-        <div className="p-4 rounded-2xl border border-border bg-card shadow-sm flex items-center gap-4">
+        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
             <User className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Staff Operators</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">{activeStaffCount} Active Users</p>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Staff Operators</span>
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{activeStaffCount} Active Users</p>
           </div>
         </div>
 
         {/* Event Types */}
-        <div className="p-4 rounded-2xl border border-border bg-card shadow-sm flex items-center gap-4">
+        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activity Domains</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">{entityTypes.length} Categories</p>
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Activity Domains</span>
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{entityTypes.length} Categories</p>
           </div>
         </div>
       </div>
 
-      {/* Search & Category Filter Pills */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+      {/* Search & Category Filter Pills - Frosted Glass Container */}
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -217,7 +226,7 @@ export default function ActivityLog() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search actions, staff names, or specific invoice/batch numbers..."
-              className="w-full h-11 pl-10 pr-10 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+              className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
             />
             {search && (
               <button
@@ -230,14 +239,14 @@ export default function ActivityLog() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto">
             <button
               onClick={() => setFilterType("all")}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
                 filterType === "all"
-                  ? "bg-card text-foreground shadow-sm border border-border/80"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "glowing-btn-blue text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-foreground"
               )}
             >
               All Events ({logs.length})
@@ -247,10 +256,10 @@ export default function ActivityLog() {
                 key={t}
                 onClick={() => setFilterType(t)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap capitalize",
+                  "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap capitalize cursor-pointer",
                   filterType === t
-                    ? "bg-card text-foreground shadow-sm border border-border/80"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "glowing-btn-blue text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-foreground"
                 )}
               >
                 {t.replace(/_/g, " ")}

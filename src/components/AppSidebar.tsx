@@ -378,17 +378,19 @@ export function AppSidebar() {
                     </div>
 
                     <div className="space-y-1 max-h-44 overflow-y-auto scrollbar-thin">
-                      {organizations.map((business) => {
+                      {(organizations || []).filter(Boolean).map((business) => {
+                        if (!business) return null;
                         const isActive = business.id === orgId;
+                        const bizName = business.name || "Store";
                         return (
                           <button
-                            key={business.id}
+                            key={business.id || Math.random()}
                             type="button"
                             onClick={() => {
-                              switchOrganization(business.id);
+                              if (business.id) switchOrganization(business.id);
                               setMobileSwitcherOpen(false);
                               setMobileMenuOpen(false);
-                              toast.success(`Switched to "${business.name}"`);
+                              toast.success(`Switched to "${bizName}"`);
                             }}
                             className={cn(
                               "w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all active:scale-[0.98]",
@@ -398,7 +400,7 @@ export function AppSidebar() {
                             )}
                           >
                             <div className="min-w-0 pr-2">
-                              <p className="truncate text-xs font-semibold">{business.name}</p>
+                              <p className="truncate text-xs font-semibold">{bizName}</p>
                               <p className="text-[10px] text-slate-500 font-mono truncate">
                                 {business.business_type || "Retail"} {business.gstin ? `• ${business.gstin}` : ""}
                               </p>
@@ -653,20 +655,22 @@ export function AppSidebar() {
           <div className="absolute left-3 right-3 top-full mt-2 bg-slate-900 text-slate-200 rounded-2xl shadow-2xl border border-slate-700/80 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
             <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
               <span>Your Businesses</span>
-              <span className="text-amber-400">{organizations.length} Store(s)</span>
+              <span className="text-amber-400">{(organizations || []).length} Store(s)</span>
             </div>
 
             <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
-              {organizations.map((business) => {
+              {(organizations || []).filter(Boolean).map((business) => {
+                if (!business) return null;
                 const isActive = business.id === orgId;
+                const bizName = business.name || "Store";
                 return (
                   <button
-                    key={business.id}
+                    key={business.id || Math.random()}
                     type="button"
                     onClick={() => {
-                      switchOrganization(business.id);
+                      if (business.id) switchOrganization(business.id);
                       setBusinessSwitcherOpen(false);
-                      toast.success(`Switched to "${business.name}"`);
+                      toast.success(`Switched to "${bizName}"`);
                     }}
                     className={cn(
                       "w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all",
@@ -676,7 +680,7 @@ export function AppSidebar() {
                     )}
                   >
                     <div className="min-w-0 pr-2">
-                      <p className="truncate text-xs font-semibold">{business.name}</p>
+                      <p className="truncate text-xs font-semibold">{bizName}</p>
                       <p className="text-[10px] text-slate-500 font-mono truncate">
                         {business.business_type || "Retail"} {business.gstin ? `• ${business.gstin}` : ""}
                       </p>
@@ -897,31 +901,6 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Pro Plan Box (Matching Reference Image 1) */}
-      {!collapsed && (
-        <div className="mx-2.5 mb-2.5 p-3 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/70 shadow-lg text-xs space-y-2 select-none">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-amber-300 flex items-center justify-center shadow-md shrink-0">
-              <Crown className="w-4 h-4 fill-amber-400 text-amber-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-white text-xs leading-none">Plan: Pro</p>
-              <p className="text-[10px] text-slate-400 font-mono mt-0.5">Valid till 17 Oct 2026</p>
-            </div>
-          </div>
-
-          <div className="space-y-1 pt-1">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono font-medium">
-              <span>Invoice limit</span>
-              <span className="text-white font-bold">296 / 500</span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full w-[60%]" />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Footer Security Badges & Sign Out */}
       <div className="p-3 border-t border-slate-800/80 bg-[#060B18] space-y-2 shrink-0 text-xs">

@@ -147,18 +147,18 @@ export default function VendorDiscovery() {
                 />
               </div>
 
-              <Button
+              <button
                 onClick={() => handleSearch()}
                 disabled={loading}
-                className="h-11 px-6 font-semibold rounded-xl gap-2 shrink-0 bg-accent hover:bg-accent/90 text-accent-foreground shadow-md"
+                className="h-11 px-6 font-bold rounded-xl gap-2 shrink-0 glowing-btn-amber text-white text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center"
               >
                 {loading ? (
-                  <div className="w-4 h-4 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Compass className="w-4 h-4" />
+                  <Compass className="w-4 h-4 stroke-[2.5]" />
                 )}
-                {loading ? "Searching..." : "Discover Vendors"}
-              </Button>
+                <span>{loading ? "Searching..." : "Discover Vendors"}</span>
+              </button>
             </div>
           </div>
 
@@ -169,7 +169,7 @@ export default function VendorDiscovery() {
               <button
                 key={tag}
                 onClick={() => handleSearch(tag)}
-                className="text-xs px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/90 font-medium transition-colors"
+                className="text-xs px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-medium transition-colors cursor-pointer"
               >
                 {tag}
               </button>
@@ -201,7 +201,7 @@ export default function VendorDiscovery() {
           [...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="h-52 bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3 animate-pulse"
+              className="h-52 glass-card-3d rounded-2xl p-5 shadow-sm space-y-3 animate-pulse"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-xl" />
@@ -221,12 +221,13 @@ export default function VendorDiscovery() {
           results.map((comp) => (
             <div
               key={comp.cin || comp.company_name}
-              className="bg-card border border-border hover:border-primary/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+              className="glass-card-3d rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
             >
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-blue-500 to-cyan-500 rounded-l-2xl" />
               <div>
                 {/* Header */}
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="p-2.5 bg-primary/10 text-primary rounded-xl shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                <div className="flex items-start gap-3 mb-3 pl-1">
+                  <div className="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">

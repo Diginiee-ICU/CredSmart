@@ -517,27 +517,25 @@ export default function Items() {
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
+    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans">
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}
-      {/* ------------------------------------------------------------- */}
-      {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
-      {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2.5 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
         {/* Card 1: Total Stock Value */}
-        <div className="p-2 sm:p-3 rounded-xl border border-border bg-card shadow-2xs hover:border-primary/40 transition-all flex items-center justify-between">
+        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div className="space-y-0.5">
-            <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-              Stock Value
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
+              Stock Valuation
             </span>
-            <p className="text-sm sm:text-lg font-black text-foreground font-mono">
+            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
               ₹ {totalStockValue.toLocaleString("en-IN")}
             </p>
-            <p className="hidden sm:block text-[9px] sm:text-[10px] text-muted-foreground truncate">Purchase valuation</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Current cost valuation</p>
           </div>
-          <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-            <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
+            <Package className="w-4 h-4" />
           </div>
         </div>
 
@@ -545,82 +543,85 @@ export default function Items() {
         <div
           onClick={() => setLowStockOnly((prev) => !prev)}
           className={cn(
-            "p-2 sm:p-3 rounded-xl border cursor-pointer shadow-2xs transition-all flex items-center justify-between",
+            "glass-card-3d p-3.5 cursor-pointer transition-all flex items-center justify-between relative overflow-hidden group select-none",
             lowStockOnly
-              ? "border-amber-500 bg-amber-500/15"
-              : "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50"
+              ? "ring-2 ring-amber-500/40 bg-amber-50/30 dark:bg-amber-950/30"
+              : "hover:scale-[1.01]"
           )}
         >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="space-y-0.5">
             <div className="flex items-center gap-1">
-              <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
                 Low Stock
               </span>
-              {lowStockOnly && <Badge className="text-[8px] h-3.5 px-1 py-0">Active</Badge>}
+              {lowStockOnly && <Badge className="text-[8px] h-3.5 px-1 py-0 bg-amber-500 text-white">Active</Badge>}
             </div>
-            <p className="text-sm sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono">
+            <p className="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight">
               {lowStockCount} Items
             </p>
-            <p className="hidden sm:block text-[9px] sm:text-[10px] text-amber-700/80 dark:text-amber-400/80 truncate">
-              {lowStockOnly ? "Clear filter" : "Filter low stock"}
+            <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">
+              {lowStockOnly ? "Clear filter" : "Below reorder level"}
             </p>
           </div>
-          <div className="p-1.5 sm:p-2 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">
-            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">
+            <AlertTriangle className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 3: Total Items Count */}
-        <div className="p-2 sm:p-3 rounded-xl border border-border bg-card shadow-2xs hover:border-primary/40 transition-all flex items-center justify-between">
+        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="space-y-0.5">
-            <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-              Total Items
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+              Total Catalog
             </span>
-            <p className="text-sm sm:text-lg font-black text-foreground">{totalItemsCount}</p>
-            <p className="hidden sm:block text-[9px] sm:text-[10px] text-muted-foreground truncate">Active SKUs</p>
+            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalItemsCount} SKUs</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Master products</p>
           </div>
-          <div className="p-1.5 sm:p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+            <Layers className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 4: Out of Stock Count */}
-        <div className="p-2 sm:p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 shadow-2xs hover:border-rose-500/50 transition-all flex items-center justify-between">
+        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
           <div className="space-y-0.5">
-            <span className="text-[9px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-              Out of Stock
+            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono">
+              Zero Stock
             </span>
-            <p className="text-sm sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
+            <p className="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight">
               {outOfStockCount} Items
             </p>
-            <p className="hidden sm:block text-[9px] sm:text-[10px] text-rose-700/80 dark:text-rose-400/80 truncate">0 available</p>
+            <p className="text-[10px] text-rose-500 dark:text-rose-400">Needs restock</p>
           </div>
-          <div className="p-1.5 sm:p-2 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0">
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="p-2 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0">
+            <X className="w-4 h-4" />
           </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* FILTER & SEARCH BAR - Compact & Responsive */}
+      {/* FILTER & SEARCH BAR - Frosted Glass Container */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2 bg-card p-1.5 sm:p-2.5 rounded-xl border border-border shadow-2xs shrink-0">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           {/* Search input */}
-          <div className="relative flex-1 min-w-0">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by Item Name, SKU, Barcode, HSN..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs bg-muted/30 border-border/80 focus:bg-background"
+              className="pl-8 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -628,11 +629,11 @@ export default function Items() {
           {/* Categories Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 px-2.5 gap-1 text-xs justify-between font-normal shrink-0">
-                <span className="truncate max-w-[85px] sm:max-w-[120px]">
+              <Button variant="outline" size="sm" className="h-9 px-3 gap-1.5 text-xs justify-between font-semibold border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl shrink-0">
+                <span className="truncate max-w-[90px] sm:max-w-[130px]">
                   {categoryFilter === "all" ? "Categories" : categoryFilter}
                 </span>
-                <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -647,18 +648,17 @@ export default function Items() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Primary "+ Create Item" button */}
-          <Button
+          {/* Primary Glowing "+ Create Item" button */}
+          <button
             onClick={() => {
               setEditingItem(null);
               setShowCreateModal(true);
             }}
-            size="sm"
-            className="h-8 px-3 gap-1 font-bold text-xs shrink-0 shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>+ Item</span>
-          </Button>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ Create Item</span>
+          </button>
         </div>
 
         {/* Bulk Action Dropdown (shows on desktop or when items selected) */}
@@ -669,10 +669,10 @@ export default function Items() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 text-xs font-semibold w-full sm:w-auto"
+                  className="h-9 gap-1.5 text-xs font-semibold w-full sm:w-auto border-slate-200 dark:border-slate-700 rounded-xl"
                 >
                   <span>Bulk Action ({selectedIds.size})</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -1218,57 +1218,6 @@ export default function Items() {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* BOTTOM BANNER: Add Multiple items at once (Desktop Only) */}
-      {/* ------------------------------------------------------------- */}
-      <div className="hidden md:flex p-5 rounded-2xl border border-border bg-gradient-to-r from-muted/60 via-card to-muted/40 flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 rounded-2xl bg-primary/10 text-primary shrink-0">
-            <Library className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-foreground">Add Multiple items at once</h4>
-            <p className="text-xs text-muted-foreground mt-0.5 max-w-xl">
-              Bulk Upload Items from Product Library or Other Software like Vyapar, Tally, Marg &amp; Busy.
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setLibraryModalMode("software_import");
-              setShowLibraryModal(true);
-            }}
-            className="text-xs font-semibold h-10 gap-1.5"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-primary" />
-            Import Items
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => {
-              setLibraryModalMode("library");
-              setShowLibraryModal(true);
-            }}
-            className="text-xs font-semibold h-10 gap-1.5"
-          >
-            <Library className="w-4 h-4 text-primary" />
-            Product Library
-          </Button>
-
-          <Button
-            onClick={() => setShowExcelUploadModal(true)}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-4 shadow-sm"
-          >
-            <Download className="w-4 h-4" />
-            Upload Excel
-          </Button>
-        </div>
-      </div>
 
       {/* ------------------------------------------------------------- */}
       {/* ALL MODALS */}

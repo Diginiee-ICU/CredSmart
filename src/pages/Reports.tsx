@@ -399,31 +399,34 @@ export default function Reports() {
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
-      {/* Top Header with Quick Action Bar - Compact */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 border-b border-border/80 pb-2 shrink-0">
+    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans">
+      {/* Top Header with Quick Action Bar - Frosted Glass */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-2.5 shrink-0">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">GST & Financial Reports</h1>
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-mono text-[10px] py-0">
-              ● GST Schema 2.0
-            </Badge>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+              GST &amp; Financial Reports
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>GST SCHEMA 2.0 READY</span>
+            </span>
           </div>
-          <p className="text-[11px] text-muted-foreground truncate">
-            Official GST Portal compliant GSTR-1, GSTR-3B JSON & multi-sheet Excel workbooks ready for 1-click filing.
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+            Official GST Portal compliant GSTR-1, GSTR-3B JSON &amp; multi-sheet Excel workbooks ready for 1-click filing.
           </p>
         </div>
 
         {/* 1-Click Action Buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <Button
             onClick={handleDownloadGSTR1JSON}
             variant="outline"
             size="sm"
-            className="h-8 text-xs font-semibold gap-1 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700 shadow-2xs px-2.5"
+            className="h-9 text-xs font-semibold gap-1.5 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-xl shadow-xs px-3"
             title="Download official GST offline tool JSON for GSTR-1"
           >
-            <FileCode className="w-3.5 h-3.5 text-indigo-600" />
+            <FileCode className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>GSTR-1 JSON</span>
           </Button>
 
@@ -431,10 +434,10 @@ export default function Reports() {
             onClick={handleDownloadGSTR1Excel}
             variant="outline"
             size="sm"
-            className="h-8 text-xs font-semibold gap-1 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 shadow-2xs px-2.5"
+            className="h-9 text-xs font-semibold gap-1.5 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 rounded-xl shadow-xs px-3"
             title="Download multi-sheet GSTR-1 Excel workbook"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>GSTR-1 Excel</span>
           </Button>
 
@@ -442,75 +445,75 @@ export default function Reports() {
             onClick={handleDownloadGSTR3BExcel}
             variant="outline"
             size="sm"
-            className="h-8 text-xs font-semibold gap-1 border-amber-200 bg-amber-50/50 hover:bg-amber-100 text-amber-800 shadow-2xs px-2.5"
+            className="h-9 text-xs font-semibold gap-1.5 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-800 dark:text-amber-300 rounded-xl shadow-xs px-3"
             title="Download GSTR-3B Return Excel"
           >
-            <Percent className="w-3.5 h-3.5 text-amber-600" />
+            <Percent className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>GSTR-3B Excel</span>
           </Button>
 
-          <Button
+          <button
             onClick={() => setShowCaModal(true)}
-            size="sm"
-            className="h-8 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-2xs gap-1.5 font-medium px-3 text-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
-            <div className="w-3.5 h-3.5 rounded bg-white/20 flex items-center justify-center text-[9px] font-bold font-mono">
+            <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center text-[9px] font-black font-mono">
               CA
             </div>
-            <span>CA Sharing</span>
-          </Button>
+            <span>CA 1-Click Sharing</span>
+          </button>
         </div>
       </div>
 
-      {/* GST Filing Return Period Quick Bar - Compact */}
-      <div className="bg-card p-2.5 sm:p-3 rounded-xl border border-border shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+      {/* GST Filing Return Period Quick Bar - Frosted Glass Card with Lightbar */}
+      <div className="glass-card-3d p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 shrink-0 relative overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="flex items-center gap-3 min-w-0 pl-1">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
             <Calendar className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-foreground">Return Period:</span>
-              <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.2 rounded border border-indigo-200 dark:border-indigo-800">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Return Period:</span>
+              <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/30">
                 FY {getFinancialYear()} • {formatFilingPeriod()}
               </span>
-              <span className="text-[11px] text-muted-foreground font-mono truncate">GSTIN: {org?.gstin || "27AAPFU0939F1ZV"}</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">GSTIN: {org?.gstin || "27AAPFU0939F1ZV"}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-              Active Invoices: <span className="font-semibold text-foreground">{gstr1Data.summary.totalInvoicesCount}</span> •
-              Taxable: <span className="font-semibold text-foreground">₹{gstr1Data.summary.totalTaxableValue.toLocaleString("en-IN")}</span> •
-              Liability: <span className="font-semibold text-emerald-600">₹{gstr1Data.summary.totalTax.toLocaleString("en-IN")}</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
+              Active Invoices: <span className="font-bold text-slate-900 dark:text-white font-mono">{gstr1Data.summary.totalInvoicesCount}</span> •
+              Taxable: <span className="font-bold text-slate-900 dark:text-white font-mono">₹{gstr1Data.summary.totalTaxableValue.toLocaleString("en-IN")}</span> •
+              Liability: <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">₹{gstr1Data.summary.totalTax.toLocaleString("en-IN")}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 self-end md:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
           <Button
             size="sm"
             variant="ghost"
             onClick={loadDocuments}
             disabled={loading}
-            className="text-xs text-muted-foreground h-7 gap-1"
+            className="text-xs text-slate-500 hover:text-foreground h-8 gap-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60"
           >
-            <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Sync Live</span>
           </Button>
         </div>
       </div>
 
-      {/* Filter Tabs & Search Bar - Compact */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 bg-card p-2 rounded-xl border border-border shadow-2xs shrink-0">
+      {/* Filter Tabs & Search Bar - Frosted Glass Container */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-[11px] font-semibold text-muted-foreground mr-1">Filter:</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mr-1 uppercase font-mono">Filter:</span>
           {FILTER_TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 ${
                 activeTab === tab
-                  ? "bg-indigo-600 text-white shadow-2xs"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  ? "glowing-btn-blue text-white shadow-xs"
+                  : "bg-slate-100/70 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-foreground"
               }`}
             >
               {tab}
@@ -520,29 +523,29 @@ export default function Reports() {
 
         {/* Search Box */}
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Find Report (e.g. GSTR-1, HSN, P&L)"
-            className="pl-9 pr-14 h-9 text-xs bg-slate-50 focus:bg-white border-slate-200"
+            className="pl-9 pr-14 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
           />
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-semibold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded border border-slate-300/50">
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-semibold text-slate-400 bg-slate-200/80 dark:bg-slate-700/80 px-1.5 py-0.5 rounded border border-slate-300/50 dark:border-slate-600">
             Ctrl + F
           </span>
         </div>
       </div>
 
-      {/* Categorized 3-Column Report Grid - Scrollable Desktop Container */}
+      {/* Categorized 3-Column Report Grid - Scrollable Desktop Container with 3D Glass Cards */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pr-1">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 pb-4">
           {/* Col 1: Favourite */}
-          <div className="bg-white dark:bg-card rounded-xl border border-border shadow-xs flex flex-col overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b border-border font-semibold text-sm text-foreground">
+          <div className="glass-card-3d flex flex-col overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-2 px-4 py-3 bg-amber-500/10 border-b border-slate-200/80 dark:border-slate-800 font-bold text-xs text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Favourite & GST Returns</span>
+              <span>Favourite &amp; GST Returns</span>
             </div>
-            <div className="divide-y divide-border/60 flex-1">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60 flex-1">
               {favouriteReports.length === 0 ? (
                 <div className="p-6 text-center text-xs text-muted-foreground">No favourite reports matched</div>
               ) : (
@@ -925,8 +928,17 @@ export default function Reports() {
                 </div>
               )}
 
+              {/* Bottom-left Report Watermark */}
+              <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono py-1 border-t border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-bold text-[9px] text-slate-700">⚡ CredSmart</span>
+                  <span>Generated via CredSmart Tax Engine</span>
+                </div>
+                <span>100% Tax Compliant</span>
+              </div>
+
               {/* Action Buttons in Modal */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
                 <div className="flex items-center gap-2 flex-wrap">
                   {selectedReport.id === "gstr-1" || selectedReport.id === "gst-sales-hsn" || selectedReport.id === "hsn-wise-sales-summary" ? (
                     <>

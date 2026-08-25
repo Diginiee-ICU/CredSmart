@@ -96,25 +96,27 @@ export default function Security() {
             return (
               <div
                 key={idx}
-                className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 hover:border-slate-700 transition-colors"
+                className="p-6 sm:p-8 rounded-3xl glass-card-3d space-y-4 hover:border-indigo-400/40 transition-colors relative overflow-hidden"
               >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-blue-500 to-cyan-500 rounded-l-2xl" />
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center shadow-xs">
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white">{sec.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{sec.desc}</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">{sec.title}</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{sec.desc}</p>
               </div>
             );
           })}
         </div>
 
         {/* Section 2(1)(w) IT Act Card */}
-        <div className="mt-12 p-8 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Scale className="w-5 h-5 text-amber-400" />
+        <div className="mt-12 p-8 rounded-3xl glass-card-3d space-y-3 relative overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
+          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Scale className="w-5 h-5 text-amber-500" />
             Statutory Intermediary Compliance &amp; Legal Safe-Harbour
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             CredSmart POS operates as a digital technology intermediary governed by Section 2(1)(w) of the Information Technology Act, 2000. We do not alter or tamper with commercial records created by businesses. All commercial disputes, Right-of-Reply workflows, and legal hold processes follow statutory guidelines.
           </p>
         </div>
@@ -122,3 +124,4 @@ export default function Security() {
     </PublicLayout>
   );
 }
+

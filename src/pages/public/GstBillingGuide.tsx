@@ -87,21 +87,24 @@ export default function GstBillingGuide() {
             Under the Indian Goods and Services Tax (GST) framework, tax is levied based on whether a transaction is <strong>Intra-State</strong> (within the same state) or <strong>Inter-State</strong> (between different states or union territories):
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-400 font-mono">CGST (Central GST)</span>
-              <p className="text-xs text-slate-400">
+            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500 rounded-l-2xl" />
+              <span className="text-xs font-black text-amber-500 dark:text-amber-400 font-mono pl-1">CGST (Central GST)</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
                 Levied by the Central Government on intra-state supplies. Appears as 50% of the total tax rate (e.g., 9% on an 18% slab).
               </p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-indigo-400 font-mono">SGST / UTGST (State GST)</span>
-              <p className="text-xs text-slate-400">
+            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 to-blue-600 rounded-l-2xl" />
+              <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 font-mono pl-1">SGST / UTGST (State GST)</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
                 Levied by the State or Union Territory Government on intra-state supplies, matching CGST equally.
               </p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-emerald-400 font-mono">IGST (Integrated GST)</span>
-              <p className="text-xs text-slate-400">
+            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-600 rounded-l-2xl" />
+              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono pl-1">IGST (Integrated GST)</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
                 Levied by the Central Government on all inter-state supplies, export/import of goods, equal to CGST + SGST combined.
               </p>
             </div>
@@ -110,8 +113,8 @@ export default function GstBillingGuide() {
 
         {/* Section 2 */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-indigo-400" />
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <FileText className="w-6 h-6 text-indigo-500" />
             2. Mandatory Fields on a Legal GST Tax Invoice
           </h2>
           <p>
@@ -130,8 +133,8 @@ export default function GstBillingGuide() {
               "Place of Supply along with State Name and Code",
               "Digital signature or physical signature of the authorized person",
             ].map((field, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-300 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 p-3 rounded-xl glass-card-3d">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <span>{field}</span>
               </li>
             ))}
@@ -140,25 +143,25 @@ export default function GstBillingGuide() {
 
         {/* Section 3 */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <Scale className="w-6 h-6 text-emerald-400" />
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <Scale className="w-6 h-6 text-emerald-500" />
             3. Standard GST Slabs in India
           </h2>
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 scrollbar-thin">
+          <div className="overflow-x-auto rounded-2xl glass-card-3d scrollbar-thin">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+              <thead className="bg-slate-900/40 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-200/80 dark:border-slate-800">
                 <tr>
                   <th className="p-4">Rate</th>
                   <th className="p-4">Classification</th>
                   <th className="p-4">Typical Goods / Services</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
                 {gstSlabs.map((s, idx) => (
-                  <tr key={idx} className="hover:bg-slate-800/40">
-                    <td className="p-4 font-bold text-amber-400">{s.rate}</td>
-                    <td className="p-4 font-semibold text-slate-200">{s.category}</td>
-                    <td className="p-4 text-slate-400 text-xs">{s.examples}</td>
+                  <tr key={idx} className="hover:bg-white/5">
+                    <td className="p-4 font-black text-amber-500 dark:text-amber-400 font-mono">{s.rate}</td>
+                    <td className="p-4 font-bold text-slate-900 dark:text-slate-200">{s.category}</td>
+                    <td className="p-4 text-slate-600 dark:text-slate-400 text-xs">{s.examples}</td>
                   </tr>
                 ))}
               </tbody>
@@ -168,25 +171,26 @@ export default function GstBillingGuide() {
 
         {/* Section 4 */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <FileSpreadsheet className="w-6 h-6 text-rose-400" />
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <FileSpreadsheet className="w-6 h-6 text-rose-500" />
             4. How CredSmart POS Automates GST Compliance
           </h2>
           <p>
             Manually calculating taxes, sorting out HSN codes, and preparing monthly GSTR-1 summaries is tedious and error-prone. CredSmart POS fully automates every step:
           </p>
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-            <p className="text-slate-200 font-semibold">
+          <div className="p-6 rounded-2xl glass-card-3d space-y-3 relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
+            <p className="text-slate-900 dark:text-slate-200 font-black text-sm pl-1">
               Automatic Tax Splits &amp; 1-Click JSON Filing
             </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">
               When you bill a customer, CredSmart automatically checks their state code against your store&apos;s registered GSTIN, calculating CGST/SGST or IGST in real time. At the end of the month, export the official <strong>GSTR-1 JSON Schema 2.0</strong> file for immediate upload to the GST Portal—saving hours of manual bookkeeping.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 pl-1">
               <Link to={ROUTE_PATHS.auth}>
-                <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md">
-                  Create Your First GST Invoice Free <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
+                <button className="h-10 px-5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                  Create Your First GST Invoice Free <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[2.5]" />
+                </button>
               </Link>
             </div>
           </div>

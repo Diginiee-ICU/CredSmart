@@ -251,33 +251,38 @@ export default function InvoiceSettings() {
           <SettingsNavSidebar activeItem="invoice" />
         </div>
 
-        {/* Main Split-Screen Customizer Area */}
-        <main className="flex-1 min-h-0 w-full bg-card rounded-2xl border border-border/80 p-3 sm:p-5 shadow-2xs flex flex-col overflow-hidden">
+        {/* Main Split-Screen Customizer Area - 3D Glass Container */}
+        <main className="flex-1 min-h-0 w-full glass-card-3d rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
           {/* Top Header Bar - Compact & Responsive */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-border/70 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
             <div>
-              <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
-                Invoice Settings
-              </h1>
-              <p className="text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+                  Invoice Settings
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>GST THEME ENGINE</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Live interactive theme customizer with real-time tax template rendering
               </p>
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              <Button
+              <button
                 onClick={handleSave}
                 disabled={saving}
-                size="sm"
-                className="h-8 px-4 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-xs gap-1.5 transition-transform active:scale-[0.98] shrink-0"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
               >
                 {saving ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="w-3.5 h-3.5 stroke-[2.5]" />
                 )}
                 <span>Save Changes</span>
-              </Button>
+              </button>
             </div>
           </div>
 

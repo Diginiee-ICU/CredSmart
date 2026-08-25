@@ -207,47 +207,42 @@ export default function EInvoicing() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans relative">
-      {/* Top Header - Compact */}
-      <header className="border-b border-slate-200 dark:border-border px-4 sm:px-6 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-card shadow-xs">
+    <div className="h-full flex flex-col bg-slate-50/50 dark:bg-background text-foreground overflow-hidden font-sans relative">
+      {/* Top Header - Frosted Container */}
+      <header className="border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xs">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
-            e-Invoicing
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+              e-Invoicing &amp; IRP Gateway
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>NIC / IRP CONNECTED</span>
+            </span>
+          </div>
 
           {/* [What is e-Invoicing] pill button */}
           <button
             type="button"
             onClick={() => setIsExplainerOpen(true)}
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-2xs hover:bg-blue-50/50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/50 hover:border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold shadow-xs hover:bg-blue-500/20 transition-all cursor-pointer"
           >
-            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:fill-blue-400" />
+            <Play className="w-3 h-3 fill-current" />
             <span>What is e-Invoicing</span>
           </button>
         </div>
-
-        {/* [Chat Support] button - Hidden as requested */}
-        {false && (
-          <button
-            type="button"
-            onClick={() => setIsChatSupportOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Chat Support</span>
-          </button>
-        )}
       </header>
 
       {/* Main Content Area - Fits Screen */}
-      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col justify-between scrollbar-thin">
-        {/* 3 Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between scrollbar-thin">
+        {/* 3 Feature Cards - 3D Frosted Glass */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {/* CARD 1: Automatic e-invoice generation */}
-          <div className="bg-white dark:bg-card rounded-xl border border-slate-200 dark:border-border/80 shadow-2xs hover:shadow-xs transition-all p-4 sm:p-5 flex flex-col items-center justify-between text-center min-h-[220px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with QR & lines */}
-              <div className="relative w-28 h-36 bg-slate-50 dark:bg-muted/40 border-2 border-slate-700 dark:border-slate-300 rounded-lg p-3 shadow-sm flex flex-col justify-between">
+              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Header fold simulation */}
                 <div className="space-y-1.5">
                   <div className="h-2 w-12 bg-teal-400/80 rounded" />
@@ -270,18 +265,19 @@ export default function EInvoicing() {
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-200/80 rounded" />
               </div>
             </div>
-            <div className="pt-6">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+            <div className="pt-5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Automatic e-invoice generation
               </h3>
             </div>
           </div>
 
           {/* CARD 2: Hassle e-way bill generation using IRN */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-8 flex flex-col items-center justify-between text-center min-h-[300px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with Truck */}
-              <div className="relative w-28 h-36 bg-slate-50 dark:bg-muted/40 border-2 border-slate-700 dark:border-slate-300 rounded-lg p-3 shadow-sm flex flex-col justify-between">
+              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Top lines */}
                 <div className="space-y-1.5">
                   <div className="h-2 w-14 bg-amber-300 rounded" />
@@ -301,18 +297,19 @@ export default function EInvoicing() {
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-200/80 rounded" />
               </div>
             </div>
-            <div className="pt-6">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+            <div className="pt-5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Hassle e-way bill generation using IRN
               </h3>
             </div>
           </div>
 
           {/* CARD 3: Easy GSTR1 reconciliation */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-8 flex flex-col items-center justify-between text-center min-h-[300px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Report Illustration with Charts */}
-              <div className="relative w-28 h-36 bg-white dark:bg-card border-2 border-slate-700 dark:border-slate-300 rounded-lg p-2.5 shadow-sm flex flex-col justify-between">
+              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-2.5 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Upper line chart container */}
                 <div className="w-full h-12 bg-amber-300/80 border border-slate-700 rounded p-1 flex items-end justify-between">
                   <div className="w-1.5 h-3 bg-slate-800 rounded-full" />
@@ -333,8 +330,8 @@ export default function EInvoicing() {
                 </div>
               </div>
             </div>
-            <div className="pt-6">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+            <div className="pt-5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Easy GSTR1 reconciliation
               </h3>
             </div>
@@ -343,17 +340,18 @@ export default function EInvoicing() {
 
         {/* Bottom Headline & Primary CTA Button matching Capture8.PNG */}
         <div className="text-center py-10 sm:py-12 space-y-4">
-          <h2 className="text-lg sm:text-xl font-medium text-slate-800 dark:text-slate-100">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
             Try India's easiest and fastest e-invoicing solution today
           </h2>
           <div>
-            <Button
+            <button
               type="button"
               onClick={() => setIsGeneratorOpen(true)}
-              className="h-10 px-6 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-sm rounded-lg shadow-sm transition-all"
+              className="px-6 py-3 glowing-btn-amber text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
-              Start Generating e-Invoices
-            </Button>
+              <Zap className="w-4 h-4 stroke-[2.5]" />
+              <span>Start Generating e-Invoices</span>
+            </button>
           </div>
         </div>
       </div>

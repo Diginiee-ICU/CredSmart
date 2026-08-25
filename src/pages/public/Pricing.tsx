@@ -90,24 +90,24 @@ export default function Pricing() {
             No trial countdowns. No invoice limits. No locked features behind paywalls. Get enterprise-grade GST billing and POS software at zero cost.
           </p>
 
-          {/* Master ₹0 Plan Card */}
-          <div className="max-w-lg mx-auto mt-8 p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border-2 border-amber-500/40 shadow-2xl shadow-amber-500/10 relative overflow-hidden">
+          {/* Master ₹0 Plan Card - 3D Frosted Glass */}
+          <div className="max-w-lg mx-auto mt-8 p-8 rounded-3xl glass-card-3d border-2 border-amber-500/40 shadow-2xl relative overflow-hidden text-left">
             <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-6 border-b border-slate-200/80 dark:border-slate-800">
               <div className="text-left">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 font-mono">
                   Enterprise Community Edition
                 </span>
-                <h3 className="text-2xl font-black text-white">Full Business Suite</h3>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Full Business Suite</h3>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-black text-white">₹ 0</div>
-                <span className="text-[11px] text-emerald-400 font-bold">Lifetime Free</span>
+                <div className="text-4xl font-black text-slate-900 dark:text-white font-mono">₹ 0</div>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">Lifetime Free</span>
               </div>
             </div>
 
-            <ul className="py-6 space-y-3 text-left text-xs sm:text-sm text-slate-200">
+            <ul className="py-6 space-y-3 text-left text-xs sm:text-sm text-slate-700 dark:text-slate-200">
               {[
                 "Unlimited GST & Retail Invoices",
                 "High-Speed POS Billing Terminal (F1-F12 Hotkeys)",
@@ -121,18 +121,18 @@ export default function Pricing() {
                 "Cloud Real-Time Cross-Device Sync (Mobile + Desktop)",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
 
             <Link to={ROUTE_PATHS.auth} className="block w-full">
-              <Button className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-slate-950 font-black text-sm shadow-xl active:scale-95 transition-all">
-                Get Started 100% Free <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <button className="w-full h-12 rounded-xl glowing-btn-amber text-white font-black text-sm shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                Get Started 100% Free <ArrowRight className="w-4 h-4 ml-2 stroke-[2.5]" />
+              </button>
             </Link>
-            <p className="text-[11px] text-slate-500 mt-3">No credit card required • Instant 30-second setup</p>
+            <p className="text-[11px] text-slate-500 mt-3 text-center">No credit card required • Instant 30-second setup</p>
           </div>
         </div>
       </section>
@@ -148,12 +148,12 @@ export default function Pricing() {
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 scrollbar-thin">
+        <div className="overflow-x-auto rounded-2xl glass-card-3d scrollbar-thin">
           <table className="w-full text-left text-xs sm:text-sm min-w-[700px]">
-            <thead className="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase font-mono text-[11px]">
+            <thead className="bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 text-slate-400 uppercase font-mono text-[11px]">
               <tr>
                 <th className="p-4 sm:p-5">Feature / Capability</th>
-                <th className="p-4 sm:p-5 text-amber-400 font-bold bg-amber-500/10 border-x border-amber-500/20">
+                <th className="p-4 sm:p-5 text-amber-500 dark:text-amber-400 font-bold bg-amber-500/10 border-x border-amber-500/20">
                   CredSmart POS
                 </th>
                 <th className="p-4 sm:p-5">Vyapar</th>

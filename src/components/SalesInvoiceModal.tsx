@@ -58,6 +58,7 @@ import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
+import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 
 interface CustomerOption {
   id: string;
@@ -174,6 +175,11 @@ export function SalesInvoiceModal({
       itemInputRefs.current[index]?.focus();
     }, 60);
   };
+
+  // Quick Create Item State
+  const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
+  const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
+  const [initialNewItemName, setInitialNewItemName] = useState("");
 
   const billItemOptions: BillItemOption[] = useMemo(() => {
     return productsCatalog.map((p) => ({
@@ -588,6 +594,43 @@ export function SalesInvoiceModal({
     });
     setActiveItemDropdown(null);
     focusItemInput(index + 1);
+  };
+
+  const handleOpenCreateItemDialog = (rowIndex: number, prefillName?: string) => {
+    setActiveItemDropdown(null);
+    setTargetRowIndexForNewItem(rowIndex);
+    setInitialNewItemName(prefillName || "");
+    setShowQuickCreateItemModal(true);
+  };
+
+  const handleItemCreated = (product: CreatedProductResult) => {
+    fetchProducts();
+    if (targetRowIndexForNewItem !== null) {
+      setItems((prev) => {
+        const copy = [...prev];
+        if (targetRowIndexForNewItem < copy.length) {
+          copy[targetRowIndexForNewItem] = {
+            ...copy[targetRowIndexForNewItem],
+            productId: product.id,
+            productName: product.name,
+            barcode: product.barcode || undefined,
+            hsn: product.hsn || copy[targetRowIndexForNewItem].hsn || "",
+            unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
+            rate: product.sellingPrice,
+            taxRate: product.taxRate,
+            batchNumber: product.batchNumber || undefined,
+          };
+        }
+
+        if (targetRowIndexForNewItem === copy.length - 1) {
+          const nextId = `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          copy.push(createNewRow(nextId));
+        }
+        return copy;
+      });
+
+      focusItemInput(targetRowIndexForNewItem + 1);
+    }
   };
 
   const handleSelectCustomer = (c: CustomerOption) => {
@@ -1298,34 +1341,77 @@ export function SalesInvoiceModal({
                             />
 
                             {activeItemDropdown === idx && (
-                              <div className="absolute z-50 left-3 top-full mt-1 w-[380px] sm:w-[440px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-60 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
-                                {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
-                                  <button
-                                    key={prod.id}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      handleSelectProduct(idx, prod);
-                                    }}
-                                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <span className="font-bold text-slate-900 dark:text-white truncate block">
-                                        {prod.name}
-                                      </span>
-                                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
-                                        {prod.barcode && <span>Code: {prod.barcode}</span>}
-                                        <span>Stock: {prod.stock} {prod.unit}</span>
-                                      </div>
+                              <div className="absolute z-50 left-3 top-full mt-1 w-[380px] sm:w-[440px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
+                                {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
+                                  <>
+                                    <div className="space-y-0.5 pb-1">
+                                      {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
+                                        <button
+                                          key={prod.id}
+                                          type="button"
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            handleSelectProduct(idx, prod);
+                                          }}
+                                          className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
+                                        >
+                                          <div className="flex-1 min-w-0">
+                                            <span className="font-bold text-slate-900 dark:text-white truncate block">
+                                              {prod.name}
+                                            </span>
+                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
+                                              {prod.barcode && <span>Code: {prod.barcode}</span>}
+                                              <span>Stock: {prod.stock} {prod.unit}</span>
+                                            </div>
+                                          </div>
+                                          <div className="text-right shrink-0">
+                                            <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                                              ₹{prod.rate}
+                                            </span>
+                                            <p className="text-[10px] text-muted-foreground font-mono">{prod.gstRate}% GST</p>
+                                          </div>
+                                        </button>
+                                      ))}
                                     </div>
-                                    <div className="text-right shrink-0">
-                                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                                        ₹{prod.rate}
-                                      </span>
-                                      <p className="text-[10px] text-muted-foreground font-mono">{prod.gstRate}% GST</p>
+
+                                    {/* Direct Create Item Action at Bottom of Matches */}
+                                    <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800">
+                                      <button
+                                        type="button"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
+                                        }}
+                                        className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                                      >
+                                        <div className="flex items-center gap-1.5 truncate">
+                                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                          <span className="truncate">Create "{itemSearchText[idx] || item.productName || "New Item"}"</span>
+                                        </div>
+                                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary shrink-0 ml-1">
+                                          + Add to Inventory
+                                        </span>
+                                      </button>
                                     </div>
-                                  </button>
-                                ))}
+                                  </>
+                                ) : (
+                                  <div className="p-3 text-center space-y-2">
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                      No catalog item matching "{itemSearchText[idx] || item.productName || ""}"
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
+                                      }}
+                                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                      <span>+ Create Item &amp; Add to Inventory</span>
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </td>
@@ -1437,37 +1523,50 @@ export function SalesInvoiceModal({
                 </div>
 
                 {/* Direct Add Item Row Actions (Like POS) */}
-                <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={handleAddRow}
-                    className="flex-1 py-2.5 rounded-xl border border-dashed border-primary/40 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-                  >
-                    <Plus className="w-4 h-4" />
-                    + Add Item
-                  </button>
+                <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <button
+                      type="button"
+                      onClick={handleAddRow}
+                      className="flex-1 py-2 px-3 rounded-xl border border-dashed border-primary/40 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>+ Add Line Item</span>
+                    </button>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddItemsModal(true)}
-                    className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                  >
-                    <Package className="w-4 h-4 text-primary" />
-                    Browse Catalog
-                  </Button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCreateItemDialog(recalculatedItems.length - 1, "")}
+                      className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>+ Create New Item</span>
+                    </button>
+                  </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddItemsModal(true)}
-                    className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                  >
-                    <ScanBarcode className="w-4 h-4 text-primary" />
-                    Scan Barcode
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddItemsModal(true)}
+                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
+                    >
+                      <Package className="w-4 h-4 text-primary" />
+                      <span>Browse Catalog</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddItemsModal(true)}
+                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
+                    >
+                      <ScanBarcode className="w-4 h-4 text-primary" />
+                      <span>Scan Barcode</span>
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Subtotals Summary Strip */}
@@ -1984,6 +2083,22 @@ export function SalesInvoiceModal({
         items={billItemOptions}
         onAddSelectedItems={handleBatchAddItems}
         priceMode="sales"
+        onOpenCreateItem={() => {
+          setShowAddItemsModal(false);
+          handleOpenCreateItemDialog(recalculatedItems.length - 1, "");
+        }}
+      />
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* DIRECT INLINE QUICK CREATE ITEM & ADD TO INVENTORY MODAL */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <QuickCreateItemModal
+        open={showQuickCreateItemModal}
+        onOpenChange={setShowQuickCreateItemModal}
+        orgId={orgId}
+        initialName={initialNewItemName}
+        priceMode="sales"
+        onItemCreated={handleItemCreated}
       />
     </>
   );

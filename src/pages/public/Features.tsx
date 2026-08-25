@@ -225,12 +225,11 @@ export default function Features() {
           <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Eliminate expensive subscriptions. CredSmart POS provides enterprise-grade POS billing, GST compliance, inventory control, and customer Khata ledgers with zero paywalls.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <Link to={ROUTE_PATHS.auth}>
-              <Button className="h-12 px-8 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
-                Start Free Billing Now <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <button className="h-12 px-8 rounded-xl glowing-btn-amber text-white font-bold text-sm shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                Start Free Billing Now <ArrowRight className="w-4 h-4 ml-2 stroke-[2.5]" />
+              </button>
             </Link>
             <Link to="/pricing">
               <Button
@@ -261,34 +260,34 @@ export default function Features() {
             return (
               <div
                 key={idx}
-                className="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 flex flex-col justify-between hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 group"
+                className="glass-card-3d p-6 sm:p-8 flex flex-col justify-between hover:border-amber-400/40 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
               >
-                <div className="space-y-4">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
+                <div className="space-y-4 pl-1">
                   <div className="flex items-center justify-between">
                     <div
-                      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.color} border flex items-center justify-center`}
+                      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.color} border flex items-center justify-center shadow-xs`}
                     >
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-800/80 text-amber-400 border border-amber-500/30">
                       {feat.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
                     {feat.title}
                   </h3>
 
-                  <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {feat.desc}
+                  </p>
 
-                  <ul className="space-y-2 pt-2 border-t border-slate-800/80">
-                    {feat.points.map((p, pIdx) => (
-                      <li
-                        key={pIdx}
-                        className="text-xs text-slate-300 flex items-start gap-2 leading-tight"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                        <span>{p}</span>
+                  <ul className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                    {feat.points.map((pt, pIdx) => (
+                      <li key={pIdx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{pt}</span>
                       </li>
                     ))}
                   </ul>

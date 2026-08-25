@@ -149,17 +149,23 @@ export default function Dashboard() {
           status = idx % 3 === 0 ? "OVERDUE" : "PENDING";
         }
 
+        const partyName = Array.isArray(s?.customers)
+          ? s?.customers[0]?.name
+          : s?.customers?.name;
+
         return {
-          id: s.id,
-          date: new Date(s.created_at).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
+          id: s?.id || `txn-${idx}`,
+          date: s?.created_at
+            ? new Date(s.created_at).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "Today",
           type: "Sale Invoice",
-          txnNo: s.invoice_number || `INV-${new Date(s.created_at).getFullYear()}-${String(idx + 82).padStart(3, "0")}`,
-          partyName: s.customers?.name || "R.K. Enterprises",
-          amount: s.total || 0,
+          txnNo: s?.invoice_number || `INV-${new Date().getFullYear()}-${String(idx + 82).padStart(3, "0")}`,
+          partyName: partyName || "R.K. Enterprises",
+          amount: s?.total || 0,
           status,
         };
       });
@@ -200,31 +206,7 @@ export default function Dashboard() {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - 100% Matching Reference Image 3
           ========================================================================= */}
-      <div className="block md:hidden space-y-4 pb-20">
-        {/* Mobile Header Bar: CREDSMART Logo + Search + glowing + Invoice button */}
-        <div className="flex items-center justify-between gap-2 pt-1 pb-1">
-          <CredsmartLogo size={32} showSubtitle={true} />
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowQuickCreate(true)}
-              className="p-2 rounded-full bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs cursor-pointer"
-              title="Search / Actions"
-              aria-label="Search"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setShowSalesInvoiceModal(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-sm active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Invoice</span>
-            </button>
-          </div>
-        </div>
-
+      <div className="block md:hidden space-y-4 pb-20 pt-1">
         {/* Mobile Title & Live Reconciled Status */}
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">

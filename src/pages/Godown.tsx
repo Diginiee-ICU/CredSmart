@@ -277,115 +277,126 @@ export default function GodownPage() {
   const activeTransfersCount = transfers.filter((t) => t.status !== "completed").length;
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
+    <div className="h-full flex flex-col p-3 sm:p-5 space-y-4 overflow-hidden font-sans">
       {/* ------------------------------------------------------------- */}
-      {/* HEADER - Compact */}
+      {/* HEADER */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-            <Warehouse className="w-5 h-5" />
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shadow-xs">
+            <Warehouse className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
                 Godown &amp; Warehouse Hub
               </h1>
-              <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.2">
-                {godowns.length} Facilities
-              </Badge>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>MULTI-FACILITY</span>
+              </span>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
               Multi-warehouse inventory tracking, batch storage distribution &amp; intra-godown stock transfers
             </p>
           </div>
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-          <Button
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <button
             onClick={() => setShowTransferModal(true)}
-            size="sm"
-            className="h-8 gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xs px-2.5"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-blue text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
+            <ArrowRightLeft className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Transfer Stock</span>
-          </Button>
+          </button>
 
-          <Button
+          <button
             onClick={() => handleOpenGodownModal()}
-            size="sm"
-            className="h-8 gap-1.5 font-bold text-xs shadow-xs px-2.5"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>+ Add Godown</span>
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* METRIC CARDS - Compact */}
+      {/* METRIC CARDS - 3D Frosted Glass */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {/* Card 1: Total Godowns */}
-        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center justify-between">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
               Total Godowns
             </span>
-            <p className="text-base sm:text-lg font-black text-foreground">{totalGodownsCount}</p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Operational facilities</p>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Warehouse className="w-4 h-4" />
+            </div>
           </div>
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Warehouse className="w-4 h-4" />
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">{totalGodownsCount}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Operational facilities</p>
           </div>
         </div>
 
         {/* Card 2: Total Stock Stored */}
-        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center justify-between">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
               Units Stored
             </span>
-            <p className="text-base sm:text-lg font-black text-foreground font-mono">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
               {totalStockUnits.toLocaleString("en-IN")}
             </p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Across all warehouses</p>
-          </div>
-          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
-            <Package className="w-4 h-4" />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Across all warehouses</p>
           </div>
         </div>
 
         {/* Card 3: Total Stock Valuation */}
-        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center justify-between">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
               Total Valuation
             </span>
-            <p className="text-base sm:text-lg font-black text-foreground font-mono">
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
               ₹ {totalValuationAll.toLocaleString("en-IN")}
             </p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Asset value in godowns</p>
-          </div>
-          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
-            <TrendingUp className="w-4 h-4" />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Asset value in godowns</p>
           </div>
         </div>
 
         {/* Card 4: Active Stock Transfers */}
-        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center justify-between">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
               Transfers
             </span>
-            <p className="text-base sm:text-lg font-black text-blue-600 font-mono">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <Truck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
               {activeTransfersCount} Active
             </p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Inter-branch logistics</p>
-          </div>
-          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
-            <Truck className="w-4 h-4" />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Inter-branch logistics</p>
           </div>
         </div>
       </div>

@@ -208,33 +208,36 @@ export default function PrintSettings() {
   );
 
   return (
-    <div className="w-full max-w-[1550px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
+    <div className="w-full max-w-[1550px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6 font-sans">
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Navigation Sidebar */}
         <SettingsNavSidebar activeItem="print" />
 
-        {/* Main Content Area */}
-        <main className="flex-1 w-full bg-card rounded-2xl border border-border/80 p-5 sm:p-7 shadow-sm space-y-6">
-          <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/70">
+        {/* Main Content Area - 3D Frosted Glass Container */}
+        <main className="flex-1 w-full glass-card-3d rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
+          <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
                   Print &amp; POS Hardware Settings
                 </h1>
-                <Badge className="bg-rose-500 text-white font-bold text-[10px]">New</Badge>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>ESC/POS PERIPHERALS</span>
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Configure thermal receipt formats, ESC/POS printers, weighing scales, and scanner signals
               </p>
             </div>
 
-            <Button
+            <button
               onClick={handleSaveHardwareAndReceipt}
-              className="h-9 px-6 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-bold shadow-sm gap-1.5 transition-transform active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Save Print Settings</span>
-            </Button>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

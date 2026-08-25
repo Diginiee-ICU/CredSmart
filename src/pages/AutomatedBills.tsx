@@ -195,43 +195,50 @@ export default function AutomatedBills() {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans">
-      {/* Top Header - Compact */}
-      <header className="border-b border-slate-200 dark:border-border px-4 sm:px-6 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-card shadow-xs">
+      {/* Top Header - Frosted Container */}
+      <header className="border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xs">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
-            Automated Bills
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+              Automated Bills &amp; Subscriptions
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>RECURRING ENGINE</span>
+            </span>
+          </div>
 
           {/* [What is Automated Bills] pill button */}
           <button
             type="button"
             onClick={() => setIsExplainerOpen(true)}
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/80 hover:border-blue-600 bg-white dark:bg-card text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-2xs hover:bg-blue-50/50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/50 hover:border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold shadow-xs hover:bg-blue-500/20 transition-all cursor-pointer"
           >
-            <Play className="w-3 h-3 fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
+            <Play className="w-3 h-3 fill-current" />
             <span>What is Automated Bills</span>
           </button>
         </div>
 
         {recurringBills.length > 0 && (
           <div className="flex items-center gap-2 shrink-0">
-            <Button
+            <button
               onClick={() => setIsCreateModalOpen(true)}
-              size="sm"
-              className="h-8 px-3 bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-lg shadow-xs"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" /> New Automated Bill
-            </Button>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>New Automated Bill</span>
+            </button>
           </div>
         )}
       </header>
 
       {/* Main Content Area - Fits Screen */}
-      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col justify-between scrollbar-thin">
-        {/* 3 Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between scrollbar-thin">
+        {/* 3 Feature Cards - 3D Frosted Glass */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {/* CARD 1: Creating repeated bills? */}
-          <div className="bg-white dark:bg-card rounded-xl border border-slate-200 dark:border-border/80 shadow-2xs hover:shadow-xs transition-all p-4 sm:p-5 flex flex-col items-center justify-between text-center min-h-[250px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized illustration matching mockup */}
               <div className="relative w-full max-w-[200px] h-36 flex items-center justify-center">
@@ -272,17 +279,18 @@ export default function AutomatedBills() {
             </div>
 
             <div className="pt-4 space-y-1">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white font-sans">
                 Creating repeated bills?
               </h3>
-              <p className="text-xs text-slate-500 dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Automate sending of repeat bills based on a schedule of your choice
               </p>
             </div>
           </div>
 
           {/* CARD 2: Automated Billing */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-6 sm:p-8 flex flex-col items-center justify-between text-center min-h-[340px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Robot & Schedule illustration matching mockup */}
               <div className="relative w-full max-w-[200px] h-36 flex items-center justify-center">
@@ -317,17 +325,18 @@ export default function AutomatedBills() {
             </div>
 
             <div className="pt-4 space-y-1">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white font-sans">
                 Automated Billing
               </h3>
-              <p className="text-xs text-slate-500 dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Send SMS reminders to customers daily/weekly/monthly
               </p>
             </div>
           </div>
 
           {/* CARD 3: Easy Reminders & Payment */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border/80 shadow-xs hover:shadow-md transition-all p-6 sm:p-8 flex flex-col items-center justify-between text-center min-h-[340px]">
+          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Phone with Reminders bubble matching mockup */}
               <div className="relative w-full max-w-[220px] h-36 flex items-center justify-center">
@@ -358,10 +367,10 @@ export default function AutomatedBills() {
             </div>
 
             <div className="pt-4 space-y-1">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                Easy Reminders & Payment
+              <h3 className="text-base font-bold text-slate-900 dark:text-white font-sans">
+                Easy Reminders &amp; Payment
               </h3>
-              <p className="text-xs text-slate-500 dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Automatically receive notifications and collect payments
               </p>
             </div>
@@ -370,17 +379,18 @@ export default function AutomatedBills() {
 
         {/* Bottom Headline & Primary CTA Button matching Capture9.PNG */}
         <div className="text-center py-10 sm:py-12 space-y-4">
-          <h2 className="text-base sm:text-lg font-medium text-slate-700 dark:text-slate-300">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
             Schedule your repeated bills hassle-free
           </h2>
           <div>
-            <Button
+            <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="h-10 px-8 bg-[#5046E5] hover:bg-[#4338CA] text-white font-semibold text-sm rounded-lg shadow-sm transition-all"
+              className="px-8 py-3.5 glowing-btn-amber text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
-              Create Automated Bill
-            </Button>
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Create Automated Bill</span>
+            </button>
           </div>
         </div>
 

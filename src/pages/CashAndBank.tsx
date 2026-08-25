@@ -535,13 +535,17 @@ export default function CashAndBank() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC] dark:bg-background text-foreground overflow-hidden font-sans">
-      {/* Top Header - Compact */}
-      <header className="bg-white dark:bg-card border-b border-border/80 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-foreground tracking-tight">
-            Cash and Bank
+    <div className="h-full flex flex-col bg-slate-50/60 dark:bg-slate-950/40 text-foreground overflow-hidden font-sans">
+      {/* Top Header - Frosted Glass Container */}
+      <header className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+            Cash &amp; Bank
           </h1>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>REAL-TIME BALANCES</span>
+          </span>
         </div>
 
         <div className="flex items-center flex-wrap gap-2 shrink-0">
@@ -553,7 +557,7 @@ export default function CashAndBank() {
               setMoneyActionType("add");
               setIsAddMoneyModalOpen(true);
             }}
-            className="h-8 px-2.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs rounded-lg shadow-2xs transition-colors"
+            className="h-9 px-3 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Add/Reduce Money
@@ -564,36 +568,41 @@ export default function CashAndBank() {
             variant="outline"
             size="sm"
             onClick={() => setIsTransferModalOpen(true)}
-            className="h-8 px-2.5 bg-white dark:bg-card border-slate-300 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 font-medium text-xs rounded-lg shadow-2xs transition-colors"
+            className="h-9 px-3 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors"
           >
             <ArrowLeftRight className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Transfer Money
           </Button>
 
-          <Button
+          <button
             type="button"
-            size="sm"
             onClick={() => setIsAddBankModalOpen(true)}
-            className="h-8 px-3 bg-[#5046E5] hover:bg-[#4338CA] text-white font-medium text-xs rounded-lg shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            Add New Account
-          </Button>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ Add Bank Account</span>
+          </button>
         </div>
       </header>
 
       {/* Main 2-Column Dashboard Layout - Single-Screen View on Desktop, Scrollable on Mobile */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-border bg-white dark:bg-card overflow-y-auto lg:overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-800 bg-white/60 dark:bg-slate-950/60 overflow-y-auto lg:overflow-hidden p-3 gap-3">
         {/* Left Side Panel: Balances & Accounts */}
-        <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 p-0 flex flex-col bg-white dark:bg-card border-r border-slate-200 dark:border-border lg:overflow-y-auto scrollbar-thin">
+        <div className="w-full lg:w-[320px] xl:w-[360px] shrink-0 p-0 flex flex-col glass-card-3d lg:overflow-y-auto scrollbar-thin rounded-2xl">
           {/* Total Balance Card */}
-          <div className="p-3.5 border-b border-slate-200 dark:border-border flex items-center justify-between shrink-0">
-            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Total Balance:
-            </span>
-            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-foreground font-mono">
-              ₹ {totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
-            </span>
+          <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0 relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-600 rounded-l-2xl" />
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
+                Total Net Liquidity
+              </p>
+              <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+                ₹ {totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Landmark className="w-5 h-5" />
+            </div>
           </div>
 
           {/* Cash Section */}

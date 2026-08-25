@@ -175,32 +175,38 @@ export default function Analytics() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Activity className="w-7 h-7 text-primary" />
-            Financial & Sales Analytics
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
+              <Activity className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              Financial &amp; Sales Analytics
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>LIVE INSIGHTS</span>
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Real-time revenue metrics, transaction trends, and payment mode breakdowns
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Badge variant="outline" className="px-3 py-1.5 bg-card border-border text-xs font-semibold gap-1.5 shadow-sm">
-            <Calendar className="w-3.5 h-3.5 text-primary" /> All Historical Data
+          <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> All Historical Data
           </Badge>
         </div>
       </div>
 
-      {/* KPI Cards with Gradient Highlights */}
+      {/* KPI Cards with 3D Frosted Glass and Lightbars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-blue-500/10 via-card to-card shadow-sm hover:shadow-md transition-all group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
               Total Revenue
             </span>
             <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
@@ -208,11 +214,11 @@ export default function Analytics() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
               ₹{totalRevenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
-              <span className="text-emerald-600 font-semibold flex items-center">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+              <span className="text-emerald-600 font-bold flex items-center">
                 <ArrowUpRight className="w-3 h-3" /> ₹{todaySales.toLocaleString("en-IN")}
               </span>
               <span>generated today</span>
@@ -221,10 +227,10 @@ export default function Analytics() {
         </div>
 
         {/* Total Orders */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-emerald-500/10 via-card to-card shadow-sm hover:shadow-md transition-all group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
               Total Invoices
             </span>
             <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -232,20 +238,20 @@ export default function Analytics() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
               {totalOrders.toLocaleString("en-IN")}
             </p>
-            <div className="text-xs text-muted-foreground mt-1.5 font-medium">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
               Completed checkout transactions
             </div>
           </div>
         </div>
 
         {/* Avg Order Value */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-purple-500/10 via-card to-card shadow-sm hover:shadow-md transition-all group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
               Avg Basket Value
             </span>
             <div className="p-2.5 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
@@ -253,20 +259,20 @@ export default function Analytics() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
               ₹{avgOrderValue.toFixed(2)}
             </p>
-            <div className="text-xs text-muted-foreground mt-1.5 font-medium">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
               Average billing per order
             </div>
           </div>
         </div>
 
         {/* Payment Channels */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-amber-500/10 via-card to-card shadow-sm hover:shadow-md transition-all group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
               Payment Channels
             </span>
             <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
@@ -274,11 +280,11 @@ export default function Analytics() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
               {paymentData.length} Modes
             </p>
-            <div className="text-xs text-muted-foreground mt-1.5 font-medium">
-              UPI, Cash, Card & Credit splits
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+              UPI, Cash, Card &amp; Credit splits
             </div>
           </div>
         </div>

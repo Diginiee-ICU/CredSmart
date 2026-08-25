@@ -343,6 +343,12 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
               </div>
             )}
             <p className="text-[9px] text-neutral-500 mt-1 italic">Thank you for your business!</p>
+
+            {/* Bottom Left Subtle CredSmart Watermark */}
+            <div className="mt-1.5 pt-1 border-t border-dotted border-neutral-300 flex items-center justify-between text-[7.5px] text-neutral-400 font-mono">
+              <span className="font-semibold text-neutral-600">⚡ CredSmart POS</span>
+              <span>GST Ready</span>
+            </div>
           </div>
         </div>
       );
@@ -799,16 +805,17 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           </div>
         </div>
 
-        {/* Invoice Footer Branding */}
+        {/* Invoice Footer Branding - Bottom Left Watermark */}
         <div className="mt-2 pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[8px] text-slate-400">
-          <div className="flex items-center gap-1">
-            <span>Invoice created using</span>
-            <strong className="font-bold text-slate-700">CredSmart POS</strong>
-            <span>• GST Billing Engine</span>
+          <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300/60 dark:border-slate-700 font-bold text-[7.5px] text-slate-700 dark:text-slate-300 font-mono">
+              ⚡ CredSmart
+            </span>
+            <span>Powered by <strong className="font-bold text-slate-700 dark:text-slate-200">CredSmart POS &amp; Billing</strong></span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span>100% Secure &amp; ISO Certified</span>
+          <div className="flex items-center gap-1.5 text-[7.5px] text-slate-400 font-mono">
+            <span>IT Act 2000 Ready • 100% Tax Compliant</span>
           </div>
         </div>
       </div>

@@ -312,10 +312,10 @@ export default function Purchases() {
   };
 
   return (
-    <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden">
-      {/* Sub-document Tabs Navigation Bar - Compact */}
-      <div className="w-full bg-card/95 border-b border-border/80 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-10 flex items-center">
-        <div className="flex items-center gap-1 min-w-max">
+    <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden font-sans">
+      {/* Sub-document Tabs Navigation Bar - Frosted Glass Ribbon */}
+      <div className="w-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
+        <div className="flex items-center gap-1.5 min-w-max">
           {PURCHASE_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -324,10 +324,10 @@ export default function Purchases() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold transition-all duration-150 relative",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
                   isActive
-                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    ? "glowing-btn-amber text-amber-300 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -339,23 +339,27 @@ export default function Purchases() {
       </div>
 
       {/* Main Container - Fitted to Screen */}
-      <div className="flex-1 min-h-0 flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 max-w-7xl w-full mx-auto overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-4 space-y-3 max-w-7xl w-full mx-auto overflow-hidden">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
               {activeTabMeta.label}
             </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>GSTR-2 ITC READY</span>
+            </span>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Reports Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs"
+                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-foreground hover:bg-muted/80 shadow-2xs rounded-xl"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Reports</span>
@@ -385,7 +389,7 @@ export default function Purchases() {
             {/* Settings Cog with Red Dot */}
             <button
               onClick={() => setSettingsModalOpen(true)}
-              className="relative p-1.5 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              className="relative p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
               title="Purchase Preferences"
               aria-label="Purchase Preferences"
             >
@@ -396,7 +400,7 @@ export default function Purchases() {
             {/* Keyboard Shortcuts Button */}
             <button
               onClick={() => setShortcutsModalOpen(true)}
-              className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shadow-2xs"
+              className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
               title="Keyboard Shortcuts"
               aria-label="Keyboard Shortcuts"
             >
@@ -405,113 +409,84 @@ export default function Purchases() {
           </div>
         </div>
 
-        {/* Top Dark Banner - Compact */}
-        {bannerVisible && (
-          <div className="relative rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-2.5 sm:p-3 shadow-md border border-slate-700/60 flex items-center justify-between gap-3 shrink-0 overflow-hidden">
-            {/* Left side: Icon + Text */}
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xs shrink-0">
-                <Sparkles className="w-3.5 h-3.5" />
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-medium text-slate-200 truncate">
-                  Skip typing - <span className="font-bold text-amber-400">Add purchases from phone</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Right side: Try on Mobile button & Close button */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => setMobileScanModalOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-white text-slate-900 hover:bg-slate-100 font-bold text-[11px] shadow-xs transition-all active:scale-95"
-              >
-                Try on Mobile
-              </button>
-              <button
-                onClick={() => setBannerVisible(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                title="Dismiss Banner"
-                aria-label="Dismiss Banner"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 3 Metric Cards - Compact */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
+        {/* 3 Frosted 3D Glass Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
           {/* Total Purchases */}
           <div
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
+              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "all"
-                ? "border-indigo-500/80 ring-1 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
-                : "border-border/80 hover:border-indigo-300"
+                ? "ring-2 ring-amber-500/40 bg-amber-50/30 dark:bg-amber-950/30"
+                : "hover:scale-[1.01]"
             )}
           >
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
               <Truck className="w-3.5 h-3.5" />
               <span>Total Purchases</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
               ₹ {metrics.totalAmount.toLocaleString("en-IN")}
             </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills &amp; vendor orders</p>
           </div>
 
           {/* Paid */}
           <div
             onClick={() => setStatusFilter("paid")}
             className={cn(
-              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
+              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "paid"
-                ? "border-emerald-500/80 ring-1 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20"
-                : "border-border/80 hover:border-emerald-300"
+                ? "ring-2 ring-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/30"
+                : "hover:scale-[1.01]"
             )}
           >
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Paid</span>
+              <span>Paid Out</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
               ₹ {metrics.paidAmount.toLocaleString("en-IN")}
             </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier payments cleared</p>
           </div>
 
           {/* Unpaid */}
           <div
             onClick={() => setStatusFilter("unpaid")}
             className={cn(
-              "p-2.5 sm:p-3 rounded-lg border bg-card transition-all cursor-pointer shadow-2xs",
+              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "unpaid"
-                ? "border-rose-500/80 ring-1 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20"
-                : "border-border/80 hover:border-rose-300"
+                ? "ring-2 ring-rose-500/40 bg-rose-50/30 dark:bg-rose-950/30"
+                : "hover:scale-[1.01]"
             )}
           >
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider">
               <AlertCircle className="w-3.5 h-3.5" />
-              <span>Unpaid</span>
+              <span>Vendor Payables</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-bold text-foreground font-mono">
+            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
               ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
             </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending supplier bills</p>
           </div>
         </div>
 
-        {/* Filter Bar - Compact */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 bg-card rounded-xl border border-border/80 shadow-2xs shrink-0">
+        {/* Filter Bar - Frosted Glass Container */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
           {/* Left: Search & Date Picker */}
-          <div className="flex items-center gap-2 flex-1 max-w-xl">
+          <div className="flex items-center gap-2 flex-1 max-w-xl flex-wrap">
             {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by bill #, supplier name, mobile..."
-                className="pl-8 h-8 text-xs bg-card border-border/80 shadow-2xs"
+                className="pl-8 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
               />
             </div>
 
@@ -521,11 +496,10 @@ export default function Purchases() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs font-medium border-border/80 bg-card gap-1.5 shadow-2xs shrink-0"
+                  className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl gap-1.5 shadow-xs shrink-0"
                 >
                   <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>{selectedPreset}</span>
-                  <CalendarIcon className="w-3 h-3 text-muted-foreground ml-0.5" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-auto p-3">
@@ -553,24 +527,23 @@ export default function Purchases() {
             </Popover>
           </div>
 
-          {/* Right: + Create Purchase Invoice Button */}
+          {/* Right: Glowing + Create Purchase Invoice Button */}
           <div className="flex items-center gap-2 shrink-0">
-            <Button
+            <button
               onClick={() => {
                 setEditingDoc(null);
                 setCreateModalOpen(true);
               }}
-              size="sm"
-              className="h-8 px-3 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 gap-1.5"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
-            </Button>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Create {activeTabMeta.label.replace(/s$/, "")}</span>
+            </button>
           </div>
         </div>
 
-        {/* Transactions Table Card / Mobile Stream - Fits Remaining Height */}
-        <div className="flex-1 min-h-0 rounded-xl border border-border/80 bg-card flex flex-col overflow-hidden shadow-2xs">
+        {/* Transactions Table Card / Mobile Stream - 3D Glass Container */}
+        <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
           <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
             {filteredDocuments.length === 0 ? (

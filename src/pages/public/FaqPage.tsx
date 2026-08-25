@@ -164,7 +164,7 @@ export default function FaqPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by keyword (e.g. thermal printer, GST, pricing, held bills)..."
-              className="h-12 pl-12 pr-4 bg-slate-900 border-slate-700 text-white rounded-2xl shadow-xl focus:border-amber-400 text-sm"
+              className="h-12 pl-12 pr-4 glass-card-3d text-slate-900 dark:text-white rounded-2xl shadow-xl focus:border-amber-400 text-sm"
             />
           </div>
         </div>
@@ -180,10 +180,10 @@ export default function FaqPage() {
               type="button"
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                 activeCategory === cat.id
-                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
-                  : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:bg-slate-800"
+                  ? "glowing-btn-amber text-white font-bold shadow-md"
+                  : "bg-slate-900/60 text-slate-400 border border-slate-800 hover:text-white hover:bg-slate-800"
               )}
             >
               {cat.label}
@@ -204,26 +204,27 @@ export default function FaqPage() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden transition-all"
+                  className="rounded-2xl glass-card-3d overflow-hidden transition-all relative"
                 >
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
                   <button
                     type="button"
                     onClick={() => toggleFaq(idx)}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-slate-800/50 transition-colors"
+                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-white/5 dark:hover:bg-white/5 transition-colors cursor-pointer pl-6"
                   >
-                    <span className="text-sm sm:text-base font-bold text-white leading-snug">
+                    <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
                       {faq.q}
                     </span>
                     <ChevronDown
                       className={cn(
                         "w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200",
-                        isOpen && "rotate-180 text-amber-400"
+                        isOpen && "rotate-180 text-amber-500 dark:text-amber-400"
                       )}
                     />
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/80 pt-4 animate-in fade-in duration-150">
+                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-200/80 dark:border-slate-800/80 pt-4 pl-6 animate-in fade-in duration-150">
                       {faq.a}
                     </div>
                   )}

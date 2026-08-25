@@ -644,38 +644,44 @@ export default function Staff() {
   }
 
   return (
-    <div className="page-wrapper max-w-6xl space-y-6">
+    <div className="page-wrapper max-w-6xl space-y-6 font-sans">
       {/* Header */}
       <div className="page-header flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="page-title flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-primary" />
-            Staff Roles &amp; Team Permissions
-          </h1>
-          <p className="page-subtitle">
+          <div className="flex items-center gap-2.5">
+            <h1 className="page-title flex items-center gap-2.5 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-sans">
+              <Users className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              Staff Roles &amp; Team Permissions
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>RBAC SYSTEM</span>
+            </span>
+          </div>
+          <p className="page-subtitle text-sm text-slate-500 dark:text-slate-400 mt-1">
             Configure salesmen, delivery boys, stock managers, partners, accountants, and cashier terminals
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="badge badge-info text-xs py-1 px-3">
-            <UserCheck className="w-3.5 h-3.5 mr-1" />
+          <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
+            <UserCheck className="w-3.5 h-3.5 text-emerald-600 mr-1" />
             {members.length} Active {members.length === 1 ? "Member" : "Members"}
-          </span>
+          </Badge>
         </div>
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 1. VISUAL ROLE EXPLORER RIBBON (Matching Reference Image) */}
+      {/* 1. VISUAL ROLE EXPLORER RIBBON - 3D Frosted Glass */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="card-base p-4 sm:p-5 space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+      <div className="glass-card-3d p-4 sm:p-5 space-y-3 rounded-2xl">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
               Explore User Roles &amp; Capabilities
             </h2>
           </div>
-          <span className="text-xs text-muted-foreground">Click any role to inspect permissions</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Click any role to inspect permissions</span>
         </div>
 
         {/* Roles Carousel Strip */}
@@ -691,14 +697,14 @@ export default function Staff() {
                   setSelectedRoleDetail(r);
                 }}
                 className={cn(
-                  "rounded-xl border p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group hover:shadow-md",
+                  "rounded-2xl border p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group hover:shadow-md",
                   isSelected
-                    ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm"
-                    : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-primary/50"
+                    ? "border-amber-500/80 ring-2 ring-amber-500/30 bg-amber-50/20 dark:bg-amber-950/20 shadow-sm"
+                    : "border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 hover:border-amber-400/50"
                 )}
               >
                 {/* Visual Illustration */}
-                <div className="w-full h-20 rounded-lg overflow-hidden flex items-center justify-center p-1 bg-white/80 dark:bg-slate-900/80 mb-2 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-transform">
+                <div className="w-full h-20 rounded-xl overflow-hidden flex items-center justify-center p-1 bg-white/90 dark:bg-slate-950/80 mb-2 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-transform">
                   {r.illustrationSvg}
                 </div>
 
@@ -715,7 +721,7 @@ export default function Staff() {
                 </div>
 
                 <div className="mt-2 w-full pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center">
-                  <span className={cn("text-[10px] font-semibold flex items-center gap-0.5", isSelected ? "text-primary" : "text-slate-500")}>
+                  <span className={cn("text-[10px] font-semibold flex items-center gap-0.5", isSelected ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500")}>
                     {isSelected ? <Check className="w-3 h-3" /> : null}
                     {isSelected ? "Selected" : "Select"}
                   </span>
@@ -727,11 +733,11 @@ export default function Staff() {
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 2. INVITE NEW STAFF MEMBER */}
+      {/* 2. INVITE NEW STAFF MEMBER - 3D Frosted Glass */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="card-base p-5 sm:p-6 space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="flex items-center gap-2.5 pb-2 border-b border-border/70">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+      <div className="glass-card-3d p-5 sm:p-6 space-y-4 rounded-2xl">
+        <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
             <UserPlus className="w-4 h-4" />
           </div>
           <div>

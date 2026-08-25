@@ -358,76 +358,86 @@ export default function Customers() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Users2 className="w-7 h-7 text-primary" />
-            Customer Directory
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
+              <Users2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              Customer Directory
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>CRM &amp; KHATA</span>
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Track customer contact details, credit ledger, and payment balances
           </p>
         </div>
-        <Button onClick={openCreate} className="self-start sm:self-auto gap-2 shadow-sm font-semibold">
-          <Plus className="w-4 h-4" /> Add Customer
-        </Button>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
+        >
+          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>+ Add Customer</span>
+        </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - 3D Frosted Glass */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Total Customers */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Customers</span>
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Total Customers</span>
             <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <Users2 className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{customers.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Active customer profiles</p>
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customers.length}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Active customer profiles</p>
           </div>
         </div>
 
         {/* Total Outstanding Credit */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-rose-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding Due</span>
+            <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono">Outstanding Receivables</span>
             <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
               ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Pending payments from customers</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pending payments to collect</p>
           </div>
         </div>
 
         {/* Customers with Balance */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm col-span-2 lg:col-span-1 group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden col-span-2 lg:col-span-1 group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">With Balance Due</span>
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">With Balance Due</span>
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <CreditCard className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{customersWithDue}</p>
-              <span className="text-xs text-muted-foreground">/ {customers.length} total</span>
+              <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customersWithDue}</p>
+              <span className="text-xs text-slate-500 dark:text-slate-400">/ {customers.length} total</span>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
               {customers.length > 0 ? `${Math.round((customersWithDue / customers.length) * 100)}% have debit balance` : "No debit balance"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Search & Credit Filters */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+      {/* Search & Credit Filters - Frosted Glass Container */}
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -437,7 +447,7 @@ export default function Customers() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by customer name, phone number, or email..."
-              className="w-full h-11 pl-10 pr-10 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+              className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
             />
             {search && (
               <button
@@ -450,7 +460,7 @@ export default function Customers() {
           </div>
 
           {/* Credit status filter pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto">
             {([
               { id: "all", label: "All Customers", count: customers.length },
               { id: "due", label: "Balance Due", count: customersWithDue },
@@ -460,17 +470,17 @@ export default function Customers() {
                 key={f.id}
                 onClick={() => setCreditFilter(f.id)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5",
+                  "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
                   creditFilter === f.id
-                    ? "bg-background text-foreground shadow-sm border border-border/60"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "glowing-btn-blue text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-foreground"
                 )}
               >
                 {f.label}
                 <span
                   className={cn(
                     "text-[10px] px-1.5 py-0.2 rounded-full",
-                    creditFilter === f.id ? "bg-primary/10 text-primary font-bold" : "bg-muted text-muted-foreground"
+                    creditFilter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
                   {f.count}
@@ -482,7 +492,7 @@ export default function Customers() {
       </div>
 
       {/* Customer List Container */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="glass-card-3d rounded-2xl overflow-hidden shadow-sm">
         {filtered.length === 0 ? (
           <div className="py-16 text-center px-4">
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">

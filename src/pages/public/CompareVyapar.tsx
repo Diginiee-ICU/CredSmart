@@ -109,11 +109,11 @@ export default function CompareVyapar() {
             Stop paying ₹3,000 to ₹7,000 every year for basic billing software. Discover why thousands of businesses are migrating to CredSmart POS.
           </p>
 
-          <div className="pt-4">
+          <div className="pt-4 flex justify-center">
             <Link to={ROUTE_PATHS.auth}>
-              <Button className="h-12 px-8 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-slate-950 font-bold text-sm shadow-xl active:scale-95 transition-all">
-                Switch to CredSmart 100% Free <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <button className="h-12 px-8 rounded-xl glowing-btn-amber text-white font-bold text-sm shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                Switch to CredSmart 100% Free <ArrowRight className="w-4 h-4 ml-2 stroke-[2.5]" />
+              </button>
             </Link>
           </div>
         </div>
@@ -134,34 +134,35 @@ export default function CompareVyapar() {
           {comparisons.map((item, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-colors space-y-4"
+              className="p-6 rounded-2xl glass-card-3d hover:border-amber-400/40 transition-colors space-y-4 relative overflow-hidden"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="text-base font-bold text-white">{item.feature}</h3>
-                <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pl-1">
+                <h3 className="text-base font-black text-slate-900 dark:text-white">{item.feature}</h3>
+                <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 w-fit">
                   CredSmart Wins
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 pl-1">
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold font-mono">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                    <CheckCircle2 className="w-4 h-4 text-amber-500" />
                     <span>CredSmart POS</span>
                   </div>
-                  <p className="text-xs font-semibold">{item.credsmart}</p>
+                  <p className="text-xs font-black">{item.credsmart}</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/60 text-slate-400 space-y-1">
+                <div className="p-3.5 rounded-xl bg-slate-100/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold font-mono text-slate-400">
                     <XCircle className="w-4 h-4 text-slate-400" />
                     <span>Vyapar / myBillBook</span>
                   </div>
-                  <p className="text-xs">{item.competitor}</p>
+                  <p className="text-xs font-semibold">{item.competitor}</p>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 leading-relaxed italic border-t border-slate-800/60 pt-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic border-t border-slate-200/80 dark:border-slate-800/60 pt-3 pl-1">
                 💡 {item.notes}
               </p>
             </div>

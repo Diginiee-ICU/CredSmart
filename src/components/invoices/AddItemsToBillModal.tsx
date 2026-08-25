@@ -292,27 +292,41 @@ export function AddItemsToBillModal({
             </div>
           </div>
 
-          {/* Category Dropdown */}
-          <div className="w-full sm:w-52 shrink-0">
-            <Select
-              value={selectedCategory}
-              onValueChange={(val) => {
-                setSelectedCategory(val);
-                setSelectedIndex(0);
-              }}
-            >
-              <SelectTrigger className="h-10 text-xs font-medium rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Category Dropdown & Create Item Action */}
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <div className="w-full sm:w-48">
+              <Select
+                value={selectedCategory}
+                onValueChange={(val) => {
+                  setSelectedCategory(val);
+                  setSelectedIndex(0);
+                }}
+              >
+                <SelectTrigger className="h-10 text-xs font-medium rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {onOpenCreateItem && (
+              <button
+                type="button"
+                onClick={onOpenCreateItem}
+                className="h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 active:scale-95 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span className="hidden sm:inline">+ Create Item</span>
+                <span className="sm:hidden">+ Item</span>
+              </button>
+            )}
           </div>
         </div>
 

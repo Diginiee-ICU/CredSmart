@@ -388,15 +388,21 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Truck className="w-7 h-7 text-primary" />
-            Suppliers & Vendors
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
+              <Truck className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              Suppliers &amp; Vendors
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>PROCUREMENT HUB</span>
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Manage your procurement directory, GSTIN numbers, and supplier payables
           </p>
         </div>
@@ -404,80 +410,84 @@ export default function Suppliers() {
           <Button
             asChild
             variant="outline"
-            className="gap-2 font-medium"
+            className="gap-2 font-medium bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 rounded-xl text-xs h-9 shadow-xs"
           >
             <Link to={ROUTE_PATHS.discovery}>
-              <Building2 className="w-4 h-4 text-primary" /> Discover 3M+ Vendors
+              <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" /> Discover 3M+ Vendors
             </Link>
           </Button>
-          <Button onClick={openCreate} className="gap-2 shadow-sm font-semibold">
-            <Plus className="w-4 h-4" /> Add Supplier
-          </Button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ Add Supplier</span>
+          </button>
         </div>
       </div>
 
-      {/* Overview Stat Cards */}
+      {/* Overview Stat Cards - 3D Frosted Glass */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Suppliers */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Suppliers</span>
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Total Suppliers</span>
             <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <Truck className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{suppliers.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Active vendor partners</p>
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{suppliers.length}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Active vendor partners</p>
           </div>
         </div>
 
         {/* GST Registered */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">GST Registered</span>
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">GST Registered</span>
             <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
               {gstinSuppliersCount}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">With valid GSTIN on file</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">With valid GSTIN on file</p>
           </div>
         </div>
 
         {/* Total Payables / Credit */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Supplier Payables</span>
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Supplier Payables</span>
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tight font-mono">
               ₹{totalCreditPayables.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Outstanding payable credit</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Outstanding payable credit</p>
           </div>
         </div>
 
         {/* Recently Added */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-card/60 shadow-sm group">
-          <div className="absolute right-0 top-0 -mt-2 -mr-2 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">New (Last 30 Days)</span>
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">New (Last 30 Days)</span>
             <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
               {
                 suppliers.filter((s) => {
                   const d = new Date(s.created_at);
@@ -485,13 +495,13 @@ export default function Suppliers() {
                 }).length
               }
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Recently onboarded</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Recently onboarded</p>
           </div>
         </div>
       </div>
 
-      {/* Search & Filters */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+      {/* Search & Filters - Frosted Glass Container */}
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -501,7 +511,7 @@ export default function Suppliers() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by supplier name, phone, email, or GSTIN..."
-              className="w-full h-11 pl-10 pr-10 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+              className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
             />
             {search && (
               <button
