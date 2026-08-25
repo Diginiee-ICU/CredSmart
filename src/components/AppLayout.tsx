@@ -219,9 +219,9 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background">
+    <div className="flex min-h-screen w-full bg-background">
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-y-auto">
         {/* Global Top Header - CredAlert Liquid Glass Shell */}
         <header className="h-14 sm:h-16 shrink-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
           {/* Mobile Header: CREDSMART Logo (Matching Image 5) */}
