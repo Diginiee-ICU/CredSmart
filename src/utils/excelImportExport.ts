@@ -362,25 +362,69 @@ export function parseItemsCSV(csvText: string): Partial<InventoryItem>[] {
     return tokens;
   };
 
+  // Header-aware parser: map columns by header names so order is flexible
+  const headerTokens = parseLine(lines[0] || "");
+  const normalized = headerTokens.map((h) => (h || "").replace(/\*/g, "").toLowerCase().trim());
+
+  const requiredKeywords = ["item name", "selling price", "unit", "category"];
+  const missing = requiredKeywords.filter((k) => !normalized.some((t) => t.includes(k)));
+  if (missing.length > 0) {
+    throw new Error(
+      `CSV header mismatch. Missing required columns: ${missing.join(", ")}. Please download the sample template and ensure your file headers match.`
+    );
+  }
+
+  const findIndexByKeywords = (keys: string[]) => {
+    for (let i = 0; i < normalized.length; i++) {
+      for (const k of keys) {
+        if (normalized[i].includes(k)) return i;
+      }
+    }
+    return -1;
+  };
+
+  const idx: Record<string, number> = {
+    name: findIndexByKeywords(["item name", "item"]),
+    sku: findIndexByKeywords(["sku"]),
+    barcode: findIndexByKeywords(["barcode"]),
+    category: findIndexByKeywords(["category"]),
+    brand: findIndexByKeywords(["brand"]),
+    unit: findIndexByKeywords(["unit", "primary unit"]),
+    sellingPrice: findIndexByKeywords(["selling price", "selling", "price"]),
+    purchasePrice: findIndexByKeywords(["purchase price", "cost price", "purchase"]),
+    mrp: findIndexByKeywords(["mrp"]),
+    gstRate: findIndexByKeywords(["gst", "gst rate", "tax rate"]),
+    hsnCode: findIndexByKeywords(["hsn"]),
+    openingStock: findIndexByKeywords(["opening stock", "stock", "stock qty", "opening stock qty"]),
+    minStockAlert: findIndexByKeywords(["low stock", "min stock", "low stock alert", "low stock threshold"]),
+    batchNumber: findIndexByKeywords(["batch"]),
+    expiryDate: findIndexByKeywords(["expiry", "expiry date", "expiry_date"]),
+  };
+
   for (let i = 1; i < lines.length; i++) {
     const cols = parseLine(lines[i]);
-    if (!cols || cols.length === 0 || !cols[0]) continue;
+    if (!cols || cols.length === 0 || !cols[idx.name]) continue;
 
-    const name = cols[0];
-    const sku = cols[1] || `SKU-${Math.floor(100000 + Math.random() * 900000)}`;
-    const barcode = cols[2] || null;
-    const category = cols[3] || "General";
-    const brand = cols[4] || null;
-    const unit: any = cols[5] ? cols[5].toUpperCase() : "PCS";
-    const sellingPrice = parseFloat(cols[6] || "0") || 0;
-    const purchasePrice = parseFloat(cols[7] || "0") || 0;
-    const mrp = parseFloat(cols[8] || "0") || sellingPrice;
-    const gstRate: any = parseFloat(cols[9] || "0") || 0;
-    const hsnCode = cols[10] || null;
-    const openingStock = parseFloat(cols[11] || "0") || 0;
-    const minStockAlert = parseFloat(cols[12] || "5") || 5;
-    const batchNumber = cols[13] || "DEFAULT";
-    const expiryDate = cols[14] || null;
+    const get = (index: number, defaultValue: string | number | null = "") => {
+      if (index >= 0 && index < cols.length) return cols[index];
+      return defaultValue;
+    };
+
+    const name = (get(idx.name, "") as string).trim();
+    const sku = ((get(idx.sku) as string) || `SKU-${Math.floor(100000 + Math.random() * 900000)}`).trim();
+    const barcode = (get(idx.barcode, "") as string) || null;
+    const category = (get(idx.category, "General") as string) || "General";
+    const brand = (get(idx.brand, "") as string) || null;
+    const unit: any = ((get(idx.unit, "PCS") as string) || "PCS").toUpperCase();
+    const sellingPrice = parseFloat(String(get(idx.sellingPrice, "0"))) || 0;
+    const purchasePrice = parseFloat(String(get(idx.purchasePrice, "0"))) || 0;
+    const mrp = parseFloat(String(get(idx.mrp, String(sellingPrice)))) || sellingPrice;
+    const gstRate: any = parseFloat(String(get(idx.gstRate, "0"))) || 0;
+    const hsnCode = (get(idx.hsnCode, "") as string) || null;
+    const openingStock = parseFloat(String(get(idx.openingStock, "0"))) || 0;
+    const minStockAlert = parseFloat(String(get(idx.minStockAlert, "5"))) || 5;
+    const batchNumber = (get(idx.batchNumber, "DEFAULT") as string) || "DEFAULT";
+    const expiryDate = (get(idx.expiryDate, "") as string) || null;
 
     results.push({
       name,

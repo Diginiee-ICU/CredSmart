@@ -138,7 +138,18 @@ export function QuickCreateItemModal({
 
     setSaving(true);
     try {
-      // 1. Insert product record
+      // Build tags payload to align with DB schema (pricing belongs to tags/product_batches)
+      const tagsPayload = {
+        unit: unit.toUpperCase(),
+        gst_rate: gstRate,
+        hsn_code: hsn.trim() || "9999",
+        selling_price: sp,
+        purchase_price: pp,
+        mrp: itemMrp,
+        min_stock_alert: 5,
+      };
+
+      // 1. Insert product record (pricing will be stored in tags and batches)
       const { data: newProd, error: prodErr } = await supabase
         .from("products")
         .insert({
@@ -148,18 +159,7 @@ export function QuickCreateItemModal({
           category: category.trim() || "General",
           barcode: barcode.trim() || null,
           sku: generatedSku,
-          unit: unit.toUpperCase(),
-          selling_price: sp,
-          tax_rate: gstRate,
-          tags: {
-            selling_price: sp,
-            purchase_price: pp,
-            mrp: itemMrp,
-            unit: unit.toUpperCase(),
-            gst_rate: gstRate,
-            hsn_code: hsn.trim() || "9999",
-            min_stock_alert: 5,
-          },
+          tags: tagsPayload,
         })
         .select()
         .single();
@@ -192,12 +192,12 @@ export function QuickCreateItemModal({
         name: newProd.name,
         barcode: newProd.barcode || undefined,
         sku: newProd.sku,
-        unit: newProd.unit,
+        unit: unit.toUpperCase(),
         sellingPrice: sp,
         purchasePrice: pp,
         taxRate: gstRate,
         hsn: hsn.trim() || "9999",
-        category: newProd.category,
+        category: newProd.category || category,
         stock: stockQty,
         batchNumber,
       });

@@ -48,14 +48,18 @@ export function ItemsExcelUploadModal({
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      if (text) {
+      try {
+        if (!text) throw new Error("Empty file uploaded.");
         const parsed = parseItemsCSV(text);
         if (parsed.length === 0) {
-          toast.error("No valid items found in the uploaded file.");
+          toast.error("No valid items found in the uploaded file. Please download the template and ensure headers match.");
         } else {
           setParsedItems(parsed);
           toast.success(`Successfully parsed ${parsed.length} items from file!`);
         }
+      } catch (err: any) {
+        console.error("Failed to parse uploaded CSV:", err);
+        toast.error(err?.message || "Failed to parse uploaded CSV. Download the sample template and try again.");
       }
     };
     reader.readAsText(file);
@@ -66,12 +70,17 @@ export function ItemsExcelUploadModal({
       toast.error("Please paste CSV formatted rows.");
       return;
     }
-    const parsed = parseItemsCSV(pastedText);
-    if (parsed.length === 0) {
-      toast.error("Could not parse rows. Ensure headers and columns match the template.");
-    } else {
-      setParsedItems(parsed);
-      toast.success(`Parsed ${parsed.length} items!`);
+    try {
+      const parsed = parseItemsCSV(pastedText);
+      if (parsed.length === 0) {
+        toast.error("Could not parse rows. Ensure headers and columns match the template.");
+      } else {
+        setParsedItems(parsed);
+        toast.success(`Parsed ${parsed.length} items!`);
+      }
+    } catch (err: any) {
+      console.error("Failed to parse pasted CSV:", err);
+      toast.error(err?.message || "Could not parse pasted rows. Download the sample template and try again.");
     }
   };
 

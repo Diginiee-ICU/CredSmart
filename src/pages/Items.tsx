@@ -162,18 +162,24 @@ export default function Items() {
         const firstBatch = itemBatches[0] || { sellingPrice: 0, costPrice: 0, mrp: 0 };
         const totalStock = itemBatches.reduce((sum, b) => sum + (Number(b.stock) || 0), 0);
 
-        const rawSPrice = Number(tags.selling_price) || Number(firstBatch.sellingPrice) || Number(firstBatch.mrp) || 100;
-        const sPrice = isNaN(rawSPrice) || rawSPrice <= 0 ? 100 : rawSPrice;
+        // Selling price: prefer tags.selling_price, then batch sellingPrice/mrp, fall back to 100
+        const tagSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : undefined;
+        const sCandidate = tagSelling !== undefined && !isNaN(Number(tagSelling)) ? Number(tagSelling) : (Number(firstBatch.sellingPrice) || Number(firstBatch.mrp) || 100);
+        const sPrice = isNaN(sCandidate) || sCandidate <= 0 ? 100 : sCandidate;
 
-        const rawPPrice = Number(tags.purchase_price) || Number(firstBatch.costPrice) || Math.round(sPrice * 0.8) || 80;
-        const pPrice = isNaN(rawPPrice) || rawPPrice <= 0 ? Math.round(sPrice * 0.8) : rawPPrice;
+        // Purchase price: prefer tags.purchase_price, then batch costPrice, else 80% of selling
+        const tagPurchase = tags && (tags.purchase_price !== undefined && tags.purchase_price !== null) ? Number(tags.purchase_price) : undefined;
+        const pCandidate = tagPurchase !== undefined && !isNaN(Number(tagPurchase)) ? Number(tagPurchase) : (Number(firstBatch.costPrice) || Math.round(sPrice * 0.8) || 80);
+        const pPrice = isNaN(pCandidate) || pCandidate <= 0 ? Math.round(sPrice * 0.8) : pCandidate;
 
-        const rawMrp = Number(firstBatch.mrp) || Number(tags.mrp) || sPrice;
-        const mrpVal = isNaN(rawMrp) ? sPrice : rawMrp;
+        // MRP: prefer batch.mrp then tags.mrp then selling price
+        const fbMrp = Number(firstBatch.mrp);
+        const tagMrp = tags && (tags.mrp !== undefined && tags.mrp !== null) ? Number(tags.mrp) : undefined;
+        const mrpVal = !isNaN(fbMrp) && fbMrp > 0 ? fbMrp : (tagMrp !== undefined ? tagMrp : sPrice);
 
-        const minAlert = Number(tags.min_stock_alert) || 10;
-        const unitVal: ItemUnit = (tags.unit as ItemUnit) || "PCS";
-        const gstRateVal: GSTRate = tags.gst_rate ? Number(tags.gst_rate) as GSTRate : 18;
+        const minAlert = tags && (tags.min_stock_alert !== undefined && tags.min_stock_alert !== null) ? Number(tags.min_stock_alert) : 10;
+        const unitVal: ItemUnit = (tags && tags.unit) ? (tags.unit as ItemUnit) : "PCS";
+        const gstRateVal: GSTRate = (tags && (tags.gst_rate !== undefined && tags.gst_rate !== null)) ? Number(tags.gst_rate) as GSTRate : 18;
 
         return {
           id: p.id,
@@ -368,26 +374,29 @@ export default function Items() {
         const stock = it.openingStock ?? it.currentStock ?? 10;
         const skuVal = it.sku || `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+        const gstRateVal = (typeof it.gstRate !== "undefined" && it.gstRate !== null) ? Number(it.gstRate) : 18;
+        const minStockAlertVal = (typeof it.minStockAlert !== "undefined" && it.minStockAlert !== null) ? Number(it.minStockAlert) : 5;
+        const tagsPayload = {
+          selling_price: sPrice,
+          purchase_price: pPrice,
+          mrp: it.mrp ?? sPrice,
+          unit: it.unit ?? "PCS",
+          gst_rate: gstRateVal,
+          hsn_code: it.hsnCode ?? "9999",
+          min_stock_alert: minStockAlertVal,
+        };
+
         const { data: newProd, error: pErr } = await supabase
           .from("products")
           .insert({
             organization_id: orgId,
             name: it.name || "Product",
-            brand: it.brand || null,
-            category: it.category || "General",
-            barcode: it.barcode || null,
+            brand: it.brand ?? null,
+            category: it.category ?? "General",
+            barcode: it.barcode ?? null,
             sku: skuVal,
-            image_url: it.imageUrl || "",
-            tags: {
-              selling_price: sPrice,
-              purchase_price: pPrice,
-              mrp: it.mrp || sPrice,
-              unit: it.unit || "PCS",
-              gst_rate: Number(it.gstRate) || 18,
-              hsn_code: it.hsnCode || "9999",
-              min_stock_alert: it.minStockAlert || 5,
-            },
-          
+            image_url: it.imageUrl ?? "",
+            tags: tagsPayload,
           })
           .select()
           .single();
