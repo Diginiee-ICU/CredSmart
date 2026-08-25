@@ -157,6 +157,11 @@ export default function Items() {
       });
 
       const formatted: InventoryItem[] = dbProducts.map((p) => {
+        const tags = (p.tags || {}) as any;
+        const itemBatches = batchMap[p.id] || [];
+        const firstBatch = itemBatches[0] || { sellingPrice: 0, costPrice: 0, mrp: 0 };
+        const totalStock = itemBatches.reduce((sum, b) => sum + (Number(b.stock) || 0), 0);
+
         const rawSPrice = Number(tags.selling_price) || Number(firstBatch.sellingPrice) || Number(firstBatch.mrp) || 100;
         const sPrice = isNaN(rawSPrice) || rawSPrice <= 0 ? 100 : rawSPrice;
 
@@ -303,7 +308,23 @@ export default function Items() {
       }
       fetchItems();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to save item.");
+      console.error("Save item error:", err);
+      const msg = err?.message || String(err);
+      if (/schema|relation|could not find|does not exist|PGRST202/i.test(msg)) {
+        // Fallback to local creation if DB schema is missing or PostgREST function not found
+        if (!editingItem) {
+          const newItem: InventoryItem = {
+            ...itemData,
+            id: `item-local-${Date.now()}`,
+            isLowStock: itemData.currentStock <= itemData.minStockAlert,
+            created_at: new Date().toISOString(),
+          };
+          setItems((prev) => [newItem, ...prev]);
+          toast.warning("Database schema missing — item created locally. Check Supabase setup.");
+          return;
+        }
+      }
+      toast.error(msg || "Failed to save item.");
     }
   };
 
@@ -356,9 +377,7 @@ export default function Items() {
             category: it.category || "General",
             barcode: it.barcode || null,
             sku: skuVal,
-            unit: it.unit || "PCS",
-            selling_price: sPrice,
-            tax_rate: Number(it.gstRate) || 18,
+            image_url: it.imageUrl || "",
             tags: {
               selling_price: sPrice,
               purchase_price: pPrice,
@@ -368,6 +387,7 @@ export default function Items() {
               hsn_code: it.hsnCode || "9999",
               min_stock_alert: it.minStockAlert || 5,
             },
+          
           })
           .select()
           .single();

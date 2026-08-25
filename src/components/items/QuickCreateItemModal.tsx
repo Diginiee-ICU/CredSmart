@@ -205,7 +205,32 @@ export function QuickCreateItemModal({
       onOpenChange(false);
     } catch (err: any) {
       console.error("Error creating item:", err);
-      toast.error(err.message || "Failed to create item");
+      const msg = err?.message || String(err);
+      if (msg && /schema|relation|could not find|does not exist|PGRST202/i.test(msg)) {
+        // Fallback to local creation to avoid blocking POS usage when DB schema is missing
+        const fallbackId = `item-local-${Date.now()}`;
+        const fallbackProduct = {
+          id: fallbackId,
+          name: name.trim(),
+          barcode: barcode.trim() || undefined,
+          sku: generatedSku,
+          unit: unit.toUpperCase(),
+          sellingPrice: sp,
+          purchasePrice: pp,
+          taxRate: gstRate,
+          hsn: hsn.trim() || "9999",
+          category: category.trim() || "General",
+          stock: stockQty,
+          batchNumber,
+        };
+        toast.warning(
+          "Database schema not found — created item locally. Please check Supabase configuration or run migrations."
+        );
+        onItemCreated(fallbackProduct);
+        onOpenChange(false);
+      } else {
+        toast.error(msg || "Failed to create item");
+      }
     } finally {
       setSaving(false);
     }
