@@ -73,7 +73,17 @@ export function CompanySearchAutocomplete({
   className,
 }: CompanySearchAutocompleteProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  interface CompanySearchResult {
+    company_name: string;
+    company_address?: string;
+    pin_code?: string;
+    phone_number?: string;
+    cin?: string;
+    company_roc?: string;
+    // add other optional fields returned by searchCompanies as needed
+  }
+
+  const [results, setResults] = useState<CompanySearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,13 +127,14 @@ export function CompanySearchAutocomplete({
       try {
         const data = await searchCompanies(val);
         if (queryId === currentQueryIdRef.current) {
-          setResults(data || []);
+          setResults((data as CompanySearchResult[]) || []);
           setError(null);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (queryId === currentQueryIdRef.current) {
           console.error("CompanySearchAutocomplete error:", err);
-          setError(err?.message || "Search failed");
+          const message = err instanceof Error ? err.message : String(err);
+          setError(message || "Search failed");
           setResults([]);
         }
       } finally {
@@ -134,7 +145,7 @@ export function CompanySearchAutocomplete({
     }, 250);
   };
 
-  const handleSelectCompany = (comp: any) => {
+  const handleSelectCompany = (comp: CompanySearchResult) => {
     const rawCin = (comp.cin || "").toUpperCase().trim();
     let state = "";
     let stateCode = "";
