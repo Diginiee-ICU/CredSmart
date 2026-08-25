@@ -241,7 +241,7 @@ export function AddItemsToBillModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onKeyDown={handleKeyDown}
-        className="bill-items-modal z-[70] w-[calc(100vw-1rem)] sm:w-[80vw] max-w-3xl h-[calc(100dvh-2rem)] sm:h-auto max-h-[92vh] p-0 rounded-none flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl"
+        className="bill-items-modal z-modal w-[calc(100vw-1rem)] sm:w-[80vw] max-w-3xl h-[calc(100dvh-2rem)] sm:h-auto max-h-[92vh] p-0 rounded-none flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl"
       >
         {/* ───────────────────────────────────────────────────────────── */}
         {/* MODAL HEADER */}

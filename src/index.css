@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    --z-modal: 120;
     /* CredAlert Warm Ivory Palette */
     --ivory: 40 20% 98%;
     --background: 40 20% 98%;
@@ -657,6 +658,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* Centralized modal stacking utilities */
+  .z-modal {
+    z-index: var(--z-modal);
+  }
+
+  .z-modal-overlay {
+    z-index: calc(var(--z-modal) - 10);
   }
 
   .mobile-touch-card {

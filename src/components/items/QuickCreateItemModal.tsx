@@ -224,7 +224,7 @@ export function QuickCreateItemModal({
           batchNumber,
         };
         toast.warning(
-          "Database schema not found — created item locally. Please check Supabase configuration or run migrations."
+          "Database schema not found — item created locally. Ensure Supabase schema/tables exist and that migrations/RLS are applied. See SUPABASE_VERCEL_INTEGRATION.md in the project root for guidance."
         );
         onItemCreated(fallbackProduct);
         onOpenChange(false);
@@ -238,7 +238,7 @@ export function QuickCreateItemModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="z-[80] w-[calc(100vw-1rem)] max-w-md sm:max-w-lg h-[calc(100dvh-1rem)] sm:h-auto max-h-[94vh] p-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+      <DialogContent className="z-modal w-[calc(100vw-1rem)] max-w-md sm:max-w-lg h-[calc(100dvh-1rem)] sm:h-auto max-h-[94vh] p-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
         <form onSubmit={handleSave} className="flex h-full min-h-0 flex-col">
           <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-2.5">

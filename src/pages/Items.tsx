@@ -326,7 +326,7 @@ export default function Items() {
             created_at: new Date().toISOString(),
           };
           setItems((prev) => [newItem, ...prev]);
-          toast.warning("Database schema missing — item created locally. Check Supabase setup.");
+          toast.warning("Database schema missing — item created locally. Ensure Supabase tables/migrations are applied; see SUPABASE_VERCEL_INTEGRATION.md in project root for guidance.");
           return;
         }
       }

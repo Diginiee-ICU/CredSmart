@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   Building2,
@@ -96,6 +96,10 @@ export function CreatePartyModal({
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const modalRef = useRef<HTMLDivElement>(null);
+  const prevActiveElRef = useRef<HTMLElement | null>(null);
+
+
   useEffect(() => {
     if (initialData) {
       setPartyType(initialData.partyType);
@@ -144,6 +148,29 @@ export function CreatePartyModal({
       setGstLookupSuccess(null);
     }
   }, [initialData, defaultType, isOpen]);
+
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (isOpen) {
+      prevActiveElRef.current = document.activeElement as HTMLElement | null;
+      if (mainEl) mainEl.setAttribute('aria-hidden', 'true');
+      // Prevent background scroll while modal is open
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        const focusTarget = modalRef.current?.querySelector('input,button,select,textarea,[tabindex]') as HTMLElement | null;
+        focusTarget?.focus();
+      }, 80);
+    } else {
+      if (mainEl) mainEl.removeAttribute('aria-hidden');
+      document.body.style.overflow = '';
+      prevActiveElRef.current?.focus?.();
+    }
+
+    return () => {
+      if (mainEl) mainEl.removeAttribute('aria-hidden');
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -339,7 +366,7 @@ export function CreatePartyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="create-party-title" className="fixed inset-0 z-modal flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-muted/40 shrink-0">
@@ -348,7 +375,7 @@ export function CreatePartyModal({
               <Building2 className="w-4 sm:w-5 h-4 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-foreground">
+              <h2 id="create-party-title" className="text-base sm:text-lg font-bold text-foreground">
                 {initialData ? "Edit Party" : "Create New Party"}
               </h2>
               <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
@@ -358,7 +385,8 @@ export function CreatePartyModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Close Create Party"
+            className="p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors touch-target"
           >
             <X className="w-5 h-5" />
           </button>
