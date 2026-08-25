@@ -287,9 +287,9 @@ export default function Landing() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchVal.trim()) {
-      navigate(`/vendor-discovery?q=${encodeURIComponent(searchVal.trim())}`);
+      navigate(`${ROUTE_PATHS.discovery}?q=${encodeURIComponent(searchVal.trim())}`);
     } else {
-      navigate("/vendor-discovery");
+      navigate(ROUTE_PATHS.discovery);
     }
   };
 
@@ -351,7 +351,7 @@ export default function Landing() {
                 Principles
               </a>
               <Link
-                to="/vendor-discovery"
+                to={ROUTE_PATHS.discovery}
                 className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 Directory
@@ -373,7 +373,7 @@ export default function Landing() {
             <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
               <Link
                 aria-label="Search businesses"
-                to="/vendor-discovery"
+                to={ROUTE_PATHS.discovery}
                 className="ripple-surface items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 focus-visible:outline-none hover:bg-accent/10 hover:text-accent h-9 w-9 hidden rounded-full sm:inline-flex"
               >
                 <Search className="size-4" />
@@ -469,7 +469,7 @@ export default function Landing() {
                         Register your business <ArrowRight className="ml-1.5 size-4" />
                       </button>
                       <Link
-                        to="/vendor-discovery"
+                        to={ROUTE_PATHS.discovery}
                         className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-10 px-7 rounded-full"
                       >
                         Browse the directory
@@ -566,7 +566,7 @@ export default function Landing() {
                   </p>
                 </div>
                 <Link
-                  to="/vendor-discovery"
+                  to={ROUTE_PATHS.discovery}
                   className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-9 px-4 py-2 rounded-full"
                 >
                   Browse directory <ArrowRight className="ml-1.5 size-4" />
@@ -795,7 +795,7 @@ Authorization: Bearer ck_live_••••••••••••
                     </div>
 
                     <Link
-                      to="/vendor-discovery"
+                      to={ROUTE_PATHS.discovery}
                       className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-9 px-5 py-2 mt-7 rounded-full"
                     >
                       <CodeXml className="mr-1.5 size-4" /> Search 3M+ Companies
@@ -975,7 +975,7 @@ Authorization: Bearer ck_live_••••••••••••
                   <li><a href="#features" className="hover:text-white transition-colors">Features Matrix</a></li>
                   <li><a href="#preview" className="hover:text-white transition-colors">POS Terminal</a></li>
                   <li><a href="#principles" className="hover:text-white transition-colors">Architecture Principles</a></li>
-                  <li><Link to="/vendor-discovery" className="hover:text-white transition-colors">MCA Directory</Link></li>
+                  <li><Link to={ROUTE_PATHS.discovery} className="hover:text-white transition-colors">MCA Directory</Link></li>
                   <li><a href="#faq" className="hover:text-white transition-colors">Help &amp; FAQ</a></li>
                 </ul>
               </div>

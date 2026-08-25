@@ -478,11 +478,12 @@ export function AppSidebar() {
                               to={item.url}
                               end={item.url === "/"}
                               onClick={() => setMobileMenuOpen(false)}
-                              className={cn(
-                                "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
-                                active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                              )}
-                            >
+                                                          data-feature={/sales|pos|checkout|purchase|invoice/i.test(item.url) || /sales|purchase|pos|invoice/i.test(item.title) ? "billbook" : undefined}
+                                                          className={cn(
+                                                            "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
+                                                            active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                                                          )}
+                                                        >
                               <div className="flex items-center gap-3 min-w-0">
                                 <div
                                   className={cn(
@@ -505,8 +506,9 @@ export function AppSidebar() {
                                     key={child.title}
                                     to={child.url as string}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors"
-                                  >
+                                                                      data-feature={/sales|pos|checkout|purchase|invoice/i.test(child.url as string) || /sales|purchase|pos|invoice/i.test(child.title) ? "billbook" : undefined}
+                                                                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors"
+                                                                    >
                                     <span className="w-1 h-1 rounded-full bg-slate-500" />
                                     <span className="truncate">{child.title}</span>
                                   </NavLink>
@@ -794,6 +796,7 @@ export function AppSidebar() {
                     onClick={() => {
                       navigate(item.url);
                     }}
+                    data-feature={/sales|pos|checkout|purchase|invoice/i.test(item.url) || /sales|purchase|pos|invoice/i.test(item.title) ? "billbook" : undefined}
                     className={cn(
                       "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer font-medium select-none group relative",
                       active
@@ -844,6 +847,7 @@ export function AppSidebar() {
                         <NavLink
                           key={child.title}
                           to={child.url}
+                          data-feature={/sales|pos|checkout|purchase|invoice/i.test(child.url as string) || /sales|purchase|pos|invoice/i.test(child.title) ? "billbook" : undefined}
                           className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
                           activeClassName="text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/20"
                         >
