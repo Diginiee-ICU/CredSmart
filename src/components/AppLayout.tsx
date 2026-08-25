@@ -445,7 +445,7 @@ export default function AppLayout() {
       {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-LEFT) */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div
-        className="fixed bottom-2.5 left-2.5 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-75 hover:opacity-100"
+        className="fixed bottom-20 md:bottom-3 left-3 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-80 hover:opacity-100"
         title="CredSmart POS & ERP"
       >
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-700/60 shadow-lg text-slate-300 dark:text-slate-400">
