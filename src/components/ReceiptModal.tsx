@@ -122,8 +122,9 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
         title: "⚡ ESC/POS Payload Generated",
         description: `Downloaded ${printerWidth} raw binary stream (${bytes.length} bytes) for thermal printer.`,
       });
-    } catch (err: any) {
-      toast({ title: "ESC/POS Generation Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "ESC/POS Generation Error", description: message, variant: "destructive" });
     }
   };
 
