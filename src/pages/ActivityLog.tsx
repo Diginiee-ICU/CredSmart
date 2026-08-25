@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
@@ -10,7 +10,7 @@ import {
   Package,
   ShoppingCart,
   ArrowUpDown,
-  Settings,
+  Settings,\r\n  ShieldAlert,
   ShieldCheck,
   CheckCircle2,
   Calendar,
@@ -40,7 +40,7 @@ const actionIcons: Record<string, { icon: any; color: string; bg: string }> = {
   stock_adjustment: { icon: ArrowUpDown, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
   product: { icon: Package, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
   purchase: { icon: FileSpreadsheet, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-500/10" },
-  settings: { icon: Settings, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
+  settings: { icon: Settings,\r\n  ShieldAlert, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
 };
 
 const actionLabels: Record<string, string> = {
@@ -336,7 +336,7 @@ export default function ActivityLog() {
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                          {time.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                          {time.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} Â·{" "}
                           {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
@@ -383,3 +383,4 @@ export default function ActivityLog() {
     </div>
   );
 }
+
