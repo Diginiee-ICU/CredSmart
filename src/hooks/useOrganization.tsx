@@ -94,9 +94,34 @@ interface OnboardingProductSeed {
   batchNumber: string;
 }
 
+// Minimal shape for scraped product payloads coming from onboarding flows
+interface ScrapedProductMinimal {
+  name?: string;
+  barcode?: string;
+  brand?: string;
+  category?: string;
+  costPrice?: number | string;
+  mrp?: number | string;
+}
+
 interface MembershipRow {
   organization_id: string;
   role: string;
+}
+
+// Lightweight typed view of organization rows returned from Supabase
+interface OrganizationRow {
+  id: string;
+  name?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  gstin?: string;
+  pan?: string;
+  invoice_prefix?: string;
+  logo_url?: string;
+  tax_rate?: number;
+  business_type?: string;
 }
 
 type BootstrapOrgResult = {
@@ -114,13 +139,13 @@ export const getPendingOnboarding = (): PendingOnboardingData | null => {
 
     // New format: { __savedAt: number, payload: PendingOnboardingData }
     if (parsed && typeof parsed === "object" && "__savedAt" in parsed && "payload" in parsed) {
-      const savedAt = Number((parsed as any).__savedAt) || 0;
+      const savedAt = Number((parsed as { __savedAt?: unknown }).__savedAt) || 0;
       if (Date.now() - savedAt > PENDING_ONBOARDING_TTL_MS) {
         localStorage.removeItem(PENDING_ONBOARDING_KEY);
         localStorage.removeItem(LEGACY_PENDING_ONBOARDING_KEY);
         return null;
       }
-      return (parsed as any).payload as PendingOnboardingData;
+      return (parsed as { payload?: PendingOnboardingData }).payload as PendingOnboardingData;
     }
 
     // Legacy format: raw payload object
@@ -242,7 +267,7 @@ const fetchMembership = async (userId: string) => {
   return all.length > 0 ? all[0] : null;
 };
 
-const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | { businessType: string; scrapedProducts?: any[] }) => {
+const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | { businessType: string; scrapedProducts?: ScrapedProductMinimal[] }) => {
   const baseSeeds = seedProductsByBusinessType[payload.businessType] || seedProductsByBusinessType["Other"];
   const scraped = payload.scrapedProducts || [];
 
@@ -257,7 +282,7 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
       stock: sp.batch.stock,
       batchNumber: sp.batch.batchNumber,
     })),
-    ...scraped.map((sp: any, idx: number) => ({
+    ...scraped.map((sp: ScrapedProductMinimal, idx: number) => ({
       name: sp.name,
       barcode: sp.barcode,
       brand: sp.brand,
@@ -267,6 +292,7 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
       stock: 0,
       batchNumber: `IMPORTED-${String(idx + 1).padStart(2, "0")}`,
     })),
+
   ].filter((p) => p.name.trim().length > 0);
 
   if (onboardingProducts.length === 0) return;
@@ -602,7 +628,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       // Fetch all organizations user has access to from DB
       const orgIds = memberships.map((m) => m.organization_id);
-      let orgRows: any[] = [];
+      let orgRows: OrganizationRow[] = [];
       try {
         const { data: dbRows, error: orgError } = await supabase
           .from("organizations")
@@ -610,7 +636,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           .in("id", orgIds);
 
         if (!orgError && dbRows) {
-          orgRows = dbRows;
+          orgRows = dbRows as OrganizationRow[];
         } else if (orgError) {
           console.warn("Notice loading remote organization details:", orgError.message);
         }

@@ -67,6 +67,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { normalizeError } from "@/lib/normalizeError";
 import { QRCodeSVG } from "qrcode.react";
 import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
 import { STANDARD_PRODUCT_CATALOG, STANDARD_PARTY_SUGGESTIONS } from "@/utils/suggestionData";
@@ -445,7 +446,7 @@ export default function POSBilling() {
         const productList = prods || [];
         const prodIds = productList.map((p) => p.id);
 
-        let batchMap: Record<string, Batch[]> = {};
+        const batchMap: Record<string, Batch[]> = {};
         if (prodIds.length > 0) {
           const { data: batches } = await supabase
             .from("product_batches")
@@ -1361,7 +1362,7 @@ export default function POSBilling() {
           setTabs([reset]);
           setActiveTabId(reset.id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Save bill error:", err);
         // Even on unexpected error, complete locally
         setMobileActiveView("cart");
@@ -1471,8 +1472,8 @@ export default function POSBilling() {
         title: "⚡ ESC/POS Test Stream Generated",
         description: `Downloaded ${printerWidth} raw byte stream (${bytes.length} bytes) for spooling.`,
       });
-    } catch (err: any) {
-      toast({ title: "Test Print Failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Test Print Failed", description: normalizeError(err), variant: "destructive" });
     }
   };
 

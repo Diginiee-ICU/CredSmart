@@ -31,6 +31,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { normalizeError } from "@/lib/normalizeError";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -457,10 +458,10 @@ export default function Staff() {
         profile: profiles?.find((p) => p.id === m.user_id) || undefined,
       }));
       setMembers(enriched);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchMembers failed:", err);
       setMembers([]);
-      toast({ title: "Error", description: err?.message || "Failed to load members", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -473,10 +474,10 @@ export default function Staff() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setInvitations((data as Invitation[]) || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchInvitations failed:", err);
       setInvitations([]);
-      toast({ title: "Error", description: err?.message || "Failed to load invitations", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -503,8 +504,8 @@ export default function Staff() {
       toast({ title: "Invitation Sent!", description: result?.message || `Invite sent to ${email} as ${roleLabelsMap[inviteRole]}` });
       setInviteEmail("");
       fetchInvitations(orgId);
-    } catch (err: any) {
-      console.warn("Edge function invite failed, using direct DB fallback:", err.message);
+    } catch (err: unknown) {
+      console.warn("Edge function invite failed, using direct DB fallback:", normalizeError(err));
       try {
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         const { error: dbError } = await supabase
@@ -526,11 +527,11 @@ export default function Staff() {
         });
         setInviteEmail("");
         fetchInvitations(orgId);
-      } catch (fallbackError: any) {
+      } catch (fallbackError: unknown) {
         console.error("Direct invitation fallback error:", fallbackError);
         toast({
           title: "Invite Failed",
-          description: fallbackError.message || "Failed to invite staff member",
+          description: normalizeError(fallbackError) || "Failed to invite staff member",
           variant: "destructive",
         });
       }
@@ -569,8 +570,8 @@ export default function Staff() {
 
       toast({ title: "Invitation Resent", description: `New invite sent to ${inv.email}` });
       fetchInvitations(orgId);
-    } catch (err: any) {
-      console.warn("Resend Edge function failed, using DB fallback:", err.message);
+    } catch (err: unknown) {
+      console.warn("Resend Edge function failed, using DB fallback:", normalizeError(err));
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { error: insertErr } = await supabase.from("staff_invitations").insert({
         organization_id: orgId,

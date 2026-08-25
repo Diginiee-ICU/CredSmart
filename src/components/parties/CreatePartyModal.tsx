@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Building2,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { normalizeError } from "@/lib/normalizeError";
 
 interface CreatePartyModalProps {
   isOpen: boolean;
@@ -40,6 +42,18 @@ interface CreatePartyModalProps {
   initialData?: Party | null;
   defaultType?: PartyType;
 }
+
+type CompanySearchResult = {
+  name: string;
+  tradeName?: string;
+  phone?: string;
+  address?: string;
+  pincode?: string;
+  city?: string;
+  state?: string;
+  category?: string;
+  cin?: string;
+};
 
 const CATEGORY_OPTIONS: string[] = [
   "Retailer",
@@ -235,14 +249,13 @@ export function CreatePartyModal({
           toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (showToast) {
-        toast.error(err?.message || "Failed to fetch tax details.");
+        toast.error(normalizeError(err) || "Failed to fetch tax details.");
       }
     } finally {
       setIsLookingUpGst(false);
-    }
-  };
+    }  };
 
   const handleGstinChange = (value: string) => {
     const clean = value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
@@ -275,7 +288,7 @@ export function CreatePartyModal({
     triggerAutoFill(gstin || pan, true);
   };
 
-  const handleCompanySelect = (comp: any) => {
+  const handleCompanySelect = (comp: CompanySearchResult) => {
     setName(comp.name);
     setTradeName(comp.tradeName || comp.name);
     if (comp.phone) setPhone(comp.phone);
@@ -286,8 +299,8 @@ export function CreatePartyModal({
     if (comp.pincode) setPincode(comp.pincode);
     if (comp.city) setCity(comp.city);
     if (comp.state) setState(comp.state);
-    if (comp.category && CATEGORY_OPTIONS.includes(comp.category as any)) {
-      setCategory(comp.category as any);
+    if (comp.category && CATEGORY_OPTIONS.includes(String(comp.category))) {
+      setCategory(String(comp.category));
     }
     if (comp.cin) {
       setNotes((prev) => (prev ? `${prev} | CIN: ${comp.cin}` : `CIN: ${comp.cin}`));
@@ -310,8 +323,8 @@ export function CreatePartyModal({
     if (result.pincode) setPincode(result.pincode);
     if (result.city) setCity(result.city);
     if (result.state) setState(result.state);
-    if (result.category && CATEGORY_OPTIONS.includes(result.category as any)) {
-      setCategory(result.category as any);
+    if (result.category && CATEGORY_OPTIONS.includes(String(result.category))) {
+      setCategory(String(result.category));
     }
     setGstLookupSuccess(`Verified via Tally: ${result.legalName} • ${result.state} (${result.status})`);
   };
@@ -358,14 +371,14 @@ export function CreatePartyModal({
     try {
       await onSave(payload);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save party.");
+    } catch (err: unknown) {
+      toast.error(normalizeError(err) || "Failed to save party.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
+  return createPortal(
     <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="create-party-title" className="fixed inset-0 z-modal flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
         {/* Header */}
@@ -403,7 +416,7 @@ export function CreatePartyModal({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "general" | "address" | "credit" | "custom")}
               className={cn(
                 "px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap",
                 activeTab === tab.id
@@ -926,5 +939,5 @@ export function CreatePartyModal({
         onApply={handleApplyTallyResult}
       />
     </div>
-  );
+  , document.body);
 }

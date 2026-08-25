@@ -658,9 +658,11 @@ export function SalesInvoiceModal({
         .insert({
           organization_id: orgId,
           name: newCustName.trim(),
+          trade_name: newCustName.trim(),
           phone: newCustPhone.trim() || undefined,
           email: undefined,
           address: newCustAddress.trim() || undefined,
+          shipping_address: newCustAddress.trim() || undefined,
         })
         .select()
         .single();
@@ -1027,7 +1029,7 @@ export function SalesInvoiceModal({
                     </div>
 
                     {showCustomerDropdown && (
-                      <div className="absolute z-[70] left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+                      <div className="absolute z-modal left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                         {/* Table Header Strip */}
                         <div className="px-3.5 py-2 bg-slate-100/90 dark:bg-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                           <span>Party Name</span>
@@ -1349,7 +1351,7 @@ export function SalesInvoiceModal({
                             />
 
                             {activeItemDropdown === idx && (
-                              <div className="absolute z-[70] left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
+                              <div className="absolute z-modal left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
                                 {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
                                   <>
                                     <div className="space-y-0.5 pb-1">
@@ -2011,7 +2013,7 @@ export function SalesInvoiceModal({
       {/* INLINE QUICK ADD CUSTOMER MODAL */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
-        <DialogContent className="z-[80] max-w-md rounded-2xl p-5">
+        <DialogContent className="z-modal max-w-md rounded-2xl p-5">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-primary" />

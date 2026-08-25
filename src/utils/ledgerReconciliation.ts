@@ -51,6 +51,34 @@ export interface ReconciledLedgerEntry {
   isMatched?: boolean;
 }
 
+// Minimal raw transaction shape used by reconciliation functions
+export interface RawLedgerTransaction {
+  id?: string;
+  created_at?: string;
+  date?: string;
+  type?: string;
+  party_id?: string;
+  partyId?: string;
+  party_type?: string;
+  amount?: number | string;
+  description?: string;
+  reference_id?: string;
+  referenceId?: string;
+  paymentMode?: string;
+  payment_method?: string;
+  accountId?: string;
+  targetAccountId?: string;
+  balance?: number | string;
+}
+
+export interface BankAccountMinimal {
+  id: string;
+  name: string;
+  bankName?: string;
+  accountNumber?: string;
+  balance?: number | string;
+}
+
 export interface InvoiceRecord {
   id: string;
   invoice_number: string;
@@ -162,7 +190,7 @@ export interface OrganizationReconciliationAudit {
  *             "payment" (payment to supplier) reduces Cr balance (moves closer to 0 or positive).
  */
 export function calculateChronologicalLedger(
-  transactions: any[],
+  transactions: RawLedgerTransaction[],
   openingBalance: number = 0,
   partyType: "customer" | "supplier" | "both" = "customer"
 ): ReconciledLedgerEntry[] {
@@ -211,7 +239,7 @@ export function calculateChronologicalLedger(
     return {
       id: tx.id || `tx-${Math.random().toString(36).slice(2, 9)}`,
       created_at: tx.created_at || tx.date || new Date().toISOString(),
-      type: txType as any,
+    type: txType as ReconciledLedgerEntry['type'],
       party_id: tx.party_id || tx.partyId,
       party_type: tx.party_type || partyType,
       amount,
@@ -240,7 +268,7 @@ export function reconcilePartyLedger(
     openingBalance?: number;
     creditLimit?: number | null;
   },
-  transactions: any[] = [],
+  transactions: RawLedgerTransaction[] = [],
   invoices: InvoiceRecord[] = []
 ): PartyReconciliationResult {
   const partyType: "customer" | "supplier" | "both" =
@@ -406,7 +434,7 @@ export function reconcilePartyLedger(
 /**
  * Reconciles the Double-Entry / Trial Balance across all ledger transactions.
  */
-export function reconcileTrialBalance(transactions: any[] = []): TrialBalanceResult {
+export function reconcileTrialBalance(transactions: RawLedgerTransaction[] = []): TrialBalanceResult {
   let totalDebits = 0;
   let totalCredits = 0;
 
@@ -441,8 +469,8 @@ export function reconcileTrialBalance(transactions: any[] = []): TrialBalanceRes
  */
 export function reconcileCashAndBank(
   cashInHandRecorded: number,
-  bankAccounts: any[] = [],
-  bankTransactions: any[] = []
+  bankAccounts: BankAccountMinimal[] = [],
+  bankTransactions: RawLedgerTransaction[] = []
 ): CashBankReconciliationResult {
   // Reconstruct Cash in hand balance from transactions
   let calculatedCash = 0;
@@ -529,9 +557,9 @@ export function performFullLedgerReconciliation(params: {
   orgId?: string;
   orgName?: string;
   parties: Party[];
-  creditTransactions: any[];
-  bankAccounts?: any[];
-  bankTransactions?: any[];
+  creditTransactions: RawLedgerTransaction[];
+  bankAccounts?: BankAccountMinimal[];
+  bankTransactions?: RawLedgerTransaction[];
   cashInHand?: number;
   invoices?: InvoiceRecord[];
 }): OrganizationReconciliationAudit {
@@ -665,7 +693,7 @@ export function performFullLedgerReconciliation(params: {
  */
 export function generatePartyStatementCSV(
   party: Party | { id: string; name: string; phone?: string | null; gstin?: string | null; address?: string | null; balance?: number },
-  transactions: ReconciledLedgerEntry[] | any[],
+  transactions: ReconciledLedgerEntry[] | RawLedgerTransaction[],
   orgInfo?: { name?: string; address?: string; phone?: string; gstin?: string },
   reconciliation?: PartyReconciliationResult
 ): string {
@@ -744,7 +772,7 @@ export function generatePartyStatementCSV(
  */
 export function downloadPartyStatementCSV(
   party: Party | { id: string; name: string; phone?: string | null; gstin?: string | null; address?: string | null; balance?: number },
-  transactions: ReconciledLedgerEntry[] | any[],
+  transactions: ReconciledLedgerEntry[] | RawLedgerTransaction[],
   orgInfo?: { name?: string; address?: string; phone?: string; gstin?: string },
   reconciliation?: PartyReconciliationResult
 ) {

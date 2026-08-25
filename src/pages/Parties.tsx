@@ -305,6 +305,14 @@ export default function Parties() {
               phone: partyData.phone,
               email: partyData.email,
               address: partyData.address,
+              trade_name: partyData.tradeName || undefined,
+              pan: partyData.pan || undefined,
+              pincode: partyData.pincode || undefined,
+              shipping_address: partyData.shippingAddress || undefined,
+              custom_fields: partyData.customFields || undefined,
+              credit_limit: partyData.creditLimit ? Number(partyData.creditLimit) : undefined,
+              credit_period_days: partyData.creditPeriodDays ? parseInt(String(partyData.creditPeriodDays), 10) : undefined,
+              category: partyData.category || undefined,
             })
             .eq("id", editingParty.id);
         } else {
@@ -316,6 +324,14 @@ export default function Parties() {
               email: partyData.email,
               address: partyData.address,
               gstin: partyData.gstin,
+              trade_name: partyData.tradeName || undefined,
+              pan: partyData.pan || undefined,
+              pincode: partyData.pincode || undefined,
+              shipping_address: partyData.shippingAddress || undefined,
+              custom_fields: partyData.customFields || undefined,
+              credit_limit: partyData.creditLimit ? Number(partyData.creditLimit) : undefined,
+              credit_period_days: partyData.creditPeriodDays ? parseInt(String(partyData.creditPeriodDays), 10) : undefined,
+              category: partyData.category || undefined,
             })
             .eq("id", editingParty.id);
         }
@@ -330,6 +346,14 @@ export default function Parties() {
               email: partyData.email,
               address: partyData.address,
               gstin: partyData.gstin,
+              trade_name: partyData.tradeName || undefined,
+              pan: partyData.pan || undefined,
+              pincode: partyData.pincode || undefined,
+              shipping_address: partyData.shippingAddress || undefined,
+              custom_fields: partyData.customFields || undefined,
+              credit_limit: partyData.creditLimit ? Number(partyData.creditLimit) : undefined,
+              credit_period_days: partyData.creditPeriodDays ? parseInt(String(partyData.creditPeriodDays), 10) : undefined,
+              category: partyData.category || undefined,
               organization_id: orgId,
             })
             .select()
@@ -355,6 +379,14 @@ export default function Parties() {
               phone: partyData.phone,
               email: partyData.email,
               address: partyData.address,
+              trade_name: partyData.tradeName || undefined,
+              pan: partyData.pan || undefined,
+              pincode: partyData.pincode || undefined,
+              shipping_address: partyData.shippingAddress || undefined,
+              custom_fields: partyData.customFields || undefined,
+              credit_limit: partyData.creditLimit ? Number(partyData.creditLimit) : undefined,
+              credit_period_days: partyData.creditPeriodDays ? parseInt(String(partyData.creditPeriodDays), 10) : undefined,
+              category: partyData.category || undefined,
               organization_id: orgId,
             })
             .select()
