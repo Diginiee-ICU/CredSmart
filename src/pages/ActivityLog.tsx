@@ -10,7 +10,8 @@ import {
   Package,
   ShoppingCart,
   ArrowUpDown,
-  Settings,\r\n  ShieldAlert,
+  Settings,
+  ShieldAlert,
   ShieldCheck,
   CheckCircle2,
   Calendar,
@@ -40,7 +41,7 @@ const actionIcons: Record<string, { icon: any; color: string; bg: string }> = {
   stock_adjustment: { icon: ArrowUpDown, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
   product: { icon: Package, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
   purchase: { icon: FileSpreadsheet, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-500/10" },
-  settings: { icon: Settings,\r\n  ShieldAlert, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
+  settings: { icon: Settings, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
 };
 
 const actionLabels: Record<string, string> = {
@@ -383,4 +384,3 @@ export default function ActivityLog() {
     </div>
   );
 }
-
