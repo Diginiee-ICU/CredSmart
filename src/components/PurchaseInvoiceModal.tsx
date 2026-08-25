@@ -822,11 +822,11 @@ export function PurchaseInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-2xl sm:border flex flex-col gap-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <DialogContent className="bill-editor-shell w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-hidden bg-white dark:bg-slate-950">
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
-          <div className="px-3 py-2.5 sm:px-6 sm:py-3.5 border-b border-border bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="bill-editor-toolbar px-3 py-2.5 sm:px-4 sm:py-2.5 border-b border-slate-200 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3">
               <Button
                 type="button"
@@ -845,7 +845,7 @@ export function PurchaseInvoiceModal({
             </div>
 
             {/* Center Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setViewMode("edit")}
@@ -969,11 +969,11 @@ export function PurchaseInvoiceModal({
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 scrollbar-thin">
+            <div className="bill-editor-body flex-1 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill From (Dropdown Format) & Purchase Bill Details */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* BILL FROM (Dropdown Format with Balance) */}
-                <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
+                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-primary" />
@@ -990,7 +990,16 @@ export function PurchaseInvoiceModal({
                   </div>
 
                   {/* Search / Dropdown Input */}
-                  <div className="relative">
+                  {!partyName.trim() && !showSupplierDropdown && (
+                    <button
+                      type="button"
+                      onClick={() => setShowSupplierDropdown(true)}
+                      className="w-full h-[104px] border border-dashed border-primary/40 hover:border-primary/70 bg-white dark:bg-slate-900 text-primary text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      + Add Supplier
+                    </button>
+                  )}
+                  <div className={cn("relative", !partyName.trim() && !showSupplierDropdown && "hidden")}>
                     <div
                       className="flex items-center justify-between border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 cursor-pointer shadow-2xs hover:border-primary/60 transition-colors"
                       onClick={() => setShowSupplierDropdown(true)}
@@ -1116,7 +1125,7 @@ export function PurchaseInvoiceModal({
                 </div>
 
                 {/* PURCHASE BILL DETAILS CARD */}
-                <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                       Purchase Bill Details
@@ -1262,7 +1271,7 @@ export function PurchaseInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* 3. LINE ITEMS TABLE (Direct POS-Style + Auto Add Next Line) */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
+              <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-xs border-collapse">
                     <thead>
@@ -1697,7 +1706,7 @@ export function PurchaseInvoiceModal({
                 </div>
 
                 {/* RIGHT COLUMN: Calculations, Totals, Settlement */}
-                <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
                   {showAdditionalCharges ? (
                     <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
                       <div className="flex items-center justify-between">

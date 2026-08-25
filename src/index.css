@@ -184,6 +184,19 @@
 }
 
 @layer utilities {
+  .bill-editor-shell .bill-panel {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .bill-editor-shell .bill-editor-body {
+    background: hsl(var(--card));
+  }
+
+  .bill-editor-shell .bill-editor-toolbar button {
+    border-radius: 0.25rem;
+  }
+
   /* CredAlert Liquid Glass Card */
   .liquid-glass {
     background: linear-gradient(150deg, rgba(255, 255, 255, 0.35) 0%, transparent 42%), hsl(var(--card) / 0.78);
