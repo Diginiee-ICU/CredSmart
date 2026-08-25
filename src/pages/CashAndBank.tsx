@@ -548,7 +548,7 @@ export default function CashAndBank() {
           </span>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2 shrink-0">
+        <div className="flex items-center overflow-x-auto pb-1 scrollbar-none gap-2 shrink-0 w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
@@ -557,7 +557,7 @@ export default function CashAndBank() {
               setMoneyActionType("add");
               setIsAddMoneyModalOpen(true);
             }}
-            className="h-9 px-3 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors"
+            className="h-8 px-2.5 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Add/Reduce Money
@@ -568,7 +568,7 @@ export default function CashAndBank() {
             variant="outline"
             size="sm"
             onClick={() => setIsTransferModalOpen(true)}
-            className="h-9 px-3 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors"
+            className="h-8 px-2.5 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-semibold text-xs rounded-xl shadow-xs transition-colors shrink-0"
           >
             <ArrowLeftRight className="w-3.5 h-3.5 mr-1 text-slate-500" />
             Transfer Money
@@ -577,16 +577,16 @@ export default function CashAndBank() {
           <button
             type="button"
             onClick={() => setIsAddBankModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Add Bank Account</span>
+            <span>Add Bank Account</span>
           </button>
         </div>
       </header>
 
       {/* Main 2-Column Dashboard Layout - Single-Screen View on Desktop, Scrollable on Mobile */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-800 bg-white/60 dark:bg-slate-950/60 overflow-y-auto lg:overflow-hidden p-3 gap-3">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-800 bg-white/60 dark:bg-slate-950/60 overflow-y-auto lg:overflow-hidden p-3 pb-28 lg:pb-3 gap-3">
         {/* Left Side Panel: Balances & Accounts */}
         <div className="w-full lg:w-[320px] xl:w-[360px] shrink-0 p-0 flex flex-col glass-card-3d lg:overflow-y-auto scrollbar-thin rounded-2xl">
           {/* Total Balance Card */}

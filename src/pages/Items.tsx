@@ -533,20 +533,20 @@ export default function Items() {
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
         {/* Card 1: Total Stock Value */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
               Stock Valuation
             </span>
-            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <p className="text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {totalStockValue.toLocaleString("en-IN")}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Current cost valuation</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400">Current cost valuation</p>
           </div>
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 hidden sm:flex">
             <Package className="w-4 h-4" />
           </div>
         </div>
@@ -555,60 +555,60 @@ export default function Items() {
         <div
           onClick={() => setLowStockOnly((prev) => !prev)}
           className={cn(
-            "glass-card-3d p-3.5 cursor-pointer transition-all flex items-center justify-between relative overflow-hidden group select-none",
+            "glass-card-3d p-2.5 sm:p-3.5 cursor-pointer transition-all flex items-center justify-between relative overflow-hidden group select-none",
             lowStockOnly
               ? "ring-2 ring-amber-500/40 bg-amber-50/30 dark:bg-amber-950/30"
               : "hover:scale-[1.01]"
           )}
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
+              <span className="text-[9px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
                 Low Stock
               </span>
               {lowStockOnly && <Badge className="text-[8px] h-3.5 px-1 py-0 bg-amber-500 text-white">Active</Badge>}
             </div>
-            <p className="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight">
+            <p className="text-sm sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight truncate">
               {lowStockCount} Items
             </p>
-            <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">
+            <p className="hidden sm:block text-[10px] text-amber-700/80 dark:text-amber-400/80">
               {lowStockOnly ? "Clear filter" : "Below reorder level"}
             </p>
           </div>
-          <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">
+          <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0 hidden sm:flex">
             <AlertTriangle className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 3: Total Items Count */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
               Total Catalog
             </span>
-            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalItemsCount} SKUs</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Master products</p>
+            <p className="text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">{totalItemsCount} SKUs</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400">Master products</p>
           </div>
-          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 hidden sm:flex">
             <Layers className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 4: Out of Stock Count */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
               Zero Stock
             </span>
-            <p className="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight">
+            <p className="text-sm sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate">
               {outOfStockCount} Items
             </p>
-            <p className="text-[10px] text-rose-500 dark:text-rose-400">Needs restock</p>
+            <p className="hidden sm:block text-[10px] text-rose-500 dark:text-rose-400">Needs restock</p>
           </div>
-          <div className="p-2 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0">
+          <div className="p-2 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0 hidden sm:flex">
             <X className="w-4 h-4" />
           </div>
         </div>
@@ -620,7 +620,7 @@ export default function Items() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           {/* Search input */}
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-[180px]">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by Item Name, SKU, Barcode, HSN..."
@@ -642,7 +642,7 @@ export default function Items() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 px-3 gap-1.5 text-xs justify-between font-semibold border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl shrink-0">
-                <span className="truncate max-w-[90px] sm:max-w-[130px]">
+                <span className="truncate max-w-[85px] sm:max-w-[130px]">
                   {categoryFilter === "all" ? "Categories" : categoryFilter}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
@@ -673,7 +673,7 @@ export default function Items() {
             <span>Bulk Products</span>
           </button>
 
-          {/* Primary Glowing "+ Create Item" button */}
+          {/* Primary Glowing Create Item button */}
           <button
             onClick={() => {
               setEditingItem(null);
@@ -682,7 +682,7 @@ export default function Items() {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Create Item</span>
+            <span>Create Item</span>
           </button>
         </div>
 
@@ -739,28 +739,17 @@ export default function Items() {
         )}
       </div>
 
-      {/* Quick Product Library, Excel Bulk Upload & Migration Ribbon (Mobile & Responsive) */}
+      {/* Quick Software Migration Ribbon */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0 py-0.5">
         <button
           onClick={() => {
             setLibraryModalMode("library");
             setShowLibraryModal(true);
           }}
-          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
+          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <Library className="w-3.5 h-3.5" />
+          <Barcode className="w-3 h-3" />
           <span>Product Library (Preloaded Barcodes)</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setLibraryModalMode("excel");
-            setShowLibraryModal(true);
-          }}
-          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-          <span>Bulk Upload Items (Excel)</span>
         </button>
 
         <button
@@ -768,9 +757,9 @@ export default function Items() {
             setLibraryModalMode("software");
             setShowLibraryModal(true);
           }}
-          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
+          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3 h-3" />
           <span>Import from Vyapar / Tally / My Bill Book</span>
         </button>
       </div>
@@ -780,7 +769,7 @@ export default function Items() {
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
         {/* MOBILE VIEW: Touch Item Cards (Visible on screens < md) */}
-        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
           {loading ? (
             <div className="py-12 text-center text-muted-foreground">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />

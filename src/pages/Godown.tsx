@@ -317,7 +317,7 @@ export default function GodownPage() {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Add Godown</span>
+            <span>Add Godown</span>
           </button>
         </div>
       </div>
@@ -325,48 +325,48 @@ export default function GodownPage() {
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS - 3D Frosted Glass */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: Total Godowns */}
-        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
               Total Godowns
             </span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
               <Warehouse className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-2">
-            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">{totalGodownsCount}</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Operational facilities</p>
+          <div className="mt-1 sm:mt-2">
+            <p className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">{totalGodownsCount}</p>
+            <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Operational facilities</p>
           </div>
         </div>
 
         {/* Card 2: Total Stock Stored */}
-        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
               Units Stored
             </span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hidden sm:flex">
               <Package className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-2">
-            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+          <div className="mt-1 sm:mt-2">
+            <p className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
               {totalStockUnits.toLocaleString("en-IN")}
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Across all warehouses</p>
+            <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">Across all warehouses</p>
           </div>
         </div>
 
         {/* Card 3: Total Stock Valuation */}
-        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
+            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate">
               Total Valuation
             </span>
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -430,7 +430,7 @@ export default function GodownPage() {
       {/* ------------------------------------------------------------- */}
       {/* TAB PANELS - Fits Remaining Space */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin pb-28 md:pb-0">
         {activeTab === "godowns" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {godowns.map((godown) => {

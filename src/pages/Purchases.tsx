@@ -410,68 +410,68 @@ export default function Purchases() {
         </div>
 
         {/* 3 Frosted 3D Glass Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
           {/* Total Purchases */}
           <div
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "all"
                 ? "ring-2 ring-amber-500/40 bg-amber-50/30 dark:bg-amber-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
               <Truck className="w-3.5 h-3.5" />
               <span>Total Purchases</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.totalAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills &amp; vendor orders</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills &amp; vendor orders</p>
           </div>
 
           {/* Paid */}
           <div
             onClick={() => setStatusFilter("paid")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "paid"
                 ? "ring-2 ring-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Paid Out</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.paidAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier payments cleared</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier payments cleared</p>
           </div>
 
           {/* Unpaid */}
           <div
             onClick={() => setStatusFilter("unpaid")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "unpaid"
                 ? "ring-2 ring-rose-500/40 bg-rose-50/30 dark:bg-rose-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider">
               <AlertCircle className="w-3.5 h-3.5" />
               <span>Vendor Payables</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending supplier bills</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending supplier bills</p>
           </div>
         </div>
 
@@ -480,7 +480,7 @@ export default function Purchases() {
           {/* Left: Search & Date Picker */}
           <div className="flex items-center gap-2 flex-1 max-w-xl flex-wrap">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px]">
+            <div className="relative flex-1 min-w-[180px]">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
@@ -527,7 +527,7 @@ export default function Purchases() {
             </Popover>
           </div>
 
-          {/* Right: Glowing + Create Purchase Invoice Button */}
+          {/* Right: Glowing Create Purchase Invoice Button */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => {
@@ -537,7 +537,7 @@ export default function Purchases() {
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Create {activeTabMeta.label.replace(/s$/, "")}</span>
+              <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
             </button>
           </div>
         </div>
@@ -545,7 +545,7 @@ export default function Purchases() {
         {/* Transactions Table Card / Mobile Stream - 3D Glass Container */}
         <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
             {filteredDocuments.length === 0 ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">

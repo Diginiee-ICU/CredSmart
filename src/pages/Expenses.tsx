@@ -460,7 +460,7 @@ export default function Expenses() {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Create Expense</span>
+            <span>Create Expense</span>
           </button>
         </div>
       </header>
@@ -564,7 +564,7 @@ export default function Expenses() {
         </div>
 
         {/* Content Body: Empty State vs Rows */}
-        <div className="flex-1 flex flex-col justify-start overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-start overflow-y-auto pb-28 md:pb-0">
           {loading ? (
             <div className="py-20 text-center text-xs text-slate-400 my-auto">
               <div className="w-7 h-7 border-2 border-[#5046E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />

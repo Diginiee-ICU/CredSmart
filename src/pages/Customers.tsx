@@ -389,60 +389,60 @@ export default function Customers() {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Add Customer</span>
+            <span>Add Customer</span>
           </button>
         </div>
       </div>
 
       {/* Stats Cards - 3D Frosted Glass */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
         {/* Total Customers */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Total Customers</span>
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <span className="text-[9px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">Total Customers</span>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
               <Users2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customers.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Active customer profiles</p>
+          <div className="mt-1 sm:mt-3">
+            <p className="text-sm sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono truncate">{customers.length}</p>
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">Active customer profiles</p>
           </div>
         </div>
 
         {/* Total Outstanding Credit */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono">Outstanding Receivables</span>
-            <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+            <span className="text-[9px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">Receivables</span>
+            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hidden sm:flex">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
-              ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="mt-1 sm:mt-3">
+            <p className="text-sm sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono truncate">
+              ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pending payments to collect</p>
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">Pending payments to collect</p>
           </div>
         </div>
 
         {/* Customers with Balance */}
-        <div className="glass-card-3d p-5 relative overflow-hidden col-span-2 lg:col-span-1 group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden col-span-2 lg:col-span-1 group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">With Balance Due</span>
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <span className="text-[9px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">With Balance Due</span>
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hidden sm:flex">
               <CreditCard className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customersWithDue}</p>
-              <span className="text-xs text-slate-500 dark:text-slate-400">/ {customers.length} total</span>
+          <div className="mt-1 sm:mt-3">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <p className="text-sm sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customersWithDue}</p>
+              <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">/ {customers.length} total</span>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
+            <p className="hidden sm:block text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
               {customers.length > 0 ? `${Math.round((customersWithDue / customers.length) * 100)}% have debit balance` : "No debit balance"}
             </p>
           </div>

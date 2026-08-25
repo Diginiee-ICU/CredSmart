@@ -442,12 +442,11 @@ export function PurchaseInvoiceModal({
 
   const handleBatchAddItems = (newItems: DocumentLineItem[]) => {
     setItems((prev) => {
-      const hasOnlyEmpty = prev.length === 1 && !prev[0].productName.trim();
-      if (hasOnlyEmpty) {
-        return newItems;
-      }
       const cleanExisting = prev.filter((it) => it.productName.trim() !== "");
-      return [...cleanExisting, ...newItems];
+      const combined = [...cleanExisting, ...newItems];
+      // Auto add new blank line after every item selection
+      const nextId = `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      return [...combined, createNewRow(nextId)];
     });
   };
 
@@ -1510,16 +1509,18 @@ export function PurchaseInvoiceModal({
 
                 {/* Direct Add Item Row Actions (Like POS) */}
                 <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
+                    {/* Primary Button: Add Items to Bill (Opens Popup Modal) */}
                     <button
                       type="button"
-                      onClick={handleAddRow}
-                      className="flex-1 py-2 px-3 rounded-xl border border-dashed border-primary/40 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                      onClick={() => setShowAddItemsModal(true)}
+                      className="py-2 px-3.5 rounded-xl glowing-btn-blue text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
                     >
-                      <Plus className="w-4 h-4" />
-                      <span>+ Add Line Item</span>
+                      <Package className="w-4 h-4 text-cyan-300 stroke-[2.2]" />
+                      <span>+ Add Items to Bill</span>
                     </button>
 
+                    {/* Secondary Button: Create New Item Inline */}
                     <button
                       type="button"
                       onClick={() => handleOpenCreateItemDialog(recalculatedItems.length - 1, "")}
@@ -1528,20 +1529,19 @@ export function PurchaseInvoiceModal({
                       <Plus className="w-4 h-4 stroke-[2.5]" />
                       <span>+ Create New Item</span>
                     </button>
+
+                    {/* Optional: Add Empty Row */}
+                    <button
+                      type="button"
+                      onClick={handleAddRow}
+                      className="py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-primary bg-white/50 dark:bg-slate-800/50 hover:bg-primary/5 text-slate-700 dark:text-slate-300 hover:text-primary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Blank Row</span>
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddItemsModal(true)}
-                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                    >
-                      <Package className="w-4 h-4 text-primary" />
-                      <span>Browse Catalog</span>
-                    </Button>
-
                     <Button
                       type="button"
                       variant="outline"

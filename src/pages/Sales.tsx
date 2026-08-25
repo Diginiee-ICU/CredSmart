@@ -434,90 +434,90 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* 4 Frosted 3D Glass Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 shrink-0">
-          {/* Total Sales */}
+        {/* Metric Cards - 3D Glass Cards (Compact on Mobile) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
+          {/* Total Volume */}
           <div
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "all"
                 ? "ring-2 ring-blue-500/40 bg-blue-50/30 dark:bg-blue-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 font-mono uppercase tracking-wider">
-              <Receipt className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 font-mono uppercase tracking-wider truncate">
+              <Receipt className="w-3.5 h-3.5 shrink-0" />
               <span>Total Volume</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.totalAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">All outward documents</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">All outward documents</p>
           </div>
 
           {/* Paid */}
           <div
             onClick={() => setStatusFilter("paid")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "paid"
                 ? "ring-2 ring-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>Settled</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.paidAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cash / UPI / Bank cleared</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cash / UPI / Bank cleared</p>
           </div>
 
           {/* Unpaid */}
           <div
             onClick={() => setStatusFilter("unpaid")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "unpaid"
                 ? "ring-2 ring-rose-500/40 bg-rose-50/30 dark:bg-rose-950/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-rose-500 to-red-600 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider">
-              <AlertCircle className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider truncate">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>Receivables</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending customer credit</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending customer credit</p>
           </div>
 
           {/* Cancelled */}
           <div
             onClick={() => setStatusFilter("cancelled")}
             className={cn(
-              "glass-card-3d p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
               statusFilter === "cancelled"
                 ? "ring-2 ring-slate-500/40 bg-slate-50/30 dark:bg-slate-900/30"
                 : "hover:scale-[1.01]"
             )}
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-400 via-slate-500 to-slate-700 rounded-l-2xl shadow-[0_0_8px_rgba(100,116,139,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider">
-              <XCircle className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider truncate">
+              <XCircle className="w-3.5 h-3.5 shrink-0" />
               <span>Voided</span>
             </div>
-            <div className="mt-1 text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight">
+            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               {metrics.cancelledAmount > 0 ? `₹ ${metrics.cancelledAmount.toLocaleString("en-IN")}` : "—"}
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cancelled vouchers</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cancelled vouchers</p>
           </div>
         </div>
 
@@ -614,7 +614,7 @@ export default function Sales() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Glowing + Create Sales Invoice Button */}
+            {/* Glowing Create Sales Invoice Button */}
             <button
               onClick={() => {
                 setEditingDoc(null);
@@ -623,7 +623,7 @@ export default function Sales() {
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Create {activeTabMeta.label.replace(/s$/, "")}</span>
+              <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
             </button>
           </div>
         </div>
@@ -631,7 +631,7 @@ export default function Sales() {
         {/* Transactions Table Card / Mobile Card Stream - 3D Glass Container */}
         <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
             {filteredDocuments.length === 0 ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">

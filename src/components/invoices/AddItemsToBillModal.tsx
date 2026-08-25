@@ -331,26 +331,25 @@ export function AddItemsToBillModal({
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* ITEMS LIST TABLE */}
+        {/* ITEMS LIST TABLE (Matching User Reference Image) */}
         {/* ───────────────────────────────────────────────────────────── */}
         <div
           ref={listContainerRef}
-          className="flex-1 overflow-y-auto max-h-[50vh] min-h-[320px] scrollbar-thin bg-white dark:bg-slate-950"
+          className="flex-1 overflow-y-auto max-h-[55vh] min-h-[340px] scrollbar-thin bg-white dark:bg-slate-950"
         >
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <thead className="sticky top-0 z-10 bg-slate-100/90 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300">
               <tr>
-                <th className="py-2.5 px-4 w-10 text-center">#</th>
-                <th className="py-2.5 px-4 min-w-[240px]">Item Name</th>
-                <th className="py-2.5 px-3 w-28 text-center">Item Code</th>
-                <th className="py-2.5 px-4 w-32 text-right">Stock</th>
-                <th className="py-2.5 px-4 w-32 text-right">
+                <th className="py-3 px-4 min-w-[260px] font-semibold text-slate-800 dark:text-slate-200">Item Name</th>
+                <th className="py-3 px-4 w-32 text-center font-semibold text-slate-800 dark:text-slate-200">Item Code</th>
+                <th className="py-3 px-4 w-36 text-right font-semibold text-slate-800 dark:text-slate-200">Stock</th>
+                <th className="py-3 px-4 w-36 text-right font-semibold text-slate-800 dark:text-slate-200">
                   {priceMode === "purchase" ? "Purchase Price" : "Sales Price"}
                 </th>
-                <th className="py-2.5 px-4 w-28 text-center">Quantity</th>
+                <th className="py-3 px-4 w-28 text-center font-semibold text-slate-800 dark:text-slate-200">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {filteredItems.map((item, idx) => {
                 const isSelected = (selectedItemQuantities[item.id] || 0) > 0;
                 const isHighlighted = selectedIndex === idx;
@@ -367,52 +366,34 @@ export function AddItemsToBillModal({
                     className={cn(
                       "cursor-pointer transition-colors select-none",
                       isSelected
-                        ? "bg-primary/10 dark:bg-primary/20 hover:bg-primary/15"
+                        ? "bg-primary/5 dark:bg-primary/15 hover:bg-primary/10"
                         : isHighlighted
-                        ? "bg-slate-100/70 dark:bg-slate-800/60"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-900"
+                        ? "bg-slate-50 dark:bg-slate-850"
+                        : "hover:bg-slate-50/80 dark:hover:bg-slate-900"
                     )}
                   >
-                    {/* Checkbox / Index */}
-                    <td className="py-3 px-4 text-center">
-                      <div
-                        className={cn(
-                          "w-4 h-4 mx-auto rounded border flex items-center justify-center transition-all",
-                          isSelected
-                            ? "bg-primary border-primary text-white"
-                            : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
-                        )}
-                      >
-                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                    </td>
-
-                    {/* Item Name & Details */}
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                    {/* Item Name */}
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">
                         {item.name}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
-                        {item.category && (
-                          <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                            {item.category}
-                          </span>
-                        )}
-                        {item.hsn && <span>HSN: {item.hsn}</span>}
-                        {item.gstRate !== undefined && <span>GST: {item.gstRate}%</span>}
-                      </div>
+                      {item.category && (
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          {item.category} {item.hsn ? `• HSN: ${item.hsn}` : ""}
+                        </div>
+                      )}
                     </td>
 
-                    {/* Item Code (SKU or Barcode) */}
-                    <td className="py-3 px-3 text-center font-mono text-slate-500 text-xs">
+                    {/* Item Code */}
+                    <td className="py-3.5 px-4 text-center font-mono text-slate-500 text-xs">
                       {item.sku || item.barcode || "-"}
                     </td>
 
                     {/* Stock */}
-                    <td className="py-3 px-4 text-right font-mono">
+                    <td className="py-3.5 px-4 text-right font-mono">
                       <span
                         className={cn(
-                          "font-bold text-xs",
+                          "font-semibold text-xs",
                           item.stock <= 0
                             ? "text-rose-600 dark:text-rose-400"
                             : item.stock < 10
@@ -421,22 +402,22 @@ export function AddItemsToBillModal({
                         )}
                       >
                         {item.stock.toLocaleString("en-IN")}{" "}
-                        <span className="text-[10px] font-normal uppercase">{item.unit || "PCS"}</span>
+                        <span className="text-[10px] uppercase font-normal">{item.unit || "PCS"}</span>
                       </span>
                     </td>
 
-                    {/* Sales / Purchase Price */}
-                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      ₹ {price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {/* Sales Price */}
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      ₹ {price.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                     </td>
 
-                    {/* Quantity Selector / Counter */}
+                    {/* Action / Quantity Counter */}
                     <td
-                      className="py-3 px-4 text-center"
+                      className="py-3.5 px-4 text-center"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {isSelected ? (
-                        <div className="inline-flex items-center border border-primary/40 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+                        <div className="inline-flex items-center border border-primary/50 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleSetQuantity(item.id, qty - 1)}
@@ -451,7 +432,7 @@ export function AddItemsToBillModal({
                             onChange={(e) =>
                               handleSetQuantity(item.id, Math.max(1, parseInt(e.target.value, 10) || 1))
                             }
-                            className="w-10 h-6 text-center font-mono font-bold text-xs bg-transparent border-x border-primary/20 focus:outline-none"
+                            className="w-8 h-6 text-center font-mono font-bold text-xs bg-transparent border-x border-primary/30 focus:outline-none"
                           />
                           <button
                             type="button"
@@ -465,7 +446,7 @@ export function AddItemsToBillModal({
                         <button
                           type="button"
                           onClick={() => handleToggleItem(item)}
-                          className="px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/10 rounded-md border border-primary/30 transition-colors"
+                          className="px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/10 rounded-lg border border-primary/30 transition-all active:scale-95 cursor-pointer"
                         >
                           + Select
                         </button>
@@ -477,7 +458,7 @@ export function AddItemsToBillModal({
 
               {filteredItems.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-muted-foreground space-y-3">
+                  <td colSpan={5} className="py-12 text-center text-muted-foreground space-y-3">
                     <Package className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
                     <div>
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">

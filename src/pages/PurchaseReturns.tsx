@@ -392,25 +392,25 @@ export default function PurchaseReturns() {
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>+ New Return / Debit Note</span>
+          <span>New Return / Debit Note</span>
         </button>
       </div>
 
       {/* Stats Cards - 3D Frosted Glass */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="glass-card-3d p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        <div className="glass-card-3d p-2.5 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
               Total Returns
             </span>
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
               <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">{returns.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Recorded debit notes</p>
+          <div className="mt-1 sm:mt-3">
+            <p className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">{returns.length}</p>
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Recorded debit notes</p>
           </div>
         </div>
 
@@ -520,7 +520,7 @@ export default function PurchaseReturns() {
         ) : (
           <>
             {/* Mobile Cards */}
-            <div className="block md:hidden divide-y divide-border/60">
+            <div className="block md:hidden divide-y divide-border/60 pb-28">
               {filtered.map((r) => {
                 const status = statusConfig[r.status] || statusConfig.draft;
                 const StatusIcon = status.icon;

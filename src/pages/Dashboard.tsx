@@ -206,7 +206,7 @@ export default function Dashboard() {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - 100% Matching Reference Image 3
           ========================================================================= */}
-      <div className="block md:hidden space-y-4 pb-20 pt-1">
+      <div className="block md:hidden space-y-4 pb-28 pt-1">
         {/* Mobile Title & Live Reconciled Status */}
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">

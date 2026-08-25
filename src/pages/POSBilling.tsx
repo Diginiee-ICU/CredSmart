@@ -3806,7 +3806,7 @@ export default function POSBilling() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <User className="w-4 h-4 text-indigo-600" />
-                <span>+ Add New Customer</span>
+                <span>Add New Customer</span>
               </h3>
               <button onClick={() => setShowQuickAddCustomerModal(false)} className="text-slate-400 hover:text-slate-700">
                 <X className="w-4 h-4" />
@@ -3872,7 +3872,7 @@ export default function POSBilling() {
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Plus className="w-4 h-4 text-emerald-600" />
-                <span>+ Quick Add Product [CTRL + I]</span>
+                <span>Quick Add Product [CTRL + I]</span>
               </h3>
               <button
                 onClick={() => setShowNewItemModal(false)}

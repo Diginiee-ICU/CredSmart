@@ -580,25 +580,43 @@ setSortDirection("asc");
       {/* HEADER: Parties, [SharedLedger Portal], [Reports v], [Settings], [Keyboard] */}
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-            <Users2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Parties</h1>
-              <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.2">
-                {parties.length} Total
-              </Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <Users2 className="w-5 h-5" />
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              Manage customers, suppliers, balances, and real-time SharedLedger synchronization
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Parties</h1>
+                <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.2">
+                  {parties.length} Total
+                </Badge>
+              </div>
+              <p className="hidden sm:block text-[11px] text-muted-foreground truncate">
+                Manage customers, suppliers, balances, and real-time SharedLedger synchronization
+              </p>
+            </div>
+          </div>
+
+          {/* Quick mobile reconcile badge */}
+          <div className="flex sm:hidden items-center gap-1.5">
+            <Button
+              onClick={() => {
+                handleRunAudit();
+                setShowReconciliationModal(true);
+              }}
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 text-[11px] font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2 rounded-lg"
+            >
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              <span>{auditResult?.integrityScore ?? 100}%</span>
+            </Button>
           </div>
         </div>
 
-        {/* Header Action Buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+        {/* Header Action Buttons (Desktop & Tablet) */}
+        <div className="hidden sm:flex items-center gap-1.5 flex-wrap shrink-0">
           {/* Reconcile Ledgers Button */}
           <Button
             onClick={() => {
@@ -745,65 +763,61 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: All Parties count, To Collect (green), To Pay (red) */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-3 gap-2.5 shrink-0">
+      <div className="grid grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
               Total Parties
             </span>
-            <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalPartiesCount}</p>
+            <p className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalPartiesCount}</p>
             <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
-              <span>{parties.filter((p) => p.partyType === "customer").length} Customers</span>
+              <span>{parties.filter((p) => p.partyType === "customer").length} Cust</span>
               <span>·</span>
-              <span>{parties.filter((p) => p.partyType === "supplier").length} Suppliers</span>
+              <span>{parties.filter((p) => p.partyType === "supplier").length} Supp</span>
             </div>
           </div>
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 hidden xs:flex">
-            <Users2 className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 hidden sm:flex">
+            <Users2 className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 2: To Collect (Green) */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
-                To Collect
-              </span>
-            </div>
-            <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
+              To Collect
+            </span>
+            <p className="text-sm sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight truncate">
               ₹ {toCollectTotal.toLocaleString("en-IN")}
             </p>
             <p className="hidden sm:block text-[10px] text-emerald-700/80 dark:text-emerald-400/80 font-medium">
               From {parties.filter((p) => p.balance > 0).length} customer ledgers
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0 hidden xs:flex">
-            <CreditCard className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0 hidden sm:flex">
+            <CreditCard className="w-4 h-4" />
           </div>
         </div>
 
         {/* Card 3: To Pay (Red) */}
-        <div className="glass-card-3d p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono">
-                To Pay
-              </span>
-            </div>
-            <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+              To Pay
+            </span>
+            <p className="text-sm sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate">
               ₹ {toPayTotal.toLocaleString("en-IN")}
             </p>
             <p className="hidden sm:block text-[10px] text-rose-700/80 dark:text-rose-400/80 font-medium">
               To {parties.filter((p) => p.balance < 0).length} supplier bills
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0 hidden xs:flex">
-            <CreditCard className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0 hidden sm:flex">
+            <CreditCard className="w-4 h-4" />
           </div>
         </div>
       </div>
@@ -814,7 +828,7 @@ setSortDirection("asc");
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           {/* Search input */}
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-[180px]">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by party name, phone, GSTIN..."
@@ -836,7 +850,7 @@ setSortDirection("asc");
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 px-3 gap-1.5 text-xs justify-between font-semibold border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl shrink-0">
-                <span className="truncate max-w-[90px] sm:max-w-[130px]">
+                <span className="truncate max-w-[85px] sm:max-w-[130px]">
                   {categoryFilter === "all" ? "Categories" : categoryFilter}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
@@ -866,7 +880,7 @@ setSortDirection("asc");
             <span>Bulk Parties</span>
           </button>
 
-          {/* Glowing "+ Create Party" Button */}
+          {/* Glowing Create Party Button */}
           <button
             onClick={() => {
               setEditingParty(null);
@@ -875,7 +889,7 @@ setSortDirection("asc");
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>+ Create Party</span>
+            <span>Create Party</span>
           </button>
         </div>
 
@@ -908,28 +922,28 @@ setSortDirection("asc");
         )}
       </div>
 
-      {/* Quick Bulk Upload & Software Migration Ribbon (Mobile & Responsive) */}
+      {/* Quick Software Migration Ribbon */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0 py-0.5">
-        <button
-          onClick={() => {
-            setExcelModalTab("excel");
-            setShowExcelUploadModal(true);
-          }}
-          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-          <span>Bulk Upload Parties (Excel)</span>
-        </button>
-
         <button
           onClick={() => {
             setExcelModalTab("software");
             setShowExcelUploadModal(true);
           }}
-          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
+          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3 h-3" />
           <span>Import from Vyapar / Tally / My Bill Book</span>
+        </button>
+
+        <button
+          onClick={() => {
+            handleRunAudit();
+            setShowReconciliationModal(true);
+          }}
+          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95 sm:hidden"
+        >
+          <ShieldCheck className="w-3 h-3" />
+          <span>SharedLedger & Reconcile</span>
         </button>
       </div>
 
@@ -938,7 +952,7 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
         {/* MOBILE VIEW: High-Touch Party Cards (Visible on screens < md) */}
-        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin">
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
           {loading ? (
             <div className="py-12 text-center text-muted-foreground">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
