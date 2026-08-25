@@ -176,6 +176,8 @@
     font-family: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'ss01';
     letter-spacing: -0.018em;
+    /* Prevent horizontal page overflow caused by wide non-wrapping elements or fixed-width images */
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -185,6 +187,13 @@
 
   code, kbd, pre, .font-mono {
     font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+  img, picture, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    /* prevent images from causing horizontal overflow */
+    object-fit: contain;
   }
 }
 
