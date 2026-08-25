@@ -168,18 +168,20 @@ export function QuickCreateItemModal({
 
       // 2. Insert batch / opening inventory
       let batchNumber = "BATCH-01";
-      if (newProd) {
-        const { error: batchErr } = await supabase.from("product_batches").insert({
-          product_id: newProd.id,
-          batch_number: batchNumber,
-          cost_price: pp,
-          mrp: itemMrp,
-          stock: stockQty,
-        });
+      if (!newProd) {
+        throw new Error("The item was not created. Please try again.");
+      }
 
-        if (batchErr) {
-          console.warn("Batch creation notice:", batchErr.message);
-        }
+      const { error: batchErr } = await supabase.from("product_batches").insert({
+        product_id: newProd.id,
+        batch_number: batchNumber,
+        cost_price: pp,
+        mrp: itemMrp,
+        stock: stockQty,
+      });
+
+      if (batchErr) {
+        throw new Error(`Item created, but inventory stock could not be added: ${batchErr.message}`);
       }
 
       toast.success(`Item "${name}" created and added to inventory!`);
@@ -211,8 +213,8 @@ export function QuickCreateItemModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
-        <form onSubmit={handleSave}>
+      <DialogContent className="z-[80] w-[calc(100vw-1rem)] max-w-md sm:max-w-lg h-[calc(100dvh-1rem)] sm:h-auto max-h-[94vh] p-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+        <form onSubmit={handleSave} className="flex h-full min-h-0 flex-col">
           <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
@@ -229,7 +231,7 @@ export function QuickCreateItemModal({
             </div>
           </DialogHeader>
 
-          <div className="p-4 sm:p-5 space-y-3.5 text-xs">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs">
             {/* Item Name */}
             <div>
               <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
