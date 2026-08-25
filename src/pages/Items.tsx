@@ -24,6 +24,7 @@ import {
   Barcode,
   ArrowRightLeft,
   Percent,
+  RotateCcw,
 } from "lucide-react";
 import { InventoryItem, ItemUnit, GSTRate, ItemOffer } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +103,7 @@ export default function Items() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
-  const [libraryModalMode, setLibraryModalMode] = useState<"library" | "software_import">("library");
+  const [libraryModalMode, setLibraryModalMode] = useState<"library" | "software" | "excel">("library");
   const [showExcelUploadModal, setShowExcelUploadModal] = useState(false);
 
   // Quick Stock Adjustment Modal
@@ -294,36 +295,87 @@ export default function Items() {
     }
   };
 
-  // Bulk Import
+  // Bulk Import Products (Excel, Product Library & Software Migration)
   const handleBulkImportItems = async (importedList: Partial<InventoryItem>[]) => {
-    const newItems: InventoryItem[] = importedList.map((it, idx) => {
-      const sPrice = it.sellingPrice || 100;
-      const pPrice = it.purchasePrice || 80;
-      const stock = it.currentStock || 0;
-      const minAlert = it.minStockAlert || 10;
-      return {
-        id: `item-imp-${Date.now()}-${idx}`,
-        name: it.name || "Product",
-        sku: it.sku || `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
-        barcode: it.barcode || null,
-        category: it.category || "General",
-        brand: it.brand || null,
-        unit: it.unit || "PCS",
-        sellingPrice: sPrice,
-        purchasePrice: pPrice,
-        mrp: it.mrp || sPrice,
-        gstRate: (it.gstRate as GSTRate) || 18,
-        hsnCode: it.hsnCode || null,
-        currentStock: stock,
-        openingStock: stock,
-        minStockAlert: minAlert,
-        isLowStock: stock <= minAlert,
-        batches: it.batches || [],
-        created_at: new Date().toISOString(),
-      };
-    });
+    if (!orgId) {
+      const newItems: InventoryItem[] = importedList.map((it, idx) => {
+        const sPrice = it.sellingPrice || 100;
+        const pPrice = it.purchasePrice || 80;
+        const stock = it.openingStock ?? it.currentStock ?? 0;
+        const minAlert = it.minStockAlert || 10;
+        return {
+          id: `item-imp-${Date.now()}-${idx}`,
+          name: it.name || "Product",
+          sku: it.sku || `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
+          barcode: it.barcode || null,
+          category: it.category || "General",
+          brand: it.brand || null,
+          unit: it.unit || "PCS",
+          sellingPrice: sPrice,
+          purchasePrice: pPrice,
+          mrp: it.mrp || sPrice,
+          gstRate: (it.gstRate as GSTRate) || 18,
+          hsnCode: it.hsnCode || null,
+          currentStock: stock,
+          openingStock: stock,
+          minStockAlert: minAlert,
+          isLowStock: stock <= minAlert,
+          batches: it.batches || [],
+          created_at: new Date().toISOString(),
+        };
+      });
+      setItems((prev) => [...newItems, ...prev]);
+      return;
+    }
 
-    setItems((prev) => [...newItems, ...prev]);
+    try {
+      for (const it of importedList) {
+        const sPrice = it.sellingPrice || 100;
+        const pPrice = it.purchasePrice || Math.round(sPrice * 0.8);
+        const stock = it.openingStock ?? it.currentStock ?? 10;
+        const skuVal = it.sku || `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+        const { data: newProd, error: pErr } = await supabase
+          .from("products")
+          .insert({
+            organization_id: orgId,
+            name: it.name || "Product",
+            brand: it.brand || null,
+            category: it.category || "General",
+            barcode: it.barcode || null,
+            sku: skuVal,
+            unit: it.unit || "PCS",
+            selling_price: sPrice,
+            tax_rate: Number(it.gstRate) || 18,
+            tags: {
+              selling_price: sPrice,
+              purchase_price: pPrice,
+              mrp: it.mrp || sPrice,
+              unit: it.unit || "PCS",
+              gst_rate: Number(it.gstRate) || 18,
+              hsn_code: it.hsnCode || "9999",
+              min_stock_alert: it.minStockAlert || 5,
+            },
+          })
+          .select()
+          .single();
+
+        if (newProd && !pErr) {
+          await supabase.from("product_batches").insert({
+            product_id: newProd.id,
+            batch_number: "BATCH-01",
+            cost_price: pPrice,
+            mrp: it.mrp || sPrice,
+            stock: stock,
+          });
+        }
+      }
+      toast.success(`Successfully imported ${importedList.length} products with barcodes & stock!`);
+      fetchItems();
+    } catch (err: any) {
+      console.error("Bulk item import error:", err);
+      toast.error(err.message || "Failed to persist imported items.");
+    }
   };
 
   // Delete Item
@@ -660,6 +712,48 @@ export default function Items() {
             </DropdownMenu>
           </div>
         )}
+      </div>
+
+      {/* Quick Product Library, Excel Bulk Upload & Migration Ribbon (Mobile & Responsive) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
+        <Button
+          onClick={() => {
+            setLibraryModalMode("library");
+            setShowLibraryModal(true);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 shrink-0 cursor-pointer shadow-2xs"
+        >
+          <Library className="w-3.5 h-3.5" />
+          <span>Product Library (Preloaded Barcodes &amp; GST)</span>
+        </Button>
+
+        <Button
+          onClick={() => {
+            setLibraryModalMode("excel");
+            setShowLibraryModal(true);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 shrink-0 cursor-pointer shadow-2xs"
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Bulk Upload Items (Excel)</span>
+        </Button>
+
+        <Button
+          onClick={() => {
+            setLibraryModalMode("software");
+            setShowLibraryModal(true);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20 shrink-0 cursor-pointer shadow-2xs"
+        >
+          <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Import from Vyapar / Tally / My Bill Book / Marg / Busy</span>
+        </Button>
       </div>
 
       {/* ------------------------------------------------------------- */}

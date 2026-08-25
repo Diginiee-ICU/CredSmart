@@ -4,6 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, Suspense } from "react";
+import { CredsmartLogo } from "@/components/ui/Liquid3DCardGraphics";
 import {
   Plus,
   Search,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
+import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import {
   CommandDialog,
   CommandEmpty,
@@ -189,11 +191,12 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userRole } = useOrganization();
+  const { userRole, orgId } = useOrganization();
   const [openCommand, setOpenCommand] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [quickCreateModalOpen, setQuickCreateModalOpen] = useState(false);
+  const [salesInvoiceModalOpen, setSalesInvoiceModalOpen] = useState(false);
 
   const { title, subtitle } = getPageMeta(location.pathname);
 
@@ -219,34 +222,39 @@ export default function AppLayout() {
     <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background overflow-hidden">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Global Top Header - CredAlert Glass Shell */}
-        <header className="h-14 sm:h-16 shrink-0 bg-card/75 backdrop-blur-xl border-b border-border/70 flex items-center justify-between px-3 sm:px-6 z-10 shadow-xs">
-          {/* Dynamic Page Header Info */}
-          <div className="flex flex-col justify-center min-w-0 mr-3">
+        {/* Global Top Header - CredAlert Liquid Glass Shell */}
+        <header className="h-14 sm:h-16 shrink-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
+          {/* Mobile Header: CREDSMART Logo (Matching Image 5) */}
+          <div className="flex md:hidden items-center min-w-0 mr-2">
+            <CredsmartLogo size={34} showSubtitle={true} />
+          </div>
+
+          {/* Desktop Header: Dynamic Page Header Info (Matching Image 1) */}
+          <div className="hidden md:flex flex-col justify-center min-w-0 mr-3">
             <div className="flex items-center gap-2.5">
-              <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate font-sans">
                 {title}
               </h1>
-              <div className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="tracking-wide">SYNC LIVE</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground truncate hidden sm:block font-normal mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-normal mt-0.5">
               {subtitle}
             </p>
           </div>
 
-          {/* Center Search Input / Command Trigger */}
+          {/* Center Search Input / Command Trigger (Desktop) */}
           <div className="flex-1 flex items-center justify-center max-w-md hidden md:flex mx-3">
             <button
               onClick={() => setOpenCommand(true)}
-              className="relative w-full flex items-center glass-input hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] rounded-full pl-9 pr-14 py-2 text-xs text-muted-foreground hover:text-foreground transition-all text-left shadow-2xs group"
+              className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-9 pr-14 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-left shadow-2xs group backdrop-blur-md"
             >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
-              <span>Search pages, items, customers...</span>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+              <span className="truncate">Search pages, items, customers...</span>
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-card border border-border rounded shadow-2xs">
+                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded shadow-2xs">
                   ⌘K
                 </kbd>
               </div>
@@ -254,49 +262,47 @@ export default function AppLayout() {
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Mobile Search Button */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Mobile Search Button (Matching Image 5) */}
             <button
               onClick={() => setOpenCommand(true)}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors md:hidden flex items-center justify-center"
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors md:hidden flex items-center justify-center border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 shadow-2xs"
               title="Search"
               aria-label="Search"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
 
+            {/* Glowing + New Invoice Button (Matching Image 1 & 5) */}
             <button
-              onClick={() => setQuickCreateModalOpen(true)}
-              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-primary-foreground text-xs sm:text-sm font-semibold rounded-full shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift transition-all active:scale-[0.98] ripple-surface"
+              onClick={() => setSalesInvoiceModalOpen(true)}
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-white text-xs sm:text-sm font-bold rounded-xl glowing-btn-amber shadow-md hover:-translate-y-0.5 transition-all active:scale-[0.98] select-none cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span className="hidden sm:inline">New Invoice</span>
               <span className="sm:hidden">Invoice</span>
             </button>
 
-            <div className="h-5 w-[1px] bg-border/80 mx-1 hidden sm:block" />
-
-            {/* Help button hidden as requested */}
-            {false && (
-              <button
-                onClick={() => setHelpOpen(true)}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-full transition-colors hidden sm:flex items-center justify-center"
-                title="Help & Documentation"
-                aria-label="Help & Documentation"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
-            )}
-
+            {/* Notifications Bell with Badge "4" (Desktop) */}
             <button
               onClick={() => setNotifOpen(true)}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-xl transition-colors relative hidden sm:flex items-center justify-center"
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/60 dark:border-slate-800"
               title="Notifications"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-accent ring-2 ring-card animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-[9px] font-bold text-white flex items-center justify-center shadow-xs">
+                4
+              </span>
             </button>
+
+            {/* Desktop User Avatar (Matching Image 1) */}
+            <div
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold font-mono border border-slate-300 dark:border-slate-600 select-none shadow-2xs"
+              title="User Account"
+            >
+              CA
+            </div>
           </div>
         </header>
 
@@ -417,7 +423,23 @@ export default function AppLayout() {
       <UniversalQuickCreateModal
         open={quickCreateModalOpen}
         onOpenChange={setQuickCreateModalOpen}
+        onActionSelect={(key) => {
+          if (key === "sales_invoice" || key === "pos_billing") {
+            setSalesInvoiceModalOpen(true);
+          }
+        }}
       />
+
+      {orgId && (
+        <SalesInvoiceModal
+          open={salesInvoiceModalOpen}
+          onOpenChange={setSalesInvoiceModalOpen}
+          orgId={orgId}
+          onSaved={() => {
+            // refresh or toast
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -259,6 +259,77 @@
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.6), var(--shadow-soft);
   }
 
+  /* 3D Liquid Glass Card matching reference images */
+  .liquid-card-3d {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.72) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    border-radius: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dark .liquid-card-3d {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Glowing Amber/Gold Button matching + New Invoice */
+  .glowing-btn-amber {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 35%, #F97316 75%, #EA580C 100%);
+    background-size: 200% 200%;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 4px 18px rgba(234, 88, 12, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    transition: all 0.25s ease-out;
+  }
+
+  .glowing-btn-amber:hover {
+    box-shadow: 0 6px 24px rgba(234, 88, 12, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+    transform: translateY(-1px);
+  }
+
+  /* Glowing Blue Neon Action Button */
+  .glowing-btn-blue {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(30, 58, 138, 0.35) 100%);
+    border: 1px solid rgba(96, 165, 250, 0.6);
+    color: #93C5FD;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .glowing-btn-blue:hover {
+    border-color: rgba(147, 197, 253, 0.9);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+  }
+
+  /* Glowing Orange Neon Action Button */
+  .glowing-btn-orange {
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.25) 0%, rgba(154, 52, 18, 0.35) 100%);
+    border: 1px solid rgba(251, 146, 60, 0.6);
+    color: #FDBA74;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .glowing-btn-orange:hover {
+    border-color: rgba(253, 186, 116, 0.9);
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+  }
+
+  /* Glowing Purple Neon Navigation Item */
+  .glowing-nav-purple {
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.3) 0%, rgba(99, 102, 241, 0.2) 100%);
+    border: 1px solid rgba(167, 139, 250, 0.7);
+    box-shadow: 0 0 18px rgba(139, 92, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: #ffffff !important;
+  }
+
   .dark .surface-card {
     background: hsl(var(--card) / 0.8);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -496,6 +567,74 @@
 
   .safe-pt-header {
     padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* ==========================================================================
+     3D FROSTED CRYSTAL GLASSMORPHISM SUITE (Liquid Glass Design System)
+     ========================================================================== */
+  .glass-card-3d {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 12px 36px -4px rgba(15, 23, 42, 0.05),
+                0 4px 12px -2px rgba(15, 23, 42, 0.03),
+                inset 0 1px 2px rgba(255, 255, 255, 1);
+    border-radius: 1.25rem;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .dark .glass-card-3d {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-sidebar-midnight {
+    background: linear-gradient(180deg, rgba(9, 21, 46, 0.92) 0%, rgba(5, 14, 34, 0.97) 100%);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.45),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .glowing-btn-amber {
+    background: linear-gradient(135deg, #09152e 0%, #0e2452 100%);
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.38),
+                inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  }
+
+  .glowing-btn-amber:hover {
+    box-shadow: 0 0 28px 0px rgba(245, 158, 11, 0.5),
+                inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+
+  .glowing-btn-blue {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3) 0%, rgba(59, 130, 246, 0.12) 100%);
+    border: 1px solid rgba(96, 165, 250, 0.45);
+    box-shadow: 0 0 18px -3px rgba(59, 130, 246, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  }
+
+  .glowing-nav-active-amber {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.08) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.25),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    color: #fbbf24;
+  }
+
+  .glowing-nav-active-violet {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.28) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border: 1px solid rgba(129, 140, 248, 0.45);
+    box-shadow: 0 0 20px -2px rgba(99, 102, 241, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    color: #c7d2fe;
   }
 
   /* Mobile Touch Targets & Ergonomic Cards */

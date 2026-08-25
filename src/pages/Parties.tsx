@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   RefreshCw,
   CheckCheck,
+  RotateCcw,
 } from "lucide-react";
 import { Party, PartyType } from "@/types/parties";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,6 +109,7 @@ export default function Parties() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
   const [showExcelUploadModal, setShowExcelUploadModal] = useState(false);
+  const [excelModalTab, setExcelModalTab] = useState<"excel" | "software">("excel");
   const [showReconciliationModal, setShowReconciliationModal] = useState(false);
   const [auditResult, setAuditResult] = useState<OrganizationReconciliationAudit | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -367,32 +369,70 @@ export default function Parties() {
     }
   };
 
-  // Bulk Import Parties from Excel
+  // Bulk Import Parties from Excel or Software Migration
   const handleBulkImportParties = async (importedList: Partial<Party>[]) => {
-    const newItems: Party[] = importedList.map((p, i) => ({
-      id: `party-imp-${Date.now()}-${i}`,
-      name: p.name || "Unnamed Party",
-      tradeName: p.tradeName,
-      phone: p.phone || null,
-      email: p.email || null,
-      partyType: p.partyType || "customer",
-      category: p.category || "General",
-      gstin: p.gstin || null,
-      pan: p.pan || null,
-      address: p.address || null,
-      city: p.city || null,
-      state: p.state || null,
-      pincode: p.pincode || null,
-      openingBalance: p.openingBalance || 0,
-      balance: p.balance || 0,
-      creditLimit: p.creditLimit || 50000,
-      creditPeriodDays: p.creditPeriodDays || 30,
-      sharedLedgerEnabled: true,
-      sharedLedgerStatus: "invited",
-      created_at: new Date().toISOString(),
-    }));
+    if (!orgId) {
+      const newItems: Party[] = importedList.map((p, i) => ({
+        id: `party-imp-${Date.now()}-${i}`,
+        name: p.name || "Unnamed Party",
+        tradeName: p.tradeName,
+        phone: p.phone || null,
+        email: p.email || null,
+        partyType: p.partyType || "customer",
+        category: p.category || "General",
+        gstin: p.gstin || null,
+        pan: p.pan || null,
+        address: p.address || null,
+        city: p.city || null,
+        state: p.state || null,
+        pincode: p.pincode || null,
+        openingBalance: p.openingBalance || 0,
+        balance: p.balance || p.openingBalance || 0,
+        creditLimit: p.creditLimit || 50000,
+        creditPeriodDays: p.creditPeriodDays || 30,
+        sharedLedgerEnabled: true,
+        sharedLedgerStatus: "synced",
+        created_at: new Date().toISOString(),
+      }));
+      setParties((prev) => [...newItems, ...prev]);
+      return;
+    }
 
-    setParties((prev) => [...newItems, ...prev]);
+    try {
+      for (const p of importedList) {
+        const isSupplier = p.partyType === "supplier";
+        const targetTable = isSupplier ? "suppliers" : "customers";
+        const { data: newParty, error: pErr } = await supabase
+          .from(targetTable)
+          .insert({
+            organization_id: orgId,
+            name: p.name || "Unnamed Party",
+            phone: p.phone || undefined,
+            email: p.email || undefined,
+            address: p.address || undefined,
+            gstin: p.gstin || undefined,
+          })
+          .select()
+          .single();
+
+        if (newParty && !pErr && Number(p.openingBalance) !== 0) {
+          await supabase.from("credit_transactions").insert({
+            organization_id: orgId,
+            party_id: newParty.id,
+            party_type: isSupplier ? "supplier" : "customer",
+            amount: Math.abs(Number(p.openingBalance)),
+            type: Number(p.openingBalance) > 0 ? "credit" : "payment",
+            description: "Opening balance import",
+            created_by: user?.id || "admin",
+          });
+        }
+      }
+      toast.success(`Successfully imported ${importedList.length} parties!`);
+      fetchParties();
+    } catch (err: any) {
+      console.error("Bulk party import error:", err);
+      toast.error(err.message || "Failed to save imported parties.");
+    }
   };
 
   // Delete Party
@@ -849,6 +889,35 @@ setSortDirection("asc");
             </DropdownMenu>
           </div>
         )}
+      </div>
+
+      {/* Quick Bulk Upload & Software Migration Ribbon (Mobile & Responsive) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
+        <Button
+          onClick={() => {
+            setExcelModalTab("excel");
+            setShowExcelUploadModal(true);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 shrink-0 cursor-pointer shadow-2xs"
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Bulk Upload Parties (Excel)</span>
+        </Button>
+
+        <Button
+          onClick={() => {
+            setExcelModalTab("software");
+            setShowExcelUploadModal(true);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 shrink-0 cursor-pointer shadow-2xs"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Import from Vyapar / Tally / My Bill Book / Marg / Busy</span>
+        </Button>
       </div>
 
       {/* ------------------------------------------------------------- */}
@@ -1658,6 +1727,14 @@ setSortDirection("asc");
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Excel & Software Migration Modal */}
+      <PartyExcelUploadModal
+        isOpen={showExcelUploadModal}
+        onClose={() => setShowExcelUploadModal(false)}
+        onImport={handleBulkImportParties}
+        initialTab={excelModalTab}
+      />
     </div>
   );
 }
