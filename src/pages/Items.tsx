@@ -61,7 +61,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 
 const DEFAULT_CATEGORIES = [
@@ -81,6 +81,7 @@ const DEFAULT_SAMPLE_ITEMS: InventoryItem[] = [];
 
 export default function Items() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { orgId, loading: orgLoading } = useOrganization();
   const { user } = useAuth();
 
@@ -203,6 +204,17 @@ export default function Items() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("new") === "1") {
+      setEditingItem(null);
+      setShowCreateModal(true);
+    } else if (params.get("bulk") === "1") {
+      setLibraryModalMode("excel");
+      setShowLibraryModal(true);
+    }
+  }, [location.search]);
 
   // Save / Update Item
   const handleSaveItem = async (
@@ -648,6 +660,19 @@ export default function Items() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Bulk Upload Items Button - Always visible on mobile & desktop */}
+          <button
+            onClick={() => {
+              setLibraryModalMode("excel");
+              setShowLibraryModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glowing-btn-blue text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            title="Bulk Upload Items from Excel / CSV"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Bulk Products</span>
+          </button>
+
           {/* Primary Glowing "+ Create Item" button */}
           <button
             onClick={() => {
@@ -715,45 +740,39 @@ export default function Items() {
       </div>
 
       {/* Quick Product Library, Excel Bulk Upload & Migration Ribbon (Mobile & Responsive) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
-        <Button
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0 py-0.5">
+        <button
           onClick={() => {
             setLibraryModalMode("library");
             setShowLibraryModal(true);
           }}
-          variant="outline"
-          size="sm"
-          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 shrink-0 cursor-pointer shadow-2xs"
+          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
           <Library className="w-3.5 h-3.5" />
-          <span>Product Library (Preloaded Barcodes &amp; GST)</span>
-        </Button>
+          <span>Product Library (Preloaded Barcodes)</span>
+        </button>
 
-        <Button
+        <button
           onClick={() => {
             setLibraryModalMode("excel");
             setShowLibraryModal(true);
           }}
-          variant="outline"
-          size="sm"
-          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 shrink-0 cursor-pointer shadow-2xs"
+          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+          <FileSpreadsheet className="w-3.5 h-3.5" />
           <span>Bulk Upload Items (Excel)</span>
-        </Button>
+        </button>
 
-        <Button
+        <button
           onClick={() => {
             setLibraryModalMode("software");
             setShowLibraryModal(true);
           }}
-          variant="outline"
-          size="sm"
-          className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20 shrink-0 cursor-pointer shadow-2xs"
+          className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Import from Vyapar / Tally / My Bill Book / Marg / Busy</span>
-        </Button>
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Import from Vyapar / Tally / My Bill Book</span>
+        </button>
       </div>
 
       {/* ------------------------------------------------------------- */}

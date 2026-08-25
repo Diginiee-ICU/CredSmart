@@ -21,6 +21,7 @@ import {
   Sparkles,
   ShieldCheck,
   KeyRound,
+  FileSpreadsheet,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
 import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
@@ -372,13 +373,25 @@ export default function Customers() {
             Track customer contact details, credit ledger, and payment balances
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>+ Add Customer</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <Button
+            asChild
+            variant="outline"
+            className="gap-1.5 font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 rounded-xl text-xs h-9 shadow-xs"
+          >
+            <Link to={`${ROUTE_PATHS.parties}?bulk=1`}>
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Bulk Import</span>
+            </Link>
+          </Button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ Add Customer</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards - 3D Frosted Glass */}

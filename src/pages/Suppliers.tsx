@@ -406,7 +406,17 @@ export default function Suppliers() {
             Manage your procurement directory, GSTIN numbers, and supplier payables
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <Button
+            asChild
+            variant="outline"
+            className="gap-1.5 font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 rounded-xl text-xs h-9 shadow-xs"
+          >
+            <Link to={`${ROUTE_PATHS.parties}?bulk=1`}>
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Bulk Import</span>
+            </Link>
+          </Button>
           <Button
             asChild
             variant="outline"
