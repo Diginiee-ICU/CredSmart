@@ -115,6 +115,9 @@ interface SalesInvoiceModalProps {
   onPrintRequest?: (doc: BusinessDocument) => void;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 export function SalesInvoiceModal({
   open,
   onOpenChange,
@@ -269,7 +272,7 @@ export function SalesInvoiceModal({
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         if (parsed.bankAccounts && parsed.bankAccounts.length > 0) {
-          const def = parsed.bankAccounts.find((b: any) => b.isDefault) || parsed.bankAccounts[0];
+          const def = parsed.bankAccounts.find((b: { isDefault?: boolean }) => b.isDefault) || parsed.bankAccounts[0];
           setBankAccount({
             accountNumber: def.accountNumber || "",
             ifsc: def.ifsc || "",
@@ -560,7 +563,7 @@ export function SalesInvoiceModal({
     }
   }, [markAsFullyPaid, totals.grandTotal]);
 
-  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: any) => {
+  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
     setItems((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
@@ -684,8 +687,8 @@ export function SalesInvoiceModal({
       setNewCustPhone("");
       setNewCustGstin("");
       setNewCustAddress("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create customer");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to create customer"));
     }
   };
 
@@ -765,8 +768,8 @@ export function SalesInvoiceModal({
       } else {
         onOpenChange(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save invoice");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save invoice"));
     } finally {
       setSaving(false);
     }
@@ -1839,7 +1842,7 @@ export function SalesInvoiceModal({
                       <div className="grid grid-cols-2 gap-2">
                         <Select
                           value={overallDiscountType}
-                          onValueChange={(val: any) => setOverallDiscountType(val)}
+                          onValueChange={(val) => setOverallDiscountType(val as "flat" | "percent")}
                         >
                           <SelectTrigger className="h-7 text-xs">
                             <SelectValue />

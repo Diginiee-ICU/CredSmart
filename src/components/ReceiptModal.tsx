@@ -237,7 +237,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
               window.close();
             }, 300);
           };
-        <\/script>
+        </script>
       </body>
       </html>
     `);
@@ -374,24 +374,49 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 type: data.docType === "purchase_invoice" || data.docType === "debit_note" ? "supplier" : "customer",
               }}
               items={data.items.map((item, idx) => {
-                const p = (item as any).product || {};
-                const b = (item as any).batch || {};
+                const itemData = item as {
+                  product?: {
+                    name?: string;
+                    description?: string;
+                    brand?: string;
+                    category?: string;
+                    hsn?: string;
+                    hsnCode?: string;
+                    gstRate?: number;
+                    unit?: string;
+                  } | null;
+                  batch?: {
+                    mrp?: number;
+                    batchNumber?: string;
+                    expiryDate?: string;
+                  } | null;
+                  rate?: number;
+                  unitPrice?: number;
+                  name?: string;
+                  hsn?: string;
+                  unit?: string;
+                  taxRate?: number;
+                  batchNo?: string;
+                  expDate?: string;
+                };
+                const p = itemData.product ?? {};
+                const b = itemData.batch ?? {};
                 const qty = Number(item.quantity) || 1;
-                const rate = Number(b.mrp || (item as any).rate || (item as any).unitPrice || 0);
+                const rate = Number(b.mrp ?? itemData.rate ?? itemData.unitPrice ?? 0);
                 return {
                   id: String(idx),
-                  name: p.name || (item as any).name || `Item ${idx + 1}`,
-                  description: p.description || (p.brand ? `${p.brand} · ${p.category || ""}` : ""),
-                  hsn: p.hsn || p.hsnCode || (item as any).hsn || "",
-                  qty: qty,
-                  unit: p.unit || (item as any).unit || "PCS",
-                  rate: rate,
+                  name: p.name ?? itemData.name ?? `Item ${idx + 1}`,
+                  description: p.description ?? (p.brand ? `${p.brand} · ${p.category || ""}` : ""),
+                  hsn: p.hsn ?? p.hsnCode ?? itemData.hsn ?? "",
+                  qty,
+                  unit: p.unit ?? itemData.unit ?? "PCS",
+                  rate,
                   mrp: rate,
                   discount: 0,
-                  taxRate: p.gstRate || (item as any).taxRate || 0,
+                  taxRate: p.gstRate ?? itemData.taxRate ?? 0,
                   total: rate * qty,
-                  batchNo: b.batchNumber || (item as any).batchNo || "",
-                  expDate: b.expiryDate || (item as any).expDate || "",
+                  batchNo: b.batchNumber ?? itemData.batchNo ?? "",
+                  expDate: b.expiryDate ?? itemData.expDate ?? "",
                 };
               })}
               totals={{

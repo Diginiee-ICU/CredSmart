@@ -113,6 +113,9 @@ interface PurchaseInvoiceModalProps {
   onPrintRequest?: (doc: BusinessDocument) => void;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 export function PurchaseInvoiceModal({
   open,
   onOpenChange,
@@ -263,7 +266,7 @@ export function PurchaseInvoiceModal({
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         if (parsed.bankAccounts && parsed.bankAccounts.length > 0) {
-          const def = parsed.bankAccounts.find((b: any) => b.isDefault) || parsed.bankAccounts[0];
+          const def = parsed.bankAccounts.find((b: { isDefault?: boolean }) => b.isDefault) || parsed.bankAccounts[0];
           setBankAccount({
             accountNumber: def.accountNumber || "",
             ifsc: def.ifsc || "",
@@ -551,7 +554,7 @@ export function PurchaseInvoiceModal({
     }
   }, [markAsFullyPaid, totals.grandTotal]);
 
-  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: any) => {
+  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
     setItems((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
@@ -673,8 +676,8 @@ export function PurchaseInvoiceModal({
       setNewSuppPhone("");
       setNewSuppGstin("");
       setNewSuppAddress("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create supplier");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to create supplier"));
     }
   };
 
@@ -754,8 +757,8 @@ export function PurchaseInvoiceModal({
       } else {
         onOpenChange(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save purchase bill");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save purchase bill"));
     } finally {
       setSaving(false);
     }
@@ -1780,7 +1783,7 @@ export function PurchaseInvoiceModal({
                       <div className="grid grid-cols-2 gap-2">
                         <Select
                           value={overallDiscountType}
-                          onValueChange={(val: any) => setOverallDiscountType(val)}
+                          onValueChange={(val) => setOverallDiscountType(val as "flat" | "percent")}
                         >
                           <SelectTrigger className="h-7 text-xs">
                             <SelectValue />

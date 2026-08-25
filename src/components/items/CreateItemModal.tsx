@@ -76,6 +76,9 @@ const UNIT_OPTIONS: ItemUnit[] = [
 
 const GST_RATES: GSTRate[] = [0, 0.1, 0.25, 3, 5, 12, 18, 28];
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 export function CreateItemModal({
   isOpen,
   onClose,
@@ -254,8 +257,8 @@ export function CreateItemModal({
     try {
       await onSave(payload);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save item.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save item."));
     } finally {
       setIsSubmitting(false);
     }
@@ -298,7 +301,7 @@ export function CreateItemModal({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "basic" | "pricing" | "stock" | "batch")}
               className={cn(
                 "px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap",
                 activeTab === tab.id
@@ -410,7 +413,7 @@ export function CreateItemModal({
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Primary Unit *</Label>
-                  <Select value={unit} onValueChange={(val: any) => setUnit(val)}>
+                  <Select value={unit} onValueChange={(val) => setUnit(val as ItemUnit)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Unit" />
                     </SelectTrigger>

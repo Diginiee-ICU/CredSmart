@@ -28,6 +28,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 interface ProductLibraryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -307,8 +310,8 @@ export function ProductLibraryModal({
       await onAddProducts(itemsToAdd);
       toast.success(`Added ${itemsToAdd.length} products with barcodes, GST rates & stock!`);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to add products from library.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to add products from library."));
     } finally {
       setIsAdding(false);
     }
@@ -325,7 +328,7 @@ export function ProductLibraryModal({
       const parts = lines[i].split(/[,\t]/).map((p) => p.trim());
       if (parts.length < 2) continue;
 
-      const obj: any = {};
+      const obj: Record<string, string | number> = {};
       headers.forEach((h, idx) => {
         const val = parts[idx] || "";
         if (h.includes("name") || h.includes("item")) obj.name = val;
@@ -334,28 +337,34 @@ export function ProductLibraryModal({
         else if (h.includes("brand")) obj.brand = val;
         else if (h.includes("category")) obj.category = val;
         else if (h.includes("unit")) obj.unit = val;
-        else if (h.includes("selling") || h.includes("sp") || h.includes("rate") || h.includes("saleprice")) obj.sellingPrice = parseFloat(val) || 0;
-        else if (h.includes("purchase") || h.includes("cost") || h.includes("pp")) obj.purchasePrice = parseFloat(val) || 0;
-        else if (h.includes("mrp")) obj.mrp = parseFloat(val) || 0;
-        else if (h.includes("gst") || h.includes("tax")) obj.gstRate = parseFloat(val) || 18;
+        else if (h.includes("selling") || h.includes("sp") || h.includes("rate") || h.includes("saleprice")) obj.sellingPrice = Number.parseFloat(val) || 0;
+        else if (h.includes("purchase") || h.includes("cost") || h.includes("pp")) obj.purchasePrice = Number.parseFloat(val) || 0;
+        else if (h.includes("mrp")) obj.mrp = Number.parseFloat(val) || 0;
+        else if (h.includes("gst") || h.includes("tax")) obj.gstRate = Number.parseFloat(val) || 18;
         else if (h.includes("hsn")) obj.hsnCode = val;
-        else if (h.includes("stock") || h.includes("qty") || h.includes("quantity")) obj.openingStock = parseFloat(val) || 0;
+        else if (h.includes("stock") || h.includes("qty") || h.includes("quantity")) obj.openingStock = Number.parseFloat(val) || 0;
       });
 
       if (obj.name) {
+        const sellingPrice = typeof obj.sellingPrice === "number" ? obj.sellingPrice : Number.parseFloat(String(obj.sellingPrice ?? "0")) || 100;
+        const purchasePrice = typeof obj.purchasePrice === "number" ? obj.purchasePrice : Number.parseFloat(String(obj.purchasePrice ?? "0")) || Math.round(sellingPrice * 0.8);
+        const mrp = typeof obj.mrp === "number" ? obj.mrp : Number.parseFloat(String(obj.mrp ?? "0")) || sellingPrice || 100;
+        const gstRate = typeof obj.gstRate === "number" ? obj.gstRate : Number.parseFloat(String(obj.gstRate ?? "0")) || 18;
+        const openingStock = typeof obj.openingStock === "number" ? obj.openingStock : Number.parseFloat(String(obj.openingStock ?? "0")) || 10;
+
         results.push({
-          name: obj.name,
-          barcode: obj.barcode || undefined,
-          sku: obj.sku || `SKU-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          category: obj.category || "General",
-          brand: obj.brand || "General",
-          unit: obj.unit || "PCS",
-          sellingPrice: obj.sellingPrice || 100,
-          purchasePrice: obj.purchasePrice || Math.round((obj.sellingPrice || 100) * 0.8),
-          mrp: obj.mrp || obj.sellingPrice || 100,
-          gstRate: obj.gstRate || 18,
-          hsnCode: obj.hsnCode || "9999",
-          openingStock: obj.openingStock || 10,
+          name: String(obj.name),
+          barcode: typeof obj.barcode === "string" ? obj.barcode : undefined,
+          sku: typeof obj.sku === "string" ? obj.sku : `SKU-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+          category: typeof obj.category === "string" ? obj.category : "General",
+          brand: typeof obj.brand === "string" ? obj.brand : "General",
+          unit: typeof obj.unit === "string" ? obj.unit : "PCS",
+          sellingPrice,
+          purchasePrice,
+          mrp,
+          gstRate,
+          hsnCode: typeof obj.hsnCode === "string" ? obj.hsnCode : "9999",
+          openingStock,
           minStockAlert: 5,
         });
       }
@@ -408,8 +417,8 @@ export function ProductLibraryModal({
       await onAddProducts(parsedItems);
       toast.success(`Successfully imported ${parsedItems.length} products into inventory!`);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to import items.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to import items."));
     } finally {
       setIsAdding(false);
     }
@@ -662,7 +671,7 @@ export function ProductLibraryModal({
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedSoftware(s.id as any)}
+                    onClick={() => setSelectedSoftware(s.id as typeof selectedSoftware)}
                     className={cn(
                       "p-3.5 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
                       selectedSoftware === s.id

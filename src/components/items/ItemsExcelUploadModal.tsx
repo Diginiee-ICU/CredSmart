@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 interface ItemsExcelUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,9 +60,9 @@ export function ItemsExcelUploadModal({
           setParsedItems(parsed);
           toast.success(`Successfully parsed ${parsed.length} items from file!`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to parse uploaded CSV:", err);
-        toast.error(err?.message || "Failed to parse uploaded CSV. Download the sample template and try again.");
+        toast.error(getErrorMessage(err, "Failed to parse uploaded CSV. Download the sample template and try again."));
       }
     };
     reader.readAsText(file);
@@ -78,9 +81,9 @@ export function ItemsExcelUploadModal({
         setParsedItems(parsed);
         toast.success(`Parsed ${parsed.length} items!`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to parse pasted CSV:", err);
-      toast.error(err?.message || "Could not parse pasted rows. Download the sample template and try again.");
+      toast.error(getErrorMessage(err, "Could not parse pasted rows. Download the sample template and try again."));
     }
   };
 
@@ -91,8 +94,8 @@ export function ItemsExcelUploadModal({
       await onImport(parsedItems);
       toast.success(`Imported ${parsedItems.length} items successfully!`);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to bulk import items.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to bulk import items."));
     } finally {
       setIsProcessing(false);
     }
