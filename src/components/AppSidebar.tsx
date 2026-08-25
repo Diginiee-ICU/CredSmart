@@ -463,142 +463,62 @@ export function AppSidebar() {
 
               {/* Categorized Route Navigation List (Matching Image 2) */}
               <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
-                {/* Section 1: GENERAL */}
-                <div className="space-y-1.5">
-                  <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                    GENERAL
-                  </p>
-                  <div className="space-y-1.5">
-                    {allAllowedNavItems
-                      .filter((i) =>
-                        [
-                          ROUTE_PATHS.dashboard,
-                          ROUTE_PATHS.parties,
-                          ROUTE_PATHS.items,
-                          ROUTE_PATHS.sales,
-                          ROUTE_PATHS.purchases,
-                          ROUTE_PATHS.reports,
-                        ].includes(i.url as any)
-                      )
-                      .map((item) => {
-                        const active = isRouteActive(item.url);
-                        return (
-                          <NavLink
-                            key={item.url}
-                            to={item.url}
-                            end={item.url === "/"}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
-                              active
-                                ? "glowing-nav-purple"
-                                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                className={cn(
-                                  "p-1.5 rounded-xl border",
-                                  active
-                                    ? "bg-purple-600/30 border-purple-400 text-white"
-                                    : "bg-slate-800/80 border-slate-700/80 text-indigo-400"
-                                )}
-                              >
-                                <item.icon className="w-4 h-4" />
-                              </div>
-                              <span className="truncate">{item.title}</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                          </NavLink>
-                        );
-                      })}
-                  </div>
-                </div>
+                {filteredNavRouteGroups.map((group, gIdx) => (
+                  <div key={gIdx} className="space-y-1.5">
+                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                      {group.group}
+                    </p>
 
-                {/* Section 2: ACCOUNTING SOLUTIONS */}
-                <div className="space-y-1.5">
-                  <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                    ACCOUNTING SOLUTIONS
-                  </p>
-                  <div className="space-y-1.5">
-                    {allAllowedNavItems
-                      .filter((i) =>
-                        [
-                          ROUTE_PATHS.cashBank,
-                          ROUTE_PATHS.expenses,
-                          ROUTE_PATHS.automatedBills,
-                        ].includes(i.url as any)
-                      )
-                      .map((item) => {
+                    <div className="space-y-1.5">
+                      {group.items.map((item) => {
                         const active = isRouteActive(item.url);
                         return (
-                          <NavLink
-                            key={item.url}
-                            to={item.url}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
-                              active
-                                ? "glowing-nav-purple"
-                                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                className={cn(
-                                  "p-1.5 rounded-xl border",
-                                  active
-                                    ? "bg-purple-600/30 border-purple-400 text-white"
-                                    : "bg-slate-800/80 border-slate-700/80 text-blue-400"
-                                )}
-                              >
-                                <item.icon className="w-4 h-4" />
+                          <div key={item.url}>
+                            <NavLink
+                              to={item.url}
+                              end={item.url === "/"}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
+                                active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                              )}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div
+                                  className={cn(
+                                    "p-1.5 rounded-xl border",
+                                    active ? "bg-purple-600/30 border-purple-400 text-white" : "bg-slate-800/80 border-slate-700/80 text-indigo-400"
+                                  )}
+                                >
+                                  <item.icon className="w-4 h-4" />
+                                </div>
+                                <span className="truncate">{item.title}</span>
                               </div>
-                              <span className="truncate">{item.title}</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                          </NavLink>
-                        );
-                      })}
-                  </div>
-                </div>
+                              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                            </NavLink>
 
-                {/* Section 3: SETTINGS & USER */}
-                <div className="space-y-1.5">
-                  <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                    ACCOUNT
-                  </p>
-                  <div className="space-y-1.5">
-                    {[
-                      { url: ROUTE_PATHS.settings, title: "Settings", icon: Settings },
-                      { url: ROUTE_PATHS.staff, title: "Manager User", icon: User },
-                    ]
-                      .filter((item) => isRouteAllowedForRole(item.url, userRole))
-                      .map((item) => {
-                        const active = isRouteActive(item.url);
-                        return (
-                          <NavLink
-                            key={item.url}
-                            to={item.url}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
-                              active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                            )}
-                            activeClassName="glowing-nav-purple"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="p-1.5 rounded-xl border bg-slate-800/80 border-slate-700/80 text-indigo-400">
-                                <item.icon className="w-4 h-4" />
+                            {/* Render child routes for mobile so sub-pages are accessible */}
+                            {item.children && item.children.length > 0 && (
+                              <div className="pl-6 pr-1 space-y-0.5 pt-0.5">
+                                {item.children.map((child) => (
+                                  <NavLink
+                                    key={child.title}
+                                    to={child.url as string}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors"
+                                  >
+                                    <span className="w-1 h-1 rounded-full bg-slate-500" />
+                                    <span className="truncate">{child.title}</span>
+                                  </NavLink>
+                                ))}
                               </div>
-                              <span className="truncate">{item.title}</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                          </NavLink>
+                            )}
+                          </div>
                         );
                       })}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
 
               {/* Footer: Sign Out Button matching Image 2 */}
