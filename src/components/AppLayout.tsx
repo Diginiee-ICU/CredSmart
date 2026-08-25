@@ -219,7 +219,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background overflow-hidden">
+    <div className="flex h-[100dvh] min-h-[100dvh] w-full bg-background">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Global Top Header - CredAlert Liquid Glass Shell */}
