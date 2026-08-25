@@ -778,18 +778,20 @@ export function SalesInvoiceModal({
   const filteredCustomers = useMemo(() => {
     if (!customerSearch) return customers.slice(0, 20);
     const q = customerSearch.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.phone && c.phone.includes(q)) ||
-        (c.gstin && c.gstin.toLowerCase().includes(q))
-    );
+    return customers.filter((c) => {
+      const safeName = (c?.name || "").toLowerCase();
+      const safePhone = c?.phone || "";
+      const safeGstin = c?.gstin || "";
+      return safeName.includes(q) || safePhone.includes(q) || safeGstin.toLowerCase().includes(q);
+    });
   }, [customers, customerSearch]);
 
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
-    if (!query) return productsCatalog.slice(0, 12).map((p) => ({
+    const safeCatalog = (productsCatalog || []).filter(Boolean);
+
+    const toSuggestion = (p: ProductCatalogOption): UnifiedProductSuggestion => ({
       id: p.id,
-      name: p.name,
+      name: p.name || "Unnamed Item",
       category: p.category || "General",
       barcode: p.barcode || undefined,
       sku: p.sku,
@@ -798,29 +800,20 @@ export function SalesInvoiceModal({
       gstRate: p.tax_rate || 18,
       stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
       isDb: true,
-    }));
+    });
+
+    if (!query) return safeCatalog.slice(0, 12).map(toSuggestion);
 
     const q = query.toLowerCase();
-    return productsCatalog
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.barcode && p.barcode.toLowerCase().includes(q)) ||
-          (p.sku && p.sku.toLowerCase().includes(q))
-      )
+    return safeCatalog
+      .filter((p) => {
+        const name = (p?.name || "").toLowerCase();
+        const barcode = (p?.barcode || "").toLowerCase();
+        const sku = (p?.sku || "").toLowerCase();
+        return name.includes(q) || barcode.includes(q) || sku.includes(q);
+      })
       .slice(0, 15)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category || "General",
-        barcode: p.barcode || undefined,
-        sku: p.sku,
-        unit: p.unit || "Pcs",
-        rate: p.selling_price || 0,
-        gstRate: p.tax_rate || 18,
-        stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-        isDb: true,
-      }));
+      .map(toSuggestion);
   };
 
   const upiPayload = upiId

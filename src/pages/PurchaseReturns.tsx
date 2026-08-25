@@ -3,6 +3,7 @@ import {
   Plus,
   Search,
   RotateCcw,
+  Undo2,
   Check,
   Clock,
   X,
