@@ -44,6 +44,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useProducts } from "@/context/ProductsContext";
 import { toast } from "sonner";
 import {
   BusinessDocument,
@@ -164,8 +165,8 @@ export function PurchaseInvoiceModal({
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
 
-  // Products catalog & Item search
-  const [productsCatalog, setProductsCatalog] = useState<ProductCatalogOption[]>([]);
+  // Products catalog & Item search (use shared ProductsContext)
+  const { products: productsCatalog, refreshProducts, addOrUpdateProduct } = useProducts();
   const [itemSearchText, setItemSearchText] = useState<Record<number, string>>({});
   const [activeItemDropdown, setActiveItemDropdown] = useState<number | null>(null);
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
@@ -344,14 +345,9 @@ export function PurchaseInvoiceModal({
   const fetchProducts = async () => {
     if (!orgId) return;
     try {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, barcode, sku, category, unit, brand, tags, product_batches(id, batch_number, cost_price, mrp, stock)")
-        .eq("organization_id", orgId)
-        .order("name");
-      if (data) setProductsCatalog(data);
+      await refreshProducts(orgId);
     } catch (e) {
-      console.error(e);
+      console.error('refreshProducts failed in PurchaseInvoiceModal:', e);
     }
   };
 
@@ -359,7 +355,7 @@ export function PurchaseInvoiceModal({
   useEffect(() => {
     if (open) {
       fetchSuppliers();
-      fetchProducts();
+      fetchProducts(); // calls shared refreshProducts under the hood
       setViewMode("edit");
 
       if (editingDoc) {
@@ -633,13 +629,12 @@ export function PurchaseInvoiceModal({
       ],
     };
 
-    setProductsCatalog((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
-      if (exists) {
-        return prev.map((item) => (item.id === product.id ? { ...item, ...catalogRow, tags: { ...(item.tags || {}), ...(catalogRow.tags || {}) } } : item));
-      }
-      return [catalogRow, ...prev];
-    });
+    // Update shared products store so item is available across the app
+    try {
+      addOrUpdateProduct(catalogRow as any);
+    } catch (e) {
+      console.warn('Failed to update shared products store from PurchaseInvoiceModal:', e);
+    }
 
     if (targetRowIndexForNewItem !== null) {
       setItems((prev) => {
