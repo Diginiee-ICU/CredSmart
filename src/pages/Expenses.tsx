@@ -86,8 +86,8 @@ export default function Expenses() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyLocalExpenses = `credsmart_expenses_${orgId || "default"}`;
-  const storageKeyCategories = `credsmart_expense_categories_${orgId || "default"}`;
+  const storageKeyLocalExpenses = `credsmart_expenses_${orgId || "no_org"}`;
+  const storageKeyCategories = `credsmart_expense_categories_${orgId || "no_org"}`;
 
   // Main State
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);

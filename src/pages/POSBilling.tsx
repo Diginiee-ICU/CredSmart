@@ -161,9 +161,9 @@ const DEFAULT_SETTINGS: PosSettings = {
   directEscPosPrint: false,
 };
 
-const getTabsStorageKey = (orgId: string | null) => `credsmart_pos_tabs_${orgId || "default"}`;
+const getTabsStorageKey = (orgId: string | null) => `credsmart_pos_tabs_${orgId || "no_org"}`;
 const GLOBAL_BACKUP_STORAGE_KEY = "credsmart_pos_tabs_backup";
-const getSettingsStorageKey = (orgId: string | null) => `credsmart_pos_settings_${orgId || "default"}`;
+const getSettingsStorageKey = (orgId: string | null) => `credsmart_pos_settings_${orgId || "no_org"}`;
 
 function createNewTab(tabIndex: number): BillingTab {
   return {

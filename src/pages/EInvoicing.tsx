@@ -55,8 +55,8 @@ export default function EInvoicing() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyEInvoices = `credsmart_einvoices_${orgId || "default"}`;
-  const storageKeyConfig = `credsmart_einvoice_config_${orgId || "default"}`;
+  const storageKeyEInvoices = `credsmart_einvoices_${orgId || "no_org"}`;
+  const storageKeyConfig = `credsmart_einvoice_config_${orgId || "no_org"}`;
 
   // Modals state
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);

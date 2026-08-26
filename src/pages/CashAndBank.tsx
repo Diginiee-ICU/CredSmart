@@ -88,10 +88,10 @@ export default function CashAndBank() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyAccounts = `credsmart_bank_accounts_${orgId || "default"}`;
-  const storageKeyTransactions = `credsmart_bank_txns_${orgId || "default"}`;
-  const storageKeyCash = `credsmart_cash_in_hand_${orgId || "default"}`;
-  const storageKeyUnlinked = `credsmart_unlinked_balance_${orgId || "default"}`;
+  const storageKeyAccounts = `credsmart_bank_accounts_${orgId || "no_org"}`;
+  const storageKeyTransactions = `credsmart_bank_txns_${orgId || "no_org"}`;
+  const storageKeyCash = `credsmart_cash_in_hand_${orgId || "no_org"}`;
+  const storageKeyUnlinked = `credsmart_unlinked_balance_${orgId || "no_org"}`;
 
   // State
   const [cashInHand, setCashInHand] = useState<number>(0);

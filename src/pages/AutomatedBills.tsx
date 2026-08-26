@@ -65,7 +65,7 @@ export default function AutomatedBills() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyRecurring = `credsmart_recurring_bills_${orgId || "default"}`;
+  const storageKeyRecurring = `credsmart_recurring_bills_${orgId || "no_org"}`;
 
   // Modals state
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
