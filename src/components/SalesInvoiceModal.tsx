@@ -726,6 +726,71 @@ export function SalesInvoiceModal({
     setShowQuickCreateItemModal(false);
   };
 
+  // When user selects multiple items from the AddItemsToBillModal, insert them
+  // at the row that opened the modal (addItemsTargetRow) if set; otherwise append.
+  // The function preserves the existing behavior of ensuring a trailing empty row.
+  const handleBatchAddItemsAtTarget = (newItems: DocumentLineItem[]) => {
+    if (!newItems || newItems.length === 0) return;
+    const target = addItemsTargetRow;
+
+    setItems((prev) => {
+      const copy = [...prev];
+
+      // Normalize incoming items into the local DocumentLineItem shape
+      const mapped = newItems.map((ni) => ({
+        id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        productId: (ni as any).productId || (ni as any).id || undefined,
+        productName: (ni as any).productName || (ni as any).name || "",
+        barcode: (ni as any).barcode || undefined,
+        hsn: (ni as any).hsn || "",
+        quantity: Number((ni as any).quantity) || 1,
+        unit: (ni as any).unit || "Pcs",
+        rate: Number((ni as any).rate) || 0,
+        discountPercent: Number((ni as any).discountPercent) || 0,
+        discountAmount: Number((ni as any).discountAmount) || 0,
+        taxRate: Number((ni as any).taxRate) || 18,
+        taxableAmount: Number((ni as any).taxableAmount) || 0,
+        cgstAmount: Number((ni as any).cgstAmount) || 0,
+        sgstAmount: Number((ni as any).sgstAmount) || 0,
+        igstAmount: Number((ni as any).igstAmount) || 0,
+        lineTotal: Number((ni as any).lineTotal) || 0,
+      } as DocumentLineItem));
+
+      // Determine insertion index
+      let insertAt = copy.length; // default append
+      if (typeof target === "number" && target >= 0 && target < copy.length) {
+        insertAt = target;
+      }
+
+      // If target row exists and is empty (no productName), replace that row with first mapped item
+      if (typeof target === "number" && target >= 0 && target < copy.length && (!copy[target].productName || copy[target].productName.trim() === "")) {
+        // replace that single row with mapped items
+        copy.splice(target, 1, ...mapped);
+      } else {
+        // splice in mapped items at insertAt
+        copy.splice(insertAt, 0, ...mapped);
+      }
+
+      // Ensure trailing blank row exists
+      const last = copy[copy.length - 1];
+      if (!last || (last.productName && last.productName.trim() !== "")) {
+        copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+      }
+
+      return copy;
+    });
+
+    // reset the remembered target and close modal
+    setAddItemsTargetRow(null);
+    setShowAddItemsModal(false);
+
+    // Focus first new inserted row after a tick
+    setTimeout(() => {
+      const focusIndex = typeof target === "number" && target >= 0 ? target : (items.length - 1);
+      focusItemInput(focusIndex + (newItems?.length ? newItems.length - 1 : 0));
+    }, 80);
+  };
+
   const handleSelectCustomer = (c: CustomerOption) => {
     setSelectedCustomerId(c.id);
     setPartyName(c.name);
@@ -1061,48 +1126,6 @@ export function SalesInvoiceModal({
                 </button>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handlePrint()}
-                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
-                title="Print"
-              >
-                <Printer className="w-3.5 h-3.5" />
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={saving}
-                onClick={() => handleSave(false, true)}
-                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
-              >
-                Save &amp; New
-              </Button>
-
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(false, false)}
-                  className="h-8 px-4 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-l-lg shadow-sm cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5 mr-1.5" />
-                  {saving ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(true, false)}
-                  className="h-8 px-2 text-xs font-bold bg-primary/95 hover:bg-primary text-primary-foreground rounded-r-lg border-l border-primary-foreground/20 shadow-sm cursor-pointer"
-                  title="Save & Print"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                </Button>
-              </div>
             </div>
           </div>
 
@@ -2251,7 +2274,7 @@ export function SalesInvoiceModal({
         open={showAddItemsModal}
         onOpenChange={setShowAddItemsModal}
         items={billItemOptions}
-        onAddSelectedItems={handleBatchAddItems}
+        onAddSelectedItems={handleBatchAddItemsAtTarget}
         priceMode="sales"
         onOpenCreateItem={() => {
           setShowAddItemsModal(false);
