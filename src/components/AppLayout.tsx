@@ -199,6 +199,11 @@ export default function AppLayout() {
   const [salesInvoiceModalOpen, setSalesInvoiceModalOpen] = useState(false);
 
   const { title, subtitle } = getPageMeta(location.pathname);
+  const isPosRoute =
+    location.pathname === ROUTE_PATHS.checkout ||
+    location.pathname === ROUTE_PATHS.pos ||
+    location.pathname.startsWith("/checkout") ||
+    location.pathname.startsWith("/pos");
 
   // Keyboard shortcut listener for ⌘K / Ctrl+K
   useEffect(() => {
@@ -219,18 +224,19 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-y-auto">
-        {/* Global Top Header - CredAlert Liquid Glass Shell */}
-        <header className="h-14 sm:h-16 shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
-          {/* Mobile Header: CREDSMART Logo (Matching Image 5) */}
-          <div className="flex md:hidden items-center min-w-0 mr-2">
-            <CredsmartLogo size={34} showSubtitle={true} />
-          </div>
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Global Top Header - CredAlert Liquid Glass Shell (Hidden on POS route so POS terminal has full height and its dedicated terminal header) */}
+        {!isPosRoute && (
+          <header className="h-14 sm:h-16 shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
+            {/* Mobile Header: CREDSMART Logo (Matching Image 5) */}
+            <div className="flex md:hidden items-center min-w-0 mr-2">
+              <CredsmartLogo size={34} showSubtitle={true} />
+            </div>
 
-          {/* Desktop Header: Dynamic Page Header Info (Matching Image 1) */}
-          <div className="hidden md:flex flex-col justify-center min-w-0 mr-3">
+            {/* Desktop Header: Dynamic Page Header Info (Matching Image 1) */}
+            <div className="hidden md:flex flex-col justify-center min-w-0 mr-3">
             <div className="flex items-center gap-2.5">
               <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate font-sans">
                 {title}
@@ -305,6 +311,7 @@ export default function AppLayout() {
             </div>
           </div>
         </header>
+        )}
 
         {/* Global Command Palette Dialog */}
         <CommandDialog open={openCommand} onOpenChange={setOpenCommand}>
@@ -412,9 +419,12 @@ export default function AppLayout() {
         {/* Main Content Viewport */}
         <main
           className={cn(
-            "flex-1 min-w-0 overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin",
-            "bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
-            isMobile && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]"
+            "flex-1 min-w-0 flex flex-col overflow-hidden",
+            isPosRoute
+              ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
+              : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+            isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+            isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
           )}
         >
           <Outlet />
