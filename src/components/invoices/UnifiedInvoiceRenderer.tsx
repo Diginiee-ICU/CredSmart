@@ -46,14 +46,19 @@ export interface UnifiedInvoiceProps {
   date: string | Date;
   dueDate?: string;
   time?: string;
-  storeInfo: {
-    name: string;
+  storeInfo?: {
+    name?: string;
     phone?: string;
     email?: string;
     address?: string;
     gstin?: string;
     pan?: string;
     logoUrl?: string;
+    bank_name?: string;
+    account_number?: string;
+    ifsc?: string;
+    account_holder?: string;
+    upi_id?: string;
   };
   partyInfo?: {
     name?: string | null;
@@ -160,31 +165,47 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const igstVal = totals.igst || 0;
 
     const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+
+    const safeStore = {
+      name: storeInfo?.name || "CredSmart Store",
+      phone: storeInfo?.phone || "",
+      email: storeInfo?.email || "",
+      address: storeInfo?.address || "",
+      gstin: storeInfo?.gstin || "",
+      pan: storeInfo?.pan || "",
+      logoUrl: storeInfo?.logoUrl || "",
+      bank_name: storeInfo?.bank_name || "",
+      account_number: storeInfo?.account_number || "",
+      ifsc: storeInfo?.ifsc || "",
+      account_holder: storeInfo?.account_holder || storeInfo?.name || "CredSmart Store",
+      upi_id: storeInfo?.upi_id || "",
+    };
+
     const selectedBank = propBankDetails?.accountNumber
       ? {
           bankName: propBankDetails.bankName || "",
           accountNumber: propBankDetails.accountNumber,
           ifsc: propBankDetails.ifsc || "",
           branch: propBankDetails.branch || "",
-          accountHolder: propBankDetails.accountHolder || storeInfo.name,
+          accountHolder: propBankDetails.accountHolder || safeStore.name,
         }
       : activeSettings.bankAccounts.find((b) => b.id === activeSettings.selectedBankAccountId) ||
         activeSettings.bankAccounts[0] ||
-        (storeInfo.account_number
+        (safeStore.account_number
           ? {
-              bankName: storeInfo.bank_name || "",
-              accountNumber: storeInfo.account_number,
-              ifsc: storeInfo.ifsc || "",
+              bankName: safeStore.bank_name || "",
+              accountNumber: safeStore.account_number,
+              ifsc: safeStore.ifsc || "",
               branch: "",
-              accountHolder: storeInfo.account_holder || storeInfo.name,
+              accountHolder: safeStore.account_holder || safeStore.name,
             }
           : null);
 
-    const activeUpiId = propUpiId || activeSettings.selectedPaymentQrUpi || storeInfo.upi_id || "";
+    const activeUpiId = propUpiId || activeSettings.selectedPaymentQrUpi || safeStore.upi_id || "";
 
     const upiPayload = `upi://pay?pa=${encodeURIComponent(
       activeUpiId
-    )}&pn=${encodeURIComponent(storeInfo.name)}&am=${totals.grandTotal}&cu=INR&tn=${encodeURIComponent(
+    )}&pn=${encodeURIComponent(safeStore.name)}&am=${totals.grandTotal}&cu=INR&tn=${encodeURIComponent(
       `Inv ${invoiceNumber}`
     )}`;
 
@@ -213,10 +234,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         >
           {/* Header */}
           <div className="text-center pb-2 mb-2 border-b border-dashed border-neutral-400">
-            <h2 className="font-bold text-sm sm:text-base uppercase tracking-wider">{storeInfo.name}</h2>
-            {storeInfo.address && <p className="text-[10px] text-neutral-600 mt-0.5">{storeInfo.address}</p>}
-            {storeInfo.phone && <p className="text-[10px] text-neutral-600">Tel: {storeInfo.phone}</p>}
-            {storeInfo.gstin && <p className="text-[10px] font-bold text-neutral-800">GSTIN: {storeInfo.gstin}</p>}
+            <h2 className="font-bold text-sm sm:text-base uppercase tracking-wider">{safeStore.name}</h2>
+            {safeStore.address && <p className="text-[10px] text-neutral-600 mt-0.5">{safeStore.address}</p>}
+            {safeStore.phone && <p className="text-[10px] text-neutral-600">Tel: {safeStore.phone}</p>}
+            {safeStore.gstin && <p className="text-[10px] font-bold text-neutral-800">GSTIN: {safeStore.gstin}</p>}
 
             <div className="mt-1.5 font-bold uppercase tracking-wide text-[11px] bg-neutral-100 py-0.5 px-2 rounded">
               {docTitle}
@@ -394,9 +415,9 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           <div className="flex items-start justify-between gap-3">
             {/* Store / Business Info */}
             <div className="flex items-start gap-2.5 max-w-[62%]">
-              {storeInfo.logoUrl ? (
+              {safeStore.logoUrl ? (
                 <img
-                  src={storeInfo.logoUrl}
+                  src={safeStore.logoUrl}
                   alt="Store Logo"
                   className="w-10 h-10 object-contain rounded-lg border border-slate-200 p-0.5 shrink-0 bg-white"
                 />
@@ -405,7 +426,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                   className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 shadow-xs"
                   style={{ backgroundColor: bgLightHex, color: primaryHex }}
                 >
-                  {storeInfo.name.charAt(0).toUpperCase()}
+                  {safeStore.name.charAt(0).toUpperCase()}
                 </div>
               )}
 
@@ -417,25 +438,25 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                   )}
                   style={{ color: isLuxury ? undefined : primaryHex }}
                 >
-                  {storeInfo.name}
+                  {safeStore.name}
                 </h2>
-                {storeInfo.address && (
-                  <p className="text-[9.5px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{storeInfo.address}</p>
+                {safeStore.address && (
+                  <p className="text-[9.5px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{safeStore.address}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-slate-600 mt-0.5">
-                  {storeInfo.phone && (
+                  {safeStore.phone && (
                     <span>
-                      Phone: <strong className="font-semibold text-slate-800">{storeInfo.phone}</strong>
+                      Phone: <strong className="font-semibold text-slate-800">{safeStore.phone}</strong>
                     </span>
                   )}
-                  {storeInfo.email && (
+                  {safeStore.email && (
                     <span>
-                      Email: <strong className="font-semibold text-slate-800">{storeInfo.email}</strong>
+                      Email: <strong className="font-semibold text-slate-800">{safeStore.email}</strong>
                     </span>
                   )}
-                  {storeInfo.gstin && (
+                  {safeStore.gstin && (
                     <span>
-                      GSTIN: <strong className="font-mono font-bold text-slate-900">{storeInfo.gstin}</strong>
+                      GSTIN: <strong className="font-mono font-bold text-slate-900">{safeStore.gstin}</strong>
                     </span>
                   )}
                 </div>
@@ -541,7 +562,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
               </p>
               <p>
                 <span>Place of Supply: </span>
-                <strong className="text-slate-800">{storeInfo.address?.includes(",") ? storeInfo.address.split(",").slice(-2).join(",") : "Local State"}</strong>
+                <strong className="text-slate-800">{safeStore.address?.includes(",") ? safeStore.address.split(",").slice(-2).join(",") : "Local State"}</strong>
               </p>
               <p>
                 <span>Terms: </span>
@@ -795,7 +816,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                     className="max-h-7 max-w-full object-contain filter contrast-125"
                   />
                 ) : (
-                  <span className="text-[8px] font-serif italic text-slate-400">For {storeInfo.name}</span>
+                  <span className="text-[8px] font-serif italic text-slate-400">For {safeStore.name}</span>
                 )}
               </div>
               <p className="text-[8.5px] font-bold text-slate-700 mt-0.5 text-right w-28">
