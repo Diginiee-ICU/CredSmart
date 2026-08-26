@@ -59,6 +59,7 @@ import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
+import { useProducts } from "@/context/ProductsContext";
 
 interface CustomerOption {
   id: string;
@@ -172,8 +173,8 @@ export function SalesInvoiceModal({
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
 
-  // Products catalog & Item search
-  const [productsCatalog, setProductsCatalog] = useState<ProductCatalogOption[]>([]);
+  // Products catalog & Item search (shared store)
+  const { products: productsCatalog, refreshProducts, addOrUpdateProduct } = useProducts();
   const [itemSearchText, setItemSearchText] = useState<Record<number, string>>({});
   const [activeItemDropdown, setActiveItemDropdown] = useState<number | null>(null);
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
@@ -359,12 +360,7 @@ export function SalesInvoiceModal({
   const fetchProducts = async () => {
     if (!orgId) return;
     try {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, barcode, sku, category, unit, brand, tags, product_batches(id, batch_number, mrp, stock, expiry_date)")
-        .eq("organization_id", orgId)
-        .order("name");
-      if (data) setProductsCatalog(data);
+      await refreshProducts(orgId);
     } catch (e) {
       console.error(e);
     }
@@ -686,13 +682,12 @@ export function SalesInvoiceModal({
       ],
     };
 
-    setProductsCatalog((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
-      if (exists) {
-        return prev.map((item) => (item.id === product.id ? { ...item, ...catalogRow, tags: { ...(item.tags || {}), ...(catalogRow.tags || {}) } } : item));
-      }
-      return [catalogRow, ...prev];
-    });
+    // Update shared product store so all views get refreshed
+    try {
+      addOrUpdateProduct(catalogRow);
+    } catch (e) {
+      console.warn('Failed to update shared product store', e);
+    }
 
     if (targetRowIndexForNewItem !== null) {
       setItems((prev) => {

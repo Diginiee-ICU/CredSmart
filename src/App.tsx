@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
+import { ProductsProvider } from "@/context/ProductsContext";
 import { ROUTE_PATHS, MANAGER_ROLES } from "@/config/routes";
 
 // Direct page imports for rock-solid zero-delay rendering
@@ -151,9 +152,10 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <OrgProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+            <ProductsProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
                 <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
