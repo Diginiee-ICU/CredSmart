@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
 import { ProductsProvider } from "@/context/ProductsContext";
 import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole } from "@/config/routes";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Direct page imports for rock-solid zero-delay rendering
 import Dashboard from "@/pages/Dashboard";
@@ -158,7 +159,8 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-              <Routes>
+                <ScrollToTop />
+                <Routes>
                 {/* Public Routes */}
                 <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                 <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
