@@ -1126,6 +1126,28 @@ export function SalesInvoiceModal({
                 </button>
               </div>
 
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handlePrint()}
+                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+                title="Print"
+              >
+                <Printer className="w-3.5 h-3.5" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => handleSave(false, true)}
+                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+              >
+                Save &amp; New
+              </Button>
+
             </div>
           </div>
 
@@ -1588,10 +1610,19 @@ export function SalesInvoiceModal({
                                     <div className="flex items-center gap-2">
                                       <button
                                         type="button"
-                                        onClick={() => {
+                                        onClick={async () => {
                                           // Remember which row opened the Add Items modal — useful if
                                           // the batch-add handler wants to insert at that row.
                                           setAddItemsTargetRow(idx);
+                                          // If catalog is empty for some reason (stale state), try fetching again
+                                          try {
+                                            if ((productsCatalog || []).length === 0) {
+                                              // fetchProducts is defined in this component scope
+                                              await fetchProducts();
+                                            }
+                                          } catch (e) {
+                                            console.warn('Failed to refresh product catalog before opening Add Items modal', e);
+                                          }
                                           setShowAddItemsModal(true);
                                         }}
                                         className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
