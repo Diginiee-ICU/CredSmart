@@ -235,14 +235,16 @@ export default function POSBilling() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  // Multi-Tab Held Bills State with local cart restoration
   const [tabs, setTabs] = useState<BillingTab[]>(() => {
     try {
       const saved = localStorage.getItem(getTabsStorageKey(orgId)) || localStorage.getItem(GLOBAL_BACKUP_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((t: any) => ({
+            ...t,
+            items: Array.isArray(t.items) ? t.items.filter((i: any) => i && i.product && i.product.id && i.batch) : [],
+          }));
         }
       }
     } catch (e) {
@@ -261,13 +263,17 @@ export default function POSBilling() {
       if (savedOrgTabs) {
         const parsed = JSON.parse(savedOrgTabs);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const totalItems = parsed.reduce((sum: number, t: BillingTab) => sum + (t.items?.length || 0), 0);
+          const sanitizedTabs = parsed.map((t: any) => ({
+            ...t,
+            items: Array.isArray(t.items) ? t.items.filter((i: any) => i && i.product && i.product.id && i.batch) : [],
+          }));
+          const totalItems = sanitizedTabs.reduce((sum: number, t: BillingTab) => sum + (t.items?.length || 0), 0);
           if (totalItems > 0 && tabs.every((t) => t.items.length === 0)) {
-            setTabs(parsed);
-            if (parsed[0]?.id) setActiveTabId(parsed[0].id);
+            setTabs(sanitizedTabs);
+            if (sanitizedTabs[0]?.id) setActiveTabId(sanitizedTabs[0].id);
             toast({
               title: "🛒 Active Cart Restored",
-              description: `Recovered ${totalItems} unbilled items across ${parsed.length} tab(s) from previous session.`,
+              description: `Recovered ${totalItems} unbilled items across ${sanitizedTabs.length} tab(s) from previous session.`,
               duration: 3000,
             });
           }
@@ -1498,7 +1504,7 @@ export default function POSBilling() {
         );
 
         if (match) {
-          const batch = match.batches[0] || {
+          const batch = match.batches?.[0] || {
             id: `batch-${match.id}`,
             mrp: 100,
             costPrice: 0,
