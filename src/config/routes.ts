@@ -126,8 +126,60 @@ export const RESTRICTED_ROUTES_FOR_CASHIER: ReadonlySet<string> = new Set([
   ROUTE_PATHS.activityLog,
 ]);
 
-export function isRouteAllowedForRole(url: string, role: string | null | undefined): boolean {
+export type FeatureKey =
+  | "dashboard"
+  | "pos"
+  | "sales"
+  | "purchases"
+  | "items"
+  | "parties"
+  | "cashBank"
+  | "eInvoicing"
+  | "automatedBills"
+  | "expenses"
+  | "reports"
+  | "analytics"
+  | "staff"
+  | "settings";
+
+export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
+  dashboard: [ROUTE_PATHS.dashboard],
+  pos: [ROUTE_PATHS.pos, ROUTE_PATHS.checkout],
+  sales: [ROUTE_PATHS.sales, ROUTE_PATHS.salesHistory],
+  purchases: [ROUTE_PATHS.purchases, ROUTE_PATHS.purchaseReturns, ROUTE_PATHS.discovery],
+  items: [ROUTE_PATHS.items, ROUTE_PATHS.inventory, ROUTE_PATHS.godown, ROUTE_PATHS.barcode],
+  parties: [ROUTE_PATHS.parties, ROUTE_PATHS.customers, ROUTE_PATHS.suppliers],
+  cashBank: [ROUTE_PATHS.cashBank],
+  eInvoicing: [ROUTE_PATHS.eInvoicing],
+  automatedBills: [ROUTE_PATHS.automatedBills],
+  expenses: [ROUTE_PATHS.expenses],
+  reports: [ROUTE_PATHS.reports],
+  analytics: [ROUTE_PATHS.analytics],
+  staff: [ROUTE_PATHS.staff, ROUTE_PATHS.activityLog],
+  settings: [
+    ROUTE_PATHS.settings,
+    ROUTE_PATHS.businessSettings,
+    ROUTE_PATHS.invoiceSettings,
+    ROUTE_PATHS.printSettings,
+  ],
+};
+
+export function isRouteAllowedForRole(
+  url: string,
+  role: string | null | undefined,
+  customPermissions?: Record<string, boolean> | null
+): boolean {
   if (!role) return false;
+
+  // Check granular custom feature toggles first if provided
+  if (customPermissions && typeof customPermissions === "object") {
+    for (const [featKey, routes] of Object.entries(FEATURE_ROUTE_MAP)) {
+      if (routes.some((r) => url === r || url.startsWith(`${r}/`))) {
+        if (customPermissions[featKey] === true) return true;
+        if (customPermissions[featKey] === false) return false;
+      }
+    }
+  }
   
   // Full Access Roles (Admin, Super Admin, Store Owner, Partner)
   if (

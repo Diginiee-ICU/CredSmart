@@ -37,6 +37,7 @@ export interface OrgContextValue {
   loading: boolean;
   refresh: () => Promise<void>;
   userRole: string | null;
+  userPermissions: Record<string, boolean> | null;
   switchOrganization: (id: string) => Promise<void>;
   createOrganization: (data: {
     name: string;
@@ -555,6 +556,7 @@ const OrgContext = createContext<OrgContextValue>({
   loading: true,
   refresh: async () => {},
   userRole: null,
+  userPermissions: null,
   switchOrganization: async () => {},
   createOrganization: async () => null,
 });
@@ -566,6 +568,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<OrgData[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
   const provisionAttemptedRef = useRef<Set<string>>(new Set());
 
   const fetchOrg = useCallback(async () => {
@@ -624,7 +627,20 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       setOrgId(currentActiveOrgId);
       localStorage.setItem(ACTIVE_ORG_KEY, currentActiveOrgId);
-      setUserRole(matchedMembership.role === "cashier" ? "cashier" : "store_owner");
+      setUserRole(matchedMembership.role || "store_owner");
+
+      // Load granular custom feature permissions
+      const permsKey = `org_user_permissions_${currentActiveOrgId}_${user.id}`;
+      const savedPerms = localStorage.getItem(permsKey);
+      if (savedPerms) {
+        try {
+          setUserPermissions(JSON.parse(savedPerms));
+        } catch {
+          setUserPermissions(null);
+        }
+      } else {
+        setUserPermissions(null);
+      }
 
       // Fetch all organizations user has access to from DB
       const orgIds = memberships.map((m) => m.organization_id);
@@ -859,7 +875,26 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchOrg();
-  }, [fetchOrg]);
+
+    const handlePermissionsUpdated = () => {
+      if (orgId && user) {
+        const permsKey = `org_user_permissions_${orgId}_${user.id}`;
+        const savedPerms = localStorage.getItem(permsKey);
+        if (savedPerms) {
+          try {
+            setUserPermissions(JSON.parse(savedPerms));
+          } catch {
+            setUserPermissions(null);
+          }
+        } else {
+          setUserPermissions(null);
+        }
+      }
+    };
+
+    window.addEventListener("credsmart_permissions_updated", handlePermissionsUpdated);
+    return () => window.removeEventListener("credsmart_permissions_updated", handlePermissionsUpdated);
+  }, [fetchOrg, orgId, user]);
 
   return (
     <OrgContext.Provider
@@ -870,6 +905,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         loading,
         refresh: fetchOrg,
         userRole,
+        userPermissions,
         switchOrganization,
         createOrganization,
       }}

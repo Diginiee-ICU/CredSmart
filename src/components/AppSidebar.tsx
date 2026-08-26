@@ -78,7 +78,7 @@ export function AppSidebar() {
   const quickCreateRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
-  const { org, orgId, organizations, switchOrganization, userRole } = useOrganization();
+  const { org, orgId, organizations, switchOrganization, userRole, userPermissions } = useOrganization();
   const location = useLocation();
 
   // Close dropdowns when clicking outside
@@ -95,10 +95,17 @@ export function AppSidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter groups and items based on role permissions
+  // Filter groups and items based on role permissions and granular feature toggles
   const filteredNavRouteGroups = NAV_ROUTES.map((group) => ({
     ...group,
-    items: group.items.filter((item) => isRouteAllowedForRole(item.url, userRole)),
+    items: group.items
+      .filter((item) => isRouteAllowedForRole(item.url, userRole, userPermissions))
+      .map((item) => ({
+        ...item,
+        children: item.children
+          ? item.children.filter((child) => isRouteAllowedForRole(child.url, userRole, userPermissions))
+          : undefined,
+      })),
   })).filter((group) => group.items.length > 0);
 
   const allAllowedNavItems = filteredNavRouteGroups.flatMap((g) => g.items);
