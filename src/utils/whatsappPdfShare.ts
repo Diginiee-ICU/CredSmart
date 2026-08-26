@@ -170,17 +170,47 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
 }
 
 /**
- * Downloads the PDF directly
+ * Downloads the PDF directly from either a Blob or an InvoiceSharePayload
  */
-export function downloadInvoicePdf(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+export async function downloadInvoicePdf(
+  target: InvoiceSharePayload | Blob,
+  optionalFilename?: string
+): Promise<void> {
+  try {
+    let blob: Blob;
+    let filename: string;
+
+    if (target instanceof Blob) {
+      blob = target;
+      filename = optionalFilename || "Invoice.pdf";
+    } else {
+      filename =
+        optionalFilename ||
+        `Invoice_${(target.invoiceNumber || "DOC").replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
+      blob = await generateInvoicePdfBlob(target);
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+    toast({
+      title: "Invoice PDF Downloaded",
+      description: `Saved ${filename} to your device.`,
+    });
+  } catch (err) {
+    console.error("Error downloading PDF:", err);
+    toast({
+      title: "Download Failed",
+      description: "Could not generate invoice PDF file.",
+      variant: "destructive",
+    });
+  }
 }
 
 /**

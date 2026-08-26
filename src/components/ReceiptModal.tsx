@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CartItem } from "@/types/pos";
 import { Printer, X, CheckCircle2, FileText, ScrollText, Smartphone, Copy, Check, Zap, Download, Bluetooth, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -299,12 +300,17 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:px-4 sm:pt-4 sm:pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
-      <div className="bg-slate-900 border border-slate-800 w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none sm:max-w-[780px] sm:h-auto sm:max-h-[92vh] sm:rounded-3xl flex flex-col animate-scale-in shadow-2xl text-white overflow-hidden">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="receipt-modal-title"
+      className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 pb-[env(safe-area-inset-bottom,0px)]"
+    >
+      <div className="bg-slate-900 border-0 sm:border border-slate-800 w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[94vh] max-w-full sm:max-w-[780px] sm:rounded-3xl flex flex-col shadow-2xl text-white overflow-hidden animate-scale-in">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
+        <div className="flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-3.5 border-b border-slate-800 bg-slate-900/95 shrink-0 z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-xs">
               <CheckCircle2 className="w-5 h-5" />
