@@ -207,7 +207,7 @@ export function CompanySearchAutocomplete({
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-border/60 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-border/60 animate-in fade-in zoom-in-95 duration-100">
           <div className="px-3 py-1.5 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
             <span>Found in MCA 3M+ Database</span>
             <span>Click to Auto-fill</span>
@@ -245,7 +245,7 @@ export function CompanySearchAutocomplete({
       )}
 
       {open && !loading && query.trim().length >= 2 && results.length === 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-4 text-center text-xs text-muted-foreground">
+        <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-4 text-center text-xs text-muted-foreground">
           {error ? `Search error: ${error}` : `No registered companies found matching "${query}"`}
         </div>
       )}
