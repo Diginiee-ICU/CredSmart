@@ -183,18 +183,27 @@ export function PurchaseInvoiceModal({
   const [initialNewItemName, setInitialNewItemName] = useState("");
 
   const billItemOptions: BillItemOption[] = useMemo(() => {
-    return productsCatalog.map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category || "General",
-      barcode: p.barcode,
-      sku: p.sku,
-      unit: p.unit || "Pcs",
-      sellingPrice: p.selling_price || 0,
-      costPrice: p.product_batches?.[0]?.cost_price || Math.round((p.selling_price || 0) * 0.8),
-      gstRate: p.tax_rate !== undefined ? p.tax_rate : 18,
-      stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-    }));
+    return productsCatalog.map((p) => {
+      const tags = (p as any).tags || {};
+      const selling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.[0]?.mrp || 0);
+      const cost = p.product_batches?.[0]?.cost_price || (tags && (tags.purchase_price !== undefined && tags.purchase_price !== null) ? Number(tags.purchase_price) : Math.round((selling || 0) * 0.8));
+      const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        barcode: p.barcode,
+        sku: p.sku,
+        hsn: hsnVal,
+        unit: p.unit || "Pcs",
+        sellingPrice: selling,
+        costPrice: cost,
+        gstRate: gst,
+        stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
+      };
+    });
   }, [productsCatalog]);
 
   // Line items
@@ -336,7 +345,7 @@ export function PurchaseInvoiceModal({
     try {
       const { data } = await supabase
         .from("products")
-        .select("id, name, barcode, sku, category, unit, tax_rate, selling_price, product_batches(id, batch_number, cost_price, mrp, stock)")
+        .select("id, name, barcode, sku, category, unit, brand, tags, product_batches(id, batch_number, cost_price, mrp, stock)")
         .eq("organization_id", orgId)
         .order("name");
       if (data) setProductsCatalog(data);
@@ -847,35 +856,6 @@ export function PurchaseInvoiceModal({
               </h2>
             </div>
 
-            {/* Center Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setViewMode("edit")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
-                  viewMode === "edit"
-                    ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                Edit Mode
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("preview")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
-                  viewMode === "preview"
-                    ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                Preview Mode
-              </button>
-            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">

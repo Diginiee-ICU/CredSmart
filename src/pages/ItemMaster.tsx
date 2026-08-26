@@ -612,7 +612,7 @@ export default function ItemMaster() {
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-card card-shadow overflow-hidden">
+      <div className="rounded-xl border border-border bg-card card-shadow overflow-hidden glass-panel">
         {/* Mobile card view */}
         <div className="block md:hidden divide-y divide-border">
           {filtered.map((product) => (

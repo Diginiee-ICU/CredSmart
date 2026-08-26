@@ -629,7 +629,7 @@ export default function Dashboard() {
         {/* Middle Row: Spline Area Chart + Latest Invoices Table (Matching Image 1 & 4) */}
         <div className="grid grid-cols-2 gap-4">
           {/* Left Column: FINANCIAL LEDGER SUMMARY Spline Chart */}
-          <div className="glass-card-3d p-4 flex flex-col justify-between">
+          <div className="glass-card-3d glass-panel p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
                 <div className="flex items-center gap-2">
@@ -750,7 +750,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Column: LATEST INVOICES & TRANSACTIONS Table (Matching Image 1 & 4) */}
-          <div className="glass-card-3d p-4 flex flex-col justify-between">
+          <div className="glass-card-3d glass-panel p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
                 <div className="flex items-center gap-2">

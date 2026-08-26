@@ -461,12 +461,25 @@ export function AddItemsToBillModal({
                   <td colSpan={5} className="py-12 text-center text-muted-foreground space-y-3">
                     <Package className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        No items matching "{searchQuery}"
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Try searching by barcode, SKU, category, or add a new item
-                      </p>
+                      {items.length === 0 ? (
+                        <>
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            No items in your catalog
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Your product catalog is empty. Create an item to get started.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            No items matching "{searchQuery}"
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Try searching by barcode, SKU, category, or add a new item
+                          </p>
+                        </>
+                      )}
                     </div>
                     {onOpenCreateItem && (
                       <Button

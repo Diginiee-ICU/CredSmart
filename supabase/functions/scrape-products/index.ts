@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     // ── Strategy 1: Jina Reader (free, handles JS/Cloudflare pages) ──
     let markdown = '';
     let imageUrls: string[] = [];
-    let debugLog = [];
+    const debugLog = [];
 
     try {
       console.log('Strategy 1: Jina Reader...');

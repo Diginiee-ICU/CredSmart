@@ -995,7 +995,7 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       {/* PARTIES TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
+      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col glass-panel">
         {/* MOBILE VIEW: High-Touch Party Cards (Visible on screens < md) */}
         <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
           {loading ? (

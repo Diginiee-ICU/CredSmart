@@ -729,8 +729,8 @@ export function processGSTR3BData(
   let outwardCamt = 0;
   let outwardSamt = 0;
   let outwardIamt = 0;
-  let zeroRatedTxval = 0;
-  let nilExemptTxval = 0;
+  const zeroRatedTxval = 0;
+  const nilExemptTxval = 0;
 
   // Inter-state unregistered supplies (Table 3.2)
   const unregInterMap = new Map<string, { txval: number; iamt: number }>();

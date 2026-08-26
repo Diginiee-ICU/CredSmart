@@ -522,7 +522,7 @@ export default function Sales() {
         </div>
 
         {/* Filter Bar - Frosted Glass Container */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 glass-panel">
           <div className="flex flex-1 items-center gap-2 flex-wrap">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[180px] max-w-sm">
