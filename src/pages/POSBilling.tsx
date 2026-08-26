@@ -312,7 +312,9 @@ export default function POSBilling() {
         const payload = JSON.stringify(tabs);
         localStorage.setItem(getTabsStorageKey(orgId), payload);
         localStorage.setItem(GLOBAL_BACKUP_STORAGE_KEY, payload);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to save POS tabs before unload:", error);
+      }
 
       const hasItems = tabs.some((t) => t.items && t.items.length > 0);
       if (hasItems) {
@@ -1705,7 +1707,9 @@ export default function POSBilling() {
     if (speechRecognizerRef.current) {
       try {
         speechRecognizerRef.current.stop();
-      } catch {}
+      } catch (error) {
+        console.warn("Unable to stop speech recognition:", error);
+      }
       speechRecognizerRef.current = null;
     }
     setIsListening(false);
@@ -2999,7 +3003,7 @@ export default function POSBilling() {
                       onClick={() => {
                         updateCurrentTab((tab) => ({
                           ...tab,
-                          paymentMode: pm.mode as any,
+                          paymentMode: pm.mode as BillingTab["paymentMode"],
                         }));
                         if (pm.mode === "UPI") {
                           setShowUPIQRModal(true);
@@ -3324,7 +3328,7 @@ export default function POSBilling() {
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      defaultPaymentMode: e.target.value as any,
+                      defaultPaymentMode: e.target.value as PosSettings["defaultPaymentMode"],
                     }))
                   }
                   className="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
@@ -3343,7 +3347,7 @@ export default function POSBilling() {
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      receiptFormat: e.target.value as any,
+                      receiptFormat: e.target.value as PosSettings["receiptFormat"],
                     }))
                   }
                   className="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
@@ -3426,7 +3430,9 @@ export default function POSBilling() {
                   try {
                     localStorage.setItem(getSettingsStorageKey(orgId), JSON.stringify(settings));
                     toast({ title: "Settings Saved ✨", description: "Terminal preferences updated." });
-                  } catch {}
+                  } catch (error) {
+                    console.warn("Failed to save POS settings locally:", error);
+                  }
                   setShowSettingsModal(false);
                 }}
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20"
@@ -4076,7 +4082,9 @@ export default function POSBilling() {
                   try {
                     localStorage.removeItem(getTabsStorageKey(orgId));
                     localStorage.removeItem(GLOBAL_BACKUP_STORAGE_KEY);
-                  } catch {}
+                  } catch (error) {
+                    console.warn("Failed to clear POS cart backup:", error);
+                  }
                   setShowExitConfirmModal(false);
                   navigate(ROUTE_PATHS.dashboard);
                 }}
