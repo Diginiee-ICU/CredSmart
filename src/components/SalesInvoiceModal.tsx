@@ -190,6 +190,9 @@ export function SalesInvoiceModal({
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
+  // When AddItems modal is opened from a specific row, this remembers the row index so
+  // selected items can be inserted/handled for that row if needed.
+  const [addItemsTargetRow, setAddItemsTargetRow] = useState<number | null>(null);
 
   const billItemOptions: BillItemOption[] = useMemo(() => {
     return productsCatalog.map((p) => {
@@ -1555,119 +1558,32 @@ export function SalesInvoiceModal({
                             {idx + 1}
                           </td>
 
-                          {/* Item Search Autocomplete & Auto-Advance */}
-                          <td className="py-2 px-3 relative">
-                            <Input
-                              ref={(el) => {
-                                itemInputRefs.current[idx] = el;
-                              }}
-                              value={item.productName}
-                              onChange={(e) => {
-                                handleUpdateItem(idx, "productName", e.target.value);
-                                setItemSearchText((prev) => ({ ...prev, [idx]: e.target.value }));
-                                setActiveItemDropdown(idx);
-                              }}
-                              onFocus={() => {
-                                setActiveItemDropdown(idx);
-                                if (!itemSearchText[idx] && item.productName) {
-                                  setItemSearchText((prev) => ({ ...prev, [idx]: item.productName }));
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  const matches = getFilteredProducts(itemSearchText[idx] || item.productName);
-                                  if (matches.length > 0) {
-                                    handleSelectProduct(idx, matches[0]);
-                                  } else if (idx === recalculatedItems.length - 1) {
-                                    handleAddRow();
-                                  }
-                                }
-                              }}
-                              onBlur={() => {
-                                setTimeout(() => {
-                                  setActiveItemDropdown((curr) => (curr === idx ? null : curr));
-                                }, 220);
-                              }}
-                              placeholder="Enter Item Name / Barcode..."
-                              className="h-8 text-xs font-medium bg-transparent"
-                            />
-
-                            {activeItemDropdown === idx && (
-                              <div className="absolute z-modal left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
-                                {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
-                                  <>
-                                    <div className="space-y-0.5 pb-1">
-                                      {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
-                                        <button
-                                          key={prod.id}
-                                          type="button"
-                                          onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            handleSelectProduct(idx, prod);
-                                          }}
-                                          className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
-                                        >
-                                          <div className="flex-1 min-w-0">
-                                            <span className="font-bold text-slate-900 dark:text-white truncate block">
-                                              {prod.name}
-                                            </span>
-                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
-                                              {prod.barcode && <span>Code: {prod.barcode}</span>}
-                                              <span>Stock: {prod.stock} {prod.unit}</span>
-                                            </div>
-                                          </div>
-                                          <div className="text-right shrink-0">
-                                            <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                                              ₹{prod.rate}
-                                            </span>
-                                            <p className="text-[10px] text-muted-foreground font-mono">{prod.gstRate}% GST</p>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-
-                                    {/* Direct Create Item Action at Bottom of Matches */}
-                                    <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800">
+                          {/* Product selection replaced by an explicit Add Items button (opens modal)
+                              per user's request: typing field replaced with a simple button that shows
+                              the full inventory. This preserves Create New Item flow via the modal too. */}
+                                  <td className="py-2 px-3 relative">
+                                    <div className="flex items-center gap-2">
                                       <button
                                         type="button"
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
+                                        onClick={() => {
+                                          // Remember which row opened the Add Items modal — useful if
+                                          // the batch-add handler wants to insert at that row.
+                                          setAddItemsTargetRow(idx);
+                                          setShowAddItemsModal(true);
                                         }}
-                                        className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                                        className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
                                       >
-                                        <div className="flex items-center gap-1.5 truncate">
-                                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                          <span className="truncate">Create "{itemSearchText[idx] || item.productName || "New Item"}"</span>
+                                        <div className="flex items-center gap-2">
+                                          <Package className="w-4 h-4 text-primary" />
+                                          <div className="text-left">
+                                            <div className="truncate text-sm font-medium text-slate-900 dark:text-white">{item.productName || "Add Item To Bill"}</div>
+                                            <div className="text-[10px] text-muted-foreground">{item.hsn ? `HSN: ${item.hsn}` : "Select from inventory"}</div>
+                                          </div>
                                         </div>
-                                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary shrink-0 ml-1">
-                                          + Add to Inventory
-                                        </span>
+                                        <div className="text-xs text-muted-foreground">Open</div>
                                       </button>
                                     </div>
-                                  </>
-                                ) : (
-                                  <div className="p-3 text-center space-y-2">
-                                    <p className="text-xs text-muted-foreground font-medium">
-                                      No catalog item matching "{itemSearchText[idx] || item.productName || ""}"
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
-                                      }}
-                                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
-                                    >
-                                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                      <span>+ Create Item &amp; Add to Inventory</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </td>
+                                  </td>
 
                           {/* HSN */}
                           <td className="py-2 px-2">
