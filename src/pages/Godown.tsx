@@ -87,6 +87,7 @@ export default function GodownPage() {
 
   // Fetch Locations from Supabase
   useEffect(() => {
+    let isMounted = true;
     if (!orgId) return;
 
     const fetchLocations = async () => {
@@ -109,14 +110,15 @@ export default function GodownPage() {
             status: "active",
             created_at: l.created_at,
           }));
-          setGodowns(mapped);
+          if (isMounted) setGodowns(mapped);
         }
       } catch (err) {
-        console.warn("Failed to load locations from Supabase:", err);
+        if (isMounted) console.warn("Failed to load locations from Supabase:", err);
       }
     };
 
     fetchLocations();
+    return () => { isMounted = false; };
   }, [orgId]);
 
   // Open Add/Edit Godown

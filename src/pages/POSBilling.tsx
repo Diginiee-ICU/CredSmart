@@ -497,7 +497,7 @@ export default function POSBilling() {
           };
         });
 
-        const names = new Set(mapped.map((p) => p.name.toLowerCase().trim()));
+        const names = new Set(mapped.map((p) => (p.name || "").toLowerCase().trim()));
         STANDARD_PRODUCT_CATALOG.forEach((sp) => {
           if (!names.has(sp.name.toLowerCase().trim())) {
             mapped.push({
@@ -556,7 +556,7 @@ export default function POSBilling() {
           loyaltyPoints: Math.floor(Math.random() * 250),
         }));
 
-        const custNames = new Set(list.map((c) => c.name.toLowerCase().trim()));
+        const custNames = new Set(list.map((c) => (c.name || "").toLowerCase().trim()));
         STANDARD_PARTY_SUGGESTIONS
           .filter((p) => p.type === "customer" || p.type === "both")
           .forEach((sp) => {
@@ -644,11 +644,11 @@ export default function POSBilling() {
         if (!matchesCategory) return false;
         if (!query) return true;
 
-        const nameMatch = p.name.toLowerCase().includes(query);
-        const barcodeMatch = p.barcode.toLowerCase().includes(query);
-        const skuMatch = p.sku?.toLowerCase().includes(query) || false;
-        const brandMatch = p.brand.toLowerCase().includes(query);
-        const catMatch = p.category.toLowerCase().includes(query);
+        const nameMatch = p.name ? p.name.toLowerCase().includes(query) : false;
+        const barcodeMatch = p.barcode ? p.barcode.toLowerCase().includes(query) : false;
+        const skuMatch = p.sku ? p.sku.toLowerCase().includes(query) : false;
+        const brandMatch = p.brand ? p.brand.toLowerCase().includes(query) : false;
+        const catMatch = p.category ? p.category.toLowerCase().includes(query) : false;
 
         return nameMatch || barcodeMatch || skuMatch || brandMatch || catMatch;
       })
@@ -740,9 +740,9 @@ export default function POSBilling() {
           // Match barcode
           const matched = products.find(
             (p) =>
-              p.barcode.toLowerCase() === scannedCode.toLowerCase() ||
-              p.sku?.toLowerCase() === scannedCode.toLowerCase() ||
-              p.id.toLowerCase() === scannedCode.toLowerCase()
+              (p.barcode && p.barcode.toLowerCase() === scannedCode.toLowerCase()) ||
+              (p.sku && p.sku.toLowerCase() === scannedCode.toLowerCase()) ||
+              (p.id && p.id.toLowerCase() === scannedCode.toLowerCase())
           );
 
           if (matched) {
@@ -1246,7 +1246,7 @@ export default function POSBilling() {
         storeAddress: settings.storeAddress || org?.address,
         storePhone: settings.storePhone || org?.phone,
         gstin: settings.storeGstin || org?.gstin,
-        upiId: org?.upi_id || settings.selectedPaymentQrUpi,
+        upiId: org?.upi_id || settings.upiId,
         bankName: org?.bank_name,
         accountNumber: org?.account_number,
         ifsc: org?.ifsc,
@@ -1497,7 +1497,7 @@ export default function POSBilling() {
         // Search products from catalog or standard suggestions
         const match = products.find(
           (p) =>
-            p.name.toLowerCase().includes(query) ||
+            (p.name && p.name.toLowerCase().includes(query)) ||
             (p.barcode && p.barcode.toLowerCase() === query) ||
             (p.sku && p.sku.toLowerCase() === query) ||
             (p.category && p.category.toLowerCase().includes(query))
@@ -3787,7 +3787,7 @@ export default function POSBilling() {
                 .filter(
                   (c) =>
                     !customerSearchTerm ||
-                    c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                    (c.name && c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())) ||
                     c.phone?.includes(customerSearchTerm)
                 )
                 .map((c) => (

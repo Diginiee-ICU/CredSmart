@@ -73,19 +73,7 @@ export default function Inventory() {
   const [adjustQty, setAdjustQty] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
-  useEffect(() => {
-    if (orgLoading) return;
-
-    if (!orgId) {
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
-
-    fetchProducts();
-  }, [orgId, orgLoading]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = async (isMounted = true) => {
     if (!orgId) return;
     setLoading(true);
     try {
@@ -97,12 +85,12 @@ export default function Inventory() {
 
       if (prodsErr) {
         toast({ title: "Error loading inventory", description: prodsErr.message, variant: "destructive" });
-        setProducts([]);
+        if (isMounted) setProducts([]);
         return;
       }
 
       if (!prods || prods.length === 0) {
-        setProducts([]);
+        if (isMounted) setProducts([]);
         return;
       }
 
@@ -138,15 +126,29 @@ export default function Inventory() {
         return { ...p, batches: pBatches, totalStock, totalValue, avgMrp };
       });
 
-      setProducts(enriched);
+      if (isMounted) setProducts(enriched);
     } catch (err: any) {
       console.error("fetchProducts unexpected error:", err);
       toast({ title: "Error", description: err?.message || "Failed to load inventory", variant: "destructive" });
-      setProducts([]);
+      if (isMounted) setProducts([]);
     } finally {
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    if (orgLoading) return;
+
+    if (!orgId) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchProducts(isMounted);
+    return () => { isMounted = false; };
+  }, [orgId, orgLoading]);
 
   const handleStockAdjust = async () => {
     if (!adjustProduct || !adjustQty) return;
