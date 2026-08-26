@@ -1295,12 +1295,13 @@ export function PurchaseInvoiceModal({
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                         <th className="py-2.5 px-3 w-10 text-center">NO</th>
-                        <th className="py-2.5 px-3 min-w-[280px]">ITEMS</th>
-                        <th className="py-2.5 px-2 w-24">HSN</th>
-                        <th className="py-2.5 px-2 w-20 text-center">QTY</th>
+                        <th className="py-2.5 px-3 min-w-[260px]">ITEMS</th>
+                        <th className="py-2.5 px-2 w-20">HSN</th>
+                        <th className="py-2.5 px-2 w-16 text-center">QTY</th>
+                        <th className="py-2.5 px-2 w-24 text-center">UNIT</th>
                         <th className="py-2.5 px-2 w-28 text-right">PURCHASE PRICE (₹)</th>
-                        <th className="py-2.5 px-2 w-24 text-center">DISCOUNT</th>
-                        <th className="py-2.5 px-2 w-24 text-center">TAX</th>
+                        <th className="py-2.5 px-2 w-20 text-center">DISCOUNT</th>
+                        <th className="py-2.5 px-2 w-20 text-center">TAX</th>
                         <th className="py-2.5 px-3 w-28 text-right">AMOUNT (₹)</th>
                         <th className="py-2.5 px-2 w-10 text-center">
                           <Settings className="w-3.5 h-3.5 text-muted-foreground mx-auto" />
