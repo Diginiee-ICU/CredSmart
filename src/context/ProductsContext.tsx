@@ -46,7 +46,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, barcode, sku, category, unit, brand, tags, product_batches(id, batch_number, mrp, stock, expiry_date)"
+          "id, name, barcode, sku, category, brand, tags, product_batches(id, batch_number, mrp, stock, expiry_date)"
         )
         .eq("organization_id", effectiveOrg)
         .order("name");
