@@ -73,6 +73,7 @@ const UNIT_OPTIONS = [
   "SET",
   "GM",
   "ML",
+  "STEPS",
 ];
 
 const GST_RATES = [0, 5, 12, 18, 28];

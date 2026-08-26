@@ -1932,82 +1932,81 @@ export function PurchaseInvoiceModal({
         </DialogContent>
       </Dialog>
 
+      {/* ───────────────────────────────────────────────────────────── */}
       {/* INLINE QUICK ADD SUPPLIER MODAL */}
-      {showNewSupplierDialog && (
-        <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewSupplierDialog(false)} />
-          <div className="relative z-modal max-w-md rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                Add New Supplier (Bill From)
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                Quickly save supplier party details into your supplier ledger
-              </DialogDescription>
-            </DialogHeader>
+      {/* ───────────────────────────────────────────────────────────── */}
+      <Dialog open={showNewSupplierDialog} onOpenChange={setShowNewSupplierDialog}>
+        <DialogContent className="z-modal max-w-md rounded-2xl p-5">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-primary" />
+              Add New Supplier (Bill From)
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Quickly save supplier party details into your supplier ledger
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-3 py-2 text-xs">
-              <div>
-                <Label className="text-xs font-semibold">Supplier / Vendor Name *</Label>
-                <Input
-                  value={newSuppName}
-                  onChange={(e) => setNewSuppName(e.target.value)}
-                  placeholder="e.g. Tata Consumer Products / Sharma Wholesalers"
-                  className="mt-1 text-xs"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold">Phone Number</Label>
-                <Input
-                  value={newSuppPhone}
-                  onChange={(e) => setNewSuppPhone(e.target.value)}
-                  placeholder="10-digit mobile"
-                  className="mt-1 text-xs font-mono"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold">GSTIN (Optional)</Label>
-                <Input
-                  value={newSuppGstin}
-                  onChange={(e) => setNewSuppGstin(e.target.value.toUpperCase())}
-                  placeholder="27ABCDE1234F1Z5"
-                  className="mt-1 text-xs font-mono uppercase"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold">Address / City</Label>
-                <Input
-                  value={newSuppAddress}
-                  onChange={(e) => setNewSuppAddress(e.target.value)}
-                  placeholder="Warehouse / Factory location"
-                  className="mt-1 text-xs"
-                />
-              </div>
+          <div className="space-y-3 py-2 text-xs">
+            <div>
+              <Label className="text-xs font-semibold">Supplier / Vendor Name *</Label>
+              <Input
+                value={newSuppName}
+                onChange={(e) => setNewSuppName(e.target.value)}
+                placeholder="e.g. Tata Consumer Products / Sharma Wholesalers"
+                className="mt-1 text-xs"
+              />
             </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNewSupplierDialog(false)}
-                className="text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleCreateSupplierInline}
-                className="text-xs font-bold bg-primary text-primary-foreground"
-              >
-                Save Supplier
-              </Button>
+            <div>
+              <Label className="text-xs font-semibold">Phone Number</Label>
+              <Input
+                value={newSuppPhone}
+                onChange={(e) => setNewSuppPhone(e.target.value)}
+                placeholder="10-digit mobile"
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">GSTIN (Optional)</Label>
+              <Input
+                value={newSuppGstin}
+                onChange={(e) => setNewSuppGstin(e.target.value.toUpperCase())}
+                placeholder="27ABCDE1234F1Z5"
+                className="mt-1 text-xs font-mono uppercase"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Address / City</Label>
+              <Input
+                value={newSuppAddress}
+                onChange={(e) => setNewSuppAddress(e.target.value)}
+                placeholder="Warehouse / Factory location"
+                className="mt-1 text-xs"
+              />
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowNewSupplierDialog(false)}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleCreateSupplierInline}
+              className="text-xs font-bold bg-primary text-primary-foreground"
+            >
+              Save Supplier
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* ADD ITEMS TO BILL MODAL */}

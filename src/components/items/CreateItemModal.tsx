@@ -72,6 +72,7 @@ const UNIT_OPTIONS: ItemUnit[] = [
   "SET",
   "GM",
   "ML",
+  "STEPS",
 ];
 
 const GST_RATES: GSTRate[] = [0, 0.1, 0.25, 3, 5, 12, 18, 28];

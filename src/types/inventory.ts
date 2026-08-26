@@ -12,7 +12,10 @@ export type ItemUnit =
   | "BTL"
   | "SET"
   | "GM"
-  | "ML";
+  | "ML"
+  | "STEPS"
+  | "steps"
+  | "Steps";
 
 export type GSTRate = 0 | 0.1 | 0.25 | 3 | 5 | 12 | 18 | 28;
 
