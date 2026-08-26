@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/utils/escpos";
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
+import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { cn } from "@/lib/utils";
 
 export interface ReceiptData {
@@ -244,21 +245,24 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
     printWindow.document.close();
   };
 
-  const handleWhatsApp = () => {
-    const cleanCustomer = data.customerName || "Valued Customer";
-    const itemList = data.items
-      .map((it, i) => `${i + 1}. ${it.product.name} (x${it.quantity}) - ₹${(it.batch.mrp * it.quantity).toFixed(2)}`)
-      .join("\n");
-
-    const message = `Hello *${cleanCustomer}*,\n\nThank you for shopping at *${storeName}*!\n\n📋 *${data.isEstimate ? "ESTIMATE" : "TAX INVOICE"}*: ${data.invoiceNumber}\n📅 Date: ${formattedDate} ${formattedTime}\n💳 Payment: ${data.paymentMethod}\n\n*Items Purchased:*\n${itemList}\n\n💰 *Total Amount: ₹${data.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*\n\nFor any queries, please reach out to us${storePhone ? ` at ${storePhone}` : ""}.\nHave a wonderful day!`;
-
-    const rawPhone = data.customerPhone ? data.customerPhone.replace(/\D/g, "") : "";
-    const waUrl =
-      rawPhone.length >= 10
-        ? `https://wa.me/91${rawPhone.slice(-10)}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-    window.open(waUrl, "_blank");
+  const handleWhatsApp = async () => {
+    await shareInvoicePdfToWhatsApp({
+      invoiceNumber: data.invoiceNumber,
+      customerName: data.customerName || undefined,
+      customerPhone: data.customerPhone || undefined,
+      storeName: storeName,
+      storePhone: storePhone || undefined,
+      totalAmount: data.total,
+      date: formattedDate,
+      isEstimate: data.isEstimate,
+      elementId: "receipt-printable-area",
+      items: data.items.map((it) => ({
+        name: it.product.name,
+        quantity: it.quantity,
+        rate: it.batch.mrp,
+        total: it.batch.mrp * it.quantity,
+      })),
+    });
   };
 
   const handleCopySummary = () => {
