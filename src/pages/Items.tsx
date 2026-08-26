@@ -174,26 +174,7 @@ export default function Items() {
     } else {
       setLoading(false);
     }
-  }, [orgId, refreshProducts]);,          mrp: mrpVal,
-          gstRate: gstRateVal,
-          hsnCode: tags.hsn_code || null,
-          currentStock: totalStock,
-          openingStock: totalStock,
-          minStockAlert: minAlert,
-          isLowStock: totalStock <= minAlert,
-          batches: itemBatches,
-          created_at: p.created_at,
-        };
-      });
-
-      setItems(formatted);
-    } catch (err) {
-      console.error("Error fetching items:", err);
-      setItems(DEFAULT_SAMPLE_ITEMS);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId]);
+  }, [orgId, refreshProducts]);
 
 
   useEffect(() => {
