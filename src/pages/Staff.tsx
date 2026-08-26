@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +29,7 @@ import {
   Sparkles,
   Info,
   ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
@@ -83,8 +84,8 @@ interface RoleDefinition {
   colorClass: string;
   bgLightClass: string;
   badgeClass: string;
-  icon: any;
-  illustrationSvg: React.ReactNode;
+  icon: LucideIcon;
+  illustrationSvg: ReactNode;
   summary: string;
   permissions: {
     sales: boolean | string;
@@ -409,7 +410,10 @@ export default function Staff() {
   // Active Role Modal Details
   const [selectedRoleDetail, setSelectedRoleDetail] = useState<RoleDefinition | null>(null);
 
-  const canManageStaff = MANAGER_ROLES.includes(userRole as any) || userRole === "admin" || userRole === "partner";
+  const canManageStaff =
+    userRole === "admin" ||
+    userRole === "partner" ||
+    (userRole ? MANAGER_ROLES.includes(userRole as (typeof MANAGER_ROLES)[number]) : false);
 
   useEffect(() => {
     if (orgLoading) return;
@@ -442,7 +446,7 @@ export default function Staff() {
       }
 
       const userIds = data.map((m) => m.user_id).filter(Boolean);
-      let profiles: any[] | undefined = [];
+      let profiles: Array<{ id: string; full_name: string | null; avatar_url: string | null }> | undefined = [];
       if (userIds.length > 0) {
         const { data: profilesData, error: profilesErr } = await supabase
           .from("profiles")

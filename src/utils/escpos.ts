@@ -790,8 +790,9 @@ export async function printViaWebBluetooth(bytes: Uint8Array): Promise<{ success
 
     server.disconnect();
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.warn("Web Bluetooth Print Exception:", err);
-    return { success: false, error: err.message || "Failed to send Bluetooth print payload." };
+    const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to send Bluetooth print payload.";
+    return { success: false, error: message };
   }
 }
