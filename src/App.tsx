@@ -9,7 +9,7 @@ import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
 import { ProductsProvider } from "@/context/ProductsContext";
-import { ROUTE_PATHS, MANAGER_ROLES } from "@/config/routes";
+import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole } from "@/config/routes";
 
 // Direct page imports for rock-solid zero-delay rendering
 import Dashboard from "@/pages/Dashboard";
@@ -96,7 +96,7 @@ function ProtectedRoutes() {
 
 function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] | string[] }) {
   const { user, loading: authLoading } = useAuth();
-  const { userRole, loading: orgLoading } = useOrganization();
+  const { userRole, userPermissions, loading: orgLoading } = useOrganization();
 
   if (authLoading || orgLoading) {
     return <SleekRouteLoader />;
@@ -107,7 +107,9 @@ function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] 
   }
 
   const effectiveRole = userRole || "store_owner";
-  if (!allowedRoles.includes(effectiveRole)) {
+  const currentPath = window.location.pathname;
+
+  if (!allowedRoles.includes(effectiveRole) && !isRouteAllowedForRole(currentPath, effectiveRole, userPermissions)) {
     return <Navigate to={ROUTE_PATHS.checkout} replace />;
   }
 

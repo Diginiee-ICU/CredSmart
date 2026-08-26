@@ -29,8 +29,21 @@ import {
   Sparkles,
   Info,
   ChevronRight,
+  Monitor,
+  ShoppingCart,
+  Receipt,
+  FileCheck,
+  Repeat,
+  FileSpreadsheet,
+  BarChart3,
+  Settings,
+  Landmark,
+  SlidersHorizontal,
+  Power,
+  CheckCheck,
   type LucideIcon,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
 import { toast } from "@/hooks/use-toast";
@@ -44,7 +57,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { MANAGER_ROLES, DetailedAppRole } from "@/config/routes";
+import { MANAGER_ROLES, DetailedAppRole, FeatureKey } from "@/config/routes";
 
 type AppRole =
   | "admin"
@@ -99,6 +112,183 @@ interface RoleDefinition {
     deleteRecords: boolean | string;
   };
 }
+
+export interface SystemFeatureItem {
+  key: FeatureKey;
+  label: string;
+  category: "Billing & Counter" | "Inventory & Purchases" | "Parties & Customers" | "Finance & Accounts" | "Intelligence & Reports" | "Administration";
+  description: string;
+  icon: LucideIcon;
+  badge: string;
+}
+
+export const SYSTEM_FEATURES: SystemFeatureItem[] = [
+  {
+    key: "pos",
+    label: "POS Billing Terminal",
+    category: "Billing & Counter",
+    description: "High-speed barcode scanner checkout, cash/card handling, hold bills, and thermal slip printing",
+    icon: Monitor,
+    badge: "Counter",
+  },
+  {
+    key: "sales",
+    label: "Sales Invoices & Quotations",
+    category: "Billing & Counter",
+    description: "Issue GST tax invoices, proforma, estimates/quotations, and delivery challans",
+    icon: ShoppingCart,
+    badge: "Sales",
+  },
+  {
+    key: "purchases",
+    label: "Purchases & Inward Bills",
+    category: "Inventory & Purchases",
+    description: "Record supplier bills, purchase orders (PO), inward batches, and debit notes",
+    icon: Truck,
+    badge: "Purchases",
+  },
+  {
+    key: "items",
+    label: "Product Catalog & Inventory",
+    category: "Inventory & Purchases",
+    description: "Create items, manage pricing, godowns/warehouses, stock adjustments, barcode printing",
+    icon: Boxes,
+    badge: "Inventory",
+  },
+  {
+    key: "parties",
+    label: "Customer & Supplier Directory",
+    category: "Parties & Customers",
+    description: "Maintain party phonebooks, credit balances, GSTINs, and customer ledgers (Khata)",
+    icon: Users,
+    badge: "Parties",
+  },
+  {
+    key: "dashboard",
+    label: "Dashboard & Real-Time Metrics",
+    category: "Intelligence & Reports",
+    description: "View store health, receivables (To Collect), payables (To Pay), and sales stats",
+    icon: Sparkles,
+    badge: "Metrics",
+  },
+  {
+    key: "cashBank",
+    label: "Cash & Bank Liquidity",
+    category: "Finance & Accounts",
+    description: "Manage bank accounts, record cash withdrawals/deposits, view net liquid balance",
+    icon: Landmark,
+    badge: "Finance",
+  },
+  {
+    key: "eInvoicing",
+    label: "E-Invoicing & E-Way Compliance",
+    category: "Finance & Accounts",
+    description: "Generate compliant GST IRN e-invoices and transporter e-way bills",
+    icon: FileCheck,
+    badge: "Compliance",
+  },
+  {
+    key: "automatedBills",
+    label: "Automated Recurring Invoices",
+    category: "Finance & Accounts",
+    description: "Schedule automated recurring customer bills and repeat subscriptions",
+    icon: Repeat,
+    badge: "Automation",
+  },
+  {
+    key: "expenses",
+    label: "Store Expenses & Petty Cash",
+    category: "Finance & Accounts",
+    description: "Record daily petty cash expenses, utilities, transport costs, and operational bills",
+    icon: Receipt,
+    badge: "Expenses",
+  },
+  {
+    key: "reports",
+    label: "Financial Reports & P&L",
+    category: "Intelligence & Reports",
+    description: "Generate P&L statements, GSTR-1, GSTR-3B tax reports, sales summaries",
+    icon: FileSpreadsheet,
+    badge: "Reports",
+  },
+  {
+    key: "analytics",
+    label: "Business Insights & Trends",
+    category: "Intelligence & Reports",
+    description: "Analyze item velocity, customer repeat rates, profit margins, and sales trends",
+    icon: BarChart3,
+    badge: "Analytics",
+  },
+  {
+    key: "staff",
+    label: "Staff & Permissions Manager",
+    category: "Administration",
+    description: "Invite employees, assign roles, and toggle granular feature permissions",
+    icon: Shield,
+    badge: "Admin",
+  },
+  {
+    key: "settings",
+    label: "Store & Invoice Settings",
+    category: "Administration",
+    description: "Configure business profile, GSTIN, invoice sequence, and print formats",
+    icon: Settings,
+    badge: "Admin",
+  },
+];
+
+export const ROLE_PRESET_PERMISSIONS: Record<AppRole, Record<FeatureKey, boolean>> = {
+  store_owner: {
+    dashboard: true, pos: true, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: true, settings: true,
+  },
+  super_admin: {
+    dashboard: true, pos: true, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: true, settings: true,
+  },
+  admin: {
+    dashboard: true, pos: true, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: true, settings: true,
+  },
+  partner: {
+    dashboard: true, pos: true, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: true, settings: true,
+  },
+  manager: {
+    dashboard: true, pos: true, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: false, settings: true,
+  },
+  salesman: {
+    dashboard: false, pos: true, sales: true, purchases: false, items: true,
+    parties: true, cashBank: false, eInvoicing: false, automatedBills: false,
+    expenses: false, reports: false, analytics: false, staff: false, settings: false,
+  },
+  cashier: {
+    dashboard: false, pos: true, sales: true, purchases: false, items: false,
+    parties: false, cashBank: false, eInvoicing: false, automatedBills: false,
+    expenses: false, reports: false, analytics: false, staff: false, settings: false,
+  },
+  stock_manager: {
+    dashboard: false, pos: true, sales: false, purchases: true, items: true,
+    parties: true, cashBank: false, eInvoicing: false, automatedBills: false,
+    expenses: false, reports: false, analytics: false, staff: false, settings: false,
+  },
+  delivery_boy: {
+    dashboard: false, pos: true, sales: true, purchases: false, items: false,
+    parties: true, cashBank: false, eInvoicing: false, automatedBills: false,
+    expenses: false, reports: false, analytics: false, staff: false, settings: false,
+  },
+  accountant: {
+    dashboard: true, pos: false, sales: true, purchases: true, items: true,
+    parties: true, cashBank: true, eInvoicing: true, automatedBills: true,
+    expenses: true, reports: true, analytics: true, staff: false, settings: false,
+  },
+};
 
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
@@ -409,6 +599,98 @@ export default function Staff() {
 
   // Active Role Modal Details
   const [selectedRoleDetail, setSelectedRoleDetail] = useState<RoleDefinition | null>(null);
+
+  // Granular Feature Modal State
+  const [featureModalMember, setFeatureModalMember] = useState<Member | null>(null);
+  const [editingPermissions, setEditingPermissions] = useState<Record<FeatureKey, boolean>>({} as Record<FeatureKey, boolean>);
+  const [customPermissionsMap, setCustomPermissionsMap] = useState<Record<string, Record<FeatureKey, boolean>>>({});
+
+  // Helper to load member's effective permissions
+  const getMemberPermissions = (member: Member): Record<FeatureKey, boolean> => {
+    if (customPermissionsMap[member.user_id]) {
+      return customPermissionsMap[member.user_id];
+    }
+    const storageKey = `org_user_permissions_${orgId}_${member.user_id}`;
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...(ROLE_PRESET_PERMISSIONS[member.role] || ROLE_PRESET_PERMISSIONS.salesman), ...parsed };
+      } catch {}
+    }
+    return ROLE_PRESET_PERMISSIONS[member.role] || ROLE_PRESET_PERMISSIONS.salesman;
+  };
+
+  const getEnabledFeaturesCount = (member: Member): number => {
+    const perms = getMemberPermissions(member);
+    return Object.values(perms).filter(Boolean).length;
+  };
+
+  const openFeatureModal = (member: Member) => {
+    setFeatureModalMember(member);
+    const perms = getMemberPermissions(member);
+    setEditingPermissions({ ...perms });
+  };
+
+  const handleToggleFeature = (key: FeatureKey, val: boolean) => {
+    setEditingPermissions((prev) => ({
+      ...prev,
+      [key]: val,
+    }));
+  };
+
+  const handleApplyPreset = (presetRole: AppRole) => {
+    const preset = ROLE_PRESET_PERMISSIONS[presetRole];
+    if (preset) {
+      setEditingPermissions({ ...preset });
+      toast({
+        title: "Preset Applied",
+        description: `Loaded standard permissions for ${roleLabelsMap[presetRole] || presetRole}`,
+      });
+    }
+  };
+
+  const handleToggleAll = (enableAll: boolean) => {
+    const updated: Record<string, boolean> = {};
+    SYSTEM_FEATURES.forEach((f) => {
+      updated[f.key] = enableAll;
+    });
+    setEditingPermissions(updated as Record<FeatureKey, boolean>);
+    toast({
+      title: enableAll ? "All Features Enabled" : "All Features Disabled",
+      description: enableAll
+        ? "Activated all 14 features for this user."
+        : "Deactivated all features for this user.",
+    });
+  };
+
+  const handleSavePermissions = async () => {
+    if (!featureModalMember || !orgId) return;
+    try {
+      const storageKey = `org_user_permissions_${orgId}_${featureModalMember.user_id}`;
+      localStorage.setItem(storageKey, JSON.stringify(editingPermissions));
+      
+      setCustomPermissionsMap((prev) => ({
+        ...prev,
+        [featureModalMember.user_id]: editingPermissions,
+      }));
+
+      // Broadcast permissions change across the app
+      window.dispatchEvent(new CustomEvent("credsmart_permissions_updated"));
+
+      toast({
+        title: "Permissions Saved!",
+        description: `Updated feature access for ${featureModalMember.profile?.full_name || "Staff Member"}`,
+      });
+      setFeatureModalMember(null);
+    } catch (err) {
+      toast({
+        title: "Save Failed",
+        description: normalizeError(err),
+        variant: "destructive",
+      });
+    }
+  };
 
   const canManageStaff =
     userRole === "admin" ||
@@ -940,6 +1222,9 @@ export default function Staff() {
                         <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-bold border", rDef?.badgeClass || "badge-info")}>
                           {rDef?.title || member.role}
                         </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                          {getEnabledFeaturesCount(member)} / {SYSTEM_FEATURES.length} Features ON
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Joined {new Date(member.created_at).toLocaleDateString()}
@@ -947,7 +1232,20 @@ export default function Staff() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openFeatureModal(member)}
+                      disabled={!canManageStaff}
+                      className="h-8 px-2.5 text-xs font-bold gap-1.5 rounded-lg border-primary/40 text-primary hover:bg-primary/10 transition-all cursor-pointer shadow-2xs"
+                      title="Toggle granular feature access for this user"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                      <span>Feature Toggles ({getEnabledFeaturesCount(member)}/{SYSTEM_FEATURES.length})</span>
+                    </Button>
+
                     <div className="relative">
                       <select
                         value={member.role}
@@ -1105,6 +1403,166 @@ export default function Staff() {
                   className="text-xs font-bold bg-primary text-primary-foreground"
                 >
                   Select for Invite
+                </Button>
+              </div>
+            </>
+          )}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 6. GRANULAR FEATURE ACCESS & PERMISSION TOGGLE MODAL */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <Dialog
+        open={!!featureModalMember}
+        onOpenChange={(o) => !o && setFeatureModalMember(null)}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+          {featureModalMember && (
+            <>
+              <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
+                      {(featureModalMember.profile?.full_name || "Staff Member")
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>{featureModalMember.profile?.full_name || "Staff Member"}</span>
+                        <span className="badge badge-info text-xs">
+                          {roleLabelsMap[featureModalMember.role] || featureModalMember.role}
+                        </span>
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                        Customize individual feature switches from any role. Toggle features ON or OFF to grant or restrict access.
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              {/* Quick Actions & Role Presets */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Quick Role Presets
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAll(true)}
+                      className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <CheckCheck className="w-3 h-3" /> Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAll(false)}
+                      className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Power className="w-3 h-3" /> Disable All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(["salesman", "cashier", "stock_manager", "delivery_boy", "accountant", "store_owner"] as AppRole[]).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => handleApplyPreset(r)}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-all shadow-2xs cursor-pointer"
+                    >
+                      {roleLabelsMap[r]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feature Toggles Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Feature Access Toggles
+                  </h4>
+                  <span className="text-xs font-bold text-primary font-mono">
+                    {Object.values(editingPermissions).filter(Boolean).length} of {SYSTEM_FEATURES.length} Enabled
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {SYSTEM_FEATURES.map((feat) => {
+                    const Icon = feat.icon;
+                    const isEnabled = editingPermissions[feat.key] ?? false;
+
+                    return (
+                      <div
+                        key={feat.key}
+                        onClick={() => handleToggleFeature(feat.key, !isEnabled)}
+                        className={cn(
+                          "p-3 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer select-none",
+                          isEnabled
+                            ? "bg-primary/5 border-primary/40 shadow-xs"
+                            : "bg-muted/10 border-border/70 opacity-75 hover:opacity-100"
+                        )}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div
+                            className={cn(
+                              "p-2 rounded-lg shrink-0 mt-0.5",
+                              isEnabled
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-foreground">
+                                {feat.label}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                              {feat.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 pt-0.5">
+                          <Switch
+                            checked={isEnabled}
+                            onCheckedChange={(checked) => handleToggleFeature(feat.key, checked)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeatureModalMember(null)}
+                  className="text-xs cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSavePermissions}
+                  className="text-xs font-bold bg-primary text-primary-foreground shadow-sm cursor-pointer"
+                >
+                  Save &amp; Apply Feature Permissions
                 </Button>
               </div>
             </>
