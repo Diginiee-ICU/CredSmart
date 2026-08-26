@@ -425,8 +425,10 @@ export default function AppLayout() {
         open={quickCreateModalOpen}
         onOpenChange={setQuickCreateModalOpen}
         onActionSelect={(key) => {
-          if (key === "sales_invoice" || key === "pos_billing") {
+          if (key === "sales_invoice") {
             setSalesInvoiceModalOpen(true);
+          } else if (key === "pos_billing" || key === "pos" || key === "checkout") {
+            navigate(ROUTE_PATHS.checkout);
           }
         }}
       />
