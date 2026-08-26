@@ -30,6 +30,7 @@ import { InventoryItem, ItemUnit, GSTRate, ItemOffer } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
+import { useProducts } from "@/context/ProductsContext";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreateOfferModal } from "@/components/items/CreateOfferModal";
 import { ProductLibraryModal } from "@/components/items/ProductLibraryModal";
@@ -147,86 +148,33 @@ export default function Items() {
   const [adjustQty, setAdjustQty] = useState("");
   const [adjustType, setAdjustType] = useState<"add" | "reduce">("add");
 
-  // Fetch Items & Batches from Supabase
-  const fetchItems = useCallback(async () => {
-    if (!orgId) {
-      setItems([]);
+  // Products are served by the shared ProductsContext. Keep a local view in-sync for filtering/sorting UI
+  const { products, refreshProducts, addOrUpdateProduct } = useProducts();
+
+  useEffect(() => {
+    // Mirror shared products into local `items` for the page UI
+    setItems(products || []);
+    setLoading(false);
+  }, [products]);
+
+  useEffect(() => {
+    // Ensure products are loaded when orgId becomes available
+    if (orgId && (!products || products.length === 0)) {
+      (async () => {
+        setLoading(true);
+        try {
+          await refreshProducts(orgId);
+        } catch (err) {
+          console.error("Failed to refresh products:", err);
+          toast.error("Failed to load products.");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } else {
       setLoading(false);
-      return;
     }
-
-    setLoading(true);
-    try {
-      const { data: dbProducts, error: prodErr } = await supabase
-        .from("products")
-        .select("id, name, brand, category, barcode, sku, image_url, tags, created_at")
-        .eq("organization_id", orgId)
-        .order("name");
-
-      if (prodErr || !dbProducts || dbProducts.length === 0) {
-        setItems([]);
-        setLoading(false);
-        return;
-      }
-
-      const prodIds = dbProducts.map((p) => p.id);
-      const { data: batches } = await supabase
-        .from("product_batches")
-        .select("id, product_id, mrp, stock, cost_price, batch_number, expiry_date, location_id")
-        .in("product_id", prodIds.length > 0 ? prodIds : ["__none__"]);
-
-      const batchMap: Record<string, ProductBatchSummary[]> = {};
-      (batches || []).forEach((b) => {
-        if (!batchMap[b.product_id]) batchMap[b.product_id] = [];
-        batchMap[b.product_id].push({
-          id: b.id,
-          productId: b.product_id,
-          batchNumber: b.batch_number,
-          mrp: Number(b.mrp) || 0,
-          sellingPrice: Number(b.mrp) || 0,
-          costPrice: Number(b.cost_price) || 0,
-          stock: Number(b.stock) || 0,
-          expiryDate: b.expiry_date,
-          locationId: b.location_id,
-        });
-      });
-
-      const formatted: InventoryItem[] = dbProducts.map((p) => {
-        const tags = (p.tags || {}) as ProductTags;
-        const itemBatches = batchMap[p.id] || [];
-        const firstBatch = itemBatches[0] || { sellingPrice: 0, costPrice: 0, mrp: 0 };
-        const totalStock = itemBatches.reduce((sum, b) => sum + (Number(b.stock) || 0), 0);
-
-        // Selling price: prefer tags.selling_price, then batch sellingPrice/mrp, fall back to 100
-        const tagSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : undefined;
-        const sCandidate = tagSelling !== undefined && !isNaN(Number(tagSelling)) ? Number(tagSelling) : (Number(firstBatch.sellingPrice) || Number(firstBatch.mrp) || 100);
-        const sPrice = isNaN(sCandidate) || sCandidate <= 0 ? 100 : sCandidate;
-
-        // Purchase price: prefer tags.purchase_price, then batch costPrice, else 80% of selling
-        const tagPurchase = tags && (tags.purchase_price !== undefined && tags.purchase_price !== null) ? Number(tags.purchase_price) : undefined;
-        const pCandidate = tagPurchase !== undefined && !isNaN(Number(tagPurchase)) ? Number(tagPurchase) : (Number(firstBatch.costPrice) || Math.round(sPrice * 0.8) || 80);
-        const pPrice = isNaN(pCandidate) || pCandidate <= 0 ? Math.round(sPrice * 0.8) : pCandidate;
-
-        // MRP: prefer batch.mrp then tags.mrp then selling price
-        const fbMrp = Number(firstBatch.mrp);
-        const tagMrp = tags && (tags.mrp !== undefined && tags.mrp !== null) ? Number(tags.mrp) : undefined;
-        const mrpVal = !isNaN(fbMrp) && fbMrp > 0 ? fbMrp : (tagMrp !== undefined ? tagMrp : sPrice);
-
-        const minAlert = tags && (tags.min_stock_alert !== undefined && tags.min_stock_alert !== null) ? Number(tags.min_stock_alert) : 10;
-        const unitVal: ItemUnit = (tags && tags.unit) ? (tags.unit as ItemUnit) : "PCS";
-        const gstRateVal: GSTRate = (tags && (tags.gst_rate !== undefined && tags.gst_rate !== null)) ? Number(tags.gst_rate) as GSTRate : 18;
-
-        return {
-          id: p.id,
-          name: p.name,
-          sku: p.sku || `SKU-${p.id.slice(0, 6)}`,
-          barcode: p.barcode,
-          category: p.category || "General",
-          brand: p.brand,
-          unit: unitVal,
-          sellingPrice: sPrice,
-          purchasePrice: pPrice,
-          mrp: mrpVal,
+  }, [orgId, refreshProducts]);,          mrp: mrpVal,
           gstRate: gstRateVal,
           hsnCode: tags.hsn_code || null,
           currentStock: totalStock,
@@ -247,9 +195,6 @@ export default function Items() {
     }
   }, [orgId]);
 
-  useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -348,7 +293,7 @@ export default function Items() {
         }
         toast.success(`Created item "${itemData.name}"!`);
       }
-      fetchItems();
+      await refreshProducts(orgId);
     } catch (err: unknown) {
       console.error("Save item error:", err);
       const msg = getErrorMessage(err);
@@ -448,7 +393,7 @@ export default function Items() {
         }
       }
       toast.success(`Successfully imported ${importedList.length} products with barcodes & stock!`);
-      fetchItems();
+      await refreshProducts(orgId);
     } catch (err: unknown) {
       console.error("Bulk item import error:", err);
       toast.error(getErrorMessage(err) || "Failed to persist imported items.");
@@ -468,7 +413,7 @@ export default function Items() {
     try {
       await supabase.from("products").delete().eq("id", item.id);
       toast.success("Product deleted.");
-      fetchItems();
+      await refreshProducts(orgId);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Failed to delete item.");
     }
@@ -523,18 +468,21 @@ export default function Items() {
 
   // Metric Cards Calculations
   const totalStockValue = items.reduce(
-    (sum, it) => sum + it.currentStock * it.purchasePrice,
+    (sum, it) => sum + ((it?.currentStock ?? 0) * (it?.purchasePrice ?? 0)),
     0
   );
-  const lowStockCount = items.filter((it) => it.isLowStock && it.currentStock > 0).length;
-  const outOfStockCount = items.filter((it) => it.currentStock <= 0).length;
-  const totalItemsCount = items.length;
+  const lowStockCount = items.filter((it) => (it?.isLowStock ?? false) && (it?.currentStock ?? 0) > 0).length;
+  const outOfStockCount = items.filter((it) => (it?.currentStock ?? 0) <= 0).length;
+  const totalItemsCount = items.filter(Boolean).length;
 
   // Sorting & Filtering
   const filteredItems = useMemo(() => {
+    // Guard against any falsy entries in `items` and use safe fallbacks for fields
     return items
+      .filter(Boolean)
       .filter((item) => {
-        if (categoryFilter !== "all" && item.category.toLowerCase() !== categoryFilter.toLowerCase()) {
+        const itemCategory = (item.category ?? "").toString();
+        if (categoryFilter !== "all" && itemCategory.toLowerCase() !== categoryFilter.toLowerCase()) {
           return false;
         }
         if (lowStockOnly && !item.isLowStock) {
@@ -542,25 +490,30 @@ export default function Items() {
         }
         if (!search.trim()) return true;
         const q = search.toLowerCase();
+        const name = (item.name ?? "").toString().toLowerCase();
+        const sku = (item.sku ?? "").toString().toLowerCase();
+        const barcode = (item.barcode ?? "").toString().toLowerCase();
+        const brand = (item.brand ?? "").toString().toLowerCase();
+        const hsn = (item.hsnCode ?? "").toString().toLowerCase();
         return (
-          item.name.toLowerCase().includes(q) ||
-          item.sku.toLowerCase().includes(q) ||
-          (item.barcode && item.barcode.toLowerCase().includes(q)) ||
-          (item.brand && item.brand.toLowerCase().includes(q)) ||
-          (item.hsnCode && item.hsnCode.toLowerCase().includes(q))
+          name.includes(q) ||
+          sku.includes(q) ||
+          (barcode && barcode.includes(q)) ||
+          (brand && brand.includes(q)) ||
+          (hsn && hsn.includes(q))
         );
       })
       .sort((a, b) => {
         if (sortField === "name") {
-          const comp = a.name.localeCompare(b.name);
+          const comp = (a.name ?? "").toString().localeCompare((b.name ?? "").toString());
           return sortDirection === "asc" ? comp : -comp;
         }
         if (sortField === "stock") {
-          const diff = a.currentStock - b.currentStock;
+          const diff = (a.currentStock ?? 0) - (b.currentStock ?? 0);
           return sortDirection === "asc" ? diff : -diff;
         }
         if (sortField === "sellingPrice") {
-          const diff = a.sellingPrice - b.sellingPrice;
+          const diff = (a.sellingPrice ?? 0) - (b.sellingPrice ?? 0);
           return sortDirection === "asc" ? diff : -diff;
         }
         return 0;
