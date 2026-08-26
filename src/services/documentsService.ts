@@ -374,8 +374,8 @@ export const documentsService = {
               purchase_invoice_id: piData.id,
               product_id: it.productId || null,
               quantity: it.quantity,
-              unit_cost: it.rate,
-              tax_rate: it.taxRate,
+              cost_price: it.rate,
+              mrp: it.rate,
               batch_number: it.batchNumber || "BATCH-01",
               expiry_date: it.expiryDate || null,
             }));

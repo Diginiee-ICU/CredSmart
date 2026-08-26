@@ -812,11 +812,9 @@ export function SalesInvoiceModal({
         .insert({
           organization_id: orgId,
           name: newCustName.trim(),
-          trade_name: newCustName.trim(),
           phone: newCustPhone.trim() || undefined,
           email: undefined,
           address: newCustAddress.trim() || undefined,
-          shipping_address: newCustAddress.trim() || undefined,
         })
         .select()
         .single();

@@ -408,8 +408,8 @@ const saveOrgBankAndUpi = (
     if (invoiceSettingsRaw) {
       try {
         const parsed = JSON.parse(invoiceSettingsRaw);
-        parsed.bankAccounts = [bankAccount];
-        parsed.selectedBankAccountId = bankAccount.id;
+        parsed.bankAccounts = bankAccounts;
+        parsed.selectedBankAccountId = bankAccounts[0]?.id || '';
         if (details.upiId) {
           parsed.selectedPaymentQrUpi = details.upiId;
         }
