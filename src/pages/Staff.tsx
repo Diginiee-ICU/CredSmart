@@ -500,9 +500,13 @@ export default function Staff() {
         },
       });
 
-      const result = (res as any)?.data;
+      type InviteFunctionResult = {
+        error?: string | { message?: string };
+        message?: string;
+      };
+      const result = (res as { data?: InviteFunctionResult }).data;
       if (res.error || !result || result.error) {
-        throw new Error(res.error?.message || result?.error || "Edge function invite failed");
+        throw new Error(res.error?.message || (typeof result?.error === "string" ? result.error : result?.error?.message) || "Edge function invite failed");
       }
 
       toast({ title: "Invitation Sent!", description: result?.message || `Invite sent to ${email} as ${roleLabelsMap[inviteRole]}` });
@@ -568,8 +572,18 @@ export default function Staff() {
         body: { email: inv.email, role: inv.role, organization_id: orgId },
       });
 
-      if (res.error || !res.data || (res.data as any).error) {
-        throw new Error(res.error?.message || (res.data as any)?.error || "Failed to resend invite via Edge Function");
+      type InviteFunctionResult = {
+        error?: string | { message?: string };
+        message?: string;
+      };
+      if (res.error || !res.data || (res.data as InviteFunctionResult).error) {
+        throw new Error(
+          res.error?.message ||
+            (typeof (res.data as InviteFunctionResult)?.error === "string"
+              ? (res.data as InviteFunctionResult).error
+              : (res.data as InviteFunctionResult)?.error?.message) ||
+            "Failed to resend invite via Edge Function"
+        );
       }
 
       toast({ title: "Invitation Resent", description: `New invite sent to ${inv.email}` });
