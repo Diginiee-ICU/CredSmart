@@ -3,6 +3,48 @@ import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentT
 
 const STORAGE_KEY_PREFIX = "credsmart_docs_";
 
+type CustomerSummary = {
+  name?: string | null;
+  phone?: string | null;
+  gstin?: string | null;
+};
+
+type SalesRow = {
+  id: string;
+  invoice_number?: string | null;
+  subtotal?: number | string | null;
+  discount_amount?: number | string | null;
+  payment_method?: string | null;
+  created_at?: string | null;
+  customer_id?: string | null;
+  customers?: CustomerSummary | null;
+  tax?: number | string | null;
+  total?: number | string | null;
+};
+
+type PurchaseInvoiceRow = {
+  id: string;
+  invoice_number?: string | null;
+  total_amount?: number | string | null;
+  tax_amount?: number | string | null;
+  status?: string | null;
+  created_at?: string | null;
+  notes?: string | null;
+  supplier_id?: string | null;
+  suppliers?: CustomerSummary | null;
+};
+
+type PurchaseReturnRow = {
+  id: string;
+  return_number?: string | null;
+  total_amount?: number | string | null;
+  status?: string | null;
+  reason?: string | null;
+  created_at?: string | null;
+  supplier_id?: string | null;
+  suppliers?: CustomerSummary | null;
+};
+
 function getStorageKey(orgId: string, docType: string): string {
   return `${STORAGE_KEY_PREFIX}${orgId}_${docType}`;
 }
@@ -21,8 +63,8 @@ export const documentsService = {
   saveLocalDocuments(orgId: string, docType: string, docs: BusinessDocument[]) {
     try {
       localStorage.setItem(getStorageKey(orgId, docType), JSON.stringify(docs));
-    } catch (e) {
-      console.error("Failed to save local docs:", e);
+    } catch (error) {
+      console.error("Failed to save local docs:", error);
     }
   },
 
@@ -54,7 +96,7 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && sales) {
-          const supabaseDocs: BusinessDocument[] = sales.map((s: any) => {
+          const supabaseDocs: BusinessDocument[] = (sales as SalesRow[]).map((s) => {
             const customer = s.customers;
             const isEstimate = s.payment_method?.toLowerCase() === "estimate";
             return {
@@ -129,7 +171,7 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          const supabaseDocs: BusinessDocument[] = data.map((inv: any) => {
+          const supabaseDocs: BusinessDocument[] = (data as PurchaseInvoiceRow[]).map((inv) => {
             const supplier = inv.suppliers;
             return {
               id: inv.id,
@@ -191,7 +233,7 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          const supabaseDocs: BusinessDocument[] = data.map((ret: any) => ({
+          const supabaseDocs: BusinessDocument[] = (data as PurchaseReturnRow[]).map((ret) => ({
             id: ret.id,
             organizationId: orgId,
             docType: docType,
@@ -343,14 +385,18 @@ export const documentsService = {
     if (docType === "sales_invoice") {
       try {
         await supabase.from("sales").delete().eq("id", docId);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to delete sales document from Supabase:", error);
+      }
     }
 
     // If purchase invoice
     if (docType === "purchase_invoice") {
       try {
         await supabase.from("purchase_invoices").delete().eq("id", docId);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to delete purchase document from Supabase:", error);
+      }
     }
 
     return true;

@@ -105,7 +105,18 @@ export default function PurchaseReturns() {
         console.error("fetchReturns error:", error);
         setReturns([]);
       } else if (data) {
-        setReturns(data.map((r: any) => ({
+        type SupplierJoin = { name?: string | null };
+        type PurchaseReturnRow = {
+          id: string;
+          return_number: string;
+          reason: string | null;
+          total_amount: number | string | null;
+          status: "draft" | "completed";
+          created_at: string;
+          suppliers?: SupplierJoin | null;
+          purchase_return_items?: Array<{ id: string }> | null;
+        };
+        setReturns((data as PurchaseReturnRow[]).map((r) => ({
           id: r.id,
           return_number: r.return_number,
           supplier_name: r.suppliers?.name || "Unknown",
@@ -196,8 +207,15 @@ export default function PurchaseReturns() {
 
       if (error) throw error;
       if (invItems && invItems.length > 0) {
+        type InvoiceItemRow = {
+          product_id: string;
+          batch_number?: string | null;
+          quantity: number | string | null;
+          cost_price: number | string | null;
+          products?: { name?: string | null } | null;
+        };
         setLineItems(
-          invItems.map((item: any) => ({
+          (invItems as InvoiceItemRow[]).map((item) => ({
             productId: item.product_id,
             productName: item.products?.name || "Product",
             batchNumber: item.batch_number || "BATCH-01",
@@ -247,9 +265,10 @@ export default function PurchaseReturns() {
 
       toast.success("Return completed — stock reversed and supplier account debited!"); 
       fetchReturns(); 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleMarkCompleted unexpected error:", err);
-      toast.error(err.message || "Failed to complete");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to complete";
+      toast.error(message);
     }
   };
 
@@ -341,9 +360,10 @@ export default function PurchaseReturns() {
       setReason("");
       setLineItems([{ productId: "", productName: "", batchNumber: "BATCH-01", quantity: 1, costPrice: 0 }]);
       fetchReturns();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleSave error:", err);
-      toast.error(err.message || "Failed to save return");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save return";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
