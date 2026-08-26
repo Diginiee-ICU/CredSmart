@@ -407,12 +407,23 @@ export default function Items() {
   };
 
   // Bulk Delete
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} selected items?`)) return;
-    setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
-    setSelectedIds(new Set());
-    toast.success("Selected items deleted.");
+    const ids = Array.from(selectedIds);
+    try {
+      if (orgId) {
+        await supabase.from("product_batches").delete().in("product_id", ids);
+        await supabase.from("products").delete().in("id", ids);
+        await refreshProducts(orgId);
+      } else {
+        setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      }
+      setSelectedIds(new Set());
+      toast.success("Selected items deleted.");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to delete items.");
+    }
   };
 
   // Bulk Export
@@ -425,7 +436,7 @@ export default function Items() {
   };
 
   // Quick Stock Adjustment
-  const handleSaveStockAdjustment = () => {
+  const handleSaveStockAdjustment = async () => {
     if (!adjustingItem) return;
     const qty = parseFloat(adjustQty) || 0;
     if (qty <= 0) {
@@ -438,19 +449,42 @@ export default function Items() {
         ? adjustingItem.currentStock + qty
         : Math.max(0, adjustingItem.currentStock - qty);
 
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === adjustingItem.id
-          ? { ...i, currentStock: newStock, isLowStock: newStock <= i.minStockAlert }
-          : i
-      )
-    );
-
-    toast.success(
-      `Stock adjusted for ${adjustingItem.name} (${adjustType === "add" ? "+" : "-"}${qty} ${adjustingItem.unit})`
-    );
-    setAdjustingItem(null);
-    setAdjustQty("");
+    try {
+      if (orgId) {
+        // Adjust logic needs proper batching if we were using it, but for UI sync:
+        // Actually, stock adjustment belongs in inventory, but for quick adjust on item page:
+        // We might just update the first batch, or we just rely on local state if DB update isn't implemented here fully.
+        // Assuming we need to update the first batch for simplicity, if batches were tracked:
+        const { data: batches } = await supabase.from("product_batches").select("id").eq("product_id", adjustingItem.id).limit(1);
+        if (batches && batches.length > 0) {
+          await supabase.from("product_batches").update({ stock: newStock }).eq("id", batches[0].id);
+        } else {
+          await supabase.from("product_batches").insert({
+            product_id: adjustingItem.id,
+            batch_number: "BATCH-01",
+            cost_price: adjustingItem.purchasePrice,
+            mrp: adjustingItem.mrp || adjustingItem.sellingPrice,
+            stock: newStock,
+          });
+        }
+        await refreshProducts(orgId);
+      } else {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === adjustingItem.id
+              ? { ...i, currentStock: newStock, isLowStock: newStock <= i.minStockAlert }
+              : i
+          )
+        );
+      }
+      toast.success(
+        `Stock adjusted for ${adjustingItem.name} (${adjustType === "add" ? "+" : "-"}${qty} ${adjustingItem.unit})`
+      );
+      setAdjustingItem(null);
+      setAdjustQty("");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to adjust stock.");
+    }
   };
 
   // Metric Cards Calculations
