@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/utils/escpos";
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
-import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
+import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 import { cn } from "@/lib/utils";
 
 export interface ReceiptData {
@@ -265,6 +265,26 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
     });
   };
 
+  const handleDownload = async () => {
+    await downloadInvoicePdf({
+      invoiceNumber: data.invoiceNumber,
+      customerName: data.customerName || undefined,
+      customerPhone: data.customerPhone || undefined,
+      storeName: storeName,
+      storePhone: storePhone || undefined,
+      totalAmount: data.total,
+      date: formattedDate,
+      isEstimate: data.isEstimate,
+      elementId: "receipt-printable-area",
+      items: data.items.map((it) => ({
+        name: (it as any).product?.name || (it as any).name || "Item",
+        quantity: it.quantity,
+        rate: (it as any).batch?.mrp || (it as any).rate || (it as any).unitPrice || 0,
+        total: ((it as any).batch?.mrp || (it as any).rate || (it as any).unitPrice || 0) * it.quantity,
+      })),
+    });
+  };
+
   const handleCopySummary = () => {
     const summary = `${data.isEstimate ? "Estimate" : "Invoice"}: ${data.invoiceNumber} | Store: ${storeName} | Total: ₹${data.total.toFixed(2)} | Date: ${formattedDate}`;
     navigator.clipboard.writeText(summary);
@@ -443,8 +463,29 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           </div>
         </div>
 
-        {/* Modal Action Bar */}
-        <div className="px-4 sm:px-6 py-3.5 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-5 gap-2.5 bg-slate-900 rounded-b-3xl">
+        {/* Modal Action Bar: Clean 3-Action Footer (Print, Download, Whatsapp) */}
+        <div className="px-4 sm:px-6 py-4 border-t border-slate-800 grid grid-cols-3 gap-3 bg-slate-900 rounded-b-3xl">
+          {/* 1. Print */}
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-indigo-950/40 active:scale-95 cursor-pointer"
+          >
+            <Printer className="w-4 h-4 shrink-0" />
+            <span>Print</span>
+          </button>
+
+          {/* 2. Download */}
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 hover:text-white font-bold text-xs sm:text-sm transition-all border border-slate-700 active:scale-95 cursor-pointer shadow-md"
+          >
+            <Download className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>Download</span>
+          </button>
+
+          {/* 3. Whatsapp */}
           <button
             type="button"
             onClick={handleWhatsApp}
@@ -453,44 +494,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current shrink-0" xmlns="http://www.w3.org/2000/svg">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
             </svg>
-            <span>WhatsApp</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleEscPosPrint(true)}
-            title="Send raw ESC/POS commands directly to thermal printer (WebUSB / Stream)"
-            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-amber-950/40 active:scale-95 cursor-pointer"
-          >
-            <Zap className="w-4 h-4 shrink-0" />
-            <span>ESC/POS Raw</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-indigo-950/40 active:scale-95 cursor-pointer"
-          >
-            <Printer className="w-4 h-4 shrink-0" />
-            <span>Print {layout === "a4" ? "A4" : layout}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCopySummary}
-            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            <span>{copied ? "Copied" : "Copy"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNewSale}
-            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl border-2 border-indigo-500 hover:bg-indigo-500/10 text-indigo-300 hover:text-white font-bold text-xs sm:text-sm transition-all col-span-2 sm:col-span-1 active:scale-95 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span>New Sale</span>
+            <span>Whatsapp</span>
           </button>
         </div>
       </div>
