@@ -476,7 +476,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
         </div>
 
         {/* Modal Action Bar: Clean 3-Action Footer (Print, Download, Whatsapp) */}
-        <div className="px-4 sm:px-6 py-4 border-t border-slate-800 grid grid-cols-3 gap-3 bg-slate-900 rounded-b-3xl">
+        <div className="px-3.5 sm:px-6 py-3 sm:py-4 border-t border-slate-800 grid grid-cols-3 gap-2.5 sm:gap-3 bg-slate-900 sm:rounded-b-3xl shrink-0 z-10 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
           {/* 1. Print */}
           <button
             type="button"
@@ -510,6 +510,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
