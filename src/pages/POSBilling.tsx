@@ -276,7 +276,7 @@ export default function POSBilling() {
     } catch (e) {
       console.warn("Cart auto-sync error:", e);
     }
-  }, [orgId]);
+  }, [orgId, tabs]);
 
   // Ensure active tab id is valid
   useEffect(() => {
@@ -374,7 +374,7 @@ export default function POSBilling() {
   const [voiceFeedback, setVoiceFeedback] = useState("");
   const [voiceLang, setVoiceLang] = useState<string>("en-IN");
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const speechRecognizerRef = useRef<any>(null);
+  const speechRecognizerRef = useRef<SpeechRecognition | null>(null);
 
   // Price/Qty/Discount Modal Form States
   const [modalPriceValue, setModalPriceValue] = useState("");
