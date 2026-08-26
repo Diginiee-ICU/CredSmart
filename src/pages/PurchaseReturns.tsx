@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Search,
@@ -263,7 +263,7 @@ export default function PurchaseReturns() {
         });
       }
 
-      toast.success("Return completed — stock reversed and supplier account debited!"); 
+      toast.success("Return completed â€” stock reversed and supplier account debited!"); 
       fetchReturns(); 
     } catch (err: unknown) {
       console.error("handleMarkCompleted unexpected error:", err);
@@ -352,7 +352,7 @@ export default function PurchaseReturns() {
         }
       }
 
-      toast.success(markCompleted ? "Return completed — stock reversed & account debited!" : "Return saved as draft");
+      toast.success(markCompleted ? "Return completed â€” stock reversed & account debited!" : "Return saved as draft");
       setShowForm(false);
       setSelectedSupplierId("");
       setSelectedInvoiceId("");
@@ -396,7 +396,7 @@ export default function PurchaseReturns() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="page-title flex items-center gap-2.5 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-sans">
-              <Undo2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              {typeof Undo2 !== 'undefined' ? <Undo2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> : <RotateCcw className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> }
               Purchase Returns &amp; Debit Notes
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400">
@@ -483,7 +483,7 @@ export default function PurchaseReturns() {
           </div>
           <div className="mt-3">
             <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
-              ₹{totalReturnValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              â‚¹{totalReturnValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Reversed merchandise</p>
           </div>
@@ -551,7 +551,7 @@ export default function PurchaseReturns() {
                       <div className="flex items-center gap-2">
                         <RotateCcw className="w-4 h-4 text-primary" />
                         <span className="text-sm font-bold text-foreground font-mono">
-                          {r.return_number || "—"}
+                          {r.return_number || "â€”"}
                         </span>
                       </div>
                       <span className={cn("badge text-[11px]", status.badgeClass)}>
@@ -571,7 +571,7 @@ export default function PurchaseReturns() {
                     <div className="flex items-center justify-between pt-1 border-t border-border/40 text-xs">
                       <span className="text-muted-foreground">{r.item_count} items</span>
                       <span className="font-bold text-sm text-foreground">
-                        ₹{Number(r.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        â‚¹{Number(r.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
 
@@ -618,7 +618,7 @@ export default function PurchaseReturns() {
                               <RotateCcw className="w-4 h-4" />
                             </div>
                             <span className="font-mono font-semibold text-foreground text-sm">
-                              {r.return_number || "—"}
+                              {r.return_number || "â€”"}
                             </span>
                           </div>
                         </td>
@@ -634,7 +634,7 @@ export default function PurchaseReturns() {
                               {r.reason}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">â€”</span>
                           )}
                         </td>
                         <td>
@@ -644,7 +644,7 @@ export default function PurchaseReturns() {
                         </td>
                         <td>
                           <span className="font-bold text-foreground">
-                            ₹{Number(r.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            â‚¹{Number(r.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </span>
                         </td>
                         <td>
@@ -756,7 +756,7 @@ export default function PurchaseReturns() {
                     <option value="">Choose an invoice to auto-load items...</option>
                     {supplierInvoices.map((inv) => (
                       <option key={inv.id} value={inv.id}>
-                        {inv.invoice_number} ({new Date(inv.created_at).toLocaleDateString("en-IN")}) — ₹{Number(inv.total_amount).toLocaleString("en-IN")}
+                        {inv.invoice_number} ({new Date(inv.created_at).toLocaleDateString("en-IN")}) â€” â‚¹{Number(inv.total_amount).toLocaleString("en-IN")}
                       </option>
                     ))}
                   </select>
@@ -791,7 +791,7 @@ export default function PurchaseReturns() {
                   <span>Product</span>
                   <span>Batch #</span>
                   <span>Qty</span>
-                  <span>Cost ₹</span>
+                  <span>Cost â‚¹</span>
                   <span></span>
                 </div>
 
@@ -892,7 +892,7 @@ export default function PurchaseReturns() {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase font-semibold">Total Debit Value</p>
                   <p className="text-2xl font-extrabold text-foreground">
-                    ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    â‚¹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:flex gap-2.5 w-full sm:w-auto">
@@ -920,5 +920,6 @@ export default function PurchaseReturns() {
     </div>
   );
 }
+
 
 
