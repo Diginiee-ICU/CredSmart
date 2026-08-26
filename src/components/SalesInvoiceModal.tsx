@@ -80,6 +80,7 @@ interface ProductCatalogOption {
   unit?: string;
   selling_price?: number;
   tax_rate?: number;
+  tags?: Record<string, any>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -393,10 +394,11 @@ export function SalesInvoiceModal({
         setPartyGstin(editingDoc.partyGstin || "");
         setPartyAddress(editingDoc.partyAddress || "");
         // Billing fields from editing document (if available)
-        setBillingAddress(editingDoc.billingAddress || "");
+        const legacyBillingAddress = editingDoc.billingAddress ?? editingDoc.partyAddress ?? "";
+        setBillingAddress(legacyBillingAddress);
         setBillingPincode(editingDoc.billingPincode || "");
         setBillingPlaceOfSupply(editingDoc.billingPlaceOfSupply || editingDoc.placeOfSupply || "27-Maharashtra");
-        setSameAsParty(Boolean(editingDoc.billingAddress && editingDoc.partyAddress && editingDoc.billingAddress === editingDoc.partyAddress));
+        setSameAsParty(Boolean(editingDoc.partyAddress && legacyBillingAddress === editingDoc.partyAddress));
         setPlaceOfSupply(editingDoc.placeOfSupply || "27-Maharashtra");
         setDocDate(editingDoc.docDate || new Date().toISOString().split("T")[0]);
         if (editingDoc.dueDate) {
@@ -653,7 +655,42 @@ export function SalesInvoiceModal({
   };
 
   const handleItemCreated = (product: CreatedProductResult) => {
-    fetchProducts();
+    const normalizedHsn = product.hsn || "9999";
+    const catalogRow: ProductCatalogOption = {
+      id: product.id,
+      name: product.name,
+      category: product.category || "General",
+      barcode: product.barcode || null,
+      sku: product.sku,
+      unit: product.unit || "Pcs",
+      tags: {
+        hsn_code: normalizedHsn,
+        gst_rate: product.taxRate,
+        selling_price: product.sellingPrice,
+        purchase_price: product.purchasePrice,
+        mrp: product.sellingPrice || product.purchasePrice || 0,
+        unit: product.unit || "Pcs",
+        min_stock_alert: 5,
+      },
+      product_batches: [
+        {
+          id: product.batchNumber || `batch-${product.id}`,
+          batch_number: product.batchNumber || "BATCH-01",
+          mrp: product.sellingPrice || product.purchasePrice || 0,
+          stock: product.stock || 0,
+          expiry_date: null,
+        },
+      ],
+    };
+
+    setProductsCatalog((prev) => {
+      const exists = prev.some((item) => item.id === product.id);
+      if (exists) {
+        return prev.map((item) => (item.id === product.id ? { ...item, ...catalogRow, tags: { ...(item.tags || {}), ...(catalogRow.tags || {}) } } : item));
+      }
+      return [catalogRow, ...prev];
+    });
+
     if (targetRowIndexForNewItem !== null) {
       setItems((prev) => {
         const copy = [...prev];
@@ -663,7 +700,7 @@ export function SalesInvoiceModal({
             productId: product.id,
             productName: product.name,
             barcode: product.barcode || undefined,
-            hsn: product.hsn || copy[targetRowIndexForNewItem].hsn || "",
+            hsn: normalizedHsn,
             unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
             rate: product.sellingPrice,
             taxRate: product.taxRate,
@@ -680,6 +717,10 @@ export function SalesInvoiceModal({
 
       focusItemInput(targetRowIndexForNewItem + 1);
     }
+
+    setTargetRowIndexForNewItem(null);
+    setInitialNewItemName("");
+    setShowQuickCreateItemModal(false);
   };
 
   const handleSelectCustomer = (c: CustomerOption) => {
@@ -753,6 +794,9 @@ export function SalesInvoiceModal({
 
     setSaving(true);
     try {
+      const resolvedBillingAddress = sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+      const resolvedBillingPlaceOfSupply = sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
+
       const finalDoc: Omit<BusinessDocument, "id"> = {
         organizationId: orgId,
         docType,
@@ -763,9 +807,9 @@ export function SalesInvoiceModal({
         partyPhone: partyPhone.trim() || undefined,
         partyGstin: partyGstin.trim() || undefined,
         partyAddress: partyAddress.trim() || undefined,
-        billingAddress: billingAddress.trim() || undefined,
-        billingPincode: billingPincode.trim() || undefined,
-        billingPlaceOfSupply: billingPlaceOfSupply.trim() || undefined,
+        billingAddress: resolvedBillingAddress,
+        billingPincode: sameAsParty ? undefined : (billingPincode.trim() || undefined),
+        billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
         placeOfSupply,
         docDate,
         dueDate: showDueDate ? dueDate : docDate,
@@ -812,6 +856,10 @@ export function SalesInvoiceModal({
         setPartyPhone("");
         setPartyGstin("");
         setPartyAddress("");
+        setBillingAddress("");
+        setBillingPincode("");
+        setBillingPlaceOfSupply("27-Maharashtra");
+        setSameAsParty(false);
         setItems([createNewRow("row-1")]);
         setAmountReceived(0);
         setMarkAsFullyPaid(false);
@@ -838,6 +886,9 @@ export function SalesInvoiceModal({
       return;
     }
 
+    const resolvedBillingAddress = sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+    const resolvedBillingPlaceOfSupply = sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
+
     const docToPrint: BusinessDocument = {
       id: editingDoc?.id || `preview-${Date.now()}`,
       organizationId: orgId,
@@ -849,9 +900,9 @@ export function SalesInvoiceModal({
       partyPhone: partyPhone.trim() || undefined,
       partyGstin: partyGstin.trim() || undefined,
       partyAddress: partyAddress.trim() || undefined,
-      billingAddress: billingAddress.trim() || undefined,
-      billingPincode: billingPincode.trim() || undefined,
-      billingPlaceOfSupply: billingPlaceOfSupply.trim() || undefined,
+      billingAddress: resolvedBillingAddress,
+      billingPincode: sameAsParty ? undefined : (billingPincode.trim() || undefined),
+      billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
       placeOfSupply,
       docDate,
       dueDate: showDueDate ? dueDate : docDate,
@@ -1259,6 +1310,75 @@ export function SalesInvoiceModal({
                       </div>
                     </div>
                   )}
+
+                  <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                        Billing Address
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="same-as-party-address"
+                          checked={sameAsParty}
+                          onCheckedChange={(checked) => {
+                            const isChecked = Boolean(checked);
+                            setSameAsParty(isChecked);
+                            if (isChecked) {
+                              setBillingAddress(partyAddress || "");
+                              setBillingPincode("");
+                              setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
+                            }
+                          }}
+                        />
+                        <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                          Same as party address
+                        </Label>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      value={billingAddress}
+                      onChange={(e) => handleBillingAddressChange(e.target.value)}
+                      disabled={sameAsParty}
+                      placeholder="Enter billing address"
+                      className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          Pincode
+                        </Label>
+                        <Input
+                          value={billingPincode}
+                          onChange={(e) => {
+                            setBillingPincode(e.target.value);
+                            if (sameAsParty) setSameAsParty(false);
+                          }}
+                          placeholder="400001"
+                          className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          State
+                        </Label>
+                        <Select value={billingPlaceOfSupply} onValueChange={handleBillingPlaceChange}>
+                          <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INDIAN_STATES_AND_CODES.map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* ───────────────────────────────────────────────────────────── */}

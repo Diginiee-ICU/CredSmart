@@ -297,9 +297,10 @@ export default function Items() {
       const tagsPayload = {
         unit: itemData.unit,
         gst_rate: itemData.gstRate,
-        hsn_code: itemData.hsnCode,
+        hsn_code: itemData.hsnCode || "9999",
         selling_price: itemData.sellingPrice,
         purchase_price: itemData.purchasePrice,
+        mrp: itemData.mrp || itemData.sellingPrice,
         min_stock_alert: itemData.minStockAlert,
       };
 

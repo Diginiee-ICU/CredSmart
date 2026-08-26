@@ -79,6 +79,7 @@ interface ProductCatalogOption {
   unit?: string;
   tax_rate?: number;
   selling_price?: number;
+  tags?: Record<string, any>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -604,7 +605,42 @@ export function PurchaseInvoiceModal({
   };
 
   const handleItemCreated = (product: CreatedProductResult) => {
-    fetchProducts();
+    const normalizedHsn = product.hsn || "9999";
+    const catalogRow: ProductCatalogOption = {
+      id: product.id,
+      name: product.name,
+      category: product.category || "General",
+      barcode: product.barcode || null,
+      sku: product.sku,
+      unit: product.unit || "Pcs",
+      tags: {
+        hsn_code: normalizedHsn,
+        gst_rate: product.taxRate,
+        selling_price: product.sellingPrice,
+        purchase_price: product.purchasePrice,
+        mrp: product.sellingPrice || product.purchasePrice || 0,
+        unit: product.unit || "Pcs",
+        min_stock_alert: 5,
+      },
+      product_batches: [
+        {
+          id: product.batchNumber || `batch-${product.id}`,
+          batch_number: product.batchNumber || "BATCH-01",
+          cost_price: product.purchasePrice || 0,
+          mrp: product.sellingPrice || product.purchasePrice || 0,
+          stock: product.stock || 0,
+        },
+      ],
+    };
+
+    setProductsCatalog((prev) => {
+      const exists = prev.some((item) => item.id === product.id);
+      if (exists) {
+        return prev.map((item) => (item.id === product.id ? { ...item, ...catalogRow, tags: { ...(item.tags || {}), ...(catalogRow.tags || {}) } } : item));
+      }
+      return [catalogRow, ...prev];
+    });
+
     if (targetRowIndexForNewItem !== null) {
       setItems((prev) => {
         const copy = [...prev];
@@ -614,7 +650,7 @@ export function PurchaseInvoiceModal({
             productId: product.id,
             productName: product.name,
             barcode: product.barcode || undefined,
-            hsn: product.hsn || copy[targetRowIndexForNewItem].hsn || "",
+            hsn: normalizedHsn,
             unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
             rate: product.purchasePrice || product.sellingPrice || 0,
             taxRate: product.taxRate,
@@ -631,6 +667,10 @@ export function PurchaseInvoiceModal({
 
       focusItemInput(targetRowIndexForNewItem + 1);
     }
+
+    setTargetRowIndexForNewItem(null);
+    setInitialNewItemName("");
+    setShowQuickCreateItemModal(false);
   };
 
   const handleSelectSupplier = (s: SupplierOption) => {
