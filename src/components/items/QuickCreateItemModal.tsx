@@ -167,7 +167,7 @@ export function QuickCreateItemModal({
       if (prodErr) throw prodErr;
 
       // 2. Insert batch / opening inventory
-      let batchNumber = "BATCH-01";
+      const batchNumber = "BATCH-01";
       if (!newProd) {
         throw new Error("The item was not created. Please try again.");
       }
@@ -203,9 +203,9 @@ export function QuickCreateItemModal({
       });
 
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating item:", err);
-      const msg = err?.message || String(err);
+      const msg = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to create item";
       if (msg && /schema|relation|could not find|does not exist|PGRST202/i.test(msg)) {
         // Fallback to local creation to avoid blocking POS usage when DB schema is missing
         const fallbackId = `item-local-${Date.now()}`;

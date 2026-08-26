@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
@@ -62,19 +62,7 @@ export default function ActivityLog() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  useEffect(() => {
-    if (orgLoading) return;
-
-    if (!orgId) {
-      setLogs([]);
-      setLoading(false);
-      return;
-    }
-
-    fetchLogs();
-  }, [orgId, orgLoading]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
     try {
@@ -116,7 +104,19 @@ export default function ActivityLog() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
+
+  useEffect(() => {
+    if (orgLoading) return;
+
+    if (!orgId) {
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchLogs();
+  }, [fetchLogs, orgId, orgLoading]);
 
   const entityTypes = useMemo(() => {
     return Array.from(new Set(logs.map((l) => l.entity_type))).filter(Boolean);

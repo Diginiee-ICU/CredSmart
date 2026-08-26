@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -74,19 +74,7 @@ export default function ItemMaster() {
   const [bulkEditField, setBulkEditField] = useState<"category" | "brand" | null>(null);
   const [bulkEditValue, setBulkEditValue] = useState("");
 
-  useEffect(() => {
-    if (orgLoading) return;
-
-    if (!orgId) {
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
-
-    fetchProducts();
-  }, [orgId, orgLoading]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
     try {
@@ -144,7 +132,19 @@ export default function ItemMaster() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId, toast]);
+
+  useEffect(() => {
+    if (orgLoading) return;
+
+    if (!orgId) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchProducts();
+  }, [fetchProducts, orgId, orgLoading]);
 
   const handleSaveProduct = async (data: SaveProductInput) => {
     if (!orgId) return;

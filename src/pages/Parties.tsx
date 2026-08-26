@@ -81,6 +81,16 @@ import { ROUTE_PATHS } from "@/config/routes";
 
 const DEFAULT_SAMPLE_PARTIES: Party[] = [];
 
+type CreditTransactionRecord = {
+  party_id: string;
+  party_type: "customer" | "supplier";
+  amount: number | string | null;
+  type: "credit" | "payment";
+  created_at?: string;
+  reference_id?: string | null;
+  description?: string | null;
+};
+
 export default function Parties() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,7 +124,7 @@ export default function Parties() {
   const [showReconciliationModal, setShowReconciliationModal] = useState(false);
   const [auditResult, setAuditResult] = useState<OrganizationReconciliationAudit | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
-  const [rawCreditTransactions, setRawCreditTransactions] = useState<any[]>([]);
+  const [rawCreditTransactions, setRawCreditTransactions] = useState<CreditTransactionRecord[]>([]);
 
   // Fetch Parties from Supabase (customers + suppliers + credit balances)
   const fetchParties = useCallback(async () => {
@@ -408,8 +418,9 @@ export default function Parties() {
         toast.success(`Created party "${partyData.name}"!`);
       }
       fetchParties();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save party.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save party.";
+      toast.error(message);
     }
   };
 
@@ -473,9 +484,10 @@ export default function Parties() {
       }
       toast.success(`Successfully imported ${importedList.length} parties!`);
       fetchParties();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Bulk party import error:", err);
-      toast.error(err.message || "Failed to save imported parties.");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save imported parties.";
+      toast.error(message);
     }
   };
 
@@ -497,8 +509,9 @@ export default function Parties() {
       }
       toast.success("Party deleted successfully.");
       fetchParties();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete party.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete party.";
+      toast.error(message);
     }
   };
 

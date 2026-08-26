@@ -81,7 +81,14 @@ export default function Suppliers() {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditDesc, setCreditDesc] = useState("");
   const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
-  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+  type CreditHistoryEntry = {
+    id: string;
+    amount: number | string | null;
+    type: "credit" | "payment";
+    description: string | null;
+    created_at: string;
+  };
+  const [creditHistory, setCreditHistory] = useState<CreditHistoryEntry[]>([]);
 
   const triggerGstAutoFill = async (targetId: string, showToast = true) => {
     const clean = targetId.trim().toUpperCase();
@@ -118,9 +125,10 @@ export default function Suppliers() {
           toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (showToast) {
-        toast.error(err?.message || "Failed to fetch tax details.");
+        const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to fetch tax details.";
+        toast.error(message);
       }
     } finally {
       setIsLookingUpGst(false);
@@ -297,8 +305,9 @@ export default function Suppliers() {
       }
       setShowForm(false);
       fetchSuppliers();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save supplier");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save supplier";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -317,9 +326,10 @@ export default function Suppliers() {
         toast.success("Supplier deleted");
         fetchSuppliers();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDelete error:", err);
-      toast.error(err.message || "Failed to delete");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete";
+      toast.error(message);
     }
     setDeleteConfirm(null);
   };
@@ -373,9 +383,10 @@ export default function Suppliers() {
       toast.success(creditType === "credit" ? "Credit recorded" : "Payment recorded");
       setCreditModal(null);
       fetchSuppliers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleCreditSubmit error:", err);
-      toast.error(err.message || "Failed to save credit transaction");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save credit transaction";
+      toast.error(message);
     }
   };
 
