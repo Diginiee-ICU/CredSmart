@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
+import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -913,13 +914,21 @@ export default function Sales() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    const url = `https://wa.me/?text=Invoice%20${doc.documentNumber}%20amount%20Rs.${doc.grandTotal}`;
-                                    window.open(url, "_blank");
+                                    shareInvoicePdfToWhatsApp({
+                                      invoiceNumber: doc.documentNumber,
+                                      customerName: doc.partyName,
+                                      customerPhone: (doc as any)?.customerPhone || (doc as any)?.partyPhone,
+                                      storeName: org?.name || "CredSmart Store",
+                                      storePhone: org?.phone,
+                                      totalAmount: doc.grandTotal,
+                                      date: doc.date,
+                                      isEstimate: doc.documentType === "quotation" || doc.documentType === "estimate",
+                                    });
                                   }}
-                                  className="gap-2 text-emerald-600"
+                                  className="gap-2 text-emerald-600 cursor-pointer"
                                 >
                                   <Share2 className="w-3.5 h-3.5" />
-                                  <span>Share on WhatsApp</span>
+                                  <span>Share PDF to WhatsApp</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
