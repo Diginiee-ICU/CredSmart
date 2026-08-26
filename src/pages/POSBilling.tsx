@@ -1603,7 +1603,7 @@ export default function POSBilling() {
 
       if (cmd.intent === "SET_PAYMENT_MODE" && cmd.paymentMode) {
         const mode = cmd.paymentMode;
-        updateCurrentTab((tab) => ({ ...tab, paymentMode: mode as any }));
+        updateCurrentTab((tab) => ({ ...tab, paymentMode: mode as BillingTab["paymentMode"] }));
         const msg = `Payment mode set to ${mode}`;
         setVoiceFeedback(msg);
         speakPOSMessage(msg, settings.soundEnabled);
