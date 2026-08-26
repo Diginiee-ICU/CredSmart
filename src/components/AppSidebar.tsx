@@ -994,24 +994,21 @@ export function AppSidebar() {
           if (orgId) {
             const isSupplier = partyData.partyType === "supplier";
             const targetTable = isSupplier ? "suppliers" : "customers";
+            const baseData = {
+              organization_id: orgId,
+              name: partyData.name,
+              phone: partyData.phone || undefined,
+              email: partyData.email || undefined,
+              address: partyData.address || undefined,
+            };
+            
+            const insertData = isSupplier 
+              ? { ...baseData, gstin: partyData.gstin || undefined }
+              : baseData;
+
             const { data: newParty } = await supabase
               .from(targetTable)
-              .insert({
-                organization_id: orgId,
-                name: partyData.name,
-                phone: partyData.phone || undefined,
-                email: partyData.email || undefined,
-                address: partyData.address || undefined,
-                gstin: partyData.gstin || undefined,
-                              trade_name: partyData.tradeName || undefined,
-                              pan: partyData.pan || undefined,
-                              pincode: partyData.pincode || undefined,
-                              shipping_address: partyData.shippingAddress || undefined,
-                              custom_fields: partyData.customFields || undefined,
-                              credit_limit: partyData.creditLimit ? Number(partyData.creditLimit) : undefined,
-                              credit_period_days: partyData.creditPeriodDays ? parseInt(String(partyData.creditPeriodDays), 10) : undefined,
-                              category: partyData.category || undefined,
-                            })
+              .insert(insertData)
               .select()
               .single();
 
