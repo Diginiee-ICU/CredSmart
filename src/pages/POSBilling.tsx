@@ -336,7 +336,18 @@ export default function POSBilling() {
 
   // Active Tab Reference Helper
   const currentTab = useMemo(() => {
-    return tabs.find((t) => t.id === activeTabId) || tabs[0] || createNewTab(1);
+    const found = tabs.find((t) => t.id === activeTabId) || tabs[0] || createNewTab(1);
+    return {
+      ...found,
+      items: Array.isArray(found.items)
+        ? found.items.filter((i) => i && i.product)
+        : [],
+      additionalCharges: Array.isArray(found.additionalCharges)
+        ? found.additionalCharges
+        : [],
+      discountValue: Number(found.discountValue) || 0,
+      receivedAmount: found.receivedAmount || "",
+    };
   }, [tabs, activeTabId]);
 
   // Update current tab helper
@@ -603,34 +614,41 @@ export default function POSBilling() {
       let itemDisc = 0;
       let totalQty = 0;
 
-      currentTab.items.forEach((item) => {
-        const lineSpTotal = item.sp * item.quantity;
+      const itemsList = Array.isArray(currentTab?.items) ? currentTab.items : [];
+      itemsList.forEach((item) => {
+        if (!item) return;
+        const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any)?.mrp ?? 0) || 0;
+        const itemQty = Number(item.quantity) || 1;
+        const itemDiscPct = Number(item.discountPercent) || 0;
+        const lineSpTotal = itemSp * itemQty;
         const lineDiscount =
           item.discountType === "percent"
-            ? (lineSpTotal * item.discountPercent) / 100
-            : item.discountPercent * item.quantity;
+            ? (lineSpTotal * itemDiscPct) / 100
+            : itemDiscPct * itemQty;
 
         sub += lineSpTotal;
         itemDisc += lineDiscount;
-        totalQty += item.quantity;
+        totalQty += itemQty;
       });
 
       // Bill global discount
       const discountedSub = Math.max(0, sub - itemDisc);
+      const discVal = Number(currentTab?.discountValue) || 0;
       const billDisc =
-        currentTab.discountType === "percent"
-          ? (discountedSub * currentTab.discountValue) / 100
-          : currentTab.discountValue;
+        currentTab?.discountType === "percent"
+          ? (discountedSub * discVal) / 100
+          : discVal;
 
       // Additional charges
-      const charges = currentTab.additionalCharges.reduce((acc, c) => acc + Number(c.amount || 0), 0);
+      const chargesList = Array.isArray(currentTab?.additionalCharges) ? currentTab.additionalCharges : [];
+      const charges = chargesList.reduce((acc, c) => acc + Number(c?.amount || 0), 0);
 
       // Tax calculation (based on settings or org tax rate)
-      const taxRate = (org?.tax_rate ?? settings.defaultTaxRate) / 100;
+      const taxRate = Number((org?.tax_rate ?? settings.defaultTaxRate) || 0) / 100;
       const taxableBase = Math.max(0, discountedSub - billDisc);
       const tax = taxableBase * taxRate;
 
-      const grand = Math.round(taxableBase + charges + tax);
+      const grand = Math.max(0, Math.round(taxableBase + charges + tax));
 
       return {
         subTotal: sub,
@@ -1960,7 +1978,7 @@ export default function POSBilling() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden h-[100dvh] w-full max-w-full">
+    <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden relative select-none">
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
       {/* ========================================================================= */}
@@ -2162,13 +2180,13 @@ export default function POSBilling() {
       {/* ========================================================================= */}
       {/* 3. MAIN TERMINAL WORKSPACE (LEFT WORKBENCH + RIGHT SUMMARY) */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 w-full h-full overflow-hidden bg-slate-50">
         {/* ========================================================================= */}
         {/* LEFT COLUMN: ACTION RIBBON + SEARCH/BARCODE + CART ITEMS TABLE */}
         {/* ========================================================================= */}
         <div
           className={cn(
-            "flex-1 flex flex-col min-w-0 border-r border-slate-200 bg-white overflow-hidden h-full",
+            "flex-1 flex flex-col min-w-0 border-r border-slate-200 bg-white overflow-hidden h-full min-h-0",
             mobileActiveView === "cart" ? "flex" : "hidden lg:flex"
           )}
         >
@@ -2431,7 +2449,7 @@ export default function POSBilling() {
           </div>
 
           {/* CART ITEM WORKBENCH CONTAINER (Mobile Cards + Desktop Table) */}
-          <div className="flex-1 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-50/50 overscroll-contain touch-pan-y">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-50/50 overscroll-contain touch-pan-y">
             {/* 1. DESKTOP DATA TABLE (Visible on lg: and larger screens) */}
             <div className="hidden lg:block">
               <table className="w-full text-left border-collapse min-w-[720px]">
@@ -2515,14 +2533,17 @@ export default function POSBilling() {
                       </td>
                     </tr>
                   ) : (
-                    currentTab.items.map((item, idx) => {
+                    (currentTab.items || []).map((item, idx) => {
                       const isSelected = idx === currentTab.selectedItemIndex;
+                      const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any)?.mrp ?? 0) || 0;
+                      const itemQty = Number(item.quantity) || 1;
+                      const itemDiscPct = Number(item.discountPercent) || 0;
                       const lineAmount =
-                        (item.sp -
+                        Math.max(0, itemSp -
                           (item.discountType === "percent"
-                            ? (item.sp * item.discountPercent) / 100
-                            : item.discountPercent)) *
-                        item.quantity;
+                            ? (itemSp * itemDiscPct) / 100
+                            : itemDiscPct)) *
+                        itemQty;
 
                       return (
                         <tr
@@ -2880,8 +2901,8 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         <div
           className={cn(
-            "w-full lg:w-[410px] bg-slate-50/90 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto shadow-sm h-full flex-1 min-h-0 overscroll-contain touch-pan-y pb-28 lg:pb-4",
-            mobileActiveView === "checkout" ? "flex" : "hidden lg:flex"
+            "w-full lg:w-[410px] xl:w-[440px] shrink-0 bg-slate-50/95 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto shadow-sm h-full min-h-0 overscroll-contain touch-pan-y pb-24 lg:pb-4",
+            mobileActiveView === "checkout" ? "flex flex-1" : "hidden lg:flex"
           )}
         >
           {/* Mobile Top Back-to-Cart Trigger */}
