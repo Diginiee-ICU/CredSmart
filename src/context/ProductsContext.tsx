@@ -12,15 +12,78 @@ export interface ProductCatalogOption {
   sku?: string;
   unit?: string;
   selling_price?: number;
+  sellingPrice?: number;
+  purchase_price?: number;
+  purchasePrice?: number;
+  mrp?: number;
+  currentStock?: number;
+  stock?: number;
   tax_rate?: number;
+  gstRate?: number;
+  hsnCode?: string;
+  minStockAlert?: number;
   tags?: Record<string, any>;
   product_batches?: {
     id: string;
     batch_number: string;
     mrp: number;
+    cost_price?: number;
     stock: number;
     expiry_date: string | null;
   }[];
+}
+
+export function normalizeProduct(p: any): ProductCatalogOption {
+  const tags = p.tags || {};
+  const batches = p.product_batches || [];
+  const firstBatch = batches[0];
+
+  const mrpVal =
+    Number(firstBatch?.mrp) ||
+    Number(tags.mrp) ||
+    Number(tags.selling_price) ||
+    Number(p.selling_price) ||
+    0;
+
+  const costVal =
+    Number(firstBatch?.cost_price) ||
+    Number(tags.purchase_price) ||
+    Number(tags.cost_price) ||
+    0;
+
+  const totalStock =
+    batches.length > 0
+      ? batches.reduce((sum: number, b: any) => sum + (Number(b.stock) || 0), 0)
+      : Number(tags.stock ?? tags.opening_stock ?? 0);
+
+  const unitVal = tags.unit || p.unit || "PCS";
+  const gstRateVal = Number(tags.gst_rate) || Number(p.tax_rate) || 18;
+  const hsnVal = tags.hsn_code || "9999";
+  const minAlert = Number(tags.min_stock_alert) || 5;
+
+  return {
+    ...p,
+    id: p.id,
+    name: p.name || "Unnamed Product",
+    category: p.category || "General",
+    brand: p.brand || null,
+    barcode: p.barcode || null,
+    sku: p.sku || "",
+    unit: unitVal,
+    selling_price: mrpVal,
+    sellingPrice: mrpVal,
+    purchase_price: costVal,
+    purchasePrice: costVal,
+    mrp: mrpVal,
+    currentStock: totalStock,
+    stock: totalStock,
+    tax_rate: gstRateVal,
+    gstRate: gstRateVal,
+    hsnCode: hsnVal,
+    minStockAlert: minAlert,
+    tags,
+    product_batches: batches,
+  };
 }
 
 type ProductsContextValue = {
@@ -46,12 +109,15 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, barcode, sku, category, brand, tags, product_batches(id, batch_number, mrp, stock, expiry_date)"
+          "id, name, barcode, sku, category, brand, tags, product_batches(id, batch_number, mrp, cost_price, stock, expiry_date)"
         )
         .eq("organization_id", effectiveOrg)
         .order("name");
       if (error) throw error;
-      if (data) setProducts(data as ProductCatalogOption[]);
+      if (data) {
+        const normalized = data.map(normalizeProduct);
+        setProducts(normalized);
+      }
     } catch (e) {
       console.error("Failed to refresh products", e);
       toast.error("Failed to load product catalog");
@@ -61,14 +127,15 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   }, [org]);
 
   const addOrUpdateProduct = useCallback((p: ProductCatalogOption) => {
+    const normalized = normalizeProduct(p);
     setProducts((prev) => {
-      const idx = prev.findIndex((x) => x.id === p.id);
+      const idx = prev.findIndex((x) => x.id === normalized.id);
       if (idx !== -1) {
         const copy = [...prev];
-        copy[idx] = { ...copy[idx], ...p };
+        copy[idx] = { ...copy[idx], ...normalized };
         return copy;
       }
-      return [p, ...prev];
+      return [normalized, ...prev];
     });
   }, []);
 

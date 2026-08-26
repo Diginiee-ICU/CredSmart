@@ -169,8 +169,12 @@ export function AppSidebar() {
         setCreateItemModalOpen(true);
         break;
       case "sales_invoice":
-      case "pos_billing":
         setSalesInvoiceModalOpen(true);
+        break;
+      case "pos_billing":
+      case "pos":
+      case "checkout":
+        navigate(ROUTE_PATHS.checkout);
         break;
       case "quotation":
         navigate("/sales?tab=quotation");

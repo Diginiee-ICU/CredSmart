@@ -152,8 +152,38 @@ export default function Items() {
   const { products, refreshProducts, addOrUpdateProduct } = useProducts();
 
   useEffect(() => {
-    // Mirror shared products into local `items` for the page UI
-    setItems(products || []);
+    // Map and hydrate products into local `items` for the page UI
+    if (products && products.length > 0) {
+      const mappedItems: InventoryItem[] = products.map((p: any) => {
+        const sPrice = p.sellingPrice ?? p.selling_price ?? p.mrp ?? 0;
+        const pPrice = p.purchasePrice ?? p.purchase_price ?? 0;
+        const stock = p.currentStock ?? p.stock ?? 0;
+        const minAlert = p.minStockAlert ?? 5;
+        return {
+          id: p.id,
+          name: p.name || "Item",
+          sku: p.sku || "",
+          barcode: p.barcode || null,
+          category: p.category || "General",
+          brand: p.brand || null,
+          unit: p.unit || "PCS",
+          sellingPrice: sPrice,
+          purchasePrice: pPrice,
+          mrp: p.mrp ?? sPrice,
+          gstRate: (p.gstRate || p.tax_rate || 18) as GSTRate,
+          hsnCode: p.hsnCode || "9999",
+          currentStock: stock,
+          openingStock: stock,
+          minStockAlert: minAlert,
+          isLowStock: stock <= minAlert,
+          batches: p.product_batches || [],
+          created_at: p.created_at || new Date().toISOString(),
+        };
+      });
+      setItems(mappedItems);
+    } else {
+      setItems([]);
+    }
     setLoading(false);
   }, [products]);
 
@@ -243,6 +273,38 @@ export default function Items() {
           })
           .eq("id", editingItem.id);
 
+        // Synchronize product batch prices & stock
+        try {
+          const { data: existingBatches } = await supabase
+            .from("product_batches")
+            .select("id")
+            .eq("product_id", editingItem.id)
+            .limit(1);
+
+          if (existingBatches && existingBatches.length > 0) {
+            await supabase
+              .from("product_batches")
+              .update({
+                cost_price: itemData.purchasePrice,
+                mrp: itemData.mrp || itemData.sellingPrice,
+                stock: itemData.currentStock,
+              })
+              .eq("id", existingBatches[0].id);
+          } else {
+            await supabase
+              .from("product_batches")
+              .insert({
+                product_id: editingItem.id,
+                batch_number: "BATCH-01",
+                cost_price: itemData.purchasePrice,
+                mrp: itemData.mrp || itemData.sellingPrice,
+                stock: itemData.currentStock,
+              });
+          }
+        } catch (batchErr) {
+          console.warn("Product batch update notice:", batchErr);
+        }
+
         toast.success(`Updated product "${itemData.name}"`);
       } else {
         const { data: newProd, error } = await supabase
@@ -261,16 +323,20 @@ export default function Items() {
 
         if (error) throw error;
 
-        if (newProd && itemData.batches && itemData.batches.length > 0) {
-          const batch = itemData.batches[0];
-          await supabase.from("product_batches").insert({
-            product_id: newProd.id,
-            batch_number: batch.batchNumber || "BATCH-01",
-            cost_price: itemData.purchasePrice,
-            mrp: itemData.mrp,
-            stock: itemData.currentStock,
-            expiry_date: batch.expiryDate || null,
-          });
+        if (newProd) {
+          const batch = (itemData.batches && itemData.batches.length > 0) ? itemData.batches[0] : null;
+          try {
+            await supabase.from("product_batches").insert({
+              product_id: newProd.id,
+              batch_number: batch?.batchNumber || "BATCH-01",
+              cost_price: itemData.purchasePrice,
+              mrp: itemData.mrp || itemData.sellingPrice,
+              stock: itemData.currentStock,
+              expiry_date: batch?.expiryDate || null,
+            });
+          } catch (batchErr) {
+            console.warn("Product batch insert notice:", batchErr);
+          }
         }
         toast.success(`Created item "${itemData.name}"!`);
       }

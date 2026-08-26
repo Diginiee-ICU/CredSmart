@@ -475,15 +475,30 @@ export default function POSBilling() {
         }
 
         const mapped: Product[] = productList.map((p) => {
-          const pBatches = batchMap[p.id] || [
-            {
-              id: `gen-${p.id}`,
-              costPrice: 0,
-              mrp: 100,
-              stock: 99,
-              batchNumber: "General",
-            },
-          ];
+          const tags = (p.tags as any) || {};
+          const fallbackMrp = Number(tags.mrp) || Number(tags.selling_price) || 100;
+          const fallbackCost = Number(tags.purchase_price) || Number(tags.cost_price) || Math.round(fallbackMrp * 0.8);
+          const fallbackStock = Number(tags.stock ?? tags.opening_stock ?? 99);
+
+          const rawBatches = batchMap[p.id] || [];
+          const pBatches: Batch[] =
+            rawBatches.length > 0
+              ? rawBatches.map((b) => ({
+                  ...b,
+                  mrp: b.mrp > 0 ? b.mrp : fallbackMrp,
+                  costPrice: b.costPrice > 0 ? b.costPrice : fallbackCost,
+                  stock: b.stock >= 0 ? b.stock : fallbackStock,
+                }))
+              : [
+                  {
+                    id: `gen-${p.id}`,
+                    costPrice: fallbackCost,
+                    mrp: fallbackMrp,
+                    stock: fallbackStock,
+                    batchNumber: "General",
+                  },
+                ];
+
           return {
             id: p.id,
             barcode: p.barcode || "",

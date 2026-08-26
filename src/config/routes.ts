@@ -295,6 +295,14 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         shortcut: "Alt+D",
       },
       {
+        title: "POS Billing",
+        url: ROUTE_PATHS.checkout,
+        icon: Monitor,
+        mobilePrimary: true,
+        badge: "FAST",
+        shortcut: "Alt+K",
+      },
+      {
         title: "Parties",
         url: ROUTE_PATHS.parties,
         icon: Users2,
@@ -328,7 +336,7 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         children: [
           { title: "Invoices & Estimates", url: ROUTE_PATHS.sales },
           { title: "Sales History", url: ROUTE_PATHS.salesHistory },
-          { title: "POS Billing", url: ROUTE_PATHS.pos },
+          { title: "POS Terminal", url: ROUTE_PATHS.checkout },
         ],
       },
       {

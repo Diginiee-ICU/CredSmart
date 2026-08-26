@@ -383,9 +383,9 @@ export default function Dashboard() {
           </h2>
 
           <div className="grid grid-cols-3 gap-2.5">
-            {/* 1: POS Bill -> Directly opens Sales Invoice Module */}
+            {/* 1: POS Bill -> Directly opens POS Terminal */}
             <button
-              onClick={() => setShowSalesInvoiceModal(true)}
+              onClick={() => navigate(ROUTE_PATHS.checkout)}
               className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-white/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
             >
               <div className="w-11 h-11 rounded-full bg-[#6366F1] text-white flex items-center justify-center mb-1.5 shadow-sm">

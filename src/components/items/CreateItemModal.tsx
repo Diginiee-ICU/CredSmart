@@ -137,14 +137,20 @@ export function CreateItemModal({
       setBarcode(initialData.barcode || "");
       setCategory(initialData.category || allCategories[0] || "General");
       setBrand(initialData.brand || "");
-      setUnit(initialData.unit || "PCS");
-      setSellingPrice(initialData.sellingPrice?.toString() || "");
-      setPurchasePrice(initialData.purchasePrice?.toString() || "");
-      setMrp(initialData.mrp?.toString() || "");
-      setGstRate(initialData.gstRate || 18);
-      setHsnCode(initialData.hsnCode || "");
-      setOpeningStock(initialData.openingStock?.toString() || "0");
-      setMinStockAlert(initialData.minStockAlert?.toString() || "10");
+      setUnit(initialData.unit || (initialData as any)?.tags?.unit || "PCS");
+      const initSelling = initialData.sellingPrice ?? (initialData as any)?.selling_price ?? initialData.mrp ?? (initialData as any)?.tags?.selling_price ?? (initialData as any)?.tags?.mrp ?? "";
+      const initPurchase = initialData.purchasePrice ?? (initialData as any)?.purchase_price ?? (initialData as any)?.tags?.purchase_price ?? "";
+      const initMrp = initialData.mrp ?? (initialData as any)?.tags?.mrp ?? initSelling ?? "";
+      const initStock = initialData.currentStock ?? initialData.openingStock ?? (initialData as any)?.stock ?? (initialData as any)?.tags?.stock ?? "0";
+      const initMinAlert = initialData.minStockAlert ?? (initialData as any)?.tags?.min_stock_alert ?? "10";
+
+      setSellingPrice(initSelling ? String(initSelling) : "");
+      setPurchasePrice(initPurchase ? String(initPurchase) : "");
+      setMrp(initMrp ? String(initMrp) : "");
+      setGstRate(initialData.gstRate || (initialData as any)?.tax_rate || 18);
+      setHsnCode(initialData.hsnCode || (initialData as any)?.tags?.hsn_code || "");
+      setOpeningStock(String(initStock));
+      setMinStockAlert(String(initMinAlert));
       setGodownId(initialData.godownId || godowns[0]?.id || "g-main");
       if (initialData.batches && initialData.batches.length > 0) {
         setTrackBatches(true);
