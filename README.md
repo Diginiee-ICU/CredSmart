@@ -57,6 +57,7 @@
 
 ### Prerequisites
 - Node.js (v18 or newer)
+- JDK 21 (Android Studio's bundled JBR is supported)
 - npm or yarn
 
 ### Installation
@@ -101,13 +102,20 @@
 
 ## 📱 Mobile App (Capacitor)
 
-To sync and build the Android application:
+The default Android build embeds the production Vite bundle. Ensure the Android release signing
+file is available locally at `android/signing.properties` (never commit it), then run:
 
 ```bash
-npm run build
-npx cap sync
-npx cap open android
+npm run android:release
 ```
+
+The signed APK is written to `android/app/build/outputs/apk/release/app-release.apk` and the
+signed Play Store bundle to `android/app/build/outputs/bundle/release/app-release.aab`.
+Set `VERSION_CODE` and `VERSION_NAME` as Gradle project properties when publishing an update,
+for example `gradlew.bat bundleRelease -PVERSION_CODE=2 -PVERSION_NAME=1.1.0`.
+
+For a separate remote-server build, set `CAP_SERVER_URL` to an HTTPS deployment URL before
+running `npm run cap:sync`; only localhost/127.0.0.1 HTTP URLs are accepted for development.
 
 ---
 
