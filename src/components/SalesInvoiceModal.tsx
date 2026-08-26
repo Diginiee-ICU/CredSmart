@@ -1748,49 +1748,12 @@ export function SalesInvoiceModal({
                 {/* Direct Add Item Row Actions (Like POS) */}
                 <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
-                    {/* Primary Button: Add Items to Bill (Opens Popup Modal) */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAddItemsModal(true)}
-                      className="py-2 px-3.5 rounded-xl glowing-btn-blue text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
-                    >
-                      <Package className="w-4 h-4 text-cyan-300 stroke-[2.2]" />
-                      <span>Add Item To Bill</span>
-                    </button>
+                      {/* Buttons removed as per user request: Add Item To Bill, Create New Item, Add Blank Row */}
+                    </div>
 
-                    {/* Secondary Button: Create New Item Inline */}
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCreateItemDialog(recalculatedItems.length - 1, "")}
-                      className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-                    >
-                      <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>+ Create New Item</span>
-                    </button>
-
-                    {/* Optional: Add Empty Row */}
-                    <button
-                      type="button"
-                      onClick={handleAddRow}
-                      className="py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-primary bg-white/50 dark:bg-slate-800/50 hover:bg-primary/5 text-slate-700 dark:text-slate-300 hover:text-primary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Blank Row</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddItemsModal(true)}
-                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                    >
-                      <ScanBarcode className="w-4 h-4 text-primary" />
-                      <span>Scan Barcode</span>
-                    </Button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      {/* Scan Barcode removed as per user request */}
+                    </div>
                 </div>
 
                 {/* Subtotals Summary Strip */}
