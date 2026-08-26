@@ -7,6 +7,8 @@
 @layer base {
   :root {
     --z-modal: 120;
+    --z-popover: 200;
+    --z-tooltip: 210;
     /* CredAlert Warm Ivory Palette */
     --ivory: 40 20% 98%;
     --background: 40 20% 98%;
@@ -745,6 +747,15 @@
 
   .z-modal-overlay {
     z-index: calc(var(--z-modal) - 10);
+  }
+
+  .z-popover,
+  .z-dropdown {
+    z-index: var(--z-popover);
+  }
+
+  .z-tooltip {
+    z-index: var(--z-tooltip);
   }
 
   .mobile-touch-card {
