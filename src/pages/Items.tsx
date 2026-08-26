@@ -79,6 +79,41 @@ const DEFAULT_CATEGORIES = [
 
 const DEFAULT_SAMPLE_ITEMS: InventoryItem[] = [];
 
+interface ProductBatchSummary {
+  id: string;
+  productId: string;
+  batchNumber: string | null;
+  mrp: number;
+  sellingPrice: number;
+  costPrice: number;
+  stock: number;
+  expiryDate: string | null;
+  locationId: string | null;
+}
+
+interface ProductTags {
+  [key: string]: unknown;
+  selling_price?: number | string;
+  purchase_price?: number | string;
+  mrp?: number | string;
+  min_stock_alert?: number | string;
+  unit?: ItemUnit | string;
+  gst_rate?: number | string;
+  hsn_code?: string | null;
+}
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "Something went wrong.";
+};
+
 export default function Items() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -140,7 +175,7 @@ export default function Items() {
         .select("id, product_id, mrp, stock, cost_price, batch_number, expiry_date, location_id")
         .in("product_id", prodIds.length > 0 ? prodIds : ["__none__"]);
 
-      const batchMap: Record<string, any[]> = {};
+      const batchMap: Record<string, ProductBatchSummary[]> = {};
       (batches || []).forEach((b) => {
         if (!batchMap[b.product_id]) batchMap[b.product_id] = [];
         batchMap[b.product_id].push({
@@ -157,7 +192,7 @@ export default function Items() {
       });
 
       const formatted: InventoryItem[] = dbProducts.map((p) => {
-        const tags = (p.tags || {}) as any;
+        const tags = (p.tags || {}) as ProductTags;
         const itemBatches = batchMap[p.id] || [];
         const firstBatch = itemBatches[0] || { sellingPrice: 0, costPrice: 0, mrp: 0 };
         const totalStock = itemBatches.reduce((sum, b) => sum + (Number(b.stock) || 0), 0);
@@ -313,9 +348,9 @@ export default function Items() {
         toast.success(`Created item "${itemData.name}"!`);
       }
       fetchItems();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save item error:", err);
-      const msg = err?.message || String(err);
+      const msg = getErrorMessage(err);
       if (/schema|relation|could not find|does not exist|PGRST202/i.test(msg)) {
         // Fallback to local creation if DB schema is missing or PostgREST function not found
         if (!editingItem) {
@@ -413,9 +448,9 @@ export default function Items() {
       }
       toast.success(`Successfully imported ${importedList.length} products with barcodes & stock!`);
       fetchItems();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Bulk item import error:", err);
-      toast.error(err.message || "Failed to persist imported items.");
+      toast.error(getErrorMessage(err) || "Failed to persist imported items.");
     }
   };
 
@@ -433,8 +468,8 @@ export default function Items() {
       await supabase.from("products").delete().eq("id", item.id);
       toast.success("Product deleted.");
       fetchItems();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete item.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to delete item.");
     }
   };
 
