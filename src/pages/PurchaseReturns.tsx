@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Search,
@@ -831,7 +831,7 @@ export default function PurchaseReturns() {
                               className="h-10 rounded-lg"
                             />
                             {showProductDropdown === index && (
-                              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                              <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
                                 {filteredProducts(index).map((p) => (
                                   <button
                                     key={p.id}

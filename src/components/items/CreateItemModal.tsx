@@ -554,7 +554,7 @@ export function CreateItemModal({
                   </div>
 
                   {showHsnDropdown && hsnSuggestions.length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-border text-xs">
+                    <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-border text-xs">
                       {hsnSuggestions.map((h) => (
                         <button
                           key={h.code}
