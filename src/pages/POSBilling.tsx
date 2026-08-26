@@ -652,7 +652,7 @@ export default function POSBilling() {
   // Add Product to Current Tab
   const handleAddProduct = useCallback(
     (product: Product, customBatch?: Batch) => {
-      const batch = customBatch || product.batches[0] || {
+      const batch = customBatch || product.batches?.[0] || {
         id: `batch-${product.id}`,
         mrp: 100,
         costPrice: 0,
@@ -2392,10 +2392,10 @@ export default function POSBilling() {
                       <div className="flex items-center gap-4 text-right">
                         <div className="flex flex-col">
                           <span className="font-extrabold text-base font-mono text-emerald-600">
-                            ₹{p.batches[0]?.mrp || 100}
+                            ₹{p.batches?.[0]?.mrp || 100}
                           </span>
                           <span className="text-[10px] text-emerald-700 font-mono">
-                            Stock: {p.batches[0]?.stock || 0}
+                            Stock: {p.batches?.[0]?.stock || 0}
                           </span>
                         </div>
                         <button className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-transform active:scale-95">
