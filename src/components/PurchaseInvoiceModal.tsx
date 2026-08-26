@@ -1353,7 +1353,7 @@ export function PurchaseInvoiceModal({
                             />
 
                             {activeItemDropdown === idx && (
-                              <div className="absolute z-modal left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
+                              <div className="absolute z-[200] left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
                                 {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
                                   <>
                                     <div className="space-y-0.5 pb-1">
