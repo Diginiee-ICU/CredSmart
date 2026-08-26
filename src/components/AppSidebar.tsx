@@ -485,39 +485,39 @@ export function AppSidebar() {
                               to={item.url}
                               end={item.url === "/"}
                               onClick={() => setMobileMenuOpen(false)}
-                                                          data-feature={/sales|pos|checkout|purchase|invoice/i.test(item.url) || /sales|purchase|pos|invoice/i.test(item.title) ? "billbook" : undefined}
-                                                          className={cn(
-                                                            "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-semibold select-none",
-                                                            active ? "glowing-nav-purple" : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                                                          )}
-                                                        >
+                              data-feature="billbook"
+                              className={cn(
+                                "flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-xs font-bold select-none",
+                                active ? "glowing-nav-purple text-white font-black" : "text-slate-200 hover:bg-slate-800/80 hover:text-white"
+                              )}
+                            >
                               <div className="flex items-center gap-3 min-w-0">
                                 <div
                                   className={cn(
-                                    "p-1.5 rounded-xl border",
-                                    active ? "bg-purple-600/30 border-purple-400 text-white" : "bg-slate-800/80 border-slate-700/80 text-indigo-400"
+                                    "p-1.5 rounded-xl border shrink-0",
+                                    active ? "bg-purple-600/30 border-purple-400 text-white" : "bg-slate-800/80 border-slate-700/80 text-amber-400"
                                   )}
                                 >
-                                  <item.icon className="w-4 h-4" />
+                                  <item.icon className="w-4 h-4 stroke-[2.5]" />
                                 </div>
-                                <span className="truncate">{item.title}</span>
+                                <span className="truncate font-bold tracking-tight text-white">{item.title}</span>
                               </div>
                               <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                             </NavLink>
 
                             {/* Render child routes for mobile so sub-pages are accessible */}
                             {item.children && item.children.length > 0 && (
-                              <div className="pl-6 pr-1 space-y-0.5 pt-0.5">
+                              <div className="pl-6 pr-1 space-y-1 pt-1">
                                 {item.children.map((child) => (
                                   <NavLink
                                     key={child.title}
                                     to={child.url as string}
                                     onClick={() => setMobileMenuOpen(false)}
-                                                                      data-feature={/sales|pos|checkout|purchase|invoice/i.test(child.url as string) || /sales|purchase|pos|invoice/i.test(child.title) ? "billbook" : undefined}
-                                                                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors"
-                                                                    >
-                                    <span className="w-1 h-1 rounded-full bg-slate-500" />
-                                    <span className="truncate">{child.title}</span>
+                                    data-feature="billbook"
+                                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                    <span className="truncate font-bold">{child.title}</span>
                                   </NavLink>
                                 ))}
                               </div>
@@ -785,9 +785,9 @@ export function AppSidebar() {
       {/* Main Navigation List */}
       <nav className="flex-1 min-h-0 px-2.5 py-3 space-y-4 overflow-y-auto scrollbar-thin text-xs">
         {filteredNavRouteGroups.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-0.5">
+          <div key={gIdx} className="space-y-1">
             {!collapsed && (
-              <p className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/90 font-mono">
+              <p className="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
                 {group.group}
               </p>
             )}
@@ -803,27 +803,27 @@ export function AppSidebar() {
                     onClick={() => {
                       navigate(item.url);
                     }}
-                    data-feature={/sales|pos|checkout|purchase|invoice/i.test(item.url) || /sales|purchase|pos|invoice/i.test(item.title) ? "billbook" : undefined}
+                    data-feature="billbook"
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer font-medium select-none group relative",
+                      "flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer font-bold select-none group relative",
                       active
-                        ? "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent text-amber-300 font-bold border border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                        : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                        ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-amber-600/10 text-amber-300 font-black border border-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.35)]"
+                        : "text-slate-100 hover:bg-slate-800/80 hover:text-white"
                     )}
                     title={collapsed ? item.title : undefined}
                   >
                     <item.icon
                       className={cn(
-                        "w-4 h-4 shrink-0 transition-transform group-hover:scale-105",
-                        active ? "text-amber-400" : "text-slate-400 group-hover:text-white"
+                        "w-4 h-4 shrink-0 transition-transform group-hover:scale-110 stroke-[2.2]",
+                        active ? "text-amber-400" : "text-amber-400/90 group-hover:text-amber-300"
                       )}
                     />
 
                     {!collapsed && (
                       <div className="flex items-center justify-between flex-1 min-w-0">
-                        <span className="truncate">{item.title}</span>
+                        <span className="truncate font-bold tracking-tight text-white">{item.title}</span>
                         {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono">
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 font-mono">
                             {item.badge}
                           </span>
                         )}
@@ -833,12 +833,12 @@ export function AppSidebar() {
                               e.stopPropagation();
                               toggleSubmenu(item.title);
                             }}
-                            className="p-1 rounded hover:bg-white/10 text-slate-400 group-hover:text-white transition-transform"
+                            className="p-1 rounded hover:bg-white/10 text-slate-300 group-hover:text-white transition-transform"
                           >
                             <ChevronDown
                               className={cn(
                                 "w-3.5 h-3.5 transition-transform duration-200",
-                                isExpanded ? "rotate-180" : ""
+                                isExpanded ? "rotate-180 text-amber-400" : ""
                               )}
                             />
                           </span>
@@ -849,17 +849,17 @@ export function AppSidebar() {
 
                   {/* Submenu Children when expanded */}
                   {hasChildren && !collapsed && isExpanded && (
-                    <div className="pl-6 pr-1 space-y-0.5 pt-0.5 animate-in slide-in-from-top-1 duration-150">
+                    <div className="pl-6 pr-1 space-y-1 pt-1 animate-in slide-in-from-top-1 duration-150">
                       {item.children?.map((child) => (
                         <NavLink
                           key={child.title}
                           to={child.url}
-                          data-feature={/sales|pos|checkout|purchase|invoice/i.test(child.url as string) || /sales|purchase|pos|invoice/i.test(child.title) ? "billbook" : undefined}
-                          className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
-                          activeClassName="text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/20"
+                          data-feature="billbook"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800/70 transition-colors"
+                          activeClassName="text-amber-300 font-black bg-amber-500/15 border border-amber-400/30"
                         >
-                          <span className="w-1 h-1 rounded-full bg-slate-500" />
-                          <span className="truncate">{child.title}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                          <span className="truncate font-bold">{child.title}</span>
                         </NavLink>
                       ))}
                     </div>
