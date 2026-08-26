@@ -1259,7 +1259,7 @@ export default function POSBilling() {
       try {
         // 2. Persist to local backup history immediately
         try {
-          const localHistoryKey = `pos_sales_history_${orgId || "default"}`;
+          const localHistoryKey = `pos_sales_history_${orgId || "no_org"}`;
           const existingHistory = JSON.parse(localStorage.getItem(localHistoryKey) || "[]");
           existingHistory.unshift({
             invoiceNumber,
