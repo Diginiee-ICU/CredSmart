@@ -1407,6 +1407,9 @@ export default function Staff() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 6. GRANULAR FEATURE ACCESS & PERMISSION TOGGLE MODAL */}
       {/* ───────────────────────────────────────────────────────────── */}
