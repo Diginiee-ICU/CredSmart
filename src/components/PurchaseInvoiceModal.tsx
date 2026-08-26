@@ -245,6 +245,16 @@ export function PurchaseInvoiceModal({
     branch: "",
     accountHolder: "",
   });
+
+  const editorBodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      editorBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0;
+    }
+  }, [open, viewMode]);
+
   const [showPaymentQr, setShowPaymentQr] = useState(true);
   const [upiId, setUpiId] = useState("");
 
@@ -1001,7 +1011,7 @@ export function PurchaseInvoiceModal({
               </div>
             </div>
           ) : (
-            <div className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
+            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill From (Dropdown Format) & Purchase Bill Details */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* BILL FROM (Dropdown Format with Balance) */}

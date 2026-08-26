@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   Package,
@@ -186,6 +186,15 @@ export function CreateItemModal({
     }
   }, [initialData, isOpen]);
 
+  const formScrollRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      formScrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (formScrollRef.current) formScrollRef.current.scrollTop = 0;
+    }
+  }, [isOpen, activeTab]);
+
   if (!isOpen) return null;
 
   const handleGenerateBarcode = () => {
@@ -322,7 +331,7 @@ export function CreateItemModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+        <form ref={formScrollRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
           {/* TAB 1: Basic Details */}
           {activeTab === "basic" && (
             <div className="space-y-5">

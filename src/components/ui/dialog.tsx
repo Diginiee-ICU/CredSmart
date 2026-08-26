@@ -36,7 +36,34 @@ const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+>(({ className, children, ...props }, forwardedRef) => {
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    const el = innerRef.current;
+    if (el) {
+      el.scrollTop = 0;
+      el.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      const scrollables = el.querySelectorAll(".overflow-y-auto, [data-scrollable], form");
+      scrollables.forEach((s) => {
+        (s as HTMLElement).scrollTop = 0;
+        s.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      });
+    }
+  }, []);
+
+  const setRefs = React.useCallback(
+    (node: any) => {
+      innerRef.current = node;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        (forwardedRef as React.MutableRefObject<any>).current = node;
+      }
+    },
+    [forwardedRef]
+  );
+
   // Check if children already include a DialogTitle to avoid duplicates
   const hasTitle = React.Children.toArray(children).some((child) => {
     if (!React.isValidElement(child)) return false;
@@ -49,7 +76,7 @@ const DialogContent = React.forwardRef<
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={setRefs}
         aria-describedby={props["aria-describedby"] || undefined}
         className={cn(
           "fixed left-[50%] top-[50%] z-modal grid w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto scrollbar-thin translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-5 sm:p-6 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",

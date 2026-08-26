@@ -55,8 +55,14 @@ interface ReceiptModalProps {
 
 export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">("80mm");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    scrollBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0;
+  }, [layout]);
 
   const receiptDate = data.date instanceof Date ? data.date : new Date(data.date || Date.now());
 
@@ -370,7 +376,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
         </div>
 
         {/* Receipt Preview Body with Thermal Paper Styling */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 flex justify-center items-start">
+        <div ref={scrollBodyRef} className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 flex justify-center items-start">
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden p-1 text-slate-900 border border-slate-200">
             <UnifiedInvoiceRenderer
               ref={receiptRef}

@@ -170,7 +170,19 @@ export function CreatePartyModal({
       if (mainEl) mainEl.setAttribute('aria-hidden', 'true');
       // Prevent background scroll while modal is open
       document.body.style.overflow = 'hidden';
+      // Autoscroll modal to top
+      modalRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      const scrollables = modalRef.current?.querySelectorAll('.overflow-y-auto, form');
+      scrollables?.forEach((s) => {
+        (s as HTMLElement).scrollTop = 0;
+        s.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      });
       setTimeout(() => {
+        modalRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        scrollables?.forEach((s) => {
+          (s as HTMLElement).scrollTop = 0;
+          s.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        });
         const focusTarget = modalRef.current?.querySelector('input,button,select,textarea,[tabindex]') as HTMLElement | null;
         focusTarget?.focus();
       }, 80);
