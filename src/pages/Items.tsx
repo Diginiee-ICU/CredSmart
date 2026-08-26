@@ -307,6 +307,12 @@ export default function Items() {
             created_at: new Date().toISOString(),
           };
           setItems((prev) => [newItem, ...prev]);
+          // Also update shared products store so other views see the new item immediately
+          try {
+            addOrUpdateProduct(newItem as any);
+          } catch (e) {
+            console.warn('Failed to update shared products store:', e);
+          }
           toast.warning("Database schema missing — item created locally. Ensure Supabase tables/migrations are applied; see SUPABASE_VERCEL_INTEGRATION.md in project root for guidance.");
           return;
         }
