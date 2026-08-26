@@ -135,6 +135,7 @@ export function QuickCreateItemModal({
     const itemMrp = Number(mrp) || sp || pp || 0;
     const stockQty = Number(openingStock) || 0;
     const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}`;
+    const normalizedHsn = (hsn || "9999").trim() || "9999";
 
     setSaving(true);
     try {
@@ -142,7 +143,7 @@ export function QuickCreateItemModal({
       const tagsPayload = {
         unit: unit.toUpperCase(),
         gst_rate: gstRate,
-        hsn_code: hsn.trim() || "9999",
+        hsn_code: normalizedHsn,
         selling_price: sp,
         purchase_price: pp,
         mrp: itemMrp,

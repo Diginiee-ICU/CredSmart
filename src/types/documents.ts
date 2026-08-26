@@ -58,6 +58,9 @@ export interface BusinessDocument {
   partyEmail?: string;
   partyGstin?: string;
   partyAddress?: string;
+  billingAddress?: string;
+  billingPincode?: string;
+  billingPlaceOfSupply?: string;
   placeOfSupply?: string; // State name / code, e.g. "27-Maharashtra"
   docDate: string; // YYYY-MM-DD
   dueDate?: string; // YYYY-MM-DD

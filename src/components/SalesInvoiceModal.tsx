@@ -591,10 +591,24 @@ export function SalesInvoiceModal({
   useEffect(() => {
     if (sameAsParty) {
       setBillingAddress(partyAddress || "");
-      setBillingPincode(""); // party pincode not tracked separately currently
+      setBillingPincode("");
       setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
     }
   }, [sameAsParty, partyAddress, placeOfSupply]);
+
+  const handleBillingAddressChange = (value: string) => {
+    setBillingAddress(value);
+    if (sameAsParty && value !== (partyAddress || "")) {
+      setSameAsParty(false);
+    }
+  };
+
+  const handleBillingPlaceChange = (value: string) => {
+    setBillingPlaceOfSupply(value);
+    if (sameAsParty && value !== (placeOfSupply || "27-Maharashtra")) {
+      setSameAsParty(false);
+    }
+  };
 
   const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
     setItems((prev) => {
@@ -749,6 +763,9 @@ export function SalesInvoiceModal({
         partyPhone: partyPhone.trim() || undefined,
         partyGstin: partyGstin.trim() || undefined,
         partyAddress: partyAddress.trim() || undefined,
+        billingAddress: billingAddress.trim() || undefined,
+        billingPincode: billingPincode.trim() || undefined,
+        billingPlaceOfSupply: billingPlaceOfSupply.trim() || undefined,
         placeOfSupply,
         docDate,
         dueDate: showDueDate ? dueDate : docDate,
@@ -832,6 +849,9 @@ export function SalesInvoiceModal({
       partyPhone: partyPhone.trim() || undefined,
       partyGstin: partyGstin.trim() || undefined,
       partyAddress: partyAddress.trim() || undefined,
+      billingAddress: billingAddress.trim() || undefined,
+      billingPincode: billingPincode.trim() || undefined,
+      billingPlaceOfSupply: billingPlaceOfSupply.trim() || undefined,
       placeOfSupply,
       docDate,
       dueDate: showDueDate ? dueDate : docDate,

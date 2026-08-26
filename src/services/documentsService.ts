@@ -3,6 +3,21 @@ import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentT
 
 const STORAGE_KEY_PREFIX = "credsmart_docs_";
 
+export function normalizeDocumentBillingFields<T extends Partial<BusinessDocument>>(doc: T): T & Pick<BusinessDocument, "billingAddress" | "billingPincode" | "billingPlaceOfSupply"> {
+  const safePartyAddress = (doc.partyAddress || "").trim();
+  const safeBillingAddress = (doc.billingAddress || safePartyAddress).trim();
+  const safeBillingPincode = (doc.billingPincode || "").trim();
+  const safeBillingPlaceOfSupply = (doc.billingPlaceOfSupply || doc.placeOfSupply || "27-Maharashtra").trim();
+
+  return {
+    ...doc,
+    partyAddress: safePartyAddress || undefined,
+    billingAddress: safeBillingAddress || undefined,
+    billingPincode: safeBillingPincode || undefined,
+    billingPlaceOfSupply: safeBillingPlaceOfSupply || undefined,
+  } as T & Pick<BusinessDocument, "billingAddress" | "billingPincode" | "billingPlaceOfSupply">;
+}
+
 type CustomerSummary = {
   name?: string | null;
   phone?: string | null;
@@ -54,7 +69,18 @@ export const documentsService = {
   getLocalDocuments(orgId: string, docType: string): BusinessDocument[] {
     try {
       const data = localStorage.getItem(getStorageKey(orgId, docType));
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+
+      const parsed = JSON.parse(data) as BusinessDocument[];
+      const normalized = parsed.map((doc) => normalizeDocumentBillingFields(doc));
+      const changed = normalized.some((doc, index) => {
+        const original = parsed[index];
+        return JSON.stringify(doc) !== JSON.stringify(original);
+      });
+      if (changed) {
+        this.saveLocalDocuments(orgId, docType, normalized);
+      }
+      return normalized;
     } catch {
       return [];
     }
