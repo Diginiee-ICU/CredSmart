@@ -151,7 +151,7 @@ export default function Dashboard() {
 
         const partyName = Array.isArray(s?.customers)
           ? s?.customers[0]?.name
-          : s?.customers?.name;
+          : (s?.customers && typeof s?.customers === "object" ? (s.customers as any)?.name : null);
 
         return {
           id: s?.id || `txn-${idx}`,

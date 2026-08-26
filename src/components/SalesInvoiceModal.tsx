@@ -1155,6 +1155,20 @@ export function SalesInvoiceModal({
                   invoiceNumber={fullDocumentNumber}
                   invoiceDate={docDate}
                   dueDate={showDueDate ? dueDate : undefined}
+                  storeInfo={{
+                    name: org?.name || "CredSmart Store",
+                    phone: org?.phone || "",
+                    email: org?.email || "",
+                    address: org?.address || "",
+                    gstin: org?.gstin || "",
+                    pan: org?.pan || "",
+                    logoUrl: org?.logo_url || "",
+                    bank_name: bankAccount.bankName || org?.bank_name,
+                    account_number: bankAccount.accountNumber || org?.account_number,
+                    ifsc: bankAccount.ifsc || org?.ifsc,
+                    account_holder: bankAccount.accountHolder || org?.account_holder || org?.name,
+                    upi_id: upiId || org?.upi_id,
+                  }}
                   party={{
                     name: partyName || "Customer",
                     phone: partyPhone,
