@@ -28,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { toast } from "@/hooks/use-toast";
 
 interface SaleItem {
@@ -572,13 +573,16 @@ export default function SalesHistory() {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            downloadInvoicePdf({
+                            downloadExactInvoicePdf({
                               invoiceNumber: sale.invoice_number,
                               customerName: sale.customer_name || undefined,
                               customerPhone: sale.customer_phone || undefined,
                               storeName: org?.name || "CredSmart Store",
                               storePhone: org?.phone,
                               totalAmount: sale.total,
+                              subtotal: sale.subtotal,
+                              discountAmount: sale.discount_amount,
+                              tax: sale.tax,
                               date: sale.created_at,
                               items: (itemsCache[sale.id] || []).map((it) => ({
                                 name: it.product_name,

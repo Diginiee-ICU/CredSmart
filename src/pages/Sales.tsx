@@ -34,6 +34,7 @@ import {
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -723,13 +724,17 @@ export default function Sales() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            downloadInvoicePdf({
+                            downloadExactInvoicePdf({
                               invoiceNumber: doc.documentNumber,
+                              docType: doc.docType as any,
                               customerName: doc.partyName,
                               customerPhone: doc.partyPhone,
                               storeName: org?.name || "CredSmart Store",
                               storePhone: org?.phone,
                               totalAmount: doc.grandTotal,
+                              subtotal: doc.subtotal,
+                              discountAmount: doc.discountAmount,
+                              tax: doc.taxAmount,
                               date: doc.docDate,
                               isEstimate: doc.docType === "quotation",
                               items: doc.items.map((it) => ({
@@ -794,13 +799,17 @@ export default function Sales() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                downloadInvoicePdf({
+                                downloadExactInvoicePdf({
                                   invoiceNumber: doc.documentNumber,
+                                  docType: doc.docType as any,
                                   customerName: doc.partyName,
                                   customerPhone: doc.partyPhone,
                                   storeName: org?.name || "CredSmart Store",
                                   storePhone: org?.phone,
                                   totalAmount: doc.grandTotal,
+                                  subtotal: doc.subtotal,
+                                  discountAmount: doc.discountAmount,
+                                  tax: doc.taxAmount,
                                   date: doc.docDate,
                                   isEstimate: doc.docType === "quotation",
                                   items: doc.items.map((it) => ({
@@ -1002,13 +1011,17 @@ export default function Sales() {
                             <button
                               type="button"
                               onClick={() => {
-                                downloadInvoicePdf({
+                                downloadExactInvoicePdf({
                                   invoiceNumber: doc.documentNumber,
+                                  docType: doc.docType as any,
                                   customerName: doc.partyName,
                                   customerPhone: doc.partyPhone,
                                   storeName: org?.name || "CredSmart Store",
                                   storePhone: org?.phone,
                                   totalAmount: doc.grandTotal,
+                                  subtotal: doc.subtotal,
+                                  discountAmount: doc.discountAmount,
+                                  tax: doc.taxAmount,
                                   date: doc.docDate,
                                   isEstimate: doc.docType === "quotation",
                                   items: doc.items.map((it) => ({
@@ -1073,13 +1086,17 @@ export default function Sales() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    downloadInvoicePdf({
+                                    downloadExactInvoicePdf({
                                       invoiceNumber: doc.documentNumber,
+                                      docType: doc.docType as any,
                                       customerName: doc.partyName,
                                       customerPhone: doc.partyPhone,
                                       storeName: org?.name || "CredSmart Store",
                                       storePhone: org?.phone,
                                       totalAmount: doc.grandTotal,
+                                      subtotal: doc.subtotal,
+                                      discountAmount: doc.discountAmount,
+                                      tax: doc.taxAmount,
                                       date: doc.docDate,
                                       isEstimate: doc.docType === "quotation",
                                       items: doc.items.map((it) => ({
