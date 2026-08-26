@@ -191,7 +191,7 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userRole, orgId } = useOrganization();
+  const { userRole, userPermissions, orgId } = useOrganization();
   const [openCommand, setOpenCommand] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -331,7 +331,7 @@ export default function AppLayout() {
 
             {NAV_ROUTES.map((group) => {
               const allowedItems = group.items.filter((item) =>
-                isRouteAllowedForRole(item.url, userRole)
+                isRouteAllowedForRole(item.url, userRole, userPermissions)
               );
               if (allowedItems.length === 0) return null;
 
