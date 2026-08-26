@@ -986,18 +986,19 @@ export default function Sales() {
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {/* 1. Print Receipt */}
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* 1. Print Receipt - always visible indigo */}
                             <button
                               type="button"
                               onClick={() => handleOpenReceipt(doc)}
-                              className="p-1.5 text-muted-foreground hover:text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
                               title="Print / View Receipt"
                             >
-                              <Printer className="w-3.5 h-3.5" />
+                              <Printer className="w-3 h-3 shrink-0" />
+                              <span>Print</span>
                             </button>
 
-                            {/* 2. Download PDF */}
+                            {/* 2. Download PDF - always visible amber */}
                             <button
                               type="button"
                               onClick={() => {
@@ -1018,13 +1019,14 @@ export default function Sales() {
                                   })),
                                 });
                               }}
-                              className="p-1.5 text-muted-foreground hover:text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
                               title="Download PDF"
                             >
-                              <Download className="w-3.5 h-3.5" />
+                              <Download className="w-3 h-3 shrink-0" />
+                              <span>PDF</span>
                             </button>
 
-                            {/* 3. WhatsApp PDF Share */}
+                            {/* 3. WhatsApp PDF Share - always visible emerald */}
                             <button
                               type="button"
                               onClick={() => {
@@ -1045,10 +1047,13 @@ export default function Sales() {
                                   })),
                                 });
                               }}
-                              className="p-1.5 text-muted-foreground hover:text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
                               title="Share PDF to WhatsApp"
                             >
-                              <Share2 className="w-3.5 h-3.5" />
+                              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current shrink-0" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                              </svg>
+                              <span>WA</span>
                             </button>
 
                             {/* 4. Dropdown Menu */}

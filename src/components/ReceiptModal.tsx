@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { CartItem } from "@/types/pos";
 import { Printer, X, CheckCircle2, FileText, ScrollText, Smartphone, Copy, Check, Zap, Download, Bluetooth, Sparkles } from "lucide-react";
