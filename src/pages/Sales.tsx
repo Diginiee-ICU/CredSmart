@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
-import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
+import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -705,34 +705,142 @@ export default function Sales() {
                         {calculateDueInText(doc)}
                       </span>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        {/* 1. Print Receipt */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenReceipt(doc)}
-                          className="h-7 px-2.5 text-[11px] font-semibold gap-1 border-border"
+                          className="h-7 px-2 text-[11px] font-semibold gap-1 border-border bg-white dark:bg-slate-900 shadow-2xs cursor-pointer"
+                          title="Print Invoice"
                         >
                           <Printer className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Print</span>
+                          <span className="hidden sm:inline">Print</span>
                         </Button>
+
+                        {/* 2. Download PDF */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const url = `https://wa.me/?text=Invoice%20${doc.documentNumber}%20amount%20Rs.${doc.grandTotal}`;
-                            window.open(url, "_blank");
+                            downloadInvoicePdf({
+                              invoiceNumber: doc.documentNumber,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: org?.name || "CredSmart Store",
+                              storePhone: org?.phone,
+                              totalAmount: doc.grandTotal,
+                              date: doc.docDate,
+                              isEstimate: doc.docType === "quotation",
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                              })),
+                            });
                           }}
-                          className="h-7 px-2 text-[11px] font-semibold border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
+                          className="h-7 px-2 text-[11px] font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30 shadow-2xs cursor-pointer gap-1"
+                          title="Download PDF"
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Download className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">PDF</span>
                         </Button>
+
+                        {/* 3. WhatsApp PDF Share */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            shareInvoicePdfToWhatsApp({
+                              invoiceNumber: doc.documentNumber,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: org?.name || "CredSmart Store",
+                              storePhone: org?.phone,
+                              totalAmount: doc.grandTotal,
+                              date: doc.docDate,
+                              isEstimate: doc.docType === "quotation",
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                              })),
+                            });
+                          }}
+                          className="h-7 px-2 text-[11px] font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 shadow-2xs cursor-pointer"
+                          title="Share to WhatsApp"
+                        >
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current shrink-0" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                          </svg>
+                        </Button>
+
+                        {/* 4. Dropdown Menu */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                               <MoreVertical className="w-3.5 h-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem
+                              onClick={() => handleOpenReceipt(doc)}
+                              className="gap-2 font-semibold"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>View / Print Receipt</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                downloadInvoicePdf({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: org?.name || "CredSmart Store",
+                                  storePhone: org?.phone,
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: doc.docType === "quotation",
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="gap-2 font-semibold text-amber-600 dark:text-amber-400"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download PDF</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                shareInvoicePdfToWhatsApp({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: org?.name || "CredSmart Store",
+                                  storePhone: org?.phone,
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: doc.docType === "quotation",
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>Share PDF to WhatsApp</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
                                 setEditingDoc(doc);
@@ -743,7 +851,6 @@ export default function Sales() {
                               <Eye className="w-3.5 h-3.5" />
                               <span>Edit Document</span>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteDocument(doc)}
                               className="gap-2 text-rose-600"
@@ -880,24 +987,134 @@ export default function Sales() {
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {/* 1. Print Receipt */}
                             <button
                               type="button"
                               onClick={() => handleOpenReceipt(doc)}
-                              className="p-1.5 text-muted-foreground hover:text-indigo-600 rounded transition-colors"
+                              className="p-1.5 text-muted-foreground hover:text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
                               title="Print / View Receipt"
                             >
                               <Printer className="w-3.5 h-3.5" />
                             </button>
+
+                            {/* 2. Download PDF */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                downloadInvoicePdf({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: org?.name || "CredSmart Store",
+                                  storePhone: org?.phone,
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: doc.docType === "quotation",
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="p-1.5 text-muted-foreground hover:text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                              title="Download PDF"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* 3. WhatsApp PDF Share */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                shareInvoicePdfToWhatsApp({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: org?.name || "CredSmart Store",
+                                  storePhone: org?.phone,
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: doc.docType === "quotation",
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="p-1.5 text-muted-foreground hover:text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                              title="Share PDF to WhatsApp"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* 4. Dropdown Menu */}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
                                 >
                                   <MoreVertical className="w-3.5 h-3.5" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuContent align="end" className="w-52">
+                                <DropdownMenuItem onClick={() => handleOpenReceipt(doc)} className="gap-2 font-semibold">
+                                  <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                                  <span>View / Print Receipt</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    downloadInvoicePdf({
+                                      invoiceNumber: doc.documentNumber,
+                                      customerName: doc.partyName,
+                                      customerPhone: doc.partyPhone,
+                                      storeName: org?.name || "CredSmart Store",
+                                      storePhone: org?.phone,
+                                      totalAmount: doc.grandTotal,
+                                      date: doc.docDate,
+                                      isEstimate: doc.docType === "quotation",
+                                      items: doc.items.map((it) => ({
+                                        name: it.productName,
+                                        quantity: it.quantity,
+                                        rate: it.rate,
+                                        total: it.lineTotal,
+                                      })),
+                                    });
+                                  }}
+                                  className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>Download PDF</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    shareInvoicePdfToWhatsApp({
+                                      invoiceNumber: doc.documentNumber,
+                                      customerName: doc.partyName,
+                                      customerPhone: doc.partyPhone,
+                                      storeName: org?.name || "CredSmart Store",
+                                      storePhone: org?.phone,
+                                      totalAmount: doc.grandTotal,
+                                      date: doc.docDate,
+                                      isEstimate: doc.docType === "quotation",
+                                      items: doc.items.map((it) => ({
+                                        name: it.productName,
+                                        quantity: it.quantity,
+                                        rate: it.rate,
+                                        total: it.lineTotal,
+                                      })),
+                                    });
+                                  }}
+                                  className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>Share PDF to WhatsApp</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setEditingDoc(doc);
@@ -908,29 +1125,6 @@ export default function Sales() {
                                   <Eye className="w-3.5 h-3.5" />
                                   <span>Edit Document</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenReceipt(doc)} className="gap-2">
-                                  <Printer className="w-3.5 h-3.5" />
-                                  <span>Print Tax Invoice</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    shareInvoicePdfToWhatsApp({
-                                      invoiceNumber: doc.documentNumber,
-                                      customerName: doc.partyName,
-                                      customerPhone: (doc as any)?.customerPhone || (doc as any)?.partyPhone,
-                                      storeName: org?.name || "CredSmart Store",
-                                      storePhone: org?.phone,
-                                      totalAmount: doc.grandTotal,
-                                      date: doc.date,
-                                      isEstimate: doc.documentType === "quotation" || doc.documentType === "estimate",
-                                    });
-                                  }}
-                                  className="gap-2 text-emerald-600 cursor-pointer"
-                                >
-                                  <Share2 className="w-3.5 h-3.5" />
-                                  <span>Share PDF to WhatsApp</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteDocument(doc)}
                                   className="gap-2 text-rose-600"

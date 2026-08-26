@@ -64,6 +64,7 @@ import { SalesSettingsModal } from "@/components/SalesSettingsModal";
 import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 import { MobileScanModal } from "@/components/MobileScanModal";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 
 const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any }[] = [
   { id: "purchase_invoice", label: "Purchase Invoices", icon: Truck },

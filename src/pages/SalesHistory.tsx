@@ -17,6 +17,7 @@ import {
   FileText,
   Wallet,
   SplitSquareHorizontal,
+  Share2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -26,6 +27,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 import { toast } from "@/hooks/use-toast";
 
 interface SaleItem {
@@ -554,16 +556,70 @@ export default function SalesHistory() {
 
                     {/* Financial Summary & Actions */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleReprintReceipt(sale)}
-                        className="rounded-xl text-xs gap-1.5 h-9"
-                      >
-                        <Printer className="w-3.5 h-3.5 text-primary" />
-                        View / Re-print Receipt
-                      </Button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleReprintReceipt(sale)}
+                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-primary" />
+                          <span>View / Re-print</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            downloadInvoicePdf({
+                              invoiceNumber: sale.invoice_number,
+                              customerName: sale.customer_name || undefined,
+                              customerPhone: sale.customer_phone || undefined,
+                              storeName: org?.name || "CredSmart Store",
+                              storePhone: org?.phone,
+                              totalAmount: sale.total,
+                              date: sale.created_at,
+                              items: (itemsCache[sale.id] || []).map((it) => ({
+                                name: it.product_name,
+                                quantity: it.quantity,
+                                rate: it.mrp,
+                                total: it.line_total,
+                              })),
+                            });
+                          }}
+                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download PDF</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            shareInvoicePdfToWhatsApp({
+                              invoiceNumber: sale.invoice_number,
+                              customerName: sale.customer_name || undefined,
+                              customerPhone: sale.customer_phone || undefined,
+                              storeName: org?.name || "CredSmart Store",
+                              storePhone: org?.phone,
+                              totalAmount: sale.total,
+                              date: sale.created_at,
+                              items: (itemsCache[sale.id] || []).map((it) => ({
+                                name: it.product_name,
+                                quantity: it.quantity,
+                                rate: it.mrp,
+                                total: it.line_total,
+                              })),
+                            });
+                          }}
+                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>WhatsApp</span>
+                        </Button>
+                      </div>
 
                       <div className="flex flex-col items-end gap-1 text-xs sm:text-sm w-full sm:w-auto">
                         <div className="flex justify-between w-64 text-muted-foreground">
