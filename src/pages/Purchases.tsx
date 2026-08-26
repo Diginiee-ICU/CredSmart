@@ -623,23 +623,133 @@ export default function Purchases() {
                         {calculateDueInText(doc)}
                       </span>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        {/* 1. View Bill (Print) */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenReceipt(doc)}
-                          className="h-7 px-2.5 text-[11px] font-semibold gap-1 border-border"
+                          className="h-7 px-2 text-[11px] font-semibold gap-1 border-border bg-white dark:bg-slate-900 shadow-2xs cursor-pointer"
+                          title="View / Print Bill"
                         >
                           <Printer className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>View Bill</span>
+                          <span className="hidden sm:inline">Print</span>
                         </Button>
+
+                        {/* 2. Download PDF */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            downloadInvoicePdf({
+                              invoiceNumber: doc.documentNumber,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: "CredSmart Store",
+                              totalAmount: doc.grandTotal,
+                              date: doc.docDate,
+                              isEstimate: false,
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                              })),
+                            });
+                          }}
+                          className="h-7 px-2 text-[11px] font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30 shadow-2xs cursor-pointer gap-1"
+                          title="Download PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">PDF</span>
+                        </Button>
+
+                        {/* 3. WhatsApp Share */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            shareInvoicePdfToWhatsApp({
+                              invoiceNumber: doc.documentNumber,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: "CredSmart Store",
+                              totalAmount: doc.grandTotal,
+                              date: doc.docDate,
+                              isEstimate: false,
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                              })),
+                            });
+                          }}
+                          className="h-7 px-2 text-[11px] font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 shadow-2xs cursor-pointer"
+                          title="Share to WhatsApp"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </Button>
+
+                        {/* 4. More Menu */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                               <MoreVertical className="w-3.5 h-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem onClick={() => handleOpenReceipt(doc)} className="gap-2 font-semibold">
+                              <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>View / Print Bill</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                downloadInvoicePdf({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: "CredSmart Store",
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: false,
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="gap-2 font-semibold text-amber-600 dark:text-amber-400"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download PDF</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                shareInvoicePdfToWhatsApp({
+                                  invoiceNumber: doc.documentNumber,
+                                  customerName: doc.partyName,
+                                  customerPhone: doc.partyPhone,
+                                  storeName: "CredSmart Store",
+                                  totalAmount: doc.grandTotal,
+                                  date: doc.docDate,
+                                  isEstimate: false,
+                                  items: doc.items.map((it) => ({
+                                    name: it.productName,
+                                    quantity: it.quantity,
+                                    rate: it.rate,
+                                    total: it.lineTotal,
+                                  })),
+                                });
+                              }}
+                              className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>Share PDF to WhatsApp</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
                                 setEditingDoc(doc);
@@ -650,11 +760,6 @@ export default function Purchases() {
                               <Eye className="w-3.5 h-3.5" />
                               <span>Edit Bill</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Download CSV</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteDocument(doc)}
                               className="gap-2 text-rose-600"
