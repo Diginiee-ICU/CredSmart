@@ -2729,14 +2729,17 @@ export default function POSBilling() {
                   </button>
                 </div>
               ) : (
-                currentTab.items.map((item, idx) => {
+                (currentTab.items || []).map((item, idx) => {
                   const isSelected = idx === currentTab.selectedItemIndex;
+                  const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any)?.mrp ?? 0) || 0;
+                  const itemQty = Number(item.quantity) || 1;
+                  const itemDiscPct = Number(item.discountPercent) || 0;
                   const lineAmount =
-                    (item.sp -
+                    Math.max(0, itemSp -
                       (item.discountType === "percent"
-                        ? (item.sp * item.discountPercent) / 100
-                        : item.discountPercent)) *
-                    item.quantity;
+                        ? (itemSp * itemDiscPct) / 100
+                        : itemDiscPct)) *
+                    itemQty;
 
                   return (
                     <div
