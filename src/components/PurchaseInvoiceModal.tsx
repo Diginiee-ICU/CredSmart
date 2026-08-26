@@ -1460,6 +1460,25 @@ export function PurchaseInvoiceModal({
                             />
                           </td>
 
+                          {/* Unit */}
+                          <td className="py-2 px-2">
+                            <Select
+                              value={item.unit || "Pcs"}
+                              onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                            >
+                              <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-56">
+                                {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                  <SelectItem key={u} value={u} className="text-xs">
+                                    {u}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+
                           {/* Price / Rate */}
                           <td className="py-2 px-2">
                             <Input
