@@ -69,16 +69,7 @@ export function AppSidebar({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    Parties: true,
-    Catalog: true,
-    "Sales Hub": true,
-    "Purchase Hub": false,
-    "Reports & Insights": false,
-    "Accounting Solutions": false,
-    "Business Tools": false,
-    "Settings & Preferences": false,
-  });
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
   const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
