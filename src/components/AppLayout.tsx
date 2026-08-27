@@ -383,34 +383,34 @@ export default function AppLayout() {
                     </button>
                   </DropdownMenuTrigger>
                 </div>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-[#0F0E38] border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
-                  <div className="px-2 pb-1.5 border-b border-[#1F1C5C]">
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                  <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <button
                       type="button"
                       onClick={() => {
                         setNewInvoiceMenuOpen(false);
                         setQuickCreateModalOpen(true);
                       }}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer"
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-200 dark:border-indigo-700/40 cursor-pointer"
                     >
-                      <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-400" /><span>All Creation Options</span></div>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold uppercase">Hub</span>
+                      <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /><span>All Creation Options</span></div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-mono font-bold uppercase">Hub</span>
                     </button>
                   </div>
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><UserPlus className="w-4 h-4 text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><PackagePlus className="w-4 h-4 text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-300 hover:bg-cyan-950/50 hover:text-cyan-200 rounded-xl cursor-pointer font-semibold"><FileText className="w-4 h-4 text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-950/60 rounded-xl cursor-pointer font-semibold"><ShoppingCart className="w-4 h-4 text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Truck className="w-4 h-4 text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><CreditCard className="w-4 h-4 text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><UserPlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><PackagePlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-800 dark:hover:text-cyan-200 rounded-xl cursor-pointer font-semibold"><FileText className="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 rounded-xl cursor-pointer font-semibold"><ShoppingCart className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -558,7 +558,7 @@ export default function AppLayout() {
 
         {/* Main Content Viewport Wrapper for 3D Effect */}
         <div 
-          className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#0A0924] dark:bg-[#02010A]"
+          className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-100 dark:bg-[#02010A]"
           style={{ perspective: "2000px" }}
         >
           <main
@@ -579,8 +579,8 @@ export default function AppLayout() {
                     borderTopLeftRadius: "2rem",
                     borderTopRightRadius: "2rem",
                     borderBottomLeftRadius: "0",
-                    boxShadow: "0 -30px 100px rgba(0, 0, 0, 0.8)",
-                    borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+                    boxShadow: "0 -30px 100px rgba(0, 0, 0, 0.15)",
+                    borderTop: "1px solid rgba(255, 255, 255, 0.6)",
                     pointerEvents: "none",
                   }
                 : {

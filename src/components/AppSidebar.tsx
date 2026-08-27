@@ -512,31 +512,27 @@ export function AppSidebar({
           "fixed top-[4.75rem] left-4 right-4 max-w-7xl mx-auto z-[200]",
           // Dimensions
           "max-h-[calc(100vh-6rem)] flex flex-col",
-          // 3D Glass Surface Architecture
+          // 3D Glass Surface Architecture - LIGHT THEME
           "rounded-3xl overflow-hidden",
-          "bg-[#0C0B2D]/95 backdrop-blur-3xl",
+          "bg-white/95 backdrop-blur-3xl",
           // Specular highlights & multi-tier 3D elevation
-          "border border-[#2D287F]/80",
-          "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_50px_rgba(0,0,0,0.8),0_40px_100px_rgba(0,0,0,0.6),0_0_100px_rgba(245,158,11,0.08),inset_0_1px_1px_rgba(255,255,255,0.15)]",
+          "border border-slate-200/80",
+          "shadow-[0_0_0_1px_rgba(0,0,0,0.02),0_20px_50px_rgba(0,0,0,0.1),0_40px_100px_rgba(0,0,0,0.05)]",
           // Dropdown Entrance Animation from TOP
           "animate-in fade-in slide-in-from-top-6 zoom-in-[0.98] duration-300 ease-out select-none"
         )}
         style={{ transformOrigin: "top center" }}
       >
         {/* Dropdown Top Anchor Pointer Indicator */}
-        <div className="absolute -top-2 left-10 w-4 h-4 rotate-45 bg-[#14124E] border-t border-l border-[#2D287F]/80 shadow-md" />
-
-        {/* 3D Top Specular Light Beam */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-8 top-[1px] h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+        <div className="absolute -top-2 left-10 w-4 h-4 rotate-45 bg-white border-t border-l border-slate-200 shadow-sm" />
 
         {/* ── Dropdown Header Strip ── */}
-        <div className="shrink-0 px-6 pt-4 pb-3.5 border-b border-[#1F1C5C]/80 bg-gradient-to-r from-[#14124E]/90 via-[#0F0E38]/90 to-[#14124E]/90">
+        <div className="shrink-0 px-6 pt-4 pb-3.5 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 via-white to-slate-50">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] animate-pulse" />
-              <span className="text-[13px] font-black tracking-[0.16em] uppercase text-slate-200 font-mono flex items-center gap-1.5">
-                CREDSMART <span className="text-amber-400">MEGA MENU</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)] animate-pulse" />
+              <span className="text-[13px] font-black tracking-[0.16em] uppercase text-slate-800 font-mono flex items-center gap-1.5">
+                CREDSMART <span className="text-amber-500">MEGA MENU</span>
               </span>
             </div>
 
@@ -549,13 +545,13 @@ export function AppSidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search modules & shortcuts..."
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#080720]/80 border border-[#262270] focus:border-amber-400/60 focus:bg-[#090826] text-sm text-white placeholder-slate-500 focus:outline-hidden transition-all shadow-inner font-sans"
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-100 border border-slate-200 focus:border-amber-400 focus:bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-hidden transition-all shadow-inner font-sans"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -563,13 +559,13 @@ export function AppSidebar({
             </div>
 
             <div className="flex items-center gap-2">
-              <kbd className="hidden sm:inline-flex px-2 py-1 rounded-md text-[10px] font-mono bg-white/10 text-slate-400 border border-white/10">
+              <kbd className="hidden sm:inline-flex px-2 py-1 rounded-md text-[10px] font-mono bg-slate-100 text-slate-500 border border-slate-200">
                 ESC
               </kbd>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all border border-white/10 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 transition-all border border-slate-200 cursor-pointer"
                 title="Close (ESC)"
               >
                 <X className="w-4 h-4" />
@@ -579,7 +575,7 @@ export function AppSidebar({
         </div>
 
         {/* ── Quick Access 4-Tile Launchpad (Mobile only or when searching) ── */}
-        <div className="sm:hidden shrink-0 px-4 py-3 border-b border-[#1F1C5C]/60 bg-[#0A0924]/60">
+        <div className="sm:hidden shrink-0 px-4 py-3 border-b border-slate-200 bg-slate-50">
            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
@@ -587,84 +583,106 @@ export function AppSidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search modules..."
-                className="w-full pl-8 pr-7 py-2 rounded-xl bg-[#080720]/80 border border-[#262270] focus:border-amber-400/60 focus:bg-[#090826] text-xs text-white placeholder-slate-500 focus:outline-hidden transition-all shadow-inner"
+                className="w-full pl-8 pr-7 py-2 rounded-xl bg-slate-100 border border-slate-200 focus:border-amber-400 focus:bg-white text-xs text-slate-700 placeholder-slate-400 focus:outline-hidden transition-all shadow-inner"
               />
             </div>
         </div>
 
-        {/* ── Mega Menu Grid Content ── */}
+        {/* ── Mega Menu 3D Grid Content ── */}
         <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 sm:p-8 scrollbar-thin">
           {filteredNavRouteGroups.length === 0 ? (
             <div className="py-16 text-center">
-              <Search className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-400 font-semibold">No matching modules found</p>
-              <p className="text-xs text-slate-600 mt-1">Try a different keyword</p>
+              <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 border border-rose-100">
+                <Search className="w-8 h-8 text-rose-500" />
+              </div>
+              <p className="text-sm text-slate-700 font-bold tracking-wide">No matching modules found</p>
+              <p className="text-xs text-slate-500 mt-1">Try a different keyword</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filteredNavRouteGroups.map((group, gIdx) => (
-                <div key={gIdx} className="space-y-3.5">
+                <div 
+                  key={gIdx} 
+                  className="relative group/card flex flex-col p-5 rounded-[1.5rem] bg-white border border-slate-200 hover:border-indigo-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+                >
+                  {/* Subtle Top Glow on Hover */}
+                  <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-indigo-500/0 to-transparent group-hover/card:via-indigo-500/30 transition-all duration-500" />
+                  
                   {/* Category Header */}
-                  <div className="flex items-center gap-2 border-b border-[#1F1C5C] pb-2">
-                    <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 font-mono">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-3.5 bg-gradient-to-b from-amber-400 to-rose-500 rounded-full" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 font-mono">
                       {group.label}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-white/5 text-slate-500">
+                    <span className="ml-auto px-2 py-0.5 rounded-lg text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                       {group.items.length}
                     </span>
                   </div>
 
                   {/* Items List */}
-                  <div className="space-y-1.5">
+                  <div className="flex-1 space-y-1.5">
                     {group.items.map((item) => {
                       const hasChildren = Boolean(item.children?.length);
                       const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
                       const active = isRouteActive(item.url) || isChildActive;
+                      const isExpanded = expandedMenus[item.title] || Boolean(searchQuery);
 
                       return (
                         <div key={item.url} className="space-y-1">
                           <button
                             type="button"
                             onClick={() => {
-                              if (!hasChildren) {
+                              if (hasChildren) {
+                                toggleSubmenu(item.title);
+                              } else {
                                 handleNavigate(item.url);
                               }
                             }}
                             className={cn(
-                              "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 text-left group",
+                              "w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-left group/item relative overflow-hidden",
                               active
-                                ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-transparent text-white shadow-[0_2px_12px_rgba(245,158,11,0.15)] border border-amber-400/40"
-                                : "bg-transparent hover:bg-white/5 text-slate-300 hover:text-white border border-transparent"
+                                ? "bg-amber-50 text-amber-900 shadow-sm border border-amber-200"
+                                : "bg-transparent hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent hover:border-slate-200/60"
                             )}
                           >
-                            <div
-                              className={cn(
-                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all",
-                                active
-                                  ? "bg-amber-500/25 border border-amber-400/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                                  : "bg-white/5 border border-white/10 group-hover:bg-amber-500/15 group-hover:border-amber-400/30 text-slate-400 group-hover:text-amber-300"
-                              )}
-                            >
-                              <item.icon className="w-4 h-4 stroke-[2.2]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                               <div className="flex items-center gap-1.5">
-                                  <span className="truncate">{item.title}</span>
-                                  {item.badge && (
-                                    <span className="px-1.5 py-0.5 rounded-md text-[8.5px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/35 font-mono">
-                                      {item.badge}
-                                    </span>
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div
+                                  className={cn(
+                                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/item:scale-110 group-hover/item:rotate-[-4deg]",
+                                    active
+                                      ? "bg-amber-100 text-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                                      : "bg-slate-100 text-slate-500 group-hover/item:text-indigo-600 group-hover/item:bg-indigo-50"
                                   )}
-                               </div>
+                                >
+                                  <item.icon className="w-3.5 h-3.5 stroke-[2.2]" />
+                                </div>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                   <span className="truncate group-hover/item:translate-x-0.5 transition-transform text-xs sm:text-sm">{item.title}</span>
+                                   {item.badge && (
+                                     <span className="px-1.5 py-0.5 rounded-md text-[8px] font-black bg-rose-100 text-rose-700 border border-rose-200 font-mono shrink-0">
+                                       {item.badge}
+                                     </span>
+                                   )}
+                                </div>
                             </div>
-                            {!hasChildren && (
-                              <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100" />
-                            )}
+                            
+                            <div className="flex items-center shrink-0">
+                                {hasChildren ? (
+                                    <ChevronDown
+                                      className={cn(
+                                        "w-4 h-4 transition-transform duration-300",
+                                        isExpanded ? "rotate-180 text-amber-500" : "text-slate-400 group-hover/item:text-slate-600"
+                                      )}
+                                    />
+                                ) : (
+                                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-indigo-500 transition-colors opacity-0 group-hover/item:opacity-100" />
+                                )}
+                            </div>
                           </button>
 
-                          {/* Render Children flat under parent in Mega Menu */}
-                          {hasChildren && (
-                            <div className="ml-12 pl-3 py-1 border-l-2 border-[#262270] space-y-1">
+                          {/* Render Children Accordion */}
+                          {hasChildren && isExpanded && (
+                            <div className="ml-10 pl-3 py-1.5 border-l-2 border-slate-200 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                               {item.children?.map((child) => {
                                 const childActive = isRouteActive(child.url);
                                 return (
@@ -673,19 +691,19 @@ export function AppSidebar({
                                     to={child.url}
                                     onClick={onClose}
                                     className={cn(
-                                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer group/child",
                                       childActive
-                                        ? "text-amber-300 bg-amber-500/15 border border-amber-400/30 font-bold"
-                                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                                        ? "text-amber-700 bg-amber-50 border border-amber-200 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                                     )}
                                   >
                                     <span
                                       className={cn(
-                                        "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
-                                        childActive ? "bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]" : "bg-slate-600"
+                                        "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300 group-hover/child:scale-150",
+                                        childActive ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" : "bg-slate-300 group-hover/child:bg-indigo-500"
                                       )}
                                     />
-                                    <span className="truncate">{child.title}</span>
+                                    <span className="truncate group-hover/child:translate-x-0.5 transition-transform">{child.title}</span>
                                   </NavLink>
                                 );
                               })}
@@ -702,14 +720,14 @@ export function AppSidebar({
         </nav>
 
         {/* ── Dropdown Footer Bar ── */}
-        <div className="shrink-0 px-6 py-3.5 border-t border-[#1F1C5C]/80 bg-[#090824] flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-emerald-400 font-mono">
-            <Shield className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="shrink-0 px-6 py-3.5 border-t border-slate-200/80 bg-slate-50 flex items-center justify-between rounded-b-3xl">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-emerald-600 font-mono">
+            <Shield className="w-3.5 h-3.5 text-emerald-500" />
             <span>256-Bit SSL • Enterprise Secure • GST Compliant</span>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono text-slate-500">
             <span>Cred</span>
-            <span className="text-amber-400 font-bold">Smart POS</span>
+            <span className="text-amber-500 font-bold">Smart POS</span>
           </div>
         </div>
       </div>
