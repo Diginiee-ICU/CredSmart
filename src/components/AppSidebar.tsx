@@ -238,9 +238,169 @@ export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
     );
   }
 
-  // ─── Desktop: Fixed Floating Overlay ─────────────────────────────────────────
-  // Position: fixed top-left. Background: transparent. Screen space: ZERO.
-  // Width matches the panel (280px) so logo fills same width as menu buttons.
+  // ─── Desktop: Proper sidebar panel (fills the flex wrapper in AppLayout) ──────
+  return (
+    <aside className="flex flex-col h-full w-full bg-[#0C0B2D] border-r border-[#1F1C5C]/70 shadow-[4px_0_24px_rgba(0,0,0,0.5)] overflow-hidden select-none">
+      {/* Top highlight line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/20 to-transparent pointer-events-none" />
+
+      {/* ── Header: Logo + Close button ── */}
+      <div className="shrink-0 px-3 pt-3 pb-2 border-b border-[#1F1C5C]/60 bg-[#0C0B2D]">
+        <div className="flex items-center justify-between gap-2">
+          <NavLink
+            to={ROUTE_PATHS.dashboard}
+            onClick={onClose}
+            title="CredSmart Dashboard"
+            className="flex-1 block rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+            style={{ filter: "drop-shadow(0 0 10px rgba(245,158,11,0.2))" }}
+          >
+            <img
+              src="/IMG_9301.GIF"
+              alt="CredSmart"
+              className="w-full h-auto object-contain rounded-xl"
+            />
+          </NavLink>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0 self-start mt-1"
+            aria-label="Close navigation menu"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Live indicator strip */}
+        <div className="flex items-center gap-1.5 mt-2 px-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)] animate-pulse" />
+          <span className="text-[9.5px] font-black tracking-widest uppercase text-slate-400 font-mono">
+            CredSmart Navigator
+          </span>
+        </div>
+      </div>
+
+      {/* ── Scrollable Nav Groups ── */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 py-3 space-y-4 scrollbar-thin">
+        {filteredNavRouteGroups.map((group, gIdx) => (
+          <div key={gIdx} className="space-y-0.5">
+            {/* Group heading */}
+            <p className="px-2.5 pb-1.5 text-[9.5px] font-black uppercase tracking-[0.15em] text-slate-500 font-mono">
+              {group.label}
+            </p>
+
+            {/* Group items */}
+            {group.items.map((item) => {
+              const hasChildren = Boolean(item.children?.length);
+              const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
+              const isSelfActive = isRouteActive(item.url);
+              const active = isSelfActive || isChildActive;
+              const isExpanded = expandedMenus[item.title];
+
+              return (
+                <div key={item.url}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasChildren) {
+                        toggleSubmenu(item.title);
+                      } else {
+                        navigate(item.url);
+                        onClose?.();
+                      }
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-[14px] cursor-pointer text-xs transition-all duration-150 text-left group",
+                      active
+                        ? "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent text-amber-200 border border-amber-400/30 shadow-[0_2px_12px_rgba(245,158,11,0.15)]"
+                        : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+                    )}
+                  >
+                    {/* 3D icon container */}
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-150",
+                        active
+                          ? "bg-gradient-to-br from-amber-400/25 to-amber-600/15 border border-amber-400/40 text-amber-300"
+                          : "bg-white/5 border border-white/8 group-hover:bg-white/10 text-slate-400 group-hover:text-amber-300"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4 stroke-[2]" />
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-between min-w-0">
+                      <span className="truncate font-semibold tracking-tight">{item.title}</span>
+                      <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                        {item.badge && (
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono">
+                            {item.badge}
+                          </span>
+                        )}
+                        {hasChildren ? (
+                          <ChevronDown
+                            className={cn(
+                              "w-3.5 h-3.5 text-slate-500 transition-transform duration-200",
+                              isExpanded ? "rotate-180 text-amber-400" : "group-hover:text-slate-300"
+                            )}
+                          />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Submenu */}
+                  {hasChildren && isExpanded && (
+                    <div className="ml-5 pl-3 pr-1 mt-1 mb-1 border-l border-[#1F1C5C] space-y-0.5">
+                      {item.children?.map((child) => {
+                        const childActive = isRouteActive(child.url);
+                        return (
+                          <NavLink
+                            key={child.title}
+                            to={child.url}
+                            onClick={onClose}
+                            className={cn(
+                              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 cursor-pointer",
+                              childActive
+                                ? "text-amber-300 bg-amber-400/10 border border-amber-400/20"
+                                : "text-slate-400 hover:text-white hover:bg-white/5"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
+                                childActive ? "bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.7)]" : "bg-slate-600"
+                              )}
+                            />
+                            <span className="truncate">{child.title}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* ── Footer: Security badges ── */}
+      <div className="shrink-0 px-4 py-3 border-t border-[#1F1C5C]/60 bg-[#0C0B2D]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[9.5px] text-emerald-400/80 font-mono">
+            <Shield className="w-3 h-3" />
+            <span>IT Act 2000 Ready · 256-bit SSL</span>
+          </div>
+          <div className="flex items-center gap-0.5 text-[9px] text-slate-600 font-mono font-bold">
+            <span>Cred</span><span className="text-amber-500/60">Smart</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
   return (
     <div className="fixed top-3 left-3 z-[200] w-[280px] flex flex-col items-stretch gap-1.5 select-none pointer-events-none">
       {/* Logo — full 280px panel width */}
