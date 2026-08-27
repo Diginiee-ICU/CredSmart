@@ -182,15 +182,14 @@ export function AppSidebar({
   };
 
   // ─── Mobile: Bottom Navigation Dock ───────────────────────────────────────
-  if (isMobile) {
     const isDashboardActive = isRouteActive(ROUTE_PATHS.dashboard) || location.pathname === "/";
     const isPosActive = isRouteActive(ROUTE_PATHS.checkout) || isRouteActive(ROUTE_PATHS.pos);
     const isSalesActive = isRouteActive(ROUTE_PATHS.sales) || isRouteActive(ROUTE_PATHS.salesHistory);
     const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
 
-    return (
-      <>
-        {/* Floating High-Tactile 3D Mobile Dock - Light Theme Edition */}
+  return (
+    <>
+      {isMobile && (
         <nav
           className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-2xl border-t border-slate-200/80 shadow-[0_-12px_40px_rgba(0,0,0,0.06)] px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
           aria-label="Mobile Bottom Navigation"
@@ -279,230 +278,33 @@ export function AppSidebar({
             <span className="text-[10px] tracking-tight">Items</span>
           </NavLink>
 
-          {/* More Menu Toggle */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl text-slate-400 hover:text-white active:scale-90 transition-all duration-200 min-w-[50px] cursor-pointer hover-3d-glow"
-              >
-                <div className="p-1.5 rounded-xl bg-transparent border border-transparent">
-                  <Menu className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[10px] tracking-tight">More</span>
-              </button>
-            </SheetTrigger>
-            <SheetContent
-              side="bottom"
-              className="h-[min(92dvh,54rem)] rounded-t-3xl border-t border-slate-200 bg-white text-slate-800 px-4 pb-6 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
-            >
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
-                <SheetDescription>Access all business tools and actions</SheetDescription>
-              </SheetHeader>
-
-              {/* Drawer Top Header with Big Logo */}
-              <div className="flex items-center justify-between pt-2 pb-3 border-b border-slate-200 shrink-0">
-                <div className="flex items-center gap-2">
-                  <img
-                    src="/IMG_9301.GIF"
-                    alt="CredSmart"
-                    className="h-16 sm:h-20 w-auto max-w-[240px] object-contain rounded-xl shadow-md ring-1 ring-slate-100"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-900 active:scale-95 transition-all cursor-pointer hover-3d-glow"
-                  title="Close Menu"
-                >
-                  <X className="w-4 h-4 stroke-[2.5]" />
-                </button>
-              </div>
-
-              {/* Drawer Search Filter */}
-              <div className="pt-3 pb-2 shrink-0">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search menu & tools..."
-                    className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 focus:border-amber-400/60 rounded-xl text-slate-800 placeholder:text-slate-400 outline-hidden transition-colors shadow-inner"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer hover-3d-glow"
-                    >
-                      <X className="w-3.5 h-3.5 stroke-[2.5]" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 4-Tile Quick Access Launchpad */}
-              {!searchQuery && (
-                <div className="grid grid-cols-4 gap-2 pb-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.checkout); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-amber-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group hover-3d-glow"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100 flex items-center justify-center mb-1 transition-colors">
-                      <ShoppingCart className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-700">POS</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.sales); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group hover-3d-glow"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 flex items-center justify-center mb-1 transition-colors">
-                      <Receipt className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-700">Sales</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.items); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-emerald-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group hover-3d-glow"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 flex items-center justify-center mb-1 transition-colors">
-                      <Package className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-700">Items</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.parties); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-cyan-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group hover-3d-glow"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100 flex items-center justify-center mb-1 transition-colors">
-                      <Users2 className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-700">Parties</span>
-                  </button>
-                </div>
+          {/* Purchases */}
+          <NavLink
+            to={ROUTE_PATHS.purchases}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer hover-3d-glow",
+              isRouteActive(ROUTE_PATHS.purchases) ? "text-rose-600 font-bold" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl border transition-all duration-200",
+                isRouteActive(ROUTE_PATHS.purchases)
+                  ? "bg-rose-50 border-rose-200 text-rose-600 shadow-[0_0_16px_rgba(225,29,72,0.15)] scale-105"
+                  : "bg-transparent border-transparent"
               )}
-
-              {/* Categorized Route List */}
-              <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-1 scrollbar-thin">
-                {filteredNavRouteGroups.map((group, gIdx) => (
-                  <div key={gIdx} className="space-y-1.5">
-                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-                      {group.label}
-                    </p>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const hasChildren = Boolean(item.children?.length);
-                        const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
-                        const active = isRouteActive(item.url) || isChildActive;
-                        const isExpanded = expandedMenus[item.title];
-                        return (
-                          <div key={item.url} className="space-y-1">
-                          <div
-                            className={cn(
-                              "w-full flex items-center justify-between gap-1 pr-1.5 pl-3 py-1.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer",
-                              active
-                                ? "bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
-                                : "text-slate-600 hover:bg-slate-100 border border-transparent"
-                            )}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMobileMenuOpen(false);
-                                navigate(item.url);
-                              }}
-                              className="flex items-center gap-3 min-w-0 flex-1 py-1 cursor-pointer text-left hover-3d-glow"
-                            >
-                              <div
-                                className={cn(
-                                  "p-1.5 rounded-xl border shrink-0",
-                                  active
-                                    ? "bg-amber-100 border-amber-300 text-amber-600"
-                                    : "bg-white border-slate-200 text-slate-500 shadow-xs"
-                                )}
-                              >
-                                <item.icon className="w-4 h-4 stroke-[2.2]" />
-                              </div>
-                              <span className="truncate">{item.title}</span>
-                            </button>
-                            
-                            {hasChildren ? (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  toggleSubmenu(item.title);
-                                }}
-                                className="p-2 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer hover-3d-glow"
-                              >
-                                <ChevronDown
-                                  className={cn(
-                                    "w-4 h-4 text-slate-400 transition-transform duration-200",
-                                    isExpanded && "rotate-180 text-amber-500"
-                                  )}
-                                />
-                              </button>
-                            ) : (
-                              <ChevronRight className="w-4 h-4 mr-2 text-slate-400" />
-                            )}
-                          </div>
-
-                            {hasChildren && isExpanded && (
-                              <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-slate-200 animate-in fade-in slide-in-from-top-1 duration-150">
-                                {item.children?.map((child) => {
-                                  const childActive = isRouteActive(child.url);
-                                  return (
-                                    <NavLink
-                                      key={child.title}
-                                      to={child.url}
-                                      onClick={() => setMobileMenuOpen(false)}
-                                      className={cn(
-                                        "flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors",
-                                        childActive
-                                          ? "text-amber-700 font-bold bg-amber-50 border border-amber-200"
-                                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                                      )}
-                                    >
-                                      <span
-                                        className={cn(
-                                          "w-1.5 h-1.5 rounded-full shrink-0",
-                                          childActive ? "bg-amber-500" : "bg-slate-300"
-                                        )}
-                                      />
-                                      <span className="truncate">{child.title}</span>
-                                    </NavLink>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
+            >
+              <Truck className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[10px] tracking-tight">Purchases</span>
+          </NavLink>
         </nav>
-      </>
-    );
-  }
+      )}
 
-  // ─── Desktop: High-Impact 3D Dropdown Navigator Popover ─────────────────────
-  if (!isOpen) return null;
-
-  return (
-    <>
-      {/* Transparent backdrop overlay for outside click dismissal to reveal 3D Squeeze effect */}
+      {/* ─── High-Impact 3D Dropdown Navigator Popover (Desktop & Mobile) ───────────────────── */}
+      {isOpen && (
+        <>
+          {/* Transparent backdrop overlay for outside click dismissal to reveal 3D Squeeze effect */}
       <div
         className="fixed inset-0 z-[190] bg-transparent cursor-default"
         onClick={onClose}
@@ -514,7 +316,7 @@ export function AppSidebar({
         ref={panelRef}
         className={cn(
           // Centered full-width Mega Menu below header
-          "fixed top-[4.75rem] left-4 right-4 max-w-7xl mx-auto z-[200]",
+          "fixed top-[6rem] sm:top-[4.75rem] left-4 right-4 max-w-7xl mx-auto z-[200]",
           // Dimensions
           "max-h-[calc(100vh-6rem)] flex flex-col",
           // 3D Glass Surface Architecture - LIGHT THEME
@@ -745,6 +547,8 @@ export function AppSidebar({
           </div>
         </div>
       </div>
+        </>
+      )}
     </>
   );
 }
