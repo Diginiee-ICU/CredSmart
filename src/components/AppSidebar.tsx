@@ -82,6 +82,9 @@ export function AppSidebar() {
   const [businessSwitcherOpen, setBusinessSwitcherOpen] = useState(false);
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false);
 
+  // New Menu dropdown button state: hidden until clicked
+  const [isMenuDropdownOpen, setIsMenuDropdownOpen] = useState(false);
+
   const businessSwitcherRef = useRef<HTMLDivElement>(null);
   const quickCreateRef = useRef<HTMLDivElement>(null);
 
@@ -144,7 +147,7 @@ export function AppSidebar() {
     [location.pathname]
   );
 
-  // Auto-expand menu when active route changes to match any child item
+  // Auto-expand submenus when active route changes
   useEffect(() => {
     filteredNavRouteGroups.forEach((group) => {
       group.items.forEach((item) => {
@@ -270,7 +273,7 @@ export function AppSidebar() {
       <>
         {/* Mobile Bottom Navigation Dock */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 bg-[#070D1E]/95 backdrop-blur-2xl border-t border-slate-800/90 shadow-[0_-10px_35px_rgba(0,0,0,0.6)] px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-400 select-none"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-[#0C0B2D]/95 backdrop-blur-2xl border-t border-[#1F1C5C]/90 shadow-[0_-10px_35px_rgba(0,0,0,0.6)] px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-400 select-none"
           aria-label="Mobile Bottom Navigation"
         >
           {/* Tab 1: Home / Dashboard */}
@@ -322,7 +325,7 @@ export function AppSidebar() {
           >
             <div
               className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ring-4 ring-[#070D1E] active:scale-95",
+                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ring-4 ring-[#0C0B2D] active:scale-95",
                 isPosActive
                   ? "bg-gradient-to-tr from-amber-500 to-amber-400 text-slate-950 shadow-[0_0_25px_rgba(245,158,11,0.5)]"
                   : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_0_25px_rgba(79,70,229,0.5)] hover:brightness-110"
@@ -376,7 +379,7 @@ export function AppSidebar() {
 
             <SheetContent
               side="bottom"
-              className="h-[min(92dvh,52rem)] rounded-t-3xl border-t border-slate-700/80 bg-[#080E1E] text-slate-200 px-4 sm:px-6 pb-6 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden"
+              className="h-[min(92dvh,52rem)] rounded-t-3xl border-t border-[#1F1C5C]/80 bg-[#0C0B2D] text-slate-200 px-4 sm:px-6 pb-6 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden"
             >
               <SheetHeader className="sr-only">
                 <SheetTitle>Navigation Menu</SheetTitle>
@@ -384,7 +387,7 @@ export function AppSidebar() {
               </SheetHeader>
 
               {/* Mobile Drawer Top Banner with GIF Logo */}
-              <div className="flex items-center justify-between pt-1 pb-2.5 border-b border-slate-800/80 shrink-0">
+              <div className="flex items-center justify-between pt-1 pb-2.5 border-b border-[#1F1C5C]/60 shrink-0">
                 <div className="flex items-center gap-2">
                   <img
                     src="/IMG_9301.GIF"
@@ -394,7 +397,7 @@ export function AppSidebar() {
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                  className="p-2 rounded-xl bg-[#141242] border border-[#232064] text-slate-400 hover:text-white transition-colors"
                   aria-label="Close menu"
                 >
                   <X className="w-4 h-4" />
@@ -402,7 +405,7 @@ export function AppSidebar() {
               </div>
 
               {/* Store Profile Card */}
-              <div className="py-2.5 border-b border-slate-800/80 shrink-0">
+              <div className="py-2.5 border-b border-[#1F1C5C]/60 shrink-0">
                 <div className="flex items-center justify-between">
                   <div
                     onClick={() => setMobileSwitcherOpen(!mobileSwitcherOpen)}
@@ -443,7 +446,7 @@ export function AppSidebar() {
 
                 {/* Expandable Mobile Store Switcher List */}
                 {mobileSwitcherOpen && (
-                  <div className="mt-2.5 p-2 bg-slate-900/95 rounded-2xl border border-slate-700/80 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="mt-2.5 p-2 bg-[#0F0E38] rounded-2xl border border-[#2B277A] space-y-1 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
                       <span>Switch Branch / Store</span>
                       <span className="text-amber-400">1-Tap Switch</span>
@@ -468,7 +471,7 @@ export function AppSidebar() {
                               "w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all active:scale-[0.98]",
                               isActive
                                 ? "bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold"
-                                : "hover:bg-slate-800 text-slate-300 hover:text-white"
+                                : "hover:bg-[#1C1A54] text-slate-300 hover:text-white"
                             )}
                           >
                             <div className="min-w-0 pr-2">
@@ -487,7 +490,7 @@ export function AppSidebar() {
                       })}
                     </div>
 
-                    <div className="pt-1.5 border-t border-slate-800">
+                    <div className="pt-1.5 border-t border-[#1F1C5C]">
                       <button
                         type="button"
                         onClick={() => {
@@ -565,14 +568,14 @@ export function AppSidebar() {
                                 "w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all duration-200 text-xs font-bold select-none text-left",
                                 active
                                   ? "bg-gradient-to-r from-amber-500/25 to-amber-600/10 text-white font-black border border-amber-400/40"
-                                  : "text-slate-200 hover:bg-slate-800/80 hover:text-white"
+                                  : "text-slate-200 hover:bg-[#1C1A54] hover:text-white"
                               )}
                             >
                               <div className="flex items-center gap-3 min-w-0">
                                 <div
                                   className={cn(
                                     "p-1.5 rounded-xl border shrink-0",
-                                    active ? "bg-amber-500/20 border-amber-400/50 text-amber-300" : "bg-slate-800/80 border-slate-700/80 text-amber-400"
+                                    active ? "bg-amber-500/20 border-amber-400/50 text-amber-300" : "bg-[#141242] border-[#262270] text-amber-400"
                                   )}
                                 >
                                   <item.icon className="w-4 h-4 stroke-[2.2]" />
@@ -593,7 +596,7 @@ export function AppSidebar() {
 
                             {/* Render child routes when expanded */}
                             {hasChildren && isExpanded && (
-                              <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-slate-800/80 animate-in slide-in-from-top-1 duration-150">
+                              <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-[#1F1C5C] animate-in slide-in-from-top-1 duration-150">
                                 {item.children?.map((child) => {
                                   const childActive = isRouteActive(child.url as string);
                                   return (
@@ -606,7 +609,7 @@ export function AppSidebar() {
                                         "flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors",
                                         childActive
                                           ? "text-amber-300 font-bold bg-amber-500/15 border border-amber-400/30"
-                                          : "text-slate-300 hover:text-white hover:bg-slate-800/70"
+                                          : "text-slate-300 hover:text-white hover:bg-[#1C1A54]"
                                       )}
                                     >
                                       <span
@@ -630,7 +633,7 @@ export function AppSidebar() {
               </div>
 
               {/* Footer: Sign Out Button */}
-              <div className="pt-3 border-t border-slate-800/80 shrink-0">
+              <div className="pt-3 border-t border-[#1F1C5C]/60 shrink-0">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
@@ -659,35 +662,35 @@ export function AppSidebar() {
     );
   }
 
-  // Desktop Sidebar
+  // Desktop Sidebar - Exactly matches logo background #0C0B2D
   return (
     <aside
       className={cn(
-        "flex flex-col h-[100dvh] min-h-0 bg-[#080E1E] text-slate-300 border-r border-slate-800/80 shadow-2xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-30 font-sans",
+        "flex flex-col h-[100dvh] min-h-0 bg-[#0C0B2D] text-slate-300 border-r border-[#1F1C5C]/70 shadow-2xl transition-all duration-300 sticky top-0 overflow-hidden select-none z-30 font-sans",
         collapsed ? "w-[72px]" : "w-[250px]"
       )}
     >
-      {/* 1. CREDSMART Animated GIF Hero Logo Header */}
+      {/* 1. CREDSMART Animated GIF Hero Logo Header - Seamless #0C0B2D Background */}
       {!collapsed ? (
-        <div className="p-3 border-b border-slate-800/80 shrink-0 bg-gradient-to-b from-[#0B132B]/90 via-[#070D1E] to-[#060B18]">
+        <div className="p-3 border-b border-[#1F1C5C]/60 shrink-0 bg-[#0C0B2D]">
           <NavLink
             to={ROUTE_PATHS.dashboard}
-            className="flex items-center justify-center w-full rounded-2xl bg-slate-950/80 border border-slate-800/90 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-amber-500/40 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 group cursor-pointer"
+            className="flex items-center justify-center w-full rounded-2xl bg-[#0C0B2D] p-1.5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
             title="CredSmart Dashboard"
           >
             <img
               src="/IMG_9301.GIF"
               alt="CREDSMART"
-              className="w-full max-h-14 object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
+              className="w-full max-h-14 object-contain rounded-xl"
             />
           </NavLink>
         </div>
       ) : (
-        <div className="p-2.5 border-b border-slate-800/80 shrink-0 bg-[#060B18] flex justify-center">
+        <div className="p-2.5 border-b border-[#1F1C5C]/60 shrink-0 bg-[#0C0B2D] flex justify-center">
           <NavLink
             to={ROUTE_PATHS.dashboard}
             title="CredSmart Dashboard"
-            className="w-11 h-11 rounded-2xl bg-slate-950/90 border border-amber-500/30 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:border-amber-400 hover:scale-105 transition-all duration-200 cursor-pointer"
+            className="w-11 h-11 rounded-2xl bg-[#0C0B2D] border border-amber-500/30 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(245,158,11,0.25)] hover:border-amber-400 hover:scale-105 transition-all duration-200 cursor-pointer"
           >
             <img
               src="/IMG_9301.GIF"
@@ -698,530 +701,612 @@ export function AppSidebar() {
         </div>
       )}
 
-      {/* 2. Store Header with Multi-Business Switcher Drop Down Menu */}
-      <div className="p-3 border-b border-slate-800/80 shrink-0 bg-[#070D1A] relative" ref={businessSwitcherRef}>
-        {!collapsed ? (
+      {/* 2. New "Menu" Dropdown Button Placed Just Below Logo */}
+      {!collapsed ? (
+        <div className="p-2.5 border-b border-[#1F1C5C]/60 shrink-0 bg-[#0C0B2D]">
           <button
             type="button"
-            onClick={() => setBusinessSwitcherOpen(!businessSwitcherOpen)}
+            onClick={() => setIsMenuDropdownOpen(!isMenuDropdownOpen)}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-2xl p-2 transition-all duration-200 cursor-pointer text-left border group",
-              businessSwitcherOpen
-                ? "bg-slate-800/90 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                : "bg-slate-900/60 hover:bg-slate-800/70 border-slate-800/80 hover:border-slate-700/80"
+              "w-full flex items-center justify-between px-3 py-2 rounded-2xl font-bold text-xs transition-all duration-200 cursor-pointer select-none border shadow-md group",
+              isMenuDropdownOpen
+                ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-[#161448] text-amber-300 border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.25)]"
+                : "bg-[#141242] hover:bg-[#1A1854] text-slate-200 border-[#262270] hover:border-amber-500/40 hover:text-white"
             )}
-            title="Switch Business / Branch"
-            aria-expanded={businessSwitcherOpen}
+            title="Toggle Sidebar Menu"
+            aria-expanded={isMenuDropdownOpen}
           >
-            {/* Amber/Gold Circular Avatar */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0 ring-2 ring-amber-400/30">
-              {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1">
-                <h2 className="text-xs font-bold text-white truncate tracking-tight group-hover:text-amber-400 transition-colors">
-                  {org?.name || "CredSmart Business"}
-                </h2>
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0",
-                    businessSwitcherOpen ? "rotate-180 text-amber-400" : "group-hover:text-amber-300"
-                  )}
-                />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={cn(
+                  "p-1.5 rounded-xl transition-colors shrink-0",
+                  isMenuDropdownOpen ? "bg-amber-400/20 text-amber-400" : "bg-[#1E1B5E] text-slate-300 group-hover:text-amber-300"
+                )}
+              >
+                <Menu className="w-4 h-4 stroke-[2.4]" />
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <p className="text-[10px] text-emerald-400 font-mono tracking-tight truncate font-semibold">
-                  Active State
-                </p>
+              <div className="min-w-0 text-left">
+                <span className="block font-black text-xs tracking-wide">Menu</span>
+                <span className="block text-[10px] text-slate-400 font-mono font-normal">
+                  {isMenuDropdownOpen ? "Click to collapse" : "Click to view options"}
+                </span>
               </div>
             </div>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform duration-200 shrink-0",
+                isMenuDropdownOpen ? "rotate-180 text-amber-400" : "text-slate-400 group-hover:text-amber-300"
+              )}
+            />
           </button>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-[0_0_12px_rgba(245,158,11,0.35)] ring-2 ring-amber-400/30 hover:scale-105 transition-transform cursor-pointer"
-                title={`Store: ${org?.name || "CredSmart"}`}
-              >
-                {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="right"
-              sideOffset={12}
-              className="w-60 bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 text-slate-200 p-2 shadow-2xl rounded-2xl z-[220]"
-            >
-              <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-2 py-1">
-                <span>Switch Business</span>
-                <span className="text-amber-400">{(organizations || []).length} Store(s)</span>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-slate-800 my-1" />
-              <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
-                {(organizations || []).filter(Boolean).map((business) => {
-                  if (!business) return null;
-                  const isActive = business.id === orgId;
-                  return (
-                    <DropdownMenuItem
-                      key={business.id}
-                      onClick={() => {
-                        switchOrganization(business.id);
-                        toast.success(`Switched to "${business.name}"`);
-                      }}
-                      className={cn(
-                        "flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer",
-                        isActive
-                          ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30"
-                          : "text-slate-300 hover:text-white hover:bg-slate-800"
-                      )}
-                    >
-                      <span className="truncate">{business.name}</span>
-                      {isActive && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </div>
-              <DropdownMenuSeparator className="bg-slate-800 my-1" />
-              <button
-                type="button"
-                onClick={() => setCreateBusinessModalOpen(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-md hover:brightness-110 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Business</span>
-              </button>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        {/* Multi-Business Switcher Popover Menu (Expanded Mode) */}
-        {businessSwitcherOpen && !collapsed && (
-          <div className="absolute left-3 right-3 top-full mt-2 bg-slate-900/95 backdrop-blur-xl text-slate-200 rounded-2xl shadow-2xl border border-slate-700/90 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
-              <span>Your Businesses</span>
-              <span className="text-amber-400 font-mono">{(organizations || []).length} Store(s)</span>
-            </div>
-
-            <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
-              {(organizations || []).filter(Boolean).map((business) => {
-                if (!business) return null;
-                const isActive = business.id === orgId;
-                const bizName = business.name || "Store";
-                return (
-                  <button
-                    key={business.id || Math.random()}
-                    type="button"
-                    onClick={() => {
-                      if (business.id) switchOrganization(business.id);
-                      setBusinessSwitcherOpen(false);
-                      toast.success(`Switched to "${bizName}"`);
-                    }}
-                    className={cn(
-                      "w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all cursor-pointer",
-                      isActive
-                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold"
-                        : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    )}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <p className="truncate text-xs font-semibold">{bizName}</p>
-                      <p className="text-[10px] text-slate-500 font-mono truncate">
-                        {business.business_type || "Retail"} {business.gstin ? `• ${business.gstin}` : ""}
-                      </p>
-                    </div>
-                    {isActive && (
-                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 shadow-sm shadow-amber-400" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="pt-1.5 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setBusinessSwitcherOpen(false);
-                  setCreateBusinessModalOpen(true);
-                }}
-                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Business / Branch</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 3. "+ Create Invoice" Neon Blue Button with Dropdown Logic */}
-        {!collapsed ? (
-          <div className="relative mt-2.5" ref={quickCreateRef}>
-            <div className="flex items-center justify-between w-full rounded-2xl glowing-btn-blue font-bold text-xs py-1 px-1 select-none shadow-md">
-              <button
-                type="button"
-                onClick={() => setSalesInvoiceModalOpen(true)}
-                className="flex items-center gap-2 min-w-0 flex-1 py-1.5 px-2.5 hover:opacity-90 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5] shrink-0 text-cyan-300" />
-                <span className="tracking-tight truncate font-bold text-white">Create Invoice</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setQuickCreateOpen(!quickCreateOpen)}
-                className="p-1.5 hover:bg-white/10 rounded-xl transition-colors shrink-0 cursor-pointer"
-                title="More creation options"
-                aria-expanded={quickCreateOpen}
-              >
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 transition-transform duration-200 text-slate-300",
-                    quickCreateOpen ? "rotate-180 text-cyan-300" : ""
-                  )}
-                />
-              </button>
-            </div>
-
-            {/* Quick Action Dropdown Popover */}
-            {quickCreateOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900/95 backdrop-blur-xl text-slate-200 rounded-2xl shadow-2xl border border-slate-700/80 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[72vh] overflow-y-auto scrollbar-thin">
-                <div className="px-2 pb-1.5 border-b border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuickCreateOpen(false);
-                      setUniversalModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>All Creation Options</span>
-                    </div>
-                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">
-                      Hub
-                    </span>
-                  </button>
-                </div>
-
-                <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
-                  MASTER DATA
-                </div>
-                <button
-                  onClick={() => handleQuickAction("party")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Create Party</span>
-                </button>
-                <button
-                  onClick={() => handleQuickAction("item")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <PackagePlus className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Create Item</span>
-                </button>
-
-                <div className="my-1.5 border-t border-slate-800" />
-
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
-                  SALES
-                </div>
-                <button
-                  onClick={() => handleQuickAction("sales_invoice")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-cyan-300 hover:bg-cyan-950/50 hover:text-cyan-200 transition-colors text-left font-semibold cursor-pointer"
-                >
-                  <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>Sales Invoice</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setQuickCreateOpen(false);
-                    navigate(ROUTE_PATHS.checkout);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-emerald-300 hover:bg-emerald-950/60 transition-colors text-left font-semibold cursor-pointer"
-                >
-                  <ShoppingCart className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>POS Billing (Fast)</span>
-                </button>
-                <button
-                  onClick={() => handleQuickAction("quotation")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Quotation / Estimate</span>
-                </button>
-                <button
-                  onClick={() => handleQuickAction("payment_in")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <Receipt className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Payment In</span>
-                </button>
-
-                <div className="my-1.5 border-t border-slate-800" />
-
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
-                  PURCHASES & EXPENSES
-                </div>
-                <button
-                  onClick={() => handleQuickAction("purchase")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <Truck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Purchase Bill</span>
-                </button>
-                <button
-                  onClick={() => handleQuickAction("payment_out")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <CreditCard className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>Payment Out</span>
-                </button>
-                <button
-                  onClick={() => handleQuickAction("expense")}
-                  className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
-                >
-                  <Receipt className="w-4 h-4 text-orange-400 shrink-0" />
-                  <span>Record Expense</span>
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
+        </div>
+      ) : (
+        <div className="p-2 border-b border-[#1F1C5C]/60 shrink-0 bg-[#0C0B2D] flex justify-center">
           <Tooltip delayDuration={150}>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                onClick={() => setSalesInvoiceModalOpen(true)}
-                className="w-10 h-10 mx-auto mt-2 rounded-2xl glowing-btn-blue flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
-                aria-label="Create Invoice"
+                onClick={() => setIsMenuDropdownOpen(!isMenuDropdownOpen)}
+                className={cn(
+                  "w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-200 cursor-pointer shadow-md",
+                  isMenuDropdownOpen
+                    ? "bg-amber-500/25 border-amber-400 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                    : "bg-[#141242] border-[#262270] text-slate-300 hover:text-white hover:border-amber-400/40"
+                )}
+                aria-label="Toggle Menu"
               >
-                <Plus className="w-5 h-5 text-cyan-300 stroke-[2.5]" />
+                <Menu className="w-5 h-5 stroke-[2.4]" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-slate-100 border border-slate-700 text-xs font-semibold py-1.5 px-3 rounded-xl shadow-xl z-[220]">
-              Create Invoice / Bill
+            <TooltipContent side="right" sideOffset={12} className="bg-[#0F0E38] text-slate-100 border border-[#2B277A] text-xs font-semibold py-1.5 px-3 rounded-xl shadow-xl z-[220]">
+              Menu Options
             </TooltipContent>
           </Tooltip>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* 4. Main Navigation Drop Down Menu List */}
-      <nav className="flex-1 min-h-0 px-2.5 py-3 space-y-3.5 overflow-y-auto scrollbar-thin text-xs">
-        {filteredNavRouteGroups.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1">
-            {!collapsed && (
-              <p className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400/90 font-mono">
-                {group.label || group.group}
-              </p>
+      {/* 3. Entire Menu Contents: Store Switcher, Create Invoice & Nav Links (Hidden until "Menu" is clicked) */}
+      {isMenuDropdownOpen ? (
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-[#0C0B2D]">
+          {/* Store Switcher Drop Down Menu */}
+          <div className="p-3 border-b border-[#1F1C5C]/60 shrink-0 bg-[#0C0B2D] relative" ref={businessSwitcherRef}>
+            {!collapsed ? (
+              <button
+                type="button"
+                onClick={() => setBusinessSwitcherOpen(!businessSwitcherOpen)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 rounded-2xl p-2 transition-all duration-200 cursor-pointer text-left border group",
+                  businessSwitcherOpen
+                    ? "bg-[#1C1A54] border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                    : "bg-[#13113F] hover:bg-[#18164D] border-[#232064] hover:border-[#35308C]"
+                )}
+                title="Switch Business / Branch"
+                aria-expanded={businessSwitcherOpen}
+              >
+                {/* Amber/Gold Circular Avatar */}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0 ring-2 ring-amber-400/30">
+                  {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <h2 className="text-xs font-bold text-white truncate tracking-tight group-hover:text-amber-400 transition-colors">
+                      {org?.name || "CredSmart Business"}
+                    </h2>
+                    <ChevronDown
+                      className={cn(
+                        "w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0",
+                        businessSwitcherOpen ? "rotate-180 text-amber-400" : "group-hover:text-amber-300"
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <p className="text-[10px] text-emerald-400 font-mono tracking-tight truncate font-semibold">
+                      Active State
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-[0_0_12px_rgba(245,158,11,0.35)] ring-2 ring-amber-400/30 hover:scale-105 transition-transform cursor-pointer"
+                    title={`Store: ${org?.name || "CredSmart"}`}
+                  >
+                    {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side="right"
+                  sideOffset={12}
+                  className="w-60 bg-[#0F0E38] backdrop-blur-xl border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220]"
+                >
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-2 py-1">
+                    <span>Switch Business</span>
+                    <span className="text-amber-400">{(organizations || []).length} Store(s)</span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
+                  <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
+                    {(organizations || []).filter(Boolean).map((business) => {
+                      if (!business) return null;
+                      const isActive = business.id === orgId;
+                      return (
+                        <DropdownMenuItem
+                          key={business.id}
+                          onClick={() => {
+                            switchOrganization(business.id);
+                            toast.success(`Switched to "${business.name}"`);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer",
+                            isActive
+                              ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30"
+                              : "text-slate-300 hover:text-white hover:bg-[#1C1A54]"
+                          )}
+                        >
+                          <span className="truncate">{business.name}</span>
+                          {isActive && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
+                  <button
+                    type="button"
+                    onClick={() => setCreateBusinessModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-md hover:brightness-110 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Business</span>
+                  </button>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
-            {group.items.map((item) => {
-              const hasChildren = Boolean(item.children && item.children.length > 0);
-              const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url as string));
-              const isSelfActive = isRouteActive(item.url);
-              const active = isSelfActive || isChildActive;
-              const isExpanded = expandedMenus[item.title];
+            {/* Multi-Business Switcher Popover Menu (Expanded Mode) */}
+            {businessSwitcherOpen && !collapsed && (
+              <div className="absolute left-3 right-3 top-full mt-2 bg-[#0F0E38] backdrop-blur-xl text-slate-200 rounded-2xl shadow-2xl border border-[#2B277A] p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
+                  <span>Your Businesses</span>
+                  <span className="text-amber-400 font-mono">{(organizations || []).length} Store(s)</span>
+                </div>
 
-              // Collapsed Mode with Floating Drop Down Flyout
-              if (collapsed) {
-                if (hasChildren) {
-                  return (
-                    <DropdownMenu key={item.url}>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className={cn(
-                            "w-full flex items-center justify-center p-2.5 rounded-2xl transition-all duration-200 cursor-pointer group relative select-none",
-                            active
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                              : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
-                          )}
-                          title={item.title}
-                        >
-                          <item.icon
-                            className={cn(
-                              "w-5 h-5 shrink-0 transition-transform group-hover:scale-110 stroke-[2.2]",
-                              active ? "text-amber-400" : "text-slate-400 group-hover:text-amber-300"
-                            )}
-                          />
-                          {active && (
-                            <span className="absolute right-1 top-1 w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
-                          )}
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        side="right"
-                        sideOffset={12}
-                        className="w-52 bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 text-slate-200 p-1.5 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150"
+                <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
+                  {(organizations || []).filter(Boolean).map((business) => {
+                    if (!business) return null;
+                    const isActive = business.id === orgId;
+                    const bizName = business.name || "Store";
+                    return (
+                      <button
+                        key={business.id || Math.random()}
+                        type="button"
+                        onClick={() => {
+                          if (business.id) switchOrganization(business.id);
+                          setBusinessSwitcherOpen(false);
+                          toast.success(`Switched to "${bizName}"`);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all cursor-pointer",
+                          isActive
+                            ? "bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold"
+                            : "hover:bg-[#1C1A54] text-slate-300 hover:text-white"
+                        )}
                       >
-                        <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 px-2.5 py-1.5 flex items-center justify-between border-b border-slate-800/80">
-                          <span className="truncate">{item.title}</span>
-                          {item.badge && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              {item.badge}
+                        <div className="min-w-0 pr-2">
+                          <p className="truncate text-xs font-semibold">{bizName}</p>
+                          <p className="text-[10px] text-slate-500 font-mono truncate">
+                            {business.business_type || "Retail"} {business.gstin ? `• ${business.gstin}` : ""}
+                          </p>
+                        </div>
+                        {isActive && (
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 shadow-sm shadow-amber-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-1.5 border-t border-[#1F1C5C]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBusinessSwitcherOpen(false);
+                      setCreateBusinessModalOpen(true);
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Business / Branch</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* "+ Create Invoice" Neon Blue Button with Dropdown Logic */}
+            {!collapsed ? (
+              <div className="relative mt-2.5" ref={quickCreateRef}>
+                <div className="flex items-center justify-between w-full rounded-2xl glowing-btn-blue font-bold text-xs py-1 px-1 select-none shadow-md">
+                  <button
+                    type="button"
+                    onClick={() => setSalesInvoiceModalOpen(true)}
+                    className="flex items-center gap-2 min-w-0 flex-1 py-1.5 px-2.5 hover:opacity-90 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5] shrink-0 text-cyan-300" />
+                    <span className="tracking-tight truncate font-bold text-white">Create Invoice</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickCreateOpen(!quickCreateOpen)}
+                    className="p-1.5 hover:bg-white/10 rounded-xl transition-colors shrink-0 cursor-pointer"
+                    title="More creation options"
+                    aria-expanded={quickCreateOpen}
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "w-3.5 h-3.5 transition-transform duration-200 text-slate-300",
+                        quickCreateOpen ? "rotate-180 text-cyan-300" : ""
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* Quick Action Dropdown Popover */}
+                {quickCreateOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#0F0E38] backdrop-blur-xl text-slate-200 rounded-2xl shadow-2xl border border-[#2B277A] py-2 z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[72vh] overflow-y-auto scrollbar-thin">
+                    <div className="px-2 pb-1.5 border-b border-[#1F1C5C]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickCreateOpen(false);
+                          setUniversalModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>All Creation Options</span>
+                        </div>
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">
+                          Hub
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
+                      MASTER DATA
+                    </div>
+                    <button
+                      onClick={() => handleQuickAction("party")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <UserPlus className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>Create Party</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction("item")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <PackagePlus className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>Create Item</span>
+                    </button>
+
+                    <div className="my-1.5 border-t border-[#1F1C5C]" />
+
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
+                      SALES
+                    </div>
+                    <button
+                      onClick={() => handleQuickAction("sales_invoice")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-cyan-300 hover:bg-cyan-950/50 hover:text-cyan-200 transition-colors text-left font-semibold cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span>Sales Invoice</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setQuickCreateOpen(false);
+                        navigate(ROUTE_PATHS.checkout);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-emerald-300 hover:bg-emerald-950/60 transition-colors text-left font-semibold cursor-pointer"
+                    >
+                      <ShoppingCart className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>POS Billing (Fast)</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction("quotation")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span>Quotation / Estimate</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction("payment_in")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <Receipt className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Payment In</span>
+                    </button>
+
+                    <div className="my-1.5 border-t border-[#1F1C5C]" />
+
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">
+                      PURCHASES & EXPENSES
+                    </div>
+                    <button
+                      onClick={() => handleQuickAction("purchase")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <Truck className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Purchase Bill</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction("payment_out")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <CreditCard className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>Payment Out</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction("expense")}
+                      className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs text-slate-300 hover:bg-[#1C1A54] hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <Receipt className="w-4 h-4 text-orange-400 shrink-0" />
+                      <span>Record Expense</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Tooltip delayDuration={150}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setSalesInvoiceModalOpen(true)}
+                    className="w-10 h-10 mx-auto mt-2 rounded-2xl glowing-btn-blue flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
+                    aria-label="Create Invoice"
+                  >
+                    <Plus className="w-5 h-5 text-cyan-300 stroke-[2.5]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={12} className="bg-[#0F0E38] text-slate-100 border border-[#2B277A] text-xs font-semibold py-1.5 px-3 rounded-xl shadow-xl z-[220]">
+                  Create Invoice / Bill
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {/* Main Navigation Drop Down Menu List */}
+          <nav className="flex-1 min-h-0 px-2.5 py-3 space-y-3.5 overflow-y-auto scrollbar-thin text-xs bg-[#0C0B2D]">
+            {filteredNavRouteGroups.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-1">
+                {!collapsed && (
+                  <p className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400/90 font-mono">
+                    {group.label || group.group}
+                  </p>
+                )}
+
+                {group.items.map((item) => {
+                  const hasChildren = Boolean(item.children && item.children.length > 0);
+                  const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url as string));
+                  const isSelfActive = isRouteActive(item.url);
+                  const active = isSelfActive || isChildActive;
+                  const isExpanded = expandedMenus[item.title];
+
+                  // Collapsed Mode with Floating Drop Down Flyout
+                  if (collapsed) {
+                    if (hasChildren) {
+                      return (
+                        <DropdownMenu key={item.url}>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className={cn(
+                                "w-full flex items-center justify-center p-2.5 rounded-2xl transition-all duration-200 cursor-pointer group relative select-none",
+                                active
+                                  ? "bg-amber-500/20 text-amber-300 border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                                  : "text-slate-300 hover:bg-[#1C1A54] hover:text-white"
+                              )}
+                              title={item.title}
+                            >
+                              <item.icon
+                                className={cn(
+                                  "w-5 h-5 shrink-0 transition-transform group-hover:scale-110 stroke-[2.2]",
+                                  active ? "text-amber-400" : "text-slate-400 group-hover:text-amber-300"
+                                )}
+                              />
+                              {active && (
+                                <span className="absolute right-1 top-1 w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+                              )}
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="right"
+                            sideOffset={12}
+                            className="w-52 bg-[#0F0E38] backdrop-blur-xl border border-[#2B277A] text-slate-200 p-1.5 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 px-2.5 py-1.5 flex items-center justify-between border-b border-[#1F1C5C]">
+                              <span className="truncate">{item.title}</span>
+                              {item.badge && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </DropdownMenuLabel>
+                            <div className="py-1 space-y-0.5">
+                              {item.children?.map((child) => {
+                                const childActive = isRouteActive(child.url as string);
+                                return (
+                                  <DropdownMenuItem
+                                    key={child.title}
+                                    onClick={() => navigate(child.url as string)}
+                                    className={cn(
+                                      "flex items-center gap-2 px-2.5 py-2 text-xs rounded-xl cursor-pointer font-medium transition-colors",
+                                      childActive
+                                        ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/40"
+                                        : "text-slate-300 hover:text-white hover:bg-[#1C1A54]"
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "w-1.5 h-1.5 rounded-full shrink-0",
+                                        childActive ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "bg-slate-500"
+                                      )}
+                                    />
+                                    <span className="truncate">{child.title}</span>
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      );
+                    }
+
+                    // Collapsed single item with Tooltip
+                    return (
+                      <Tooltip key={item.url} delayDuration={150}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => navigate(item.url)}
+                            className={cn(
+                              "w-full flex items-center justify-center p-2.5 rounded-2xl transition-all duration-200 cursor-pointer group relative select-none",
+                              active
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                                : "text-slate-300 hover:bg-[#1C1A54] hover:text-white"
+                            )}
+                            aria-label={item.title}
+                          >
+                            <item.icon
+                              className={cn(
+                                "w-5 h-5 shrink-0 transition-transform group-hover:scale-110 stroke-[2.2]",
+                                active ? "text-amber-400" : "text-slate-400 group-hover:text-amber-300"
+                              )}
+                            />
+                            {item.badge && (
+                              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-amber-500 text-slate-950">
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={12} className="bg-[#0F0E38] text-slate-100 border border-[#2B277A] text-xs font-semibold py-1.5 px-3 rounded-xl shadow-xl z-[220]">
+                          <span>{item.title}</span>
+                          {item.shortcut && (
+                            <span className="ml-2 text-[10px] font-mono text-amber-400 font-normal">
+                              {item.shortcut}
                             </span>
                           )}
-                        </DropdownMenuLabel>
-                        <div className="py-1 space-y-0.5">
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  // Expanded Sidebar Item with Accordion / Drop Down Logic
+                  return (
+                    <div key={item.url} className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (hasChildren) {
+                            toggleSubmenu(item.title);
+                          } else {
+                            navigate(item.url);
+                          }
+                        }}
+                        data-feature="billbook"
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-all duration-200 cursor-pointer font-bold select-none group text-left relative",
+                          active
+                            ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-transparent text-amber-300 font-black border border-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.25)]"
+                            : "text-slate-300 hover:bg-[#161448] hover:text-white border border-transparent"
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 stroke-[2.2]",
+                            active ? "text-amber-400" : "text-amber-400/80 group-hover:text-amber-300"
+                          )}
+                        />
+
+                        <div className="flex items-center justify-between flex-1 min-w-0">
+                          <span className="truncate font-bold tracking-tight text-white">{item.title}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.badge && (
+                              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 font-mono">
+                                {item.badge}
+                              </span>
+                            )}
+                            {hasChildren && (
+                              <ChevronDown
+                                className={cn(
+                                  "w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform duration-200",
+                                  isExpanded ? "rotate-180 text-amber-400" : ""
+                                )}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Drop Down Sub-Menu */}
+                      {hasChildren && isExpanded && (
+                        <div className="pl-4 pr-1 space-y-1 pt-0.5 border-l border-[#1F1C5C] ml-4 animate-in slide-in-from-top-1 duration-150">
                           {item.children?.map((child) => {
                             const childActive = isRouteActive(child.url as string);
                             return (
-                              <DropdownMenuItem
+                              <NavLink
                                 key={child.title}
-                                onClick={() => navigate(child.url as string)}
+                                to={child.url as string}
+                                data-feature="billbook"
                                 className={cn(
-                                  "flex items-center gap-2 px-2.5 py-2 text-xs rounded-xl cursor-pointer font-medium transition-colors",
+                                  "flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150",
                                   childActive
-                                    ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/40"
-                                    : "text-slate-300 hover:text-white hover:bg-slate-800/80"
+                                    ? "text-amber-300 font-bold bg-amber-500/15 border border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                                    : "text-slate-400 hover:text-white hover:bg-[#161448]"
                                 )}
                               >
                                 <span
                                   className={cn(
-                                    "w-1.5 h-1.5 rounded-full shrink-0",
-                                    childActive ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "bg-slate-500"
+                                    "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
+                                    childActive
+                                      ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] scale-110"
+                                      : "bg-slate-600 group-hover:bg-slate-400"
                                   )}
                                 />
                                 <span className="truncate">{child.title}</span>
-                              </DropdownMenuItem>
+                              </NavLink>
                             );
                           })}
                         </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      )}
+                    </div>
                   );
-                }
+                })}
+              </div>
+            ))}
+          </nav>
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-4 text-center select-none bg-[#0C0B2D]">
+          {!collapsed && (
+            <div className="flex flex-col items-center gap-2 text-slate-500 max-w-[190px]">
+              <div className="w-10 h-10 rounded-2xl bg-[#141242] border border-[#232064] flex items-center justify-center text-slate-400">
+                <Menu className="w-5 h-5 opacity-60" />
+              </div>
+              <p className="text-[11px] font-medium text-slate-400">
+                Click <strong className="text-amber-400">"Menu"</strong> above to view store, invoice actions &amp; navigation.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
-                // Collapsed single item with Tooltip
-                return (
-                  <Tooltip key={item.url} delayDuration={150}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => navigate(item.url)}
-                        className={cn(
-                          "w-full flex items-center justify-center p-2.5 rounded-2xl transition-all duration-200 cursor-pointer group relative select-none",
-                          active
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                            : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
-                        )}
-                        aria-label={item.title}
-                      >
-                        <item.icon
-                          className={cn(
-                            "w-5 h-5 shrink-0 transition-transform group-hover:scale-110 stroke-[2.2]",
-                            active ? "text-amber-400" : "text-slate-400 group-hover:text-amber-300"
-                          )}
-                        />
-                        {item.badge && (
-                          <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-amber-500 text-slate-950">
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-slate-100 border border-slate-700 text-xs font-semibold py-1.5 px-3 rounded-xl shadow-xl z-[220]">
-                      <span>{item.title}</span>
-                      {item.shortcut && (
-                        <span className="ml-2 text-[10px] font-mono text-amber-400 font-normal">
-                          {item.shortcut}
-                        </span>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              // Expanded Sidebar Item with Accordion / Drop Down Logic
-              return (
-                <div key={item.url} className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (hasChildren) {
-                        toggleSubmenu(item.title);
-                      } else {
-                        navigate(item.url);
-                      }
-                    }}
-                    data-feature="billbook"
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-all duration-200 cursor-pointer font-bold select-none group text-left relative",
-                      active
-                        ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-transparent text-amber-300 font-black border border-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.25)]"
-                        : "text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent"
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 stroke-[2.2]",
-                        active ? "text-amber-400" : "text-amber-400/80 group-hover:text-amber-300"
-                      )}
-                    />
-
-                    <div className="flex items-center justify-between flex-1 min-w-0">
-                      <span className="truncate font-bold tracking-tight text-white">{item.title}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 font-mono">
-                            {item.badge}
-                          </span>
-                        )}
-                        {hasChildren && (
-                          <ChevronDown
-                            className={cn(
-                              "w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform duration-200",
-                              isExpanded ? "rotate-180 text-amber-400" : ""
-                            )}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Drop Down Sub-Menu */}
-                  {hasChildren && isExpanded && (
-                    <div className="pl-4 pr-1 space-y-1 pt-0.5 border-l border-slate-800/80 ml-4 animate-in slide-in-from-top-1 duration-150">
-                      {item.children?.map((child) => {
-                        const childActive = isRouteActive(child.url as string);
-                        return (
-                          <NavLink
-                            key={child.title}
-                            to={child.url as string}
-                            data-feature="billbook"
-                            className={cn(
-                              "flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150",
-                              childActive
-                                ? "text-amber-300 font-bold bg-amber-500/15 border border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
-                                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
-                                childActive
-                                  ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] scale-110"
-                                  : "bg-slate-600 group-hover:bg-slate-400"
-                              )}
-                            />
-                            <span className="truncate">{child.title}</span>
-                          </NavLink>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* 5. Footer Security Badges, Sign Out & Collapse */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#060B18] space-y-2 shrink-0 text-xs">
+      {/* 4. Footer Security Badges, Sign Out & Collapse - Matching #0C0B2D */}
+      <div className="p-3 border-t border-[#1F1C5C]/60 bg-[#0C0B2D] space-y-2 shrink-0 text-xs">
         {!collapsed && (
           <div className="space-y-1 px-1 py-0.5">
             <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
@@ -1257,7 +1342,7 @@ export function AppSidebar() {
             type="button"
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#1C1A54] transition-colors shrink-0 cursor-pointer"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
