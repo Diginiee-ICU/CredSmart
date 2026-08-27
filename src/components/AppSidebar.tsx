@@ -504,260 +504,210 @@ export function AppSidebar({
         aria-hidden="true"
       />
 
-      {/* 3D Dropdown Floating Popover */}
+      {/* 3D Dropdown Floating Popover (Top Mega Menu) */}
       <div
         ref={panelRef}
         className={cn(
-          // Fixed positioning directly under header logo / dropdown arrow
-          "fixed top-[4.75rem] left-3 sm:left-4 z-[200]",
+          // Centered full-width Mega Menu below header
+          "fixed top-[4.75rem] left-4 right-4 max-w-7xl mx-auto z-[200]",
           // Dimensions
-          "w-[390px] sm:w-[440px] max-h-[min(86vh,740px)] flex flex-col",
+          "max-h-[calc(100vh-6rem)] flex flex-col",
           // 3D Glass Surface Architecture
           "rounded-3xl overflow-hidden",
-          "bg-[#0C0B2D]/98 backdrop-blur-3xl",
+          "bg-[#0C0B2D]/95 backdrop-blur-3xl",
           // Specular highlights & multi-tier 3D elevation
           "border border-[#2D287F]/80",
-          "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_32px_rgba(0,0,0,0.7),0_32px_72px_rgba(0,0,0,0.5),0_0_80px_rgba(245,158,11,0.1),inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-1px_1px_rgba(0,0,0,0.5)]",
-          // Dropdown Entrance Animation
-          "animate-in fade-in zoom-in-[0.95] slide-in-from-top-3 duration-200 ease-out select-none"
+          "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_50px_rgba(0,0,0,0.8),0_40px_100px_rgba(0,0,0,0.6),0_0_100px_rgba(245,158,11,0.08),inset_0_1px_1px_rgba(255,255,255,0.15)]",
+          // Dropdown Entrance Animation from TOP
+          "animate-in fade-in slide-in-from-top-6 zoom-in-[0.98] duration-300 ease-out select-none"
         )}
-        style={{ transformOrigin: "top left" }}
+        style={{ transformOrigin: "top center" }}
       >
         {/* Dropdown Top Anchor Pointer Indicator */}
-        <div className="absolute -top-2 left-8 w-4 h-4 rotate-45 bg-[#14124E] border-t border-l border-[#2D287F]/80 shadow-md" />
+        <div className="absolute -top-2 left-10 w-4 h-4 rotate-45 bg-[#14124E] border-t border-l border-[#2D287F]/80 shadow-md" />
 
         {/* 3D Top Specular Light Beam */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
         <div className="pointer-events-none absolute inset-x-8 top-[1px] h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
         {/* ── Dropdown Header Strip ── */}
-        <div className="shrink-0 px-4 pt-3.5 pb-3 border-b border-[#1F1C5C]/80 bg-gradient-to-r from-[#14124E]/90 via-[#0F0E38]/90 to-[#14124E]/90">
-          <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className="shrink-0 px-6 pt-4 pb-3.5 border-b border-[#1F1C5C]/80 bg-gradient-to-r from-[#14124E]/90 via-[#0F0E38]/90 to-[#14124E]/90">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
-              <span className="text-[11px] font-black tracking-[0.16em] uppercase text-slate-200 font-mono flex items-center gap-1.5">
-                CREDSMART <span className="text-amber-400">NAVIGATOR</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] animate-pulse" />
+              <span className="text-[13px] font-black tracking-[0.16em] uppercase text-slate-200 font-mono flex items-center gap-1.5">
+                CREDSMART <span className="text-amber-400">MEGA MENU</span>
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <kbd className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[9px] font-mono bg-white/10 text-slate-400 border border-white/10">
+
+            {/* Quick Search Input */}
+            <div className="relative flex-1 max-w-md mx-4 hidden sm:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search modules & shortcuts..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#080720]/80 border border-[#262270] focus:border-amber-400/60 focus:bg-[#090826] text-sm text-white placeholder-slate-500 focus:outline-hidden transition-all shadow-inner font-sans"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <kbd className="hidden sm:inline-flex px-2 py-1 rounded-md text-[10px] font-mono bg-white/10 text-slate-400 border border-white/10">
                 ESC
               </kbd>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all border border-white/10 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all border border-white/10 cursor-pointer"
                 title="Close (ESC)"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
-
-          {/* Quick Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter menu, modules & shortcuts..."
-              className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-[#080720]/80 border border-[#262270] focus:border-amber-400/60 focus:bg-[#090826] text-xs text-white placeholder-slate-500 focus:outline-hidden transition-all shadow-inner font-sans"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
           </div>
         </div>
 
-        {/* ── Quick Access 4-Tile Launchpad (when not searching) ── */}
-        {!searchQuery && (
-          <div className="shrink-0 p-3 border-b border-[#1F1C5C]/60 bg-[#0A0924]/60">
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => handleNavigate(ROUTE_PATHS.checkout)}
-                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-600/10 hover:from-amber-500/30 hover:to-amber-600/20 border border-amber-400/30 hover:border-amber-400/60 transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="w-7 h-7 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-                  <ShoppingCart className="w-3.5 h-3.5 stroke-[2.4]" />
-                </div>
-                <span className="text-[10px] font-bold text-amber-200 mt-1 truncate">POS</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavigate(ROUTE_PATHS.sales)}
-                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#141242] hover:bg-[#1C195C] border border-[#282470] hover:border-indigo-400/40 transition-all group cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
-                  <Receipt className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-300 mt-1 truncate">Sales</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavigate(ROUTE_PATHS.items)}
-                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#141242] hover:bg-[#1C195C] border border-[#282470] hover:border-emerald-400/40 transition-all group cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform">
-                  <Package className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-300 mt-1 truncate">Items</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavigate(ROUTE_PATHS.customers)}
-                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#141242] hover:bg-[#1C195C] border border-[#282470] hover:border-purple-400/40 transition-all group cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
-                  <Users className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-300 mt-1 truncate">Khata</span>
-              </button>
+        {/* ── Quick Access 4-Tile Launchpad (Mobile only or when searching) ── */}
+        <div className="sm:hidden shrink-0 px-4 py-3 border-b border-[#1F1C5C]/60 bg-[#0A0924]/60">
+           <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search modules..."
+                className="w-full pl-8 pr-7 py-2 rounded-xl bg-[#080720]/80 border border-[#262270] focus:border-amber-400/60 focus:bg-[#090826] text-xs text-white placeholder-slate-500 focus:outline-hidden transition-all shadow-inner"
+              />
             </div>
-          </div>
-        )}
+        </div>
 
-        {/* ── Scrollable Menu Content ── */}
-        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-3.5 scrollbar-thin">
+        {/* ── Mega Menu Grid Content ── */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 sm:p-8 scrollbar-thin">
           {filteredNavRouteGroups.length === 0 ? (
-            <div className="py-8 text-center">
-              <Search className="w-6 h-6 text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-400 font-semibold">No matching modules found</p>
-              <p className="text-[10px] text-slate-600 mt-0.5">Try a different keyword</p>
+            <div className="py-16 text-center">
+              <Search className="w-8 h-8 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-400 font-semibold">No matching modules found</p>
+              <p className="text-xs text-slate-600 mt-1">Try a different keyword</p>
             </div>
           ) : (
-            filteredNavRouteGroups.map((group, gIdx) => (
-              <div key={gIdx} className="space-y-1">
-                {/* Category Header */}
-                <div className="flex items-center justify-between px-2 pb-1">
-                  <span className="text-[9.5px] font-black uppercase tracking-[0.16em] text-slate-400 font-mono">
-                    {group.label}
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-600">
-                    {group.items.length}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10">
+              {filteredNavRouteGroups.map((group, gIdx) => (
+                <div key={gIdx} className="space-y-3.5">
+                  {/* Category Header */}
+                  <div className="flex items-center gap-2 border-b border-[#1F1C5C] pb-2">
+                    <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 font-mono">
+                      {group.label}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-white/5 text-slate-500">
+                      {group.items.length}
+                    </span>
+                  </div>
 
-                {/* Items Container */}
-                <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const hasChildren = Boolean(item.children?.length);
-                    const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
-                    const active = isRouteActive(item.url) || isChildActive;
-                    const isExpanded = expandedMenus[item.title] || Boolean(searchQuery);
+                  {/* Items List */}
+                  <div className="space-y-1.5">
+                    {group.items.map((item) => {
+                      const hasChildren = Boolean(item.children?.length);
+                      const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
+                      const active = isRouteActive(item.url) || isChildActive;
 
-                    return (
-                      <div key={item.url} className="space-y-0.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (hasChildren) {
-                              toggleSubmenu(item.title);
-                            } else {
-                              handleNavigate(item.url);
-                            }
-                          }}
-                          className={cn(
-                            "w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-semibold transition-all duration-150 text-left group cursor-pointer border relative overflow-hidden",
-                            active
-                              ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-transparent text-white border-amber-400/40 shadow-[0_2px_12px_rgba(245,158,11,0.15)]"
-                              : "bg-[#110F38]/60 hover:bg-[#19164E] text-slate-200 border-white/[0.04] hover:border-white/10 hover:text-white"
-                          )}
-                        >
-                          {/* Active Accent Bar */}
-                          {active && (
-                            <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-300 to-amber-500 rounded-r-full" />
-                          )}
-
-                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      return (
+                        <div key={item.url} className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!hasChildren) {
+                                handleNavigate(item.url);
+                              }
+                            }}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 text-left group",
+                              active
+                                ? "bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-transparent text-white shadow-[0_2px_12px_rgba(245,158,11,0.15)] border border-amber-400/40"
+                                : "bg-transparent hover:bg-white/5 text-slate-300 hover:text-white border border-transparent"
+                            )}
+                          >
                             <div
                               className={cn(
-                                "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-all",
+                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all",
                                 active
                                   ? "bg-amber-500/25 border border-amber-400/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
                                   : "bg-white/5 border border-white/10 group-hover:bg-amber-500/15 group-hover:border-amber-400/30 text-slate-400 group-hover:text-amber-300"
                               )}
                             >
-                              <item.icon className="w-3.5 h-3.5 stroke-[2.2]" />
+                              <item.icon className="w-4 h-4 stroke-[2.2]" />
                             </div>
-                            <span className="truncate font-semibold">{item.title}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {item.badge && (
-                              <span className="px-1.5 py-0.5 rounded-md text-[8.5px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/35 font-mono">
-                                {item.badge}
-                              </span>
-                            )}
-                            {hasChildren ? (
-                              <ChevronDown
-                                className={cn(
-                                  "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
-                                  isExpanded ? "rotate-180 text-amber-400" : "group-hover:text-slate-200"
-                                )}
-                              />
-                            ) : (
-                              <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100" />
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Submenu Accordion */}
-                        {hasChildren && isExpanded && (
-                          <div className="ml-5 pl-3.5 pr-1 py-1 border-l-2 border-[#262270] space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                            {item.children?.map((child) => {
-                              const childActive = isRouteActive(child.url);
-                              return (
-                                <NavLink
-                                  key={child.title}
-                                  to={child.url}
-                                  onClick={onClose}
-                                  className={cn(
-                                    "flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer",
-                                    childActive
-                                      ? "text-amber-300 bg-amber-500/15 border border-amber-400/30 font-bold"
-                                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                            <div className="flex-1 min-w-0">
+                               <div className="flex items-center gap-1.5">
+                                  <span className="truncate">{item.title}</span>
+                                  {item.badge && (
+                                    <span className="px-1.5 py-0.5 rounded-md text-[8.5px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/35 font-mono">
+                                      {item.badge}
+                                    </span>
                                   )}
-                                >
-                                  <span
+                               </div>
+                            </div>
+                            {!hasChildren && (
+                              <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100" />
+                            )}
+                          </button>
+
+                          {/* Render Children flat under parent in Mega Menu */}
+                          {hasChildren && (
+                            <div className="ml-12 pl-3 py-1 border-l-2 border-[#262270] space-y-1">
+                              {item.children?.map((child) => {
+                                const childActive = isRouteActive(child.url);
+                                return (
+                                  <NavLink
+                                    key={child.title}
+                                    to={child.url}
+                                    onClick={onClose}
                                     className={cn(
-                                      "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
-                                      childActive ? "bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]" : "bg-slate-600"
+                                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                                      childActive
+                                        ? "text-amber-300 bg-amber-500/15 border border-amber-400/30 font-bold"
+                                        : "text-slate-400 hover:text-white hover:bg-white/5"
                                     )}
-                                  />
-                                  <span className="truncate">{child.title}</span>
-                                </NavLink>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
+                                        childActive ? "bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]" : "bg-slate-600"
+                                      )}
+                                    />
+                                    <span className="truncate">{child.title}</span>
+                                  </NavLink>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </nav>
 
         {/* ── Dropdown Footer Bar ── */}
-        <div className="shrink-0 px-4 py-2.5 border-t border-[#1F1C5C]/80 bg-[#090824] flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[9.5px] text-emerald-400 font-mono">
-            <Shield className="w-3 h-3 text-emerald-400" />
-            <span>256-Bit SSL • GST Compliant</span>
+        <div className="shrink-0 px-6 py-3.5 border-t border-[#1F1C5C]/80 bg-[#090824] flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-emerald-400 font-mono">
+            <Shield className="w-3.5 h-3.5 text-emerald-400" />
+            <span>256-Bit SSL • Enterprise Secure • GST Compliant</span>
           </div>
-          <div className="flex items-center gap-1 text-[9.5px] font-mono text-slate-500">
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono text-slate-500">
             <span>Cred</span>
             <span className="text-amber-400 font-bold">Smart POS</span>
           </div>

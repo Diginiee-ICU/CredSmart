@@ -572,22 +572,24 @@ export default function AppLayout() {
             )}
             style={{
               transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-              transformOrigin: "left center",
+              transformOrigin: "top center",
               ...(sidebarOpen && !isMobile
                 ? {
-                    transform: "translateX(460px) scale(0.95) rotateY(-4deg)",
-                    borderTopLeftRadius: "1.5rem",
-                    borderBottomLeftRadius: "1.5rem",
-                    boxShadow: "-30px 0 80px rgba(0, 0, 0, 0.6)",
-                    borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
+                    transform: "translateY(3rem) scale(0.96) rotateX(3deg)",
+                    borderTopLeftRadius: "2rem",
+                    borderTopRightRadius: "2rem",
+                    borderBottomLeftRadius: "0",
+                    boxShadow: "0 -30px 100px rgba(0, 0, 0, 0.8)",
+                    borderTop: "1px solid rgba(255, 255, 255, 0.15)",
                     pointerEvents: "none",
                   }
                 : {
-                    transform: "translateX(0) scale(1) rotateY(0)",
+                    transform: "translateY(0) scale(1) rotateX(0)",
                     borderTopLeftRadius: "0",
+                    borderTopRightRadius: "0",
                     borderBottomLeftRadius: "0",
                     boxShadow: "0 0 0 rgba(0, 0, 0, 0)",
-                    borderLeft: "1px solid transparent",
+                    borderTop: "1px solid transparent",
                   }),
             }}
           >
