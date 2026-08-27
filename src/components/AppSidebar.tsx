@@ -56,7 +56,7 @@ interface NavGroup {
 
 // ─── AppSidebar ───────────────────────────────────────────────────────────────
 
-export function AppSidebar() {
+export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { userRole, userPermissions } = useOrganization();
