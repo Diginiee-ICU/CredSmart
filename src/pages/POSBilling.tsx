@@ -1266,11 +1266,23 @@ export default function POSBilling() {
       const preparedReceipt: ReceiptData = {
         docType: "pos_invoice",
         invoiceNumber,
-        items: currentTab.items.map((ci) => ({
-          product: ci.product,
-          batch: ci.batch,
-          quantity: ci.quantity,
-        })),
+        items: currentTab.items.map((ci) => {
+          const pTags = (ci.product as any).tags || {};
+          const altU = (ci.product as any).altUnit || pTags.alt_unit || undefined;
+          const altConv = (ci.product as any).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined;
+          return {
+            product: {
+              ...ci.product,
+              altUnit: altU,
+              altUnitConversion: altConv ? Number(altConv) : undefined,
+            },
+            batch: ci.batch,
+            quantity: ci.quantity,
+            altUnit: altU,
+            altUnitConversion: altConv ? Number(altConv) : undefined,
+            unit: ci.product.unit || "PCS",
+          };
+        }),
         subtotal: subTotal,
         discountAmount: itemDiscountsTotal + billDiscountAmount,
         discountLabel: currentTab.discountReason || "Special Discount",
@@ -1380,25 +1392,32 @@ export default function POSBilling() {
               // B2B Network Sync: Auto-dispatch to buyer if customer matches a CredSmart business
               if (currentTab.customer && org) {
                 try {
-                  const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => ({
-                    id: `pos-item-${Date.now()}-${idx}`,
-                    productName: ci.product.name,
-                    productId: ci.product.id,
-                    barcode: ci.product.barcode || undefined,
-                    batchNumber: ci.batch.batchNumber || undefined,
-                    expiryDate: ci.batch.expiryDate,
-                    quantity: ci.quantity,
-                    unit: ci.product.unit || "PCS",
-                    rate: ci.sp,
-                    discountPercent: ci.discountPercent || 0,
-                    discountAmount: ci.discountAmount || 0,
-                    taxRate: ci.product.gstRate || 0,
-                    taxableAmount: ci.taxableAmount || (ci.sp * ci.quantity),
-                    cgstAmount: (ci.gstAmount || 0) / 2,
-                    sgstAmount: (ci.gstAmount || 0) / 2,
-                    igstAmount: 0,
-                    lineTotal: Number((ci.sp * ci.quantity).toFixed(2)),
-                  }));
+                  const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => {
+                    const pTags = (ci.product as any).tags || {};
+                    const altU = (ci.product as any).altUnit || pTags.alt_unit || undefined;
+                    const altConv = (ci.product as any).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined;
+                    return {
+                      id: `pos-item-${Date.now()}-${idx}`,
+                      productName: ci.product.name,
+                      productId: ci.product.id,
+                      barcode: ci.product.barcode || undefined,
+                      batchNumber: ci.batch.batchNumber || undefined,
+                      expiryDate: ci.batch.expiryDate,
+                      quantity: ci.quantity,
+                      unit: ci.product.unit || "PCS",
+                      altUnit: altU,
+                      altUnitConversion: altConv ? Number(altConv) : undefined,
+                      rate: ci.sp,
+                      discountPercent: ci.discountPercent || 0,
+                      discountAmount: ci.discountAmount || 0,
+                      taxRate: ci.product.gstRate || 0,
+                      taxableAmount: ci.taxableAmount || (ci.sp * ci.quantity),
+                      cgstAmount: (ci.gstAmount || 0) / 2,
+                      sgstAmount: (ci.gstAmount || 0) / 2,
+                      igstAmount: 0,
+                      lineTotal: Number((ci.sp * ci.quantity).toFixed(2)),
+                    };
+                  });
 
                   const posDoc: BusinessDocument = {
                     id: sale.id,

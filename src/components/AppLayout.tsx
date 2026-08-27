@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { NavLink } from "@/components/NavLink";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
