@@ -217,7 +217,18 @@ export function NetworkInvoicePreviewModal({
                           {item.hsn || "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right font-medium text-foreground">
-                          {item.quantity} {item.unit || "PCS"}
+                          {item.altUnit && item.altQty != null && item.altQty > 0 ? (
+                            <div className="leading-tight">
+                              <span className="font-bold text-foreground block">
+                                {item.altQty} {item.altUnit}
+                              </span>
+                              <span className="block text-[10px] text-muted-foreground font-mono mt-0.5">
+                                ({item.altQty}*{item.altUnitConversion || Math.round(item.quantity / item.altQty) || 1} {item.unit || "Pcs"})
+                              </span>
+                            </div>
+                          ) : (
+                            <span>{item.quantity} {item.unit || "PCS"}</span>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono text-foreground">
                           ₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
