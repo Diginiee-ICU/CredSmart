@@ -39,6 +39,7 @@ import {
   ChevronUp,
   Eye,
   Package,
+  Sparkles,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";

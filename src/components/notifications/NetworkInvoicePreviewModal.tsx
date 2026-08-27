@@ -310,22 +310,22 @@ export function NetworkInvoicePreviewModal({
         </div>
 
         {/* Modal Action Footer */}
-        <div className="p-4 sm:p-5 border-t border-border bg-muted/20 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-border bg-muted/20 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto h-11 sm:h-9 text-xs font-semibold"
           >
             Close
           </Button>
 
           {isPending && !rejectPromptOpen && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 flex-1 sm:flex-none"
+                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 h-11 sm:h-9 text-xs font-semibold active:scale-[0.98]"
                 onClick={() => setRejectPromptOpen(true)}
                 disabled={isApproving || isRejecting}
               >
@@ -335,7 +335,7 @@ export function NetworkInvoicePreviewModal({
 
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-500/20 flex-1 sm:flex-none"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-500/20 h-11 sm:h-9 text-xs active:scale-[0.98]"
                 onClick={async () => {
                   if (onApprove) {
                     await onApprove(invoice.id);

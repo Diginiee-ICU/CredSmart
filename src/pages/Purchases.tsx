@@ -487,24 +487,24 @@ export default function Purchases() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-border/60 gap-2">
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2 flex-wrap sm:flex-nowrap">
                     <button
                       type="button"
                       onClick={() => {
                         setInspectingInvoice(inv);
                         setInspectModalOpen(true);
                       }}
-                      className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1"
+                      className="text-xs text-primary hover:underline font-bold flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-primary/5 active:scale-95 cursor-pointer"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      View Bill
+                      <Eye className="w-4 h-4" />
+                      <span>View Bill</span>
                     </button>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                        className="h-9 sm:h-7 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 font-semibold px-3 active:scale-95 flex-1 sm:flex-none"
                         onClick={async () => {
                           await rejectInvoice(inv.id);
                           await loadDocuments();
@@ -515,7 +515,7 @@ export default function Purchases() {
                       </Button>
                       <Button
                         size="sm"
-                        className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        className="h-9 sm:h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 active:scale-95 flex-1 sm:flex-none shadow-xs"
                         onClick={async () => {
                           const ok = await approveInvoice(inv.id);
                           if (ok) await loadDocuments();
@@ -523,9 +523,9 @@ export default function Purchases() {
                         disabled={approvingId === inv.id || rejectingId === inv.id}
                       >
                         {approvingId === inv.id ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         ) : (
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                         )}
                         Approve &amp; Inward
                       </Button>

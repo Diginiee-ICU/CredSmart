@@ -216,26 +216,26 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                         </div>
 
                         {/* Items Snapshot Chip */}
-                        <div className="pl-9 text-xs text-muted-foreground bg-muted/20 p-2 rounded-lg border border-border/60 flex items-center justify-between gap-2">
-                          <span className="truncate">
-                            <strong>Items:</strong> {inv.items.map((i) => `${i.productName} (x${i.quantity})`).join(", ")}
+                        <div className="text-xs text-muted-foreground bg-muted/20 p-2.5 rounded-lg border border-border/60 flex items-center justify-between gap-2 sm:ml-9">
+                          <span className="truncate text-[11px] sm:text-xs">
+                            <strong className="text-foreground">Items:</strong> {inv.items.map((i) => `${i.productName} (x${i.quantity})`).join(", ")}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleInspect(inv)}
-                            className="text-primary hover:underline text-[11px] shrink-0 font-medium flex items-center gap-1"
+                            className="text-primary hover:underline text-[11px] sm:text-xs shrink-0 font-bold flex items-center gap-1 cursor-pointer py-1 px-1.5 rounded hover:bg-primary/5 active:scale-95"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            View Bill
+                            <span>View Bill</span>
                           </button>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center justify-end gap-2 pt-1 pl-9">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 pt-1 sm:pl-9">
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-xs h-8"
+                            className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-xs min-h-[40px] sm:min-h-[32px] font-semibold active:scale-[0.98]"
                             onClick={() => handleReject(inv.id)}
                             disabled={rejectingId === inv.id || approvingId === inv.id}
                           >
@@ -249,14 +249,14 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
 
                           <Button
                             size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 shadow-sm shadow-emerald-500/20"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs min-h-[40px] sm:min-h-[32px] shadow-sm shadow-emerald-500/20 active:scale-[0.98]"
                             onClick={() => handleApprove(inv.id)}
                             disabled={approvingId === inv.id || rejectingId === inv.id}
                           >
                             {approvingId === inv.id ? (
-                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                             ) : (
-                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                             )}
                             Approve &amp; Add to Purchases
                           </Button>

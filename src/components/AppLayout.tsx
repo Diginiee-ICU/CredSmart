@@ -233,9 +233,15 @@ export default function AppLayout() {
         {/* Global Top Header - CredAlert Liquid Glass Shell (Hidden on POS route so POS terminal has full height and its dedicated terminal header) */}
         {!isPosRoute && (
           <header className="h-14 sm:h-16 shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
-            {/* Mobile Header: CREDSMART Logo (Matching Image 5) */}
+            {/* Mobile Header: CREDSMART Logo */}
             <div className="flex md:hidden items-center min-w-0 mr-2">
-              <CredsmartLogo size={34} showSubtitle={true} />
+              <NavLink to={ROUTE_PATHS.dashboard} className="flex items-center">
+                <img
+                  src="/IMG_9301.GIF"
+                  alt="CREDSMART"
+                  className="h-8 w-auto max-w-[120px] object-contain rounded-lg"
+                />
+              </NavLink>
             </div>
 
             {/* Desktop Header: Dynamic Page Header Info (Matching Image 1) */}
@@ -466,13 +472,13 @@ export default function AppLayout() {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-LEFT ON DESKTOP) */}
+      {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-RIGHT ON DESKTOP) */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div
-        className="hidden md:flex fixed bottom-3 left-3 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-80 hover:opacity-100"
+        className="hidden md:flex fixed bottom-3 right-4 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-80 hover:opacity-100"
         title="CredSmart POS & ERP"
       >
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-700/60 shadow-lg text-slate-300 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 dark:bg-slate-950/85 backdrop-blur-md border border-slate-700/60 shadow-lg text-slate-300 dark:text-slate-400">
           <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-[8px] font-black text-slate-950 shadow-xs">
             ⚡
           </div>
