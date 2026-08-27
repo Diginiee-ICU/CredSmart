@@ -880,16 +880,17 @@ setSortDirection("asc");
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Bulk Upload Parties Button - Always visible on mobile & desktop */}
+          {/* Bulk Upload Parties Button - 3D Tactile Emerald/Teal Gradient */}
           <button
             onClick={() => {
               setExcelModalTab("excel");
               setShowExcelUploadModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glowing-btn-blue text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-600 text-white font-bold text-xs shadow-[0_4px_14px_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.5)] border border-emerald-400/40 active:scale-95 transition-all duration-200 cursor-pointer shrink-0 overflow-hidden group"
             title="Bulk Upload Parties from Excel / CSV"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-300" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200 group-hover:scale-110 transition-transform" />
             <span>Bulk Parties</span>
           </button>
 

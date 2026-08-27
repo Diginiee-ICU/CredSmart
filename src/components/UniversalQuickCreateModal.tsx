@@ -335,70 +335,93 @@ export function UniversalQuickCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col gap-0 overflow-hidden bg-card shadow-2xl">
-        {/* Header with Search */}
-        <div className="p-5 sm:p-6 border-b border-border/80 bg-slate-50/50 dark:bg-slate-900/40 space-y-4">
+      <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl lg:max-w-5xl sm:h-auto sm:max-h-[90vh] sm:rounded-3xl sm:border border-slate-200/80 dark:border-slate-800 flex flex-col gap-0 overflow-hidden bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
+        {/* Header with Search & Filter Tabs */}
+        <div className="p-4 sm:p-6 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl space-y-3.5 shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/30">
-                <Zap className="w-5 h-5 fill-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <Zap className="w-5 h-5 fill-white stroke-[1.5]" />
               </div>
               <div>
-                <DialogTitle className="text-lg sm:text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+                <DialogTitle className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span>Create New Transaction or Record</span>
-                  <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-300">
-                    All Options
+                  <Badge variant="outline" className="text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
+                    ALL MODULES
                   </Badge>
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Select any sales invoice, inward purchase, party, item, or accounting record to create instantly
                 </DialogDescription>
               </div>
             </div>
           </div>
 
-          {/* Search bar & Category filters */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search any option (e.g. Sales Invoice, Quotation, Purchase, Party, Expense)..."
-                className="pl-10 h-10 rounded-xl bg-background border-border text-xs focus-visible:ring-indigo-500 shadow-2xs"
-                autoFocus
-              />
-            </div>
+          {/* Full Width Search Bar */}
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search any creation option (e.g. Sales Invoice, Quotation, Purchase, Party, Expense, Bulk)..."
+              className="pl-10 pr-9 h-10 rounded-2xl bg-slate-100/70 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-xs focus-visible:ring-indigo-500 shadow-inner"
+              autoFocus
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
-              {[
-                { id: "all", label: "All (19)" },
-                { id: "sales", label: "Sales (8)" },
-                { id: "purchases", label: "Purchases (5)" },
-                { id: "masters", label: "Masters (3)" },
-                { id: "accounting", label: "Accounting (3)" },
-              ].map((tab) => (
+          {/* Dedicated Category Filter Pills Row (Never overflows screen) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <span className="text-[10px] font-mono font-bold uppercase text-slate-400 shrink-0 mr-1">
+              Category:
+            </span>
+            {[
+              { id: "all", label: "All Modules", count: 19 },
+              { id: "sales", label: "Sales & Invoicing", count: 8 },
+              { id: "purchases", label: "Purchases & Inward", count: 5 },
+              { id: "masters", label: "Master Data & Stock", count: 3 },
+              { id: "accounting", label: "Accounting & Ledgers", count: 3 },
+            ].map((tab) => {
+              const isActive = activeCategory === tab.id;
+              return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveCategory(tab.id as any)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
-                    activeCategory === tab.id
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 active:scale-95",
+                    isActive
+                      ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 ring-2 ring-indigo-500/20"
+                      : "bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/60 dark:border-slate-700/60"
                   )}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 rounded-md text-[9px] font-mono font-bold",
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    )}
+                  >
+                    {tab.count}
+                  </span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Action Grid Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 max-h-[calc(92vh-180px)] scrollbar-thin">
+        {/* 3D Action Grid Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-h-[calc(90vh-190px)] scrollbar-thin">
           {filteredOptions.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
               {filteredOptions.map((item) => {
@@ -408,44 +431,47 @@ export function UniversalQuickCreateModal({
                     key={item.id}
                     type="button"
                     onClick={() => handleSelect(item)}
-                    className="group relative flex items-start gap-3.5 p-3.5 rounded-xl border border-border/80 hover:border-indigo-500/50 bg-card hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20 transition-all text-left shadow-2xs hover:shadow-md hover:-translate-y-0.5"
+                    className="group relative flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 hover:border-indigo-500/50 bg-white/90 dark:bg-slate-900/90 hover:bg-gradient-to-br hover:from-white hover:to-indigo-50/40 dark:hover:from-slate-900 dark:hover:to-indigo-950/40 transition-all duration-200 text-left shadow-sm hover:shadow-xl hover:-translate-y-1 cursor-pointer active:scale-[0.98] overflow-hidden"
                   >
+                    {/* Top specular shine */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
+
                     <div
                       className={cn(
-                        "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 shadow-xs",
+                        "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-110 shadow-xs",
                         item.iconBg,
                         item.color
                       )}
                     >
-                      <Icon className="w-5 h-5 stroke-[2]" />
+                      <Icon className="w-5 h-5 stroke-[2.2]" />
                     </div>
 
                     <div className="flex-1 min-w-0 pr-4">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <h3 className="font-bold text-xs sm:text-sm text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                           {item.title}
                         </h3>
                         {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                          <span className="px-1.5 py-0.2 rounded-md text-[8.5px] font-mono font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
                             {item.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
                         {item.subtitle}
                       </p>
                     </div>
 
-                    <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                   </button>
                 );
               })}
             </div>
           ) : (
-            <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
-              <Search className="w-8 h-8 text-muted-foreground/50" />
-              <p className="font-semibold text-sm">No creation options matching "{searchTerm}"</p>
-              <p className="text-xs">Try searching for invoice, purchase, customer, or expense.</p>
+            <div className="py-16 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
+              <Search className="w-8 h-8 text-slate-400/50" />
+              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">No creation options matching "{searchTerm}"</p>
+              <p className="text-xs text-slate-500">Try searching for invoice, purchase, customer, item, or bulk.</p>
             </div>
           )}
         </div>

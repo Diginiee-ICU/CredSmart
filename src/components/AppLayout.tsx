@@ -227,6 +227,7 @@ export default function AppLayout() {
   const [createItemModalOpen, setCreateItemModalOpen] = useState(false);
   const [createPartyModalOpen, setCreatePartyModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newInvoiceMenuOpen, setNewInvoiceMenuOpen] = useState(false);
 
   const { title, subtitle } = getPageMeta(location.pathname);
   const isPosRoute =
@@ -266,6 +267,7 @@ export default function AppLayout() {
   };
 
   const handleQuickAction = (action: string) => {
+    setNewInvoiceMenuOpen(false);
     switch (action) {
       case "party": setCreatePartyModalOpen(true); break;
       case "item": setCreateItemModalOpen(true); break;
@@ -368,7 +370,7 @@ export default function AppLayout() {
               </button>
 
               {/* New Invoice split button */}
-              <DropdownMenu>
+              <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
                 <div className="flex items-center rounded-xl glowing-btn-amber shadow-md select-none">
                   <button type="button" onClick={() => setSalesInvoiceModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer">
                     <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -383,7 +385,14 @@ export default function AppLayout() {
                 </div>
                 <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-[#0F0E38] border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
                   <div className="px-2 pb-1.5 border-b border-[#1F1C5C]">
-                    <button type="button" onClick={() => setQuickCreateModalOpen(true)} className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewInvoiceMenuOpen(false);
+                        setQuickCreateModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer"
+                    >
                       <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-400" /><span>All Creation Options</span></div>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold uppercase">Hub</span>
                     </button>
@@ -541,36 +550,25 @@ export default function AppLayout() {
         {/* Global B2B Inward Alerts & Notifications Center */}
         <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} />
 
-        {/* Workspace flex container (Push panel + Main content viewport) */}
-        <div className="flex-1 flex w-full min-h-0 overflow-hidden relative">
-          {/* Desktop Push Navigation Panel */}
-          <div
-            className={cn(
-              "hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden border-r border-[#1F1C5C] bg-[#0C0B2D] text-slate-200 z-20",
-              sidebarOpen && !isPosRoute ? "w-72 lg:w-80 opacity-100 shadow-2xl" : "w-0 opacity-0 border-r-0 pointer-events-none"
-            )}
-          >
-            <AppSidebar
-              isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
-              isPushLayout={true}
-            />
-          </div>
+        {/* 3D Dropdown Navigation Menu Popover (Desktop) & Bottom Dock (Mobile) */}
+        <AppSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
-          {/* Main Content Viewport — smoothly shifts when push panel opens */}
-          <main
-            className={cn(
-              "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-300",
-              isPosRoute
-                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
-                : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
-              isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
-              isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-            )}
-          >
-            <Outlet />
-          </main>
-        </div>
+        {/* Main Content Viewport — Clean Full Width */}
+        <main
+          className={cn(
+            "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-300",
+            isPosRoute
+              ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
+              : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+            isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+            isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+          )}
+        >
+          <Outlet />
+        </main>
 
       <UniversalQuickCreateModal
         open={quickCreateModalOpen}
