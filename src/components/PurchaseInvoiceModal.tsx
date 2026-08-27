@@ -245,8 +245,15 @@ export function PurchaseInvoiceModal({
     "1. Goods received in good condition.\n2. Payment terms as agreed with supplier."
   );
 
-  // Bank & QR
-  const [showBankDetails, setShowBankDetails] = useState(true);
+  // Billing Address fields (new)
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingPincode, setBillingPincode] = useState("");
+  const [billingPlaceOfSupply, setBillingPlaceOfSupply] = useState("27-Maharashtra");
+  const [sameAsSupplier, setSameAsSupplier] = useState(false);
+
+
+  // Payment details
+  const [showBankDetails, setShowBankDetails] = useState(false);
   const [bankAccount, setBankAccount] = useState({
     accountNumber: "",
     ifsc: "",
@@ -254,6 +261,9 @@ export function PurchaseInvoiceModal({
     branch: "",
     accountHolder: "",
   });
+  // Signature & Stamp
+  const [showStamp, setShowStamp] = useState(true);
+  const [stampUrl, setStampUrl] = useState<string>("");
 
   const editorBodyRef = useRef<HTMLDivElement>(null);
 
@@ -306,6 +316,7 @@ export function PurchaseInvoiceModal({
           });
         }
         if (parsed.upiId) setUpiId(parsed.upiId);
+        if (parsed.signatureUrl) setStampUrl(parsed.signatureUrl);
       } else if (org) {
         if (org.upi_id) setUpiId(org.upi_id);
         if (org.account_number) {
@@ -440,6 +451,12 @@ export function PurchaseInvoiceModal({
         setPartyGstin(editingDoc.partyGstin || "");
         setPartyAddress(editingDoc.partyAddress || "");
         setPlaceOfSupply(editingDoc.placeOfSupply || "27-Maharashtra");
+        // Billing fields from editing document (if available)
+        const legacyBillingAddress = editingDoc.billingAddress ?? editingDoc.partyAddress ?? "";
+        setBillingAddress(legacyBillingAddress);
+        setBillingPincode(editingDoc.billingPincode || "");
+        setBillingPlaceOfSupply(editingDoc.billingPlaceOfSupply || editingDoc.placeOfSupply || "27-Maharashtra");
+        setSameAsSupplier(Boolean(editingDoc.partyAddress && legacyBillingAddress === editingDoc.partyAddress));
         setDocDate(editingDoc.docDate || new Date().toISOString().split("T")[0]);
         if (editingDoc.dueDate) {
           setShowDueDate(true);
@@ -467,6 +484,11 @@ export function PurchaseInvoiceModal({
         setPartyPhone("");
         setPartyGstin("");
         setPartyAddress("");
+        // Reset billing fields for new document
+        setBillingAddress("");
+        setBillingPincode("");
+        setBillingPlaceOfSupply("27-Maharashtra");
+        setSameAsSupplier(false);
         setDocDate(new Date().toISOString().split("T")[0]);
         setShowDueDate(false);
         setEwayBillNo("");
@@ -874,6 +896,9 @@ export function PurchaseInvoiceModal({
         partyPhone: partyPhone.trim() || undefined,
         partyGstin: partyGstin.trim() || undefined,
         partyAddress: partyAddress.trim() || undefined,
+        billingAddress: billingAddress.trim() || undefined,
+        billingPincode: billingPincode.trim() || undefined,
+        billingPlaceOfSupply,
         placeOfSupply,
         docDate,
         dueDate: showDueDate ? dueDate : docDate,
@@ -900,6 +925,8 @@ export function PurchaseInvoiceModal({
         notes: showNotes ? notes : undefined,
         terms,
         transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
+        showStamp,
+        stampUrl: stampUrl || undefined,
         created_at: editingDoc?.created_at || new Date().toISOString(),
       };
 
@@ -1321,6 +1348,80 @@ export function PurchaseInvoiceModal({
                       </div>
                     </div>
                   )}
+
+                  <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                        Billing Address
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="same-as-party-address"
+                          checked={sameAsSupplier}
+                          onCheckedChange={(checked) => {
+                            const isChecked = Boolean(checked);
+                            setSameAsSupplier(isChecked);
+                            if (isChecked) {
+                              setBillingAddress(partyAddress || "");
+                              setBillingPincode("");
+                              setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
+                            }
+                          }}
+                        />
+                        <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                          Same as party address
+                        </Label>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      value={billingAddress}
+                      onChange={(e) => setBillingAddress(e.target.value)}
+                      disabled={sameAsSupplier}
+                      placeholder="Enter billing address"
+                      className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          Pincode
+                        </Label>
+                        <Input
+                          value={billingPincode}
+                          onChange={(e) => {
+                            setBillingPincode(e.target.value);
+                            if (sameAsSupplier) setSameAsSupplier(false);
+                          }}
+                          placeholder="400001"
+                          className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          State
+                        </Label>
+                        <Select value={billingPlaceOfSupply} onValueChange={(val) => {
+                          setBillingPlaceOfSupply(val);
+                          if (sameAsSupplier && val !== (placeOfSupply || "27-Maharashtra")) {
+                            setSameAsSupplier(false);
+                          }
+                        }}>
+                          <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INDIAN_STATES_AND_CODES.map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* PURCHASE BILL DETAILS CARD */}
@@ -1496,118 +1597,34 @@ export function PurchaseInvoiceModal({
                             {idx + 1}
                           </td>
 
-                          {/* Item Search Autocomplete & Auto-Advance */}
+                          {/* Item Search (Add Items Button) */}
                           <td className="py-2 px-3 relative">
-                            <Input
-                              ref={(el) => {
-                                itemInputRefs.current[idx] = el;
-                              }}
-                              value={item.productName}
-                              onChange={(e) => {
-                                handleUpdateItem(idx, "productName", e.target.value);
-                                setItemSearchText((prev) => ({ ...prev, [idx]: e.target.value }));
-                                setActiveItemDropdown(idx);
-                              }}
-                              onFocus={() => {
-                                setActiveItemDropdown(idx);
-                                if (!itemSearchText[idx] && item.productName) {
-                                  setItemSearchText((prev) => ({ ...prev, [idx]: item.productName }));
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  const matches = getFilteredProducts(itemSearchText[idx] || item.productName);
-                                  if (matches.length > 0) {
-                                    handleSelectProduct(idx, matches[0]);
-                                  } else if (idx === recalculatedItems.length - 1) {
-                                    handleAddRow();
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setAddItemsTargetRow(idx);
+                                  try {
+                                    if ((productsCatalog || []).length === 0) {
+                                      await fetchProducts();
+                                    }
+                                  } catch (e) {
+                                    console.warn('Failed to refresh product catalog before opening Add Items modal', e);
                                   }
-                                }
-                              }}
-                              onBlur={() => {
-                                setTimeout(() => {
-                                  setActiveItemDropdown((curr) => (curr === idx ? null : curr));
-                                }, 220);
-                              }}
-                              placeholder="Enter Inward Item Name / Barcode..."
-                              className="h-8 text-xs font-medium bg-transparent"
-                            />
-
-                            {activeItemDropdown === idx && (
-                              <div className="absolute z-[200] left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
-                                {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
-                                  <>
-                                    <div className="space-y-0.5 pb-1">
-                                      {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
-                                        <button
-                                          key={prod.id}
-                                          type="button"
-                                          onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            handleSelectProduct(idx, prod);
-                                          }}
-                                          className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
-                                        >
-                                          <div className="flex-1 min-w-0">
-                                            <span className="font-bold text-slate-900 dark:text-white truncate block">
-                                              {prod.name}
-                                            </span>
-                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
-                                              {prod.barcode && <span>Code: {prod.barcode}</span>}
-                                              <span>Current Stock: {prod.stock} {prod.unit}</span>
-                                            </div>
-                                          </div>
-                                          <div className="text-right shrink-0">
-                                            <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                                              ₹{prod.costPrice}
-                                            </span>
-                                            <p className="text-[10px] text-muted-foreground font-mono">{prod.gstRate}% GST</p>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-
-                                    {/* Direct Create Item Action at Bottom of Matches */}
-                                    <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800">
-                                      <button
-                                        type="button"
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
-                                        }}
-                                        className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
-                                      >
-                                        <div className="flex items-center gap-1.5 truncate">
-                                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                          <span className="truncate">Create "{itemSearchText[idx] || item.productName || "New Item"}"</span>
-                                        </div>
-                                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary shrink-0 ml-1">
-                                          + Add to Inventory
-                                        </span>
-                                      </button>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="p-3 text-center space-y-2">
-                                    <p className="text-xs text-muted-foreground font-medium">
-                                      No catalog item matching "{itemSearchText[idx] || item.productName || ""}"
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
-                                      }}
-                                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
-                                    >
-                                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                      <span>+ Create Item &amp; Add to Inventory</span>
-                                    </button>
+                                  setShowAddItemsModal(true);
+                                }}
+                                className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Package className="w-4 h-4 text-primary" />
+                                  <div className="text-left">
+                                    <div className="truncate text-sm font-medium text-slate-900 dark:text-white">{item.productName || "Add Item To Bill"}</div>
+                                    <div className="text-[10px] text-muted-foreground">{item.hsn ? `HSN: ${item.hsn}` : "Select from inventory"}</div>
                                   </div>
-                                )}
-                              </div>
-                            )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Open</div>
+                              </button>
+                            </div>
                           </td>
 
                           {/* HSN */}
@@ -1788,60 +1805,6 @@ export function PurchaseInvoiceModal({
                       ))}
                     </tbody>
                   </table>
-                </div>
-
-                {/* Direct Add Item Row Actions (Like POS) */}
-                <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
-                    {/* Primary Button: Add Items to Bill (Opens Popup Modal) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddItemsTargetRow(recalculatedItems.length - 1);
-                        setShowAddItemsModal(true);
-                      }}
-                      className="py-2 px-3.5 rounded-xl glowing-btn-blue text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
-                    >
-                      <Package className="w-4 h-4 text-cyan-300 stroke-[2.2]" />
-                      <span>+ Add Items to Bill</span>
-                    </button>
-
-                    {/* Secondary Button: Create New Item Inline */}
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCreateItemDialog(recalculatedItems.length - 1, "")}
-                      className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-                    >
-                      <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>+ Create New Item</span>
-                    </button>
-
-                    {/* Optional: Add Empty Row */}
-                    <button
-                      type="button"
-                      onClick={handleAddRow}
-                      className="py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-primary bg-white/50 dark:bg-slate-800/50 hover:bg-primary/5 text-slate-700 dark:text-slate-300 hover:text-primary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Blank Row</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAddItemsTargetRow(recalculatedItems.length - 1);
-                        setShowAddItemsModal(true);
-                      }}
-                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                    >
-                      <ScanBarcode className="w-4 h-4 text-primary" />
-                      <span>Scan Barcode</span>
-                    </Button>
-                  </div>
                 </div>
 
                 {/* Subtotals Summary Strip */}
@@ -2187,6 +2150,40 @@ export function PurchaseInvoiceModal({
                       ₹ {Math.max(0, totals.grandTotal - amountPaid).toFixed(2)}
                     </span>
                   </div>
+
+                  {/* Stamp / Signature Box */}
+                  {showStamp && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col items-end">
+                      <div className="w-36 h-16 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-center p-1 overflow-hidden">
+                        {stampUrl ? (
+                          <img src={stampUrl} alt="Store Stamp" className="max-h-full max-w-full object-contain" />
+                        ) : (
+                          <div className="text-center">
+                            <span className="text-[10px] text-muted-foreground font-serif italic">Authorized Signatory</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowStamp(false)}
+                          className="text-rose-500 hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" /> Remove
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newUrl = prompt("Enter Signature / Stamp Image URL:", stampUrl);
+                            if (newUrl !== null) setStampUrl(newUrl);
+                          }}
+                          className="text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Change
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
