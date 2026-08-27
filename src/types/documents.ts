@@ -33,8 +33,14 @@ export interface DocumentLineItem {
   hsn?: string;
   batchNumber?: string;
   expiryDate?: string;
-  quantity: number;
-  unit: string;
+  quantity: number;       // ALWAYS in primary units (e.g. PCS) — used for all calculations
+  unit: string;           // primary unit label (e.g. "PCS")
+  /** Alternate unit label used during billing, e.g. "PKT" */
+  altUnit?: string;
+  /** Qty entered in alternate units (e.g. 2 PKT). quantity = altQty × altUnitConversion */
+  altQty?: number;
+  /** Conversion factor: how many primary units per 1 alt unit (e.g. 4 PCS/PKT) */
+  altUnitConversion?: number;
   rate: number;
   discountPercent: number;
   discountAmount: number;

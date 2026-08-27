@@ -60,6 +60,8 @@ import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRend
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 import { useProducts } from "@/context/ProductsContext";
+import { networkInvoicingService } from "@/services/networkInvoicingService";
+import { ConnectedOrgInfo } from "@/types/networkInvoicing";
 
 interface CustomerOption {
   id: string;
@@ -79,6 +81,8 @@ interface ProductCatalogOption {
   brand: string | null;
   sku?: string;
   unit?: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   selling_price?: number;
   tax_rate?: number;
   tags?: Record<string, any>;
@@ -99,6 +103,8 @@ interface UnifiedProductSuggestion {
   sku?: string;
   hsn?: string;
   unit: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   rate: number;
   mrp?: number;
   gstRate: number;
@@ -148,6 +154,33 @@ export function SalesInvoiceModal({
   const [partyGstin, setPartyGstin] = useState("");
   const [partyAddress, setPartyAddress] = useState("");
   const [placeOfSupply, setPlaceOfSupply] = useState("27-Maharashtra");
+  const [connectedPartner, setConnectedPartner] = useState<ConnectedOrgInfo | null>(null);
+
+  // Auto-detect if customer is a connected CredSmart partner business
+  useEffect(() => {
+    let isMounted = true;
+    if (!partyName.trim()) {
+      setConnectedPartner(null);
+      return;
+    }
+    networkInvoicingService.findConnectedOrganization({
+      orgId: selectedCustomerId,
+      phone: partyPhone,
+      gstin: partyGstin,
+      name: partyName,
+    }).then((partner) => {
+      if (isMounted) {
+        if (partner && partner.id !== orgId) {
+          setConnectedPartner(partner);
+        } else {
+          setConnectedPartner(null);
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [partyName, partyPhone, partyGstin, selectedCustomerId, orgId]);
 
   // Billing Address fields (new)
   const [billingAddress, setBillingAddress] = useState("");
@@ -201,6 +234,8 @@ export function SalesInvoiceModal({
       const selling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.[0]?.mrp || 0);
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
+      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,
@@ -210,6 +245,8 @@ export function SalesInvoiceModal({
         sku: p.sku,
         hsn: hsnVal,
         unit: p.unit || "Pcs",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
         sellingPrice: selling,
         gstRate: gst,
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
@@ -639,6 +676,9 @@ export function SalesInvoiceModal({
         barcode: product.barcode || undefined,
         hsn: product.hsn || copy[index].hsn || "",
         unit: product.unit || copy[index].unit || "Pcs",
+        altUnit: product.altUnit || undefined,
+        altUnitConversion: product.altUnitConversion || undefined,
+        altQty: undefined,
         rate: product.rate,
         batchNumber: product.batchNumber || undefined,
         taxRate: product.gstRate !== undefined ? product.gstRate : 18,
@@ -671,6 +711,8 @@ export function SalesInvoiceModal({
       barcode: product.barcode || null,
       sku: product.sku,
       unit: product.unit || "Pcs",
+      altUnit: product.altUnit,
+      altUnitConversion: product.altUnitConversion,
       tags: {
         hsn_code: normalizedHsn,
         gst_rate: product.taxRate,
@@ -678,6 +720,8 @@ export function SalesInvoiceModal({
         purchase_price: product.purchasePrice,
         mrp: product.sellingPrice || product.purchasePrice || 0,
         unit: product.unit || "Pcs",
+        alt_unit: product.altUnit,
+        alt_unit_conversion: product.altUnitConversion,
         min_stock_alert: 5,
       },
       product_batches: [
@@ -709,6 +753,9 @@ export function SalesInvoiceModal({
             barcode: product.barcode || undefined,
             hsn: normalizedHsn,
             unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
+            altUnit: product.altUnit || undefined,
+            altUnitConversion: product.altUnitConversion || undefined,
+            altQty: undefined,
             rate: product.sellingPrice,
             taxRate: product.taxRate,
             batchNumber: product.batchNumber || undefined,
@@ -910,7 +957,26 @@ export function SalesInvoiceModal({
       };
 
       const saved = await documentsService.saveDocument(finalDoc, user?.id);
-      toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+
+      // Auto-share with CredSmart network buyer for approval & auto-purchase sync
+      if (docType === "sales_invoice") {
+        try {
+          const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
+          if (netInvoice) {
+            toast.success(
+              `⚡ Sales Invoice #${fullDocumentNumber} saved & shared with ${netInvoice.recipientOrgName} for purchase approval!`,
+              { duration: 5000 }
+            );
+          } else {
+            toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+          }
+        } catch (netErr) {
+          console.warn("Network dispatch notice:", netErr);
+          toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+        }
+      } else {
+        toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+      }
       onSaved(saved);
 
       if (andPrint && onPrintRequest) {
@@ -1023,6 +1089,8 @@ export function SalesInvoiceModal({
       const rate = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
+      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,
@@ -1032,6 +1100,8 @@ export function SalesInvoiceModal({
         sku: p.sku,
         hsn: hsnVal,
         unit: p.unit || "Pcs",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
         rate,
         gstRate: gst,
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
@@ -1191,6 +1261,9 @@ export function SalesInvoiceModal({
                     hsn: it.hsn,
                     qty: Number(it.quantity) || 1,
                     unit: it.unit || "Pcs",
+                    altUnit: it.altUnit,
+                    altQty: it.altQty,
+                    altUnitConversion: it.altUnitConversion,
                     rate: Number(it.rate) || 0,
                     discount: it.discountPercent || 0,
                     discountPercent: it.discountPercent,
@@ -1372,6 +1445,20 @@ export function SalesInvoiceModal({
                           Change
                         </Button>
                       </div>
+
+                      {connectedPartner && (
+                        <div className="mt-2 pt-2 border-t border-emerald-500/20 flex items-start gap-2 bg-emerald-500/10 p-2 rounded-md">
+                          <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          <div className="text-[11px] flex-1">
+                            <span className="font-bold text-emerald-800 dark:text-emerald-300">
+                              ⚡ Connected CredSmart Store: {connectedPartner.name}
+                            </span>
+                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                              Saving this invoice will automatically send an in-app notification to {connectedPartner.name} to approve &amp; inward this into their Purchases.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1671,8 +1758,16 @@ export function SalesInvoiceModal({
                             <Input
                               type="number"
                               min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleUpdateItem(idx, "quantity", Math.max(1, Number(e.target.value)))}
+                              value={item.altUnit && item.altUnitConversion && item.altQty != null ? item.altQty : item.quantity}
+                              onChange={(e) => {
+                                const val = Math.max(1, Number(e.target.value));
+                                if (item.altUnit && item.altUnitConversion && item.altQty != null) {
+                                  handleUpdateItem(idx, "altQty", val);
+                                  handleUpdateItem(idx, "quantity", val * item.altUnitConversion);
+                                } else {
+                                  handleUpdateItem(idx, "quantity", val);
+                                }
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
@@ -1685,25 +1780,68 @@ export function SalesInvoiceModal({
                               }}
                               className="h-8 text-xs text-center font-mono font-semibold bg-transparent"
                             />
+                            {item.altUnit && item.altUnitConversion && item.altQty != null && (
+                              <span className="block text-[9px] text-blue-500 font-mono text-center mt-0.5 whitespace-nowrap">
+                                = {item.quantity} {item.unit || "PCS"}
+                              </span>
+                            )}
                           </td>
 
                           {/* Unit */}
                           <td className="py-2 px-2">
-                            <Select
-                              value={item.unit || "Pcs"}
-                              onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
-                            >
-                              <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-56">
-                                {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
-                                  <SelectItem key={u} value={u} className="text-xs">
-                                    {u}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="inline-flex rounded-md border border-primary/40 overflow-hidden text-[10px] font-bold bg-white dark:bg-slate-900 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateItem(idx, "altQty", undefined)}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors cursor-pointer",
+                                      item.altQty == null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.unit || "PCS"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const altQ = Math.max(1, Math.round((item.quantity || 1) / item.altUnitConversion!));
+                                      handleUpdateItem(idx, "altQty", altQ);
+                                      handleUpdateItem(idx, "quantity", altQ * item.altUnitConversion!);
+                                    }}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors border-l border-primary/40 cursor-pointer",
+                                      item.altQty != null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.altUnit}
+                                  </button>
+                                </div>
+                                <span className="text-[8.5px] text-muted-foreground font-mono whitespace-nowrap">
+                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit || "PCS"}
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                value={item.unit || "Pcs"}
+                                onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-56">
+                                  {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                    <SelectItem key={u} value={u} className="text-xs">
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                           </td>
 
                           {/* Price / Rate */}

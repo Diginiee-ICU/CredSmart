@@ -31,6 +31,8 @@ import {
 import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
 import {
   CommandDialog,
   CommandEmpty,
@@ -192,6 +194,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userRole, userPermissions, orgId } = useOrganization();
+  const { pendingCount, unreadCount } = useNetworkInvoices();
   const [openCommand, setOpenCommand] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -269,7 +272,7 @@ export default function AppLayout() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Mobile Search Button (Matching Image 5) */}
+            {/* Mobile Search Button */}
             <button
               onClick={() => setOpenCommand(true)}
               className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors md:hidden flex items-center justify-center border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 shadow-2xs"
@@ -279,7 +282,26 @@ export default function AppLayout() {
               <Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
 
-            {/* Glowing + New Invoice Button (Matching Image 1 & 5) */}
+            {/* Mobile Notification Bell */}
+            <button
+              onClick={() => setNotifOpen(true)}
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors md:hidden flex items-center justify-center border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 shadow-2xs relative"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {pendingCount > 0 ? (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-bold text-white flex items-center justify-center shadow-xs animate-pulse">
+                  {pendingCount}
+                </span>
+              ) : unreadCount > 0 ? (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center shadow-xs">
+                  {unreadCount}
+                </span>
+              ) : null}
+            </button>
+
+            {/* Glowing + New Invoice Button */}
             <button
               onClick={() => setSalesInvoiceModalOpen(true)}
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-white text-xs sm:text-sm font-bold rounded-xl glowing-btn-amber shadow-md hover:-translate-y-0.5 transition-all active:scale-[0.98] select-none cursor-pointer"
@@ -289,17 +311,26 @@ export default function AppLayout() {
               <span className="sm:hidden">Invoice</span>
             </button>
 
-            {/* Notifications Bell with Badge "4" (Desktop) */}
+            {/* Notifications Bell with Dynamic Badges (Desktop) */}
             <button
               onClick={() => setNotifOpen(true)}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/60 dark:border-slate-800"
-              title="Notifications"
+              className={cn(
+                "p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/60 dark:border-slate-800",
+                pendingCount > 0 && "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              )}
+              title={pendingCount > 0 ? `${pendingCount} incoming sales invoice(s) awaiting approval` : "Notifications"}
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-[9px] font-bold text-white flex items-center justify-center shadow-xs">
-                4
-              </span>
+              {pendingCount > 0 ? (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
+                  {pendingCount}
+                </span>
+              ) : unreadCount > 0 ? (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center shadow-xs">
+                  {unreadCount}
+                </span>
+              ) : null}
             </button>
 
             {/* Desktop User Avatar (Matching Image 1) */}
@@ -393,28 +424,8 @@ export default function AppLayout() {
           </DialogContent>
         </Dialog>
 
-        {/* Notifications Dialog */}
-        <Dialog open={notifOpen} onOpenChange={setNotifOpen}>
-          <DialogContent className="max-w-lg sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-primary" />
-                <span>Notifications</span>
-              </DialogTitle>
-              <DialogDescription>
-                Recent store alerts and system events
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 text-sm py-2">
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                <p className="font-semibold text-emerald-800 dark:text-emerald-200 text-xs">System Online &amp; Synchronized</p>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                  All store databases, inventory batches, and cloud sync are operational.
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Global B2B Inward Alerts & Notifications Center */}
+        <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} />
 
         {/* Main Content Viewport */}
         <main

@@ -159,6 +159,8 @@ export default function Items() {
         const pPrice = p.purchasePrice ?? p.purchase_price ?? 0;
         const stock = p.currentStock ?? p.stock ?? 0;
         const minAlert = p.minStockAlert ?? 5;
+        const altUnitVal = p.altUnit || p.tags?.alt_unit || null;
+        const altConvVal = p.altUnitConversion ?? p.tags?.alt_unit_conversion ?? null;
         return {
           id: p.id,
           name: p.name || "Item",
@@ -167,6 +169,9 @@ export default function Items() {
           category: p.category || "General",
           brand: p.brand || null,
           unit: p.unit || "PCS",
+          altUnit: altUnitVal,
+          altUnitConversion: altConvVal ? Number(altConvVal) : null,
+          tags: p.tags || null,
           sellingPrice: sPrice,
           purchasePrice: pPrice,
           mrp: p.mrp ?? sPrice,
@@ -252,6 +257,8 @@ export default function Items() {
     try {
       const tagsPayload = {
         unit: itemData.unit,
+        alt_unit: itemData.altUnit || undefined,
+        alt_unit_conversion: itemData.altUnitConversion || undefined,
         gst_rate: itemData.gstRate,
         hsn_code: itemData.hsnCode || "9999",
         selling_price: itemData.sellingPrice,
@@ -950,10 +957,20 @@ export default function Items() {
                         ) : isLow ? (
                           <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 text-[9px] py-0">
                             Low: {item.currentStock} {item.unit}
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
+                              <span className="ml-1 opacity-80">
+                                ({(item.currentStock / item.altUnitConversion).toFixed(1).replace(/\.0$/, "")} {item.altUnit})
+                              </span>
+                            )}
                           </Badge>
                         ) : (
                           <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[9px] py-0">
                             {item.currentStock} {item.unit}
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
+                              <span className="ml-1 opacity-80">
+                                ({(item.currentStock / item.altUnitConversion).toFixed(1).replace(/\.0$/, "")} {item.altUnit})
+                              </span>
+                            )}
                           </Badge>
                         )}
                       </div>
@@ -1165,11 +1182,16 @@ export default function Items() {
                             >
                               {item.name}
                             </span>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
                               {item.brand && <span>{item.brand} ·</span>}
                               <span className="bg-muted px-1.5 py-0.2 rounded border border-border/60">
                                 {item.category}
                               </span>
+                              {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
+                                <span className="bg-blue-500/10 text-blue-700 dark:text-blue-300 font-mono px-1.5 py-0.2 rounded border border-blue-500/20 font-bold">
+                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit}
+                                </span>
+                              )}
                               {item.gstRate !== undefined && (
                                 <span className="font-mono">{item.gstRate}% GST</span>
                               )}
@@ -1208,6 +1230,11 @@ export default function Items() {
                             )}
                           >
                             {item.currentStock} {item.unit}
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
+                              <span className="block text-[10px] font-normal text-muted-foreground font-mono">
+                                ({(item.currentStock / item.altUnitConversion).toFixed(1).replace(/\.0$/, "")} {item.altUnit})
+                              </span>
+                            )}
                           </span>
                           <div>
                             {isZero ? (

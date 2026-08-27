@@ -78,6 +78,8 @@ interface ProductCatalogOption {
   sku?: string;
   category?: string;
   unit?: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   tax_rate?: number;
   selling_price?: number;
   tags?: Record<string, any>;
@@ -98,6 +100,8 @@ interface UnifiedPurchaseProduct {
   sku?: string;
   hsn?: string;
   unit: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   costPrice: number;
   mrp: number;
   gstRate: number;
@@ -170,6 +174,7 @@ export function PurchaseInvoiceModal({
   const [itemSearchText, setItemSearchText] = useState<Record<number, string>>({});
   const [activeItemDropdown, setActiveItemDropdown] = useState<number | null>(null);
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
+  const [addItemsTargetRow, setAddItemsTargetRow] = useState<number | null>(null);
 
   // Item input refs for auto-focus
   const itemInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
@@ -191,6 +196,8 @@ export function PurchaseInvoiceModal({
       const cost = p.product_batches?.[0]?.cost_price || (tags && (tags.purchase_price !== undefined && tags.purchase_price !== null) ? Number(tags.purchase_price) : Math.round((selling || 0) * 0.8));
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
+      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,
@@ -200,6 +207,8 @@ export function PurchaseInvoiceModal({
         sku: p.sku,
         hsn: hsnVal,
         unit: p.unit || "Pcs",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
         sellingPrice: selling,
         costPrice: cost,
         gstRate: gst,
@@ -314,16 +323,25 @@ export function PurchaseInvoiceModal({
     }
   }, [orgId, org]);
 
-  // Fetch Suppliers & Products with Ledger Balances
+  // Fetch parties from BOTH customers and suppliers tables (unified party list)
   const fetchSuppliers = async () => {
     if (!orgId) return;
     try {
+      // 1. Fetch from customers table (same as Sales Invoice)
+      const { data: custData } = await supabase
+        .from("customers")
+        .select("id, name, phone, email, address, gstin")
+        .eq("organization_id", orgId)
+        .order("name");
+
+      // 2. Fetch from suppliers table (legacy/dedicated suppliers)
       const { data: suppData } = await supabase
         .from("suppliers")
         .select("id, name, phone, email, address, gstin")
         .eq("organization_id", orgId)
         .order("name");
 
+      // 3. Fetch credit balances
       const { data: creditData } = await supabase
         .from("credit_transactions")
         .select("party_id, amount, type")
@@ -340,13 +358,47 @@ export function PurchaseInvoiceModal({
         }
       });
 
-      if (suppData) {
-        const merged = suppData.map((s) => ({
-          ...s,
-          balance: balanceMap[s.id] || 0,
-        }));
-        setSuppliers(merged);
+      // 4. Merge both lists, deduplicate by name+phone
+      const seenKeys = new Set<string>();
+      const merged: SupplierOption[] = [];
+
+      // Customers first (preferred source of truth)
+      for (const c of custData || []) {
+        const key = `${c.name.toLowerCase().trim()}|${(c.phone || "").trim()}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          merged.push({
+            id: c.id,
+            name: c.name,
+            phone: c.phone || "",
+            email: c.email || undefined,
+            address: c.address || undefined,
+            gstin: c.gstin || undefined,
+            balance: balanceMap[c.id] || 0,
+          });
+        }
       }
+
+      // Then suppliers (add any that aren't already in customers)
+      for (const s of suppData || []) {
+        const key = `${s.name.toLowerCase().trim()}|${(s.phone || "").trim()}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          merged.push({
+            id: s.id,
+            name: s.name,
+            phone: s.phone || "",
+            email: s.email || undefined,
+            address: s.address || undefined,
+            gstin: s.gstin || undefined,
+            balance: balanceMap[s.id] || 0,
+          });
+        }
+      }
+
+      // Sort alphabetically
+      merged.sort((a, b) => a.name.localeCompare(b.name));
+      setSuppliers(merged);
     } catch (e) {
       console.error(e);
     }
@@ -459,14 +511,58 @@ export function PurchaseInvoiceModal({
     });
   };
 
-  const handleBatchAddItems = (newItems: DocumentLineItem[]) => {
+  const handleBatchAddItemsAtTarget = (newItems: DocumentLineItem[]) => {
+    if (!newItems || newItems.length === 0) return;
+    const target = addItemsTargetRow;
+
     setItems((prev) => {
-      const cleanExisting = prev.filter((it) => it.productName.trim() !== "");
-      const combined = [...cleanExisting, ...newItems];
-      // Auto add new blank line after every item selection
-      const nextId = `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      return [...combined, createNewRow(nextId)];
+      const copy = [...prev];
+
+      const mapped = newItems.map((ni) => ({
+        id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        productId: (ni as any).productId || (ni as any).id || undefined,
+        productName: (ni as any).productName || (ni as any).name || "",
+        barcode: (ni as any).barcode || undefined,
+        hsn: (ni as any).hsn || "",
+        quantity: Number((ni as any).quantity) || 1,
+        unit: (ni as any).unit || "Pcs",
+        rate: Number((ni as any).rate) || Number((ni as any).costPrice) || 0,
+        discountPercent: Number((ni as any).discountPercent) || 0,
+        discountAmount: Number((ni as any).discountAmount) || 0,
+        taxRate: Number((ni as any).taxRate) || 18,
+        taxableAmount: Number((ni as any).taxableAmount) || 0,
+        cgstAmount: Number((ni as any).cgstAmount) || 0,
+        sgstAmount: Number((ni as any).sgstAmount) || 0,
+        igstAmount: Number((ni as any).igstAmount) || 0,
+        lineTotal: Number((ni as any).lineTotal) || 0,
+      } as DocumentLineItem));
+
+      let insertAt = copy.length;
+      if (typeof target === "number" && target >= 0 && target < copy.length) {
+        insertAt = target;
+      }
+
+      if (typeof target === "number" && target >= 0 && target < copy.length && (!copy[target].productName || copy[target].productName.trim() === "")) {
+        copy.splice(target, 1, ...mapped);
+      } else {
+        copy.splice(insertAt, 0, ...mapped);
+      }
+
+      const last = copy[copy.length - 1];
+      if (!last || (last.productName && last.productName.trim() !== "")) {
+        copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+      }
+
+      return copy;
     });
+
+    setAddItemsTargetRow(null);
+    setShowAddItemsModal(false);
+
+    setTimeout(() => {
+      const focusIndex = typeof target === "number" && target >= 0 ? target : (items.length - 1);
+      focusItemInput(focusIndex + (newItems?.length ? newItems.length - 1 : 0));
+    }, 80);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -588,6 +684,9 @@ export function PurchaseInvoiceModal({
         barcode: product.barcode || undefined,
         hsn: product.hsn || copy[index].hsn || "",
         unit: product.unit || copy[index].unit || "Pcs",
+        altUnit: product.altUnit || undefined,
+        altUnitConversion: product.altUnitConversion || undefined,
+        altQty: undefined,
         rate: product.costPrice || 0,
         taxRate: product.gstRate !== undefined ? product.gstRate : 18,
       };
@@ -619,6 +718,8 @@ export function PurchaseInvoiceModal({
       barcode: product.barcode || null,
       sku: product.sku,
       unit: product.unit || "Pcs",
+      altUnit: product.altUnit,
+      altUnitConversion: product.altUnitConversion,
       tags: {
         hsn_code: normalizedHsn,
         gst_rate: product.taxRate,
@@ -626,6 +727,8 @@ export function PurchaseInvoiceModal({
         purchase_price: product.purchasePrice,
         mrp: product.sellingPrice || product.purchasePrice || 0,
         unit: product.unit || "Pcs",
+        alt_unit: product.altUnit,
+        alt_unit_conversion: product.altUnitConversion,
         min_stock_alert: 5,
       },
       product_batches: [
@@ -657,6 +760,9 @@ export function PurchaseInvoiceModal({
             barcode: product.barcode || undefined,
             hsn: normalizedHsn,
             unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
+            altUnit: product.altUnit || undefined,
+            altUnitConversion: product.altUnitConversion || undefined,
+            altQty: undefined,
             rate: product.purchasePrice || product.sellingPrice || 0,
             taxRate: product.taxRate,
             batchNumber: product.batchNumber || undefined,
@@ -695,12 +801,13 @@ export function PurchaseInvoiceModal({
 
   const handleCreateSupplierInline = async () => {
     if (!newSuppName.trim()) {
-      toast.error("Please enter a supplier name");
+      toast.error("Please enter a party name");
       return;
     }
     try {
+      // Insert into customers table (shared with Sales Invoice party list)
       const { data, error } = await supabase
-        .from("suppliers")
+        .from("customers")
         .insert({
           organization_id: orgId,
           name: newSuppName.trim(),
@@ -714,7 +821,7 @@ export function PurchaseInvoiceModal({
 
       if (error) throw error;
 
-      toast.success(`Supplier "${newSuppName}" created successfully!`);
+      toast.success(`Party "${newSuppName}" added and synced with Sales!`);
       const newOpt: SupplierOption = {
         id: data.id,
         name: data.name,
@@ -723,7 +830,7 @@ export function PurchaseInvoiceModal({
         gstin: data.gstin || "",
         balance: 0,
       };
-      setSuppliers((prev) => [newOpt, ...prev]);
+      setSuppliers((prev) => [newOpt, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
       handleSelectSupplier(newOpt);
       setShowNewSupplierDialog(false);
       setNewSuppName("");
@@ -731,7 +838,7 @@ export function PurchaseInvoiceModal({
       setNewSuppGstin("");
       setNewSuppAddress("");
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to create supplier"));
+      toast.error(getErrorMessage(err, "Failed to create party"));
     }
   };
 
@@ -830,19 +937,28 @@ export function PurchaseInvoiceModal({
   }, [suppliers, supplierSearch]);
 
   const getFilteredProducts = (query: string): UnifiedPurchaseProduct[] => {
-    if (!query) return productsCatalog.slice(0, 12).map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category || "General",
-      barcode: p.barcode || undefined,
-      sku: p.sku,
-      unit: p.unit || "Pcs",
-      costPrice: p.product_batches?.[0]?.cost_price || Math.round((p.selling_price || 0) * 0.8),
-      mrp: p.product_batches?.[0]?.mrp || p.selling_price || 0,
-      gstRate: p.tax_rate || 18,
-      stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-      isDb: true,
-    }));
+    const toPurchaseSuggestion = (p: ProductCatalogOption): UnifiedPurchaseProduct => {
+      const tags = (p as any).tags || {};
+      const altUnitVal = p.altUnit || tags?.alt_unit || undefined;
+      const altConvVal = p.altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        barcode: p.barcode || undefined,
+        sku: p.sku,
+        unit: p.unit || "Pcs",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
+        costPrice: p.product_batches?.[0]?.cost_price || (tags?.purchase_price ? Number(tags.purchase_price) : Math.round((p.selling_price || 0) * 0.8)),
+        mrp: p.product_batches?.[0]?.mrp || p.selling_price || 0,
+        gstRate: p.tax_rate || 18,
+        stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
+        isDb: true,
+      };
+    };
+
+    if (!query) return productsCatalog.slice(0, 12).map(toPurchaseSuggestion);
 
     const q = query.toLowerCase();
     return productsCatalog
@@ -853,19 +969,7 @@ export function PurchaseInvoiceModal({
           (p.sku && p.sku.toLowerCase().includes(q))
       )
       .slice(0, 15)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category || "General",
-        barcode: p.barcode || undefined,
-        sku: p.sku,
-        unit: p.unit || "Pcs",
-        costPrice: p.product_batches?.[0]?.cost_price || Math.round((p.selling_price || 0) * 0.8),
-        mrp: p.product_batches?.[0]?.mrp || p.selling_price || 0,
-        gstRate: p.tax_rate || 18,
-        stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-        isDb: true,
-      }));
+      .map(toPurchaseSuggestion);
   };
 
   const upiPayload = upiId
@@ -912,6 +1016,48 @@ export function PurchaseInvoiceModal({
                 title="Purchase Settings"
               >
                 <Settings className="w-4 h-4" />
+              </Button>
+
+              {/* Edit / Preview Toggle — matches SalesInvoiceModal */}
+              <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mr-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("edit")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
+                    viewMode === "edit"
+                      ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("preview")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
+                    viewMode === "preview"
+                      ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </button>
+              </div>
+
+              {/* Standalone Print button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleSave(true, false)}
+                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+                title="Print"
+              >
+                <Printer className="w-3.5 h-3.5" />
               </Button>
 
               <Button
@@ -986,6 +1132,9 @@ export function PurchaseInvoiceModal({
                     hsn: it.hsn,
                     qty: Number(it.quantity) || 1,
                     unit: it.unit || "Pcs",
+                    altUnit: it.altUnit,
+                    altQty: it.altQty,
+                    altUnitConversion: it.altUnitConversion,
                     rate: Number(it.rate) || 0,
                     discount: it.discountPercent || 0,
                     discountPercent: it.discountPercent,
@@ -1019,13 +1168,13 @@ export function PurchaseInvoiceModal({
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-primary" />
-                      Bill From (Supplier)
+                      Bill From (Party / Vendor)
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowNewSupplierDialog(true)}
                       className="text-muted-foreground hover:text-primary transition-colors"
-                      title="Add Supplier"
+                      title="Add New Party"
                     >
                       <Settings className="w-3.5 h-3.5" />
                     </button>
@@ -1038,7 +1187,7 @@ export function PurchaseInvoiceModal({
                       onClick={() => setShowSupplierDropdown(true)}
                       className="w-full h-[104px] border border-dashed border-primary/40 hover:border-primary/70 bg-white dark:bg-slate-900 text-primary text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer"
                     >
-                      + Add Supplier
+                      + Select Party / Vendor
                     </button>
                   )}
                   <div className={cn("relative", !partyName.trim() && !showSupplierDropdown && "hidden")}>
@@ -1047,7 +1196,7 @@ export function PurchaseInvoiceModal({
                       onClick={() => setShowSupplierDropdown(true)}
                     >
                       <input
-                        placeholder="Search supplier by name or number"
+                        placeholder="Search party by name or phone..."
                         value={showSupplierDropdown ? supplierSearch : (partyName || supplierSearch)}
                         onChange={(e) => {
                           setSupplierSearch(e.target.value);
@@ -1062,7 +1211,7 @@ export function PurchaseInvoiceModal({
                     {showSupplierDropdown && (
                       <div className="absolute z-[200] left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                         <div className="px-3.5 py-2 bg-slate-100/90 dark:bg-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                          <span>Supplier Name</span>
+                          <span>Party / Vendor Name</span>
                           <span>Balance</span>
                         </div>
 
@@ -1098,7 +1247,7 @@ export function PurchaseInvoiceModal({
                           ))}
                           {filteredSuppliers.length === 0 && (
                             <div className="p-4 text-center text-xs text-muted-foreground">
-                              No supplier found matching "{supplierSearch}"
+                              No party found matching "{supplierSearch}"
                             </div>
                           )}
                         </div>
@@ -1114,7 +1263,7 @@ export function PurchaseInvoiceModal({
                             className="w-full py-2 rounded-lg border border-dashed border-primary/40 hover:border-primary text-primary text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-primary/5 transition-all cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
-                            + Create Supplier
+                            + Create New Party
                           </button>
                         </div>
                       </div>
@@ -1468,8 +1617,16 @@ export function PurchaseInvoiceModal({
                             <Input
                               type="number"
                               min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleUpdateItem(idx, "quantity", Math.max(1, Number(e.target.value)))}
+                              value={item.altUnit && item.altUnitConversion && item.altQty != null ? item.altQty : item.quantity}
+                              onChange={(e) => {
+                                const val = Math.max(1, Number(e.target.value));
+                                if (item.altUnit && item.altUnitConversion && item.altQty != null) {
+                                  handleUpdateItem(idx, "altQty", val);
+                                  handleUpdateItem(idx, "quantity", val * item.altUnitConversion);
+                                } else {
+                                  handleUpdateItem(idx, "quantity", val);
+                                }
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
@@ -1482,25 +1639,68 @@ export function PurchaseInvoiceModal({
                               }}
                               className="h-8 text-xs text-center font-mono font-semibold bg-transparent"
                             />
+                            {item.altUnit && item.altUnitConversion && item.altQty != null && (
+                              <span className="block text-[9px] text-blue-500 font-mono text-center mt-0.5 whitespace-nowrap">
+                                = {item.quantity} {item.unit || "PCS"}
+                              </span>
+                            )}
                           </td>
 
                           {/* Unit */}
                           <td className="py-2 px-2">
-                            <Select
-                              value={item.unit || "Pcs"}
-                              onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
-                            >
-                              <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-56">
-                                {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
-                                  <SelectItem key={u} value={u} className="text-xs">
-                                    {u}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="inline-flex rounded-md border border-primary/40 overflow-hidden text-[10px] font-bold bg-white dark:bg-slate-900 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateItem(idx, "altQty", undefined)}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors cursor-pointer",
+                                      item.altQty == null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.unit || "PCS"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const altQ = Math.max(1, Math.round((item.quantity || 1) / item.altUnitConversion!));
+                                      handleUpdateItem(idx, "altQty", altQ);
+                                      handleUpdateItem(idx, "quantity", altQ * item.altUnitConversion!);
+                                    }}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors border-l border-primary/40 cursor-pointer",
+                                      item.altQty != null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.altUnit}
+                                  </button>
+                                </div>
+                                <span className="text-[8.5px] text-muted-foreground font-mono whitespace-nowrap">
+                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit || "PCS"}
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                value={item.unit || "Pcs"}
+                                onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-56">
+                                  {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                    <SelectItem key={u} value={u} className="text-xs">
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                           </td>
 
                           {/* Price / Rate */}
@@ -1584,7 +1784,10 @@ export function PurchaseInvoiceModal({
                     {/* Primary Button: Add Items to Bill (Opens Popup Modal) */}
                     <button
                       type="button"
-                      onClick={() => setShowAddItemsModal(true)}
+                      onClick={() => {
+                        setAddItemsTargetRow(recalculatedItems.length - 1);
+                        setShowAddItemsModal(true);
+                      }}
                       className="py-2 px-3.5 rounded-xl glowing-btn-blue text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
                     >
                       <Package className="w-4 h-4 text-cyan-300 stroke-[2.2]" />
@@ -1617,7 +1820,10 @@ export function PurchaseInvoiceModal({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowAddItemsModal(true)}
+                      onClick={() => {
+                        setAddItemsTargetRow(recalculatedItems.length - 1);
+                        setShowAddItemsModal(true);
+                      }}
                       className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
                     >
                       <ScanBarcode className="w-4 h-4 text-primary" />
@@ -1984,16 +2190,16 @@ export function PurchaseInvoiceModal({
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-primary" />
-              Add New Supplier (Bill From)
+              Add New Party (Bill From)
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Quickly save supplier party details into your supplier ledger
+              Party will be saved and synced across both Sales &amp; Purchase invoices
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2 text-xs">
             <div>
-              <Label className="text-xs font-semibold">Supplier / Vendor Name *</Label>
+              <Label className="text-xs font-semibold">Party / Vendor Name *</Label>
               <Input
                 value={newSuppName}
                 onChange={(e) => setNewSuppName(e.target.value)}
@@ -2057,13 +2263,16 @@ export function PurchaseInvoiceModal({
       {/* ───────────────────────────────────────────────────────────── */}
       <AddItemsToBillModal
         open={showAddItemsModal}
-        onOpenChange={setShowAddItemsModal}
+        onOpenChange={(open) => {
+          setShowAddItemsModal(open);
+          if (!open) setAddItemsTargetRow(null);
+        }}
         items={billItemOptions}
-        onAddSelectedItems={handleBatchAddItems}
+        onAddSelectedItems={handleBatchAddItemsAtTarget}
         priceMode="purchase"
         onOpenCreateItem={() => {
           setShowAddItemsModal(false);
-          handleOpenCreateItemDialog(recalculatedItems.length - 1, "");
+          handleOpenCreateItemDialog(addItemsTargetRow ?? recalculatedItems.length - 1, "");
         }}
       />
 

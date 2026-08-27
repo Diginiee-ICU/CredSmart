@@ -42,6 +42,10 @@ export interface BillItemOption {
   sku?: string;
   hsn?: string;
   unit: string;
+  /** Alternate (secondary) unit, e.g. "PKT" */
+  altUnit?: string;
+  /** How many primary units per 1 alternate unit (e.g. 4 PCS per PKT) */
+  altUnitConversion?: number;
   sellingPrice: number;
   costPrice?: number;
   gstRate: number;
@@ -70,6 +74,8 @@ export function AddItemsToBillModal({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [selectedItemQuantities, setSelectedItemQuantities] = useState<Record<string, number>>({});
+  /** Tracks if a specific item is being sold in its alt unit ("alt") or primary unit ("primary") */
+  const [selectedItemUnits, setSelectedItemUnits] = useState<Record<string, "primary" | "alt">>({});
   const [showOnlySelected, setShowOnlySelected] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +99,7 @@ export function AddItemsToBillModal({
       setSelectedCategory("all");
       setSelectedIndex(0);
       setSelectedItemQuantities({});
+      setSelectedItemUnits({});
       setShowOnlySelected(false);
       setTimeout(() => {
         searchInputRef.current?.focus();
@@ -199,13 +206,21 @@ export function AddItemsToBillModal({
   const handleConfirmAdd = () => {
     const lineItemsToAdd: DocumentLineItem[] = [];
 
-    Object.entries(selectedItemQuantities).forEach(([itemId, qty]) => {
-      if (qty > 0) {
+    Object.entries(selectedItemQuantities).forEach(([itemId, enteredQty]) => {
+      if (enteredQty > 0) {
         const product = items.find((i) => i.id === itemId);
         if (product) {
           const rate = priceMode === "purchase" ? product.costPrice || 0 : product.sellingPrice;
           const gstRate = product.gstRate || 18;
-          const taxable = rate * qty;
+          const unitMode = selectedItemUnits[itemId] || "primary";
+          const hasAltUnit = !!(product.altUnit && product.altUnitConversion && product.altUnitConversion > 1);
+          const useAlt = hasAltUnit && unitMode === "alt";
+
+          // Base qty is always in primary units — this is used for all financial calculations
+          const convFactor = useAlt ? (product.altUnitConversion || 1) : 1;
+          const baseQty = enteredQty * convFactor;
+
+          const taxable = rate * baseQty;
           const taxAmt = (taxable * gstRate) / 100;
           const total = taxable + taxAmt;
 
@@ -215,8 +230,11 @@ export function AddItemsToBillModal({
             productName: product.name,
             hsn: product.hsn || "",
             barcode: product.barcode || undefined,
-            quantity: qty,
-            unit: product.unit || "Pcs",
+            quantity: baseQty,                      // always primary units
+            unit: product.unit || "PCS",            // primary unit label
+            altUnit: useAlt ? product.altUnit : undefined,
+            altQty: useAlt ? enteredQty : undefined,
+            altUnitConversion: useAlt ? convFactor : undefined,
             rate: rate,
             discountPercent: 0,
             discountAmount: 0,
@@ -401,8 +419,20 @@ export function AddItemsToBillModal({
                             : "text-slate-700 dark:text-slate-300"
                         )}
                       >
-                        {item.stock.toLocaleString("en-IN")}{" "}
-                        <span className="text-[10px] uppercase font-normal">{item.unit || "PCS"}</span>
+                        {/* Show stock in selected unit mode when alt unit is available */}
+                        {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1
+                          ? selectedItemUnits[item.id] === "alt"
+                            ? <>
+                                {Math.floor(item.stock / item.altUnitConversion).toLocaleString("en-IN")}
+                                {" "}<span className="text-[10px] uppercase font-normal">{item.altUnit}</span>
+                                <span className="block text-[9px] text-slate-400 font-normal">({item.stock.toLocaleString("en-IN")} {item.unit || "PCS"})</span>
+                              </>
+                            : <>
+                                {item.stock.toLocaleString("en-IN")}
+                                {" "}<span className="text-[10px] uppercase font-normal">{item.unit || "PCS"}</span>
+                              </>
+                          : <>{item.stock.toLocaleString("en-IN")}{" "}<span className="text-[10px] uppercase font-normal">{item.unit || "PCS"}</span></>
+                        }
                       </span>
                     </td>
 
@@ -417,30 +447,68 @@ export function AddItemsToBillModal({
                       onClick={(e) => e.stopPropagation()}
                     >
                       {isSelected ? (
-                        <div className="inline-flex items-center border border-primary/50 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
-                          <button
-                            type="button"
-                            onClick={() => handleSetQuantity(item.id, qty - 1)}
-                            className="w-6 h-6 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <input
-                            type="number"
-                            min="1"
-                            value={qty}
-                            onChange={(e) =>
-                              handleSetQuantity(item.id, Math.max(1, parseInt(e.target.value, 10) || 1))
-                            }
-                            className="w-8 h-6 text-center font-mono font-bold text-xs bg-transparent border-x border-primary/30 focus:outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleSetQuantity(item.id, qty + 1)}
-                            className="w-6 h-6 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
+                        <div className="flex flex-col items-center gap-1">
+                          {/* Unit toggle pill — only shown when item has alt unit */}
+                          {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
+                            <div className="inline-flex rounded-md border border-primary/30 overflow-hidden text-[10px] font-bold">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedItemUnits((prev) => ({ ...prev, [item.id]: "primary" }))}
+                                className={cn(
+                                  "px-2 py-0.5 transition-colors",
+                                  (selectedItemUnits[item.id] || "primary") === "primary"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                )}
+                              >
+                                {item.unit}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedItemUnits((prev) => ({ ...prev, [item.id]: "alt" }))}
+                                className={cn(
+                                  "px-2 py-0.5 transition-colors border-l border-primary/30",
+                                  selectedItemUnits[item.id] === "alt"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                )}
+                              >
+                                {item.altUnit}
+                              </button>
+                            </div>
+                          )}
+                          {/* Quantity stepper */}
+                          <div className="inline-flex items-center border border-primary/50 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => handleSetQuantity(item.id, qty - 1)}
+                              className="w-6 h-6 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              min="1"
+                              value={qty}
+                              onChange={(e) =>
+                                handleSetQuantity(item.id, Math.max(1, parseInt(e.target.value, 10) || 1))
+                              }
+                              className="w-8 h-6 text-center font-mono font-bold text-xs bg-transparent border-x border-primary/30 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSetQuantity(item.id, qty + 1)}
+                              className="w-6 h-6 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          {/* Conversion hint for alt unit mode */}
+                          {item.altUnit && item.altUnitConversion && selectedItemUnits[item.id] === "alt" && qty > 0 && (
+                            <span className="text-[9px] text-blue-500 font-mono">
+                              = {qty * item.altUnitConversion} {item.unit}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <button

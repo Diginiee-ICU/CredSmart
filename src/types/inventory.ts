@@ -42,6 +42,10 @@ export interface InventoryItem {
   category: string;
   brand: string | null;
   unit: ItemUnit;
+  /** Alternate (secondary) unit name, e.g. "PKT", "BOX", "DOZ" */
+  altUnit?: string | null;
+  /** How many primary units equal 1 alternate unit. e.g. 4 (PCS per PKT) */
+  altUnitConversion?: number | null;
   sellingPrice: number;
   purchasePrice: number;
   mrp: number;

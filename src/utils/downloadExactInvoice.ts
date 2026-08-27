@@ -45,6 +45,9 @@ export interface ExactInvoicePayload {
     hsn?: string;
     quantity: number;
     unit?: string;
+    altUnit?: string;
+    altQty?: number;
+    altUnitConversion?: number;
     rate: number;
     total: number;
     taxRate?: number;
@@ -85,6 +88,9 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
       hsn: it.hsn,
       qty: it.quantity,
       unit: it.unit,
+      altUnit: it.altUnit,
+      altQty: it.altQty,
+      altUnitConversion: it.altUnitConversion,
       rate: it.rate,
       mrp: it.mrp ?? it.rate,
       taxRate: it.taxRate ?? 0,

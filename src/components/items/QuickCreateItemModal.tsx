@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, Plus } from "lucide-react";
+import { Package, Plus, Layers } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,6 +28,8 @@ export interface CreatedProductResult {
   barcode?: string;
   sku: string;
   unit: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   sellingPrice: number;
   purchasePrice: number;
   taxRate: number;
@@ -89,6 +92,9 @@ export function QuickCreateItemModal({
   const [name, setName] = useState(initialName);
   const [category, setCategory] = useState("General");
   const [unit, setUnit] = useState("PCS");
+  const [enableAltUnit, setEnableAltUnit] = useState(false);
+  const [altUnit, setAltUnit] = useState("PKT");
+  const [altUnitConversion, setAltUnitConversion] = useState("4");
   const [sellingPrice, setSellingPrice] = useState<number | "">("");
   const [purchasePrice, setPurchasePrice] = useState<number | "">("");
   const [mrp, setMrp] = useState<number | "">("");
@@ -105,6 +111,9 @@ export function QuickCreateItemModal({
       setName(initialName);
       setCategory("General");
       setUnit("PCS");
+      setEnableAltUnit(false);
+      setAltUnit("PKT");
+      setAltUnitConversion("4");
       setSellingPrice("");
       setPurchasePrice("");
       setMrp("");
@@ -138,11 +147,17 @@ export function QuickCreateItemModal({
     const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}`;
     const normalizedHsn = (hsn || "9999").trim() || "9999";
 
+    const convFactor = enableAltUnit ? (parseFloat(altUnitConversion) || 1) : undefined;
+    const resolvedAltUnit = enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined;
+    const finalAltConv = resolvedAltUnit && convFactor && convFactor > 1 ? convFactor : undefined;
+
     setSaving(true);
     try {
       // Build tags payload to align with DB schema (pricing belongs to tags/product_batches)
       const tagsPayload = {
         unit: unit.toUpperCase(),
+        alt_unit: resolvedAltUnit,
+        alt_unit_conversion: finalAltConv,
         gst_rate: gstRate,
         hsn_code: normalizedHsn,
         selling_price: sp,
@@ -195,6 +210,8 @@ export function QuickCreateItemModal({
         barcode: newProd.barcode || undefined,
         sku: newProd.sku,
         unit: unit.toUpperCase(),
+        altUnit: resolvedAltUnit,
+        altUnitConversion: finalAltConv,
         sellingPrice: sp,
         purchasePrice: pp,
         taxRate: gstRate,
@@ -217,6 +234,8 @@ export function QuickCreateItemModal({
           barcode: barcode.trim() || undefined,
           sku: generatedSku,
           unit: unit.toUpperCase(),
+          altUnit: resolvedAltUnit,
+          altUnitConversion: finalAltConv,
           sellingPrice: sp,
           purchasePrice: pp,
           taxRate: gstRate,
@@ -311,6 +330,56 @@ export function QuickCreateItemModal({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Alternate Unit Section */}
+            <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">Alternate Unit</span>
+                  <p className="text-[10px] text-muted-foreground">e.g. 1 PKT = 4 PCS, 1 BOX = 10 PCS</p>
+                </div>
+                <Switch checked={enableAltUnit} onCheckedChange={setEnableAltUnit} />
+              </div>
+
+              {enableAltUnit && (
+                <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Alt Unit</Label>
+                      <Select value={altUnit} onValueChange={setAltUnit}>
+                        <SelectTrigger className="h-8 text-xs mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {UNIT_OPTIONS.filter((u) => u !== unit).map((u) => (
+                            <SelectItem key={u} value={u}>
+                              {u}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">{unit}s per {altUnit}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={altUnitConversion}
+                        onChange={(e) => setAltUnitConversion(e.target.value)}
+                        placeholder="e.g. 4"
+                        className="h-8 text-xs font-mono font-bold mt-1"
+                      />
+                    </div>
+                  </div>
+                  {altUnit && altUnitConversion && parseFloat(altUnitConversion) > 1 && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 p-1.5 rounded-md">
+                      <Layers className="w-3 h-3 shrink-0" />
+                      <span>1 {altUnit} = {altUnitConversion} {unit}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Pricing Details */}

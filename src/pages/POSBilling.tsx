@@ -65,6 +65,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { networkInvoicingService } from "@/services/networkInvoicingService";
+import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
@@ -1374,6 +1376,63 @@ export default function POSBilling() {
                 payment: currentTab.paymentMode,
                 customer: currentTab.customer?.name || "Walk-in",
               });
+
+              // B2B Network Sync: Auto-dispatch to buyer if customer matches a CredSmart business
+              if (currentTab.customer && org) {
+                try {
+                  const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => ({
+                    id: `pos-item-${Date.now()}-${idx}`,
+                    productName: ci.product.name,
+                    productId: ci.product.id,
+                    barcode: ci.product.barcode || undefined,
+                    batchNumber: ci.batch.batchNumber || undefined,
+                    expiryDate: ci.batch.expiryDate,
+                    quantity: ci.quantity,
+                    unit: ci.product.unit || "PCS",
+                    rate: ci.sp,
+                    discountPercent: ci.discountPercent || 0,
+                    discountAmount: ci.discountAmount || 0,
+                    taxRate: ci.product.gstRate || 0,
+                    taxableAmount: ci.taxableAmount || (ci.sp * ci.quantity),
+                    cgstAmount: (ci.gstAmount || 0) / 2,
+                    sgstAmount: (ci.gstAmount || 0) / 2,
+                    igstAmount: 0,
+                    lineTotal: Number((ci.sp * ci.quantity).toFixed(2)),
+                  }));
+
+                  const posDoc: BusinessDocument = {
+                    id: sale.id,
+                    organizationId: orgId,
+                    docType: "sales_invoice",
+                    documentNumber: invoiceNumber,
+                    partyId: currentTab.customer.id,
+                    partyName: currentTab.customer.name,
+                    partyPhone: currentTab.customer.phone || undefined,
+                    partyGstin: currentTab.customer.gstin || undefined,
+                    partyAddress: currentTab.customer.address || undefined,
+                    docDate: new Date().toISOString().split("T")[0],
+                    paymentMethod: currentTab.paymentMode,
+                    items: mappedItems,
+                    subtotal: subTotal,
+                    discountTotal: itemDiscountsTotal + billDiscountAmount,
+                    taxableTotal: subTotal - (itemDiscountsTotal + billDiscountAmount),
+                    cgstTotal: taxAmount / 2,
+                    sgstTotal: taxAmount / 2,
+                    igstTotal: 0,
+                    taxTotal: taxAmount,
+                    roundOff: 0,
+                    grandTotal: grandTotal,
+                    paidAmount: currentTab.paymentMode === "Credit" ? 0 : grandTotal,
+                    balanceDue: currentTab.paymentMode === "Credit" ? grandTotal : 0,
+                    status: currentTab.paymentMode === "Credit" ? "unpaid" : "paid",
+                    created_at: new Date().toISOString(),
+                  };
+
+                  networkInvoicingService.sendSalesInvoiceToNetwork(posDoc, org, user.id);
+                } catch (netErr) {
+                  console.warn("POS network dispatch notice:", netErr);
+                }
+              }
             }
           } catch (dbErr) {
             console.warn("Cloud sync will retry in background:", dbErr);

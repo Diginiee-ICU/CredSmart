@@ -9,6 +9,7 @@ import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
 import { ProductsProvider } from "@/context/ProductsContext";
+import { NetworkInvoicesProvider } from "@/hooks/useNetworkInvoices";
 import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole } from "@/config/routes";
 import ScrollToTop from "@/components/ScrollToTop";
 
@@ -155,12 +156,13 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <OrgProvider>
-            <ProductsProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <Routes>
+            <NetworkInvoicesProvider>
+              <ProductsProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Routes>
                 {/* Public Routes */}
                 <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                 <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
@@ -218,7 +220,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-            </ProductsProvider>
+              </ProductsProvider>
+            </NetworkInvoicesProvider>
           </OrgProvider>
         </AuthProvider>
       </TooltipProvider>

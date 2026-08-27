@@ -431,6 +431,9 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                   name?: string;
                   hsn?: string;
                   unit?: string;
+                  altUnit?: string;
+                  altQty?: number;
+                  altUnitConversion?: number;
                   taxRate?: number;
                   batchNo?: string;
                   expDate?: string;
@@ -446,6 +449,9 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                   hsn: p.hsn ?? p.hsnCode ?? itemData.hsn ?? "",
                   qty,
                   unit: p.unit ?? itemData.unit ?? "PCS",
+                  altUnit: (item as any).altUnit ?? itemData.altUnit,
+                  altQty: (item as any).altQty ?? itemData.altQty,
+                  altUnitConversion: (item as any).altUnitConversion ?? itemData.altUnitConversion,
                   rate,
                   mrp: rate,
                   discount: 0,

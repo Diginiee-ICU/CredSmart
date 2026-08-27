@@ -304,6 +304,9 @@ export const documentsService = {
 
   // Save or Update Document
   async saveDocument(doc: BusinessDocument, userId?: string): Promise<BusinessDocument> {
+    if (!doc.id) {
+      doc.id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    }
     const orgId = doc.organizationId;
     const docType = doc.docType;
 
@@ -350,13 +353,26 @@ export const documentsService = {
     }
 
     // 2. If purchase invoice, attempt saving to Supabase purchase_invoices
-    if (docType === "purchase_invoice" && userId && doc.partyId) {
+    // Note: partyId may be a customer UUID (unified party list) or supplier UUID
+    // We try to resolve it against suppliers table; if it fails (customer ID), save without supplier_id FK
+    if (docType === "purchase_invoice" && userId) {
       try {
+        // Check if partyId exists in suppliers table
+        let resolvedSupplierId: string | null = null;
+        if (doc.partyId) {
+          const { data: suppCheck } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("id", doc.partyId)
+            .maybeSingle();
+          if (suppCheck) resolvedSupplierId = doc.partyId;
+        }
+
         const { data: piData, error: piErr } = await supabase
           .from("purchase_invoices")
           .insert({
             organization_id: orgId,
-            supplier_id: doc.partyId,
+            supplier_id: resolvedSupplierId, // null if party is a customer, not a supplier
             invoice_number: doc.documentNumber,
             total_amount: doc.grandTotal,
             tax_amount: doc.taxTotal,

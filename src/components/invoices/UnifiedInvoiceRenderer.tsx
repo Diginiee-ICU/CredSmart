@@ -22,9 +22,11 @@ export interface InvoiceItemData {
   name: string;
   description?: string;
   hsn?: string;
-  qty: number;
-  unit?: string;
-  altUnit?: string;
+  qty: number;            // base/primary qty (always in primary unit like PCS)
+  unit?: string;          // primary unit label
+  altUnit?: string;       // alternate unit label (e.g. "PKT")
+  altQty?: number;        // qty in alternate units (e.g. 2 PKT). qty = altQty × altUnitConversion
+  altUnitConversion?: number; // how many primary units per 1 alt unit
   freeQty?: number;
   rate: number;
   mrp?: number;
@@ -289,7 +291,16 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                     <span className="font-bold block leading-tight">{it.name}</span>
                     {it.hsn && <span className="text-[9px] text-neutral-500">HSN:{it.hsn}</span>}
                   </td>
-                  <td className="py-1 text-center font-bold">{it.qty}</td>
+                  <td className="py-1 text-center font-bold">
+                    {it.altUnit && it.altQty != null && it.altQty > 0 ? (
+                      <span>
+                        {it.altQty}{it.altUnit}
+                        <span className="block text-[8px] font-normal text-neutral-500">({it.qty}{it.unit || "PCS"})</span>
+                      </span>
+                    ) : (
+                      <span>{it.qty}</span>
+                    )}
+                  </td>
                   <td className="py-1 text-right">{it.rate.toFixed(2)}</td>
                   <td className="py-1 text-right font-bold">{it.total.toFixed(2)}</td>
                 </tr>
@@ -626,7 +637,19 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
                   {activeSettings.columns.quantity && (
                     <td className="py-1.5 px-2 text-center font-semibold">
-                      <span>{it.qty} {it.unit || "PCS"}</span>
+                      {/* Dual-unit display: show alt qty + primary qty sub-label */}
+                      {it.altUnit && it.altQty != null && it.altQty > 0 ? (
+                        <div className="leading-tight">
+                          <span className="font-bold text-slate-900">
+                            {it.altQty} {it.altUnit}
+                          </span>
+                          <span className="block text-[8px] text-blue-500 font-mono mt-0.5">
+                            = {it.qty} {it.unit || "PCS"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span>{it.qty} {it.unit || "PCS"}</span>
+                      )}
                       {activeSettings.enableFreeQty && it.freeQty && it.freeQty > 0 ? (
                         <span className="block text-[8px] font-bold text-emerald-600 bg-emerald-50 rounded px-1">
                           +{it.freeQty} Free

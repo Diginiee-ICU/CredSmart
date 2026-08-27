@@ -106,6 +106,9 @@ export function CreateItemModal({
   const [category, setCategory] = useState(allCategories[0] || "General");
   const [brand, setBrand] = useState("");
   const [unit, setUnit] = useState<ItemUnit>("PCS");
+  const [enableAltUnit, setEnableAltUnit] = useState(false);
+  const [altUnit, setAltUnit] = useState<string>("PKT");
+  const [altUnitConversion, setAltUnitConversion] = useState<string>("4");
 
   // Pricing & Tax
   const [sellingPrice, setSellingPrice] = useState("");
@@ -138,6 +141,20 @@ export function CreateItemModal({
       setCategory(initialData.category || allCategories[0] || "General");
       setBrand(initialData.brand || "");
       setUnit(initialData.unit || (initialData as any)?.tags?.unit || "PCS");
+
+      // Load alternate unit from item or tags
+      const savedAltUnit = initialData.altUnit || (initialData as any)?.tags?.alt_unit || null;
+      const savedConv = initialData.altUnitConversion ?? (initialData as any)?.tags?.alt_unit_conversion ?? null;
+      if (savedAltUnit && savedConv) {
+        setEnableAltUnit(true);
+        setAltUnit(savedAltUnit);
+        setAltUnitConversion(String(savedConv));
+      } else {
+        setEnableAltUnit(false);
+        setAltUnit("PKT");
+        setAltUnitConversion("4");
+      }
+
       const initSelling = initialData.sellingPrice ?? (initialData as any)?.selling_price ?? initialData.mrp ?? (initialData as any)?.tags?.selling_price ?? (initialData as any)?.tags?.mrp ?? "";
       const initPurchase = initialData.purchasePrice ?? (initialData as any)?.purchase_price ?? (initialData as any)?.tags?.purchase_price ?? "";
       const initMrp = initialData.mrp ?? (initialData as any)?.tags?.mrp ?? initSelling ?? "";
@@ -171,6 +188,9 @@ export function CreateItemModal({
       setCategory(allCategories[0] || "General");
       setBrand("");
       setUnit("PCS");
+      setEnableAltUnit(false);
+      setAltUnit("PKT");
+      setAltUnitConversion("4");
       setSellingPrice("");
       setPurchasePrice("");
       setMrp("");
@@ -231,6 +251,7 @@ export function CreateItemModal({
     const mrpVal = parseFloat(mrp) || sPrice;
     const opStock = parseFloat(openingStock) || 0;
     const minStock = parseFloat(minStockAlert) || 5;
+    const convFactor = enableAltUnit ? (parseFloat(altUnitConversion) || 1) : null;
 
     const batches: ItemBatch[] = [];
     if (trackBatches || batchNumber.trim()) {
@@ -256,6 +277,8 @@ export function CreateItemModal({
       category: category || "General",
       brand: brand.trim() || null,
       unit,
+      altUnit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : null,
+      altUnitConversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : null,
       sellingPrice: sPrice,
       purchasePrice: pPrice,
       mrp: mrpVal,
@@ -267,6 +290,11 @@ export function CreateItemModal({
       godownId,
       godownName: godowns.find((g) => g.id === godownId)?.name,
       batches,
+      // Also store in tags for backward-compat with existing DB queries
+      tags: {
+        alt_unit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined,
+        alt_unit_conversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : undefined,
+      },
     };
 
     setIsSubmitting(true);
@@ -442,6 +470,69 @@ export function CreateItemModal({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Alternate Unit Configuration */}
+              <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-foreground text-xs">Enable Alternate Unit</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Allow selling in a secondary unit (e.g. PKT, BOX, DOZ) with an auto conversion
+                    </p>
+                  </div>
+                  <Switch checked={enableAltUnit} onCheckedChange={setEnableAltUnit} />
+                </div>
+
+                {enableAltUnit && (
+                  <div className="animate-in fade-in duration-200 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Alternate Unit</Label>
+                        <Select
+                          value={altUnit}
+                          onValueChange={(val) => setAltUnit(val)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Alt Unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {UNIT_OPTIONS.filter((u) => u !== unit).map((u) => (
+                              <SelectItem key={u} value={u}>
+                                {u}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="alt-unit-conversion" className="text-xs font-semibold">
+                          {unit}s per {altUnit || "Alt Unit"}
+                        </Label>
+                        <Input
+                          id="alt-unit-conversion"
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="e.g. 4"
+                          value={altUnitConversion}
+                          onChange={(e) => setAltUnitConversion(e.target.value)}
+                          className="font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+                    {/* Live preview */}
+                    {altUnit && altUnitConversion && parseFloat(altUnitConversion) > 1 && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs">
+                        <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="text-blue-700">
+                          On invoices: <strong>1 {altUnit} = {altUnitConversion} {unit}</strong>
+                          {" "}&nbsp;·&nbsp; Selling 2 {altUnit} will bill as {(parseFloat(altUnitConversion) * 2) || "?"} {unit}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
