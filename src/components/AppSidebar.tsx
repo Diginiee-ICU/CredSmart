@@ -240,25 +240,27 @@ export function AppSidebar() {
 
   // ─── Desktop: Fixed Floating Overlay ─────────────────────────────────────────
   // Position: fixed top-left. Background: transparent. Screen space: ZERO.
+  // Width matches the panel (280px) so logo fills same width as menu buttons.
   return (
-    <div className="fixed top-3 left-3 z-[200] flex items-center gap-2 select-none pointer-events-none">
-      {/* Floating Logo + Arrow Trigger (both pointer-events-auto) */}
-      <div className="pointer-events-auto flex items-center gap-1.5">
-        {/* Animated GIF Logo */}
+    <div className="fixed top-3 left-3 z-[200] w-[280px] flex flex-col items-stretch gap-1.5 select-none pointer-events-none">
+      {/* Logo — full 280px panel width */}
+      <div className="pointer-events-auto w-full">
         <NavLink
           to={ROUTE_PATHS.dashboard}
           title="CredSmart Dashboard"
-          className="block rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(12,11,45,0.5)] hover:scale-105 transition-transform duration-200 cursor-pointer"
-          style={{ filter: "drop-shadow(0 0 12px rgba(245,158,11,0.25))" }}
+          className="block w-full rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(12,11,45,0.5)] hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+          style={{ filter: "drop-shadow(0 0 14px rgba(245,158,11,0.28))" }}
         >
           <img
             src="/IMG_9301.GIF"
             alt="CredSmart"
-            className="h-10 w-auto max-w-[130px] object-contain rounded-2xl"
+            className="w-full h-auto object-contain rounded-2xl"
           />
         </NavLink>
+      </div>
 
-        {/* Dropdown Arrow Trigger */}
+      {/* Chevron dropdown trigger — full width pill, centred icon */}
+      <div className="pointer-events-auto w-full">
         <button
           ref={triggerRef}
           type="button"
@@ -267,21 +269,22 @@ export function AppSidebar() {
           aria-expanded={isOpen}
           title="Navigation Menu"
           className={cn(
-            "group flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 cursor-pointer",
-            "bg-[#0C0B2D]/70 backdrop-blur-md border shadow-lg",
+            "group w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[14px] transition-all duration-200 cursor-pointer backdrop-blur-md border shadow-lg font-bold text-xs tracking-wide",
             isOpen
-              ? "border-amber-400/60 bg-amber-500/20 shadow-[0_0_18px_rgba(245,158,11,0.35)] text-amber-300"
-              : "border-white/10 hover:border-amber-400/40 hover:bg-[#1A1854]/80 text-slate-300 hover:text-amber-300"
+              ? "border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.3)] text-amber-300"
+              : "border-white/10 bg-[#0C0B2D]/70 text-slate-300 hover:border-amber-400/35 hover:bg-[#1A1854]/80 hover:text-amber-300"
           )}
         >
+          <span className="tracking-widest uppercase font-black text-[10px] font-mono">Menu</span>
           <ChevronDown
             className={cn(
-              "w-4 h-4 stroke-[2.5] transition-transform duration-300",
+              "w-3.5 h-3.5 stroke-[2.5] transition-transform duration-300",
               isOpen ? "rotate-180 text-amber-300" : "group-hover:text-amber-300"
             )}
           />
         </button>
       </div>
+
 
       {/* ─── 3D Professional Navigation Panel ─────────────────────────────── */}
       {isOpen && (
