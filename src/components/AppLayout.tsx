@@ -458,9 +458,9 @@ export default function AppLayout() {
                       <Plus className="w-3.5 h-3.5" /><span>+ Add Business / Branch</span>
                     </button>
                   </div>
-                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
-                  <DropdownMenuItem onClick={() => navigate(ROUTE_PATHS.businessSettings)} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Settings className="w-4 h-4 text-slate-400" /><span>Store &amp; Business Settings</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold"><LogOut className="w-4 h-4 text-rose-400" /><span>Sign Out of CredSmart</span></DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                  <DropdownMenuItem onClick={() => navigate(ROUTE_PATHS.businessSettings)} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Settings className="w-4 h-4 text-slate-400" /><span>Store &amp; Business Settings</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold"><LogOut className="w-4 h-4 text-rose-500 dark:text-rose-400" /><span>Sign Out of CredSmart</span></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
