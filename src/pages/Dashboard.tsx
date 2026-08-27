@@ -236,45 +236,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* 5 Quick Action Frosted Glass Icon Buttons in a 5-Column Grid */}
-        <div className="grid grid-cols-5 gap-2">
-          <button
-            onClick={() => toast({ title: "Fiscal Period", description: "Fiscal Year 2026-27 active." })}
-            className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
-            aria-label="Calendar"
-          >
-            <CalendarIcon className="w-5 h-5 stroke-[2.2]" />
-          </button>
-          <button
-            onClick={() => toast({ title: "WhatsApp Invoice Gateway", description: "Ready to broadcast statements & bills." })}
-            className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
-            aria-label="Share / Send"
-          >
-            <Send className="w-5 h-5 stroke-[2.2]" />
-          </button>
-          <button
-            onClick={() => setShowCreateItemModal(true)}
-            className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
-            aria-label="Add Item Master"
-          >
-            <Gift className="w-5 h-5 stroke-[2.2]" />
-          </button>
-          <button
-            onClick={() => setShowCreatePartyModal(true)}
-            className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
-            aria-label="Add Party Master"
-          >
-            <Users2 className="w-5 h-5 stroke-[2.2]" />
-          </button>
-          <button
-            onClick={() => navigate(ROUTE_PATHS.reports)}
-            className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-xs backdrop-blur-md cursor-pointer"
-            aria-label="Ledger Reports"
-          >
-            <Receipt className="w-5 h-5 stroke-[2.2]" />
-          </button>
-        </div>
-
         {/* FINANCIAL LEDGER SUMMARY Section Header */}
         <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-mono font-bold tracking-wider uppercase pt-1">
           <span>FINANCIAL LEDGER SUMMARY</span>

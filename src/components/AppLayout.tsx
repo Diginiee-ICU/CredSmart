@@ -292,7 +292,7 @@ export default function AppLayout() {
       <div className="w-full flex flex-col min-w-0 h-full overflow-hidden">
         {/* Global Top Header */}
         {!isPosRoute && (
-          <header className="h-16 sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center gap-3 px-3 sm:px-4 z-10 shadow-sm">
+          <header className="h-[4.25rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 shrink-0">
@@ -304,7 +304,7 @@ export default function AppLayout() {
                 <img
                   src="/IMG_9301.GIF"
                   alt="CredSmart"
-                  className="h-12 sm:h-14 w-auto max-w-[180px] object-contain rounded-xl"
+                  className="h-13 sm:h-14 w-auto max-w-[200px] sm:max-w-[180px] object-contain rounded-xl"
                 />
               </NavLink>
 
@@ -334,7 +334,7 @@ export default function AppLayout() {
             {/* SEPARATOR */}
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 shrink-0 hidden md:block" />
 
-            {/* CENTER-LEFT: Page title (desktop) */}
+            {/* CENTER-LEFT: Page title (desktop only) */}
             <div className="hidden md:flex flex-col justify-center min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
@@ -346,11 +346,6 @@ export default function AppLayout() {
                 </div>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{subtitle}</p>
-            </div>
-
-            {/* Mobile page title */}
-            <div className="flex md:hidden flex-col justify-center min-w-0 flex-1">
-              <h1 className="text-sm font-black text-slate-900 dark:text-white truncate">{title}</h1>
             </div>
 
             {/* Search bar (desktop) */}
