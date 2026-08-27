@@ -136,10 +136,13 @@ export function AppSidebar() {
     [filteredNavRouteGroups]
   );
 
-  const isRouteActive = (url: string) =>
-    url === "/"
-      ? location.pathname === "/"
-      : location.pathname === url || location.pathname.startsWith(`${url}/`);
+  const isRouteActive = useMemo(
+    () => (url: string) =>
+      url === "/"
+        ? location.pathname === "/"
+        : location.pathname === url || location.pathname.startsWith(`${url}/`),
+    [location.pathname]
+  );
 
   // Auto-expand menu when active route changes to match any child item
   useEffect(() => {
@@ -156,7 +159,7 @@ export function AppSidebar() {
         }
       });
     });
-  }, [location.pathname, filteredNavRouteGroups]);
+  }, [location.pathname, filteredNavRouteGroups, isRouteActive]);
 
   // Global Keyboard Shortcuts Listener
   useEffect(() => {

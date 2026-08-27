@@ -115,6 +115,58 @@ const DOC_TITLE_MAP: Record<UniversalDocType, string> = {
   payment_out: "PAYMENT VOUCHER",
 };
 
+/**
+ * Formats the quantity cell for an item on bills / invoices.
+ * If sold/purchased in an alternate unit:
+ * - Top Line: e.g. "1 PKT" (total number of alt units)
+ * - Bottom Line (exact just below it in brackets): "(1*4 Pcs)"
+ *   i.e. `(total alt units * primary units per alt unit PrimaryUnit)`
+ */
+export function formatItemQuantityDisplay(it: InvoiceItemData): {
+  isDual: boolean;
+  primaryLine: string;
+  secondaryLine: string | null;
+} {
+  const cleanUnit = it.unit ? (it.unit.toUpperCase() === "PCS" ? "Pcs" : it.unit) : "Pcs";
+
+  // Case 1: Explicit altQty and altUnit provided
+  if (it.altUnit && it.altQty != null && it.altQty > 0) {
+    const altUnitName = it.altUnit;
+    const altQtyVal = it.altQty;
+    const conv = it.altUnitConversion || (altQtyVal > 0 ? Math.round(it.qty / altQtyVal) : 1) || 1;
+    return {
+      isDual: true,
+      primaryLine: `${altQtyVal} ${altUnitName}`,
+      secondaryLine: `(${altQtyVal}*${conv} ${cleanUnit})`,
+    };
+  }
+
+  // Case 2: Unit selected was the altUnit directly (e.g. unit = "PKT", altUnitConversion = 4, base unit PCS)
+  if (
+    it.altUnit &&
+    it.altUnitConversion &&
+    it.altUnitConversion > 1 &&
+    it.unit &&
+    it.unit.toUpperCase() === it.altUnit.toUpperCase()
+  ) {
+    const altUnitName = it.unit;
+    const altQtyVal = it.qty;
+    const conv = it.altUnitConversion;
+    return {
+      isDual: true,
+      primaryLine: `${altQtyVal} ${altUnitName}`,
+      secondaryLine: `(${altQtyVal}*${conv} Pcs)`,
+    };
+  }
+
+  // Case 3: Standard single unit
+  return {
+    isDual: false,
+    primaryLine: `${it.qty} ${cleanUnit}`,
+    secondaryLine: null,
+  };
+}
+
 export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceProps>(
   (
     {
@@ -292,14 +344,19 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                     {it.hsn && <span className="text-[9px] text-neutral-500">HSN:{it.hsn}</span>}
                   </td>
                   <td className="py-1 text-center font-bold">
-                    {it.altUnit && it.altQty != null && it.altQty > 0 ? (
-                      <span>
-                        {it.altQty}{it.altUnit}
-                        <span className="block text-[8px] font-normal text-neutral-500">({it.qty}{it.unit || "PCS"})</span>
-                      </span>
-                    ) : (
-                      <span>{it.qty}</span>
-                    )}
+                    {(() => {
+                      const q = formatItemQuantityDisplay(it);
+                      return q.isDual ? (
+                        <div className="leading-tight">
+                          <span>{q.primaryLine}</span>
+                          <span className="block text-[8px] font-normal text-neutral-600 font-mono mt-0.5">
+                            {q.secondaryLine}
+                          </span>
+                        </div>
+                      ) : (
+                        <span>{q.primaryLine}</span>
+                      );
+                    })()}
                   </td>
                   <td className="py-1 text-right">{it.rate.toFixed(2)}</td>
                   <td className="py-1 text-right font-bold">{it.total.toFixed(2)}</td>
