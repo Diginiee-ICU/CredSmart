@@ -284,15 +284,15 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Dropdown nav panel — fixed overlay, does not push content */}
-      <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
+      {/* Mobile navigation dock and drawer */}
+      <div className="md:hidden">
+        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
 
-      {/* ── Main content column — always full width ── */}
-      <div className="w-full flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Global Top Header */}
-        {!isPosRoute && (
-          <header className="h-[4.25rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm">
+      {/* Global Top Header */}
+      {!isPosRoute && (
+        <header className="h-[4.25rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 shrink-0">
@@ -541,20 +541,36 @@ export default function AppLayout() {
         {/* Global B2B Inward Alerts & Notifications Center */}
         <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} />
 
-        {/* Main Content Viewport */}
-        <main
-          className={cn(
-            "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-300",
-            isPosRoute
-              ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
-              : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
-            isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
-            isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-          )}
-        >
-          <Outlet />
-        </main>
-      </div>
+        {/* Workspace flex container (Push panel + Main content viewport) */}
+        <div className="flex-1 flex w-full min-h-0 overflow-hidden relative">
+          {/* Desktop Push Navigation Panel */}
+          <div
+            className={cn(
+              "hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden border-r border-[#1F1C5C] bg-[#0C0B2D] text-slate-200 z-20",
+              sidebarOpen && !isPosRoute ? "w-72 lg:w-80 opacity-100 shadow-2xl" : "w-0 opacity-0 border-r-0 pointer-events-none"
+            )}
+          >
+            <AppSidebar
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+              isPushLayout={true}
+            />
+          </div>
+
+          {/* Main Content Viewport — smoothly shifts when push panel opens */}
+          <main
+            className={cn(
+              "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-300",
+              isPosRoute
+                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
+                : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+              isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+              isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+            )}
+          >
+            <Outlet />
+          </main>
+        </div>
 
       <UniversalQuickCreateModal
         open={quickCreateModalOpen}

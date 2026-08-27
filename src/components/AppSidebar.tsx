@@ -52,7 +52,15 @@ interface NavGroup {
 
 // ─── AppSidebar / Dropdown Navigator ──────────────────────────────────────────
 
-export function AppSidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void } = {}) {
+export function AppSidebar({
+  isOpen = false,
+  onClose,
+  isPushLayout = false,
+}: {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isPushLayout?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { userRole, userPermissions } = useOrganization();
@@ -483,43 +491,12 @@ export function AppSidebar({ isOpen = false, onClose }: { isOpen?: boolean; onCl
     );
   }
 
-  // ─── Desktop: High-Impact 3D Dropdown Navigator ─────────────────────────────
-  if (!isOpen) return null;
-
+  // ─── Desktop: High-Impact 3D Dropdown Navigator (Push Layout) ───────────────
   return (
-    <>
-      {/* Subtle backdrop overlay for focus */}
-      <div
-        className="fixed inset-0 z-[190] bg-black/35 backdrop-blur-[3px] transition-opacity duration-200"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* 3D Dropdown Floating Card */}
-      <div
-        ref={panelRef}
-        className={cn(
-          // Fixed positioning right under header left side
-          "fixed top-[4.75rem] left-3.5 sm:left-4 z-[200]",
-          // Dimensions
-          "w-[380px] sm:w-[420px] max-h-[min(88vh,720px)] flex flex-col",
-          // 3D Glass Surface Architecture
-          "rounded-3xl overflow-hidden",
-          "bg-[#0C0B2D]/98 backdrop-blur-3xl",
-          // Specular highlights & multi-tier 3D elevation
-          "border border-[#2D287F]/80",
-          "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_32px_rgba(0,0,0,0.7),0_32px_72px_rgba(0,0,0,0.5),0_0_80px_rgba(245,158,11,0.08),inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-1px_1px_rgba(0,0,0,0.5)]",
-          // Dropdown Entrance Animation
-          "animate-in fade-in zoom-in-[0.96] slide-in-from-top-3 duration-200 ease-out select-none"
-        )}
-        style={{ transformOrigin: "top left" }}
-      >
-        {/* Dropdown Top Anchor Pointer Indicator */}
-        <div className="absolute -top-2 left-8 w-4 h-4 rotate-45 bg-[#14124E] border-t border-l border-[#2D287F]/80 shadow-md" />
-
-        {/* 3D Top Specular Light Beam */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-8 top-[1px] h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+    <aside
+      className="w-full h-full flex flex-col bg-[#0C0B2D] text-slate-200 select-none overflow-hidden"
+      aria-label="Desktop Navigation Menu"
+    >
 
         {/* ── Dropdown Header Strip ── */}
         <div className="shrink-0 px-4 pt-3.5 pb-3 border-b border-[#1F1C5C]/80 bg-gradient-to-r from-[#14124E]/90 via-[#0F0E38]/90 to-[#14124E]/90">
@@ -753,8 +730,7 @@ export function AppSidebar({ isOpen = false, onClose }: { isOpen?: boolean; onCl
             <span className="text-amber-400 font-bold">Smart POS</span>
           </div>
         </div>
-      </div>
-    </>
+      </aside>
   );
 }
 
