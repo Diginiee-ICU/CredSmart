@@ -305,9 +305,10 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="relative flex h-screen w-full overflow-hidden bg-background">
+      {/* AppSidebar renders as a fixed overlay - does NOT occupy flex space */}
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300">
+      <div className="w-full flex flex-col min-w-0 h-full overflow-hidden">
         {/* Global Top Header - CredAlert Liquid Glass Shell */}
         {!isPosRoute && (
           <header className="h-14 sm:h-16 shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between px-3.5 sm:px-6 z-10 shadow-2xs">
