@@ -435,7 +435,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
             {/* Bottom Left Subtle CredSmart Watermark */}
             <div className="mt-1.5 pt-1 border-t border-dotted border-neutral-300 flex items-center justify-between text-[7.5px] text-neutral-400 font-mono">
-              <span className="font-semibold text-neutral-600">⚡ CredSmart POS</span>
+              <span className="inline-flex items-center justify-center"><img src="/logo-static.jpeg" alt="CredSmart" className="h-2.5 w-auto object-contain grayscale mix-blend-multiply opacity-80" /></span>
               <span>GST Ready</span>
             </div>
           </div>
@@ -915,9 +915,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         {/* Invoice Footer Branding - Bottom Left Watermark */}
         <div className="mt-2 pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[8px] text-slate-400">
           <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300/60 dark:border-slate-700 font-bold text-[7.5px] text-slate-700 dark:text-slate-300 font-mono">
-              ⚡ CredSmart
-            </span>
+            <span className="inline-flex items-center justify-center bg-transparent"><img src="/logo-static.jpeg" alt="CredSmart" className="h-3.5 w-auto object-contain mix-blend-multiply opacity-80" /></span>
             <span>Powered by <strong className="font-bold text-slate-700 dark:text-slate-200">CredSmart POS &amp; Billing</strong></span>
           </div>
 

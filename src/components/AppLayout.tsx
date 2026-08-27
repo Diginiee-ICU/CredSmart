@@ -725,13 +725,12 @@ export default function AppLayout() {
         className="hidden md:flex fixed bottom-3 right-4 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-80 hover:opacity-100"
         title="CredSmart POS & ERP"
       >
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 dark:bg-slate-950/85 backdrop-blur-md border border-slate-700/60 shadow-lg text-slate-300 dark:text-slate-400">
-          <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-[8px] font-black text-slate-950 shadow-xs">
-            ⚡
-          </div>
-          <span className="text-[10px] font-mono font-medium tracking-tight">
-            Cred<strong className="text-amber-400 font-bold">Smart</strong>
-          </span>
+        <div className="flex items-center justify-center p-1.5 rounded-xl bg-white/40 backdrop-blur-md border border-slate-200/50 shadow-lg">
+          <img
+            src="/logo-static.jpeg"
+            alt="CredSmart"
+            className="h-6 w-auto object-contain rounded-md drop-shadow-sm mix-blend-multiply"
+          />
         </div>
       </div>
     </div>
