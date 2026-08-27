@@ -99,7 +99,7 @@ export function QuickCreateItemModal({
   const [purchasePrice, setPurchasePrice] = useState<number | "">("");
   const [mrp, setMrp] = useState<number | "">("");
   const [gstRate, setGstRate] = useState<number>(18);
-  const [hsn, setHsn] = useState("9999");
+  const [hsn, setHsn] = useState("");
   const [openingStock, setOpeningStock] = useState<number | "">(10);
   const [barcode, setBarcode] = useState("");
   const [saving, setSaving] = useState(false);
@@ -118,7 +118,7 @@ export function QuickCreateItemModal({
       setPurchasePrice("");
       setMrp("");
       setGstRate(18);
-      setHsn("9999");
+      setHsn("");
       setOpeningStock(10);
       setBarcode("");
       setTimeout(() => {
@@ -145,7 +145,7 @@ export function QuickCreateItemModal({
     const itemMrp = Number(mrp) || sp || pp || 0;
     const stockQty = Number(openingStock) || 0;
     const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}`;
-    const normalizedHsn = (hsn || "9999").trim() || "9999";
+    const normalizedHsn = (hsn || "").trim();
 
     const convFactor = enableAltUnit ? (parseFloat(altUnitConversion) || 1) : undefined;
     const resolvedAltUnit = enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined;
@@ -457,7 +457,7 @@ export function QuickCreateItemModal({
                 <Input
                   value={hsn}
                   onChange={(e) => setHsn(e.target.value)}
-                  placeholder="9999"
+                  placeholder="e.g. 2106, 0405, 8517"
                   className="h-9 text-xs font-mono mt-1"
                 />
               </div>

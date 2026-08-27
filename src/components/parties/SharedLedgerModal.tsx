@@ -325,10 +325,10 @@ export function SharedLedgerModal({
                   </div>
                 </div>
 
-                {/* Sample Live Transaction Sync Stream */}
+                {/* Live Transaction Sync Stream */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-foreground">
-                    <span>Recent Reconciled Invoices & Payments</span>
+                    <span>Recent Invoices & Payments</span>
                     <span className="text-[11px] font-normal text-muted-foreground">Auto-matched</span>
                   </div>
                   <div className="border border-border rounded-xl divide-y divide-border overflow-hidden bg-card text-xs">
@@ -338,32 +338,28 @@ export function SharedLedgerModal({
                       <span>Amount</span>
                       <span>Status</span>
                     </div>
-                    <div className="p-3 flex items-center justify-between hover:bg-muted/30">
-                      <div>
-                        <p className="font-semibold text-foreground">INV-2026-0814</p>
-                        <p className="text-[10px] text-muted-foreground">18 Aug 2026</p>
+                    {partyReconciliation && partyReconciliation.transactions.length > 0 ? (
+                      partyReconciliation.transactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="p-3 flex items-center justify-between hover:bg-muted/30">
+                          <div>
+                            <p className="font-semibold text-foreground">{tx.referenceNo || tx.id}</p>
+                            <p className="text-[10px] text-muted-foreground">{tx.date}</p>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary capitalize">
+                            {tx.type.replace(/_/g, " ")}
+                          </Badge>
+                          <span className="font-mono font-bold text-foreground">₹ {tx.amount.toLocaleString("en-IN")}</span>
+                          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
+                            <CheckCheck className="w-3.5 h-3.5" /> Reconciled
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center text-muted-foreground space-y-1">
+                        <p className="font-medium text-xs">No transactions recorded for this party yet</p>
+                        <p className="text-[11px] text-muted-foreground">New sales invoices or payments will automatically sync and reconcile here.</p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600">
-                        Sales Invoice
-                      </Badge>
-                      <span className="font-mono font-bold text-foreground">₹ 18,450</span>
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
-                        <CheckCheck className="w-3.5 h-3.5" /> Synced & Verified
-                      </span>
-                    </div>
-                    <div className="p-3 flex items-center justify-between hover:bg-muted/30">
-                      <div>
-                        <p className="font-semibold text-foreground">PAY-REC-0042</p>
-                        <p className="text-[10px] text-muted-foreground">15 Aug 2026</p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600">
-                        Payment In (UPI)
-                      </Badge>
-                      <span className="font-mono font-bold text-foreground">₹ 15,000</span>
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
-                        <CheckCheck className="w-3.5 h-3.5" /> Matched & Reconciled
-                      </span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </>

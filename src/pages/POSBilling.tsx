@@ -72,7 +72,6 @@ import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
 import { QRCodeSVG } from "qrcode.react";
 import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
-import { STANDARD_PRODUCT_CATALOG, STANDARD_PARTY_SUGGESTIONS } from "@/utils/suggestionData";
 import {
   createSpeechRecognizer,
   parsePOSVoiceCommand,
@@ -525,29 +524,6 @@ export default function POSBilling() {
           };
         });
 
-        const names = new Set(mapped.map((p) => (p.name || "").toLowerCase().trim()));
-        STANDARD_PRODUCT_CATALOG.forEach((sp) => {
-          if (!names.has(sp.name.toLowerCase().trim())) {
-            mapped.push({
-              id: sp.id,
-              barcode: sp.barcode,
-              name: sp.name,
-              brand: "Popular",
-              category: sp.category,
-              batches: [
-                {
-                  id: `batch-${sp.id}`,
-                  costPrice: sp.purchasePrice,
-                  mrp: sp.mrp,
-                  stock: sp.stock,
-                  batchNumber: "LOT-01",
-                },
-              ],
-              sku: sp.sku,
-            });
-          }
-        });
-
         setProducts(mapped);
 
         // Extract unique categories
@@ -581,24 +557,8 @@ export default function POSBilling() {
           phone: c.phone,
           email: c.email,
           balance: 0,
-          loyaltyPoints: Math.floor(Math.random() * 250),
+          loyaltyPoints: 0,
         }));
-
-        const custNames = new Set(list.map((c) => (c.name || "").toLowerCase().trim()));
-        STANDARD_PARTY_SUGGESTIONS
-          .filter((p) => p.type === "customer" || p.type === "both")
-          .forEach((sp) => {
-            if (!custNames.has(sp.name.toLowerCase().trim())) {
-              list.push({
-                id: sp.id,
-                name: sp.name,
-                phone: sp.phone,
-                email: sp.email,
-                balance: sp.balance || 0,
-                loyaltyPoints: 120,
-              });
-            }
-          });
 
         setCustomers(list);
       } catch (e) {
@@ -1546,10 +1506,10 @@ export default function POSBilling() {
         tax: 5,
         total: 105,
         paymentMethod: "Cash",
-        storeName: settings.storeName || "CredSmart Retail Store",
-        storeAddress: settings.storeAddress || "Hardware Terminal Integration",
-        storePhone: settings.storePhone || "+91 98765 43210",
-        gstin: settings.storeGstin || "29AAAAA0000A1Z5",
+        storeName: org?.name || settings.storeName || "CredSmart POS Terminal",
+        storeAddress: org?.address || settings.storeAddress || "",
+        storePhone: org?.phone || settings.storePhone || "",
+        gstin: org?.gstin || settings.storeGstin || "",
         date: new Date(),
       };
 

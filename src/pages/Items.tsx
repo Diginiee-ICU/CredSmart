@@ -176,7 +176,7 @@ export default function Items() {
           purchasePrice: pPrice,
           mrp: p.mrp ?? sPrice,
           gstRate: (p.gstRate || p.tax_rate || 18) as GSTRate,
-          hsnCode: p.hsnCode || "9999",
+          hsnCode: p.hsnCode || (p.tags as any)?.hsn_code || (p.tags as any)?.hsn || "",
           currentStock: stock,
           openingStock: stock,
           minStockAlert: minAlert,
@@ -260,7 +260,7 @@ export default function Items() {
         alt_unit: itemData.altUnit || undefined,
         alt_unit_conversion: itemData.altUnitConversion || undefined,
         gst_rate: itemData.gstRate,
-        hsn_code: itemData.hsnCode || "9999",
+        hsn_code: itemData.hsnCode?.trim() || null,
         selling_price: itemData.sellingPrice,
         purchase_price: itemData.purchasePrice,
         mrp: itemData.mrp || itemData.sellingPrice,
@@ -423,7 +423,7 @@ export default function Items() {
           mrp: it.mrp ?? sPrice,
           unit: it.unit ?? "PCS",
           gst_rate: gstRateVal,
-          hsn_code: it.hsnCode ?? "9999",
+          hsn_code: it.hsnCode ? String(it.hsnCode).trim() : null,
           min_stock_alert: minStockAlertVal,
         };
 

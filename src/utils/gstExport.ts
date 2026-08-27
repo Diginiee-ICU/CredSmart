@@ -386,13 +386,13 @@ export function processGSTR1Data(
         rateMap.set(rate, current);
 
         // HSN aggregation
-        const hsnCode = item.hsn?.trim() || "9983";
+        const hsnCode = item.hsn?.trim() || "";
         const unit = (item.unit || "NOS").toUpperCase();
-        const hsnKey = `${hsnCode}_${unit}_${rate}`;
+        const hsnKey = `${hsnCode || "GENERAL"}_${unit}_${rate}`;
 
         const existingHsn = hsnMap.get(hsnKey) || {
           num: hsnMap.size + 1,
-          hsn_sc: hsnCode,
+          hsn_sc: hsnCode || "OTHERS",
           desc: item.productName || "General Goods / Services",
           uqc: unit,
           qty: 0,

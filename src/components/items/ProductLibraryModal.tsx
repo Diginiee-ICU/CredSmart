@@ -363,7 +363,7 @@ export function ProductLibraryModal({
           purchasePrice,
           mrp,
           gstRate,
-          hsnCode: typeof obj.hsnCode === "string" ? obj.hsnCode : "9999",
+          hsnCode: typeof obj.hsnCode === "string" ? obj.hsnCode.trim() : "",
           openingStock,
           minStockAlert: 5,
         });

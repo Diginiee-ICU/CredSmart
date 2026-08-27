@@ -430,7 +430,7 @@ export default function AppLayout() {
                       <h4 className="text-xs font-bold text-white truncate">{org?.name || "CredSmart Business"}</h4>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || "owner@credsmart.in"}</p>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
                     <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">{roleLabel}</div>
                   </div>
                   <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
@@ -605,7 +605,7 @@ export default function AppLayout() {
                   mrp: itemData.mrp,
                   unit: itemData.unit,
                   gst_rate: Number(itemData.gstRate) || 18,
-                  hsn_code: itemData.hsnCode || "9999",
+                  hsn_code: itemData.hsnCode?.trim() || null,
                   min_stock_alert: itemData.minStockAlert || 5,
                 },
               })

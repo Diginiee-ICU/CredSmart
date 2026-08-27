@@ -718,7 +718,7 @@ export function PurchaseInvoiceModal({
   };
 
   const handleItemCreated = (product: CreatedProductResult) => {
-    const normalizedHsn = product.hsn || "9999";
+    const normalizedHsn = (product.hsn || "").trim();
     const catalogRow: ProductCatalogOption = {
       id: product.id,
       name: product.name,

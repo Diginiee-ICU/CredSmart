@@ -159,19 +159,8 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-foreground">No Pending Invoices</p>
                       <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                        When another business (Person A) issues a sales invoice in your name, it will automatically appear here with instant Approve or Reject actions.
+                        When a verified trade partner issues an invoice in your name, it will instantly appear here for 1-click ledger reconciliation.
                       </p>
-                    </div>
-                    <div className="pt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={simulateTestInvoice}
-                        className="text-xs text-primary border-primary/30 hover:bg-primary/5"
-                      >
-                        <Zap className="w-3.5 h-3.5 mr-1.5 fill-primary" />
-                        Simulate Partner Sales Invoice (1-Click Test)
-                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -340,15 +329,9 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Real-time CredSmart 2-Way Synchronization</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-7 text-primary hover:underline"
-              onClick={simulateTestInvoice}
-            >
-              <Zap className="w-3 h-3 mr-1" />
-              Test Simulation
-            </Button>
+            <div className="text-[10px] font-mono text-muted-foreground">
+              <span>Encrypted • GST Ready</span>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

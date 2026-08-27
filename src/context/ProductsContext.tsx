@@ -58,7 +58,7 @@ export function normalizeProduct(p: any): ProductCatalogOption {
 
   const unitVal = tags.unit || p.unit || "PCS";
   const gstRateVal = Number(tags.gst_rate) || Number(p.tax_rate) || 18;
-  const hsnVal = tags.hsn_code || "9999";
+  const hsnVal = tags.hsn_code || tags.hsn || (p as any).hsn || (p as any).hsn_code || "";
   const minAlert = Number(tags.min_stock_alert) || 5;
 
   return {
