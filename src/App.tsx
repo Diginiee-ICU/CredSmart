@@ -64,21 +64,51 @@ const queryClient = new QueryClient({
 
 export function SleekRouteLoader() {
   return (
-    <div className="min-h-[100dvh] w-full bg-background flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-200">
-      <div className="relative flex items-center justify-center">
-        <div className="absolute w-20 h-20 rounded-full bg-emerald-500/15 blur-xl animate-pulse pointer-events-none" />
-        <div className="w-10 h-10 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 border-r-emerald-500 animate-spin" />
-        <div className="absolute w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+    <>
+      {/* 3D Preloader - Desktop View */}
+      <div className="hidden md:flex min-h-[100dvh] w-full bg-slate-50/50 backdrop-blur-3xl flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+        <div className="relative flex items-center justify-center perspective-[1200px]">
+          {/* Outer glowing ring */}
+          <div className="absolute w-32 h-32 rounded-full border border-amber-200 shadow-[0_0_40px_rgba(245,158,11,0.2)] animate-[spin_4s_linear_infinite]" style={{ transformStyle: 'preserve-3d', transform: 'rotateX(60deg) rotateZ(0deg)' }} />
+          {/* Inner fast ring */}
+          <div className="absolute w-24 h-24 rounded-full border-2 border-t-amber-500 border-r-transparent border-b-amber-400 border-l-transparent animate-[spin_1.5s_ease-in-out_infinite]" style={{ transformStyle: 'preserve-3d', transform: 'rotateX(60deg) rotateZ(0deg)' }} />
+          {/* Floating Logo/Core */}
+          <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-2xl shadow-[0_10px_30px_rgba(245,158,11,0.4)] animate-[bounce_2s_infinite] flex items-center justify-center border-2 border-white/50 backdrop-blur-md">
+            <div className="w-8 h-8 bg-white/90 rounded-lg shadow-inner animate-pulse" />
+          </div>
+        </div>
+        <div className="mt-12 flex flex-col items-center gap-2">
+          <p className="text-sm font-bold text-slate-800 tracking-[0.2em] uppercase drop-shadow-sm">
+            CredSmart OS
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+        </div>
       </div>
-      <div className="mt-4 flex flex-col items-center gap-1">
-        <p className="text-xs font-mono font-medium text-foreground/80 tracking-wider uppercase">
-          CredSmart POS
-        </p>
-        <p className="text-[11px] font-mono text-muted-foreground">
-          Loading workspace...
-        </p>
+
+      {/* 3D Preloader - Mobile View */}
+      <div className="md:hidden min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-300">
+        <div className="relative flex items-center justify-center perspective-[800px]">
+          {/* Soft back glow */}
+          <div className="absolute w-24 h-24 rounded-full bg-indigo-500/10 blur-2xl animate-pulse" />
+          {/* 3D Flip Card */}
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-cyan-400 rounded-[2rem] shadow-[0_15px_35px_rgba(99,102,241,0.3)] border-[3px] border-white/20 animate-[flip_2s_ease-in-out_infinite] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-[3px] border-white/80 border-t-transparent animate-spin" />
+          </div>
+        </div>
+        <div className="mt-10 flex flex-col items-center gap-1.5">
+          <p className="text-xs font-black bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent tracking-widest uppercase">
+            Loading Workspace
+          </p>
+          <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-1/2 rounded-full animate-[ping_1.5s_infinite]" />
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

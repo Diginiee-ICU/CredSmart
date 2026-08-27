@@ -243,7 +243,7 @@ export default function Dashboard() {
             <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
             <button
               onClick={handleRefresh}
-              className="p-0.5 rounded hover:text-slate-900 transition-colors cursor-pointer"
+              className="p-0.5 rounded hover:text-slate-900 transition-colors cursor-pointer hover-3d-glow"
               title="Refresh"
             >
               <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-blue-600")} />
@@ -256,7 +256,7 @@ export default function Dashboard() {
           {/* Card 1: TO COLLECT */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group"
+            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-3xl shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
 
@@ -288,7 +288,7 @@ export default function Dashboard() {
           {/* Card 2: TO PAY */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group"
+            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-3xl shadow-[0_0_12px_rgba(249,115,22,0.6)]" />
 
@@ -320,7 +320,7 @@ export default function Dashboard() {
           {/* Card 3: CASH & BANK */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group"
+            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-yellow-300 via-amber-400 to-yellow-600 rounded-l-3xl shadow-[0_0_12px_rgba(234,179,8,0.6)]" />
 
@@ -368,7 +368,7 @@ export default function Dashboard() {
               <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
               <button
                 onClick={handleRefresh}
-                className="p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                className="p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer hover-3d-glow"
                 title="Refresh metrics"
               >
                 <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-blue-600")} />
@@ -380,35 +380,35 @@ export default function Dashboard() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => toast({ title: "Fiscal Period", description: "Fiscal Year 2026-27 active." })}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer"
+              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
               title="Calendar"
             >
               <CalendarIcon className="w-4 h-4" />
             </button>
             <button
               onClick={() => toast({ title: "Invoice Gateway", description: "WhatsApp & SMS invoice gateway ready." })}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer"
+              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
               title="Send Gateway"
             >
               <Send className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowCreateItemModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer"
+              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
               title="+ Add Item Master"
             >
               <Gift className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowCreatePartyModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer"
+              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
               title="+ Add Party Master"
             >
               <Users2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowSalesInvoiceModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer"
+              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
               title="+ Create Invoice"
             >
               <Building2 className="w-4 h-4" />
@@ -421,7 +421,7 @@ export default function Dashboard() {
           {/* Card 1: TO COLLECT */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between"
+            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function Dashboard() {
           {/* Card 2: TO PAY */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between"
+            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -475,7 +475,7 @@ export default function Dashboard() {
           {/* Card 3: CASH & BANK */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between"
+            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export default function Dashboard() {
           {/* Card 4: TOTAL SALES (MTD) */}
           <div
             onClick={() => navigate(ROUTE_PATHS.sales)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between"
+            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -530,7 +530,7 @@ export default function Dashboard() {
         {/* Middle Row: Spline Area Chart + Latest Invoices Table (Matching Image 1 & 4) */}
         <div className="grid grid-cols-2 gap-4">
           {/* Left Column: FINANCIAL LEDGER SUMMARY Spline Chart */}
-          <div className="glass-card-3d glass-panel p-4 flex flex-col justify-between">
+          <div className="glass-card-3d glass-panel hover-3d-glow p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
                 <div className="flex items-center gap-2">
@@ -555,7 +555,7 @@ export default function Dashboard() {
                   <select
                     value={chartTimeframe}
                     onChange={(e) => setChartTimeframe(e.target.value)}
-                    className="text-xs font-semibold bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs"
+                    className="text-xs font-semibold bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs hover-3d-glow"
                   >
                     <option value="This Month">This Month</option>
                     <option value="Last Month">Last Month</option>
@@ -624,7 +624,7 @@ export default function Dashboard() {
 
             {/* Bottom Summary Metric Pills */}
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/70 dark:border-slate-800">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover-3d-glow">
                 <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
                   <ArrowDown className="w-4 h-4" />
                 </div>
@@ -651,7 +651,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Column: LATEST INVOICES & TRANSACTIONS Table (Matching Image 1 & 4) */}
-          <div className="glass-card-3d glass-panel p-4 flex flex-col justify-between">
+          <div className="glass-card-3d glass-panel hover-3d-glow p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
                 <div className="flex items-center gap-2">
@@ -662,7 +662,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={() => navigate(ROUTE_PATHS.sales)}
-                  className="px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer"
+                  className="px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer hover-3d-glow"
                 >
                   View All
                 </button>
@@ -681,7 +681,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => setShowSalesInvoiceModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white rounded-xl glowing-btn-blue shadow-md active:scale-95 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white rounded-xl glowing-btn-blue shadow-md active:scale-95 cursor-pointer hover-3d-glow"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                     <span>Create Sales Invoice</span>
@@ -703,7 +703,7 @@ export default function Dashboard() {
                         <tr
                           key={row.id}
                           onClick={() => navigate(ROUTE_PATHS.sales)}
-                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer hover-3d-glow"
                         >
                           <td className="py-2.5 px-2 font-mono font-semibold text-blue-600 dark:text-blue-400 text-xs">
                             {row.txnNo}

@@ -207,6 +207,16 @@
 }
 
 @layer utilities {
+  .hover-3d-glow {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.4s ease !important;
+  }
+  
+  .hover-3d-glow:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.45), 0 10px 15px -5px rgba(245, 158, 11, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(251, 191, 36, 0.6) !important;
+  }
+  
   .bill-editor-shell .bill-panel {
     border-radius: 0 !important;
     box-shadow: none !important;
