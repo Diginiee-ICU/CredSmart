@@ -428,17 +428,17 @@ export default function AppLayout() {
                     {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-[#0F0E38] border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150">
-                  <div className="p-2 border-b border-[#1F1C5C]">
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150">
+                  <div className="p-2 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-white truncate">{org?.name || "CredSmart Business"}</h4>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || "CredSmart Business"}</h4>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
-                    <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">{roleLabel}</div>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
+                    <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">{roleLabel}</div>
                   </div>
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
-                    <span>YOUR BUSINESSES</span><span className="text-amber-400">{(organizations || []).length} Store(s)</span>
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
+                    <span>YOUR BUSINESSES</span><span className="text-amber-600 dark:text-amber-400">{(organizations || []).length} Store(s)</span>
                   </DropdownMenuLabel>
                   <div className="space-y-1 my-1 max-h-40 overflow-y-auto">
                     {(organizations || []).filter(Boolean).map((business) => {
@@ -446,9 +446,9 @@ export default function AppLayout() {
                       const isActive = business.id === orgId;
                       const bizName = business.name || "Store";
                       return (
-                        <DropdownMenuItem key={business.id} onClick={() => { if (business.id) switchOrganization(business.id); toast.success(`Switched to "${bizName}"`); }} className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/40" : "text-slate-300 hover:text-white hover:bg-[#1C1A54]")}>
+                        <DropdownMenuItem key={business.id} onClick={() => { if (business.id) switchOrganization(business.id); toast.success(`Switched to "${bizName}"`); }} className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-50 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-400/40" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54]")}>
                           <div className="min-w-0 pr-2"><p className="truncate text-xs font-semibold">{bizName}</p><p className="text-[10px] text-slate-500 font-mono truncate">{business.business_type || "Retail"}</p></div>
-                          {isActive && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                          {isActive && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />}
                         </DropdownMenuItem>
                       );
                     })}
