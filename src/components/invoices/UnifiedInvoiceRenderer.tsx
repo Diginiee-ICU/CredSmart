@@ -694,24 +694,30 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
                   {activeSettings.columns.quantity && (
                     <td className="py-1.5 px-2 text-center font-semibold">
-                      {/* Dual-unit display: show alt qty + primary qty sub-label */}
-                      {it.altUnit && it.altQty != null && it.altQty > 0 ? (
-                        <div className="leading-tight">
-                          <span className="font-bold text-slate-900">
-                            {it.altQty} {it.altUnit}
-                          </span>
-                          <span className="block text-[8px] text-blue-500 font-mono mt-0.5">
-                            = {it.qty} {it.unit || "PCS"}
-                          </span>
-                        </div>
-                      ) : (
-                        <span>{it.qty} {it.unit || "PCS"}</span>
-                      )}
-                      {activeSettings.enableFreeQty && it.freeQty && it.freeQty > 0 ? (
-                        <span className="block text-[8px] font-bold text-emerald-600 bg-emerald-50 rounded px-1">
-                          +{it.freeQty} Free
-                        </span>
-                      ) : null}
+                      {(() => {
+                        const q = formatItemQuantityDisplay(it);
+                        return (
+                          <>
+                            {q.isDual ? (
+                              <div className="leading-tight">
+                                <span className="font-bold text-slate-900 block">
+                                  {q.primaryLine}
+                                </span>
+                                <span className="block text-[9px] text-slate-600 font-mono mt-0.5 font-medium">
+                                  {q.secondaryLine}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-900">{q.primaryLine}</span>
+                            )}
+                            {activeSettings.enableFreeQty && it.freeQty && it.freeQty > 0 ? (
+                              <span className="block text-[8px] font-bold text-emerald-600 bg-emerald-50 rounded px-1 mt-0.5">
+                                +{it.freeQty} Free
+                              </span>
+                            ) : null}
+                          </>
+                        );
+                      })()}
                     </td>
                   )}
 

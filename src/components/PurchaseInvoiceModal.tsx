@@ -674,6 +674,14 @@ export function PurchaseInvoiceModal({
     });
   };
 
+  const handleUpdateItemFields = (index: number, fields: Partial<DocumentLineItem>) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], ...fields };
+      return copy;
+    });
+  };
+
   const handleSelectProduct = (index: number, product: UnifiedPurchaseProduct) => {
     setItems((prev) => {
       const copy = [...prev];
@@ -1621,8 +1629,10 @@ export function PurchaseInvoiceModal({
                               onChange={(e) => {
                                 const val = Math.max(1, Number(e.target.value));
                                 if (item.altUnit && item.altUnitConversion && item.altQty != null) {
-                                  handleUpdateItem(idx, "altQty", val);
-                                  handleUpdateItem(idx, "quantity", val * item.altUnitConversion);
+                                  handleUpdateItemFields(idx, {
+                                    altQty: val,
+                                    quantity: val * item.altUnitConversion,
+                                  });
                                 } else {
                                   handleUpdateItem(idx, "quantity", val);
                                 }
@@ -1640,8 +1650,8 @@ export function PurchaseInvoiceModal({
                               className="h-8 text-xs text-center font-mono font-semibold bg-transparent"
                             />
                             {item.altUnit && item.altUnitConversion && item.altQty != null && (
-                              <span className="block text-[9px] text-blue-500 font-mono text-center mt-0.5 whitespace-nowrap">
-                                = {item.quantity} {item.unit || "PCS"}
+                              <span className="block text-[9px] text-blue-600 dark:text-blue-400 font-mono font-semibold text-center mt-0.5 whitespace-nowrap">
+                                ({item.altQty}*{item.altUnitConversion} {item.unit || "Pcs"})
                               </span>
                             )}
                           </td>
@@ -1653,7 +1663,7 @@ export function PurchaseInvoiceModal({
                                 <div className="inline-flex rounded-md border border-primary/40 overflow-hidden text-[10px] font-bold bg-white dark:bg-slate-900 shadow-2xs">
                                   <button
                                     type="button"
-                                    onClick={() => handleUpdateItem(idx, "altQty", undefined)}
+                                    onClick={() => handleUpdateItemFields(idx, { altQty: undefined })}
                                     className={cn(
                                       "px-2 py-1 transition-colors cursor-pointer",
                                       item.altQty == null
@@ -1667,8 +1677,10 @@ export function PurchaseInvoiceModal({
                                     type="button"
                                     onClick={() => {
                                       const altQ = Math.max(1, Math.round((item.quantity || 1) / item.altUnitConversion!));
-                                      handleUpdateItem(idx, "altQty", altQ);
-                                      handleUpdateItem(idx, "quantity", altQ * item.altUnitConversion!);
+                                      handleUpdateItemFields(idx, {
+                                        altQty: altQ,
+                                        quantity: altQ * item.altUnitConversion!,
+                                      });
                                     }}
                                     className={cn(
                                       "px-2 py-1 transition-colors border-l border-primary/40 cursor-pointer",
@@ -1681,7 +1693,7 @@ export function PurchaseInvoiceModal({
                                   </button>
                                 </div>
                                 <span className="text-[8.5px] text-muted-foreground font-mono whitespace-nowrap">
-                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit || "PCS"}
+                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit || "Pcs"}
                                 </span>
                               </div>
                             ) : (
