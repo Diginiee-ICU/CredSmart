@@ -352,9 +352,123 @@ export default function AppLayout() {
                   <span className="tracking-wide">SYNC LIVE</span>
                 </div>
               </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{subtitle}</p>
+            </div>
+
+            {/* Mobile page title */}
+            <div className="flex md:hidden flex-col justify-center min-w-0 flex-1">
+              <h1 className="text-sm font-black text-slate-900 dark:text-white truncate">{title}</h1>
+            </div>
+
+            {/* Search bar (desktop) */}
+            <div className="hidden lg:flex items-center max-w-xs w-full mx-2">
+              <button
+                onClick={() => setOpenCommand(true)}
+                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-12 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-sm group backdrop-blur-md cursor-pointer"
+              >
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
+                <span className="truncate">Search...</span>
+                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">⌘K</kbd>
+              </button>
+            </div>
+
+            {/* RIGHT: Action buttons */}
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              {/* Mobile search */}
+              <button onClick={() => setOpenCommand(true)} className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer" title="Search">
+                <Search className="w-4 h-4" />
+              </button>
+
+              {/* New Invoice split button */}
+              <DropdownMenu>
+                <div className="flex items-center rounded-xl glowing-btn-amber shadow-md select-none">
+                  <button type="button" onClick={() => setSalesInvoiceModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer">
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span className="hidden sm:inline">New Invoice</span>
+                    <span className="sm:hidden">Invoice</span>
+                  </button>
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" className="px-1.5 py-1.5 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer" aria-label="More creation options">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                </div>
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-[#0F0E38] border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                  <div className="px-2 pb-1.5 border-b border-[#1F1C5C]">
+                    <button type="button" onClick={() => setQuickCreateModalOpen(true)} className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-700/40 cursor-pointer">
+                      <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-400" /><span>All Creation Options</span></div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold uppercase">Hub</span>
+                    </button>
+                  </div>
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><UserPlus className="w-4 h-4 text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><PackagePlus className="w-4 h-4 text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-300 hover:bg-cyan-950/50 hover:text-cyan-200 rounded-xl cursor-pointer font-semibold"><FileText className="w-4 h-4 text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-950/60 rounded-xl cursor-pointer font-semibold"><ShoppingCart className="w-4 h-4 text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Truck className="w-4 h-4 text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><CreditCard className="w-4 h-4 text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Receipt className="w-4 h-4 text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Bell */}
+              <button onClick={() => setNotifOpen(true)} className={cn("p-2 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer", pendingCount > 0 ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400" : "border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")} title="Notifications">
+                <Bell className="w-4 h-4" />
+                {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
+                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+              </button>
+
+              {/* Profile dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs font-black shadow-md hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer" title={org?.name || "Account"}>
+                    {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-[#0F0E38] border border-[#2B277A] text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150">
+                  <div className="p-2 border-b border-[#1F1C5C]">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-white truncate">{org?.name || "CredSmart Business"}</h4>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || "owner@credsmart.in"}</p>
+                    <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">{roleLabel}</div>
+                  </div>
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
+                    <span>YOUR BUSINESSES</span><span className="text-amber-400">{(organizations || []).length} Store(s)</span>
+                  </DropdownMenuLabel>
+                  <div className="space-y-1 my-1 max-h-40 overflow-y-auto">
+                    {(organizations || []).filter(Boolean).map((business) => {
+                      if (!business) return null;
+                      const isActive = business.id === orgId;
+                      const bizName = business.name || "Store";
+                      return (
+                        <DropdownMenuItem key={business.id} onClick={() => { if (business.id) switchOrganization(business.id); toast.success(`Switched to "${bizName}"`); }} className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/40" : "text-slate-300 hover:text-white hover:bg-[#1C1A54]")}>
+                          <div className="min-w-0 pr-2"><p className="truncate text-xs font-semibold">{bizName}</p><p className="text-[10px] text-slate-500 font-mono truncate">{business.business_type || "Retail"}</p></div>
+                          {isActive && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                  <div className="pt-1.5 pb-1 border-t border-[#1F1C5C]">
+                    <button type="button" onClick={() => setCreateBusinessModalOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:brightness-110 text-white text-xs font-bold transition-all shadow-md cursor-pointer">
+                      <Plus className="w-3.5 h-3.5" /><span>+ Add Business / Branch</span>
+                    </button>
+                  </div>
+                  <DropdownMenuSeparator className="bg-[#1F1C5C] my-1" />
+                  <DropdownMenuItem onClick={() => navigate(ROUTE_PATHS.businessSettings)} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-[#1C1A54] rounded-xl cursor-pointer"><Settings className="w-4 h-4 text-slate-400" /><span>Store &amp; Business Settings</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold"><LogOut className="w-4 h-4 text-rose-400" /><span>Sign Out of CredSmart</span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </header>
         )}
-
 
         {/* Global Command Palette Dialog */}
         <CommandDialog open={openCommand} onOpenChange={setOpenCommand}>
