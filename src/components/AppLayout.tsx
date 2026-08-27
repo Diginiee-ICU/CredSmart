@@ -294,10 +294,10 @@ export default function AppLayout() {
 
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="h-[4.25rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm">
+        <header className="h-[5rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-1.5 shrink-0">
               <NavLink
                 to={ROUTE_PATHS.dashboard}
                 title="CredSmart Dashboard"
@@ -306,7 +306,7 @@ export default function AppLayout() {
                 <img
                   src="/IMG_9301.GIF"
                   alt="CredSmart"
-                  className="h-13 sm:h-14 w-auto max-w-[200px] sm:max-w-[180px] object-contain rounded-xl"
+                  className="h-16 sm:h-14 w-auto max-w-[220px] sm:max-w-[180px] object-contain rounded-xl"
                 />
               </NavLink>
 

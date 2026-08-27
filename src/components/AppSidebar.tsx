@@ -190,9 +190,9 @@ export function AppSidebar({
 
     return (
       <>
-        {/* Floating High-Tactile 3D Mobile Dock */}
+        {/* Floating High-Tactile 3D Mobile Dock - Light Theme Edition */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 bg-[#0C0B2D]/95 backdrop-blur-2xl border-t border-[#231F68] shadow-[0_-12px_40px_rgba(0,0,0,0.7)] px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-400 select-none"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-2xl border-t border-slate-200/80 shadow-[0_-12px_40px_rgba(0,0,0,0.06)] px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
           aria-label="Mobile Bottom Navigation"
         >
           {/* Home */}
@@ -201,14 +201,14 @@ export function AppSidebar({
             end
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isDashboardActive ? "text-amber-400 font-bold" : "text-slate-400 hover:text-white"
+              isDashboardActive ? "text-amber-600 font-bold" : "text-slate-400 hover:text-slate-600"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isDashboardActive
-                  ? "bg-amber-400/20 border-amber-400/50 text-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.4)] scale-105"
+                  ? "bg-amber-100/50 border-amber-300 text-amber-600 shadow-[0_0_16px_rgba(251,191,36,0.2)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -222,14 +222,14 @@ export function AppSidebar({
             to={ROUTE_PATHS.sales}
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isSalesActive ? "text-indigo-300 font-bold" : "text-slate-400 hover:text-white"
+              isSalesActive ? "text-indigo-600 font-bold" : "text-slate-400 hover:text-slate-600"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isSalesActive
-                  ? "bg-indigo-500/25 border-indigo-400/50 text-indigo-300 shadow-[0_0_16px_rgba(99,102,241,0.4)] scale-105"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-[0_0_16px_rgba(99,102,241,0.15)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -245,20 +245,15 @@ export function AppSidebar({
           >
             <div
               className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center ring-4 ring-[#0C0B2D] shadow-2xl transition-all duration-200",
+                "w-14 h-14 rounded-2xl flex items-center justify-center ring-4 ring-white shadow-2xl transition-all duration-200",
                 isPosActive
-                  ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 shadow-[0_6px_25px_rgba(245,158,11,0.6)] scale-105"
-                  : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_6px_25px_rgba(79,70,229,0.55)] group-hover:brightness-110"
+                  ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-white shadow-[0_8px_25px_rgba(245,158,11,0.4)] scale-105"
+                  : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_6px_25px_rgba(79,70,229,0.35)] group-hover:brightness-110"
               )}
             >
-              <ShoppingCart className="w-6 h-6 stroke-[2.5]" />
+              <ShoppingCart className="w-6 h-6 fill-current" />
             </div>
-            <span
-              className={cn(
-                "text-[10px] font-black tracking-tight mt-1 transition-colors",
-                isPosActive ? "text-amber-400" : "text-slate-300 group-hover:text-white"
-              )}
-            >
+            <span className={cn("text-[10px] mt-1 font-bold", isPosActive ? "text-amber-600" : "text-slate-800")}>
               POS Billing
             </span>
           </NavLink>
@@ -268,14 +263,14 @@ export function AppSidebar({
             to={ROUTE_PATHS.items}
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isItemsActive ? "text-emerald-400 font-bold" : "text-slate-400 hover:text-white"
+              isItemsActive ? "text-emerald-600 font-bold" : "text-slate-400 hover:text-slate-600"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isItemsActive
-                  ? "bg-emerald-500/25 border-emerald-400/50 text-emerald-300 shadow-[0_0_16px_rgba(16,185,129,0.4)] scale-105"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-[0_0_16px_rgba(16,185,129,0.15)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -284,7 +279,7 @@ export function AppSidebar({
             <span className="text-[10px] tracking-tight">Items</span>
           </NavLink>
 
-          {/* More Drawer */}
+          {/* More Menu Toggle */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button
@@ -299,7 +294,7 @@ export function AppSidebar({
             </SheetTrigger>
             <SheetContent
               side="bottom"
-              className="h-[min(92dvh,54rem)] rounded-t-3xl border-t border-[#2B277A] bg-[#0C0B2D] text-slate-200 px-4 pb-6 shadow-[0_-20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
+              className="h-[min(92dvh,54rem)] rounded-t-3xl border-t border-slate-200 bg-white text-slate-800 px-4 pb-6 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
             >
               <SheetHeader className="sr-only">
                 <SheetTitle>Navigation Menu</SheetTitle>
@@ -307,21 +302,21 @@ export function AppSidebar({
               </SheetHeader>
 
               {/* Drawer Top Header with Big Logo */}
-              <div className="flex items-center justify-between pt-2 pb-3 border-b border-[#1F1C5C]/80 shrink-0">
+              <div className="flex items-center justify-between pt-2 pb-3 border-b border-slate-200 shrink-0">
                 <div className="flex items-center gap-2">
                   <img
                     src="/IMG_9301.GIF"
                     alt="CredSmart"
-                    className="h-14 sm:h-16 w-auto max-w-[190px] object-contain rounded-xl shadow-md ring-1 ring-white/10"
+                    className="h-16 sm:h-20 w-auto max-w-[240px] object-contain rounded-xl shadow-md ring-1 ring-slate-100"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-[#141242] border border-[#2B277A] text-slate-400 hover:text-white active:scale-95 transition-all cursor-pointer"
+                  className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
                   title="Close Menu"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 stroke-[2.5]" />
                 </button>
               </div>
 
@@ -334,15 +329,15 @@ export function AppSidebar({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search menu & tools..."
-                    className="w-full pl-9 pr-8 py-2 text-xs bg-[#141242] border border-[#2B277A] focus:border-amber-400/60 rounded-xl text-slate-200 placeholder:text-slate-500 outline-hidden transition-colors"
+                    className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 focus:border-amber-400/60 rounded-xl text-slate-800 placeholder:text-slate-400 outline-hidden transition-colors shadow-inner"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5 stroke-[2.5]" />
                     </button>
                   )}
                 </div>
@@ -354,42 +349,42 @@ export function AppSidebar({
                   <button
                     type="button"
                     onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.checkout); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#141242]/80 border border-[#2B277A]/70 hover:border-amber-400/40 active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-amber-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center mb-1">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100 flex items-center justify-center mb-1 transition-colors">
                       <ShoppingCart className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-200">POS</span>
+                    <span className="text-[10px] font-bold text-slate-700">POS</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.sales); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#141242]/80 border border-[#2B277A]/70 hover:border-indigo-400/40 active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-1">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 flex items-center justify-center mb-1 transition-colors">
                       <Receipt className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-200">Sales</span>
+                    <span className="text-[10px] font-bold text-slate-700">Sales</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.items); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#141242]/80 border border-[#2B277A]/70 hover:border-emerald-400/40 active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-emerald-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-1">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 flex items-center justify-center mb-1 transition-colors">
                       <Package className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-200">Items</span>
+                    <span className="text-[10px] font-bold text-slate-700">Items</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMobileMenuOpen(false); navigate(ROUTE_PATHS.parties); }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#141242]/80 border border-[#2B277A]/70 hover:border-cyan-400/40 active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 hover:border-cyan-400/40 active:scale-95 transition-all shadow-sm cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center mb-1">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100 flex items-center justify-center mb-1 transition-colors">
                       <Users2 className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-200">Parties</span>
+                    <span className="text-[10px] font-bold text-slate-700">Parties</span>
                   </button>
                 </div>
               )}
@@ -398,7 +393,7 @@ export function AppSidebar({
               <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-1 scrollbar-thin">
                 {filteredNavRouteGroups.map((group, gIdx) => (
                   <div key={gIdx} className="space-y-1.5">
-                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
                       {group.label}
                     </p>
                     <div className="space-y-1">
@@ -421,8 +416,8 @@ export function AppSidebar({
                               className={cn(
                                 "w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer",
                                 active
-                                  ? "bg-gradient-to-r from-amber-500/25 to-amber-600/10 text-white border border-amber-400/40 shadow-sm"
-                                  : "text-slate-200 hover:bg-[#1C1A54] border border-transparent"
+                                  ? "bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
+                                  : "text-slate-600 hover:bg-slate-100 border border-transparent"
                               )}
                             >
                               <div className="flex items-center gap-3 min-w-0">
@@ -430,19 +425,19 @@ export function AppSidebar({
                                   className={cn(
                                     "p-1.5 rounded-xl border shrink-0",
                                     active
-                                      ? "bg-amber-500/20 border-amber-400/50 text-amber-300"
-                                      : "bg-[#141242] border-[#262270] text-amber-400"
+                                      ? "bg-amber-100 border-amber-300 text-amber-600"
+                                      : "bg-white border-slate-200 text-slate-500 shadow-xs"
                                   )}
                                 >
                                   <item.icon className="w-4 h-4 stroke-[2.2]" />
                                 </div>
-                                <span className="truncate text-white">{item.title}</span>
+                                <span className="truncate">{item.title}</span>
                               </div>
                               {hasChildren ? (
                                 <ChevronDown
                                   className={cn(
                                     "w-4 h-4 text-slate-400 transition-transform duration-200",
-                                    isExpanded && "rotate-180 text-amber-400"
+                                    isExpanded && "rotate-180 text-amber-500"
                                   )}
                                 />
                               ) : (
@@ -451,7 +446,7 @@ export function AppSidebar({
                             </button>
 
                             {hasChildren && isExpanded && (
-                              <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-[#1F1C5C] animate-in fade-in slide-in-from-top-1 duration-150">
+                              <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-slate-200 animate-in fade-in slide-in-from-top-1 duration-150">
                                 {item.children?.map((child) => {
                                   const childActive = isRouteActive(child.url);
                                   return (
@@ -462,14 +457,14 @@ export function AppSidebar({
                                       className={cn(
                                         "flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors",
                                         childActive
-                                          ? "text-amber-300 font-bold bg-amber-500/15 border border-amber-400/30"
-                                          : "text-slate-300 hover:text-white hover:bg-[#1C1A54]"
+                                          ? "text-amber-700 font-bold bg-amber-50 border border-amber-200"
+                                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                                       )}
                                     >
                                       <span
                                         className={cn(
                                           "w-1.5 h-1.5 rounded-full shrink-0",
-                                          childActive ? "bg-amber-400" : "bg-slate-500"
+                                          childActive ? "bg-amber-500" : "bg-slate-300"
                                         )}
                                       />
                                       <span className="truncate">{child.title}</span>
