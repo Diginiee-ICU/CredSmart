@@ -556,19 +556,44 @@ export default function AppLayout() {
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* Main Content Viewport — Clean Full Width */}
-        <main
-          className={cn(
-            "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-300",
-            isPosRoute
-              ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
-              : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
-            isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
-            isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-          )}
+        {/* Main Content Viewport Wrapper for 3D Effect */}
+        <div 
+          className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#0A0924] dark:bg-[#02010A]"
+          style={{ perspective: "2000px" }}
         >
-          <Outlet />
-        </main>
+          <main
+            className={cn(
+              "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-500",
+              isPosRoute
+                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
+                : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+              isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+              isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+            )}
+            style={{
+              transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+              transformOrigin: "left center",
+              ...(sidebarOpen && !isMobile
+                ? {
+                    transform: "translateX(460px) scale(0.95) rotateY(-4deg)",
+                    borderTopLeftRadius: "1.5rem",
+                    borderBottomLeftRadius: "1.5rem",
+                    boxShadow: "-30px 0 80px rgba(0, 0, 0, 0.6)",
+                    borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
+                    pointerEvents: "none",
+                  }
+                : {
+                    transform: "translateX(0) scale(1) rotateY(0)",
+                    borderTopLeftRadius: "0",
+                    borderBottomLeftRadius: "0",
+                    boxShadow: "0 0 0 rgba(0, 0, 0, 0)",
+                    borderLeft: "1px solid transparent",
+                  }),
+            }}
+          >
+            <Outlet />
+          </main>
+        </div>
 
       <UniversalQuickCreateModal
         open={quickCreateModalOpen}

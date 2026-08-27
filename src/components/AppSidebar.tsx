@@ -497,9 +497,9 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Subtle backdrop overlay for outside click dismissal */}
+      {/* Transparent backdrop overlay for outside click dismissal to reveal 3D Squeeze effect */}
       <div
-        className="fixed inset-0 z-[190] bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+        className="fixed inset-0 z-[190] bg-transparent cursor-default"
         onClick={onClose}
         aria-hidden="true"
       />
