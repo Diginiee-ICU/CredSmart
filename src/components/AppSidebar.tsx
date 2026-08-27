@@ -404,46 +404,56 @@ export function AppSidebar({
                         const isExpanded = expandedMenus[item.title];
                         return (
                           <div key={item.url} className="space-y-1">
+                          <div
+                            className={cn(
+                              "w-full flex items-center justify-between gap-1 pr-1.5 pl-3 py-1.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer",
+                              active
+                                ? "bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
+                                : "text-slate-600 hover:bg-slate-100 border border-transparent"
+                            )}
+                          >
                             <button
                               type="button"
                               onClick={() => {
-                                if (hasChildren) toggleSubmenu(item.title);
-                                else {
-                                  setMobileMenuOpen(false);
-                                  navigate(item.url);
-                                }
+                                setMobileMenuOpen(false);
+                                navigate(item.url);
                               }}
-                              className={cn(
-                                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer",
-                                active
-                                  ? "bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
-                                  : "text-slate-600 hover:bg-slate-100 border border-transparent"
-                              )}
+                              className="flex items-center gap-3 min-w-0 flex-1 py-1 cursor-pointer text-left"
                             >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div
-                                  className={cn(
-                                    "p-1.5 rounded-xl border shrink-0",
-                                    active
-                                      ? "bg-amber-100 border-amber-300 text-amber-600"
-                                      : "bg-white border-slate-200 text-slate-500 shadow-xs"
-                                  )}
-                                >
-                                  <item.icon className="w-4 h-4 stroke-[2.2]" />
-                                </div>
-                                <span className="truncate">{item.title}</span>
+                              <div
+                                className={cn(
+                                  "p-1.5 rounded-xl border shrink-0",
+                                  active
+                                    ? "bg-amber-100 border-amber-300 text-amber-600"
+                                    : "bg-white border-slate-200 text-slate-500 shadow-xs"
+                                )}
+                              >
+                                <item.icon className="w-4 h-4 stroke-[2.2]" />
                               </div>
-                              {hasChildren ? (
+                              <span className="truncate">{item.title}</span>
+                            </button>
+                            
+                            {hasChildren ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleSubmenu(item.title);
+                                }}
+                                className="p-2 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+                              >
                                 <ChevronDown
                                   className={cn(
                                     "w-4 h-4 text-slate-400 transition-transform duration-200",
                                     isExpanded && "rotate-180 text-amber-500"
                                   )}
                                 />
-                              ) : (
-                                <ChevronRight className="w-4 h-4 text-slate-500" />
-                              )}
-                            </button>
+                              </button>
+                            ) : (
+                              <ChevronRight className="w-4 h-4 mr-2 text-slate-400" />
+                            )}
+                          </div>
 
                             {hasChildren && isExpanded && (
                               <div className="pl-6 pr-1 space-y-1 pt-1 ml-2 border-l border-slate-200 animate-in fade-in slide-in-from-top-1 duration-150">
@@ -624,23 +634,19 @@ export function AppSidebar({
 
                       return (
                         <div key={item.url} className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (hasChildren) {
-                                toggleSubmenu(item.title);
-                              } else {
-                                handleNavigate(item.url);
-                              }
-                            }}
+                          <div
                             className={cn(
-                              "w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-left group/item relative overflow-hidden",
+                              "w-full flex items-center justify-between gap-1 pr-1.5 pl-2.5 py-1.5 rounded-xl text-sm font-semibold transition-all duration-200 text-left group/item relative overflow-hidden",
                               active
                                 ? "bg-amber-50 text-amber-900 shadow-sm border border-amber-200"
                                 : "bg-transparent hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent hover:border-slate-200/60"
                             )}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => handleNavigate(item.url)}
+                              className="flex items-center gap-3 min-w-0 flex-1 py-0.5 cursor-pointer text-left"
+                            >
                                 <div
                                   className={cn(
                                     "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/item:scale-110 group-hover/item:rotate-[-4deg]",
@@ -659,21 +665,32 @@ export function AppSidebar({
                                      </span>
                                    )}
                                 </div>
-                            </div>
+                            </button>
                             
                             <div className="flex items-center shrink-0">
                                 {hasChildren ? (
-                                    <ChevronDown
-                                      className={cn(
-                                        "w-4 h-4 transition-transform duration-300",
-                                        isExpanded ? "rotate-180 text-amber-500" : "text-slate-400 group-hover/item:text-slate-600"
-                                      )}
-                                    />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleSubmenu(item.title);
+                                      }}
+                                      className="p-1.5 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+                                      title={`Toggle ${item.title} Menu`}
+                                    >
+                                      <ChevronDown
+                                        className={cn(
+                                          "w-4 h-4 transition-transform duration-300",
+                                          isExpanded ? "rotate-180 text-amber-500" : "text-slate-400 group-hover/item:text-slate-600"
+                                        )}
+                                      />
+                                    </button>
                                 ) : (
-                                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-indigo-500 transition-colors opacity-0 group-hover/item:opacity-100" />
+                                    <ArrowUpRight className="w-3.5 h-3.5 mr-2 text-slate-400 group-hover/item:text-indigo-500 transition-colors opacity-0 group-hover/item:opacity-100" />
                                 )}
                             </div>
-                          </button>
+                          </div>
 
                           {/* Render Children Accordion */}
                           {hasChildren && isExpanded && (
