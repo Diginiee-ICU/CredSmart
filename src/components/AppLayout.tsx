@@ -285,21 +285,14 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* ── Sidebar wrapper – takes flex space so content reflows smoothly ── */}
-      <div
-        className={cn(
-          "transition-all duration-300 ease-in-out overflow-hidden shrink-0 h-full",
-          sidebarOpen ? "w-[280px]" : "w-0"
-        )}
-      >
-        <AppSidebar onClose={() => setSidebarOpen(false)} />
-      </div>
+      {/* Dropdown nav panel — fixed overlay, does not push content */}
+      <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* ── Main content column ── */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      {/* ── Main content column — always full width ── */}
+      <div className="w-full flex flex-col min-w-0 h-full overflow-hidden">
         {/* Global Top Header */}
         {!isPosRoute && (
-          <header className="h-14 sm:h-16 shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center gap-3 px-3 sm:px-4 z-10 shadow-sm">
+          <header className="h-16 sm:h-[4.5rem] shrink-0 glass-nav border-b border-white/60 dark:border-slate-800/80 flex items-center gap-3 px-3 sm:px-4 z-10 shadow-sm">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 shrink-0">
@@ -311,7 +304,7 @@ export default function AppLayout() {
                 <img
                   src="/IMG_9301.GIF"
                   alt="CredSmart"
-                  className="h-9 sm:h-10 w-auto max-w-[120px] object-contain rounded-xl"
+                  className="h-12 sm:h-14 w-auto max-w-[180px] object-contain rounded-xl"
                 />
               </NavLink>
 
