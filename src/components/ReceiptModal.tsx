@@ -442,16 +442,23 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 const b = itemData.batch ?? {};
                 const qty = Number(item.quantity) || 1;
                 const rate = Number(b.mrp ?? itemData.rate ?? itemData.unitPrice ?? 0);
+                const resolvedUnit = itemData.unit || p.unit || "PCS";
+                const resolvedAltUnit = itemData.altUnit || p.altUnit || p.tags?.alt_unit || undefined;
+                const resolvedAltConv = itemData.altUnitConversion ?? p.altUnitConversion ?? p.tags?.alt_unit_conversion ?? undefined;
+                const resolvedAltQty = itemData.altQty !== undefined
+                  ? itemData.altQty
+                  : (resolvedAltUnit && resolvedAltConv && Number(resolvedAltConv) > 1 && resolvedUnit.toUpperCase() === resolvedAltUnit.toUpperCase() ? qty : undefined);
+
                 return {
                   id: String(idx),
                   name: p.name ?? itemData.name ?? `Item ${idx + 1}`,
                   description: p.description ?? (p.brand ? `${p.brand} · ${p.category || ""}` : ""),
                   hsn: p.hsn ?? p.hsnCode ?? itemData.hsn ?? "",
                   qty,
-                  unit: p.unit ?? itemData.unit ?? "PCS",
-                  altUnit: (item as any).altUnit ?? itemData.altUnit,
-                  altQty: (item as any).altQty ?? itemData.altQty,
-                  altUnitConversion: (item as any).altUnitConversion ?? itemData.altUnitConversion,
+                  unit: resolvedUnit,
+                  altUnit: resolvedAltUnit,
+                  altQty: resolvedAltQty,
+                  altUnitConversion: resolvedAltConv ? Number(resolvedAltConv) : undefined,
                   rate,
                   mrp: rate,
                   discount: 0,
