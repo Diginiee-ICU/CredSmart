@@ -140,13 +140,13 @@ export default function Parties() {
       // 1. Fetch Customers
       const { data: dbCustomers, error: custErr } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address, created_at")
+        .select("id, name, phone, email, address, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
         .eq("organization_id", orgId);
 
       // 2. Fetch Suppliers
       const { data: dbSuppliers, error: suppErr } = await supabase
         .from("suppliers")
-        .select("id, name, phone, email, address, gstin, created_at")
+        .select("id, name, phone, email, address, gstin, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
         .eq("organization_id", orgId);
 
       // 3. Fetch Credit Transactions
@@ -170,42 +170,68 @@ export default function Parties() {
 
       const mergedParties: Party[] = [];
 
-      (dbCustomers || []).forEach((c) => {
+      (dbCustomers || []).forEach((c: any) => {
         const bal = creditBalanceMap[c.id] || 0;
+        const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
+        const keepSamePrice = cf.keepSamePrice !== false;
+        const keepSameInventory = cf.keepSameInventory !== false;
+        const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+
         mergedParties.push({
           id: c.id,
           name: c.name,
+          tradeName: c.trade_name || undefined,
           phone: c.phone,
           email: c.email,
           partyType: "customer",
-          category: "Retailer",
+          category: c.category || "Retailer",
           address: c.address,
+          pan: c.pan || undefined,
+          pincode: c.pincode || undefined,
+          shippingAddress: c.shipping_address || undefined,
           openingBalance: bal,
           balance: bal,
-          creditLimit: 50000,
-          creditPeriodDays: 30,
+          creditLimit: c.credit_limit ? Number(c.credit_limit) : 50000,
+          creditPeriodDays: c.credit_period_days ? Number(c.credit_period_days) : 30,
+          customFields: cf,
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
           sharedLedgerEnabled: true,
           sharedLedgerStatus: "synced",
           created_at: c.created_at,
         });
       });
 
-      (dbSuppliers || []).forEach((s) => {
+      (dbSuppliers || []).forEach((s: any) => {
         const bal = creditBalanceMap[s.id] || 0;
         const payableBal = -Math.abs(bal);
+        const cf = typeof s.custom_fields === "object" && s.custom_fields !== null ? s.custom_fields : {};
+        const keepSamePrice = cf.keepSamePrice !== false;
+        const keepSameInventory = cf.keepSameInventory !== false;
+        const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+
         mergedParties.push({
           id: s.id,
           name: s.name,
+          tradeName: s.trade_name || undefined,
           phone: s.phone,
           email: s.email,
           gstin: s.gstin,
           partyType: "supplier",
-          category: "Distributor",
+          category: s.category || "Distributor",
           address: s.address,
+          pan: s.pan || undefined,
+          pincode: s.pincode || undefined,
+          shippingAddress: s.shipping_address || undefined,
           openingBalance: payableBal,
           balance: payableBal,
-          creditLimit: 100000,
-          creditPeriodDays: 45,
+          creditLimit: s.credit_limit ? Number(s.credit_limit) : 100000,
+          creditPeriodDays: s.credit_period_days ? Number(s.credit_period_days) : 45,
+          customFields: cf,
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
           sharedLedgerEnabled: true,
           sharedLedgerStatus: "synced",
           created_at: s.created_at,
@@ -306,6 +332,12 @@ export default function Parties() {
     }
 
     try {
+      const customFieldsPayload = partyData.customFields || {
+        keepSamePrice: partyData.keepSamePrice,
+        keepSameInventory: partyData.keepSameInventory,
+        customItems: partyData.customItems,
+      };
+
       if (editingParty) {
         if (editingParty.partyType === "customer" || partyData.partyType === "customer") {
           await supabase
@@ -315,6 +347,14 @@ export default function Parties() {
               phone: partyData.phone,
               email: partyData.email,
               address: partyData.address,
+              trade_name: partyData.tradeName || null,
+              pan: partyData.pan || null,
+              pincode: partyData.pincode || null,
+              shipping_address: partyData.shippingAddress || null,
+              category: partyData.category || "General",
+              credit_limit: partyData.creditLimit || null,
+              credit_period_days: partyData.creditPeriodDays || null,
+              custom_fields: customFieldsPayload,
             })
             .eq("id", editingParty.id);
         } else {
@@ -326,6 +366,14 @@ export default function Parties() {
               email: partyData.email,
               address: partyData.address,
               gstin: partyData.gstin,
+              trade_name: partyData.tradeName || null,
+              pan: partyData.pan || null,
+              pincode: partyData.pincode || null,
+              shipping_address: partyData.shippingAddress || null,
+              category: partyData.category || "General",
+              credit_limit: partyData.creditLimit || null,
+              credit_period_days: partyData.creditPeriodDays || null,
+              custom_fields: customFieldsPayload,
             })
             .eq("id", editingParty.id);
         }
@@ -340,6 +388,14 @@ export default function Parties() {
               email: partyData.email,
               address: partyData.address,
               gstin: partyData.gstin,
+              trade_name: partyData.tradeName || null,
+              pan: partyData.pan || null,
+              pincode: partyData.pincode || null,
+              shipping_address: partyData.shippingAddress || null,
+              category: partyData.category || "General",
+              credit_limit: partyData.creditLimit || null,
+              credit_period_days: partyData.creditPeriodDays || null,
+              custom_fields: customFieldsPayload,
               organization_id: orgId,
             })
             .select()
@@ -365,6 +421,14 @@ export default function Parties() {
               phone: partyData.phone,
               email: partyData.email,
               address: partyData.address,
+              trade_name: partyData.tradeName || null,
+              pan: partyData.pan || null,
+              pincode: partyData.pincode || null,
+              shipping_address: partyData.shippingAddress || null,
+              category: partyData.category || "General",
+              credit_limit: partyData.creditLimit || null,
+              credit_period_days: partyData.creditPeriodDays || null,
+              custom_fields: customFieldsPayload,
               organization_id: orgId,
             })
             .select()

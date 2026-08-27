@@ -872,6 +872,68 @@ export function PurchaseInvoiceModal({
     }
   };
 
+  const handlePrint = () => {
+    if (!partyName.trim()) {
+      toast.error("Please enter or select a supplier name (Bill From)");
+      return;
+    }
+
+    const validItems = recalculatedItems.filter((it) => it.productName.trim() !== "");
+    if (validItems.length === 0) {
+      toast.error("Please add at least one line item");
+      return;
+    }
+
+    const resolvedBillingAddress = sameAsSupplier ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+    const resolvedBillingPlaceOfSupply = sameAsSupplier ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
+
+    const docToPrint: BusinessDocument = {
+      id: editingDoc?.id || `preview-${Date.now()}`,
+      organizationId: orgId,
+      docType,
+      documentNumber: fullDocumentNumber,
+      referenceNumber: ewayBillNo.trim() || undefined,
+      partyId: selectedSupplierId || undefined,
+      partyName: partyName.trim(),
+      partyPhone: partyPhone.trim() || undefined,
+      partyGstin: partyGstin.trim() || undefined,
+      partyAddress: partyAddress.trim() || undefined,
+      billingAddress: resolvedBillingAddress,
+      billingPincode: sameAsSupplier ? undefined : (billingPincode.trim() || undefined),
+      billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
+      placeOfSupply,
+      docDate,
+      dueDate: showDueDate ? dueDate : docDate,
+      paymentTerms,
+      items: validItems,
+      subtotal: totals.rawSubtotal,
+      discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
+      taxableTotal: totals.taxableTotal,
+      cgstTotal: totals.cgstTotal,
+      sgstTotal: totals.sgstTotal,
+      igstTotal: totals.igstTotal,
+      taxTotal: totals.taxTotal,
+      roundOff: totals.roundOff,
+      grandTotal: totals.grandTotal,
+      paidAmount: amountPaid,
+      balanceDue: Math.max(0, totals.grandTotal - amountPaid),
+      status: amountPaid >= totals.grandTotal ? "paid" : amountPaid > 0 ? "partial" : "unpaid",
+      paymentMethod,
+      notes: showNotes ? notes : undefined,
+      terms,
+      transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
+      showStamp,
+      stampUrl: stampUrl || undefined,
+      created_at: new Date().toISOString(),
+    };
+
+    if (onPrintRequest) {
+      onPrintRequest(docToPrint);
+    } else {
+      toast.error("No print handler available");
+    }
+  };
+
   const handleSave = async (andPrint = false, saveAndNew = false) => {
     if (!partyName.trim()) {
       toast.error("Please enter or select a supplier name (Bill From)");
@@ -883,6 +945,10 @@ export function PurchaseInvoiceModal({
       toast.error("Please add at least one line item");
       return;
     }
+
+    
+    const resolvedBillingAddress = sameAsSupplier ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+    const resolvedBillingPlaceOfSupply = sameAsSupplier ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
 
     setSaving(true);
     try {
@@ -896,9 +962,9 @@ export function PurchaseInvoiceModal({
         partyPhone: partyPhone.trim() || undefined,
         partyGstin: partyGstin.trim() || undefined,
         partyAddress: partyAddress.trim() || undefined,
-        billingAddress: billingAddress.trim() || undefined,
-        billingPincode: billingPincode.trim() || undefined,
-        billingPlaceOfSupply,
+        billingAddress: resolvedBillingAddress,
+        billingPincode: sameAsSupplier ? undefined : (billingPincode.trim() || undefined),
+        billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
         placeOfSupply,
         docDate,
         dueDate: showDueDate ? dueDate : docDate,
@@ -1088,7 +1154,7 @@ export function PurchaseInvoiceModal({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleSave(true, false)}
+                onClick={() => handlePrint()}
                 className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
                 title="Print"
               >
@@ -1106,26 +1172,6 @@ export function PurchaseInvoiceModal({
                 Save &amp; New
               </Button>
 
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(false, false)}
-                  className="h-8 px-4 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-l-lg shadow-sm cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5 mr-1.5" />
-                  {saving ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(true, false)}
-                  className="h-8 px-2 text-xs font-bold bg-primary/95 hover:bg-primary text-primary-foreground rounded-r-lg border-l border-primary-foreground/20 shadow-sm cursor-pointer"
-                  title="Save & Print"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                </Button>
-              </div>
             </div>
           </div>
 
@@ -1369,7 +1415,7 @@ export function PurchaseInvoiceModal({
                           }}
                         />
                         <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
-                          Same as party address
+                          Same as Party Address
                         </Label>
                       </div>
                     </div>

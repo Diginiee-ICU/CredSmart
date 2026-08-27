@@ -1,4 +1,4 @@
-import { Party } from "@/types/parties";
+import { Party, PartyCustomItem } from "@/types/parties";
 import { InventoryItem } from "@/types/inventory";
 
 // CSV download trigger helper
@@ -458,4 +458,263 @@ export function parseItemsCSV(csvText: string): Partial<InventoryItem>[] {
   }
 
   return results;
+}
+
+// -------------------------------------------------------------
+// PARTY CUSTOM ITEMS EXPORT, SAMPLE & PARSER
+// -------------------------------------------------------------
+
+export function generatePartyCustomItemsSampleCSV(): string {
+  const headers = [
+    "Product Name*",
+    "Custom Selling Price (₹)*",
+    "Standard Catalogue Price (₹)",
+    "SKU Code",
+    "Barcode",
+    "Category",
+    "Unit",
+    "GST Rate (%)",
+    "HSN Code",
+    "Notes",
+  ];
+
+  const sampleRows = [
+    [
+      "Amul Pure Ghee 1L Pouch",
+      "550",
+      "590",
+      "AML-GHEE-1L",
+      "8901262010123",
+      "Dairy",
+      "LTR",
+      "5",
+      "0402",
+      "VIP Wholesale customer discount rate",
+    ],
+    [
+      "Tata Salt Vacuum Evaporated 1kg",
+      "25",
+      "28",
+      "TAT-SALT-1K",
+      "8901030615863",
+      "Grocery",
+      "KG",
+      "5",
+      "1006",
+      "Special bulk contract pricing",
+    ],
+    [
+      "Fortune Sunlite Refined Sunflower Oil 1L",
+      "135",
+      "148",
+      "FORT-SUN-1L",
+      "8906007280123",
+      "Edible Oil",
+      "LTR",
+      "5",
+      "1512",
+      "Quarterly locked agreement rate",
+    ],
+    [
+      "Dettol Antiseptic Liquid 500ml",
+      "180",
+      "195",
+      "DET-LIQ-500",
+      "8901058851403",
+      "Hygiene",
+      "BTL",
+      "18",
+      "3808",
+      "Distributor tier rate",
+    ],
+  ];
+
+  return [headers.join(","), ...sampleRows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))].join("\n");
+}
+
+export function exportPartyCustomItemsToCSV(items: PartyCustomItem[], partyName = "Party"): string {
+  const headers = [
+    "Product Name",
+    "Custom Selling Price (₹)",
+    "Standard Catalogue Price (₹)",
+    "Price Difference (₹)",
+    "SKU Code",
+    "Barcode",
+    "Category",
+    "Unit",
+    "GST Rate (%)",
+    "HSN Code",
+    "Notes",
+  ];
+
+  const rows = items.map((item) => {
+    const diff = item.customPrice - item.standardPrice;
+    return [
+      item.productName,
+      item.customPrice.toString(),
+      item.standardPrice.toString(),
+      diff > 0 ? `+${diff}` : `${diff}`,
+      item.sku || "",
+      item.barcode || "",
+      item.category || "General",
+      item.unit || "Pcs",
+      (item.gstRate ?? 18).toString(),
+      item.hsnCode || "",
+      item.notes || "",
+    ];
+  });
+
+  return [headers.join(","), ...rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))].join("\n");
+}
+
+export interface ParsePartyCustomItemsResult {
+  items: PartyCustomItem[];
+  matchedCount: number;
+  newCount: number;
+}
+
+export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any[] = []): ParsePartyCustomItemsResult {
+  const lines = csvText.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (lines.length < 2) return { items: [], matchedCount: 0, newCount: 0 };
+
+  const parseLine = (line: string): string[] => {
+    const tokens: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (c === "," && !inQuotes) {
+        tokens.push(cur.trim());
+        cur = "";
+      } else {
+        cur += c;
+      }
+    }
+    tokens.push(cur.trim());
+    return tokens;
+  };
+
+  const headerTokens = parseLine(lines[0] || "");
+  const normalized = headerTokens.map((h) => (h || "").replace(/\*/g, "").toLowerCase().trim());
+
+  const findIndexByKeywords = (keys: string[]) => {
+    for (let i = 0; i < normalized.length; i++) {
+      for (const k of keys) {
+        if (normalized[i].includes(k)) return i;
+      }
+    }
+    return -1;
+  };
+
+  const idx = {
+    name: findIndexByKeywords(["product name", "item name", "product", "item"]),
+    customPrice: findIndexByKeywords(["custom selling price", "custom price", "party price", "special price", "rate"]),
+    standardPrice: findIndexByKeywords(["standard catalogue price", "standard price", "mrp", "catalogue price", "regular price"]),
+    sku: findIndexByKeywords(["sku code", "sku"]),
+    barcode: findIndexByKeywords(["barcode", "code", "ean", "upc"]),
+    category: findIndexByKeywords(["category"]),
+    unit: findIndexByKeywords(["unit", "uom"]),
+    gstRate: findIndexByKeywords(["gst rate", "gst", "tax"]),
+    hsnCode: findIndexByKeywords(["hsn code", "hsn"]),
+    notes: findIndexByKeywords(["notes", "remark", "comment"]),
+  };
+
+  if (idx.name === -1 && idx.customPrice === -1) {
+    throw new Error(
+      "CSV header mismatch. Could not identify Product Name or Custom Price column. Please download the sample template and try again."
+    );
+  }
+
+  const items: PartyCustomItem[] = [];
+  let matchedCount = 0;
+  let newCount = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseLine(lines[i]);
+    if (!cols || cols.length === 0) continue;
+
+    const get = (index: number, defaultValue = "") => {
+      if (index >= 0 && index < cols.length) return cols[index];
+      return defaultValue;
+    };
+
+    const rawName = (get(idx.name, "") as string).trim();
+    const rawCustomPrice = parseFloat(String(get(idx.customPrice, "0"))) || 0;
+    const rawStandardPrice = parseFloat(String(get(idx.standardPrice, "0"))) || 0;
+    const rawSku = ((get(idx.sku, "") as string) || "").trim();
+    const rawBarcode = ((get(idx.barcode, "") as string) || "").trim();
+    const rawCategory = ((get(idx.category, "General") as string) || "General").trim();
+    const rawUnit = ((get(idx.unit, "Pcs") as string) || "Pcs").trim();
+    const rawGstRate = parseFloat(String(get(idx.gstRate, "18"))) || 18;
+    const rawHsnCode = ((get(idx.hsnCode, "") as string) || "").trim();
+    const rawNotes = ((get(idx.notes, "") as string) || "").trim();
+
+    if (!rawName && !rawSku && !rawBarcode) continue;
+
+    // Search against catalogProducts by Barcode, SKU, or Name
+    let matchedProduct: any = null;
+    if (catalogProducts && catalogProducts.length > 0) {
+      if (rawBarcode) {
+        matchedProduct = catalogProducts.find((p) => (p.barcode || "").toLowerCase() === rawBarcode.toLowerCase());
+      }
+      if (!matchedProduct && rawSku) {
+        matchedProduct = catalogProducts.find((p) => (p.sku || "").toLowerCase() === rawSku.toLowerCase());
+      }
+      if (!matchedProduct && rawName) {
+        matchedProduct = catalogProducts.find((p) => (p.name || "").toLowerCase() === rawName.toLowerCase());
+      }
+    }
+
+    if (matchedProduct) {
+      matchedCount++;
+      const tags = matchedProduct.tags || {};
+      const catStandardPrice = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
+        ? Number(tags.selling_price)
+        : (matchedProduct.product_batches?.[0]?.mrp || rawStandardPrice || rawCustomPrice);
+
+      items.push({
+        productId: matchedProduct.id,
+        productName: matchedProduct.name,
+        category: matchedProduct.category || rawCategory,
+        brand: matchedProduct.brand || undefined,
+        sku: matchedProduct.sku || rawSku || undefined,
+        barcode: matchedProduct.barcode || rawBarcode || undefined,
+        unit: matchedProduct.unit || rawUnit,
+        standardPrice: catStandardPrice,
+        customPrice: rawCustomPrice > 0 ? rawCustomPrice : catStandardPrice,
+        costPrice: matchedProduct.product_batches?.[0]?.cost_price || 0,
+        gstRate: tags?.gst_rate !== undefined ? Number(tags.gst_rate) : rawGstRate,
+        hsnCode: tags?.hsn_code || tags?.hsn || matchedProduct.hsn || rawHsnCode || undefined,
+        notes: rawNotes || undefined,
+        isActive: true,
+      });
+    } else {
+      newCount++;
+      const effectiveStandardPrice = rawStandardPrice > 0 ? rawStandardPrice : rawCustomPrice;
+      items.push({
+        productId: `custom-prod-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+        productName: rawName || rawSku || rawBarcode || `Custom Item #${i}`,
+        category: rawCategory,
+        sku: rawSku || undefined,
+        barcode: rawBarcode || undefined,
+        unit: rawUnit,
+        standardPrice: effectiveStandardPrice,
+        customPrice: rawCustomPrice > 0 ? rawCustomPrice : effectiveStandardPrice,
+        costPrice: 0,
+        gstRate: rawGstRate,
+        hsnCode: rawHsnCode || undefined,
+        notes: rawNotes || undefined,
+        isActive: true,
+      });
+    }
+  }
+
+  return { items, matchedCount, newCount };
 }

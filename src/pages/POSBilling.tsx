@@ -67,6 +67,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { networkInvoicingService } from "@/services/networkInvoicingService";
 import { BusinessDocument, DocumentLineItem } from "@/types/documents";
+import { PartyCustomItem } from "@/types/parties";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
@@ -108,6 +109,10 @@ export interface CustomerInfo {
   email?: string | null;
   balance?: number;
   loyaltyPoints?: number;
+  custom_fields?: Record<string, any>;
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
+  customItems?: PartyCustomItem[];
 }
 
 export interface BillingTab {
@@ -547,18 +552,29 @@ export default function POSBilling() {
       try {
         const { data, error } = await supabase
           .from("customers")
-          .select("id, name, phone, email")
+          .select("id, name, phone, email, custom_fields")
           .eq("organization_id", orgId)
           .order("name");
 
-        const list = (data || []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email,
-          balance: 0,
-          loyaltyPoints: 0,
-        }));
+        const list = (data || []).map((c: any) => {
+          const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
+          const keepSamePrice = cf.keepSamePrice !== false;
+          const keepSameInventory = cf.keepSameInventory !== false;
+          const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+
+          return {
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            email: c.email,
+            balance: 0,
+            loyaltyPoints: 0,
+            custom_fields: cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          };
+        });
 
         setCustomers(list);
       } catch (e) {
@@ -628,12 +644,42 @@ export default function POSBilling() {
   const changeDue = Math.max(0, receivedNum - grandTotal);
   const balanceRemaining = Math.max(0, grandTotal - receivedNum);
 
+  // Active party products respecting customer inventory restriction & custom pricing
+  const activePartyProducts = useMemo(() => {
+    const cust = currentTab.customer;
+    let list = products;
+
+    if (cust && cust.keepSameInventory === false && cust.customItems && cust.customItems.length > 0) {
+      const allowedIds = new Set(cust.customItems.map((ci) => ci.productId));
+      list = list.filter((p) => allowedIds.has(p.id));
+    }
+
+    if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
+      const customPriceMap = new Map<string, number>();
+      cust.customItems.forEach((ci) => customPriceMap.set(ci.productId, ci.customPrice));
+
+      list = list.map((p) => {
+        if (!customPriceMap.has(p.id)) return p;
+        const customPrice = customPriceMap.get(p.id) || 0;
+        return {
+          ...p,
+          batches: (p.batches || []).map((b) => ({
+            ...b,
+            mrp: customPrice,
+          })),
+        };
+      });
+    }
+
+    return list;
+  }, [products, currentTab.customer]);
+
   // Filtered Products for Search Dropdown
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim() && selectedCategory === "All") return [];
 
     const query = searchQuery.toLowerCase().trim();
-    return products
+    return activePartyProducts
       .filter((p) => {
         const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
         if (!matchesCategory) return false;
@@ -648,17 +694,31 @@ export default function POSBilling() {
         return nameMatch || barcodeMatch || skuMatch || brandMatch || catMatch;
       })
       .slice(0, 10);
-  }, [products, searchQuery, selectedCategory]);
+  }, [activePartyProducts, searchQuery, selectedCategory]);
 
   // Add Product to Current Tab
   const handleAddProduct = useCallback(
     (product: Product, customBatch?: Batch) => {
-      const batch = customBatch || product.batches?.[0] || {
+      const cust = currentTab.customer;
+      const rawBatch = customBatch || product.batches?.[0] || {
         id: `batch-${product.id}`,
         mrp: 100,
         costPrice: 0,
         stock: 99,
         batchNumber: "Default",
+      };
+
+      let effectiveMrp = rawBatch.mrp;
+      if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
+        const matched = cust.customItems.find((ci) => ci.productId === product.id);
+        if (matched && matched.customPrice !== undefined) {
+          effectiveMrp = matched.customPrice;
+        }
+      }
+
+      const batch: Batch = {
+        ...rawBatch,
+        mrp: effectiveMrp,
       };
 
       soundService.playScanBeep();
@@ -686,8 +746,8 @@ export default function POSBilling() {
             id: `row-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
             product,
             batch,
-            mrp: batch.mrp,
-            sp: batch.mrp, // Default SP = MRP
+            mrp: effectiveMrp,
+            sp: effectiveMrp, // Default SP = MRP (custom or standard)
             discountPercent: 0,
             discountType: "percent",
             quantity: 1,
@@ -3233,6 +3293,17 @@ export default function POSBilling() {
                   className="text-xs text-slate-500 text-center py-2 border border-dashed border-slate-300 hover:border-indigo-400 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
                 >
                   Walk-in Customer (Tap to attach phone / points)
+                </div>
+              )}
+
+              {currentTab.customer && (currentTab.customer.keepSamePrice === false || currentTab.customer.keepSameInventory === false) && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-[11px] text-indigo-700 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>
+                    Custom Party Catalog:
+                    {currentTab.customer.keepSamePrice === false && " Custom Rates"}
+                    {currentTab.customer.keepSameInventory === false && ` (${currentTab.customer.customItems?.length || 0} items only)`}
+                  </span>
                 </div>
               )}
             </div>

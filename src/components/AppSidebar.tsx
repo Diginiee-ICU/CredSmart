@@ -74,15 +74,37 @@ export function AppSidebar({
   const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus search input when dropdown opens
+  const isRouteActive = useMemo(
+    () => (url: string) =>
+      url === "/"
+        ? location.pathname === "/"
+        : location.pathname === url || location.pathname.startsWith(`${url}/`),
+    [location.pathname]
+  );
+
+  // Focus search input and auto-expand active sections when dropdown opens
   useEffect(() => {
     if (isOpen) {
       setSearchQuery("");
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 50);
+
+      // Auto-expand any group or item containing active route
+      const autoExpanded: Record<string, boolean> = {};
+      NAV_ROUTES.forEach((group) => {
+        group.items.forEach((item) => {
+          if (
+            isRouteActive(item.url) ||
+            item.children?.some((child) => isRouteActive(child.url))
+          ) {
+            autoExpanded[item.title] = true;
+          }
+        });
+      });
+      setExpandedMenus((prev) => ({ ...prev, ...autoExpanded }));
     }
-  }, [isOpen]);
+  }, [isOpen, isRouteActive]);
 
   // Close panel on outside click & escape key
   useEffect(() => {
@@ -154,14 +176,6 @@ export function AppSidebar({
       };
     }).filter((group) => group.items.length > 0);
   }, [userRole, userPermissions, searchQuery]);
-
-  const isRouteActive = useMemo(
-    () => (url: string) =>
-      url === "/"
-        ? location.pathname === "/"
-        : location.pathname === url || location.pathname.startsWith(`${url}/`),
-    [location.pathname]
-  );
 
   const toggleSubmenu = (title: string) => {
     setExpandedMenus((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -307,33 +321,37 @@ export function AppSidebar({
         ref={panelRef}
         className={cn(
           // Centered full-width Mega Menu below header
-          "fixed top-[6rem] sm:top-[4.75rem] left-4 right-4 max-w-7xl mx-auto z-[200]",
+          "fixed top-[3.75rem] sm:top-[5.5rem] md:top-[6rem] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-7xl mx-auto z-[200]",
           // Dimensions
-          "max-h-[calc(100vh-6rem)] flex flex-col",
+          "max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-7rem)] flex flex-col",
           // 3D Glass Surface Architecture - LIGHT THEME
-          "rounded-3xl overflow-hidden",
+          "rounded-2xl sm:rounded-3xl overflow-hidden",
           "bg-white/95 backdrop-blur-3xl",
           // Specular highlights & multi-tier 3D elevation
           "border border-slate-200/80",
-          "shadow-[0_0_0_1px_rgba(0,0,0,0.02),0_20px_50px_rgba(0,0,0,0.1),0_40px_100px_rgba(0,0,0,0.05)]",
+          "shadow-[0_0_0_1px_rgba(0,0,0,0.02),0_20px_50px_rgba(0,0,0,0.12),0_40px_100px_rgba(0,0,0,0.08)]",
           // Dropdown Entrance Animation from TOP
-          "animate-in fade-in slide-in-from-top-6 zoom-in-[0.98] duration-300 ease-out select-none"
+          "animate-in fade-in slide-in-from-top-4 zoom-in-[0.98] duration-300 ease-out select-none"
         )}
         style={{ transformOrigin: "top center" }}
       >
         {/* Dropdown Top Anchor Pointer Indicator */}
-        <div className="absolute -top-2 left-10 w-4 h-4 rotate-45 bg-white border-t border-l border-slate-200 shadow-sm" />
+        <div className="absolute -top-2 left-6 sm:left-10 w-4 h-4 rotate-45 bg-white border-t border-l border-slate-200 shadow-xs" />
 
-        {/* ── Dropdown Header Strip ── */}
-        <div className="shrink-0 px-6 pt-4 pb-3.5 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 via-white to-slate-50">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img
-                src="/IMG_9301.GIF"
-                alt="CredSmart Mega Menu"
-                className="h-10 w-auto object-contain drop-shadow-sm"
-              />
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse hidden sm:block" />
+        {/* ── Dropdown Header Strip (NO LOGO - Clean Modules Directory Header) ── */}
+        <div className="shrink-0 px-4 sm:px-6 pt-3.5 pb-3 sm:pt-4 sm:pb-3.5 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-[0_4px_16px_rgba(245,158,11,0.3)] shrink-0">
+                <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider font-mono truncate">Navigation &amp; Modules</h2>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse hidden sm:block" />
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 truncate font-sans">Quick navigation across all business modules &amp; sub-menus</p>
+              </div>
             </div>
 
             {/* Quick Search Input */}
@@ -344,7 +362,7 @@ export function AppSidebar({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search modules & shortcuts..."
+                placeholder="Search modules, sub-menus & shortcuts..."
                 className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-100 border border-slate-200 focus:border-amber-400 focus:bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-hidden transition-all shadow-inner font-sans"
               />
               {searchQuery && (
@@ -374,7 +392,7 @@ export function AppSidebar({
           </div>
         </div>
 
-        {/* ── Quick Access 4-Tile Launchpad (Mobile only or when searching) ── */}
+        {/* ── Quick Access Mobile Search ── */}
         <div className="sm:hidden shrink-0 px-4 py-3 border-b border-slate-200 bg-slate-50">
            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -382,14 +400,14 @@ export function AppSidebar({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search modules..."
+                placeholder="Search modules & sub-menus..."
                 className="w-full pl-8 pr-7 py-2 rounded-xl bg-slate-100 border border-slate-200 focus:border-amber-400 focus:bg-white text-xs text-slate-700 placeholder-slate-400 focus:outline-hidden transition-all shadow-inner"
               />
             </div>
         </div>
 
         {/* ── Mega Menu 3D Grid Content ── */}
-        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 sm:p-8 scrollbar-thin">
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-5 sm:p-7 scrollbar-thin">
           {filteredNavRouteGroups.length === 0 ? (
             <div className="py-16 text-center">
               <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 border border-rose-100">
@@ -399,17 +417,17 @@ export function AppSidebar({
               <p className="text-xs text-slate-500 mt-1">Try a different keyword</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
               {filteredNavRouteGroups.map((group, gIdx) => (
                 <div 
                   key={gIdx} 
-                  className="relative group/card flex flex-col p-5 rounded-[1.5rem] bg-white border border-slate-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover-3d-glow"
+                  className="relative group/card flex flex-col p-4 sm:p-5 rounded-2xl sm:rounded-[1.5rem] bg-white border border-slate-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover-3d-glow"
                 >
                   {/* Subtle Top Glow on Hover */}
                   <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-indigo-500/0 to-transparent group-hover/card:via-indigo-500/30 transition-all duration-500" />
                   
                   {/* Category Header */}
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3.5">
                     <div className="w-1 h-3.5 bg-gradient-to-b from-amber-400 to-rose-500 rounded-full" />
                     <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 font-mono">
                       {group.label}
@@ -420,49 +438,52 @@ export function AppSidebar({
                   </div>
 
                   {/* Items List */}
-                  <div className="flex-1 space-y-1.5">
+                  <div className="flex-1 space-y-2">
                     {group.items.map((item) => {
                       const hasChildren = Boolean(item.children?.length);
                       const isChildActive = hasChildren && item.children?.some((c) => isRouteActive(c.url));
-                      const active = isRouteActive(item.url) || isChildActive;
+                      const isSelfActive = isRouteActive(item.url);
+                      const active = isSelfActive || isChildActive;
                       const isExpanded = expandedMenus[item.title] || Boolean(searchQuery);
 
                       return (
                         <div key={item.url} className="space-y-1">
                           <div
                             className={cn(
-                              "w-full flex items-center justify-between gap-1 pr-1.5 pl-2.5 py-1.5 rounded-xl text-sm font-semibold transition-all duration-200 text-left group/item relative overflow-hidden",
+                              "w-full flex items-center justify-between gap-1.5 p-1 rounded-xl text-sm font-semibold transition-all duration-200 group/item relative border",
                               active
-                                ? "bg-amber-50 text-amber-900 shadow-sm border border-amber-200"
-                                : "bg-transparent hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent hover:border-slate-200/60"
+                                ? "bg-amber-50/80 text-amber-950 border-amber-200/90 shadow-2xs"
+                                : "bg-transparent hover:bg-slate-50/80 text-slate-700 hover:text-slate-900 border-transparent hover:border-slate-200"
                             )}
                           >
+                            {/* Main clickable action */}
                             <button
                               type="button"
                               onClick={() => handleNavigate(item.url)}
-                              className="flex items-center gap-3 min-w-0 flex-1 py-0.5 cursor-pointer text-left hover-3d-glow"
+                              className="flex items-center gap-2.5 min-w-0 flex-1 px-2 py-1.5 cursor-pointer text-left rounded-lg transition-colors"
                             >
-                                <div
-                                  className={cn(
-                                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/item:scale-110 group-hover/item:rotate-[-4deg]",
-                                    active
-                                      ? "bg-amber-100 text-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
-                                      : "bg-slate-100 text-slate-500 group-hover/item:text-indigo-600 group-hover/item:bg-indigo-50"
-                                  )}
-                                >
-                                  <item.icon className="w-3.5 h-3.5 stroke-[2.2]" />
-                                </div>
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                   <span className="truncate group-hover/item:translate-x-0.5 transition-transform text-xs sm:text-sm">{item.title}</span>
-                                   {item.badge && (
-                                     <span className="px-1.5 py-0.5 rounded-md text-[8px] font-black bg-rose-100 text-rose-700 border border-rose-200 font-mono shrink-0">
-                                       {item.badge}
-                                     </span>
-                                   )}
-                                </div>
+                              <div
+                                className={cn(
+                                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover/item:scale-105",
+                                  active
+                                    ? "bg-amber-100 text-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                                    : "bg-slate-100 text-slate-500 group-hover/item:text-amber-600 group-hover/item:bg-amber-50"
+                                )}
+                              >
+                                <item.icon className="w-3.5 h-3.5 stroke-[2.2]" />
+                              </div>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                 <span className="truncate text-xs sm:text-sm font-semibold">{item.title}</span>
+                                 {item.badge && (
+                                   <span className="px-1.5 py-0.2 rounded-md text-[8px] font-black bg-rose-100 text-rose-700 border border-rose-200 font-mono shrink-0">
+                                     {item.badge}
+                                   </span>
+                                 )}
+                              </div>
                             </button>
                             
-                            <div className="flex items-center shrink-0">
+                            {/* Submenu Dropdown Button */}
+                            <div className="flex items-center shrink-0 pr-1">
                                 {hasChildren ? (
                                     <button
                                       type="button"
@@ -471,47 +492,62 @@ export function AppSidebar({
                                         e.stopPropagation();
                                         toggleSubmenu(item.title);
                                       }}
-                                      className="p-1.5 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer flex items-center justify-center hover-3d-glow"
-                                      title={`Toggle ${item.title} Menu`}
+                                      aria-label={`Toggle sub-menu for ${item.title}`}
+                                      aria-expanded={isExpanded}
+                                      className={cn(
+                                        "w-7 h-7 flex items-center justify-center rounded-lg border transition-all cursor-pointer",
+                                        isExpanded
+                                          ? "bg-amber-100/80 border-amber-300 text-amber-700 shadow-2xs"
+                                          : "bg-slate-100/70 hover:bg-slate-200/80 border-slate-200 text-slate-500 hover:text-slate-800"
+                                      )}
+                                      title={isExpanded ? `Collapse ${item.title} sub-menu` : `Expand ${item.title} sub-menu`}
                                     >
                                       <ChevronDown
                                         className={cn(
-                                          "w-4 h-4 transition-transform duration-300",
-                                          isExpanded ? "rotate-180 text-amber-500" : "text-slate-400 group-hover/item:text-slate-600"
+                                          "w-3.5 h-3.5 stroke-[2.5] transition-transform duration-200",
+                                          isExpanded ? "rotate-180 text-amber-600" : "text-slate-500"
                                         )}
                                       />
                                     </button>
                                 ) : (
-                                    <ArrowUpRight className="w-3.5 h-3.5 mr-2 text-slate-400 group-hover/item:text-indigo-500 transition-colors opacity-0 group-hover/item:opacity-100" />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleNavigate(item.url)}
+                                      className="p-1 text-slate-400 group-hover/item:text-amber-600 transition-colors opacity-0 group-hover/item:opacity-100 cursor-pointer"
+                                      title={`Go to ${item.title}`}
+                                    >
+                                      <ArrowUpRight className="w-3.5 h-3.5" />
+                                    </button>
                                 )}
                             </div>
                           </div>
 
                           {/* Render Children Accordion */}
                           {hasChildren && isExpanded && (
-                            <div className="ml-10 pl-3 py-1.5 border-l-2 border-slate-200 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="ml-6 pl-3 py-1 border-l-2 border-amber-200 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
                               {item.children?.map((child) => {
                                 const childActive = isRouteActive(child.url);
                                 return (
-                                  <NavLink
+                                  <button
                                     key={child.title}
-                                    to={child.url}
-                                    onClick={onClose}
+                                    type="button"
+                                    onClick={() => handleNavigate(child.url)}
                                     className={cn(
-                                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer group/child",
+                                      "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left group/child",
                                       childActive
-                                        ? "text-amber-700 bg-amber-50 border border-amber-200 shadow-sm"
-                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                                        ? "text-amber-900 bg-amber-100/70 border border-amber-200 font-bold shadow-2xs"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                                     )}
                                   >
                                     <span
                                       className={cn(
-                                        "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300 group-hover/child:scale-150",
-                                        childActive ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" : "bg-slate-300 group-hover/child:bg-indigo-500"
+                                        "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200 group-hover/child:scale-125",
+                                        childActive ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]" : "bg-slate-300 group-hover/child:bg-amber-500"
                                       )}
                                     />
-                                    <span className="truncate group-hover/child:translate-x-0.5 transition-transform">{child.title}</span>
-                                  </NavLink>
+                                    <span className="truncate group-hover/child:translate-x-0.5 transition-transform flex-1">{child.title}</span>
+                                    <ArrowUpRight className="w-3 h-3 text-slate-400 opacity-0 group-hover/child:opacity-100 transition-opacity shrink-0" />
+                                  </button>
                                 );
                               })}
                             </div>
@@ -527,7 +563,7 @@ export function AppSidebar({
         </nav>
 
         {/* ── Dropdown Footer Bar ── */}
-        <div className="shrink-0 px-6 py-3.5 border-t border-slate-200/80 bg-slate-50 flex items-center justify-between rounded-b-3xl">
+        <div className="shrink-0 px-6 py-3 border-t border-slate-200/80 bg-slate-50 flex items-center justify-between rounded-b-3xl">
           <div className="flex items-center gap-2 text-[10px] sm:text-xs text-emerald-600 font-mono">
             <Shield className="w-3.5 h-3.5 text-emerald-500" />
             <span>256-Bit SSL • Enterprise Secure • GST Compliant</span>

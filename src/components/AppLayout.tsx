@@ -287,26 +287,21 @@ export default function AppLayout() {
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
-      {/* Mobile navigation dock and drawer */}
-      <div className="md:hidden">
-        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      </div>
-
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="h-[5.5rem] sm:h-[4.5rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 z-10 shadow-sm bg-white dark:bg-slate-900/90">
+        <header className="h-14 sm:h-20 md:h-[5.5rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
-            <div className="flex items-center gap-2 sm:gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
               <NavLink
                 to={ROUTE_PATHS.dashboard}
                 title="CredSmart Dashboard"
-                className="flex items-center rounded-xl overflow-hidden hover:scale-[1.03] transition-transform duration-200 cursor-pointer hover-3d-glow"
+                className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
               >
                 <img
                   src="/IMG_9301.GIF"
                   alt="CredSmart"
-                  className="h-20 sm:h-14 w-auto max-w-[260px] sm:max-w-[180px] object-contain rounded-xl drop-shadow-md"
+                  className="h-8 sm:h-14 md:h-16 w-auto max-w-[120px] sm:max-w-[280px] md:max-w-[340px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -318,16 +313,16 @@ export default function AppLayout() {
                 aria-expanded={sidebarOpen}
                 title={sidebarOpen ? "Close Menu" : "Open Menu"}
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-bold font-mono uppercase tracking-widest cursor-pointer border transition-all duration-200 select-none",
+                  "flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
                   sidebarOpen
-                    ? "bg-amber-500/15 border-amber-400/50 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
-                    : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-amber-400/40 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
+                    ? "bg-amber-500/15 border-amber-400/50 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                    : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400/50 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
                 )}
               >
                 <ChevronDown
                   className={cn(
-                    "w-3.5 h-3.5 stroke-[2.5] transition-transform duration-300",
-                    sidebarOpen ? "rotate-180" : ""
+                    "w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] transition-transform duration-300",
+                    sidebarOpen ? "rotate-180 text-amber-500" : ""
                   )}
                 />
               </button>
@@ -354,7 +349,7 @@ export default function AppLayout() {
             <div className="hidden lg:flex items-center max-w-xs w-full mx-2">
               <button
                 onClick={() => setOpenCommand(true)}
-                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-12 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-sm group backdrop-blur-md cursor-pointer hover-3d-glow"
+                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-12 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
               >
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
                 <span className="truncate">Search...</span>
@@ -363,23 +358,35 @@ export default function AppLayout() {
             </div>
 
             {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
               {/* Mobile search */}
-              <button onClick={() => setOpenCommand(true)} className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer hover-3d-glow" title="Search">
-                <Search className="w-4 h-4" />
+              <button
+                onClick={() => setOpenCommand(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer hover-3d-glow shrink-0"
+                title="Search"
+              >
+                <Search className="w-3.5 h-3.5" />
               </button>
 
               {/* New Invoice split button */}
               <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                <div className="flex items-center rounded-xl glowing-btn-amber shadow-md select-none">
-                  <button type="button" onClick={() => setSalesInvoiceModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow">
-                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                <div className="flex items-center rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSalesInvoiceModalOpen(true)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                  >
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                     <span className="hidden sm:inline">New Invoice</span>
-                    <span className="sm:hidden">Invoice</span>
+                    <span className="sm:hidden text-[11px] font-bold">Bill</span>
                   </button>
                   <DropdownMenuTrigger asChild>
-                    <button type="button" className="px-1.5 py-1.5 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow" aria-label="More creation options">
-                      <ChevronDown className="w-3.5 h-3.5" />
+                    <button
+                      type="button"
+                      className="px-1 sm:px-1.5 py-1.5 sm:py-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                      aria-label="More creation options"
+                    >
+                      <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </button>
                   </DropdownMenuTrigger>
                 </div>
@@ -415,7 +422,7 @@ export default function AppLayout() {
               </DropdownMenu>
 
               {/* Bell */}
-              <button onClick={() => setNotifOpen(true)} className={cn("p-2 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer", pendingCount > 0 ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400" : "border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")} title="Notifications">
+              <button onClick={() => setNotifOpen(true)} className={cn("p-2 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer shrink-0", pendingCount > 0 ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400" : "border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")} title="Notifications">
                 <Bell className="w-4 h-4" />
                 {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
                 {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
@@ -424,8 +431,8 @@ export default function AppLayout() {
               {/* Profile dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs font-black shadow-md hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow" title={org?.name || "Account"}>
-                    {org?.name ? org.name.charAt(0).toUpperCase() : "CA"}
+                  <button type="button" className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-[11px] sm:text-xs font-black shadow-xs hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0" title={org?.name || "Account"}>
+                    {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150">

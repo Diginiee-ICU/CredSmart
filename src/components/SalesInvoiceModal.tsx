@@ -59,10 +59,10 @@ import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
-import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 import { useProducts } from "@/context/ProductsContext";
 import { networkInvoicingService } from "@/services/networkInvoicingService";
 import { ConnectedOrgInfo } from "@/types/networkInvoicing";
+import { PartyCustomItem } from "@/types/parties";
 
 interface CustomerOption {
   id: string;
@@ -72,6 +72,10 @@ interface CustomerOption {
   gstin?: string;
   address?: string;
   balance?: number;
+  custom_fields?: Record<string, any>;
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
+  customItems?: PartyCustomItem[];
 }
 
 interface ProductCatalogOption {
@@ -229,10 +233,31 @@ export function SalesInvoiceModal({
   // selected items can be inserted/handled for that row if needed.
   const [addItemsTargetRow, setAddItemsTargetRow] = useState<number | null>(null);
 
+  const activeCustomer = useMemo(() => {
+    return customers.find((c) => c.id === selectedCustomerId) || null;
+  }, [customers, selectedCustomerId]);
+
   const billItemOptions: BillItemOption[] = useMemo(() => {
-    return productsCatalog.map((p) => {
+    let catalog = productsCatalog || [];
+
+    if (activeCustomer && activeCustomer.keepSameInventory === false && activeCustomer.customItems && activeCustomer.customItems.length > 0) {
+      const allowedIds = new Set(activeCustomer.customItems.map((ci) => ci.productId));
+      catalog = catalog.filter((p) => allowedIds.has(p.id));
+    }
+
+    const customPriceMap = new Map<string, number>();
+    if (activeCustomer && activeCustomer.keepSamePrice === false && activeCustomer.customItems) {
+      activeCustomer.customItems.forEach((ci) => {
+        customPriceMap.set(ci.productId, ci.customPrice);
+      });
+    }
+
+    return catalog.map((p) => {
       const tags = (p as any).tags || {};
-      const selling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.[0]?.mrp || 0);
+      const defaultSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
+        ? Number(tags.selling_price)
+        : (p.product_batches?.[0]?.mrp || 0);
+      const selling = customPriceMap.has(p.id) ? (customPriceMap.get(p.id) ?? defaultSelling) : defaultSelling;
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
       const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
@@ -253,7 +278,7 @@ export function SalesInvoiceModal({
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
       };
     });
-  }, [productsCatalog]);
+  }, [productsCatalog, activeCustomer]);
 
   // Line items
   const [items, setItems] = useState<DocumentLineItem[]>([
@@ -372,7 +397,7 @@ export function SalesInvoiceModal({
     try {
       const { data: custData } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address")
+        .select("id, name, phone, email, address, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -393,10 +418,21 @@ export function SalesInvoiceModal({
       });
 
       if (custData) {
-        const merged = custData.map((c) => ({
-          ...c,
-          balance: balanceMap[c.id] || 0,
-        }));
+        const merged = custData.map((c: any) => {
+          const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
+          const keepSamePrice = cf.keepSamePrice !== false;
+          const keepSameInventory = cf.keepSameInventory !== false;
+          const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+
+          return {
+            ...c,
+            balance: balanceMap[c.id] || 0,
+            custom_fields: cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          };
+        });
         setCustomers(merged);
       }
     } catch (e) {
@@ -1091,11 +1127,26 @@ export function SalesInvoiceModal({
   }, [customers, customerSearch]);
 
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
-    const safeCatalog = (productsCatalog || []).filter(Boolean);
+    let safeCatalog = (productsCatalog || []).filter(Boolean);
+
+    if (activeCustomer && activeCustomer.keepSameInventory === false && activeCustomer.customItems && activeCustomer.customItems.length > 0) {
+      const allowedIds = new Set(activeCustomer.customItems.map((ci) => ci.productId));
+      safeCatalog = safeCatalog.filter((p) => allowedIds.has(p.id));
+    }
+
+    const customPriceMap = new Map<string, number>();
+    if (activeCustomer && activeCustomer.keepSamePrice === false && activeCustomer.customItems) {
+      activeCustomer.customItems.forEach((ci) => {
+        customPriceMap.set(ci.productId, ci.customPrice);
+      });
+    }
 
     const toSuggestion = (p: ProductCatalogOption): UnifiedProductSuggestion => {
       const tags = (p as any).tags || {};
-      const rate = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
+      const defaultRate = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
+        ? Number(tags.selling_price)
+        : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
+      const rate = customPriceMap.has(p.id) ? (customPriceMap.get(p.id) ?? defaultRate) : defaultRate;
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
       const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
@@ -1491,7 +1542,7 @@ export function SalesInvoiceModal({
                           }}
                         />
                         <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
-                          Same as party address
+                          Same as Party Address
                         </Label>
                       </div>
                     </div>
@@ -1690,6 +1741,21 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* 3. LINE ITEMS TABLE (Direct POS-Style + Auto Add Next Line) */}
               {/* ───────────────────────────────────────────────────────────── */}
+              {activeCustomer && (activeCustomer.keepSamePrice === false || activeCustomer.keepSameInventory === false) && (
+                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs mb-2">
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      <strong>Custom Party Catalog Active:</strong> {activeCustomer.name}
+                      {activeCustomer.keepSamePrice === false && " • Custom Prices Applied"}
+                      {activeCustomer.keepSameInventory === false && ` • Restricted to ${activeCustomer.customItems?.length || 0} product(s)`}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] bg-background font-semibold">
+                    Party Rule Active
+                  </Badge>
+                </div>
+              )}
               <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-xs border-collapse">
