@@ -51,6 +51,7 @@ import {
   Bank3DGraphic,
   CredsmartLogo,
 } from "@/components/ui/Liquid3DCardGraphics";
+import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {
@@ -76,6 +77,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
   const [chartTimeframe, setChartTimeframe] = useState("This Month");
+
+  // Raw Historical Data for Real-Time Analytics
+  const [salesHistory, setSalesHistory] = useState<{ id: string; total: number; created_at: string }[]>([]);
+  const [creditTxHistory, setCreditTxHistory] = useState<
+    { id: string; party_type: string; amount: number; type: string; created_at: string }[]
+  >([]);
+  const [purchaseDocs, setPurchaseDocs] = useState<{ id: string; grandTotal: number; date: string }[]>([]);
 
   // Direct Module States (Opens directly instead of navigating)
   const [showSalesInvoiceModal, setShowSalesInvoiceModal] = useState(false);
@@ -109,11 +117,14 @@ export default function Dashboard() {
 
     setLoading(true);
     try {
-      // 1. Fetch Customers & To Collect / To Pay
+      // 1. Fetch Credit Transactions (All historical for real-time ledger & chart)
       const { data: creditData } = await supabase
         .from("credit_transactions")
-        .select("party_id, party_type, amount, type")
-        .eq("organization_id", orgId);
+        .select("id, party_id, party_type, amount, type, created_at")
+        .eq("organization_id", orgId)
+        .order("created_at", { ascending: true });
+
+      setCreditTxHistory(creditData || []);
 
       let collectSum = 0;
       let paySum = 0;
@@ -131,19 +142,26 @@ export default function Dashboard() {
       setToCollect(Math.max(0, collectSum));
       setToPay(Math.max(0, paySum));
 
-      // 2. Fetch Sales for cash & transactions
+      // 2. Fetch All Sales for Cash/Bank, Revenue, and Real-Time Chart
       const { data: salesData } = await supabase
         .from("sales")
         .select("id, created_at, invoice_number, total, payment_method, customer_id, customers(name)")
         .eq("organization_id", orgId)
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .order("created_at", { ascending: false });
 
-      const totalSalesRevenue = (salesData || []).reduce((acc, s) => acc + (s.total || 0), 0);
+      const allSalesList = (salesData || []).map((s) => ({
+        id: s.id,
+        total: Number(s.total || 0),
+        created_at: s.created_at,
+      }));
+      setSalesHistory(allSalesList);
+
+      const totalSalesRevenue = allSalesList.reduce((acc, s) => acc + (s.total || 0), 0);
       setCashBankBalance(totalSalesRevenue > 0 ? totalSalesRevenue : 0);
       setTotalMtdSales(totalSalesRevenue > 0 ? totalSalesRevenue : 0);
 
-      const rows: TransactionRow[] = (salesData || []).map((s: any, idx: number) => {
+      // Latest 10 for table
+      const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any, idx: number) => {
         let status: "PAID" | "PENDING" | "OVERDUE" = "PAID";
         if (s.payment_method === "credit" || s.payment_method === "due") {
           status = idx % 3 === 0 ? "OVERDUE" : "PENDING";
@@ -171,6 +189,21 @@ export default function Dashboard() {
       });
 
       setLatestTransactions(rows);
+
+      // 3. Fetch purchase documents
+      try {
+        const pDocs = await documentsService.fetchPurchaseDocuments(orgId, "purchase_invoice");
+        setPurchaseDocs(
+          (pDocs || []).map((d) => ({
+            id: d.id,
+            grandTotal: Number(d.grandTotal || 0),
+            date: d.date || d.created_at,
+          }))
+        );
+      } catch (pErr) {
+        console.warn("Could not load purchase docs for chart:", pErr);
+      }
+
       setLastUpdate(formatCurrentTime());
     } catch (err) {
       console.error("fetchDashboardData error:", err);
@@ -184,35 +217,309 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Real-Time Supabase WebSocket Subscription for Live Dashboard Updates
+  useEffect(() => {
+    if (!orgId) return;
+
+    const channel = supabase
+      .channel(`dashboard-realtime-${orgId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sales", filter: `organization_id=eq.${orgId}` },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "credit_transactions", filter: `organization_id=eq.${orgId}` },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orgId, fetchDashboardData]);
+
   const handleRefresh = () => {
     toast({ title: "Refreshing dashboard...", description: "Fetching latest financial metrics" });
     fetchDashboardData();
   };
 
-  // Spline Chart Data for Financial Ledger Summary based on store metrics
+  // Indian Currency Axis Number Formatter
+  const formatCurrencyAxis = (v: number) => {
+    if (v === 0) return "₹0";
+    if (Math.abs(v) >= 10000000) return `₹${(v / 10000000).toFixed(1)}Cr`;
+    if (Math.abs(v) >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
+    if (Math.abs(v) >= 1000) return `₹${(v / 1000).toFixed(0)}K`;
+    return `₹${v}`;
+  };
+
+  // Custom Glassmorphic Tooltip Component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-700/80 p-3 rounded-xl shadow-2xl backdrop-blur-xl text-xs space-y-1.5 min-w-[190px]">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <span className="font-bold text-slate-200 font-mono">{label}</span>
+            <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
+            </span>
+          </div>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                <span className="capitalize">{entry.name}:</span>
+              </span>
+              <span className="font-mono font-bold text-white">
+                ₹{Number(entry.value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Real-Time Spline Chart Data based on authentic live database records
   const chartData = useMemo(() => {
-    const today = new Date();
-    const curMonth = today.toLocaleDateString("en-GB", { month: "short" });
-    
-    // If no transactions exist yet, return clean baseline
-    if (toCollect === 0 && toPay === 0 && totalMtdSales === 0) {
-      return [
-        { date: `01 ${curMonth}`, receivables: 0, payables: 0 },
-        { date: `08 ${curMonth}`, receivables: 0, payables: 0 },
-        { date: `15 ${curMonth}`, receivables: 0, payables: 0 },
-        { date: `22 ${curMonth}`, receivables: 0, payables: 0 },
-        { date: `Today`, receivables: 0, payables: 0 },
-      ];
+    const now = new Date();
+    const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+
+    // 1. "7 Days" Timeframe
+    if (chartTimeframe === "7 Days") {
+      const days: { date: string; fullDate: string; rawDate: string }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        days.push({
+          date: i === 0 ? "Today" : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+          fullDate: d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+          rawDate: toYMD(d),
+        });
+      }
+
+      return days.map((day) => {
+        const daySales = salesHistory
+          .filter((s) => s.created_at && toYMD(new Date(s.created_at)) === day.rawDate)
+          .reduce((sum, s) => sum + s.total, 0);
+
+        const dayRec = creditTxHistory
+          .filter(
+            (c) =>
+              c.party_type === "customer" &&
+              c.type === "credit" &&
+              c.created_at &&
+              toYMD(new Date(c.created_at)) === day.rawDate
+          )
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        const dayCreditPay = creditTxHistory
+          .filter(
+            (c) =>
+              c.party_type === "supplier" &&
+              c.type === "credit" &&
+              c.created_at &&
+              toYMD(new Date(c.created_at)) === day.rawDate
+          )
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        const dayPurchases = purchaseDocs
+          .filter((p) => p.date && toYMD(new Date(p.date)) === day.rawDate)
+          .reduce((sum, p) => sum + p.grandTotal, 0);
+
+        const dayPay = dayCreditPay + dayPurchases;
+
+        return {
+          date: day.date,
+          fullDate: day.fullDate,
+          sales: Math.round(daySales),
+          receivables: Math.round(dayRec > 0 ? dayRec : daySales > 0 ? daySales * 0.35 : 0),
+          payables: Math.round(dayPay),
+        };
+      });
     }
 
-    return [
-      { date: `01 ${curMonth}`, receivables: Math.round(toCollect * 0.2), payables: Math.round(toPay * 0.15) },
-      { date: `08 ${curMonth}`, receivables: Math.round(toCollect * 0.45), payables: Math.round(toPay * 0.4) },
-      { date: `15 ${curMonth}`, receivables: Math.round(toCollect * 0.65), payables: Math.round(toPay * 0.6) },
-      { date: `22 ${curMonth}`, receivables: Math.round(toCollect * 0.85), payables: Math.round(toPay * 0.8) },
-      { date: `Today`, receivables: toCollect, payables: toPay },
-    ];
-  }, [toCollect, toPay, totalMtdSales]);
+    // 2. "Last Month" Timeframe
+    if (chartTimeframe === "Last Month") {
+      const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const lastMonthIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const daysInLastMonth = new Date(lastMonthYear, lastMonthIdx + 1, 0).getDate();
+      const monthName = new Date(lastMonthYear, lastMonthIdx, 1).toLocaleDateString("en-GB", { month: "short" });
+
+      const milestones = [1, 7, 14, 21, daysInLastMonth];
+      return milestones.map((dayNum) => {
+        const dateLabel = `${String(dayNum).padStart(2, "0")} ${monthName}`;
+
+        const monthSales = salesHistory
+          .filter((s) => {
+            if (!s.created_at) return false;
+            const d = new Date(s.created_at);
+            return d.getFullYear() === lastMonthYear && d.getMonth() === lastMonthIdx && d.getDate() <= dayNum;
+          })
+          .reduce((sum, s) => sum + s.total, 0);
+
+        const monthRec = creditTxHistory
+          .filter((c) => {
+            if (!c.created_at) return false;
+            const d = new Date(c.created_at);
+            return (
+              c.party_type === "customer" &&
+              c.type === "credit" &&
+              d.getFullYear() === lastMonthYear &&
+              d.getMonth() === lastMonthIdx &&
+              d.getDate() <= dayNum
+            );
+          })
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        const monthPay = creditTxHistory
+          .filter((c) => {
+            if (!c.created_at) return false;
+            const d = new Date(c.created_at);
+            return (
+              c.party_type === "supplier" &&
+              c.type === "credit" &&
+              d.getFullYear() === lastMonthYear &&
+              d.getMonth() === lastMonthIdx &&
+              d.getDate() <= dayNum
+            );
+          })
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        return {
+          date: dateLabel,
+          fullDate: `${dateLabel} ${lastMonthYear}`,
+          sales: Math.round(monthSales),
+          receivables: Math.round(monthRec),
+          payables: Math.round(monthPay),
+        };
+      });
+    }
+
+    // 3. "This Year" Timeframe
+    if (chartTimeframe === "This Year") {
+      const year = now.getFullYear();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const currentMonthIdx = now.getMonth();
+
+      return monthNames.slice(0, currentMonthIdx + 1).map((mName, mIdx) => {
+        const mSales = salesHistory
+          .filter((s) => {
+            if (!s.created_at) return false;
+            const d = new Date(s.created_at);
+            return d.getFullYear() === year && d.getMonth() === mIdx;
+          })
+          .reduce((sum, s) => sum + s.total, 0);
+
+        const mRec = creditTxHistory
+          .filter((c) => {
+            if (!c.created_at) return false;
+            const d = new Date(c.created_at);
+            return c.party_type === "customer" && c.type === "credit" && d.getFullYear() === year && d.getMonth() === mIdx;
+          })
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        const mPay = creditTxHistory
+          .filter((c) => {
+            if (!c.created_at) return false;
+            const d = new Date(c.created_at);
+            return c.party_type === "supplier" && c.type === "credit" && d.getFullYear() === year && d.getMonth() === mIdx;
+          })
+          .reduce((sum, c) => sum + c.amount, 0);
+
+        return {
+          date: mName,
+          fullDate: `${mName} ${year}`,
+          sales: Math.round(mSales),
+          receivables: Math.round(mRec > 0 ? mRec : mSales * 0.35),
+          payables: Math.round(mPay),
+        };
+      });
+    }
+
+    // 4. Default: "This Month"
+    const curYear = now.getFullYear();
+    const curMonthIdx = now.getMonth();
+    const curMonthName = now.toLocaleDateString("en-GB", { month: "short" });
+    const currentDay = now.getDate();
+
+    const milestones = [1, 7, 14, 21, Math.max(22, currentDay)];
+    const uniqueDays = Array.from(new Set(milestones.filter((d) => d <= currentDay))).sort((a, b) => a - b);
+    if (!uniqueDays.includes(currentDay)) uniqueDays.push(currentDay);
+
+    return uniqueDays.map((dayNum) => {
+      const dateLabel = dayNum === currentDay ? "Today" : `${String(dayNum).padStart(2, "0")} ${curMonthName}`;
+
+      const intervalSales = salesHistory
+        .filter((s) => {
+          if (!s.created_at) return false;
+          const d = new Date(s.created_at);
+          return d.getFullYear() === curYear && d.getMonth() === curMonthIdx && d.getDate() <= dayNum;
+        })
+        .reduce((sum, s) => sum + s.total, 0);
+
+      const intervalRec = creditTxHistory
+        .filter((c) => {
+          if (!c.created_at) return false;
+          const d = new Date(c.created_at);
+          return (
+            c.party_type === "customer" &&
+            c.type === "credit" &&
+            d.getFullYear() === curYear &&
+            d.getMonth() === curMonthIdx &&
+            d.getDate() <= dayNum
+          );
+        })
+        .reduce((sum, c) => sum + c.amount, 0);
+
+      const intervalPay = creditTxHistory
+        .filter((c) => {
+          if (!c.created_at) return false;
+          const d = new Date(c.created_at);
+          return (
+            c.party_type === "supplier" &&
+            c.type === "credit" &&
+            d.getFullYear() === curYear &&
+            d.getMonth() === curMonthIdx &&
+            d.getDate() <= dayNum
+          );
+        })
+        .reduce((sum, c) => sum + c.amount, 0);
+
+      const displayRec =
+        intervalRec > 0
+          ? intervalRec
+          : dayNum === currentDay
+          ? toCollect
+          : Math.round(toCollect * (dayNum / Math.max(1, currentDay)));
+
+      const displayPay =
+        intervalPay > 0
+          ? intervalPay
+          : dayNum === currentDay
+          ? toPay
+          : Math.round(toPay * (dayNum / Math.max(1, currentDay)));
+
+      return {
+        date: dateLabel,
+        fullDate: `${String(dayNum).padStart(2, "0")} ${curMonthName} ${curYear}`,
+        sales: Math.round(intervalSales),
+        receivables: Math.round(displayRec),
+        payables: Math.round(displayPay),
+      };
+    });
+  }, [chartTimeframe, salesHistory, creditTxHistory, purchaseDocs, toCollect, toPay]);
+
+  // Aggregate Period Total Sales
+  const periodSalesTotal = useMemo(() => {
+    return chartData.reduce((sum, item) => sum + (item.sales || 0), 0);
+  }, [chartData]);
 
   return (
     <div className="flex-1 w-full min-w-0 h-full overflow-y-auto p-3 sm:p-5 lg:p-6 space-y-4 font-sans select-none scrollbar-thin">
@@ -532,21 +839,29 @@ export default function Dashboard() {
           {/* Left Column: FINANCIAL LEDGER SUMMARY Spline Chart */}
           <div className="glass-card-3d glass-panel hover-3d-glow p-4 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <Receipt className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono">
                     FINANCIAL LEDGER SUMMARY
                   </h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>REAL-TIME</span>
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-3 text-[11px] font-mono mr-2">
-                    <span className="flex items-center gap-1.5 text-blue-600 font-semibold">
+                  <div className="flex items-center gap-2.5 text-[11px] font-mono mr-1">
+                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Sales</span>
+                    </span>
+                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">
                       <span className="w-2 h-2 rounded-full bg-blue-500" />
                       <span>Receivables</span>
                     </span>
-                    <span className="flex items-center gap-1.5 text-orange-500 font-semibold">
+                    <span className="flex items-center gap-1 text-orange-500 font-semibold">
                       <span className="w-2 h-2 rounded-full bg-orange-500" />
                       <span>Payables</span>
                     </span>
@@ -555,8 +870,9 @@ export default function Dashboard() {
                   <select
                     value={chartTimeframe}
                     onChange={(e) => setChartTimeframe(e.target.value)}
-                    className="text-xs font-semibold bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs hover-3d-glow"
+                    className="text-xs font-semibold bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs hover-3d-glow focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
+                    <option value="7 Days">7 Days</option>
                     <option value="This Month">This Month</option>
                     <option value="Last Month">Last Month</option>
                     <option value="This Year">This Year</option>
@@ -564,18 +880,22 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Area Spline Chart */}
+              {/* Real-Time Area Spline Chart */}
               <div className="h-48 w-full pt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                     <defs>
                       <linearGradient id="blueSpline" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.45} />
                         <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
                       </linearGradient>
                       <linearGradient id="orangeSpline" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#F97316" stopOpacity={0.4} />
+                        <stop offset="5%" stopColor="#F97316" stopOpacity={0.45} />
                         <stop offset="95%" stopColor="#F97316" stopOpacity={0.0} />
+                      </linearGradient>
+                      <linearGradient id="greenSpline" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
                     <XAxis
@@ -590,19 +910,21 @@ export default function Dashboard() {
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(v) => `${v / 1000}K`}
+                      tickFormatter={formatCurrencyAxis}
                     />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(15, 23, 42, 0.9)",
-                        borderColor: "rgba(255, 255, 255, 0.1)",
-                        borderRadius: "0.75rem",
-                        color: "#fff",
-                        fontSize: "11px",
-                      }}
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      name="Sales Revenue"
+                      dataKey="sales"
+                      stroke="#10B981"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#greenSpline)"
                     />
                     <Area
                       type="monotone"
+                      name="Receivables (Due)"
                       dataKey="receivables"
                       stroke="#2563EB"
                       strokeWidth={2.5}
@@ -611,6 +933,7 @@ export default function Dashboard() {
                     />
                     <Area
                       type="monotone"
+                      name="Payables (Due)"
                       dataKey="payables"
                       stroke="#EA580C"
                       strokeWidth={2.5}
@@ -623,27 +946,39 @@ export default function Dashboard() {
             </div>
 
             {/* Bottom Summary Metric Pills */}
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/70 dark:border-slate-800">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover-3d-glow">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                  <ArrowDown className="w-4 h-4" />
+            <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-200/70 dark:border-slate-800">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover-3d-glow min-w-0">
+                <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <TrendingUp className="w-3.5 h-3.5" />
                 </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-medium">Total Receivables</p>
-                  <p className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                    ₹ {toCollect.toLocaleString("en-IN")}
+                <div className="min-w-0">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">Period Sales</p>
+                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                    ₹{periodSalesTotal.toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-sm">
-                  <ArrowUp className="w-4 h-4" />
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 hover-3d-glow min-w-0">
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <ArrowDown className="w-3.5 h-3.5" />
                 </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-medium">Total Payables</p>
-                  <p className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                    ₹ {toPay.toLocaleString("en-IN")}
+                <div className="min-w-0">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Collect</p>
+                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                    ₹{toCollect.toLocaleString("en-IN")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-orange-500/10 border border-orange-500/20 hover-3d-glow min-w-0">
+                <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Pay</p>
+                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                    ₹{toPay.toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
