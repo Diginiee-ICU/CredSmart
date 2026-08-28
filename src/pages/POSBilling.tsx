@@ -80,6 +80,15 @@ import {
   isVoiceSupported,
   ParsedVoiceCommand,
 } from "@/utils/posVoiceService";
+import { SwipeableListItem } from "@/components/ui/SwipeableListItem";
+import {
+  playScanBeep,
+  playSuccessChime,
+  playDeleteThud,
+  triggerHapticScan,
+  triggerHapticSuccess,
+  triggerHapticDelete,
+} from "@/utils/soundAndHaptics";
 
 // --- Types ---
 
@@ -722,6 +731,8 @@ export default function POSBilling() {
       };
 
       soundService.playScanBeep();
+      playScanBeep();
+      triggerHapticScan();
 
       updateCurrentTab((tab) => {
         const existingIdx = tab.items.findIndex(
@@ -901,6 +912,23 @@ export default function POSBilling() {
       toast({ title: "Tab Closed", description: "Held bill was removed." });
     },
     [tabs, activeTabId]
+  );
+
+  // Cart Item Removal Handler with Haptics and Sound
+  const handleRemoveCartItem = useCallback(
+    (idx: number) => {
+      playDeleteThud();
+      triggerHapticDelete();
+      updateCurrentTab((tab) => {
+        const newItems = tab.items.filter((_, i) => i !== idx);
+        return {
+          ...tab,
+          items: newItems,
+          selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
+        };
+      });
+    },
+    [updateCurrentTab]
   );
 
   // Action Hotkey: Delete Selected Item [DEL]
@@ -1480,6 +1508,8 @@ export default function POSBilling() {
 
         // 4. Audio Chime & Success Feedback
         soundService.playSuccessChime();
+        playSuccessChime();
+        triggerHapticSuccess();
 
         // 5. Trigger Print Modal if requested
         if (shouldPrint || settings.autoPrintOnSave) {
@@ -2783,16 +2813,7 @@ export default function POSBilling() {
                           {/* DELETE ACTION */}
                           <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => {
-                                updateCurrentTab((tab) => {
-                                  const newItems = tab.items.filter((_, i) => i !== idx);
-                                  return {
-                                    ...tab,
-                                    items: newItems,
-                                    selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
-                                  };
-                                });
-                              }}
+                              onClick={() => handleRemoveCartItem(idx)}
                               className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-600 transition-colors"
                               title="Remove item"
                             >
@@ -2807,7 +2828,7 @@ export default function POSBilling() {
               </table>
             </div>
 
-            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Scrolling) */}
+            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Swipe-to-Delete) */}
             <div className="block lg:hidden p-3 space-y-2.5 pb-28 touch-pan-y overscroll-contain">
               {currentTab.items.length === 0 ? (
                 <div className="py-12 text-center text-slate-500 space-y-3">
@@ -2840,132 +2861,134 @@ export default function POSBilling() {
                     itemQty;
 
                   return (
-                    <div
+                    <SwipeableListItem
                       key={item.id}
-                      onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
-                      className={cn(
-                        "p-3 rounded-xl border transition-all bg-white shadow-2xs",
-                        isSelected
-                          ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30"
-                          : "border-slate-200 hover:border-slate-300"
-                      )}
+                      leftAction={{
+                        icon: <Trash2 className="w-5 h-5" />,
+                        label: "Delete",
+                        color: "bg-rose-600",
+                        onTrigger: () => handleRemoveCartItem(idx),
+                      }}
                     >
-                      {/* Header: Item Name + Delete Button */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                              #{idx + 1}
-                            </span>
-                            <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-500">
-                            <span>{item.itemCode}</span>
-                            {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateCurrentTab((tab) => {
-                              const newItems = tab.items.filter((_, i) => i !== idx);
-                              return {
-                                ...tab,
-                                items: newItems,
-                                selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
-                              };
-                            });
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
-                          title="Remove item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Price, Steppers, & Line Amount */}
-                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-                        {/* Selling Price & Discount */}
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                                handleOpenChangePrice();
-                              }}
-                              className="text-xs font-bold text-slate-900 font-mono hover:text-indigo-600 cursor-pointer underline decoration-dotted"
-                            >
-                              ₹{item.sp.toFixed(2)}
-                            </span>
-                            {item.discountPercent > 0 && (
-                              <span className="text-[9px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
+                      <div
+                        onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
+                        className={cn(
+                          "p-3 rounded-xl border transition-all bg-white shadow-2xs w-full",
+                          isSelected
+                            ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30"
+                            : "border-slate-200 hover:border-slate-300"
+                        )}
+                      >
+                        {/* Header: Item Name + Delete Button */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                                #{idx + 1}
                               </span>
-                            )}
+                              <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-500">
+                              <span>{item.itemCode}</span>
+                              {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
+                            </div>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono line-through">
-                            MRP: ₹{item.mrp.toFixed(2)}
-                          </span>
-                        </div>
 
-                        {/* Touch-Friendly Quantity Stepper */}
-                        <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => {
-                              updateCurrentTab((tab) => {
-                                const newItems = tab.items.map((it, i) => {
-                                  if (i === idx) {
-                                    return { ...it, quantity: Math.max(1, it.quantity - 1) };
-                                  }
-                                  return it;
-                                });
-                                return { ...tab, items: newItems };
-                              });
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveCartItem(idx);
                             }}
-                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
+                            title="Remove item (or swipe left)"
                           >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <span
-                            onClick={() => {
-                              updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                              handleOpenChangeQty();
-                            }}
-                            className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-slate-900 cursor-pointer hover:bg-slate-50"
-                          >
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateCurrentTab((tab) => {
-                                const newItems = tab.items.map((it, i) => {
-                                  if (i === idx) {
-                                    return { ...it, quantity: it.quantity + 1 };
-                                  }
-                                  return it;
-                                });
-                                return { ...tab, items: newItems };
-                              });
-                            }}
-                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Line Total */}
-                        <div className="text-right">
-                          <span className="text-sm font-black font-mono text-emerald-600">
-                            ₹{lineAmount.toFixed(2)}
-                          </span>
+                        {/* Price, Steppers, & Line Amount */}
+                        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+                          {/* Selling Price & Discount */}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                  handleOpenChangePrice();
+                                }}
+                                className="text-xs font-bold text-slate-900 font-mono hover:text-indigo-600 cursor-pointer underline decoration-dotted"
+                              >
+                                ₹{item.sp.toFixed(2)}
+                              </span>
+                              {item.discountPercent > 0 && (
+                                <span className="text-[9px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono line-through">
+                              MRP: ₹{item.mrp.toFixed(2)}
+                            </span>
+                          </div>
+
+                          {/* Touch-Friendly Quantity Stepper */}
+                          <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentTab((tab) => {
+                                  const newItems = tab.items.map((it, i) => {
+                                    if (i === idx) {
+                                      return { ...it, quantity: Math.max(1, it.quantity - 1) };
+                                    }
+                                    return it;
+                                  });
+                                  return { ...tab, items: newItems };
+                                });
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span
+                              onClick={() => {
+                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                handleOpenChangeQty();
+                              }}
+                              className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-slate-900 cursor-pointer hover:bg-slate-50"
+                            >
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentTab((tab) => {
+                                  const newItems = tab.items.map((it, i) => {
+                                    if (i === idx) {
+                                      return { ...it, quantity: it.quantity + 1 };
+                                    }
+                                    return it;
+                                  });
+                                  return { ...tab, items: newItems };
+                                });
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Line Total */}
+                          <div className="text-right">
+                            <span className="text-sm font-black font-mono text-emerald-600">
+                              ₹{lineAmount.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </SwipeableListItem>
                   );
                 })
               )}

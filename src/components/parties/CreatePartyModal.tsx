@@ -1169,113 +1169,136 @@ export function CreatePartyModal({
               </div>
 
               {/* Filter & Actions Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-                <div className="flex flex-1 items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Filter party products by Name, SKU, Barcode..."
-                      value={inventorySearch}
-                      onChange={(e) => setInventorySearch(e.target.value)}
-                      className="pl-8 h-9 text-xs"
-                    />
-                    {inventorySearch && (
-                      <button
-                        type="button"
-                        onClick={() => setInventorySearch("")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+              <div className="space-y-2.5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  <div className="flex flex-1 items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Filter party products by Name, SKU, Barcode..."
+                        value={inventorySearch}
+                        onChange={(e) => setInventorySearch(e.target.value)}
+                        className="pl-8 h-9 text-xs"
+                      />
+                      {inventorySearch && (
+                        <button
+                          type="button"
+                          onClick={() => setInventorySearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {catalogCategories.length > 0 && (
-                    <Select value={inventoryCategory} onValueChange={setInventoryCategory}>
-                      <SelectTrigger className="w-[140px] sm:w-[160px] h-9 text-xs shrink-0">
-                        <SelectValue placeholder="All Categories" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {catalogCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImportModal(true)}
+                      className="h-9 gap-1.5 text-xs font-semibold"
+                      title="Bulk import custom product price list from Excel/CSV"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
+                      Bulk Import CSV
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPickerProductIds(new Set());
+                        setPickerSearch("");
+                        setPickerCategory("all");
+                        setShowCataloguePicker(true);
+                      }}
+                      className="h-9 gap-1.5 text-xs font-semibold"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add from Catalogue
+                    </Button>
+
+                    {customItems.length > 0 && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleExportCustomItems}
+                          className="h-9 gap-1.5 text-xs font-medium"
+                          title="Export current party custom price list to CSV"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Export CSV
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowBulkDiscountModal(true)}
+                          className="h-9 gap-1.5 text-xs"
+                          disabled={keepSamePrice}
+                          title={keepSamePrice ? "Uncheck 'Keep Same Price' to apply bulk discount" : undefined}
+                        >
+                          <Percent className="w-3.5 h-3.5 text-primary" />
+                          Bulk Discount
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearAllCustomItems}
+                          className="h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          title="Clear all assigned products"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowImportModal(true)}
-                    className="h-9 gap-1.5 text-xs font-semibold"
-                    title="Bulk import custom product price list from Excel/CSV"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
-                    Bulk Import CSV
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedPickerProductIds(new Set());
-                      setPickerSearch("");
-                      setPickerCategory("all");
-                      setShowCataloguePicker(true);
-                    }}
-                    className="h-9 gap-1.5 text-xs font-semibold"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add from Catalogue
-                  </Button>
-
-                  {customItems.length > 0 && (
-                    <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleExportCustomItems}
-                        className="h-9 gap-1.5 text-xs font-medium"
-                        title="Export current party custom price list to CSV"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        Export CSV
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowBulkDiscountModal(true)}
-                        className="h-9 gap-1.5 text-xs"
-                        disabled={keepSamePrice}
-                        title={keepSamePrice ? "Uncheck 'Keep Same Price' to apply bulk discount" : undefined}
-                      >
-                        <Percent className="w-3.5 h-3.5 text-primary" />
-                        Bulk Discount
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleClearAllCustomItems}
-                        className="h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                        title="Clear all assigned products"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {/* Touch Category Filter Chips */}
+                {catalogCategories.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                    <span className="text-muted-foreground font-semibold text-[11px] shrink-0">Filter:</span>
+                    <button
+                      type="button"
+                      onClick={() => setInventoryCategory("all")}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer",
+                        inventoryCategory === "all"
+                          ? "bg-primary text-primary-foreground shadow-2xs"
+                          : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                      )}
+                    >
+                      All ({customItems.length})
+                    </button>
+                    {catalogCategories.map((cat) => {
+                      const count = customItems.filter((it) => (it.category || "General") === cat).length;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setInventoryCategory(cat)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer",
+                            inventoryCategory === cat
+                              ? "bg-primary text-primary-foreground shadow-2xs font-bold"
+                              : "bg-muted/60 hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {cat} {count > 0 ? `(${count})` : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Custom Items List */}
@@ -1368,7 +1391,7 @@ export function CreatePartyModal({
                               <span className="font-bold text-foreground">₹{item.standardPrice.toFixed(2)}</span>
                             </div>
 
-                            {/* Party Custom Selling Price */}
+                            {/* Party Custom Selling Price + Quick Stepper Chips */}
                             <div className="col-span-3 flex flex-col items-start md:items-end w-full">
                               <div className="relative w-full md:w-32">
                                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
@@ -1389,6 +1412,43 @@ export function CreatePartyModal({
                                   )}
                                 />
                               </div>
+
+                              {/* Mobile Quick Increment / Decrement Steppers */}
+                              {!keepSamePrice && (
+                                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = Math.max(0, Math.round((item.customPrice - 10) * 100) / 100);
+                                      handleUpdateCustomPrice(item.productId, String(next));
+                                    }}
+                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-bold text-muted-foreground cursor-pointer"
+                                  >
+                                    -₹10
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = Math.round((item.customPrice + 10) * 100) / 100;
+                                      handleUpdateCustomPrice(item.productId, String(next));
+                                    }}
+                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-bold text-muted-foreground cursor-pointer"
+                                  >
+                                    +₹10
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const discounted = Math.round(item.standardPrice * 0.9 * 100) / 100;
+                                      handleUpdateCustomPrice(item.productId, String(discounted));
+                                    }}
+                                    className="px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                                  >
+                                    -10%
+                                  </button>
+                                </div>
+                              )}
+
                               {/* Price Delta Badge */}
                               {!keepSamePrice && item.customPrice !== item.standardPrice && (
                                 <div className="mt-1">

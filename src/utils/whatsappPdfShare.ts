@@ -213,8 +213,11 @@ export async function downloadInvoicePdf(
   }
 }
 
+import { playSuccessChime, triggerHapticSuccess } from "./soundAndHaptics";
+
 /**
- * Shares an invoice PDF to WhatsApp directly via Web Share API or WhatsApp Web fallback
+ * Shares an invoice PDF to WhatsApp directly via Web Share API or WhatsApp Web fallback,
+ * while ensuring the original A4 PDF is saved to the user's phone/device in the same action.
  */
 export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): Promise<void> {
   const filename = `Invoice_${payload.invoiceNumber.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
@@ -222,21 +225,26 @@ export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): P
   const cleanStore = payload.storeName || "CredSmart Store";
   const docType = payload.isEstimate ? "Estimate" : "Tax Invoice";
 
-  const messageText = `Hello *${cleanCustomer}*,\n\nHere is your *${docType} #${payload.invoiceNumber}* from *${cleanStore}* for *₹${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*.\n\nPlease find the attached PDF document for your records.\n\nThank you for your business!`;
+  const messageText = `🧾 *${cleanStore.toUpperCase()}* - ${docType.toUpperCase()}\n\nHello *${cleanCustomer}*,\nHere is your *${docType} #${payload.invoiceNumber}* for *₹${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*.\n\n📄 *An original A4 Tax Invoice PDF has been generated and attached for your records.*\n\nThank you for choosing ${cleanStore}!`;
 
   const rawPhone = payload.customerPhone ? payload.customerPhone.replace(/\D/g, "") : "";
   const phoneParam = rawPhone.length >= 10 ? `91${rawPhone.slice(-10)}` : "";
 
   try {
     toast({
-      title: "Generating Invoice PDF...",
-      description: "Preparing high-resolution PDF document for WhatsApp dispatch.",
+      title: "Generating Original A4 PDF...",
+      description: "Preparing high-resolution tax invoice for WhatsApp & device download.",
     });
 
     const pdfBlob = await generateInvoicePdfBlob(payload);
     const pdfFile = new File([pdfBlob], filename, { type: "application/pdf" });
 
-    // 1. Try Native Web Share API with file support (Android/iOS/Chrome PWA)
+    // Always trigger local device download so the user has the invoice PDF in phone/PC files
+    downloadInvoicePdf(pdfBlob, filename);
+    playSuccessChime();
+    triggerHapticSuccess();
+
+    // 1. Try Native Web Share API with file support (Android Chrome, iOS Safari, PWA)
     if (
       navigator.canShare &&
       navigator.canShare({
@@ -249,15 +257,13 @@ export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): P
         text: messageText,
       });
       toast({
-        title: "PDF Shared Successfully!",
-        description: `Dispatched ${filename} to WhatsApp.`,
+        title: "A4 PDF Shared & Saved!",
+        description: `Dispatched ${filename} to WhatsApp and saved to your device.`,
       });
       return;
     }
 
-    // 2. Desktop Fallback: Automatically download the PDF and launch WhatsApp
-    downloadInvoicePdf(pdfBlob, filename);
-
+    // 2. Fallback: Launch WhatsApp with statement text
     const waUrl = phoneParam
       ? `https://web.whatsapp.com/send?phone=${phoneParam}&text=${encodeURIComponent(messageText)}`
       : `https://web.whatsapp.com/send?text=${encodeURIComponent(messageText)}`;
@@ -266,19 +272,17 @@ export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): P
       ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(messageText)}`
       : `https://wa.me/?text=${encodeURIComponent(messageText)}`;
 
-    // Try web.whatsapp.com for desktop, with fallback
     const win = window.open(waUrl, "_blank");
     if (!win || win.closed || typeof win.closed === "undefined") {
       window.open(fallbackWaUrl, "_blank");
     }
 
     toast({
-      title: "PDF Downloaded & WhatsApp Opened",
-      description: `Downloaded ${filename}. Attach it in the opened WhatsApp chat.`,
+      title: "PDF Saved & WhatsApp Opened",
+      description: `Saved ${filename} to device files. Attach it in the opened WhatsApp chat.`,
     });
   } catch (err: any) {
     if (err?.name === "AbortError") {
-      // User cancelled share dialog
       return;
     }
     console.error("Error sharing PDF to WhatsApp:", err);

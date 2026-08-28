@@ -20,6 +20,10 @@ import {
   Eye,
   SlidersHorizontal,
   ChevronRight,
+  FileSpreadsheet,
+  Save,
+  Undo2,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -29,6 +33,12 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  playSuccessChime,
+  playScanBeep,
+  triggerHapticSuccess,
+  triggerHapticScan,
+} from "@/utils/soundAndHaptics";
 
 interface BatchData {
   id: string;
@@ -62,6 +72,13 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Inline Excel Edit Mode State
+  const [isExcelEditMode, setIsExcelEditMode] = useState(false);
+  const [dirtyRows, setDirtyRows] = useState<
+    Record<string, { stock: number; mrp: number; cost_price: number; batchId: string; productName: string }>
+  >({});
+  const [savingExcel, setSavingExcel] = useState(false);
 
   // Batch Viewer Modal
   const [viewBatchesProduct, setViewBatchesProduct] = useState<ProductData | null>(null);
@@ -234,40 +251,130 @@ export default function Inventory() {
         .update({ stock: newStock })
         .eq("id", batch.id);
 
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
-        toast({
-          title: "Stock Updated",
-          description: `${adjustType === "add" ? "Added" : "Reduced"} ${qty} units. New stock: ${newStock}`,
+      if (error) throw error;
+
+      toast({
+        title: "Stock Adjusted",
+        description: `Updated ${adjustProduct.name} stock to ${newStock} units.`,
+      });
+
+      try {
+        auditLog?.({
+          action: "stock_adjusted",
+          entity_type: "stock_adjustment",
+          entity_id: batch.id,
+          details: {
+            product: adjustProduct.name,
+            batch: batch.batch_number,
+            previous_stock: currentStock,
+            new_stock: newStock,
+            adjustment: adjustType === "add" ? `+${qty}` : `-${qty}`,
+          },
         });
-        try {
-          auditLog?.({
-            action: adjustType === "add" ? "stock_added" : "stock_reduced",
-            entity_type: "stock_adjustment",
-            entity_id: batch.id,
-            details: {
-              product: adjustProduct.name,
-              batch: batch.batch_number,
-              quantity: qty,
-              previous_stock: currentStock,
-              new_stock: newStock,
-            },
-          });
-        } catch (aErr) {
-          console.warn("Audit log failed:", aErr);
-        }
-        setAdjustProduct(null);
-        setAdjustBatchId("");
-        setAdjustQty("");
-        fetchProducts();
+      } catch (aErr) {
+        console.warn("Audit log failed:", aErr);
       }
+
+      setAdjustProduct(null);
+      setAdjustBatchId("");
+      setAdjustQty("");
+      fetchProducts();
     } catch (err: any) {
-      console.error("handleStockAdjust failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to update stock", variant: "destructive" });
+      toast({ title: "Error adjusting stock", description: err.message, variant: "destructive" });
     } finally {
       setAdjusting(false);
     }
+  };
+
+  // ─── Inline Excel Edit Mode Handlers ─────────────────────────────────
+  const handleCellChange = (
+    productId: string,
+    batchId: string,
+    field: "stock" | "mrp" | "cost_price",
+    val: number,
+    currentValues: { stock: number; mrp: number; cost_price: number },
+    productName: string
+  ) => {
+    setDirtyRows((prev) => {
+      const existing = prev[productId] || {
+        stock: currentValues.stock,
+        mrp: currentValues.mrp,
+        cost_price: currentValues.cost_price,
+        batchId: batchId || "",
+        productName,
+      };
+
+      return {
+        ...prev,
+        [productId]: {
+          ...existing,
+          [field]: Math.max(0, val),
+        },
+      };
+    });
+  };
+
+  const handleSaveAllExcelChanges = async () => {
+    const entries = Object.entries(dirtyRows);
+    if (entries.length === 0) return;
+
+    setSavingExcel(true);
+    let successCount = 0;
+    try {
+      for (const [prodId, data] of entries) {
+        if (data.batchId) {
+          const { error } = await supabase
+            .from("product_batches")
+            .update({
+              stock: data.stock,
+              mrp: data.mrp,
+              cost_price: data.cost_price,
+            })
+            .eq("id", data.batchId);
+          if (!error) successCount++;
+        } else {
+          // If no batch exists, create one
+          const { error } = await supabase
+            .from("product_batches")
+            .insert([
+              {
+                product_id: prodId,
+                batch_number: "BATCH-01",
+                stock: data.stock,
+                mrp: data.mrp,
+                cost_price: data.cost_price,
+              },
+            ]);
+          if (!error) successCount++;
+        }
+      }
+
+      playSuccessChime();
+      triggerHapticSuccess();
+      toast({
+        title: "Inventory Bulk Updated!",
+        description: `Successfully updated ${successCount} product(s) in bulk via Excel mode.`,
+      });
+
+      setDirtyRows({});
+      fetchProducts();
+    } catch (err: any) {
+      toast({
+        title: "Error saving bulk changes",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingExcel(false);
+    }
+  };
+
+  const handleDiscardExcelChanges = () => {
+    setDirtyRows({});
+    toast({
+      title: "Changes Discarded",
+      description: "Reverted all inline inventory edits.",
+    });
   };
 
   const categories = useMemo(() => {
@@ -473,6 +580,38 @@ export default function Inventory() {
               </button>
             ))}
           </div>
+
+          {/* Excel Edit Mode Toggle (Desktop) */}
+          <div className="hidden md:flex items-center gap-1 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setIsExcelEditMode((v) => !v);
+                playScanBeep();
+                triggerHapticScan();
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none",
+                isExcelEditMode
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                  : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+              )}
+              title="Toggle Excel-style direct editing"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Excel Edit</span>
+              <span
+                className={cn(
+                  "text-[9px] px-1.5 py-0.2 rounded-full font-mono uppercase font-bold",
+                  isExcelEditMode
+                    ? "bg-white/25 text-white"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {isExcelEditMode ? "ON" : "OFF"}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Category filter pills */}
@@ -511,7 +650,7 @@ export default function Inventory() {
       </div>
 
       {/* Inventory Table Container */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden relative">
         {/* Mobile View: Cards */}
         <div className="block md:hidden divide-y divide-border">
           {filtered.map((item) => {
@@ -630,10 +769,29 @@ export default function Inventory() {
               <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
                 <th className="text-left px-5 py-3.5">Product & Details</th>
                 <th className="text-left px-5 py-3.5">Category</th>
-                <th className="text-left px-5 py-3.5 min-w-[200px]">Stock vs Min Level</th>
+                <th className="text-left px-5 py-3.5 min-w-[180px]">
+                  {isExcelEditMode ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
+                      <FileSpreadsheet className="w-3.5 h-3.5" /> Stock (Units)
+                    </span>
+                  ) : (
+                    "Stock Level"
+                  )}
+                </th>
+                <th className="text-left px-5 py-3.5">
+                  {isExcelEditMode ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">MRP (₹)</span>
+                  ) : (
+                    "Avg MRP"
+                  )}
+                </th>
+                {isExcelEditMode && (
+                  <th className="text-left px-5 py-3.5">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">Cost Price (₹)</span>
+                  </th>
+                )}
                 <th className="text-left px-5 py-3.5">Batches</th>
-                <th className="text-left px-5 py-3.5">Avg MRP</th>
-                <th className="text-left px-5 py-3.5">Inventory Value</th>
+                {!isExcelEditMode && <th className="text-left px-5 py-3.5">Inventory Value</th>}
                 <th className="text-left px-5 py-3.5">Status</th>
                 <th className="text-right px-5 py-3.5">Actions</th>
               </tr>
@@ -643,9 +801,19 @@ export default function Inventory() {
                 const stockPercent = Math.min(100, Math.max(0, (item.totalStock / (LOW_STOCK_THRESHOLD * 2.5)) * 100));
                 const isOutOfStock = item.totalStock === 0;
                 const isLowStock = item.totalStock > 0 && item.totalStock <= LOW_STOCK_THRESHOLD;
+                const primaryBatch = item.batches[0];
+                const isRowModified = !!dirtyRows[item.id];
 
                 return (
-                  <tr key={item.id} className="hover:bg-muted/30 transition-colors group">
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "transition-colors group",
+                      isRowModified
+                        ? "bg-amber-50/50 dark:bg-amber-950/20"
+                        : "hover:bg-muted/30"
+                    )}
+                  >
                     {/* Product Name & Brand */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -653,7 +821,12 @@ export default function Inventory() {
                           <Package className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">{item.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-foreground">{item.name}</p>
+                            {isRowModified && (
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="Unsaved changes" />
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                             {item.brand && <span>{item.brand}</span>}
                             {item.barcode && <span className="font-mono text-[11px]">#{item.barcode}</span>}
@@ -673,27 +846,144 @@ export default function Inventory() {
                       )}
                     </td>
 
-                    {/* Stock vs Min Level Progress */}
+                    {/* Stock Level (Standard or Excel Edit Input) */}
                     <td className="px-5 py-4">
-                      <div className="space-y-1.5 max-w-[180px]">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-foreground text-sm">
-                            {item.totalStock}{" "}
-                            <span className="text-xs font-normal text-muted-foreground">units</span>
-                          </span>
-                          <span className="text-[11px] text-muted-foreground">Min: {LOW_STOCK_THRESHOLD}</span>
+                      {isExcelEditMode ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              dirtyRows[item.id]?.stock !== undefined
+                                ? dirtyRows[item.id].stock
+                                : item.totalStock
+                            }
+                            onChange={(e) => {
+                              handleCellChange(
+                                item.id,
+                                primaryBatch?.id || "",
+                                "stock",
+                                Number(e.target.value) || 0,
+                                {
+                                  stock: item.totalStock,
+                                  mrp: primaryBatch?.mrp || item.avgMrp,
+                                  cost_price: primaryBatch?.cost_price || 0,
+                                },
+                                item.name
+                              );
+                            }}
+                            className={cn(
+                              "w-24 px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all focus:outline-hidden",
+                              dirtyRows[item.id]?.stock !== undefined
+                                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-950 dark:text-amber-200 ring-2 ring-amber-400/40"
+                                : "bg-slate-100/80 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground"
+                            )}
+                          />
+                          <span className="text-[11px] text-muted-foreground">units</span>
                         </div>
-                        <Progress
-                          value={stockPercent}
-                          className={cn(
-                            "h-1.5 rounded-full",
-                            isOutOfStock ? "bg-destructive/20 [&>div]:bg-destructive" :
-                            isLowStock ? "bg-amber-500/20 [&>div]:bg-amber-500" :
-                            "bg-emerald-500/20 [&>div]:bg-emerald-500"
-                          )}
-                        />
-                      </div>
+                      ) : (
+                        <div className="space-y-1.5 max-w-[180px]">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-foreground text-sm">
+                              {item.totalStock}{" "}
+                              <span className="text-xs font-normal text-muted-foreground">units</span>
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">Min: {LOW_STOCK_THRESHOLD}</span>
+                          </div>
+                          <Progress
+                            value={stockPercent}
+                            className={cn(
+                              "h-1.5 rounded-full",
+                              isOutOfStock ? "bg-destructive/20 [&>div]:bg-destructive" :
+                              isLowStock ? "bg-amber-500/20 [&>div]:bg-amber-500" :
+                              "bg-emerald-500/20 [&>div]:bg-emerald-500"
+                            )}
+                          />
+                        </div>
+                      )}
                     </td>
+
+                    {/* Avg MRP (Standard or Excel Edit Input) */}
+                    <td className="px-5 py-4">
+                      {isExcelEditMode ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-muted-foreground">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={
+                              dirtyRows[item.id]?.mrp !== undefined
+                                ? dirtyRows[item.id].mrp
+                                : primaryBatch?.mrp || item.avgMrp || 0
+                            }
+                            onChange={(e) => {
+                              handleCellChange(
+                                item.id,
+                                primaryBatch?.id || "",
+                                "mrp",
+                                Number(e.target.value) || 0,
+                                {
+                                  stock: item.totalStock,
+                                  mrp: primaryBatch?.mrp || item.avgMrp,
+                                  cost_price: primaryBatch?.cost_price || 0,
+                                },
+                                item.name
+                              );
+                            }}
+                            className={cn(
+                              "w-24 px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all focus:outline-hidden",
+                              dirtyRows[item.id]?.mrp !== undefined
+                                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-950 dark:text-amber-200 ring-2 ring-amber-400/40"
+                                : "bg-slate-100/80 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground"
+                            )}
+                          />
+                        </div>
+                      ) : (
+                        <span className="font-medium text-foreground">
+                          ₹{item.avgMrp > 0 ? item.avgMrp.toFixed(2) : "0.00"}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Cost Price (Excel Edit Mode only) */}
+                    {isExcelEditMode && (
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-muted-foreground">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={
+                              dirtyRows[item.id]?.cost_price !== undefined
+                                ? dirtyRows[item.id].cost_price
+                                : primaryBatch?.cost_price || 0
+                            }
+                            onChange={(e) => {
+                              handleCellChange(
+                                item.id,
+                                primaryBatch?.id || "",
+                                "cost_price",
+                                Number(e.target.value) || 0,
+                                {
+                                  stock: item.totalStock,
+                                  mrp: primaryBatch?.mrp || item.avgMrp,
+                                  cost_price: primaryBatch?.cost_price || 0,
+                                },
+                                item.name
+                              );
+                            }}
+                            className={cn(
+                              "w-24 px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all focus:outline-hidden",
+                              dirtyRows[item.id]?.cost_price !== undefined
+                                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-950 dark:text-amber-200 ring-2 ring-amber-400/40"
+                                : "bg-slate-100/80 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground"
+                            )}
+                          />
+                        </div>
+                      </td>
+                    )}
 
                     {/* Batches Viewer Button */}
                     <td className="px-5 py-4">
@@ -707,15 +997,12 @@ export default function Inventory() {
                       </button>
                     </td>
 
-                    {/* Avg MRP */}
-                    <td className="px-5 py-4 font-medium text-foreground">
-                      ₹{item.avgMrp > 0 ? item.avgMrp.toFixed(2) : "0.00"}
-                    </td>
-
                     {/* Total Value */}
-                    <td className="px-5 py-4 font-bold text-foreground">
-                      ₹{item.totalValue.toLocaleString("en-IN")}
-                    </td>
+                    {!isExcelEditMode && (
+                      <td className="px-5 py-4 font-bold text-foreground">
+                        ₹{item.totalValue.toLocaleString("en-IN")}
+                      </td>
+                    )}
 
                     {/* Status Badge */}
                     <td className="px-5 py-4">
@@ -755,7 +1042,7 @@ export default function Inventory() {
                             setAdjustProduct(item);
                             setAdjustBatchId(item.batches[0]?.id || "");
                           }}
-                          className="h-8 px-3 text-xs font-semibold gap-1.5 shadow-sm hover:border-primary/50"
+                          className="h-8 px-3 text-xs font-semibold gap-1.5 shadow-xs hover:border-primary/50"
                         >
                           <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
                           Adjust Stock
@@ -789,6 +1076,35 @@ export default function Inventory() {
           </div>
         )}
       </div>
+
+      {/* Floating Bottom Sticky Bar for Excel Edit Mode */}
+      {isExcelEditMode && Object.keys(dirtyRows).length > 0 && (
+        <aside className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[240] flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-slate-900/95 dark:bg-slate-950/95 text-white shadow-2xl border border-amber-400/50 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 select-none">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span className="text-xs font-bold font-mono">
+              {Object.keys(dirtyRows).length} Product(s) Modified
+            </span>
+          </div>
+          <div className="h-4 w-px bg-slate-700" />
+          <button
+            type="button"
+            onClick={handleDiscardExcelChanges}
+            className="px-3 py-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+          >
+            Discard
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAllExcelChanges}
+            disabled={savingExcel}
+            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{savingExcel ? "Saving to Cloud..." : `Save All (${Object.keys(dirtyRows).length})`}</span>
+          </button>
+        </aside>
+      )}
 
       {/* Batch Viewer Modal */}
       {viewBatchesProduct && (
