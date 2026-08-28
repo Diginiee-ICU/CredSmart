@@ -1871,7 +1871,7 @@ export function CreatePartyModal({
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         partyName={name || "Party"}
-        catalogProducts={productsCatalog}
+        catalogProducts={catalogProducts || []}
         onImport={handleImportCustomItems}
       />
     </div>,
