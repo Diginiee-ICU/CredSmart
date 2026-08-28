@@ -536,7 +536,39 @@ export default function Customers() {
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
-                {/* View Mode Toggle for Desktop */}
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto">
+            {([
+              { id: "all", label: "All Customers", count: customers.length },
+              { id: "due", label: "With Balance", count: customersWithDue },
+              { id: "zero", label: "Settled (₹0)", count: customers.length - customersWithDue },
+            ] as const).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+                  filter === f.id
+                    ? "glowing-btn-amber text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-foreground"
+                )}
+              >
+                {f.label}
+                <span
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    filter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* View Mode Toggle for Desktop */}
           <div className="hidden md:flex items-center gap-1 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
             <button
               onClick={() => setDesktopLayoutMode("split")}

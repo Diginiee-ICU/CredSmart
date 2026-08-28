@@ -63,6 +63,7 @@ import { useProducts } from "@/context/ProductsContext";
 import { networkInvoicingService } from "@/services/networkInvoicingService";
 import { ConnectedOrgInfo } from "@/types/networkInvoicing";
 import { PartyCustomItem } from "@/types/parties";
+import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 
 interface CustomerOption {
   id: string;
