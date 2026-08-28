@@ -289,7 +289,7 @@ export default function AppLayout() {
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="h-14 sm:h-20 md:h-[5.5rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
+        <header className="h-14 sm:h-20 md:h-[6rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
@@ -301,7 +301,7 @@ export default function AppLayout() {
                 <img
                   src="/IMG_9301.GIF"
                   alt="CredSmart"
-                  className="h-8 sm:h-14 md:h-16 w-auto max-w-[120px] sm:max-w-[280px] md:max-w-[340px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-9 sm:h-14 md:h-[4.5rem] w-auto max-w-[110px] sm:max-w-[260px] md:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -570,10 +570,10 @@ export default function AppLayout() {
         >
           <main
             className={cn(
-              "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-500",
+              "flex-1 min-w-0 flex flex-col overflow-y-auto scrollbar-thin transition-all duration-500",
               isPosRoute
-                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950"
-                : "overflow-y-auto md:overflow-hidden md:flex md:flex-col scrollbar-thin bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950 overflow-hidden"
+                : "bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
               isMobile && !isPosRoute && "pb-[calc(5rem+env(safe-area-inset-bottom,0px))]",
               isMobile && isPosRoute && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
             )}

@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Package,
   Sparkles,
@@ -614,6 +616,12 @@ export default function Items() {
       });
   }, [items, categoryFilter, lowStockOnly, search, sortField, sortDirection]);
 
+  const {
+    page, setPage, pageSize, setPageSize,
+    paginatedItems, totalPages, totalItems,
+    startIndex, endIndex, hasNext, hasPrev,
+  } = usePagination(filteredItems, 25);
+
   const handleSelectAll = () => {
     if (selectedIds.size === filteredItems.length) {
       setSelectedIds(new Set());
@@ -994,18 +1002,19 @@ export default function Items() {
                         size="sm"
                         onClick={() => {
                           setAdjustingItem(item);
+                          setAdjustQty("5");
                           setAdjustType("add");
-                          setAdjustQty("1");
                         }}
-                        className="h-7 px-2.5 text-[11px] font-semibold"
+                        className="h-7 text-xs gap-1 px-2"
                       >
-                        Adjust Stock
+                        <ArrowRightLeft className="w-3 h-3" />
+                        Adjust
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </Button>
+                          <button className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuItem
@@ -1015,18 +1024,18 @@ export default function Items() {
                             }}
                             className="text-xs cursor-pointer"
                           >
-                            <Edit className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                            <Edit className="w-3.5 h-3.5 mr-2" />
                             Edit Item
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
-                              setSelectedBarcodeItem(item);
+                              setSelectedProductForBarcode(item);
                               setShowBarcodeModal(true);
                             }}
                             className="text-xs cursor-pointer"
                           >
-                            <Barcode className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                            Print Barcode
+                            <Barcode className="w-3.5 h-3.5 mr-2" />
+                            Generate Barcode
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -1038,6 +1047,29 @@ export default function Items() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/60 text-xs">
+                    <div>
+                      <span className="text-muted-foreground text-[10px]">Selling Price</span>
+                      <p className="font-bold text-foreground font-mono">
+                        ₹ {item.sellingPrice.toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-muted-foreground text-[10px]">Stock Level</span>
+                      <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full shrink-0",
+                            isZero ? "bg-rose-500" : isLow ? "bg-amber-500" : "bg-emerald-500"
+                          )}
+                        />
+                        <span className="font-bold font-mono text-foreground">
+                          {item.currentStock} {item.unit}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1139,7 +1171,7 @@ export default function Items() {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => {
+                paginatedItems.map((item) => {
                   const isSelected = selectedIds.has(item.id);
                   const isZero = item.currentStock <= 0;
                   const isLow = item.isLowStock && !isZero;
@@ -1344,10 +1376,26 @@ export default function Items() {
           </table>
         </div>
 
+        {/* Desktop Pagination */}
+        <div className="hidden md:block">
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            hasNext={hasNext}
+            hasPrev={hasPrev}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
+
         {/* Table Footer Summary */}
         <div className="p-4 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>
-            Showing <strong className="text-foreground">{filteredItems.length}</strong> of{" "}
+            Showing <strong className="text-foreground">{totalItems === 0 ? 0 : `${startIndex}–${endIndex}`}</strong> of{" "}
             {items.length} products
           </span>
           <div className="flex items-center gap-4 font-mono font-bold">

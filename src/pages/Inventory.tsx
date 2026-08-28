@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Search,
   Filter,
@@ -405,6 +407,20 @@ export default function Inventory() {
     return matchSearch && matchFilter && matchCategory;
   });
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems: filteredTotalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
+
   const totalItems = products.length;
   const totalStockUnits = products.reduce((s, i) => s + i.totalStock, 0);
   const totalInventoryValue = products.reduce((s, i) => s + i.totalValue, 0);
@@ -653,7 +669,7 @@ export default function Inventory() {
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden relative">
         {/* Mobile View: Cards */}
         <div className="block md:hidden divide-y divide-border">
-          {filtered.map((item) => {
+          {paginatedItems.map((item) => {
             const stockPercent = Math.min(100, Math.max(0, (item.totalStock / (LOW_STOCK_THRESHOLD * 2.5)) * 100));
             const isOutOfStock = item.totalStock === 0;
             const isLowStock = item.totalStock > 0 && item.totalStock <= LOW_STOCK_THRESHOLD;
@@ -678,79 +694,58 @@ export default function Inventory() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setViewBatchesProduct(item)}
-                      className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                  <div className="text-right">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold",
+                        isOutOfStock
+                          ? "bg-destructive/10 text-destructive"
+                          : isLowStock
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      )}
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      Batches ({item.batches.length})
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setAdjustProduct(item);
-                        setAdjustBatchId(item.batches[0]?.id || "");
-                      }}
-                      className="h-8 px-2.5 text-xs gap-1 font-semibold"
-                    >
-                      <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
-                      Adjust
-                    </Button>
+                      {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Stock progress bar & info */}
-                <div className="space-y-1.5 bg-muted/40 p-2.5 rounded-xl border border-border/40">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-muted-foreground">Stock Level</span>
-                    <span className="font-bold text-foreground">
-                      {item.totalStock} units{" "}
-                      <span className="text-[11px] font-normal text-muted-foreground">
-                        (min: {LOW_STOCK_THRESHOLD})
-                      </span>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Stock Level</span>
+                    <span className="font-semibold font-mono text-foreground">
+                      {item.totalStock} {item.unit}
                     </span>
                   </div>
                   <Progress
                     value={stockPercent}
                     className={cn(
-                      "h-1.5 rounded-full",
-                      isOutOfStock ? "bg-destructive/20 [&>div]:bg-destructive" :
-                      isLowStock ? "bg-amber-500/20 [&>div]:bg-amber-500" :
-                      "bg-emerald-500/20 [&>div]:bg-emerald-500"
+                      "h-1.5",
+                      isOutOfStock ? "[&>div]:bg-destructive" : isLowStock ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
                     )}
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1">
+                <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "font-semibold text-xs px-2.5 py-0.5 rounded-full inline-flex items-center gap-1",
-                        isOutOfStock
-                          ? "bg-destructive/10 text-destructive border border-destructive/20"
-                          : isLowStock
-                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                      )}
+                    <button
+                      onClick={() => setViewBatchesProduct(item)}
+                      className="text-primary hover:underline font-medium text-xs flex items-center gap-1"
                     >
-                      {isOutOfStock ? (
-                        <>
-                          <AlertCircle className="w-3 h-3" /> Out of Stock
-                        </>
-                      ) : isLowStock ? (
-                        <>
-                          <AlertTriangle className="w-3 h-3" /> Low Stock
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-3 h-3" /> In Stock
-                        </>
-                      )}
-                    </span>
+                      <Layers className="w-3.5 h-3.5" />
+                      {item.batches.length} {item.batches.length === 1 ? "Batch" : "Batches"}
+                    </button>
+                    <span className="text-muted-foreground">•</span>
+                    <button
+                      onClick={() => {
+                        setAdjustProduct(item);
+                        setAdjustBatchId(item.batches[0]?.id || "");
+                      }}
+                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <ArrowUpDown className="w-3 h-3" />
+                      Adjust
+                    </button>
                   </div>
                   <div className="text-right">
                     <span className="text-[11px] text-muted-foreground mr-1">Val:</span>
@@ -760,6 +755,22 @@ export default function Inventory() {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile Pagination */}
+        <div className="md:hidden">
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={filteredTotalItems}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            hasNext={hasNext}
+            hasPrev={hasPrev}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+          />
         </div>
 
         {/* Desktop View: Table */}
@@ -797,7 +808,7 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((item) => {
+              {paginatedItems.map((item) => {
                 const stockPercent = Math.min(100, Math.max(0, (item.totalStock / (LOW_STOCK_THRESHOLD * 2.5)) * 100));
                 const isOutOfStock = item.totalStock === 0;
                 const isLowStock = item.totalStock > 0 && item.totalStock <= LOW_STOCK_THRESHOLD;
@@ -1054,6 +1065,22 @@ export default function Inventory() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Desktop Pagination */}
+        <div className="hidden md:block">
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={filteredTotalItems}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            hasNext={hasNext}
+            hasPrev={hasPrev}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+          />
         </div>
 
         {/* Empty State */}

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
@@ -274,6 +276,20 @@ export default function Customers() {
       return matchSearch && matchCredit;
     });
   }, [customers, search, creditFilter]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedCustomers,
+    totalPages,
+    totalItems: totalCustomerCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const totalOutstandingCredit = useMemo(() => {
     return customers.reduce((s, c) => s + Math.max(c.balance, 0), 0);
@@ -627,7 +643,7 @@ export default function Customers() {
                 <span>👉 Swipe Right for <b>WhatsApp Reminder</b></span>
                 <span>👈 Swipe Left to <b>Call</b></span>
               </p>
-              {filtered.map((c) => {
+              {paginatedCustomers.map((c) => {
                 const hasDue = c.balance > 0;
                 return (
                   <SwipeableListItem
@@ -744,65 +760,96 @@ export default function Customers() {
                   </SwipeableListItem>
                 );
               })}
+
+              {/* Mobile Pagination */}
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalCustomerCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
             </div>
 
             {/* Desktop View: Split-Screen Khata Workspace or Full Table */}
             {desktopLayoutMode === "split" ? (
               <div className="hidden md:grid grid-cols-12 gap-5 items-start min-h-[580px]">
                 {/* LEFT PANE: Customer Selection List (4 of 12 cols) */}
-                <div className="col-span-5 lg:col-span-4 max-h-[720px] overflow-y-auto space-y-2 pr-1 rounded-2xl">
-                  {filtered.map((c) => {
-                    const isSelected = selectedCustomerId === c.id;
-                    const hasDue = c.balance > 0;
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => handleSelectCustomer(c)}
-                        className={cn(
-                          "p-3.5 rounded-2xl border transition-all cursor-pointer select-none",
-                          isSelected
-                            ? "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500/50 shadow-md ring-1 ring-amber-400/40"
-                            : "bg-white/80 dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2.5">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div
+                <div className="col-span-5 lg:col-span-4 max-h-[720px] overflow-y-auto space-y-2 pr-1 rounded-2xl flex flex-col justify-between">
+                  <div className="space-y-2">
+                    {paginatedCustomers.map((c) => {
+                      const isSelected = selectedCustomerId === c.id;
+                      const hasDue = c.balance > 0;
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => handleSelectCustomer(c)}
+                          className={cn(
+                            "p-3.5 rounded-2xl border transition-all cursor-pointer select-none",
+                            isSelected
+                              ? "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500/50 shadow-md ring-1 ring-amber-400/40"
+                              : "bg-white/80 dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={cn(
+                                  "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-transform",
+                                  isSelected
+                                    ? "bg-amber-500 text-slate-950 shadow-xs scale-105"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                )}
+                              >
+                                {c.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className={cn("font-bold text-xs truncate", isSelected ? "text-amber-950 dark:text-amber-200 font-extrabold" : "text-foreground")}>
+                                  {c.name}
+                                </p>
+                                {c.phone && (
+                                  <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1 mt-0.5">
+                                    <Phone className="w-3 h-3" /> {c.phone}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <span
                               className={cn(
-                                "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-transform",
-                                isSelected
-                                  ? "bg-amber-500 text-slate-950 shadow-xs scale-105"
-                                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                "px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0",
+                                hasDue
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                               )}
                             >
-                              {c.name.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="min-w-0">
-                              <p className={cn("font-bold text-xs truncate", isSelected ? "text-amber-950 dark:text-amber-200 font-extrabold" : "text-foreground")}>
-                                {c.name}
-                              </p>
-                              {c.phone && (
-                                <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1 mt-0.5">
-                                  <Phone className="w-3 h-3" /> {c.phone}
-                                </p>
-                              )}
-                            </div>
+                              {hasDue ? `₹${c.balance.toFixed(2)}` : "₹0"}
+                            </span>
                           </div>
-
-                          <span
-                            className={cn(
-                              "px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0",
-                              hasDue
-                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                            )}
-                          >
-                            {hasDue ? `₹${c.balance.toFixed(2)}` : "₹0"}
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  <PaginationBar
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalCustomerCount}
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    hasNext={hasNext}
+                    hasPrev={hasPrev}
+                    onPageChange={setPage}
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    compact
+                    className="mt-2 rounded-xl border"
+                  />
                 </div>
 
                 {/* RIGHT PANE: Selected Customer Khata Ledger & Transactions (8 of 12 cols) */}
@@ -982,7 +1029,7 @@ export default function Customers() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filtered.map((c) => {
+                    {paginatedCustomers.map((c) => {
                       const hasDue = c.balance > 0;
                       return (
                         <tr key={c.id} className="hover:bg-muted/30 transition-colors group">
@@ -1142,6 +1189,20 @@ export default function Customers() {
                     })}
                   </tbody>
                 </table>
+
+                {/* Desktop Full Table Pagination */}
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalCustomerCount}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
               </div>
             )}
           </>

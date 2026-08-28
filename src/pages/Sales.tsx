@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -221,6 +223,20 @@ export default function Sales() {
         }
       });
   }, [documents, searchQuery, statusFilter, dateRange, sortField, sortOrder]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedDocs,
+    totalPages,
+    totalItems: totalDocCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filteredDocuments, 25);
 
   // Metrics
   const metrics = useMemo(() => {
@@ -662,7 +678,7 @@ export default function Sales() {
                 </Button>
               </div>
             ) : (
-              filteredDocuments.map((doc) => {
+              paginatedDocs.map((doc) => {
                 const isSelected = selectedDocIds.has(doc.id);
                 return (
                   <div
@@ -883,6 +899,22 @@ export default function Sales() {
             )}
           </div>
 
+          {/* Mobile Pagination */}
+          <div className="md:hidden">
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalDocCount}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+
           {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse min-w-[640px]">
@@ -932,8 +964,8 @@ export default function Sales() {
               </thead>
 
               <tbody className="divide-y divide-border/60">
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map((doc) => {
+                {paginatedDocs.length > 0 ? (
+                  paginatedDocs.map((doc) => {
                     const isSelected = selectedDocIds.has(doc.id);
                     return (
                       <tr
@@ -1209,6 +1241,22 @@ export default function Sales() {
                 )}
               </tbody>
             </table>
+
+            {/* Desktop Pagination */}
+            <div className="hidden md:block">
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalDocCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
           </div>
         </div>
       </div>

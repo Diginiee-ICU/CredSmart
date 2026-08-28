@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -140,6 +140,12 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const getById = useCallback((id: string) => products.find((p) => p.id === id), [products]);
+
+  useEffect(() => {
+    if (org?.id) {
+      refreshProducts(org.id);
+    }
+  }, [org?.id, refreshProducts]);
 
   return (
     <ProductsContext.Provider value={{ products, loading, refreshProducts, addOrUpdateProduct, getById }}>

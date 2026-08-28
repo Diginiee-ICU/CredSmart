@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
@@ -697,6 +699,20 @@ export default function Staff() {
     userRole === "partner" ||
     (userRole ? MANAGER_ROLES.includes(userRole as (typeof MANAGER_ROLES)[number]) : false);
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedMembers,
+    totalPages,
+    totalItems: totalMemberCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(members, 25);
+
   useEffect(() => {
     if (orgLoading) return;
 
@@ -1188,7 +1204,7 @@ export default function Staff() {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {members.map((member) => {
+            {paginatedMembers.map((member) => {
               const isCurrentUser = member.user_id === user?.id;
               const initials = (member.profile?.full_name || "Staff Member")
                 .split(" ")
@@ -1277,6 +1293,20 @@ export default function Staff() {
                 </div>
               );
             })}
+
+            {/* Pagination for team members */}
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalMemberCount}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </div>
         )}
       </div>

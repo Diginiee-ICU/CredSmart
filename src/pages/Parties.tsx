@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Users2,
   Share2,
@@ -625,6 +627,21 @@ export default function Parties() {
       });
   }, [parties, categoryFilter, search, sortField, sortDirection]);
 
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  const {
+    page: partiesPage,
+    setPage: setPartiesPage,
+    pageSize: partiesPageSize,
+    setPageSize: setPartiesPageSize,
+    paginatedItems: paginatedParties,
+    totalPages: partiesTotalPages,
+    totalItems: partiesTotalItems,
+    startIndex: partiesStartIndex,
+    endIndex: partiesEndIndex,
+    hasNext: partiesHasNext,
+    hasPrev: partiesHasPrev,
+  } = usePagination(filteredParties, 25);
+
   const handleSelectAll = () => {
     if (selectedIds.size === filteredParties.length) {
       setSelectedIds(new Set());
@@ -1056,7 +1073,7 @@ setSortDirection("asc");
               </Button>
             </div>
           ) : (
-            filteredParties.map((party) => {
+            paginatedParties.map((party) => {
               const isSelected = selectedIds.has(party.id);
               const isCustomer = party.partyType === "customer";
               const isSupplier = party.partyType === "supplier";
@@ -1210,6 +1227,22 @@ setSortDirection("asc");
           )}
         </div>
 
+        {/* Mobile Pagination */}
+        <div className="md:hidden">
+          <PaginationBar
+            page={partiesPage}
+            totalPages={partiesTotalPages}
+            totalItems={partiesTotalItems}
+            startIndex={partiesStartIndex}
+            endIndex={partiesEndIndex}
+            hasNext={partiesHasNext}
+            hasPrev={partiesHasPrev}
+            onPageChange={setPartiesPage}
+            pageSize={partiesPageSize}
+            onPageSizeChange={setPartiesPageSize}
+          />
+        </div>
+
         {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
@@ -1284,7 +1317,7 @@ setSortDirection("asc");
                   </td>
                 </tr>
               ) : (
-                filteredParties.map((party) => {
+                paginatedParties.map((party) => {
                   const isSelected = selectedIds.has(party.id);
                   const isCustomer = party.partyType === "customer";
                   const isSupplier = party.partyType === "supplier";
@@ -1559,10 +1592,26 @@ setSortDirection("asc");
           </table>
         </div>
 
+        {/* Desktop Pagination */}
+        <div className="hidden md:block">
+          <PaginationBar
+            page={partiesPage}
+            totalPages={partiesTotalPages}
+            totalItems={partiesTotalItems}
+            startIndex={partiesStartIndex}
+            endIndex={partiesEndIndex}
+            hasNext={partiesHasNext}
+            hasPrev={partiesHasPrev}
+            onPageChange={setPartiesPage}
+            pageSize={partiesPageSize}
+            onPageSizeChange={setPartiesPageSize}
+          />
+        </div>
+
         {/* Table Footer summary */}
         <div className="p-4 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>
-            Showing <strong className="text-foreground">{filteredParties.length}</strong> of{" "}
+            Showing <strong className="text-foreground">{partiesTotalItems === 0 ? 0 : `${partiesStartIndex}–${partiesEndIndex}`}</strong> of{" "}
             {parties.length} parties
           </span>
           <div className="flex items-center gap-4">

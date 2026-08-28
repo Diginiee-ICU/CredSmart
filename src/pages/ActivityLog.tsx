@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
@@ -137,6 +139,20 @@ export default function ActivityLog() {
   const activeStaffCount = useMemo(() => {
     return new Set(logs.map((l) => l.user_id).filter(Boolean)).size;
   }, [logs]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedLogs,
+    totalPages,
+    totalItems: totalLogCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   if (orgLoading || loading) {
     return (
@@ -278,7 +294,7 @@ export default function ActivityLog() {
           </div>
         ) : (
           <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-border">
-            {filtered.map((log) => {
+            {paginatedLogs.map((log) => {
               const meta = actionIcons[log.entity_type] || {
                 icon: Activity,
                 color: "text-primary",
@@ -333,7 +349,7 @@ export default function ActivityLog() {
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                          {time.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} Â·{" "}
+                          {time.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
                           {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
@@ -374,6 +390,22 @@ export default function ActivityLog() {
                 </div>
               );
             })}
+
+            {/* Pagination */}
+            <div className="pt-4">
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalLogCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
           </div>
         )}
       </div>

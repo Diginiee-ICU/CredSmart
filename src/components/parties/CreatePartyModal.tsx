@@ -96,7 +96,7 @@ export function CreatePartyModal({
   initialData,
   defaultType = "customer",
 }: CreatePartyModalProps) {
-  const { products: catalogProducts } = useProducts();
+  const { products: catalogProducts, loading: loadingProducts, refreshProducts } = useProducts();
   const [activeTab, setActiveTab] = useState<"general" | "address" | "credit" | "inventory" | "custom">("general");
   const [partyType, setPartyType] = useState<PartyType>(defaultType);
   const [name, setName] = useState("");
@@ -204,6 +204,12 @@ export function CreatePartyModal({
       setGstLookupSuccess(null);
     }
   }, [initialData, defaultType, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && (!catalogProducts || catalogProducts.length === 0)) {
+      refreshProducts();
+    }
+  }, [isOpen, catalogProducts, refreshProducts]);
 
   useEffect(() => {
     const mainEl = document.querySelector('main');
@@ -385,7 +391,7 @@ export function CreatePartyModal({
   const catalogCategories = useMemo(() => {
     const set = new Set<string>();
     (catalogProducts || []).forEach((p) => {
-      if (p.category && p.category.trim()) {
+      if (p?.category && typeof p.category === "string" && p.category.trim()) {
         set.add(p.category.trim());
       }
     });
@@ -395,30 +401,30 @@ export function CreatePartyModal({
   // Filtered party custom items
   const filteredCustomItems = useMemo(() => {
     return customItems.filter((item) => {
+      if (!item) return false;
       const matchCat = inventoryCategory === "all" || item.category === inventoryCategory;
       if (!matchCat) return false;
       if (!inventorySearch.trim()) return true;
       const q = inventorySearch.toLowerCase();
-      return (
-        item.productName.toLowerCase().includes(q) ||
-        (item.sku && item.sku.toLowerCase().includes(q)) ||
-        (item.barcode && item.barcode.toLowerCase().includes(q))
-      );
+      const pName = (item.productName || "").toLowerCase();
+      const pSku = (item.sku || "").toLowerCase();
+      const pBarcode = (item.barcode || "").toLowerCase();
+      return pName.includes(q) || pSku.includes(q) || pBarcode.includes(q);
     });
   }, [customItems, inventoryCategory, inventorySearch]);
 
   // Available catalog products for picker
   const filteredPickerProducts = useMemo(() => {
     return (catalogProducts || []).filter((p) => {
+      if (!p) return false;
       const matchCat = pickerCategory === "all" || p.category === pickerCategory;
       if (!matchCat) return false;
       if (!pickerSearch.trim()) return true;
       const q = pickerSearch.toLowerCase();
-      return (
-        p.name.toLowerCase().includes(q) ||
-        (p.sku && p.sku.toLowerCase().includes(q)) ||
-        (p.barcode && p.barcode.toLowerCase().includes(q))
-      );
+      const pName = (p.name || "").toLowerCase();
+      const pSku = (p.sku || "").toLowerCase();
+      const pBarcode = (p.barcode || "").toLowerCase();
+      return pName.includes(q) || pSku.includes(q) || pBarcode.includes(q);
     });
   }, [catalogProducts, pickerCategory, pickerSearch]);
 
@@ -1692,10 +1698,25 @@ export function CreatePartyModal({
 
             {/* Products List */}
             <div className="flex-1 overflow-y-auto p-3 divide-y divide-border max-h-[400px] scrollbar-thin">
-              {filteredPickerProducts.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground space-y-1">
+              {loadingProducts ? (
+                <div className="p-8 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Loading catalogue products...</span>
+                </div>
+              ) : filteredPickerProducts.length === 0 ? (
+                <div className="p-8 text-center text-xs text-muted-foreground space-y-2">
                   <p className="font-semibold text-foreground">No Catalogue Products Found</p>
-                  <p>Create products in Item Master or Catalogue first.</p>
+                  <p>Create products in Item Master or Catalogue first, or refresh.</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshProducts()}
+                    className="h-7 text-xs gap-1.5"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Refresh Catalogue
+                  </Button>
                 </div>
               ) : (
                 filteredPickerProducts.map((prod) => {

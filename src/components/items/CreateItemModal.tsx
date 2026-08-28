@@ -820,13 +820,15 @@ export function CreateItemModal({
               )}
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              {activeTab !== "batch" ? (
+              {activeTab !== "batch" && (
                 <Button
                   type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     if (activeTab === "basic") setActiveTab("pricing");
                     else if (activeTab === "pricing") setActiveTab("stock");
@@ -836,16 +838,15 @@ export function CreateItemModal({
                 >
                   Continue →
                 </Button>
-              ) : (
-                <Button type="submit" disabled={isSubmitting} className="gap-2 font-bold">
-                  {isSubmitting ? (
-                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
-                  {initialData ? "Update Item" : "Save & Create Item"}
-                </Button>
               )}
+              <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2 font-bold bg-primary text-primary-foreground shadow-md">
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                {initialData ? "Update Item" : "Save Item"}
+              </Button>
             </div>
           </div>
         </form>
