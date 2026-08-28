@@ -240,8 +240,6 @@ export function CreatePartyModal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const triggerAutoFill = async (targetId: string, showToast = true) => {
     const clean = targetId.trim().toUpperCase();
     if (!clean) {
@@ -423,6 +421,9 @@ export function CreatePartyModal({
       );
     });
   }, [catalogProducts, pickerCategory, pickerSearch]);
+
+  // ⚠️ Early return MUST come after all hooks (Rules of Hooks)
+  if (!isOpen) return null;
 
   const handleTogglePickerProduct = (prodId: string) => {
     setSelectedPickerProductIds((prev) => {
