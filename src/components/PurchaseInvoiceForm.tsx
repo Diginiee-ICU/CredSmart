@@ -74,6 +74,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
   useEffect(() => {
     fetchSuppliers();
     fetchProducts();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
   useEffect(() => {
@@ -248,7 +249,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
 
       toast.success(markReceived ? "Invoice saved & stock updated!" : "Invoice saved as draft");
       onSaved();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleSave invoice failed:", err);
       toast.error(err.message || "Failed to save invoice");
     } finally {

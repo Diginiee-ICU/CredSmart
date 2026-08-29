@@ -7,8 +7,8 @@
 // Define SpeechRecognition types for browsers
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
+    webkitSpeechRecognition: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 }
 
@@ -228,7 +228,7 @@ export function createSpeechRecognizer(
   recognition.lang = lang;
   recognition.maxAlternatives = 1;
 
-  recognition.onresult = (event: any) => {
+  recognition.onresult = (event: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     let interimTranscript = "";
     let finalTranscript = "";
 
@@ -247,7 +247,7 @@ export function createSpeechRecognizer(
     }
   };
 
-  recognition.onerror = (event: any) => {
+  recognition.onerror = (event: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.warn("Speech recognition error:", event.error);
     onError(event.error);
   };

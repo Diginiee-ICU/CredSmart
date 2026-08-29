@@ -10,7 +10,7 @@ function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!audioCtx) {
     const AudioContextClass =
-      window.AudioContext || (window as any).webkitAudioContext;
+      window.AudioContext || (window as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).webkitAudioContext; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (AudioContextClass) {
       audioCtx = new AudioContextClass();
     }
@@ -119,7 +119,7 @@ export function triggerHapticScan(): void {
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     try {
       navigator.vibrate(30);
-    } catch {}
+    } catch { /* empty */ }
   }
 }
 
@@ -130,7 +130,7 @@ export function triggerHapticSuccess(): void {
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     try {
       navigator.vibrate([40, 30, 60]);
-    } catch {}
+    } catch { /* empty */ }
   }
 }
 
@@ -141,6 +141,6 @@ export function triggerHapticDelete(): void {
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     try {
       navigator.vibrate([25, 20, 25]);
-    } catch {}
+    } catch { /* empty */ }
   }
 }

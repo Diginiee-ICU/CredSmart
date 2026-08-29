@@ -415,11 +415,11 @@ export function parseItemsCSV(csvText: string): Partial<InventoryItem>[] {
     const barcode = (get(idx.barcode, "") as string) || null;
     const category = (get(idx.category, "General") as string) || "General";
     const brand = (get(idx.brand, "") as string) || null;
-    const unit: any = ((get(idx.unit, "PCS") as string) || "PCS").toUpperCase();
+    const unit: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = ((get(idx.unit, "PCS") as string) || "PCS").toUpperCase(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const sellingPrice = parseFloat(String(get(idx.sellingPrice, "0"))) || 0;
     const purchasePrice = parseFloat(String(get(idx.purchasePrice, "0"))) || 0;
     const mrp = parseFloat(String(get(idx.mrp, String(sellingPrice)))) || sellingPrice;
-    const gstRate: any = parseFloat(String(get(idx.gstRate, "0"))) || 0;
+    const gstRate: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = parseFloat(String(get(idx.gstRate, "0"))) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
     const hsnCode = (get(idx.hsnCode, "") as string) || null;
     const openingStock = parseFloat(String(get(idx.openingStock, "0"))) || 0;
     const minStockAlert = parseFloat(String(get(idx.minStockAlert, "5"))) || 5;
@@ -571,11 +571,12 @@ export interface ParsePartyCustomItemsResult {
   items: PartyCustomItem[];
   matchedCount: number;
   newCount: number;
+  errors: string[];
 }
 
-export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any[] = []): ParsePartyCustomItemsResult {
+export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] = []): ParsePartyCustomItemsResult { // eslint-disable-line @typescript-eslint/no-explicit-any
   const lines = csvText.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length < 2) return { items: [], matchedCount: 0, newCount: 0 };
+  if (lines.length < 2) return { items: [], matchedCount: 0, newCount: 0, errors: [] };
 
   const parseLine = (line: string): string[] => {
     const tokens: string[] = [];
@@ -635,6 +636,7 @@ export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any[]
   const items: PartyCustomItem[] = [];
   let matchedCount = 0;
   let newCount = 0;
+  const errors: string[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const cols = parseLine(lines[i]);
@@ -656,10 +658,18 @@ export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any[]
     const rawHsnCode = ((get(idx.hsnCode, "") as string) || "").trim();
     const rawNotes = ((get(idx.notes, "") as string) || "").trim();
 
-    if (!rawName && !rawSku && !rawBarcode) continue;
+    if (!rawName && !rawSku && !rawBarcode) {
+      errors.push(`Row ${i + 1}: Missing product identifier (Name, SKU, or Barcode)`);
+      continue;
+    }
+    
+    if (rawCustomPrice <= 0 && rawStandardPrice <= 0) {
+      errors.push(`Row ${i + 1}: '${rawName || rawSku || rawBarcode}' has invalid or zero pricing`);
+      continue;
+    }
 
     // Search against catalogProducts by Barcode, SKU, or Name
-    let matchedProduct: any = null;
+    let matchedProduct: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (catalogProducts && catalogProducts.length > 0) {
       if (rawBarcode) {
         matchedProduct = catalogProducts.find((p) => (p.barcode || "").toLowerCase() === rawBarcode.toLowerCase());
@@ -716,5 +726,5 @@ export function parsePartyCustomItemsCSV(csvText: string, catalogProducts: any[]
     }
   }
 
-  return { items, matchedCount, newCount };
+  return { items, matchedCount, newCount, errors };
 }

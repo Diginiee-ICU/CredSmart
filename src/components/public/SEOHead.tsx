@@ -12,7 +12,7 @@ export interface SEOHeadProps {
   canonicalUrl?: string;
   ogType?: "website" | "article";
   ogImage?: string;
-  structuredData?: Record<string, any> | Record<string, any>[];
+  structuredData?: Record<string, any> | Record<string, any>[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   breadcrumbs?: BreadcrumbItem[];
   publishedTime?: string;
   modifiedTime?: string;
@@ -96,7 +96,7 @@ export function SEOHead({
     setMetaTag("name", "twitter:creator", "@credalert");
 
     // Build Structured Data Array
-    const schemasToInject: Record<string, any>[] = [];
+    const schemasToInject: Record<string, any>[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Optional BreadcrumbList Schema
     if (breadcrumbs && breadcrumbs.length > 0) {

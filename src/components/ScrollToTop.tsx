@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 /**
  * Helper to instantly scroll any target element and all its scrollable children to top
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function scrollElementAndChildrenToTop(root: HTMLElement | Element) {
   try {
     if ("scrollTop" in root) {

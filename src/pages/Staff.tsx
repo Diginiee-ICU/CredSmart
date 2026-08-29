@@ -124,6 +124,7 @@ export interface SystemFeatureItem {
   badge: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const SYSTEM_FEATURES: SystemFeatureItem[] = [
   {
     key: "pos",
@@ -239,6 +240,7 @@ export const SYSTEM_FEATURES: SystemFeatureItem[] = [
   },
 ];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ROLE_PRESET_PERMISSIONS: Record<AppRole, Record<FeatureKey, boolean>> = {
   store_owner: {
     dashboard: true, pos: true, sales: true, purchases: true, items: true,
@@ -292,6 +294,7 @@ export const ROLE_PRESET_PERMISSIONS: Record<AppRole, Record<FeatureKey, boolean
   },
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
     id: "salesman",
@@ -618,7 +621,7 @@ export default function Staff() {
       try {
         const parsed = JSON.parse(saved);
         return { ...(ROLE_PRESET_PERMISSIONS[member.role] || ROLE_PRESET_PERMISSIONS.salesman), ...parsed };
-      } catch {}
+      } catch { /* empty */ }
     }
     return ROLE_PRESET_PERMISSIONS[member.role] || ROLE_PRESET_PERMISSIONS.salesman;
   };

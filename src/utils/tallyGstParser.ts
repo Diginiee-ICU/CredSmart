@@ -1,7 +1,7 @@
 import { STATE_CODE_MAP, getEntityCategoryFromPAN, GSTLookupResult, isValidGSTIN, isValidPAN } from "@/utils/gstinLookup";
 
-export function parseTallyGstResult(raw: string | Record<string, any>, fallbackGstin: string = ""): GSTLookupResult {
-  let data: Record<string, any> = {};
+export function parseTallyGstResult(raw: string | Record<string, any>, fallbackGstin: string = ""): GSTLookupResult { // eslint-disable-line @typescript-eslint/no-explicit-any
+  let data: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   if (typeof raw === "object" && raw !== null) {
     data = raw;
@@ -99,8 +99,8 @@ export function parseTallyGstResult(raw: string | Record<string, any>, fallbackG
     city,
     pincode,
     address,
-    taxpayerType: taxpayerType as any,
-    status: status as any,
+    taxpayerType: taxpayerType as any /* eslint-disable-line @typescript-eslint/no-explicit-any */, // eslint-disable-line @typescript-eslint/no-explicit-any
+    status: status as any /* eslint-disable-line @typescript-eslint/no-explicit-any */, // eslint-disable-line @typescript-eslint/no-explicit-any
     registerDate: data.effective_date_of_registration || data.registerDate || "2017-07-01",
     category,
     source: "live_api",

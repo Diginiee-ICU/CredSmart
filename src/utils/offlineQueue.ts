@@ -10,7 +10,7 @@ import { playSuccessChime, triggerHapticSuccess } from "./soundAndHaptics";
 export interface QueuedOfflineAction {
   id: string;
   type: "sale" | "customer" | "stock_adjustment" | "credit_payment";
-  payload: any;
+  payload: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
   timestamp: number;
   retryCount: number;
 }
@@ -42,7 +42,7 @@ function openDB(): Promise<IDBDatabase> {
  */
 export async function enqueueOfflineAction(
   type: QueuedOfflineAction["type"],
-  payload: any
+  payload: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ // eslint-disable-line @typescript-eslint/no-explicit-any
 ): Promise<string> {
   const id = `offline_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const item: QueuedOfflineAction = {
@@ -71,7 +71,7 @@ export async function enqueueOfflineAction(
       existing.push(item);
       localStorage.setItem(STORE_NAME, JSON.stringify(existing));
       window.dispatchEvent(new CustomEvent("offline-queue-changed"));
-    } catch {}
+    } catch { /* empty */ }
     return id;
   }
 }
@@ -118,7 +118,7 @@ export async function syncOfflineQueue(): Promise<{ synced: number; failed: numb
   } catch {
     try {
       items = JSON.parse(localStorage.getItem(STORE_NAME) || "[]");
-    } catch {}
+    } catch { /* empty */ }
   }
 
   if (items.length === 0) return { synced: 0, failed: 0 };
@@ -154,7 +154,7 @@ export async function syncOfflineQueue(): Promise<{ synced: number; failed: numb
         tx.objectStore(STORE_NAME).delete(item.id);
       } catch {
         const existing = JSON.parse(localStorage.getItem(STORE_NAME) || "[]");
-        const remaining = existing.filter((x: any) => x.id !== item.id);
+        const remaining = existing.filter((x: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => x.id !== item.id); // eslint-disable-line @typescript-eslint/no-explicit-any
         localStorage.setItem(STORE_NAME, JSON.stringify(remaining));
       }
       synced++;

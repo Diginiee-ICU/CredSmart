@@ -22,7 +22,7 @@ export interface ProductCatalogOption {
   gstRate?: number;
   hsnCode?: string;
   minStockAlert?: number;
-  tags?: Record<string, any>;
+  tags?: Record<string, unknown>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -33,7 +33,8 @@ export interface ProductCatalogOption {
   }[];
 }
 
-export function normalizeProduct(p: any): ProductCatalogOption {
+// eslint-disable-next-line react-refresh/only-export-components
+export function normalizeProduct(p: unknown): ProductCatalogOption {
   const tags = p.tags || {};
   const batches = p.product_batches || [];
   const firstBatch = batches[0];
@@ -53,12 +54,12 @@ export function normalizeProduct(p: any): ProductCatalogOption {
 
   const totalStock =
     batches.length > 0
-      ? batches.reduce((sum: number, b: any) => sum + (Number(b.stock) || 0), 0)
+      ? batches.reduce((sum: number, b: unknown) => sum + (Number(b.stock) || 0), 0)
       : Number(tags.stock ?? tags.opening_stock ?? 0);
 
   const unitVal = tags.unit || p.unit || "PCS";
   const gstRateVal = Number(tags.gst_rate) || Number(p.tax_rate) || 18;
-  const hsnVal = tags.hsn_code || tags.hsn || (p as any).hsn || (p as any).hsn_code || "";
+  const hsnVal = tags.hsn_code || tags.hsn || (p as unknown).hsn || (p as unknown).hsn_code || "";
   const minAlert = Number(tags.min_stock_alert) || 5;
 
   return {
@@ -159,6 +160,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProducts = () => {
   const ctx = useContext(ProductsContext);
   if (!ctx) {

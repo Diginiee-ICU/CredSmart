@@ -144,7 +144,7 @@ export interface GSTR1Data {
   b2cs: GSTR1B2CSItem[];
   cdnr: GSTR1CDNRParty[];
   cdnur: GSTR1CDNURItem[];
-  exp: any[];
+  exp: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[];  
   hsn: {
     data: GSTR1HSNRecord[];
   };
@@ -649,25 +649,41 @@ export function processGSTR1Data(
       };
     }
 
-    const docNums = docs.map((d) => d.documentNumber).sort();
-    const fromDoc = docNums[0];
-    const toDoc = docNums[docNums.length - 1];
-    const cancelledCount = docs.filter((d) => d.status === "cancelled").length;
-    const totalCount = docs.length;
+    // Group by series prefix (e.g. "INV-", "CN-") to handle multiple series correctly
+    const seriesMap = new Map<string, BusinessDocument[]>();
+    docs.forEach((d) => {
+      const match = d.documentNumber.match(/^(.*?)(\d+)$/);
+      const docPrefix = match ? match[1] : prefix;
+      if (!seriesMap.has(docPrefix)) seriesMap.set(docPrefix, []);
+      seriesMap.get(docPrefix)!.push(d);
+    });
+
+    const docEntries: GSTR1DocDetails[] = [];
+    let seq = 1;
+
+    seriesMap.forEach((seriesDocs) => {
+      const docNums = seriesDocs
+        .map((d) => d.documentNumber)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+      const fromDoc = docNums[0];
+      const toDoc = docNums[docNums.length - 1];
+      const cancelledCount = seriesDocs.filter((d) => d.status === "cancelled").length;
+      const totalCount = seriesDocs.length;
+
+      docEntries.push({
+        num: seq++,
+        from: fromDoc,
+        to: toDoc,
+        totnum: totalCount,
+        cancel: cancelledCount,
+        net_issue: totalCount - cancelledCount,
+      });
+    });
 
     return {
       doc_num: docNum,
       doc_typ: docTyp,
-      docs: [
-        {
-          num: 1,
-          from: fromDoc,
-          to: toDoc,
-          totnum: totalCount,
-          cancel: cancelledCount,
-          net_issue: totalCount - cancelledCount,
-        },
-      ],
+      docs: docEntries,
     };
   };
 
@@ -924,7 +940,7 @@ function escapeXml(str: string | number | null | undefined): string {
     .replace(/'/g, "&apos;");
 }
 
-function buildXmlCell(value: any, isHeader = false, isNumeric = false): string {
+function buildXmlCell(value: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, isHeader = false, isNumeric = false): string {  
   const styleAttr = isHeader ? ' ss:StyleID="HeaderStyle"' : isNumeric ? ' ss:StyleID="NumberStyle"' : ' ss:StyleID="TextStyle"';
   const type = isNumeric && !isNaN(Number(value)) ? "Number" : "String";
   const content = isNumeric && !isNaN(Number(value)) ? Number(value).toFixed(2) : escapeXml(value);

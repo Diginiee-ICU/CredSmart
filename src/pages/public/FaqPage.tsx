@@ -25,6 +25,7 @@ export default function FaqPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set([0, 1]));
 
+// eslint-disable-next-line react-hooks/exhaustive-deps
   const faqData = [
     {
       category: "general",

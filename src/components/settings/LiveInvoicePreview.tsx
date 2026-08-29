@@ -156,7 +156,7 @@ export function LiveInvoicePreview({
               window.close();
             }, 300);
           };
-        <\/script>
+        </script>
       </body>
       </html>
     `);

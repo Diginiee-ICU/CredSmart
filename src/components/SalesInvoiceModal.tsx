@@ -74,7 +74,7 @@ interface CustomerOption {
   gstin?: string;
   address?: string;
   balance?: number;
-  custom_fields?: Record<string, any>;
+  custom_fields?: Record<string, unknown>;
   keepSamePrice?: boolean;
   keepSameInventory?: boolean;
   customItems?: PartyCustomItem[];
@@ -92,7 +92,7 @@ interface ProductCatalogOption {
   altUnitConversion?: number;
   selling_price?: number;
   tax_rate?: number;
-  tags?: Record<string, any>;
+  tags?: Record<string, unknown>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -255,15 +255,15 @@ export function SalesInvoiceModal({
     }
 
     return catalog.map((p) => {
-      const tags = (p as any).tags || {};
+      const tags = (p as unknown).tags || {};
       const defaultSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
         ? Number(tags.selling_price)
         : (p.product_batches?.[0]?.mrp || 0);
       const selling = customPriceMap.has(p.id) ? (customPriceMap.get(p.id) ?? defaultSelling) : defaultSelling;
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
-      const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
-      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
-      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined;
+      const altUnitVal = (p as unknown).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,
@@ -420,7 +420,7 @@ export function SalesInvoiceModal({
       });
 
       if (custData) {
-        const merged = custData.map((c: any) => {
+        const merged = custData.map((c: unknown) => {
           const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
           const keepSamePrice = cf.keepSamePrice !== false;
           const keepSameInventory = cf.keepSameInventory !== false;
@@ -532,6 +532,7 @@ export function SalesInvoiceModal({
         setPaymentMethod("Cash");
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingDoc, initialDocType]);
 
   const createNewRow = (id: string): DocumentLineItem => ({
@@ -837,21 +838,21 @@ export function SalesInvoiceModal({
       // Normalize incoming items into the local DocumentLineItem shape
       const mapped = newItems.map((ni) => ({
         id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        productId: (ni as any).productId || (ni as any).id || undefined,
-        productName: (ni as any).productName || (ni as any).name || "",
-        barcode: (ni as any).barcode || undefined,
-        hsn: (ni as any).hsn || "",
-        quantity: Number((ni as any).quantity) || 1,
-        unit: (ni as any).unit || "Pcs",
-        rate: Number((ni as any).rate) || 0,
-        discountPercent: Number((ni as any).discountPercent) || 0,
-        discountAmount: Number((ni as any).discountAmount) || 0,
-        taxRate: Number((ni as any).taxRate) || 18,
-        taxableAmount: Number((ni as any).taxableAmount) || 0,
-        cgstAmount: Number((ni as any).cgstAmount) || 0,
-        sgstAmount: Number((ni as any).sgstAmount) || 0,
-        igstAmount: Number((ni as any).igstAmount) || 0,
-        lineTotal: Number((ni as any).lineTotal) || 0,
+        productId: (ni as unknown).productId || (ni as unknown).id || undefined,
+        productName: (ni as unknown).productName || (ni as unknown).name || "",
+        barcode: (ni as unknown).barcode || undefined,
+        hsn: (ni as unknown).hsn || "",
+        quantity: Number((ni as unknown).quantity) || 1,
+        unit: (ni as unknown).unit || "Pcs",
+        rate: Number((ni as unknown).rate) || 0,
+        discountPercent: Number((ni as unknown).discountPercent) || 0,
+        discountAmount: Number((ni as unknown).discountAmount) || 0,
+        taxRate: Number((ni as unknown).taxRate) || 18,
+        taxableAmount: Number((ni as unknown).taxableAmount) || 0,
+        cgstAmount: Number((ni as unknown).cgstAmount) || 0,
+        sgstAmount: Number((ni as unknown).sgstAmount) || 0,
+        igstAmount: Number((ni as unknown).igstAmount) || 0,
+        lineTotal: Number((ni as unknown).lineTotal) || 0,
       } as DocumentLineItem));
 
       // Determine insertion index
@@ -1129,7 +1130,7 @@ export function SalesInvoiceModal({
   }, [customers, customerSearch]);
 
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
-    let safeCatalog = (productsCatalog || []).filter(Boolean);
+    const safeCatalog = (productsCatalog || []).filter(Boolean);
 
     const customPriceMap = new Map<string, number>();
     const customItemsList = activeCustomer?.customItems || [];
@@ -1151,7 +1152,7 @@ export function SalesInvoiceModal({
       );
 
       if (existing) {
-        const tags = (existing as any).tags || {};
+        const tags = (existing as unknown).tags || {};
         const defaultRate =
           tags && tags.selling_price !== undefined && tags.selling_price !== null
             ? Number(tags.selling_price)
@@ -1167,10 +1168,10 @@ export function SalesInvoiceModal({
           category: existing.category || ci.category || "General",
           barcode: existing.barcode || ci.barcode || undefined,
           sku: existing.sku || ci.sku,
-          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as unknown).hsn || undefined,
           unit: ci.unit || existing.unit || "Pcs",
-          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
-          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          altUnit: (existing as unknown).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
           rate,
           gstRate: ci.gstRate || (tags && tags.gst_rate !== undefined ? Number(tags.gst_rate) : 18),
           stock: existing.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || ci.customStock || 0,
@@ -1205,7 +1206,7 @@ export function SalesInvoiceModal({
     }
 
     const toSuggestion = (p: ProductCatalogOption): UnifiedProductSuggestion => {
-      const tags = (p as any).tags || {};
+      const tags = (p as unknown).tags || {};
       const defaultRate = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
         ? Number(tags.selling_price)
         : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
@@ -1215,9 +1216,9 @@ export function SalesInvoiceModal({
         (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
       const rate = matchRate !== undefined ? matchRate : defaultRate;
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
-      const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
-      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
-      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined;
+      const altUnitVal = (p as unknown).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,

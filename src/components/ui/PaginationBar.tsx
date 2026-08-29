@@ -164,7 +164,7 @@ export function PaginationBar({
         )}
 
         {/* Current page indicator on mobile / compact */}
-        {(compact || true) && (
+        {(compact || true) && ( // eslint-disable-line no-constant-binary-expression
           <span className="sm:hidden px-2 text-xs font-mono font-semibold text-muted-foreground select-none">
             {page}/{totalPages}
           </span>

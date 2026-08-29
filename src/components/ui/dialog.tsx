@@ -53,12 +53,12 @@ const DialogContent = React.forwardRef<
   }, []);
 
   const setRefs = React.useCallback(
-    (node: any) => {
+    (node: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       innerRef.current = node;
       if (typeof forwardedRef === "function") {
         forwardedRef(node);
       } else if (forwardedRef) {
-        (forwardedRef as React.MutableRefObject<any>).current = node;
+        (forwardedRef as React.MutableRefObject<any> /* eslint-disable-line @typescript-eslint/no-explicit-any */).current = node; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     },
     [forwardedRef]
@@ -69,7 +69,7 @@ const DialogContent = React.forwardRef<
     if (!React.isValidElement(child)) return false;
     // Check direct DialogTitle or DialogHeader (which typically contains DialogTitle)
     const type = (child as React.ReactElement).type;
-    return type === DialogPrimitive.Title || (type as any)?.displayName === DialogPrimitive.Title.displayName || (type as any)?.displayName === "DialogHeader";
+    return type === DialogPrimitive.Title || (type as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.displayName === DialogPrimitive.Title.displayName || (type as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.displayName === "DialogHeader"; // eslint-disable-line @typescript-eslint/no-explicit-any
   });
 
   return (

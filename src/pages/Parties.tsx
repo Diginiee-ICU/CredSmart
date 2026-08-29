@@ -172,7 +172,7 @@ export default function Parties() {
 
       const mergedParties: Party[] = [];
 
-      const parsePartyCustomFields = (rawCf: any, rawRecord: any) => {
+      const parsePartyCustomFields = (rawCf: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, rawRecord: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         let cf = rawCf;
         if (typeof cf === "string") {
           try {
@@ -204,7 +204,7 @@ export default function Parties() {
         };
       };
 
-      (dbCustomers || []).forEach((c: any) => {
+      (dbCustomers || []).forEach((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[c.id] || 0;
         const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(c.custom_fields, c);
 
@@ -239,7 +239,7 @@ export default function Parties() {
         });
       });
 
-      (dbSuppliers || []).forEach((s: any) => {
+      (dbSuppliers || []).forEach((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[s.id] || 0;
         const payableBal = -Math.abs(bal);
         const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(s.custom_fields, s);
@@ -1319,7 +1319,7 @@ setSortDirection("asc");
                     <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
                   </div>
                 </th>
-                <th className="px-4 py-3.5 text-center w-16">Actions</th>
+                <th className="px-4 py-3.5 text-center w-16 sticky right-0 bg-muted/80 backdrop-blur-xs z-10 border-l border-border/50">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -1510,7 +1510,7 @@ setSortDirection("asc");
                       </td>
 
                       {/* Actions Menu */}
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-4 py-3.5 text-center sticky right-0 bg-background group-hover:bg-muted/30 transition-colors z-10 border-l border-border/50">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">

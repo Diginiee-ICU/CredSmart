@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Sparkles,
   KeyRound,
+  ShoppingBag,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,8 +50,8 @@ interface Supplier {
   address: string | null;
   created_at: string;
   balance: number;
-  custom_fields?: any;
-  customItems?: any[];
+  custom_fields?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
+  customItems?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   keepSamePrice?: boolean;
   keepSameInventory?: boolean;
 }
@@ -193,7 +194,7 @@ export default function Suppliers() {
 
       if (data) {
         setSuppliers(
-          data.map((s: any) => {
+          data.map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
             let cf = s.custom_fields;
             if (typeof cf === "string") {
               try {

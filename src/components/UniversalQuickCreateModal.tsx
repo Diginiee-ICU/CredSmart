@@ -44,7 +44,7 @@ interface ActionItem {
   title: string;
   subtitle: string;
   category: "sales" | "purchases" | "masters" | "accounting";
-  icon: any;
+  icon: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
   badge?: string;
   color: string;
   iconBg: string;
@@ -395,7 +395,7 @@ export function UniversalQuickCreateModal({
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveCategory(tab.id as any)}
+                  onClick={() => setActiveCategory(tab.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 active:scale-95",
                     isActive

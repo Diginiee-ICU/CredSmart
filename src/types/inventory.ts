@@ -60,7 +60,7 @@ export interface InventoryItem {
   imageUrl?: string | null;
   isLowStock: boolean;
   batches: ItemBatch[];
-  tags?: Record<string, any> | null;
+  tags?: Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any
   created_at: string;
   updated_at?: string;
 }

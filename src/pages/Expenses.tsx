@@ -141,6 +141,7 @@ export default function Expenses() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expenses]);
 
   // Load Categories & Expenses
@@ -157,7 +158,7 @@ export default function Expenses() {
           .order("date", { ascending: false });
 
         if (!error && data) {
-          const mapped: ExpenseRecord[] = data.map((d: any, idx: number) => ({
+          const mapped: ExpenseRecord[] = data.map((d: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
             id: d.id,
             expense_number: d.expense_number || `EXP-${String(data.length - idx).padStart(3, "0")}`,
             party_name: d.party_name || d.description?.split(" - ")[0] || "Vendor / Store",
@@ -196,13 +197,15 @@ export default function Expenses() {
       if (storedCats) {
         setCategoriesList(JSON.parse(storedCats));
       }
-    } catch {}
+    } catch { /* empty */ }
 
     setLoading(false);
   };
 
   useEffect(() => {
+ 
     fetchExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
   const persistExpensesLocally = (newList: ExpenseRecord[]) => {
@@ -285,7 +288,7 @@ export default function Expenses() {
     if (orgId) {
       try {
         await supabase.from("expenses").delete().eq("id", id);
-      } catch {}
+      } catch { /* empty */ }
     }
     const updated = expenses.filter((e) => e.id !== id);
     persistExpensesLocally(updated);

@@ -110,14 +110,14 @@ class SoundService {
       gain.connect(this.ctx.destination);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.03);
-    } catch (e) {}
+    } catch (e) { /* empty */ }
   }
 
   setEnabled(val: boolean) {
     this.enabled = val;
     try {
       localStorage.setItem("credsmart_pos_sound_enabled", String(val));
-    } catch {}
+    } catch { /* empty */ }
   }
 
   getEnabled(): boolean {

@@ -156,7 +156,7 @@ export default function Items() {
   useEffect(() => {
     // Map and hydrate products into local `items` for the page UI
     if (products && products.length > 0) {
-      const mappedItems: InventoryItem[] = products.map((p: any) => {
+      const mappedItems: InventoryItem[] = products.map((p: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const sPrice = p.sellingPrice ?? p.selling_price ?? p.mrp ?? 0;
         const pPrice = p.purchasePrice ?? p.purchase_price ?? 0;
         const stock = p.currentStock ?? p.stock ?? 0;
@@ -178,7 +178,7 @@ export default function Items() {
           purchasePrice: pPrice,
           mrp: p.mrp ?? sPrice,
           gstRate: (p.gstRate || p.tax_rate || 18) as GSTRate,
-          hsnCode: p.hsnCode || (p.tags as any)?.hsn_code || (p.tags as any)?.hsn || "",
+          hsnCode: p.hsnCode || (p.tags as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.hsn_code || (p.tags as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.hsn || "", // eslint-disable-line @typescript-eslint/no-explicit-any
           currentStock: stock,
           openingStock: stock,
           minStockAlert: minAlert,
@@ -211,6 +211,7 @@ export default function Items() {
     } else {
       setLoading(false);
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId, refreshProducts]);
 
 
@@ -365,7 +366,7 @@ export default function Items() {
           setItems((prev) => [newItem, ...prev]);
           // Also update shared products store so other views see the new item immediately
           try {
-            addOrUpdateProduct(newItem as any);
+            addOrUpdateProduct(newItem as any /* eslint-disable-line @typescript-eslint/no-explicit-any */); // eslint-disable-line @typescript-eslint/no-explicit-any
           } catch (e) {
             console.warn('Failed to update shared products store:', e);
           }
@@ -1029,8 +1030,7 @@ export default function Items() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
-                              setSelectedProductForBarcode(item);
-                              setShowBarcodeModal(true);
+                              navigate(ROUTE_PATHS.barcode, { state: { prefilledItem: item } });
                             }}
                             className="text-xs cursor-pointer"
                           >

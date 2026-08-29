@@ -70,7 +70,7 @@ interface SupplierOption {
   gstin?: string;
   address?: string;
   balance?: number;
-  custom_fields?: any;
+  custom_fields?: unknown;
   customItems?: PartyCustomItem[];
   keepSamePrice?: boolean;
   keepSameInventory?: boolean;
@@ -87,7 +87,7 @@ interface ProductCatalogOption {
   altUnitConversion?: number;
   tax_rate?: number;
   selling_price?: number;
-  tags?: Record<string, any>;
+  tags?: Record<string, unknown>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -120,6 +120,14 @@ interface PurchaseInvoiceModalProps {
   orgId: string;
   initialDocType?: PurchaseDocumentType;
   editingDoc?: BusinessDocument | null;
+  prefilledSupplier?: {
+    id?: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    gstin?: string;
+    address?: string;
+  } | null;
   onSaved: (doc: BusinessDocument) => void;
   onPrintRequest?: (doc: BusinessDocument) => void;
 }
@@ -133,6 +141,7 @@ export function PurchaseInvoiceModal({
   orgId,
   initialDocType = "purchase_invoice",
   editingDoc = null,
+  prefilledSupplier = null,
   onSaved,
   onPrintRequest,
 }: PurchaseInvoiceModalProps) {
@@ -225,7 +234,7 @@ export function PurchaseInvoiceModal({
       );
 
       if (existing) {
-        const tags = (existing as any).tags || {};
+        const tags = (existing as unknown).tags || {};
         const defaultCost =
           existing.product_batches?.[0]?.cost_price ||
           (tags && tags.purchase_price !== undefined && tags.purchase_price !== null
@@ -242,10 +251,10 @@ export function PurchaseInvoiceModal({
           category: existing.category || ci.category || "General",
           barcode: existing.barcode || ci.barcode || null,
           sku: existing.sku || ci.sku,
-          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as unknown).hsn || undefined,
           unit: ci.unit || existing.unit || "Pcs",
-          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
-          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          altUnit: (existing as unknown).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
           sellingPrice: existing.selling_price || ci.standardPrice || 0,
           costPrice: cost,
           gstRate: ci.gstRate || (tags && tags.gst_rate !== undefined ? Number(tags.gst_rate) : 18),
@@ -273,7 +282,7 @@ export function PurchaseInvoiceModal({
     }
 
     const catalogOptions = productsCatalog.map((p) => {
-      const tags = (p as any).tags || {};
+      const tags = (p as unknown).tags || {};
       const selling =
         tags && tags.selling_price !== undefined && tags.selling_price !== null
           ? Number(tags.selling_price)
@@ -289,9 +298,9 @@ export function PurchaseInvoiceModal({
         (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
       const cost = matchCost !== undefined ? matchCost : defaultCost;
       const gst = tags && tags.gst_rate !== undefined && tags.gst_rate !== null ? Number(tags.gst_rate) : 18;
-      const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
-      const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
-      const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined;
+      const altUnitVal = (p as unknown).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
 
       return {
         id: p.id,
@@ -443,7 +452,7 @@ export function PurchaseInvoiceModal({
   const fetchSuppliers = async () => {
     if (!orgId) return;
     try {
-      const parsePartyCf = (rawCf: any, rawRecord: any) => {
+      const parsePartyCf = (rawCf: unknown, rawRecord: unknown) => {
         let cf = rawCf;
         if (typeof cf === "string") {
           try {
@@ -616,17 +625,33 @@ export function PurchaseInvoiceModal({
         const randSeq = Math.floor(200 + Math.random() * 800).toString();
         setBillPrefix("PUR/26-27/");
         setBillNumberSeq(randSeq);
-        setSelectedSupplierId("");
-        setPartyName("");
-        setSupplierSearch("");
-        setPartyPhone("");
-        setPartyGstin("");
-        setPartyAddress("");
-        // Reset billing fields for new document
-        setBillingAddress("");
+        if (prefilledSupplier) {
+          setSelectedSupplierId(prefilledSupplier.id || "");
+          setPartyName(prefilledSupplier.name || "");
+          setSupplierSearch(prefilledSupplier.name || "");
+          setPartyPhone(prefilledSupplier.phone || "");
+          setPartyGstin(prefilledSupplier.gstin || "");
+          setPartyAddress(prefilledSupplier.address || "");
+          if (prefilledSupplier.address) {
+            setBillingAddress(prefilledSupplier.address);
+            setSameAsSupplier(true);
+          } else {
+            setBillingAddress("");
+            setSameAsSupplier(false);
+          }
+        } else {
+          setSelectedSupplierId("");
+          setPartyName("");
+          setSupplierSearch("");
+          setPartyPhone("");
+          setPartyGstin("");
+          setPartyAddress("");
+          // Reset billing fields for new document
+          setBillingAddress("");
+          setSameAsSupplier(false);
+        }
         setBillingPincode("");
         setBillingPlaceOfSupply("27-Maharashtra");
-        setSameAsSupplier(false);
         setDocDate(new Date().toISOString().split("T")[0]);
         setShowDueDate(false);
         setEwayBillNo("");
@@ -643,7 +668,8 @@ export function PurchaseInvoiceModal({
         setPaymentMethod("Bank Transfer");
       }
     }
-  }, [open, editingDoc, initialDocType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editingDoc, initialDocType, prefilledSupplier]);
 
   const createNewRow = (id: string): DocumentLineItem => ({
     id,
@@ -680,21 +706,21 @@ export function PurchaseInvoiceModal({
 
       const mapped = newItems.map((ni) => ({
         id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        productId: (ni as any).productId || (ni as any).id || undefined,
-        productName: (ni as any).productName || (ni as any).name || "",
-        barcode: (ni as any).barcode || undefined,
-        hsn: (ni as any).hsn || "",
-        quantity: Number((ni as any).quantity) || 1,
-        unit: (ni as any).unit || "Pcs",
-        rate: Number((ni as any).rate) || Number((ni as any).costPrice) || 0,
-        discountPercent: Number((ni as any).discountPercent) || 0,
-        discountAmount: Number((ni as any).discountAmount) || 0,
-        taxRate: Number((ni as any).taxRate) || 18,
-        taxableAmount: Number((ni as any).taxableAmount) || 0,
-        cgstAmount: Number((ni as any).cgstAmount) || 0,
-        sgstAmount: Number((ni as any).sgstAmount) || 0,
-        igstAmount: Number((ni as any).igstAmount) || 0,
-        lineTotal: Number((ni as any).lineTotal) || 0,
+        productId: (ni as unknown).productId || (ni as unknown).id || undefined,
+        productName: (ni as unknown).productName || (ni as unknown).name || "",
+        barcode: (ni as unknown).barcode || undefined,
+        hsn: (ni as unknown).hsn || "",
+        quantity: Number((ni as unknown).quantity) || 1,
+        unit: (ni as unknown).unit || "Pcs",
+        rate: Number((ni as unknown).rate) || Number((ni as unknown).costPrice) || 0,
+        discountPercent: Number((ni as unknown).discountPercent) || 0,
+        discountAmount: Number((ni as unknown).discountAmount) || 0,
+        taxRate: Number((ni as unknown).taxRate) || 18,
+        taxableAmount: Number((ni as unknown).taxableAmount) || 0,
+        cgstAmount: Number((ni as unknown).cgstAmount) || 0,
+        sgstAmount: Number((ni as unknown).sgstAmount) || 0,
+        igstAmount: Number((ni as unknown).igstAmount) || 0,
+        lineTotal: Number((ni as unknown).lineTotal) || 0,
       } as DocumentLineItem));
 
       let insertAt = copy.length;
@@ -912,7 +938,7 @@ export function PurchaseInvoiceModal({
 
     // Update shared products store so item is available across the app
     try {
-      addOrUpdateProduct(catalogRow as any);
+      addOrUpdateProduct(catalogRow as unknown);
     } catch (e) {
       console.warn('Failed to update shared products store from PurchaseInvoiceModal:', e);
     }
@@ -1197,7 +1223,7 @@ export function PurchaseInvoiceModal({
       );
 
       if (existing) {
-        const tags = (existing as any).tags || {};
+        const tags = (existing as unknown).tags || {};
         const defaultCost =
           existing.product_batches?.[0]?.cost_price ||
           (tags?.purchase_price ? Number(tags.purchase_price) : Math.round((existing.selling_price || 0) * 0.8));
@@ -1212,10 +1238,10 @@ export function PurchaseInvoiceModal({
           category: existing.category || ci.category || "General",
           barcode: existing.barcode || ci.barcode || undefined,
           sku: existing.sku || ci.sku,
-          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as unknown).hsn || undefined,
           unit: ci.unit || existing.unit || "Pcs",
-          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
-          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          altUnit: (existing as unknown).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
           costPrice: cost,
           mrp: existing.product_batches?.[0]?.mrp || existing.selling_price || ci.standardPrice || 0,
           gstRate: ci.gstRate || (tags?.gst_rate ? Number(tags.gst_rate) : 18),
@@ -1254,7 +1280,7 @@ export function PurchaseInvoiceModal({
     }
 
     const toPurchaseSuggestion = (p: ProductCatalogOption): UnifiedPurchaseProduct => {
-      const tags = (p as any).tags || {};
+      const tags = (p as unknown).tags || {};
       const altUnitVal = p.altUnit || tags?.alt_unit || undefined;
       const altConvVal = p.altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
       const defaultCost =
@@ -1272,7 +1298,7 @@ export function PurchaseInvoiceModal({
         category: p.category || "General",
         barcode: p.barcode || undefined,
         sku: p.sku,
-        hsn: tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined,
+        hsn: tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined,
         unit: p.unit || "Pcs",
         altUnit: altUnitVal,
         altUnitConversion: altConvVal ? Number(altConvVal) : undefined,

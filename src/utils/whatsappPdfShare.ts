@@ -281,7 +281,7 @@ export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): P
       title: "PDF Saved & WhatsApp Opened",
       description: `Saved ${filename} to device files. Attach it in the opened WhatsApp chat.`,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err?.name === "AbortError") {
       return;
     }

@@ -129,7 +129,7 @@ export function CreateOfferModal({
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setOfferType(t.id as any)}
+                    onClick={() => setOfferType(t.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                     className={cn(
                       "p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5",
                       offerType === t.id

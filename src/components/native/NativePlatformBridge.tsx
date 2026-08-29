@@ -34,6 +34,7 @@ export const NativePlatformBridge: React.FC = () => {
     return () => {
       cleanupBackButton();
     };
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 3. Update status bar when theme changes

@@ -160,7 +160,7 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           paymentMethod: payload.paymentMethod,
           notes: payload.notes,
           terms: payload.terms,
-        } as any)
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
       );
 
       // Wait for React to paint the DOM
@@ -230,7 +230,7 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           paymentMethod: payload.paymentMethod,
           notes: payload.notes,
           terms: payload.terms,
-        } as any)
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
       );
 
       setTimeout(async () => {

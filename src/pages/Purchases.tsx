@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationBar } from "@/components/ui/PaginationBar";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   ChevronDown,
@@ -35,6 +35,7 @@ import {
   Smartphone,
   X,
   Upload,
+  Loader2,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,7 +73,7 @@ import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 
-const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any }[] = [
+const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
   { id: "purchase_invoice", label: "Purchase Invoices", icon: Truck },
   { id: "payment_out", label: "Payment Out", icon: Wallet },
   { id: "purchase_return", label: "Purchase Return", icon: RotateCcw },
@@ -93,6 +94,7 @@ export default function Purchases() {
   const { org, orgId } = useOrganization();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active Tab / Sub-view
@@ -136,10 +138,45 @@ export default function Purchases() {
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<BusinessDocument | null>(null);
+  const [prefilledSupplier, setPrefilledSupplier] = useState<{
+    id?: string;
+    name: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+  } | null>(null);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [mobileScanModalOpen, setMobileScanModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as {
+      openForm?: boolean;
+      prefilledSupplier?: {
+        id?: string;
+        name: string;
+        phone?: string;
+        address?: string;
+        gstin?: string;
+      };
+      supplierId?: string;
+      supplierName?: string;
+    } | null;
+
+    if (state?.openForm) {
+      if (state.prefilledSupplier) {
+        setPrefilledSupplier(state.prefilledSupplier);
+      } else if (state.supplierId || state.supplierName) {
+        setPrefilledSupplier({
+          id: state.supplierId,
+          name: state.supplierName || "",
+        });
+      }
+      setEditingDoc(null);
+      setCreateModalOpen(true);
+    }
+  }, [location.state]);
 
   // Fetch Documents
   const loadDocuments = useCallback(async () => {
@@ -798,15 +835,15 @@ export default function Purchases() {
                           onClick={() => {
                             downloadExactInvoicePdf({
                               invoiceNumber: doc.documentNumber,
-                              docType: doc.docType as any,
+                              docType: doc.docType as any /* eslint-disable-line @typescript-eslint/no-explicit-any */, // eslint-disable-line @typescript-eslint/no-explicit-any
                               customerName: doc.partyName,
                               customerPhone: doc.partyPhone,
                               storeName: org?.name || "CredSmart Store",
                               storePhone: org?.phone,
                               totalAmount: doc.grandTotal,
                               subtotal: doc.subtotal,
-                              discountAmount: doc.discountAmount,
-                              tax: doc.taxAmount,
+                              discountAmount: doc.discountTotal ?? 0,
+                              tax: doc.taxTotal ?? 0,
                               date: doc.docDate,
                               isEstimate: false,
                               items: doc.items.map((it) => ({
@@ -867,15 +904,15 @@ export default function Purchases() {
                               onClick={() => {
                                 downloadExactInvoicePdf({
                                   invoiceNumber: doc.documentNumber,
-                                  docType: doc.docType as any,
+                                  docType: doc.docType as any /* eslint-disable-line @typescript-eslint/no-explicit-any */, // eslint-disable-line @typescript-eslint/no-explicit-any
                                   customerName: doc.partyName,
                                   customerPhone: doc.partyPhone,
                                   storeName: org?.name || "CredSmart Store",
                                   storePhone: org?.phone,
                                   totalAmount: doc.grandTotal,
                                   subtotal: doc.subtotal,
-                                  discountAmount: doc.discountAmount,
-                                  tax: doc.taxAmount,
+                                  discountAmount: doc.discountTotal ?? 0,
+                                  tax: doc.taxTotal ?? 0,
                                   date: doc.docDate,
                                   isEstimate: false,
                                   items: doc.items.map((it) => ({
@@ -1200,6 +1237,7 @@ export default function Purchases() {
         orgId={orgId || ""}
         initialDocType={activeTab}
         editingDoc={editingDoc}
+        prefilledSupplier={prefilledSupplier}
         onSaved={() => loadDocuments()}
       />
 

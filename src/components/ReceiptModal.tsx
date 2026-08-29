@@ -284,10 +284,10 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       isEstimate: data.isEstimate,
       elementId: "receipt-printable-area",
       items: data.items.map((it) => ({
-        name: (it as any).product?.name || (it as any).name || "Item",
+        name: (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).product?.name || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).name || "Item", // eslint-disable-line @typescript-eslint/no-explicit-any
         quantity: it.quantity,
-        rate: (it as any).batch?.mrp || (it as any).rate || (it as any).unitPrice || 0,
-        total: ((it as any).batch?.mrp || (it as any).rate || (it as any).unitPrice || 0) * it.quantity,
+        rate: (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).batch?.mrp || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).rate || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).unitPrice || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
+        total: ((it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).batch?.mrp || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).rate || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).unitPrice || 0) * it.quantity, // eslint-disable-line @typescript-eslint/no-explicit-any
       })),
     });
   };

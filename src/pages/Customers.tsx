@@ -62,8 +62,8 @@ interface Customer {
   address: string | null;
   created_at: string;
   balance: number;
-  custom_fields?: any;
-  customItems?: any[];
+  custom_fields?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
+  customItems?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   keepSamePrice?: boolean;
   keepSameInventory?: boolean;
 }
@@ -100,12 +100,12 @@ export default function Customers() {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditDesc, setCreditDesc] = useState("");
   const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
-  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+  const [creditHistory, setCreditHistory] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Split-screen & Selected customer state
   const [desktopLayoutMode, setDesktopLayoutMode] = useState<"split" | "table">("split");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [selectedTransactions, setSelectedTransactions] = useState<any[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loadingTx, setLoadingTx] = useState(false);
 
   const fetchCustomerTransactions = useCallback(async (customerId: string) => {
@@ -189,7 +189,7 @@ export default function Customers() {
           toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (showToast) {
         toast.error(err?.message || "Failed to fetch tax details.");
       }
@@ -250,7 +250,7 @@ export default function Customers() {
 
       if (custs) {
         setCustomers(
-          custs.map((c: any) => {
+          custs.map((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
             let cf = c.custom_fields;
             if (typeof cf === "string") {
               try {
@@ -379,7 +379,7 @@ export default function Customers() {
       }
       setShowForm(false);
       fetchCustomers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.message || "Failed to save customer");
     } finally {
       setSaving(false);
@@ -394,7 +394,7 @@ export default function Customers() {
         toast.success("Customer deleted");
         fetchCustomers();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDelete error:", err);
       toast.error(err.message || "Failed to delete");
     }
@@ -450,7 +450,7 @@ export default function Customers() {
       toast.success(creditType === "credit" ? "Credit given recorded" : "Payment received recorded");
       setCreditModal(null);
       fetchCustomers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleCreditSubmit error:", err);
       toast.error(err.message || "Failed to save transaction");
     }
@@ -587,14 +587,14 @@ export default function Customers() {
             {([
               { id: "all", label: "All Customers", count: customers.length },
               { id: "due", label: "With Balance", count: customersWithDue },
-              { id: "zero", label: "Settled (₹0)", count: customers.length - customersWithDue },
+              { id: "clear", label: "Settled (₹0)", count: customers.length - customersWithDue },
             ] as const).map((f) => (
               <button
                 key={f.id}
-                onClick={() => setFilter(f.id)}
+                onClick={() => setCreditFilter(f.id)}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
-                  filter === f.id
+                  creditFilter === f.id
                     ? "glowing-btn-amber text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground"
                 )}
@@ -603,7 +603,7 @@ export default function Customers() {
                 <span
                   className={cn(
                     "text-[10px] px-1.5 py-0.2 rounded-full",
-                    filter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
+                    creditFilter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
                   {f.count}

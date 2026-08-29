@@ -242,6 +242,11 @@ const App = () => (
                       <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
                       <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
                       <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
+                      <Route path={ROUTE_PATHS.settingsReminders} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
+                      <Route path={ROUTE_PATHS.settingsCaSharing} element={<Navigate to={ROUTE_PATHS.reports} replace />} />
+                      <Route path={ROUTE_PATHS.settingsPricing} element={<Navigate to={ROUTE_PATHS.pricing} replace />} />
+                      <Route path={ROUTE_PATHS.settingsRefer} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
+                      <Route path={ROUTE_PATHS.settingsHelp} element={<Navigate to={ROUTE_PATHS.faq} replace />} />
                       <Route path={ROUTE_PATHS.staff} element={<Staff />} />
                       <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
                     </Route>

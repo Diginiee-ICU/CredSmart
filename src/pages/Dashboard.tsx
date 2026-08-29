@@ -161,7 +161,7 @@ export default function Dashboard() {
       setTotalMtdSales(totalSalesRevenue > 0 ? totalSalesRevenue : 0);
 
       // Latest 10 for table
-      const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any, idx: number) => {
+      const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => {  
         let status: "PAID" | "PENDING" | "OVERDUE" = "PAID";
         if (s.payment_method === "credit" || s.payment_method === "due") {
           status = idx % 3 === 0 ? "OVERDUE" : "PENDING";
@@ -169,7 +169,7 @@ export default function Dashboard() {
 
         const partyName = Array.isArray(s?.customers)
           ? s?.customers[0]?.name
-          : (s?.customers && typeof s?.customers === "object" ? (s.customers as any)?.name : null);
+          : (s?.customers && typeof s?.customers === "object" ? (s.customers as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.name : null);  
 
         return {
           id: s?.id || `txn-${idx}`,
@@ -259,7 +259,7 @@ export default function Dashboard() {
   };
 
   // Custom Glassmorphic Tooltip Component
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-700/80 p-3 rounded-xl shadow-2xl backdrop-blur-xl text-xs space-y-1.5 min-w-[190px]">
@@ -269,7 +269,7 @@ export default function Dashboard() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
             </span>
           </div>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, index: number) => (  
             <div key={`item-${index}`} className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-1.5 text-slate-400">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -567,27 +567,27 @@ export default function Dashboard() {
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-3xl shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
 
-            <div className="space-y-1.5 flex-1 pr-2">
+            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <ArrowDownLeft className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono">
+                <span className="text-xs font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono truncate">
                   TO COLLECT
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600 transition-colors shrink-0" />
               </div>
 
-              <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1">
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
                 ₹ <span className="tabular-nums">{toCollect.toLocaleString("en-IN")}</span>
               </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
                 Outstanding customer credit ledger balances
               </p>
             </div>
 
-            <div className="shrink-0 w-24 h-24 flex items-center justify-center">
+            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
               <Wallet3DGraphic className="w-24 h-24" />
             </div>
           </div>
@@ -599,27 +599,27 @@ export default function Dashboard() {
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-3xl shadow-[0_0_12px_rgba(249,115,22,0.6)]" />
 
-            <div className="space-y-1.5 flex-1 pr-2">
+            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
                   <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono">
+                <span className="text-xs font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono truncate">
                   TO PAY
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-600 transition-colors" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-600 transition-colors shrink-0" />
               </div>
 
-              <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1">
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
                 ₹ <span className="tabular-nums">{toPay.toLocaleString("en-IN")}</span>
               </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
                 Pending supplier invoices &amp; outward dues
               </p>
             </div>
 
-            <div className="shrink-0 w-24 h-24 flex items-center justify-center">
+            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
               <Invoice3DGraphic className="w-24 h-24" />
             </div>
           </div>
@@ -631,27 +631,27 @@ export default function Dashboard() {
           >
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-yellow-300 via-amber-400 to-yellow-600 rounded-l-3xl shadow-[0_0_12px_rgba(234,179,8,0.6)]" />
 
-            <div className="space-y-1.5 flex-1 pr-2">
+            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                   <Landmark className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                <span className="text-xs font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono truncate">
                   CASH &amp; BANK
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600 transition-colors" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600 transition-colors shrink-0" />
               </div>
 
-              <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1">
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
                 ₹ <span className="tabular-nums">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
                 Total reconciled liquidity across accounts
               </p>
             </div>
 
-            <div className="shrink-0 w-24 h-24 flex items-center justify-center">
+            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
               <Bank3DGraphic className="w-24 h-24" />
             </div>
           </div>

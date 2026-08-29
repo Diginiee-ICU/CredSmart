@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
@@ -45,10 +46,31 @@ type BarcodeFormat = "CODE128" | "EAN13" | "CODE39" | "UPC";
 
 export default function BarcodeGenerator() {
   const { orgId, org } = useOrganization();
+  const location = useLocation();
   const [products, setProducts] = useState<BarcodeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedLabels, setSelectedLabels] = useState<QueuedLabel[]>([]);
+
+  useEffect(() => {
+    const prefilled = (location.state as { prefilledItem?: Record<string, unknown> })?.prefilledItem;
+    if (prefilled) {
+      const barcodeItem: BarcodeProduct = {
+        id: String(prefilled.id || `item-${Date.now()}`),
+        name: String(prefilled.name || "Item"),
+        sku: String(prefilled.sku || prefilled.barcode || ""),
+        barcode: String(prefilled.barcode || prefilled.sku || ""),
+        brand: String(prefilled.brand || ""),
+        category: String(prefilled.category || ""),
+        price: Number(prefilled.mrp || prefilled.sellingPrice || prefilled.price || 0),
+        stock: Number(prefilled.stock || prefilled.currentStock || 0),
+      };
+      setSelectedLabels((prev) => {
+        if (prev.some((l) => l.id === barcodeItem.id)) return prev;
+        return [{ ...barcodeItem, quantity: 1 }, ...prev];
+      });
+    }
+  }, [location.state]);
 
   // Paper & Sizing Controls
   const [paperPreset, setPaperPreset] = useState<PaperPreset>("thermal-50x38");
@@ -134,7 +156,7 @@ export default function BarcodeGenerator() {
         });
 
         setProducts(mapped);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("fetchProducts unexpected:", err);
         setProducts([]);
       } finally {
@@ -348,7 +370,7 @@ export default function BarcodeGenerator() {
                 window.close();
               }, 300);
             };
-          <\/script>
+          </script>
         </body>
       </html>
     `);

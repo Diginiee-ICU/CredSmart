@@ -169,7 +169,7 @@ export const printBluetoothReceipt = async (data: ReceiptData): Promise<boolean>
   }
 
   try {
-    const nav = navigator as any;
+    const nav = navigator as any /* eslint-disable-line @typescript-eslint/no-explicit-any */;  
     // Request Bluetooth device
     const device = await nav.bluetooth.requestDevice({
       filters: [
@@ -218,7 +218,7 @@ export const printBluetoothReceipt = async (data: ReceiptData): Promise<boolean>
     }
 
     return true;
-  } catch (error: any) {
+  } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {  
     if (error?.name === "NotFoundError" || error?.message?.includes("User cancelled")) {
       return false; // User dismissed Bluetooth selector
     }

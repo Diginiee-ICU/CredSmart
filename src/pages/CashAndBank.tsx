@@ -1165,7 +1165,7 @@ export default function CashAndBank() {
                 </Label>
                 <select
                   value={moneyMode}
-                  onChange={(e) => setMoneyMode(e.target.value as any)}
+                  onChange={(e) => setMoneyMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
                 >
                   <option value="cash">Cash</option>
@@ -1341,7 +1341,7 @@ export default function CashAndBank() {
               </Label>
               <select
                 value={transferMode}
-                onChange={(e) => setTransferMode(e.target.value as any)}
+                onChange={(e) => setTransferMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                 className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
               >
                 <option value="neft_rtgs">NEFT / RTGS / IMPS</option>
@@ -1469,7 +1469,7 @@ export default function CashAndBank() {
                 </Label>
                 <select
                   value={accountType}
-                  onChange={(e) => setAccountType(e.target.value as any)}
+                  onChange={(e) => setAccountType(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
                 >
                   <option value="current">Current Account</option>

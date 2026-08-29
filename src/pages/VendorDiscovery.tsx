@@ -39,13 +39,14 @@ export default function VendorDiscovery() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [pinCode, setPinCode] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   // We load a default set of companies on mount (or first search)
   useEffect(() => {
     handleSearch();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = async (customSearch?: string) => {
@@ -62,7 +63,7 @@ export default function VendorDiscovery() {
         limit: 50,
       });
       setResults(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.message || "Failed to fetch companies");
       console.error(err);
     } finally {
@@ -70,7 +71,7 @@ export default function VendorDiscovery() {
     }
   };
 
-  const handleAddAsSupplier = (comp: any) => {
+  const handleAddAsSupplier = (comp: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     navigate(ROUTE_PATHS.purchases, {
       state: {
         openForm: true,

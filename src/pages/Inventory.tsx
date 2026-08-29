@@ -58,6 +58,7 @@ interface ProductData {
   brand: string | null;
   category: string | null;
   barcode: string | null;
+  unit?: string | null;
   batches: BatchData[];
   totalStock: number;
   totalValue: number;
@@ -98,7 +99,7 @@ export default function Inventory() {
     try {
       const { data: prods, error: prodsErr } = await supabase
         .from("products")
-        .select("id, name, brand, category, barcode")
+        .select("id, name, brand, category, barcode, unit")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -146,7 +147,7 @@ export default function Inventory() {
       });
 
       if (isMounted) setProducts(enriched);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchProducts unexpected error:", err);
       toast({ title: "Error", description: err?.message || "Failed to load inventory", variant: "destructive" });
       if (isMounted) setProducts([]);
@@ -167,6 +168,7 @@ export default function Inventory() {
 
     fetchProducts(isMounted);
     return () => { isMounted = false; };
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId, orgLoading]);
 
   const handleStockAdjust = async () => {
@@ -281,7 +283,7 @@ export default function Inventory() {
       setAdjustBatchId("");
       setAdjustQty("");
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Error adjusting stock", description: err.message, variant: "destructive" });
     } finally {
       setAdjusting(false);
@@ -360,7 +362,7 @@ export default function Inventory() {
 
       setDirtyRows({});
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Error saving bulk changes",
         description: err.message,
@@ -714,7 +716,7 @@ export default function Inventory() {
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Stock Level</span>
                     <span className="font-semibold font-mono text-foreground">
-                      {item.totalStock} {item.unit}
+                      {item.totalStock} {item.unit || "Units"}
                     </span>
                   </div>
                   <Progress

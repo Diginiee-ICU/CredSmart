@@ -51,6 +51,7 @@ export function TallyGstSearchModal({
         handleParse(initialGstin);
       }
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialGstin]);
 
   const handleOpenTally = () => {

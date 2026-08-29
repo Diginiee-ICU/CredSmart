@@ -25,7 +25,7 @@ interface PartyCustomItemsImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   partyName?: string;
-  catalogProducts: any[];
+  catalogProducts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   onImport: (items: PartyCustomItem[], mode: "merge" | "replace") => void;
 }
 
@@ -44,6 +44,7 @@ export function PartyCustomItemsImportModal({
   const [newCount, setNewCount] = useState(0);
   const [importMode, setImportMode] = useState<"merge" | "replace">("merge");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -60,8 +61,13 @@ export function PartyCustomItemsImportModal({
         throw new Error("Empty file or input provided.");
       }
       const res = parsePartyCustomItemsCSV(text, catalogProducts);
+      setImportErrors(res.errors || []);
+      
       if (res.items.length === 0) {
         toast.error("No valid product rows found. Please ensure headers match the template.");
+        if (res.errors?.length) {
+           toast.error(`Found ${res.errors.length} errors, check logs below.`);
+        }
         return;
       }
       setParsedItems(res.items);
@@ -69,7 +75,7 @@ export function PartyCustomItemsImportModal({
       setMatchedCount(res.matchedCount);
       setNewCount(res.newCount);
       toast.success(`Successfully parsed ${res.items.length} items (${res.matchedCount} matched in master catalogue)!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to parse party custom items CSV:", err);
       toast.error(err?.message || "Failed to parse CSV file. Download the sample template to check formatting.");
     }
@@ -122,7 +128,7 @@ export function PartyCustomItemsImportModal({
       onImport(chosen, importMode);
       toast.success(`Imported ${chosen.length} custom product rates for ${partyName}!`);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.message || "Failed to import items.");
     } finally {
       setIsProcessing(false);
@@ -263,6 +269,20 @@ export function PartyCustomItemsImportModal({
               </div>
             )}
           </div>
+
+          {importErrors.length > 0 && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl space-y-1.5 animate-in fade-in duration-150">
+              <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-bold text-xs">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Import Warnings / Skipped Rows ({importErrors.length})</span>
+              </div>
+              <ul className="text-[11px] text-red-500/80 dark:text-red-400/80 space-y-0.5 list-disc pl-4 max-h-24 overflow-y-auto">
+                {importErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Step 3: Parsed Preview */}
           {parsedItems.length > 0 && (

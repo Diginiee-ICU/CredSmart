@@ -44,28 +44,28 @@ export function ItemsExcelUploadModal({
     toast.success("Sample Excel/CSV Items template downloaded!");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      try {
-        if (!text) throw new Error("Empty file uploaded.");
-        const parsed = parseItemsCSV(text);
-        if (parsed.length === 0) {
-          toast.error("No valid items found in the uploaded file. Please download the template and ensure headers match.");
-        } else {
-          setParsedItems(parsed);
-          toast.success(`Successfully parsed ${parsed.length} items from file!`);
-        }
-      } catch (err: unknown) {
-        console.error("Failed to parse uploaded CSV:", err);
-        toast.error(getErrorMessage(err, "Failed to parse uploaded CSV. Download the sample template and try again."));
+    setIsProcessing(true);
+    try {
+      const text = await file.text();
+      if (!text) throw new Error("Empty file uploaded.");
+      const parsed = parseItemsCSV(text);
+      if (parsed.length === 0) {
+        toast.error("No valid items found in the uploaded file. Please download the template and ensure headers match.");
+      } else {
+        setParsedItems(parsed);
+        toast.success(`Successfully parsed ${parsed.length} items from file!`);
       }
-    };
-    reader.readAsText(file);
+    } catch (err: unknown) {
+      console.error("Failed to parse uploaded CSV:", err);
+      toast.error(getErrorMessage(err, "Failed to parse uploaded CSV. Ensure it is a valid text/CSV format matching the template."));
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleParsePastedText = () => {
@@ -103,16 +103,16 @@ export function ItemsExcelUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-3xl sm:max-w-4xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-3xl sm:max-w-4xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[92vh] max-h-[85dvh] animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/40">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center justify-between bg-muted/40">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">Bulk Upload Items via Excel</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Import product catalog with barcodes, GST rates, HSN codes and opening stock
               </p>
             </div>
@@ -126,7 +126,7 @@ export function ItemsExcelUploadModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 text-xs">
           {/* Step 1: Download Template */}
           <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between shadow-2xs">
             <div>
@@ -151,7 +151,7 @@ export function ItemsExcelUploadModal({
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 rounded-3xl p-8 text-center cursor-pointer bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent hover:from-teal-500/15 transition-all duration-200 shadow-inner group"
+              className="border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 rounded-3xl p-5 sm:p-8 text-center cursor-pointer bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent hover:from-teal-500/15 transition-all duration-200 shadow-inner group"
             >
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-teal-500/30 group-hover:scale-110 transition-transform">
                 <Upload className="w-6 h-6 stroke-[2.2]" />

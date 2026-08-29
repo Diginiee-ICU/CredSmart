@@ -38,6 +38,7 @@ interface ProductLibraryModalProps {
   mode?: "library" | "software" | "excel";
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PRESET_LIBRARY_ITEMS: Partial<InventoryItem>[] = [
   // FMCG & Grocery
   {

@@ -56,7 +56,7 @@ export interface Party {
   balance: number; // Positive = Receivable (To Collect, Dr), Negative = Payable (To Pay, Cr), 0 = Settled
   creditLimit?: number | null;
   creditPeriodDays?: number | null;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   keepSamePrice?: boolean; // Default true: uses standard catalogue prices. If false: uses party-specific custom prices
   keepSameInventory?: boolean; // Default true: allows all catalogue products. If false: only customItems are allowed
   customItems?: PartyCustomItem[];

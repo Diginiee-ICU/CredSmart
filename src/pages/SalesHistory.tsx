@@ -114,7 +114,7 @@ export default function SalesHistory() {
       }
       if (data) {
         setSales(
-          data.map((s: any) => ({
+          data.map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => ({
             ...s,
             customer_name: s.customers?.name || null,
             customer_phone: s.customers?.phone || null,
@@ -123,7 +123,7 @@ export default function SalesHistory() {
       } else {
         setSales([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchSales unexpected error:", err);
       setSales([]);
     } finally {
@@ -457,231 +457,233 @@ export default function SalesHistory() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border/70">
-            {paginatedItems.map((sale) => (
-              <div key={sale.id} className="transition-colors">
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(sale.id)}
-                  className={cn(
-                    "w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 hover:bg-muted/40 transition-colors text-left",
-                    expandedId === sale.id && "bg-muted/30"
-                  )}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <Receipt className="w-4 h-4" />
-                    </div>
-                    
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold font-mono text-foreground">
-                          {sale.invoice_number}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(sale.created_at), "dd MMM yyyy, hh:mm a")}
-                        </span>
+          <>
+            <div className="divide-y divide-border/70">
+              {paginatedItems.map((sale) => (
+                <div key={sale.id} className="transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(sale.id)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 hover:bg-muted/40 transition-colors text-left",
+                      expandedId === sale.id && "bg-muted/30"
+                    )}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Receipt className="w-4 h-4" />
                       </div>
-
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="badge badge-neutral text-[11px] py-0.5">
-                          {paymentIcons[sale.payment_method] || null}
-                          <span>{sale.payment_method}</span>
-                        </span>
-
-                        {sale.customer_name ? (
-                          <span className="badge badge-info text-[11px] py-0.5">
-                            <User className="w-3 h-3" />
-                            <span>{sale.customer_name}</span>
+                      
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold font-mono text-foreground">
+                            {sale.invoice_number}
                           </span>
-                        ) : (
-                          <span className="text-[11px] text-muted-foreground">Walk-in Customer</span>
-                        )}
-
-                        {sale.discount_amount > 0 && (
-                          <span className="badge badge-success text-[10px] py-0">
-                            -₹{sale.discount_amount.toFixed(2)}
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(sale.created_at), "dd MMM yyyy, hh:mm a")}
                           </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                        </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="text-base font-extrabold text-foreground">
-                        ₹{sale.total.toFixed(2)}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Tax: ₹{sale.tax.toFixed(2)}
-                      </p>
-                    </div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="badge badge-neutral text-[11px] py-0.5">
+                            {paymentIcons[sale.payment_method] || null}
+                            <span>{sale.payment_method}</span>
+                          </span>
 
-                    <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground">
-                      {expandedId === sale.id ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </div>
-                </button>
-
-                {/* Expanded Detail Panel */}
-                {expandedId === sale.id && (
-                  <div className="px-4 sm:px-6 py-4 bg-muted/15 border-t border-border/60 animate-fade-in space-y-4">
-                    <div className="rounded-xl border border-border/80 overflow-hidden bg-card shadow-xs">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-muted/60 border-b border-border/70 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            <th className="text-left px-4 py-2.5">Product</th>
-                            <th className="text-right px-4 py-2.5">Qty</th>
-                            <th className="text-right px-4 py-2.5">MRP / Price</th>
-                            <th className="text-right px-4 py-2.5">Line Total</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/60">
-                          {(itemsCache[sale.id] || []).map((item) => (
-                            <tr key={item.id} className="hover:bg-muted/20">
-                              <td className="px-4 py-2.5 text-foreground font-medium text-xs sm:text-sm">
-                                <div>{item.product_name}</div>
-                                {item.batch_number && (
-                                  <span className="text-[11px] text-muted-foreground font-mono">
-                                    Batch: {item.batch_number}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-4 py-2.5 text-right text-muted-foreground text-xs sm:text-sm">
-                                {item.quantity}
-                              </td>
-                              <td className="px-4 py-2.5 text-right text-muted-foreground text-xs sm:text-sm">
-                                ₹{item.mrp.toFixed(2)}
-                              </td>
-                              <td className="px-4 py-2.5 text-right font-bold text-foreground text-xs sm:text-sm">
-                                ₹{item.line_total.toFixed(2)}
-                              </td>
-                            </tr>
-                          ))}
-                          {!itemsCache[sale.id] && (
-                            <tr>
-                              <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground text-xs">
-                                Loading item details...
-                              </td>
-                            </tr>
+                          {sale.customer_name ? (
+                            <span className="badge badge-info text-[11px] py-0.5">
+                              <User className="w-3 h-3" />
+                              <span>{sale.customer_name}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">Walk-in Customer</span>
                           )}
-                        </tbody>
-                      </table>
+
+                          {sale.discount_amount > 0 && (
+                            <span className="badge badge-success text-[10px] py-0">
+                              -₹{sale.discount_amount.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Financial Summary & Actions */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleReprintReceipt(sale)}
-                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold"
-                        >
-                          <Printer className="w-3.5 h-3.5 text-primary" />
-                          <span>View / Re-print</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            downloadExactInvoicePdf({
-                              invoiceNumber: sale.invoice_number,
-                              customerName: sale.customer_name || undefined,
-                              customerPhone: sale.customer_phone || undefined,
-                              storeName: org?.name || "CredSmart Store",
-                              storePhone: org?.phone,
-                              totalAmount: sale.total,
-                              subtotal: sale.subtotal,
-                              discountAmount: sale.discount_amount,
-                              tax: sale.tax,
-                              date: sale.created_at,
-                              items: (itemsCache[sale.id] || []).map((it) => ({
-                                name: it.product_name,
-                                quantity: it.quantity,
-                                rate: it.mrp,
-                                total: it.line_total,
-                              })),
-                            });
-                          }}
-                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download PDF</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            shareInvoicePdfToWhatsApp({
-                              invoiceNumber: sale.invoice_number,
-                              customerName: sale.customer_name || undefined,
-                              customerPhone: sale.customer_phone || undefined,
-                              storeName: org?.name || "CredSmart Store",
-                              storePhone: org?.phone,
-                              totalAmount: sale.total,
-                              date: sale.created_at,
-                              items: (itemsCache[sale.id] || []).map((it) => ({
-                                name: it.product_name,
-                                quantity: it.quantity,
-                                rate: it.mrp,
-                                total: it.line_total,
-                              })),
-                            });
-                          }}
-                          className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>WhatsApp</span>
-                        </Button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-base font-extrabold text-foreground">
+                          ₹{sale.total.toFixed(2)}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Tax: ₹{sale.tax.toFixed(2)}
+                        </p>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1 text-xs sm:text-sm w-full sm:w-auto">
-                        <div className="flex justify-between w-64 text-muted-foreground">
-                          <span>Subtotal:</span>
-                          <span className="font-medium text-foreground">₹{sale.subtotal.toFixed(2)}</span>
-                        </div>
-                        {sale.discount_amount > 0 && (
-                          <div className="flex justify-between w-64 text-emerald-600 dark:text-emerald-400">
-                            <span>Discount {sale.discount_label ? `(${sale.discount_label})` : ""}:</span>
-                            <span className="font-medium">-₹{sale.discount_amount.toFixed(2)}</span>
-                          </div>
+                      <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground">
+                        {expandedId === sale.id ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
                         )}
-                        <div className="flex justify-between w-64 text-muted-foreground">
-                          <span>GST / Tax:</span>
-                          <span className="font-medium text-foreground">₹{sale.tax.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded Detail Panel */}
+                  {expandedId === sale.id && (
+                    <div className="px-4 sm:px-6 py-4 bg-muted/15 border-t border-border/60 animate-fade-in space-y-4">
+                      <div className="rounded-xl border border-border/80 overflow-hidden bg-card shadow-xs">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-muted/60 border-b border-border/70 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                              <th className="text-left px-4 py-2.5">Product</th>
+                              <th className="text-right px-4 py-2.5">Qty</th>
+                              <th className="text-right px-4 py-2.5">MRP / Price</th>
+                              <th className="text-right px-4 py-2.5">Line Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/60">
+                            {(itemsCache[sale.id] || []).map((item) => (
+                              <tr key={item.id} className="hover:bg-muted/20">
+                                <td className="px-4 py-2.5 text-foreground font-medium text-xs sm:text-sm">
+                                  <div>{item.product_name}</div>
+                                  {item.batch_number && (
+                                    <span className="text-[11px] text-muted-foreground font-mono">
+                                      Batch: {item.batch_number}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-muted-foreground text-xs sm:text-sm">
+                                  {item.quantity}
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-muted-foreground text-xs sm:text-sm">
+                                  ₹{item.mrp.toFixed(2)}
+                                </td>
+                                <td className="px-4 py-2.5 text-right font-bold text-foreground text-xs sm:text-sm">
+                                  ₹{item.line_total.toFixed(2)}
+                                </td>
+                              </tr>
+                            ))}
+                            {!itemsCache[sale.id] && (
+                              <tr>
+                                <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground text-xs">
+                                  Loading item details...
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Financial Summary & Actions */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReprintReceipt(sale)}
+                            className="rounded-xl text-xs gap-1.5 h-9 font-semibold"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-primary" />
+                            <span>View / Re-print</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              downloadExactInvoicePdf({
+                                invoiceNumber: sale.invoice_number,
+                                customerName: sale.customer_name || undefined,
+                                customerPhone: sale.customer_phone || undefined,
+                                storeName: org?.name || "CredSmart Store",
+                                storePhone: org?.phone,
+                                totalAmount: sale.total,
+                                subtotal: sale.subtotal,
+                                discountAmount: sale.discount_amount,
+                                tax: sale.tax,
+                                date: sale.created_at,
+                                items: (itemsCache[sale.id] || []).map((it) => ({
+                                  name: it.product_name,
+                                  quantity: it.quantity,
+                                  rate: it.mrp,
+                                  total: it.line_total,
+                                })),
+                              });
+                            }}
+                            className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download PDF</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              shareInvoicePdfToWhatsApp({
+                                invoiceNumber: sale.invoice_number,
+                                customerName: sale.customer_name || undefined,
+                                customerPhone: sale.customer_phone || undefined,
+                                storeName: org?.name || "CredSmart Store",
+                                storePhone: org?.phone,
+                                totalAmount: sale.total,
+                                date: sale.created_at,
+                                items: (itemsCache[sale.id] || []).map((it) => ({
+                                  name: it.product_name,
+                                  quantity: it.quantity,
+                                  rate: it.mrp,
+                                  total: it.line_total,
+                                })),
+                              });
+                            }}
+                            className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </Button>
                         </div>
-                        <div className="flex justify-between w-64 border-t border-border/80 pt-1.5 text-sm sm:text-base font-bold text-foreground">
-                          <span>Grand Total:</span>
-                          <span className="text-primary">₹{sale.total.toFixed(2)}</span>
+
+                        <div className="flex flex-col items-end gap-1 text-xs sm:text-sm w-full sm:w-auto">
+                          <div className="flex justify-between w-64 text-muted-foreground">
+                            <span>Subtotal:</span>
+                            <span className="font-medium text-foreground">₹{sale.subtotal.toFixed(2)}</span>
+                          </div>
+                          {sale.discount_amount > 0 && (
+                            <div className="flex justify-between w-64 text-emerald-600 dark:text-emerald-400">
+                              <span>Discount {sale.discount_label ? `(${sale.discount_label})` : ""}:</span>
+                              <span className="font-medium">-₹{sale.discount_amount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between w-64 text-muted-foreground">
+                            <span>GST / Tax:</span>
+                            <span className="font-medium text-foreground">₹{sale.tax.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between w-64 border-t border-border/80 pt-1.5 text-sm sm:text-base font-bold text-foreground">
+                            <span>Grand Total:</span>
+                            <span className="text-primary">₹{sale.total.toFixed(2)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
-          <PaginationBar
-            page={page}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            hasNext={hasNext}
-            hasPrev={hasPrev}
-            onPageChange={setPage}
-            pageSize={pageSize}
-            onPageSizeChange={setPageSize}
-          />
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          </>
         )}
       </div>
 

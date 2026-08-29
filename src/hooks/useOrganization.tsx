@@ -131,6 +131,7 @@ type BootstrapOrgResult = {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getPendingOnboarding = (): PendingOnboardingData | null => {
   try {
     const raw = localStorage.getItem(PENDING_ONBOARDING_KEY) || localStorage.getItem(LEGACY_PENDING_ONBOARDING_KEY);
@@ -158,6 +159,7 @@ export const getPendingOnboarding = (): PendingOnboardingData | null => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const setPendingOnboarding = (payload: PendingOnboardingData) => {
   try {
     const wrapper = { __savedAt: Date.now(), payload };
@@ -167,6 +169,7 @@ export const setPendingOnboarding = (payload: PendingOnboardingData) => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const clearPendingOnboarding = () => {
   try {
     localStorage.removeItem(PENDING_ONBOARDING_KEY);
@@ -204,6 +207,7 @@ interface LocalOrgRecord {
   role?: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getLocalOrgRegistry = (userId: string): LocalOrgRecord[] => {
   try {
     const raw = localStorage.getItem(`credsmart_org_registry_${userId}`);
@@ -215,6 +219,7 @@ export const getLocalOrgRegistry = (userId: string): LocalOrgRecord[] => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const saveLocalOrgRegistry = (userId: string, org: LocalOrgRecord) => {
   try {
     const current = getLocalOrgRegistry(userId);
@@ -223,7 +228,7 @@ export const saveLocalOrgRegistry = (userId: string, org: LocalOrgRecord) => {
       ? current.map((o) => (o.id === org.id ? { ...o, ...org } : o))
       : [org, ...current];
     localStorage.setItem(`credsmart_org_registry_${userId}`, JSON.stringify(updated));
-  } catch {}
+  } catch { /* empty */ }
 };
 
 const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => {
@@ -415,7 +420,7 @@ const saveOrgBankAndUpi = (
           parsed.selectedPaymentQrUpi = details.upiId;
         }
         localStorage.setItem("credsmart_invoice_settings", JSON.stringify(parsed));
-      } catch {}
+      } catch { /* empty */ }
     }
   } catch (e) {
     console.warn("Failed to cache organization bank & upi details:", e);
@@ -689,7 +694,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
               accountHolder = b.accountHolder || "";
             }
           }
-        } catch {}
+        } catch { /* empty */ }
 
         const name = row?.name || local?.name || "My Store";
         const address = row?.address || local?.address || "";
@@ -915,6 +920,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useOrganization() {
   return useContext(OrgContext);
 }

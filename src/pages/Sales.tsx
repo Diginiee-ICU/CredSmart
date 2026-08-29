@@ -755,8 +755,8 @@ export default function Sales() {
                               storePhone: org?.phone,
                               totalAmount: doc.grandTotal,
                               subtotal: doc.subtotal,
-                              discountAmount: doc.discountAmount,
-                              tax: doc.taxAmount,
+                              discountAmount: doc.discountTotal ?? 0,
+                              tax: doc.taxTotal ?? 0,
                               date: doc.docDate,
                               isEstimate: doc.docType === "quotation",
                               items: doc.items.map((it) => ({
@@ -830,8 +830,8 @@ export default function Sales() {
                                   storePhone: org?.phone,
                                   totalAmount: doc.grandTotal,
                                   subtotal: doc.subtotal,
-                                  discountAmount: doc.discountAmount,
-                                  tax: doc.taxAmount,
+                                  discountAmount: doc.discountTotal ?? 0,
+                                  tax: doc.taxTotal ?? 0,
                                   date: doc.docDate,
                                   isEstimate: doc.docType === "quotation",
                                   items: doc.items.map((it) => ({
@@ -1058,8 +1058,8 @@ export default function Sales() {
                                   storePhone: org?.phone,
                                   totalAmount: doc.grandTotal,
                                   subtotal: doc.subtotal,
-                                  discountAmount: doc.discountAmount,
-                                  tax: doc.taxAmount,
+                                  discountAmount: doc.discountTotal ?? 0,
+                                  tax: doc.taxTotal ?? 0,
                                   date: doc.docDate,
                                   isEstimate: doc.docType === "quotation",
                                   items: doc.items.map((it) => ({
@@ -1133,8 +1133,8 @@ export default function Sales() {
                                       storePhone: org?.phone,
                                       totalAmount: doc.grandTotal,
                                       subtotal: doc.subtotal,
-                                      discountAmount: doc.discountAmount,
-                                      tax: doc.taxAmount,
+                                      discountAmount: doc.discountTotal ?? 0,
+                                      tax: doc.taxTotal ?? 0,
                                       date: doc.docDate,
                                       isEstimate: doc.docType === "quotation",
                                       items: doc.items.map((it) => ({

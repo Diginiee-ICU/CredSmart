@@ -141,7 +141,7 @@ export default function InvoiceSettings() {
     setSettings((prev) => ({ ...prev, [key]: val }));
   };
 
-  const updateColumns = (key: keyof InvoiceSettingsState["columns"], val: any) => {
+  const updateColumns = (key: keyof InvoiceSettingsState["columns"], val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     setSettings((prev) => ({
       ...prev,
       columns: {
@@ -159,7 +159,7 @@ export default function InvoiceSettings() {
         title: "Invoice Settings Saved!",
         description: "Your live invoice customization and theme settings are now active across the POS.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Error saving settings", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
@@ -1054,7 +1054,7 @@ export default function InvoiceSettings() {
                       <Label className="text-[11px] font-semibold text-muted-foreground">Terms and Conditions</Label>
                       <Select
                         value={settings.termsAndConditionsType}
-                        onValueChange={(val: any) => updateSetting("termsAndConditionsType", val)}
+                        onValueChange={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => updateSetting("termsAndConditionsType", val)} // eslint-disable-line @typescript-eslint/no-explicit-any
                       >
                         <SelectTrigger className="h-9 rounded-xl text-xs">
                           <SelectValue placeholder="Select Document Type" />

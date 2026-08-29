@@ -96,10 +96,10 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
           loadData();
         };
       }
-    } catch {}
+    } catch { /* empty */ }
 
     // Listen to Supabase Realtime for network_invoices (if connected)
-    let sub: any = null;
+    let sub: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null; // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       sub = supabase
         .channel("public:network_invoices")
@@ -111,7 +111,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
           }
         )
         .subscribe();
-    } catch {}
+    } catch { /* empty */ }
 
     return () => {
       window.removeEventListener("credsmart_network_update", handleNetworkUpdate);
@@ -122,7 +122,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       if (sub) {
         try {
           supabase.removeChannel(sub);
-        } catch {}
+        } catch { /* empty */ }
       }
     };
   }, [loadData]);
@@ -147,7 +147,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         toast.error(result.error || "Failed to approve invoice");
         return false;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || "Error approving invoice");
       return false;
     } finally {
@@ -172,7 +172,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         toast.error(result.error || "Failed to reject invoice");
         return false;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || "Error rejecting invoice");
       return false;
     } finally {
@@ -206,7 +206,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         { duration: 5000 }
       );
       await loadData();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || "Failed to simulate test invoice");
     }
   };
@@ -238,6 +238,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNetworkInvoices() {
   return useContext(NetworkInvoicesContext);
 }

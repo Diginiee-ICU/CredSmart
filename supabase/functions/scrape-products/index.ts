@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         });
         if (modelsRes.ok) {
           const modelsData = await modelsRes.json();
-          const available: string[] = (modelsData.data || []).map((m: any) => m.id as string);
+          const available: string[] = (modelsData.data || []).map((m: Record<string, unknown>) => m.id as string);
           console.log('Available Groq models:', available.join(', '));
           // Filter to chat-only models — exclude audio/speech/embedding/terms-gated models
           const chatModels = available.filter((m) =>
@@ -282,9 +282,9 @@ Rules:
     }
 
     const validProducts = products
-      .filter((p: any) => p && typeof p.name === 'string' && p.name.trim())
+      .filter((p: unknown) => p && typeof (p as Record<string, unknown>).name === 'string' && ((p as Record<string, unknown>).name as string).trim())
       .slice(0, 50)
-      .map((p: any) => ({
+      .map((p: Record<string, unknown>) => ({
         name: String(p.name).trim().substring(0, 200),
         brand: String(p.brand || '').trim().substring(0, 100),
         category: String(p.category || '').trim().substring(0, 50),

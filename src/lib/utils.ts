@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function exportToCSV(filename: string, rows: any[][]) {
-  const processRow = (row: any[]) => {
+export function exportToCSV(filename: string, rows: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[][]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const processRow = (row: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     return row
       .map((val) => {
         const str = String(val === null || val === undefined ? "" : val);

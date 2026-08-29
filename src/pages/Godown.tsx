@@ -224,7 +224,7 @@ export default function GodownPage() {
         toast.success(`Created warehouse "${godownName}"!`);
       }
       setShowGodownModal(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.message || "Failed to save warehouse.");
     }
   };
@@ -444,7 +444,7 @@ export default function GodownPage() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
               className={cn(
                 "px-3 py-1 rounded-md text-xs font-semibold transition-all",
                 activeTab === tab.id

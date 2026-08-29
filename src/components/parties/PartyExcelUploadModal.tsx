@@ -93,7 +93,7 @@ export function PartyExcelUploadModal({
       await onImport(parsedParties);
       toast.success(`Imported ${parsedParties.length} parties successfully!`);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.message || "Failed to bulk import parties.");
     } finally {
       setIsProcessing(false);
@@ -288,7 +288,7 @@ export function PartyExcelUploadModal({
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedSoftware(s.id as any)}
+                    onClick={() => setSelectedSoftware(s.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                     className={cn(
                       "p-3.5 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
                       selectedSoftware === s.id

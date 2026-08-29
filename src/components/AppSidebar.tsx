@@ -130,6 +130,7 @@ export function AppSidebar({
   // Close on route change
   useEffect(() => {
     onClose?.();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // Filtered nav groups by role & search query

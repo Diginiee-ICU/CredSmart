@@ -122,6 +122,7 @@ const DOC_TITLE_MAP: Record<UniversalDocType, string> = {
  * - Bottom Line (exact just below it in brackets): "(1*4 Pcs)"
  *   i.e. `(total alt units * primary units per alt unit PrimaryUnit)`
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatItemQuantityDisplay(it: InvoiceItemData): {
   isDual: boolean;
   primaryLine: string;
