@@ -3,46 +3,56 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
-  ChevronDown,
-  Store,
-  BarChart3,
-  Users,
-  Zap,
-  Shield,
-  ShieldCheck,
-  Scale,
-  FileCheck,
-  Smartphone,
-  Package,
-  Truck,
-  Globe,
-  Receipt,
-  Printer,
-  Sparkles,
   ArrowRight,
-  ArrowUpRight,
-  Cpu,
-  Database,
-  Lock,
-  Flame,
+  Layers,
+  ShieldCheck,
+  Gift,
+  Share2,
+  BarChart3,
+  Users2,
+  Clock,
+  Paperclip,
+  Network,
+  Play,
   Search,
-  Activity,
-  CodeXml,
-  Sun,
-  Moon,
+  ChevronDown,
   Menu,
+  X,
+  ExternalLink,
+  Sparkles,
+  Store,
+  Building,
+  AlertTriangle,
+  RotateCw,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
+import { CredSmartLogo } from "@/components/public/CredSmartLogo";
+import {
+  Collect3DIcon,
+  Pay3DIcon,
+  Bank3DIcon,
+  CredAlertShield3D,
+} from "@/components/public/Landing3DIcons";
+import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /* ─────────────────────────── JSON-LD DATA ─────────────────────────── */
 const jsonLdSoftware = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "CredSmart POS",
+  name: "CredSmart",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web, Android, iOS",
   offers: {
@@ -52,21 +62,11 @@ const jsonLdSoftware = {
   },
   aggregateRating: {
     "@type": "AggregateRating",
-    ratingValue: "4.8",
-    reviewCount: "1240",
+    ratingValue: "4.9",
+    reviewCount: "2480",
   },
   description:
-    "CredSmart POS is India's #1 free GST billing and POS software for Indian businesses. Create GST invoices, manage inventory, track Udhar Khata and run your retail store 100% free.",
-  featureList: [
-    "GST Billing with CGST SGST IGST",
-    "Thermal and A4 Invoice Printing",
-    "Inventory Management with Batch Tracking",
-    "Customer Udhar Khata / Credit Ledger",
-    "B2B Vendor Discovery with 3M+ Companies",
-    "GSTR Export for CA",
-    "Supplier and Purchase Order Management",
-    "Barcode Scanner Support",
-  ],
+    "CredSmart by CredAlert is India's all-in-one completely free business management software. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence.",
 };
 
 const jsonLdFaq = {
@@ -75,219 +75,62 @@ const jsonLdFaq = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "What is CredSmart POS?",
+      name: "Is CredSmart really completely free forever?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "CredSmart POS is a comprehensive, free GST billing and point-of-sale software designed specifically for Indian businesses. It allows you to create professional GST invoices, manage inventory, maintain customer Udhar Khata, track purchases, and run your entire retail or wholesale operation — all at zero cost.",
+        text: "Yes. CredSmart is 100% free with no credit card required, no trial expiration, and no hidden charges. Every feature — POS, GST billing, inventory, reports, and ledger — is free forever.",
       },
     },
     {
       "@type": "Question",
-      name: "Is CredSmart POS really free forever?",
+      name: "What is the CredSmart Business Ecosystem?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. CredSmart POS is 100% free with no credit card required, no trial period, and no hidden charges. You get full access to every feature from day one, forever.",
+        text: "When both businesses use CredSmart, transactions flow automatically. When you create a sales invoice, it automatically becomes the recipient's purchase invoice with zero manual re-entry.",
       },
     },
     {
       "@type": "Question",
-      name: "Does CredSmart POS support GST billing with CGST and SGST?",
+      name: "What is CredAlert Intelligence?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Absolutely. CredSmart POS fully supports GST invoicing including CGST, SGST, and IGST calculations. You can generate GST-compliant A4 and thermal invoices instantly.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can I use CredSmart POS on my mobile phone?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. CredSmart POS is a responsive web application that works seamlessly on any modern browser — whether on your smartphone, tablet, or desktop computer. No app download required.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Is my business data secure on CredSmart POS?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Your data is protected with bank-grade encryption and stored securely on world-class cloud infrastructure. Your business data is private and never shared.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How is CredSmart POS different from Vyapar or myBillBook?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Unlike Vyapar and myBillBook which charge thousands per year for full features, CredSmart POS is completely free — every feature, forever. We also offer unique B2B Vendor Discovery with 3M+ MCA-registered companies.",
+        text: "CredAlert Intelligence alerts you if a business counterparty is flagged for commercial disputes, unpaid dues, or risk indicators, helping you protect cash flow and make safe credit decisions.",
       },
     },
   ],
 };
 
-const jsonLdOrg = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "CredSmart POS",
-  url: "https://credsmart.in",
-  logo: "https://credsmart.in/favicon.png",
-  description: "India's free GST billing and POS software provider",
-  sameAs: [],
-};
-
-/* ─────────────────────────── STATIC DATA ─────────────────────────── */
-const stats = [
-  { num: "3.2M+", label: "Listed businesses" },
-  { num: "100%", label: "KYC verified" },
-  { num: "₹0.00", label: "Cost forever" },
-];
-
-const governanceRows = [
-  { label: "Grievance acknowledgement", value: "24 hours" },
-  { label: "Grievance resolution", value: "15 days" },
-  { label: "Takedown first review", value: "36 hours" },
-  { label: "DPDP request response", value: "30 days" },
-  { label: "Invoice generation speed", value: "< 2.0 seconds" },
-];
-
-const principles = [
-  {
-    icon: FileCheck,
-    title: "Evidence, not opinion",
-    desc: "Every report and billing record requires authenticated documents — invoices, challans, ledgers, and tax filings with SHA-256 integrity.",
-  },
-  {
-    icon: Scale,
-    title: "Right of Reply, always",
-    desc: "Reported businesses are notified before publication and get 30 days to publish an unedited reply that sits alongside the report permanently.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Intermediary by design",
-    desc: "CredSmart never authors, edits or endorses a report. Safe-harbour posture under Section 2(1)(w) IT Act and statutory workflows are built in.",
-  },
-];
-
-const trustMetrics = [
-  {
-    icon: Activity,
-    title: "Responsiveness",
-    desc: "Share of published reports naming the business that received an active Right of Reply.",
-  },
-  {
-    icon: Scale,
-    title: "Resolution",
-    desc: "Share of commercial disputes resolved and reports withdrawn after bilateral engagement.",
-  },
-  {
-    icon: FileCheck,
-    title: "Profile completeness",
-    desc: "GSTIN, PAN, CIN registration identifiers, authorised KYC documents, and direct contact channels on file.",
-  },
-];
-
-const steps = [
-  {
-    num: "01",
-    title: "Verify your business",
-    desc: "GSTIN, PAN, CIN and authorised-signatory KYC before you can publish or transact.",
-  },
-  {
-    num: "02",
-    title: "Submit with documents",
-    desc: "Structured intake with minimum evidence thresholds, GST line items, and a signed reporter declaration.",
-  },
-  {
-    num: "03",
-    title: "Notice & Right of Reply",
-    desc: "The counterparty is served notice and can respond before and after public listing.",
-  },
-  {
-    num: "04",
-    title: "Moderation & billing sync",
-    desc: "Automated verification for compliance sufficiency — fast, neutral, and permanently audited.",
-  },
-];
-
-const businesses = [
-  { name: "Kirana & Supermarkets", count: "18.4k+ Stores" },
-  { name: "Pharma & Medical Stores", count: "9.2k+ Pharmacies" },
-  { name: "Electronics & Hardware", count: "7.1k+ Retailers" },
-  { name: "Apparel & Textiles", count: "11.5k+ Boutiques" },
-  { name: "FMCG Distributors", count: "4.8k+ Warehouses" },
-  { name: "Wholesale Traders", count: "6.3k+ Traders" },
-  { name: "Restaurants & Cafes", count: "8.9k+ Outlets" },
-  { name: "Automobile Spare Parts", count: "3.4k+ Workshops" },
-];
-
-const complianceControls = [
-  {
-    title: "Row-level access control",
-    desc: "Every database table is governed by role-scoped policies. Invoices and evidence never leave their private vault without an audited URL.",
-  },
-  {
-    title: "Immutable audit trail",
-    desc: "Views, downloads, status transitions and staff actions are appended to an append-only log with actor, timestamp, and reason.",
-  },
-  {
-    title: "DPDP-aligned processing",
-    desc: "Purpose-bound data collection, consent records, and data-principal requests answered within 30 days under Indian data protection law.",
-  },
-  {
-    title: "Legal holds & LEA workflow",
-    desc: "Records under commercial dispute or legal hold cannot be mutated. Law-enforcement requests follow a documented statutory channel.",
-  },
-];
-
-const faqs = [
-  {
-    q: "Is CredSmart / CredAlert a credit bureau?",
-    a: "No. CredSmart / CredAlert is not a credit information company and issues no credit score or creditworthiness opinion. It is a neutral technology intermediary that hosts documented commercial experiences and GST billing infrastructure for verified Indian businesses.",
-  },
-  {
-    q: "Is CredSmart POS really free forever?",
-    a: "Yes. CredSmart POS has zero software license fees, zero monthly subscriptions, zero transaction commissions on standard cash/UPI billing, and zero trial limits. You get full, unrestricted access to the complete POS, inventory, customer ledger, and supplier suites from day one.",
-  },
-  {
-    q: "What is the Right of Reply?",
-    a: "Every reported business is served notice and has 30 days to publish an unedited reply. The reply is displayed permanently alongside the report, ensuring complete transparency and neutral balance.",
-  },
-  {
-    q: "Does CredSmart POS support GST billing with CGST and SGST?",
-    a: "Absolutely. CredSmart POS fully supports GST invoicing including CGST, SGST, and IGST calculations. You can generate GST-compliant A4 and thermal invoices instantly in under 2 seconds.",
-  },
-  {
-    q: "How is evidence and invoice data protected?",
-    a: "Each uploaded invoice or ledger document is SHA-256 hashed at intake and stored in a private, access-controlled vault with an immutable audit trail covering every view, print, and status transition.",
-  },
-  {
-    q: "Can I use CredSmart POS on my mobile phone or tablet?",
-    a: "Yes. CredSmart POS is engineered as a lightweight Progressive Web App (PWA). It runs directly in Chrome, Safari, Edge, or on Android/iOS devices with offline resilience, full thermal printer support (ESC/POS), and instant cloud backup.",
-  },
-];
-
 export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { userRole } = useOrganization();
-  const [openFaq, setOpenFaq] = useState<boolean[]>(faqs.map((_, i) => i === 0));
-  const [searchVal, setSearchVal] = useState("");
-
-  const toggleFaq = (i: number) =>
-    setOpenFaq((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [ecosystemModalOpen, setEcosystemModalOpen] = useState(false);
+  const [credibilityModalOpen, setCredibilityModalOpen] = useState(false);
+  const [searchGstin, setSearchGstin] = useState("");
 
   const targetAppRoute = userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard;
-  const goToAuth = (mode?: string) => {
+
+  const handleStartFree = () => {
     if (user) {
       navigate(targetAppRoute);
     } else {
-      navigate(mode ? `${ROUTE_PATHS.auth}?mode=${mode}` : ROUTE_PATHS.auth);
+      navigate(`${ROUTE_PATHS.auth}?mode=signup`);
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleLogin = () => {
+    if (user) {
+      navigate(targetAppRoute);
+    } else {
+      navigate(`${ROUTE_PATHS.auth}?mode=login`);
+    }
+  };
+
+  const handleCredibilitySearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchVal.trim()) {
-      navigate(`${ROUTE_PATHS.discovery}?q=${encodeURIComponent(searchVal.trim())}`);
+    if (searchGstin.trim()) {
+      navigate(`${ROUTE_PATHS.discovery}?q=${encodeURIComponent(searchGstin.trim())}`);
     } else {
       navigate(ROUTE_PATHS.discovery);
     }
@@ -295,7 +138,7 @@ export default function Landing() {
 
   return (
     <>
-      {/* JSON-LD Structured Data */}
+      {/* Structured SEO Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSoftware) }}
@@ -304,699 +147,735 @@ export default function Landing() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
-      />
 
-      <div className="flex min-h-screen flex-col font-sans selection:bg-accent selection:text-white">
-        {/* ── FLOATING GLASS NAVIGATION (CredAlert Style) ── */}
-        <header className="sticky top-0 z-50 px-2 pt-2 sm:px-4 sm:pt-3">
-          <div className="glass-nav mx-auto flex h-14 max-w-7xl items-center gap-2 rounded-2xl px-3 sm:h-16 sm:gap-4 sm:px-6">
-            <Link
-              to={user ? targetAppRoute : ROUTE_PATHS.landing}
-              className="focus-ring min-w-0 shrink rounded-md active"
-            >
-              <span className="inline-flex items-center gap-2.5">
-                <img
-                  src="/favicon.png"
-                  alt="CredSmart"
-                  width="32"
-                  height="32"
-                  className="size-8 shrink-0 object-contain rounded-lg"
-                />
-                <span className="text-[17px] font-semibold tracking-tight">
-                  Cred<span className="text-accent font-bold">Smart</span>
-                </span>
-              </span>
-            </Link>
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#FF6A00] selection:text-white">
+        {/* ── TOP NAVIGATION HEADER (Matching Reference Exactly) ── */}
+        <PublicHeader />
 
-            <nav className="ml-4 hidden items-center gap-1 lg:flex">
-              <a
-                href="#features"
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Features
-              </a>
-              <a
-                href="#preview"
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Terminal
-              </a>
-              <a
-                href="#principles"
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Principles
-              </a>
-              <Link
-                to={ROUTE_PATHS.discovery}
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Directory
-              </Link>
-              <a
-                href="#compliance"
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Compliance
-              </a>
-              <a
-                href="#faq"
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                FAQ
-              </a>
-            </nav>
+        {/* ── HERO SECTION (Matching Reference Image) ── */}
+        <section className="relative pt-6 sm:pt-10 pb-16 lg:pb-24 overflow-hidden">
+          {/* Subtle Ambient Background Mesh Gradient */}
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-blue-200/40 via-indigo-100/30 to-transparent rounded-full blur-3xl -z-10 pointer-events-none translate-x-1/4 -translate-y-1/4" />
+          <div className="absolute top-1/2 left-0 w-[450px] h-[450px] bg-gradient-to-tr from-orange-200/30 via-amber-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none -translate-x-1/4" />
 
-            <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-              <Link
-                aria-label="Search businesses"
-                to={ROUTE_PATHS.discovery}
-                className="ripple-surface items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 focus-visible:outline-none hover:bg-accent/10 hover:text-accent h-9 w-9 hidden rounded-full sm:inline-flex"
-              >
-                <Search className="size-4" />
-              </Link>
-
-              {!user ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => goToAuth("login")}
-                    className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-all duration-300 hover:bg-accent/10 hover:text-accent h-8 rounded-full px-3.5 text-xs text-foreground"
-                  >
-                    Sign in
-                  </button>
-                  <button
-                    onClick={() => goToAuth("signup")}
-                    className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-8 px-4 text-xs rounded-full"
-                  >
-                    Register store
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => navigate(targetAppRoute)}
-                  className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-8 px-4 text-xs rounded-full"
-                >
-                  Dashboard <ArrowRight className="size-3.5 ml-0.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* ── HERO SECTION WITH AURORA AND LIQUID GLASS CARDS ── */}
-        <main className="flex-1">
-          <div>
-            <div className="relative overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="aurora" aria-hidden="true" />
-              </div>
-              <div className="grid-fade absolute inset-0 pointer-events-none" aria-hidden="true" />
-
-              <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 relative pt-12 sm:pt-20">
-                <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-                  {/* Left Column */}
-                  <div>
-                    <div>
-                      <span className="glass-input inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-2xs">
-                        Free Infrastructure · Evidence-First · DPDP Aligned
-                      </span>
-                    </div>
-
-                    <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.6rem] text-foreground">
-                      Know who you are
-                      <br />
-                      <span className="text-gradient-ruby">doing business with.</span>
-                    </h1>
-
-                    <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                      A neutral commercial infrastructure that lets verified Indian businesses publish documented commercial experiences, generate GST-compliant invoices in under 2 seconds, and access 3M+ MCA-registered counterparties.
-                    </p>
-
-                    {/* Pill Search Input */}
-                    <form
-                      onSubmit={handleSearchSubmit}
-                      role="search"
-                      className="glass-input mt-8 flex items-center gap-2 rounded-full p-1.5 pl-4 sm:max-w-xl shadow-xs"
-                    >
-                      <Search className="size-4 shrink-0 text-muted-foreground" />
-                      <label htmlFor="global-search" className="sr-only">
-                        Search by GSTIN, CIN, PAN or company name
-                      </label>
-                      <input
-                        id="global-search"
-                        placeholder="Search GSTIN, CIN, PAN or company name"
-                        className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground text-foreground"
-                        value={searchVal}
-                        onChange={(e) => setSearchVal(e.target.value)}
-                      />
-                      <button
-                        className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-8 text-xs shrink-0 rounded-full px-5"
-                        type="submit"
-                      >
-                        Search
-                      </button>
-                    </form>
-
-                    {/* Action Buttons */}
-                    <div className="mt-6 flex flex-wrap items-center gap-3">
-                      <button
-                        onClick={() => goToAuth("signup")}
-                        className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-10 px-7 rounded-full"
-                      >
-                        Register your business <ArrowRight className="ml-1.5 size-4" />
-                      </button>
-                      <Link
-                        to={ROUTE_PATHS.discovery}
-                        className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-10 px-7 rounded-full"
-                      >
-                        Browse the directory
-                      </Link>
-                    </div>
-
-                    {/* 3 Stat Counters in Soft Liquid Glass */}
-                    <div className="mt-10 grid max-w-lg grid-cols-3 gap-3">
-                      {stats.map((s) => (
-                        <div key={s.label}>
-                          <div className="liquid-glass-soft h-full p-4">
-                            <p className="text-2xl font-semibold tracking-tight font-mono text-foreground">
-                              <span className="tabular-nums">{s.num}</span>
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Floating Governance Snapshot Card */}
-                  <div>
-                    <div className="liquid-glass glass-shimmer hover-lift float-slow p-6 sm:p-8">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground font-mono">
-                        Governance &amp; SLA snapshot
-                      </p>
-                      <div className="mt-5 space-y-4">
-                        {governanceRows.map((row) => (
-                          <div
-                            key={row.label}
-                            className="flex items-center justify-between border-b border-border/60 pb-3 last:border-0 last:pb-0"
-                          >
-                            <span className="text-sm text-muted-foreground">{row.label}</span>
-                            <span className="text-sm font-semibold tabular-nums font-mono text-foreground">
-                              {row.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="rounded-2xl border border-border bg-secondary/60 px-4 py-3.5 text-xs leading-relaxed text-muted-foreground mt-6">
-                        CredSmart is an intermediary under Section 2(1)(w) of the Information Technology Act, 2000. It does not determine truth, does not perform debt recovery, is not a credit bureau, and never becomes the publisher of any commercial report.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            {/* ── THREE PRINCIPLES SECTION (CredAlert Architecture) ── */}
-            <section id="principles" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 pt-4">
-              <div className="max-w-2xl">
-                <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Architecture
-                </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                  Built on three non-negotiable principles
-                </h2>
-                <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                  CredSmart is engineered as commercial compliance infrastructure first and billing software second. The legal posture is enforced in the schema, not in a policy page.
-                </p>
-              </div>
-
-              <div className="mt-10 grid gap-5 md:grid-cols-3">
-                {principles.map((p) => {
-                  const Icon = p.icon;
-                  return (
-                    <div key={p.title} className="h-full">
-                      <div className="liquid-glass glass-shimmer hover-lift h-full p-6 sm:p-7">
-                        <span className="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary">
-                          <Icon className="size-5" />
-                        </span>
-                        <h3 className="mt-5 text-base font-semibold text-foreground">{p.title}</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* ── LIVE INTERACTIVE PREVIEW TERMINAL ── */}
-            <section id="preview" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 pt-4 scroll-mt-16">
-              <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-                <div className="max-w-2xl">
-                  <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    High-Speed POS Engine
-                  </span>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                    Engineered for Split-Second Retail Checkout
-                  </h2>
-                  <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                    Automated intra-state (CGST + SGST) and inter-state (IGST) tax computation with dual thermal ESC/POS and A4 PDF printing.
-                  </p>
-                </div>
-                <Link
-                  to={ROUTE_PATHS.discovery}
-                  className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-9 px-4 py-2 rounded-full"
-                >
-                  Browse directory <ArrowRight className="ml-1.5 size-4" />
-                </Link>
-              </div>
-
-              {/* Obsidian Code Terminal Window */}
-              <div className="rounded-3xl border border-gold/30 bg-[#0E121E] text-slate-100 shadow-2xl overflow-hidden font-mono text-xs">
-                <div className="px-5 py-3.5 bg-[#141A29] border-b border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-amber-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                    <span className="text-[11px] text-slate-300 ml-2 font-medium">credsmart-engine // GST-INVOICE-PIPELINE.json</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>ONLINE · SYNC LIVE</span>
-                  </div>
-                </div>
-
-                <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 text-slate-300">
-                  <div className="lg:col-span-7 space-y-2 overflow-x-auto">
-                    <div className="text-slate-500 pb-1">// Automated GST 18% Tax Computation Pipeline</div>
-                    <p><span className="text-indigo-400">"invoice_number"</span>: <span className="text-amber-300">"INV-2025-08492"</span>,</p>
-                    <p><span className="text-indigo-400">"customer"</span>: &#123; <span className="text-indigo-300">"name"</span>: <span className="text-emerald-300">"Sharma Traders"</span>, <span className="text-indigo-300">"gstin"</span>: <span className="text-amber-300">"07AAAAA0000A1Z5"</span> &#125;,</p>
-                    <p><span className="text-indigo-400">"line_items"</span>: [</p>
-                    <p className="pl-4">&#123; <span className="text-indigo-300">"sku"</span>: <span className="text-amber-300">"8901030382901"</span>, <span className="text-indigo-300">"item"</span>: <span className="text-emerald-300">"Organic Tea 500g"</span>, <span className="text-indigo-300">"qty"</span>: <span className="text-rose-400">4</span>, <span className="text-indigo-300">"rate"</span>: <span className="text-rose-400">₹525.00</span> &#125;</p>
-                    <p>],</p>
-                    <p><span className="text-indigo-400">"taxable_amount"</span>: <span className="text-rose-400">₹2,100.00</span>,</p>
-                    <p><span className="text-indigo-400">"tax_breakdown"</span>: &#123;</p>
-                    <p className="pl-4"><span className="text-indigo-300">"cgst_9pct"</span>: <span className="text-rose-400">₹189.00</span>,</p>
-                    <p className="pl-4"><span className="text-indigo-300">"sgst_9pct"</span>: <span className="text-rose-400">₹189.00</span>,</p>
-                    <p className="pl-4"><span className="text-indigo-300">"total_gst"</span>: <span className="text-rose-400">₹378.00</span></p>
-                    <p>&#125;,</p>
-                    <p><span className="text-indigo-400">"grand_total"</span>: <span className="text-emerald-400 font-bold">₹2,478.00</span>,</p>
-                    <p><span className="text-indigo-400">"thermal_esc_pos"</span>: <span className="text-slate-400 font-mono">"RAW_BYTES_READY (80mm/58mm)"</span></p>
-                  </div>
-
-                  <div className="lg:col-span-5 bg-[#141A29] border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-                        <div className="flex items-center gap-2">
-                          <Receipt className="w-4 h-4 text-gold" />
-                          <span className="font-bold text-white uppercase tracking-wider text-[11px]">Thermal Invoice</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">PAID (UPI)</span>
-                      </div>
-
-                      <div className="space-y-2 text-[11px]">
-                        <div className="flex justify-between text-slate-300">
-                          <span>Invoice:</span>
-                          <span className="text-white font-mono">INV-2025-08492</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span>Customer:</span>
-                          <span className="text-white">Sharma Traders</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span>Taxable Value:</span>
-                          <span className="font-mono">₹2,100.00</span>
-                        </div>
-                        <div className="flex justify-between text-slate-400">
-                          <span>CGST (9%):</span>
-                          <span className="font-mono">+ ₹189.00</span>
-                        </div>
-                        <div className="flex justify-between text-slate-400">
-                          <span>SGST (9%):</span>
-                          <span className="font-mono">+ ₹189.00</span>
-                        </div>
-                        <div className="border-t border-white/10 pt-2 flex justify-between text-sm font-bold text-emerald-400">
-                          <span>Total Paid:</span>
-                          <span className="font-mono">₹2,478.00</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
-                      <span className="flex items-center gap-1.5">
-                        <Printer className="w-3.5 h-3.5 text-gold" /> ESC/POS Ready
-                      </span>
-                      <span className="text-slate-500 font-mono">CredSmart v2.4</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ── TRUST METRICS SECTION ── */}
-            <div className="border-y border-border/70 bg-secondary/30">
-              <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-                <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-                  <div className="max-w-2xl">
-                    <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Trust metrics
-                    </span>
-                    <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                      Descriptive, mathematical, never predictive
-                    </h2>
-                    <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                      Every metric on a counterparty profile is computed from activity recorded on this platform — how often the counterparty replies, and how often commercial accounts are settled.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    {trustMetrics.map((m) => {
-                      const Icon = m.icon;
-                      return (
-                        <div key={m.title} className="h-full">
-                          <div className="liquid-glass glass-shimmer hover-lift h-full p-5">
-                            <Icon className="size-5 text-accent" />
-                            <p className="mt-4 text-sm font-semibold text-foreground">{m.title}</p>
-                            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.desc}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <p className="rounded-xl border border-border bg-secondary/60 px-4 py-3 text-xs leading-relaxed text-muted-foreground mt-8 max-w-3xl">
-                  Trust metrics are purely algorithmic descriptions of commercial activity recorded on this platform. They are not credit scores, not predictions, not creditworthiness opinions, and must not be used as the sole basis of any commercial decision.
-                </p>
-              </section>
-            </div>
-
-            {/* ── HOW CREDSMART WORKS (01, 02, 03, 04) ── */}
-            <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-              <div className="max-w-2xl">
-                <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  How CredSmart works
-                </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                  From onboarding to instant compliance
-                </h2>
-              </div>
-
-              <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-                {steps.map((st) => (
-                  <div key={st.num} className="h-full">
-                    <div className="liquid-glass glass-shimmer hover-lift h-full p-6">
-                      <span className="text-xs font-semibold tabular-nums text-accent font-mono">
-                        {st.num}
-                      </span>
-                      <h3 className="mt-3 text-sm font-semibold text-foreground">{st.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{st.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8">
-                <button
-                  onClick={() => goToAuth("signup")}
-                  className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-9 px-5 py-2 rounded-full"
-                >
-                  Start Billing Free Now <ArrowRight className="ml-1.5 size-4" />
-                </button>
-              </div>
-            </section>
-
-            {/* ── ENTERPRISE & DEVELOPER REST API CARDS ── */}
-            <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 pt-0">
-              <div className="grid gap-8 lg:grid-cols-2">
-                <div>
-                  <div className="liquid-glass glass-shimmer hover-lift h-full p-8">
-                    <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Enterprise
-                    </span>
-                    <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">
-                      Procurement-grade vendor monitoring
-                    </h2>
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      Build watchlists across your vendor portfolio, save searches, and receive alerts the moment an invoice, return, or report is recorded against a counterparty you track.
-                    </p>
-                    <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
-                      <li className="flex gap-3 items-center">
-                        <span className="size-1.5 shrink-0 rounded-full bg-accent" />
-                        Portfolio watchlists and 3M+ MCA company lookups
-                      </li>
-                      <li className="flex gap-3 items-center">
-                        <span className="size-1.5 shrink-0 rounded-full bg-accent" />
-                        Multi-warehouse Godown inventory &amp; batch matrix
-                      </li>
-                      <li className="flex gap-3 items-center">
-                        <span className="size-1.5 shrink-0 rounded-full bg-accent" />
-                        Automated WhatsApp payment reminders for Udhar Khata
-                      </li>
-                      <li className="flex gap-3 items-center">
-                        <span className="size-1.5 shrink-0 rounded-full bg-accent" />
-                        Role-scoped access for store owners, cashiers, and CAs
-                      </li>
-                    </ul>
-                    <button
-                      onClick={() => goToAuth("signup")}
-                      className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-9 px-5 py-2 mt-7 rounded-full"
-                    >
-                      Explore enterprise <ArrowRight className="ml-1.5 size-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="liquid-glass glass-shimmer hover-lift h-full p-8">
-                    <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      API &amp; developers
-                    </span>
-                    <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">
-                      Build CredSmart into your workflow
-                    </h2>
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      A documented REST API with scoped keys and webhooks so vendor verification, inventory updates, and invoice syncing run directly inside your ERP or procurement pipeline.
-                    </p>
-
-                    <div className="mt-6 overflow-x-auto rounded-2xl border border-border/70 bg-[#0E121E] p-4 text-slate-300">
-                      <pre className="font-mono text-xs leading-relaxed">
-GET /v1/businesses?gstin=29AABCU9603R1ZM
-Authorization: Bearer ck_live_••••••••••••
-
-200 OK
-&#123; "status": "active_gst",
-  "response_rate": 96,
-  "invoices_generated": 1420,
-  "open_disputes": 0 &#125;
-                      </pre>
-                    </div>
-
-                    <Link
-                      to={ROUTE_PATHS.discovery}
-                      className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-all duration-300 glass-input text-foreground hover:border-[color-mix(in_oklab,var(--accent)_40%,transparent)] hover:text-accent h-9 px-5 py-2 mt-7 rounded-full"
-                    >
-                      <CodeXml className="mr-1.5 size-4" /> Search 3M+ Companies
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ── SECURITY & COMPLIANCE ── */}
-            <div id="compliance" className="border-y border-border/70 bg-secondary/30 scroll-mt-16">
-              <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-                <div className="max-w-2xl">
-                  <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Security &amp; compliance
-                  </span>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                    Compliance controls that are enforced, not promised
-                  </h2>
-                  <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                    Safe-harbour posture under the IT Act and IT Rules, 2021, with DPDP-aligned processing and a complete evidentiary record for every transaction.
-                  </p>
-                </div>
-
-                <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                  {complianceControls.map((c) => (
-                    <div key={c.title} className="h-full">
-                      <div className="liquid-glass glass-shimmer hover-lift flex h-full items-start gap-4 p-6">
-                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-foreground">
-                          <Lock className="size-4 text-accent" />
-                        </span>
-                        <span>
-                          <span className="block text-sm font-semibold text-foreground">{c.title}</span>
-                          <span className="mt-1.5 block text-sm leading-relaxed text-muted-foreground">
-                            {c.desc}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            {/* ── TAILORED FOR INDIAN BUSINESSES ── */}
-            <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-              <div className="max-w-2xl">
-                <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Trade Segments
-                </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                  Tailored for Every Segment of Indian Trade
-                </h2>
-                <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                  Whether you process 2,000 barcode scans a day or handle B2B wholesale credit ledgers, CredSmart adapts dynamically.
-                </p>
-              </div>
-
-              <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-                {businesses.map((biz) => (
-                  <div
-                    key={biz.name}
-                    className="liquid-glass-soft p-4 sm:p-5 text-left hover-lift"
-                  >
-                    <p className="font-semibold text-sm text-foreground mb-1">{biz.name}</p>
-                    <p className="font-mono text-xs text-accent font-medium">{biz.count}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* ── FAQ ACCORDION SECTION ── */}
-            <section id="faq" className="mx-auto w-full max-w-4xl px-4 py-16 sm:px-6 sm:py-20 scroll-mt-16">
-              <div className="text-center max-w-2xl mx-auto mb-12">
-                <span className="glass-input inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Help &amp; Clarifications
-                </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                  Frequently Asked Questions
-                </h2>
-                <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                  Clear answers regarding licensing, hardware compatibility, GST compliance, and data security.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {faqs.map((item, i) => (
-                  <div
-                    key={i}
-                    className="liquid-glass-soft overflow-hidden transition-colors"
-                  >
-                    <button
-                      onClick={() => toggleFaq(i)}
-                      className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-secondary/40 transition-colors"
-                      aria-expanded={openFaq[i]}
-                    >
-                      <span className="font-semibold text-foreground text-sm sm:text-base pr-4">
-                        {item.q}
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          "w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200",
-                          openFaq[i] && "rotate-180 text-accent"
-                        )}
-                      />
-                    </button>
-                    {openFaq[i] && (
-                      <div className="px-6 pb-5 pt-1 text-sm text-muted-foreground leading-relaxed border-t border-border/50">
-                        {item.a}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* ── FINAL CTA BANNER ── */}
-            <div className="border-t border-border/70 bg-secondary/30">
-              <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 text-center">
-                <div className="max-w-3xl mx-auto">
-                  <span className="glass-input inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent mb-6">
-                    ⚡ Instant Zero-Cost Onboarding
-                  </span>
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground mb-5">
-                    Empower Your Commercial Trade with CredSmart
-                  </h2>
-                  <p className="text-muted-foreground text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                    Join thousands of Indian enterprises and store owners who have streamlined their billing, eliminated software license fees, and secured their commercial ledger.
-                  </p>
-                  <button
-                    onClick={() => goToAuth("signup")}
-                    className="ripple-surface inline-flex items-center justify-center gap-2 whitespace-nowrap text-base font-semibold cursor-pointer transition-all duration-300 text-primary-foreground shadow-soft [background-image:var(--gradient-primary)] hover:-translate-y-0.5 hover:shadow-lift h-12 px-9 rounded-full"
-                  >
-                    Get Started Completely Free <ArrowRight className="ml-2 size-5" />
-                  </button>
-                  <p className="mt-4 text-xs text-muted-foreground font-mono">
-                    Zero credit card required • Instant web &amp; mobile access • Section 2(1)(w) IT Act Ready
-                  </p>
-                </div>
-              </section>
-            </div>
-          </div>
-        </main>
-
-        {/* ── INSTITUTIONAL FOOTER (CredAlert Style) ── */}
-        <footer className="bg-[#0B1120] text-slate-400 pt-16 pb-12 border-t border-slate-800/80 font-sans">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-              <div className="md:col-span-2">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <img
-                    src="/favicon.png"
-                    alt="CredSmart"
-                    width="32"
-                    height="32"
-                    className="size-8 object-contain rounded-lg"
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-bold text-white text-lg tracking-tight">
-                      Cred<span className="text-accent font-bold">Smart</span>
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">Commercial Infrastructure by CredAlert</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+              
+              {/* Left Column: Value Proposition & CTAs */}
+              <div className="lg:col-span-5 flex flex-col items-start text-left">
+                
+                {/* Pill Badge */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-200/80 bg-blue-50/70 text-blue-700 text-xs sm:text-sm font-medium mb-5 shadow-xs">
+                  <RotateCw className="w-3.5 h-3.5 text-blue-600 animate-spin-slow" />
+                  <span>All-in-One Business Management Software</span>
+                  <span className="text-blue-400 font-bold ml-1">×</span>
+                </div>
+
+                {/* Main Headline (Exact Copy & Styling from Reference) */}
+                <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-extrabold tracking-tight text-[#0F172A] leading-[1.08] mb-5">
+                  Everything Your Business <br className="hidden sm:inline" />
+                  Needs. <br />
+                  <span className="text-[#FF6A00]">Completely Free.</span>
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-6 max-w-lg">
+                  Invoicing, POS, Inventory, Purchases, Accounting &amp; more — one powerful platform to run your entire business.
+                </p>
+
+                {/* 3 Horizontal Feature Badges */}
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-8">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50/80 border border-blue-100 text-slate-800 text-xs sm:text-sm font-bold">
+                    <span className="text-blue-600 text-base">🎁</span>
+                    <span>100% Free Forever</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50/80 border border-emerald-100 text-slate-800 text-xs sm:text-sm font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>All Features Included</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50/80 border border-orange-100 text-slate-800 text-xs sm:text-sm font-bold">
+                    <span className="text-orange-600 text-base">👥</span>
+                    <span>For Every Business</span>
                   </div>
                 </div>
-                <p className="text-sm leading-relaxed text-slate-400 max-w-sm mb-4">
-                  India's high-performance, 100% free GST billing, customer credit ledger, and commercial reputation infrastructure for retail stores, supermarkets, pharmacies, and wholesale distributors.
+
+                {/* Dual CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto mb-6">
+                  <button
+                    type="button"
+                    onClick={handleStartFree}
+                    className="h-12 px-7 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-base shadow-lg shadow-blue-700/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Start Free Now</span>
+                    <span className="text-lg">🚀</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVideoModalOpen(true)}
+                    className="h-12 px-6 rounded-xl bg-white hover:bg-blue-50/50 border border-blue-600 text-blue-700 font-semibold text-base active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  >
+                    <span>Explore CredSmart</span>
+                    <div className="w-5 h-5 rounded-full border border-blue-600 flex items-center justify-center">
+                      <Play className="w-2.5 h-2.5 fill-blue-600 text-blue-600 ml-0.5" />
+                    </div>
+                  </button>
+                </div>
+
+                {/* Trust Checklist Row */}
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm font-medium text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+                    No Credit Card Required
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+                    Easy to Use
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+                    Setup in Minutes
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Right Column: High-Fidelity 3D Live Dashboard Preview Card */}
+              <div className="lg:col-span-7 relative">
+                
+                {/* 3D Elevated Card Wrapper */}
+                <div className="relative rounded-2xl bg-white border border-slate-200/80 shadow-[0_20px_50px_rgba(15,23,42,0.12)] p-3 sm:p-4 transition-all hover:shadow-[0_25px_60px_rgba(15,23,42,0.16)]">
+                  
+                  {/* Top Bar of Mockup */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 px-1">
+                    <div className="flex items-center gap-3">
+                      <CredSmartLogo size="sm" showTagline={false} />
+                      <button type="button" className="p-1 text-slate-500 hover:text-slate-700">
+                        <Menu className="w-4 h-4" />
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">Dashboard</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-200/60">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          LIVE RECONCILED
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button type="button" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50">
+                        <Search className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleStartFree}
+                        className="h-7 px-2.5 rounded-lg bg-[#FF6A00] hover:bg-[#E65F00] text-white text-xs font-bold flex items-center gap-1 shadow-xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Bill</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      <div className="w-7 h-7 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center shadow-xs">
+                        Y
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body: Mini-Sidebar + Main Panel */}
+                  <div className="grid grid-cols-12 gap-3">
+                    
+                    {/* Mini Sidebar */}
+                    <div className="hidden sm:block sm:col-span-3 border-r border-slate-100 pr-2 space-y-1 text-xs">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold">
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        <span>Dashboard</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>🛒 Sales</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>🧾 POS Billing</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>📦 Purchases</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>🏷️ Items / Inventory</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>👥 Customers</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>🚚 Suppliers</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>📊 Reports</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        <span>⚙️ Settings</span>
+                      </div>
+                    </div>
+
+                    {/* Main Mockup Dashboard Area */}
+                    <div className="col-span-12 sm:col-span-9 pl-0 sm:pl-1">
+                      
+                      {/* Financial Ledger Summary Header */}
+                      <div className="flex items-center justify-between mb-2.5 text-[11px]">
+                        <span className="font-bold text-slate-500 uppercase tracking-wider">
+                          FINANCIAL LEDGER SUMMARY
+                        </span>
+                        <span className="font-medium text-slate-400 flex items-center gap-1">
+                          LAST SYNC: 29 AUG 2026 | 11:22 PM <RotateCw className="w-3 h-3 text-slate-400" />
+                        </span>
+                      </div>
+
+                      {/* Top 3 Metric Cards (Collect, Pay, Cash & Bank) */}
+                      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+                        
+                        {/* 1. TO COLLECT */}
+                        <div className="rounded-xl border border-blue-100 bg-gradient-to-b from-blue-50/50 to-white p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-blue-600 mb-1">
+                              <span>↙ TO COLLECT ↗</span>
+                            </div>
+                            <div className="text-lg sm:text-xl font-extrabold text-slate-900">
+                              ₹ 0
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-medium">
+                              Outstanding Receivables
+                            </div>
+                          </div>
+                          <div className="absolute right-1 bottom-1 opacity-90 scale-90 sm:scale-100 pointer-events-none">
+                            <Collect3DIcon />
+                          </div>
+                        </div>
+
+                        {/* 2. TO PAY */}
+                        <div className="rounded-xl border border-orange-100 bg-gradient-to-b from-orange-50/50 to-white p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-orange-600 mb-1">
+                              <span>↗ TO PAY ↗</span>
+                            </div>
+                            <div className="text-lg sm:text-xl font-extrabold text-slate-900">
+                              ₹ 0
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-medium">
+                              Pending Payables
+                            </div>
+                          </div>
+                          <div className="absolute right-1 bottom-1 opacity-90 scale-90 sm:scale-100 pointer-events-none">
+                            <Pay3DIcon />
+                          </div>
+                        </div>
+
+                        {/* 3. CASH & BANK */}
+                        <div className="rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50/50 to-white p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 mb-1">
+                              <span>🏛 CASH &amp; BANK ↗</span>
+                            </div>
+                            <div className="text-lg sm:text-xl font-extrabold text-slate-900">
+                              ₹ 97,678
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-medium">
+                              Reconciled Liquidity
+                            </div>
+                          </div>
+                          <div className="absolute right-1 bottom-1 opacity-90 scale-90 sm:scale-100 pointer-events-none">
+                            <Bank3DIcon />
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Recent Overview Grid */}
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                          RECENT OVERVIEW
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left bg-slate-50/80 rounded-xl p-2.5 border border-slate-100">
+                          <div>
+                            <div className="text-[10px] text-slate-500 font-medium">Sales (This Month)</div>
+                            <div className="text-sm font-bold text-slate-900">₹ 1,24,590</div>
+                            <div className="text-[10px] text-slate-400">12 Invoices</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 font-medium">Purchases (This Month)</div>
+                            <div className="text-sm font-bold text-slate-900">₹ 78,320</div>
+                            <div className="text-[10px] text-slate-400">9 Invoices</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 font-medium">Low Stock Items</div>
+                            <div className="text-sm font-bold text-rose-600">16</div>
+                            <div className="text-[10px] text-rose-500 font-semibold">Need Attention</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 font-medium">Customers Due</div>
+                            <div className="text-sm font-bold text-slate-900">₹ 54,320</div>
+                            <div className="text-[10px] text-slate-400">8 Customers</div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 2: "WHY BUSINESSES LOVE CREDSMART" (6-Card Grid Matching Reference) ── */}
+        <section id="features" className="py-14 sm:py-20 bg-white border-y border-slate-200/70">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            {/* Section Header */}
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+                Why Businesses Love <span className="text-[#FF6A00]">CredSmart</span>
+              </h2>
+            </div>
+
+            {/* 6 Feature Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
+              
+              {/* 1. Complete & Free */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-4">
+                  🎁
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  Complete &amp; Free
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Use every feature. Forever. No hidden charges. No limits.
                 </p>
-                <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>ALL SYSTEMS OPERATIONAL • 256-BIT ENCRYPTION • SECTION 2(1)(w) IT ACT</span>
+              </div>
+
+              {/* 2. All-in-One Platform */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  All-in-One Platform
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Invoicing, POS, Inventory, Sales, Purchases, Accounting – everything in one place.
+                </p>
+              </div>
+
+              {/* 3. Business Ecosystem */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  Business Ecosystem
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Your sales invoice can automatically become their purchase invoice.
+                </p>
+              </div>
+
+              {/* 4. CredAlert Intelligence */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  CredAlert Intelligence
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Know the credibility of the businesses you deal with. Stay protected.
+                </p>
+              </div>
+
+              {/* 5. Real-time Insights */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  Real-time Insights
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Live financial dashboard. Track collections, payments &amp; cash flow in real-time.
+                </p>
+              </div>
+
+              {/* 6. Built for Every Business */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col items-start">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
+                  <Users2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                  Built for Every Business
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Retailers, Wholesalers, Distributors, Manufacturers, Service Businesses &amp; more.
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── SECTION 3: DUAL FEATURE SPOTLIGHT CARDS (Ecosystem & CredAlert Intelligence) ── */}
+        <section className="py-14 sm:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+              {/* ── Left Bento Card: The CredSmart Business Ecosystem ── */}
+              <div
+                id="ecosystem"
+                className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
+              >
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+                    The <span className="text-[#FF6A00]">CredSmart</span> Business Ecosystem
+                  </h3>
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+                    When both businesses use CredSmart, transactions flow automatically. No duplicate entry. No extra work. Just connected businesses.
+                  </p>
+
+                  {/* Flow Diagram (Matching Reference) */}
+                  <div className="bg-slate-50/80 rounded-2xl border border-slate-100 p-5 mb-6">
+                    <div className="flex items-center justify-between max-w-md mx-auto">
+                      
+                      {/* Business A Node */}
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shadow-xs mb-2">
+                          <Store className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">Business A</span>
+                        <span className="text-[10px] text-slate-500 font-medium">Creates Sales Invoice</span>
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="flex flex-col items-center text-blue-500 font-bold px-2">
+                        <ArrowRight className="w-5 h-5 animate-pulse" />
+                      </div>
+
+                      {/* CredSmart Ecosystem Center */}
+                      <div className="flex flex-col items-center text-center">
+                        <div className="px-3 py-2 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white font-extrabold text-xs shadow-md mb-2 flex items-center gap-1.5">
+                          <RotateCw className="w-3.5 h-3.5" />
+                          <span>CredSmart Ecosystem</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-600 font-bold">Auto-Reconciled</span>
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="flex flex-col items-center text-blue-500 font-bold px-2">
+                        <ArrowRight className="w-5 h-5 animate-pulse" />
+                      </div>
+
+                      {/* Business B Node */}
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-xs mb-2">
+                          <Building className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">Business B</span>
+                        <span className="text-[10px] text-slate-500 font-medium">Receives as Purchase Invoice</span>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setEcosystemModalOpen(true)}
+                      className="px-6 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-sm transition-colors cursor-pointer shadow-xs"
+                    >
+                      Learn More
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3 Perks Row at Bottom of Card */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5 border-t border-slate-100 text-xs">
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-900">Save Time</div>
+                      <div className="text-slate-500 text-[11px]">No manual data entry</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Paperclip className="w-4 h-4 text-orange-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-900">Reduce Errors</div>
+                      <div className="text-slate-500 text-[11px]">Eliminate duplicate data</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Network className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-900">Stronger Network</div>
+                      <div className="text-slate-500 text-[11px]">Grow with connected businesses</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* ── Right Bento Card: CredAlert Intelligence ── */}
+              <div
+                id="intelligence"
+                className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                  
+                  {/* Left info column inside the right card */}
+                  <div className="sm:col-span-7 flex flex-col items-start">
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+                      CredAlert <span className="text-[#FF6A00]">Intelligence</span>
+                    </h3>
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+                      Get alerted if a business is flagged as a potential defaulter or risky counterparty by our CredAlert Intelligence system. Make smarter credit decisions. Reduce risk.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => setCredibilityModalOpen(true)}
+                      className="px-6 py-2.5 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-colors cursor-pointer mb-4 inline-flex items-center gap-1.5"
+                    >
+                      <span>Check Business Credibility</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+
+                    <p className="text-xs text-slate-500 font-medium">
+                      For more details visit{" "}
+                      <a
+                        href="https://www.credalert.business"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline font-semibold"
+                      >
+                        www.credalert.business
+                      </a>
+                    </p>
+                  </div>
+
+                  {/* Right 3D Shield Graphic inside the right card */}
+                  <div className="sm:col-span-5 flex items-center justify-center">
+                    <CredAlertShield3D />
+                  </div>
+
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                    <ShieldCheck className="w-4 h-4" /> Real-time Default Risk Alerts
+                  </span>
+                  <span>MCA &amp; GST Registered Database</span>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 4: HIGH-CONVERSION BOTTOM BANNER (Matching Reference) ── */}
+        <section className="py-10 sm:py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 p-6 sm:p-10 shadow-2xl text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+              
+              {/* Subtle Backglow */}
+              <div className="absolute right-0 bottom-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Left Content */}
+              <div className="flex items-center gap-5 text-left">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-900 flex items-center justify-center text-2xl sm:text-3xl shadow-xl shrink-0">
+                  🚀
+                </div>
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                    Run Your Entire Business. <span className="text-amber-300">For Free.</span>
+                  </h3>
+                  <p className="text-sm sm:text-base text-blue-100 mt-1">
+                    Stop juggling multiple tools. Start using CredSmart today.
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <h4 className="text-white font-mono font-semibold mb-4 text-xs uppercase tracking-wider">Navigation</h4>
-                <ul className="space-y-2.5 text-sm">
-                  <li><a href="#features" className="hover:text-white transition-colors">Features Matrix</a></li>
-                  <li><a href="#preview" className="hover:text-white transition-colors">POS Terminal</a></li>
-                  <li><a href="#principles" className="hover:text-white transition-colors">Architecture Principles</a></li>
-                  <li><Link to={ROUTE_PATHS.discovery} className="hover:text-white transition-colors">MCA Directory</Link></li>
-                  <li><a href="#faq" className="hover:text-white transition-colors">Help &amp; FAQ</a></li>
-                </ul>
+              {/* Center Checkmarks */}
+              <div className="hidden md:flex items-center gap-6 text-xs sm:text-sm font-bold text-blue-100">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                  Complete Solution
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                  All Features Free
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                  Trusted by Businesses
+                </span>
               </div>
 
-              <div>
-                <h4 className="text-white font-mono font-semibold mb-4 text-xs uppercase tracking-wider">Legal &amp; Compliance</h4>
-                <ul className="space-y-2.5 text-sm">
-                  <li><Link to={ROUTE_PATHS.privacyPolicy} className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                  <li><Link to={ROUTE_PATHS.termsOfService} className="hover:text-white transition-colors">Terms of Service</Link></li>
-                  <li><button onClick={() => goToAuth("login")} className="hover:text-white transition-colors text-left">Store Login</button></li>
-                  <li><button onClick={() => goToAuth("signup")} className="hover:text-white transition-colors text-left">Create Free Account</button></li>
-                </ul>
+              {/* Right CTA Button */}
+              <div className="shrink-0 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleStartFree}
+                  className="w-full sm:w-auto h-12 px-8 rounded-xl bg-white hover:bg-slate-50 text-blue-700 font-extrabold text-base shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span className="text-lg">🚀</span>
+                  <span>Start Free Now</span>
+                </button>
               </div>
-            </div>
 
-            <div className="border-t border-slate-800/80 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-              <p>© {new Date().getFullYear()} CredSmart POS. Free GST Billing Software for Indian Businesses. All rights reserved.</p>
-              <p className="font-mono text-[11px] text-slate-400">CredAlert — India's commercial reputation infrastructure • Section 2(1)(w) IT Act • 256-bit Encrypted</p>
             </div>
           </div>
-        </footer>
+        </section>
+
+        {/* ── PUBLIC FOOTER ── */}
+        <PublicFooter />
+
+        {/* ── MODALS FOR INTERACTIVE EXPLORATION ── */}
+        
+        {/* Video Tour Modal */}
+        <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+          <DialogContent className="max-w-3xl p-6 rounded-2xl bg-white text-slate-900 border border-slate-200">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                <CredSmartLogo size="sm" showTagline={false} />
+                <span>Interactive Product Overview</span>
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                See how fast you can create GST invoices, manage POS billing, and automate ledger reconciliation with zero setup fees.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 rounded-xl overflow-hidden bg-slate-950 aspect-video flex flex-col items-center justify-center text-white p-6 relative border border-slate-800">
+              <div className="w-16 h-16 rounded-full bg-[#FF6A00] flex items-center justify-center shadow-xl animate-pulse cursor-pointer">
+                <Play className="w-7 h-7 fill-white text-white ml-1" />
+              </div>
+              <p className="mt-4 text-sm font-bold text-slate-200">CredSmart 2-Minute Guided Tour</p>
+              <p className="text-xs text-slate-400">GST Billing • Barcode POS • Inventory &amp; Ledgers</p>
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setVideoModalOpen(false)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setVideoModalOpen(false);
+                  handleStartFree();
+                }}
+                className="bg-[#FF6A00] hover:bg-[#E65F00] text-white font-bold"
+              >
+                Get Started Free Now 🚀
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Ecosystem Modal */}
+        <Dialog open={ecosystemModalOpen} onOpenChange={setEcosystemModalOpen}>
+          <DialogContent className="max-w-2xl p-6 rounded-2xl bg-white text-slate-900 border border-slate-200">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                The CredSmart Business Ecosystem
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                How automatic connected billing eliminates manual accounting errors.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 my-4 text-sm text-slate-700">
+              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+                <span className="text-xl">1️⃣</span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Direct Invoicing Sync</h4>
+                  <p className="text-xs text-slate-600 mt-0.5">When you issue a GST invoice to another business using CredSmart, it instantly registers in their purchase ledger for one-click verification.</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-100 flex items-start gap-3">
+                <span className="text-xl">2️⃣</span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Zero Re-Entry &amp; Reconciliation</h4>
+                  <p className="text-xs text-slate-600 mt-0.5">HSN codes, batch numbers, rates, and GST taxes match automatically, preventing tax credit discrepancies.</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100 flex items-start gap-3">
+                <span className="text-xl">3️⃣</span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Unified Payment &amp; Credit Ledger</h4>
+                  <p className="text-xs text-slate-600 mt-0.5">Track Udhar, credit cycles, and payment receipts with cryptographically verified transaction receipts.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setEcosystemModalOpen(false)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setEcosystemModalOpen(false);
+                  handleStartFree();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+              >
+                Join the Ecosystem
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Check Business Credibility Modal */}
+        <Dialog open={credibilityModalOpen} onOpenChange={setCredibilityModalOpen}>
+          <DialogContent className="max-w-xl p-6 rounded-2xl bg-white text-slate-900 border border-slate-200">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                <span>CredAlert Intelligence Check</span>
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Search any Indian business by GSTIN, PAN, or Company Name to verify default records and commercial credibility.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCredibilitySearch} className="space-y-4 my-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                  Business Name, GSTIN or PAN
+                </label>
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchGstin}
+                    onChange={(e) => setSearchGstin(e.target.value)}
+                    placeholder="e.g. 27AABCU9603R1ZM or Tata Motors"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 flex items-start gap-2.5 text-xs text-amber-800">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>CredAlert indexes over 3.2M+ registered companies and commercial payment track records across India.</span>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setCredibilityModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                  Check Credibility Now
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </>
   );

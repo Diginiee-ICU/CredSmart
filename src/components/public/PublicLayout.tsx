@@ -15,7 +15,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#070C18] text-slate-100 flex flex-col selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-[#FF6A00] selection:text-white">
       <PublicHeader />
       <main className="flex-1 w-full">{children}</main>
       <PublicFooter />
