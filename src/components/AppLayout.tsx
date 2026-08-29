@@ -228,6 +228,7 @@ export default function AppLayout() {
   const [createPartyModalOpen, setCreatePartyModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newInvoiceMenuOpen, setNewInvoiceMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const { title, subtitle } = getPageMeta(location.pathname);
   const isPosRoute =

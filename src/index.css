@@ -6,9 +6,9 @@
 
 @layer base {
   :root {
-    --z-modal: 120;
+    --z-modal: 500;
     --z-popover: 200;
-    --z-tooltip: 210;
+    --z-tooltip: 600;
     /* CredAlert Warm Ivory Palette */
     --ivory: 40 20% 98%;
     --background: 40 20% 98%;
