@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, Lock, User, Building2, ArrowRight, Phone, MapPin,
@@ -65,7 +65,7 @@ export default function Auth() {
   const [invoicePrefix, setInvoicePrefix] = useState("INV");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [scrapedProducts, setScrapedProducts] = useState<any[]>([]);
+  const [scrapedProducts, setScrapedProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Bank & UPI Details
   const [bankName, setBankName] = useState("");
@@ -139,7 +139,7 @@ export default function Auth() {
         setResetSent(true);
         toast({ title: "Email sent", description: "Check your email inbox for password reset instructions." });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Reset error", description: err.message || "Failed to send reset link", variant: "destructive" });
     } finally {
       setResetLoading(false);
@@ -445,7 +445,7 @@ export default function Auth() {
           variant: "destructive",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Signup error:", err);
       toast({ title: "Signup failed", description: err?.message || "Unable to create account", variant: "destructive" });
     } finally {
