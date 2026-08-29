@@ -1,5 +1,5 @@
-# CredSmart POS & ERP Robots.txt
-# https://credsmart.in
+# CredSmart by CredAlert Robots.txt
+# Production Canonical: https://pos.credalert.bussiness/
 
 User-agent: *
 Allow: /
@@ -15,7 +15,7 @@ Allow: /privacy-policy
 Allow: /terms-of-service
 Allow: /auth
 
-# Disallow internal authenticated app routes from indexing
+# Disallow internal authenticated ERP/POS routes from search engine indexing
 Disallow: /dashboard
 Disallow: /checkout
 Disallow: /pos
@@ -45,6 +45,6 @@ Disallow: /print-settings
 Disallow: /staff
 Disallow: /activity-log
 
-# Host & Sitemap
-Host: https://credsmart.in
-Sitemap: https://credsmart.in/sitemap.xml
+# Host & XML Sitemap
+Host: https://pos.credalert.bussiness
+Sitemap: https://pos.credalert.bussiness/sitemap.xml

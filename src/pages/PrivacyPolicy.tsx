@@ -9,18 +9,22 @@ export default function PrivacyPolicy() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "Privacy Policy — CredSmart POS",
-    description: "CredSmart POS privacy policy, data protection rules, and DPDP Act 2023 compliance.",
-    url: "https://credsmart.in/privacy-policy",
+    name: "Privacy Policy — CredSmart by CredAlert",
+    description: "CredSmart privacy policy, data protection rules, and DPDP Act 2023 compliance.",
+    url: "https://pos.credalert.bussiness/privacy-policy",
   };
 
   return (
     <PublicLayout>
       <SEOHead
-        title="Privacy Policy — Data Protection & DPDP 2023 | CredSmart POS"
+        title="Privacy Policy — Data Protection & DPDP 2023 | CredSmart by CredAlert"
         description="Read CredSmart's Privacy Policy. Learn how we safeguard your GST billing, customer ledgers, and inventory records under Indian data protection laws."
         keywords="CredSmart privacy policy, DPDP Act compliance, data security billing app, GST invoice data privacy"
-        canonicalUrl="https://credsmart.in/privacy-policy"
+        canonicalUrl="https://pos.credalert.bussiness/privacy-policy"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Privacy Policy", url: "/privacy-policy" },
+        ]}
         structuredData={structuredData}
       />
 

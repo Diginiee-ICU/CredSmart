@@ -20,27 +20,30 @@ export default function About() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    name: "About CredSmart POS & ERP",
+    name: "About CredSmart by CredAlert",
     description:
-      "CredSmart POS is India's free GST billing, POS, and financial infrastructure provider designed for Indian MSMEs.",
-    url: "https://credsmart.in/about",
+      "CredSmart by CredAlert is India's free GST billing, POS, and business management software provider designed for Indian MSMEs.",
+    url: "https://pos.credalert.bussiness/about",
     mainEntity: {
       "@type": "Organization",
-      name: "CredSmart POS",
-      url: "https://credsmart.in",
-      logo: "https://credsmart.in/favicon.png",
-      foundingDate: "2024",
-      description: "Indian commercial technology intermediary providing free GST billing and POS infrastructure.",
+      name: "CredSmart by CredAlert",
+      url: "https://pos.credalert.bussiness",
+      logo: "https://pos.credalert.bussiness/favicon.png",
+      description: "Indian commercial technology intermediary providing free GST billing and POS infrastructure by CredAlert.",
     },
   };
 
   return (
     <PublicLayout>
       <SEOHead
-        title="About Us — Empowering Indian MSMEs with Free Tech | CredSmart"
+        title="About Us — Empowering Indian MSMEs with Free Tech | CredSmart by CredAlert"
         description="Learn about CredSmart's mission to digitize 63M+ Indian micro and small businesses with free enterprise-grade GST billing, POS, and inventory software."
         keywords="about CredSmart, free billing software company India, MSME billing tech India, Section 2(1)(w) IT Act intermediary, DPDP compliant billing software"
-        canonicalUrl="https://credsmart.in/about"
+        canonicalUrl="https://pos.credalert.bussiness/about"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "About Us", url: "/about" },
+        ]}
         structuredData={structuredData}
       />
 

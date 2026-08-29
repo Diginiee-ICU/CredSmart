@@ -16,19 +16,6 @@ import { SEOHead } from "@/components/public/SEOHead";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function Pricing() {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: "CredSmart POS Software",
-    description: "100% Free GST Billing & POS Software for Indian Retailers and Wholesalers.",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "INR",
-      availability: "https://schema.org/InStock",
-    },
-  };
-
   const comparisonRows = [
     { feature: "Annual Subscription Cost", credsmart: "₹ 0 / Forever", vyapar: "₹ 2,999 - ₹ 4,999/yr", mybillbook: "₹ 2,599 - ₹ 6,999/yr", tally: "₹ 22,500 + GST" },
     { feature: "Invoices & Billing Volume", credsmart: "Unlimited", vyapar: "Limited in Basic", mybillbook: "Limited in Basic", tally: "Unlimited" },
@@ -45,8 +32,8 @@ export default function Pricing() {
 
   const pricingFaqs = [
     {
-      q: "Why is CredSmart POS 100% free?",
-      a: "Our core mission is to digitize every Indian retail shop, wholesaler, and MSME without barrier. We monetize through value-added B2B enterprise discovery and optional commercial infrastructure, ensuring retail billing software remains free forever.",
+      q: "Why is CredSmart 100% free?",
+      a: "Our core mission is to digitize every Indian retail shop, wholesaler, and MSME without barrier. We monetize through value-added B2B enterprise discovery and optional commercial infrastructure by CredAlert, ensuring retail billing software remains free forever.",
     },
     {
       q: "Are there any hidden costs, watermark on invoices, or trial expiration?",
@@ -62,13 +49,44 @@ export default function Pricing() {
     },
   ];
 
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: "CredSmart Business Management & POS Software",
+      description: "100% Free GST Billing & POS Software for Indian Retailers, Wholesalers and MSMEs.",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "INR",
+        availability: "https://schema.org/InStock",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: pricingFaqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.a,
+        },
+      })),
+    },
+  ];
+
   return (
     <PublicLayout>
       <SEOHead
-        title="Pricing — 100% Free Forever GST Billing & POS Software | CredSmart"
-        description="CredSmart POS is 100% free forever. No software fees, no hidden charges, no invoice limits. Compare our ₹0 transparent pricing against Vyapar, myBillBook, and Tally."
+        title="Pricing — 100% Free Forever GST Billing & POS Software | CredSmart by CredAlert"
+        description="CredSmart is 100% free forever. No software fees, no hidden charges, no invoice limits. Compare our ₹0 transparent pricing against Vyapar, myBillBook, and Tally."
         keywords="free GST billing software, free POS software price, Vyapar pricing comparison, myBillBook pricing comparison, free retail billing software India, zero cost billing app"
-        canonicalUrl="https://credsmart.in/pricing"
+        canonicalUrl="https://pos.credalert.bussiness/pricing"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Pricing", url: "/pricing" },
+        ]}
         structuredData={structuredData}
       />
 
@@ -144,7 +162,7 @@ export default function Pricing() {
             How CredSmart Compares with Legacy Paid Apps
           </h2>
           <p className="text-sm text-slate-400">
-            See how much your business saves annually by switching to CredSmart POS.
+            See how much your business saves annually by switching to CredSmart.
           </p>
         </div>
 
@@ -154,7 +172,7 @@ export default function Pricing() {
               <tr>
                 <th className="p-4 sm:p-5">Feature / Capability</th>
                 <th className="p-4 sm:p-5 text-amber-500 dark:text-amber-400 font-bold bg-amber-500/10 border-x border-amber-500/20">
-                  CredSmart POS
+                  CredSmart
                 </th>
                 <th className="p-4 sm:p-5">Vyapar</th>
                 <th className="p-4 sm:p-5">myBillBook</th>

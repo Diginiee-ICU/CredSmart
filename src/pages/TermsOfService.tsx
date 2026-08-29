@@ -9,18 +9,22 @@ export default function TermsOfService() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "Terms of Service — CredSmart POS",
-    description: "CredSmart POS terms of service, user agreement, and Section 2(1)(w) IT Act intermediary safe-harbour terms.",
-    url: "https://credsmart.in/terms-of-service",
+    name: "Terms of Service — CredSmart by CredAlert",
+    description: "CredSmart terms of service, user agreement, and Section 2(1)(w) IT Act intermediary safe-harbour terms.",
+    url: "https://pos.credalert.bussiness/terms-of-service",
   };
 
   return (
     <PublicLayout>
       <SEOHead
-        title="Terms of Service — User Agreement & Governance | CredSmart POS"
-        description="Review the CredSmart POS Terms of Service, free service guarantee, merchant responsibilities, and intermediary governance under Section 2(1)(w) IT Act."
+        title="Terms of Service — User Agreement & Governance | CredSmart by CredAlert"
+        description="Review the CredSmart Terms of Service, free service guarantee, merchant responsibilities, and intermediary governance under Section 2(1)(w) IT Act."
         keywords="CredSmart terms of service, GST billing software terms, Section 2(1)(w) IT Act intermediary, MSME billing terms India"
-        canonicalUrl="https://credsmart.in/terms-of-service"
+        canonicalUrl="https://pos.credalert.bussiness/terms-of-service"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Terms of Service", url: "/terms-of-service" },
+        ]}
         structuredData={structuredData}
       />
 

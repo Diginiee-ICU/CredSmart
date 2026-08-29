@@ -40,6 +40,7 @@ import {
 } from "@/components/public/Landing3DIcons";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
+import { SEOHead } from "@/components/public/SEOHead";
 import {
   Dialog,
   DialogContent,
@@ -48,57 +49,101 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-/* ─────────────────────────── JSON-LD DATA ─────────────────────────── */
-const jsonLdSoftware = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "CredSmart",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web, Android, iOS",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "INR",
+/* ─────────────────────────── JSON-LD MULTI-SCHEMA ─────────────────────────── */
+const structuredDataSchemas = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "CredSmart by CredAlert",
+    url: "https://pos.credalert.bussiness",
+    logo: "https://pos.credalert.bussiness/favicon.png",
+    description: "India's free GST billing, POS software, and business management platform by CredAlert.",
+    sameAs: ["https://www.credalert.business"],
   },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    reviewCount: "2480",
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "CredSmart",
+    url: "https://pos.credalert.bussiness",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "https://pos.credalert.bussiness/discovery?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
+    },
   },
-  description:
-    "CredSmart by CredAlert is India's all-in-one completely free business management software. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence.",
-};
-
-const jsonLdFaq = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Is CredSmart really completely free forever?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. CredSmart is 100% free with no credit card required, no trial expiration, and no hidden charges. Every feature — POS, GST billing, inventory, reports, and ledger — is free forever.",
-      },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "CredSmart",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web, Android, iOS, Windows, macOS",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
     },
-    {
-      "@type": "Question",
-      name: "What is the CredSmart Business Ecosystem?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "When both businesses use CredSmart, transactions flow automatically. When you create a sales invoice, it automatically becomes the recipient's purchase invoice with zero manual re-entry.",
-      },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      reviewCount: "2480",
     },
-    {
-      "@type": "Question",
-      name: "What is CredAlert Intelligence?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "CredAlert Intelligence alerts you if a business counterparty is flagged for commercial disputes, unpaid dues, or risk indicators, helping you protect cash flow and make safe credit decisions.",
+    description:
+      "CredSmart by CredAlert is India's all-in-one completely free business management software. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence.",
+    featureList: [
+      "100% Free Forever with Zero Hidden Fees",
+      "GST Billing with CGST SGST IGST Breakdown",
+      "High-Speed POS Retail Checkout & Thermal Printing",
+      "Multi-Godown Inventory Management & Low Stock Alerts",
+      "Customer Udhar Khata & Digital Payment Ledgers",
+      "Business Ecosystem Automated Invoice Exchange",
+      "CredAlert Commercial Credit Risk Intelligence",
+      "Barcode Label Designer Studio",
+      "GSTR-1 Excel and JSON Tax Export",
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Is CredSmart really completely free forever?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. CredSmart is 100% free with no credit card required, no trial expiration, and no hidden charges. Every feature — POS, GST billing, inventory, reports, and ledger — is free forever.",
+        },
       },
-    },
-  ],
-};
+      {
+        "@type": "Question",
+        name: "What is the CredSmart Business Ecosystem?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "When both businesses use CredSmart, transactions flow automatically. When you create a sales invoice, it automatically becomes the recipient's purchase invoice with zero manual re-entry.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is CredAlert Intelligence?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "CredAlert Intelligence alerts you if a business counterparty is flagged for commercial disputes, unpaid dues, or risk indicators, helping you protect cash flow and make safe credit decisions.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does CredSmart support thermal receipt printers and barcode scanners?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. CredSmart supports all standard 58mm and 80mm ESC/POS thermal printers, barcode scanners, and thermal label sticker printers natively.",
+        },
+      },
+    ],
+  },
+];
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -138,14 +183,12 @@ export default function Landing() {
 
   return (
     <>
-      {/* Structured SEO Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSoftware) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }}
+      <SEOHead
+        title="CredSmart by CredAlert — Free GST Billing & POS Software for Indian Businesses"
+        description="India's all-in-one completely free business management platform. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence. 100% free forever."
+        keywords="free GST billing software India, free POS software India, GST invoice software free, Vyapar alternative free, myBillBook alternative free, free retail billing software, kirana store billing software, CredAlert credit risk intelligence"
+        canonicalUrl="https://pos.credalert.bussiness/"
+        structuredData={structuredDataSchemas}
       />
 
       <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#FF6A00] selection:text-white">

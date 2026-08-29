@@ -27,14 +27,14 @@ export default function Features() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "ItemPage",
-    name: "CredSmart POS Features — Complete Free GST Billing & ERP Suite",
+    name: "CredSmart Features — Complete Free GST Billing & ERP Suite",
     description:
-      "Explore the 12 powerful modules of CredSmart POS: POS Billing, GST Invoices, Inventory, Khata Ledgers, Barcode Studio, E-Invoicing, GSTR-1 Tax Exports, and Multi-Branch Management.",
-    url: "https://credsmart.in/features",
+      "Explore the powerful modules of CredSmart: POS Billing, GST Invoices, Inventory, Khata Ledgers, Barcode Studio, E-Invoicing, GSTR-1 Tax Exports, and Multi-Branch Management.",
+    url: "https://pos.credalert.bussiness/features",
     publisher: {
       "@type": "Organization",
-      name: "CredSmart POS",
-      url: "https://credsmart.in",
+      name: "CredSmart by CredAlert",
+      url: "https://pos.credalert.bussiness",
     },
   };
 
@@ -200,10 +200,14 @@ export default function Features() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Features — Free GST Billing & POS Software Suite | CredSmart POS"
-        description="Discover the complete feature suite of CredSmart POS: Fast POS Billing, GST Invoices, Inventory, Multi-Godown Control, Barcode Generator, Customer Udhar Khata, GSTR-1 Exports, and Multi-Branch Management."
+        title="Features — Free GST Billing & POS Software Suite | CredSmart by CredAlert"
+        description="Discover the complete feature suite of CredSmart: Fast POS Billing, GST Invoices, Inventory, Multi-Godown Control, Barcode Generator, Customer Udhar Khata, GSTR-1 Exports, and Multi-Branch Management."
         keywords="POS billing features, GST invoice maker features, inventory management software India, free barcode generator, GSTR-1 export software, multi godown software India, customer khata ledger app"
-        canonicalUrl="https://credsmart.in/features"
+        canonicalUrl="https://pos.credalert.bussiness/features"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Features", url: "/features" },
+        ]}
         structuredData={structuredData}
       />
 

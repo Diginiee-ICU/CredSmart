@@ -28,9 +28,9 @@ export default function Contact() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    name: "Contact CredSmart POS Support & Grievance Desk",
-    description: "Official contact channels, statutory Grievance Officer details, and customer support for CredSmart POS & ERP.",
-    url: "https://credsmart.in/contact",
+    name: "Contact CredSmart by CredAlert Support & Grievance Desk",
+    description: "Official contact channels, statutory Grievance Officer details, and customer support for CredSmart by CredAlert.",
+    url: "https://pos.credalert.bussiness/contact",
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -46,10 +46,14 @@ export default function Contact() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Contact Us & Grievance Officer — CredSmart POS"
-        description="Get in touch with CredSmart POS support team, submit business feedback, or reach our statutory Grievance Officer under Section 2(1)(w) IT Act."
+        title="Contact Us & Grievance Officer — CredSmart by CredAlert"
+        description="Get in touch with CredSmart support team, submit business feedback, or reach our statutory Grievance Officer under Section 2(1)(w) IT Act."
         keywords="contact CredSmart, CredSmart support, GST billing support India, grievance officer CredSmart, DPDP compliance contact"
-        canonicalUrl="https://credsmart.in/contact"
+        canonicalUrl="https://pos.credalert.bussiness/contact"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Contact Us", url: "/contact" },
+        ]}
         structuredData={structuredData}
       />
 

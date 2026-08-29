@@ -22,10 +22,10 @@ export default function Security() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "CredSmart POS Security & Data Privacy Architecture",
+    name: "CredSmart Security & Data Privacy Architecture",
     description:
       "Overview of CredSmart's bank-grade security infrastructure: 256-bit encryption, Row-Level Security (RLS), DPDP 2023 compliance, and automated backups.",
-    url: "https://credsmart.in/security",
+    url: "https://pos.credalert.bussiness/security",
   };
 
   const securityFeatures = [
@@ -64,10 +64,14 @@ export default function Security() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Security & Data Privacy Architecture — CredSmart POS"
-        description="Learn how CredSmart POS protects your business data with 256-bit encryption, Row-Level Security (RLS), DPDP Act compliance, and immutable audit trails."
-        keywords="POS security India, cloud billing security, DPDP compliant billing software, GST data encryption, row level security billing app"
-        canonicalUrl="https://credsmart.in/security"
+        title="Security & Data Privacy Architecture — CredSmart by CredAlert"
+        description="Learn how CredSmart protects your business billing and accounting records with 256-bit SSL encryption, Supabase RLS, immutable audit logs, and DPDP alignment."
+        keywords="CredSmart security, billing software encryption, safe GST invoice cloud, DPDP 2023 compliance, row level security POS, business data protection"
+        canonicalUrl="https://pos.credalert.bussiness/security"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Security Architecture", url: "/security" },
+        ]}
         structuredData={structuredData}
       />
 

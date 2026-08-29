@@ -135,10 +135,14 @@ export default function FaqPage() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Frequently Asked Questions (FAQ) — CredSmart POS"
-        description="Find answers to all questions about CredSmart POS: free pricing, GST invoicing, thermal printers, barcode scanner setup, customer Khata, and multi-store management."
+        title="Frequently Asked Questions (FAQ) — CredSmart by CredAlert"
+        description="Find answers to all questions about CredSmart: free pricing, GST invoicing, thermal printers, barcode scanner setup, customer Khata, and multi-store management."
         keywords="CredSmart FAQ, free POS billing questions, GST invoice FAQ, thermal printer setup billing, barcode label maker questions, Udhar khata app FAQ"
-        canonicalUrl="https://credsmart.in/faq"
+        canonicalUrl="https://pos.credalert.bussiness/faq"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "FAQ", url: "/faq" },
+        ]}
         structuredData={structuredData}
       />
 

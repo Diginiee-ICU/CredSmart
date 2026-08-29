@@ -17,27 +17,57 @@ import { SEOHead } from "@/components/public/SEOHead";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function GstBillingGuide() {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: "The Complete Guide to GST Billing & Invoicing in India (2026)",
-    description:
-      "A comprehensive guide for Indian retail and wholesale businesses on GST rules, CGST/SGST/IGST calculation, HSN/SAC codes, e-Invoicing, and GSTR-1 tax compliance.",
-    author: {
-      "@type": "Organization",
-      name: "CredSmart POS Research Team",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "CredSmart POS",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://credsmart.in/favicon.png",
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: "The Complete Guide to GST Billing & Invoicing in India (2026)",
+      description:
+        "A comprehensive guide for Indian retail and wholesale businesses on GST rules, CGST/SGST/IGST calculation, HSN/SAC codes, e-Invoicing, and GSTR-1 tax compliance.",
+      author: {
+        "@type": "Organization",
+        name: "CredSmart Research Team",
       },
+      publisher: {
+        "@type": "Organization",
+        name: "CredSmart by CredAlert",
+        logo: {
+          "@type": "ImageObject",
+          url: "https://pos.credalert.bussiness/favicon.png",
+        },
+      },
+      datePublished: "2026-01-01",
+      dateModified: "2026-08-30",
+      mainEntityOfPage: "https://pos.credalert.bussiness/gst-billing-guide",
     },
-    datePublished: "2026-01-01",
-    dateModified: "2026-08-22",
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "How to Generate a GST Compliant Invoice in India",
+      step: [
+        {
+          "@type": "HowToStep",
+          name: "Add Business & Customer Details",
+          text: "Enter your registered GSTIN, trade name, and customer billing address.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Select Items and HSN Codes",
+          text: "Add product line items with their corresponding 4 or 6 digit HSN codes.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Calculate CGST, SGST or IGST",
+          text: "Apply intra-state (CGST + SGST) or inter-state (IGST) tax rates based on Place of Supply.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Print or Export Invoice",
+          text: "Generate thermal receipt or A4 PDF with dynamic UPI payment QR code.",
+        },
+      ],
+    },
+  ];
 
   const gstSlabs = [
     { rate: "0%", category: "Exempted / Nil-Rated Goods", examples: "Unprocessed grains, fresh milk, vegetables, fresh meat, educational services." },
@@ -50,11 +80,15 @@ export default function GstBillingGuide() {
   return (
     <PublicLayout>
       <SEOHead
-        title="GST Billing Guide 2026 — Tax Rules, Invoicing & Slabs in India | CredSmart"
+        title="GST Billing Guide 2026 — Tax Rules, Invoicing & Slabs in India | CredSmart by CredAlert"
         description="Comprehensive GST billing guide for Indian businesses. Learn how CGST, SGST, and IGST work, mandatory invoice rules, HSN codes, e-Invoicing, and how to file GSTR-1 effortlessly."
         keywords="GST billing guide India, GST invoice rules, CGST SGST calculation, HSN code rules, e-Invoicing thresholds India, GSTR-1 filing guide, free GST invoice software"
-        canonicalUrl="https://credsmart.in/gst-billing-guide"
+        canonicalUrl="https://pos.credalert.bussiness/gst-billing-guide"
         ogType="article"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "GST Guide", url: "/gst-billing-guide" },
+        ]}
         structuredData={structuredData}
       />
 

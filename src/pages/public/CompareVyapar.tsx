@@ -19,13 +19,14 @@ export default function CompareVyapar() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "CredSmart POS vs Vyapar & myBillBook",
+    name: "CredSmart vs Vyapar & myBillBook",
     description:
-      "Detailed feature and price comparison between CredSmart POS, Vyapar, and myBillBook for Indian retail and wholesale businesses.",
+      "Detailed feature and price comparison between CredSmart, Vyapar, and myBillBook for Indian retail and wholesale businesses.",
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
     },
   };
 
@@ -84,10 +85,14 @@ export default function CompareVyapar() {
   return (
     <PublicLayout>
       <SEOHead
-        title="CredSmart POS vs Vyapar & myBillBook — Why Switch? | CredSmart"
-        description="Looking for the best free alternative to Vyapar or myBillBook? Compare CredSmart POS features, pricing, cloud sync, barcode printing, and multi-branch management."
+        title="CredSmart vs Vyapar & myBillBook — 100% Free Alternative | CredSmart by CredAlert"
+        description="Looking for the best free alternative to Vyapar or myBillBook? Compare CredSmart features, pricing, cloud sync, barcode printing, and multi-branch management."
         keywords="Vyapar alternative free, myBillBook alternative free, CredSmart vs Vyapar, CredSmart vs myBillBook, best billing software India, free GST invoice app comparison"
-        canonicalUrl="https://credsmart.in/compare-vyapar"
+        canonicalUrl="https://pos.credalert.bussiness/compare-vyapar"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Compare Vyapar", url: "/compare-vyapar" },
+        ]}
         structuredData={structuredData}
       />
 
