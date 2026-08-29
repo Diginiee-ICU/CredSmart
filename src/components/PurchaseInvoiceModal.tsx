@@ -60,6 +60,7 @@ import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
+import { PartyCustomItem } from "@/types/parties";
 
 interface SupplierOption {
   id: string;
@@ -69,6 +70,10 @@ interface SupplierOption {
   gstin?: string;
   address?: string;
   balance?: number;
+  custom_fields?: any;
+  customItems?: PartyCustomItem[];
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
 }
 
 interface ProductCatalogOption {
@@ -189,12 +194,101 @@ export function PurchaseInvoiceModal({
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
 
+  const activeSupplier = useMemo(() => {
+    return suppliers.find(
+      (s) =>
+        s.id === selectedSupplierId ||
+        (partyPhone && s.phone === partyPhone) ||
+        (partyName && s.name.toLowerCase().trim() === partyName.toLowerCase().trim())
+    );
+  }, [suppliers, selectedSupplierId, partyPhone, partyName]);
+
   const billItemOptions: BillItemOption[] = useMemo(() => {
-    return productsCatalog.map((p) => {
+    const customPriceMap = new Map<string, number>();
+    const customItemsList = activeSupplier?.customItems || [];
+
+    if (activeSupplier && activeSupplier.keepSamePrice === false && customItemsList.length > 0) {
+      customItemsList.forEach((ci) => {
+        const price = ci.costPrice !== undefined ? ci.costPrice : ci.customPrice;
+        if (ci.productId) customPriceMap.set(ci.productId, price);
+        if (ci.productName) customPriceMap.set(ci.productName.toLowerCase().trim(), price);
+        if (ci.barcode) customPriceMap.set(ci.barcode.trim(), price);
+      });
+    }
+
+    const synthesizedCustomOptions: BillItemOption[] = customItemsList.map((ci) => {
+      const existing = productsCatalog.find(
+        (p) =>
+          p.id === ci.productId ||
+          (ci.barcode && p.barcode === ci.barcode) ||
+          (ci.productName && p.name?.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+      );
+
+      if (existing) {
+        const tags = (existing as any).tags || {};
+        const defaultCost =
+          existing.product_batches?.[0]?.cost_price ||
+          (tags && tags.purchase_price !== undefined && tags.purchase_price !== null
+            ? Number(tags.purchase_price)
+            : Math.round((existing.selling_price || 0) * 0.8));
+        const cost =
+          activeSupplier?.keepSamePrice === false && (ci.costPrice !== undefined || ci.customPrice !== undefined)
+            ? (ci.costPrice ?? ci.customPrice)
+            : customPriceMap.get(existing.id) ?? defaultCost;
+
+        return {
+          id: existing.id,
+          name: existing.name || ci.productName || "Unnamed Item",
+          category: existing.category || ci.category || "General",
+          barcode: existing.barcode || ci.barcode || null,
+          sku: existing.sku || ci.sku,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          unit: ci.unit || existing.unit || "Pcs",
+          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          sellingPrice: existing.selling_price || ci.standardPrice || 0,
+          costPrice: cost,
+          gstRate: ci.gstRate || (tags && tags.gst_rate !== undefined ? Number(tags.gst_rate) : 18),
+          stock: existing.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || ci.customStock || 0,
+        };
+      }
+
+      return {
+        id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+        name: ci.productName || "Custom Product",
+        category: ci.category || "General",
+        barcode: ci.barcode || null,
+        sku: ci.sku,
+        hsn: ci.hsnCode,
+        unit: ci.unit || "Pcs",
+        sellingPrice: ci.standardPrice || ci.customPrice || 0,
+        costPrice: ci.costPrice ?? ci.customPrice ?? 0,
+        gstRate: ci.gstRate || 18,
+        stock: ci.customStock || 999,
+      };
+    });
+
+    if (activeSupplier && activeSupplier.keepSameInventory === false && customItemsList.length > 0) {
+      return synthesizedCustomOptions;
+    }
+
+    const catalogOptions = productsCatalog.map((p) => {
       const tags = (p as any).tags || {};
-      const selling = tags && (tags.selling_price !== undefined && tags.selling_price !== null) ? Number(tags.selling_price) : (p.product_batches?.[0]?.mrp || 0);
-      const cost = p.product_batches?.[0]?.cost_price || (tags && (tags.purchase_price !== undefined && tags.purchase_price !== null) ? Number(tags.purchase_price) : Math.round((selling || 0) * 0.8));
-      const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
+      const selling =
+        tags && tags.selling_price !== undefined && tags.selling_price !== null
+          ? Number(tags.selling_price)
+          : p.product_batches?.[0]?.mrp || 0;
+      const defaultCost =
+        p.product_batches?.[0]?.cost_price ||
+        (tags && tags.purchase_price !== undefined && tags.purchase_price !== null
+          ? Number(tags.purchase_price)
+          : Math.round((selling || 0) * 0.8));
+      const matchCost =
+        customPriceMap.get(p.id) ??
+        (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+        (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+      const cost = matchCost !== undefined ? matchCost : defaultCost;
+      const gst = tags && tags.gst_rate !== undefined && tags.gst_rate !== null ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
       const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
       const altConvVal = (p as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
@@ -215,7 +309,18 @@ export function PurchaseInvoiceModal({
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
       };
     });
-  }, [productsCatalog]);
+
+    const uniqueAdditional = synthesizedCustomOptions.filter(
+      (cp) =>
+        !productsCatalog.some(
+          (p) =>
+            p.id === cp.id ||
+            (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+        )
+    );
+
+    return [...catalogOptions, ...uniqueAdditional];
+  }, [productsCatalog, activeSupplier]);
 
   // Line items
   const [items, setItems] = useState<DocumentLineItem[]>([
@@ -338,17 +443,40 @@ export function PurchaseInvoiceModal({
   const fetchSuppliers = async () => {
     if (!orgId) return;
     try {
+      const parsePartyCf = (rawCf: any, rawRecord: any) => {
+        let cf = rawCf;
+        if (typeof cf === "string") {
+          try {
+            cf = JSON.parse(cf);
+          } catch {
+            cf = {};
+          }
+        }
+        if (!cf || typeof cf !== "object") cf = {};
+        const customItems = Array.isArray(cf.customItems)
+          ? cf.customItems
+          : Array.isArray(cf.custom_items)
+          ? cf.custom_items
+          : Array.isArray(rawRecord?.custom_items)
+          ? rawRecord.custom_items
+          : [];
+        const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+        const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+        return { cf, customItems, keepSamePrice, keepSameInventory };
+      };
+
       // 1. Fetch from customers table (same as Sales Invoice)
       const { data: custData } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address, gstin")
+        .select("id, name, phone, email, address, gstin, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
       // 2. Fetch from suppliers table (legacy/dedicated suppliers)
       const { data: suppData } = await supabase
         .from("suppliers")
-        .select("id, name, phone, email, address, gstin")
+        .select("id, name, phone, email, address, gstin, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -378,6 +506,7 @@ export function PurchaseInvoiceModal({
         const key = `${c.name.toLowerCase().trim()}|${(c.phone || "").trim()}`;
         if (!seenKeys.has(key)) {
           seenKeys.add(key);
+          const { cf, customItems, keepSamePrice, keepSameInventory } = parsePartyCf(c.custom_fields, c);
           merged.push({
             id: c.id,
             name: c.name,
@@ -386,6 +515,10 @@ export function PurchaseInvoiceModal({
             address: c.address || undefined,
             gstin: c.gstin || undefined,
             balance: balanceMap[c.id] || 0,
+            custom_fields: cf,
+            customItems,
+            keepSamePrice,
+            keepSameInventory,
           });
         }
       }
@@ -395,6 +528,7 @@ export function PurchaseInvoiceModal({
         const key = `${s.name.toLowerCase().trim()}|${(s.phone || "").trim()}`;
         if (!seenKeys.has(key)) {
           seenKeys.add(key);
+          const { cf, customItems, keepSamePrice, keepSameInventory } = parsePartyCf(s.custom_fields, s);
           merged.push({
             id: s.id,
             name: s.name,
@@ -403,6 +537,10 @@ export function PurchaseInvoiceModal({
             address: s.address || undefined,
             gstin: s.gstin || undefined,
             balance: balanceMap[s.id] || 0,
+            custom_fields: cf,
+            customItems,
+            keepSamePrice,
+            keepSameInventory,
           });
         }
       }
@@ -1038,39 +1176,136 @@ export function PurchaseInvoiceModal({
   }, [suppliers, supplierSearch]);
 
   const getFilteredProducts = (query: string): UnifiedPurchaseProduct[] => {
+    const customPriceMap = new Map<string, number>();
+    const customItemsList = activeSupplier?.customItems || [];
+
+    if (activeSupplier && activeSupplier.keepSamePrice === false && customItemsList.length > 0) {
+      customItemsList.forEach((ci) => {
+        const price = ci.costPrice !== undefined ? ci.costPrice : ci.customPrice;
+        if (ci.productId) customPriceMap.set(ci.productId, price);
+        if (ci.productName) customPriceMap.set(ci.productName.toLowerCase().trim(), price);
+        if (ci.barcode) customPriceMap.set(ci.barcode.trim(), price);
+      });
+    }
+
+    const synthesizedCustomProducts: UnifiedPurchaseProduct[] = customItemsList.map((ci) => {
+      const existing = productsCatalog.find(
+        (p) =>
+          p.id === ci.productId ||
+          (ci.barcode && p.barcode === ci.barcode) ||
+          (ci.productName && p.name?.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+      );
+
+      if (existing) {
+        const tags = (existing as any).tags || {};
+        const defaultCost =
+          existing.product_batches?.[0]?.cost_price ||
+          (tags?.purchase_price ? Number(tags.purchase_price) : Math.round((existing.selling_price || 0) * 0.8));
+        const cost =
+          activeSupplier?.keepSamePrice === false && (ci.costPrice !== undefined || ci.customPrice !== undefined)
+            ? (ci.costPrice ?? ci.customPrice)
+            : customPriceMap.get(existing.id) ?? defaultCost;
+
+        return {
+          id: existing.id,
+          name: existing.name || ci.productName || "Unnamed Item",
+          category: existing.category || ci.category || "General",
+          barcode: existing.barcode || ci.barcode || undefined,
+          sku: existing.sku || ci.sku,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          unit: ci.unit || existing.unit || "Pcs",
+          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          costPrice: cost,
+          mrp: existing.product_batches?.[0]?.mrp || existing.selling_price || ci.standardPrice || 0,
+          gstRate: ci.gstRate || (tags?.gst_rate ? Number(tags.gst_rate) : 18),
+          stock: existing.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || ci.customStock || 0,
+          isDb: true,
+        };
+      }
+
+      return {
+        id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+        name: ci.productName || "Custom Product",
+        category: ci.category || "General",
+        barcode: ci.barcode || undefined,
+        sku: ci.sku,
+        hsn: ci.hsnCode,
+        unit: ci.unit || "Pcs",
+        costPrice: ci.costPrice ?? ci.customPrice ?? 0,
+        mrp: ci.standardPrice || ci.customPrice || 0,
+        gstRate: ci.gstRate || 18,
+        stock: ci.customStock || 999,
+        isDb: true,
+      };
+    });
+
+    if (activeSupplier && activeSupplier.keepSameInventory === false && customItemsList.length > 0) {
+      if (!query) return synthesizedCustomProducts.slice(0, 15);
+      const q = query.toLowerCase();
+      return synthesizedCustomProducts
+        .filter((p) => {
+          const name = (p.name || "").toLowerCase();
+          const barcode = (p.barcode || "").toLowerCase();
+          const sku = (p.sku || "").toLowerCase();
+          return name.includes(q) || barcode.includes(q) || sku.includes(q);
+        })
+        .slice(0, 15);
+    }
+
     const toPurchaseSuggestion = (p: ProductCatalogOption): UnifiedPurchaseProduct => {
       const tags = (p as any).tags || {};
       const altUnitVal = p.altUnit || tags?.alt_unit || undefined;
       const altConvVal = p.altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+      const defaultCost =
+        p.product_batches?.[0]?.cost_price ||
+        (tags?.purchase_price ? Number(tags.purchase_price) : Math.round((p.selling_price || 0) * 0.8));
+      const matchCost =
+        customPriceMap.get(p.id) ??
+        (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+        (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+      const costPrice = matchCost !== undefined ? matchCost : defaultCost;
+
       return {
         id: p.id,
         name: p.name,
         category: p.category || "General",
         barcode: p.barcode || undefined,
         sku: p.sku,
+        hsn: tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined,
         unit: p.unit || "Pcs",
         altUnit: altUnitVal,
         altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
-        costPrice: p.product_batches?.[0]?.cost_price || (tags?.purchase_price ? Number(tags.purchase_price) : Math.round((p.selling_price || 0) * 0.8)),
+        costPrice,
         mrp: p.product_batches?.[0]?.mrp || p.selling_price || 0,
-        gstRate: p.tax_rate || 18,
+        gstRate: p.tax_rate || (tags?.gst_rate ? Number(tags.gst_rate) : 18),
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
         isDb: true,
       };
     };
 
-    if (!query) return productsCatalog.slice(0, 12).map(toPurchaseSuggestion);
+    const uniqueAdditional = synthesizedCustomProducts.filter(
+      (cp) =>
+        !productsCatalog.some(
+          (p) =>
+            p.id === cp.id ||
+            (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+        )
+    );
+
+    const allProducts = [...productsCatalog.map(toPurchaseSuggestion), ...uniqueAdditional];
+
+    if (!query) return allProducts.slice(0, 12);
 
     const q = query.toLowerCase();
-    return productsCatalog
+    return allProducts
       .filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           (p.barcode && p.barcode.toLowerCase().includes(q)) ||
           (p.sku && p.sku.toLowerCase().includes(q))
       )
-      .slice(0, 15)
-      .map(toPurchaseSuggestion);
+      .slice(0, 15);
   };
 
   const upiPayload = upiId
