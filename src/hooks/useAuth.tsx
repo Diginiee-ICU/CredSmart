@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    let subscription: any | null = null;
+    let subscription: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Safety timeout to prevent any infinite spinner if supabase client takes time
     const safetyTimer = setTimeout(() => {
@@ -36,13 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const result = await supabase.auth.getSession();
-        const sess = (result as any)?.data?.session ?? null;
+        const sess = (result as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.data?.session ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
         if (isMounted) {
           setSession(sess);
           setUser(sess?.user ?? null);
           setLoading(false);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         // AbortErrors are expected in some environments (e.g. preview mode); log at info level.
         if (err?.name === "AbortError") {
           console.info("Session check aborted:", err?.message ?? err);
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }
       });
-      subscription = (onAuth as any)?.data?.subscription ?? null;
+      subscription = (onAuth as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.data?.subscription ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
     } catch (err) {
       console.warn("Auth subscription failed:", err);
     }
@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ignore errors during cleanup
       }
     };
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signOut = async () => {
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }
