@@ -12,6 +12,7 @@ import { ProductsProvider } from "@/context/ProductsContext";
 import { NetworkInvoicesProvider } from "@/hooks/useNetworkInvoices";
 import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole } from "@/config/routes";
 import ScrollToTop from "@/components/ScrollToTop";
+import { NativePlatformBridge } from "@/components/native/NativePlatformBridge";
 
 // Direct page imports for rock-solid zero-delay rendering
 import Dashboard from "@/pages/Dashboard";
@@ -190,6 +191,7 @@ const App = () => (
               <ProductsProvider>
                 <Toaster />
                 <Sonner />
+                <NativePlatformBridge />
                 <BrowserRouter>
                   <ScrollToTop />
                   <Routes>
