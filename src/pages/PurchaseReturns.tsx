@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
@@ -369,15 +371,31 @@ export default function PurchaseReturns() {
     }
   };
 
-  const filtered = returns.filter((r) => {
-    const matchesSearch =
-      r.return_number.toLowerCase().includes(search.toLowerCase()) ||
-      r.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.reason.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || r.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = useMemo(() => {
+    return returns.filter((r) => {
+      const matchesSearch =
+        r.return_number.toLowerCase().includes(search.toLowerCase()) ||
+        r.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
+        r.reason.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || r.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [returns, search, statusFilter]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const totalReturnValue = returns.reduce((s, r) => s + Number(r.total_amount || 0), 0);
 
@@ -542,7 +560,7 @@ export default function PurchaseReturns() {
           <>
             {/* Mobile Cards */}
             <div className="block md:hidden divide-y divide-border/60 pb-28">
-              {filtered.map((r) => {
+              {paginatedItems.map((r) => {
                 const status = statusConfig[r.status] || statusConfig.draft;
                 const StatusIcon = status.icon;
                 return (
@@ -606,7 +624,7 @@ export default function PurchaseReturns() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => {
+                  {paginatedItems.map((r) => {
                     const status = statusConfig[r.status] || statusConfig.draft;
                     const StatusIcon = status.icon;
 
@@ -683,6 +701,19 @@ export default function PurchaseReturns() {
                 </tbody>
               </table>
             </div>
+
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </>
         )}
       </div>

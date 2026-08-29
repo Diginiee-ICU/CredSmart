@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Search,
   ChevronDown,
@@ -207,15 +209,31 @@ export default function SalesHistory() {
     });
   };
 
-  const filtered = sales.filter((s) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      s.invoice_number.toLowerCase().includes(q) ||
-      (s.customer_name && s.customer_name.toLowerCase().includes(q)) ||
-      (s.payment_method && s.payment_method.toLowerCase().includes(q))
-    );
-  });
+  const filtered = useMemo(() => {
+    return sales.filter((s) => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        s.invoice_number.toLowerCase().includes(q) ||
+        (s.customer_name && s.customer_name.toLowerCase().includes(q)) ||
+        (s.payment_method && s.payment_method.toLowerCase().includes(q))
+      );
+    });
+  }, [sales, search]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const totalRevenue = filtered.reduce((s, sale) => s + (sale.payment_method !== "Estimate" ? sale.total : 0), 0);
   const regularSalesCount = filtered.filter((s) => s.payment_method !== "Estimate").length;
@@ -440,7 +458,7 @@ export default function SalesHistory() {
           </div>
         ) : (
           <div className="divide-y divide-border/70">
-            {filtered.map((sale) => (
+            {paginatedItems.map((sale) => (
               <div key={sale.id} className="transition-colors">
                 <button
                   type="button"
@@ -651,6 +669,19 @@ export default function SalesHistory() {
               </div>
             ))}
           </div>
+
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            hasNext={hasNext}
+            hasPrev={hasPrev}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+          />
         )}
       </div>
 

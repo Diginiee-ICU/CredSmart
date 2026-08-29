@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
@@ -216,6 +218,20 @@ export default function Suppliers() {
       return matchSearch && matchFilter;
     });
   }, [suppliers, search, filterType]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const gstinSuppliersCount = useMemo(() => {
     return suppliers.filter((s) => s.gstin && s.gstin.trim().length > 0).length;
@@ -599,7 +615,7 @@ export default function Suppliers() {
           <>
             {/* Mobile View: Cards */}
             <div className="block md:hidden divide-y divide-border">
-              {filtered.map((s) => (
+              {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -708,7 +724,7 @@ export default function Suppliers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filtered.map((s) => (
+                  {paginatedItems.map((s) => (
                     <tr key={s.id} className="hover:bg-muted/30 transition-colors group">
                       {/* Name */}
                       <td className="px-5 py-4">
@@ -844,6 +860,19 @@ export default function Suppliers() {
                 </tbody>
               </table>
             </div>
+
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </>
         )}
       </div>

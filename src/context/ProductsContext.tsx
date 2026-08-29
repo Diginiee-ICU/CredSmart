@@ -97,12 +97,17 @@ type ProductsContextValue = {
 const ProductsContext = createContext<ProductsContextValue | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const { org } = useOrganization();
+  const { org, orgId } = useOrganization();
   const [products, setProducts] = useState<ProductCatalogOption[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const refreshProducts = useCallback(async (orgId?: string) => {
-    const effectiveOrg = orgId || (org && (org.id as string)) || undefined;
+  const refreshProducts = useCallback(async (customOrgId?: string) => {
+    const effectiveOrg =
+      customOrgId ||
+      orgId ||
+      org?.id ||
+      localStorage.getItem("credsmart_active_org_id") ||
+      undefined;
     if (!effectiveOrg) return;
     setLoading(true);
     try {
@@ -120,11 +125,10 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (e) {
       console.error("Failed to refresh products", e);
-      toast.error("Failed to load product catalog");
     } finally {
       setLoading(false);
     }
-  }, [org]);
+  }, [org, orgId]);
 
   const addOrUpdateProduct = useCallback((p: ProductCatalogOption) => {
     const normalized = normalizeProduct(p);
@@ -142,10 +146,11 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const getById = useCallback((id: string) => products.find((p) => p.id === id), [products]);
 
   useEffect(() => {
-    if (org?.id) {
-      refreshProducts(org.id);
+    const targetId = orgId || org?.id || localStorage.getItem("credsmart_active_org_id");
+    if (targetId) {
+      refreshProducts(targetId);
     }
-  }, [org?.id, refreshProducts]);
+  }, [org?.id, orgId, refreshProducts]);
 
   return (
     <ProductsContext.Provider value={{ products, loading, refreshProducts, addOrUpdateProduct, getById }}>

@@ -54,10 +54,12 @@ import {
   Mic,
   MicOff,
   Radio,
+  Send,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { Product, Batch } from "@/types/pos";
+import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
@@ -658,26 +660,106 @@ export default function POSBilling() {
     const cust = currentTab.customer;
     let list = products;
 
-    if (cust && cust.keepSameInventory === false && cust.customItems && cust.customItems.length > 0) {
-      const allowedIds = new Set(cust.customItems.map((ci) => ci.productId));
-      list = list.filter((p) => allowedIds.has(p.id));
-    }
-
-    if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
+    if (cust && cust.customItems && cust.customItems.length > 0) {
       const customPriceMap = new Map<string, number>();
-      cust.customItems.forEach((ci) => customPriceMap.set(ci.productId, ci.customPrice));
+      const customItemsMap = new Map<string, PartyCustomItem>();
 
-      list = list.map((p) => {
-        if (!customPriceMap.has(p.id)) return p;
-        const customPrice = customPriceMap.get(p.id) || 0;
+      cust.customItems.forEach((ci) => {
+        if (ci.productId) {
+          customPriceMap.set(ci.productId, ci.customPrice);
+          customItemsMap.set(ci.productId, ci);
+        }
+        if (ci.productName) {
+          const normName = ci.productName.toLowerCase().trim();
+          customPriceMap.set(normName, ci.customPrice);
+          customItemsMap.set(normName, ci);
+        }
+        if (ci.barcode) {
+          customPriceMap.set(ci.barcode.trim(), ci.customPrice);
+          customItemsMap.set(ci.barcode.trim(), ci);
+        }
+      });
+
+      // Synthesize custom items so any product configured for this party appears in the catalog
+      const synthesizedCustomProducts: Product[] = cust.customItems.map((ci) => {
+        const existing = products.find(
+          (p) =>
+            p.id === ci.productId ||
+            (ci.barcode && p.barcode === ci.barcode) ||
+            (ci.productName && p.name.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+        );
+
+        if (existing) {
+          const customPrice = (cust.keepSamePrice === false && ci.customPrice !== undefined) ? ci.customPrice : undefined;
+          return {
+            ...existing,
+            batches: (existing.batches || []).map((b) => ({
+              ...b,
+              mrp: customPrice !== undefined ? customPrice : b.mrp,
+            })),
+          };
+        }
+
         return {
-          ...p,
-          batches: (p.batches || []).map((b) => ({
-            ...b,
-            mrp: customPrice,
-          })),
+          id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+          name: ci.productName || "Custom Product",
+          barcode: ci.barcode || "",
+          sku: ci.sku || undefined,
+          brand: ci.brand || "",
+          category: ci.category || "General",
+          batches: [
+            {
+              id: `batch-${ci.productId || Date.now()}`,
+              mrp: ci.customPrice || ci.standardPrice || 0,
+              costPrice: ci.costPrice || 0,
+              stock: ci.customStock ?? 999,
+              batchNumber: "Party Batch",
+            },
+          ],
+          tags: {
+            unit: ci.unit || "PCS",
+            gst_rate: String(ci.gstRate || 18),
+            hsn_code: ci.hsnCode || "",
+          },
         };
       });
+
+      if (cust.keepSameInventory === false) {
+        return synthesizedCustomProducts;
+      }
+
+      // If keepSameInventory is true, show all catalogue products with custom price overrides + any unique party products
+      const customIds = new Set(cust.customItems.map((ci) => ci.productId));
+      const customNames = new Set(cust.customItems.map((ci) => ci.productName?.toLowerCase().trim()));
+
+      const modifiedCatalogue = products.map((p) => {
+        const matchPrice =
+          customPriceMap.get(p.id) ??
+          (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+          (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+
+        if (cust.keepSamePrice === false && matchPrice !== undefined) {
+          return {
+            ...p,
+            batches: (p.batches || []).map((b) => ({
+              ...b,
+              mrp: matchPrice,
+            })),
+          };
+        }
+        return p;
+      });
+
+      const uniqueAdditionalCustom = synthesizedCustomProducts.filter(
+        (cp) =>
+          !products.some(
+            (p) =>
+              p.id === cp.id ||
+              (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+          )
+      );
+
+      return [...modifiedCatalogue, ...uniqueAdditionalCustom];
     }
 
     return list;
@@ -719,7 +801,12 @@ export default function POSBilling() {
 
       let effectiveMrp = rawBatch.mrp;
       if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
-        const matched = cust.customItems.find((ci) => ci.productId === product.id);
+        const matched = cust.customItems.find(
+          (ci) =>
+            ci.productId === product.id ||
+            (ci.barcode && product.barcode && ci.barcode.trim() === product.barcode.trim()) ||
+            (ci.productName && product.name && ci.productName.toLowerCase().trim() === product.name.toLowerCase().trim())
+        );
         if (matched && matched.customPrice !== undefined) {
           effectiveMrp = matched.customPrice;
         }
@@ -1293,9 +1380,9 @@ export default function POSBilling() {
     }
   };
 
-  // Save Bill / Save & Print [F6 / F7]
+  // Save Bill / Save & Print / WhatsApp [F6 / F7]
   const handleSaveBill = useCallback(
-    async (shouldPrint: boolean = false) => {
+    async (shouldPrint: boolean = false, shouldWhatsApp: boolean = false) => {
       if (currentTab.items.length === 0) {
         toast({
           title: "Cannot Save Empty Bill",
@@ -1511,13 +1598,36 @@ export default function POSBilling() {
         playSuccessChime();
         triggerHapticSuccess();
 
-        // 5. Trigger Print Modal if requested
+        // 5. Trigger Print Modal or WhatsApp if requested
         if (shouldPrint || settings.autoPrintOnSave) {
           setReceiptData(preparedReceipt);
         }
 
+        if (shouldWhatsApp) {
+          try {
+            shareInvoicePdfToWhatsApp({
+              invoiceNumber,
+              customerName: currentTab.customer?.name || "Customer",
+              customerPhone: currentTab.customer?.phone || undefined,
+              storeName,
+              storePhone: settings.storePhone || org?.phone,
+              totalAmount: grandTotal,
+              date: new Date().toISOString(),
+              isEstimate: false,
+              items: currentTab.items.map((ci) => ({
+                name: ci.product.name,
+                quantity: ci.quantity,
+                rate: ci.sp,
+                total: Number((ci.sp * ci.quantity).toFixed(2)),
+              })),
+            });
+          } catch (waErr) {
+            console.warn("WhatsApp share notice:", waErr);
+          }
+        }
+
         toast({
-          title: "Bill Completed Successfully! 🎉",
+          title: shouldWhatsApp ? "Bill Saved & WhatsApp Dispatched! 🚀" : "Bill Completed Successfully! 🎉",
           description: `Invoice #${invoiceNumber} recorded for ₹${grandTotal.toLocaleString("en-IN")}.`,
           duration: 3500,
         });
@@ -3332,19 +3442,19 @@ export default function POSBilling() {
             </div>
           </div>
 
-          {/* DUAL PRIMARY ACTION CTA BUTTONS */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200 mt-4 shrink-0">
+          {/* TRIPLE PRIMARY ACTION CTA BUTTONS */}
+          <div className="grid grid-cols-3 gap-2 pt-3 sm:pt-4 border-t border-slate-200 mt-4 shrink-0">
             {/* Save & Print */}
             <button
               onClick={() => handleSaveBill(true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               title="Save bill and print receipt"
             >
-              <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">Save &amp; Print</span>
-              <span className="sm:hidden">Print Bill</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-emerald-800 px-1 py-0.5 rounded font-normal">
+              <Printer className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">Save &amp; Print</span>
+              <span className="xl:hidden">Print</span>
+              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-emerald-800 px-1 py-0.5 rounded font-normal">
                 F6
               </kbd>
             </button>
@@ -3353,15 +3463,27 @@ export default function POSBilling() {
             <button
               onClick={() => handleSaveBill(false)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               title="Save bill directly"
             >
-              <Check className="w-4 h-4" />
-              <span className="hidden sm:inline">Save Bill</span>
-              <span className="sm:hidden">Save Bill</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-indigo-800 px-1 py-0.5 rounded font-normal">
+              <Check className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">Save Bill</span>
+              <span className="xl:hidden">Save</span>
+              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-indigo-800 px-1 py-0.5 rounded font-normal">
                 F7
               </kbd>
+            </button>
+
+            {/* Save & WhatsApp */}
+            <button
+              onClick={() => handleSaveBill(false, true)}
+              disabled={isProcessingSave || currentTab.items.length === 0}
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Save bill and dispatch WhatsApp receipt"
+            >
+              <Send className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">WhatsApp</span>
+              <span className="xl:hidden">WA</span>
             </button>
           </div>
         </div>

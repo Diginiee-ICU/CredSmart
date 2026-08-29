@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, isWithinInterval, parseISO } from "date-fns";
@@ -253,6 +255,20 @@ export default function CashAndBank() {
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, selectedAccountId, dateFilter, searchQuery]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filteredTransactions, 25);
 
   // Add / Reduce Money Action
   const handleAddReduceMoney = (e: React.FormEvent) => {
@@ -856,7 +872,7 @@ export default function CashAndBank() {
               <div className="w-full h-full flex flex-col">
                 {/* MOBILE VIEW: Touch Bank Transaction Cards (Visible on screens < md) */}
                 <div className="block md:hidden space-y-2.5 w-full">
-                  {filteredTransactions.map((txn) => {
+                  {paginatedItems.map((txn) => {
                     const isMoneyIn = txn.type === "money_in";
                     const isTransfer = txn.type === "transfer";
 
@@ -947,7 +963,7 @@ export default function CashAndBank() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-border/60">
-                      {filteredTransactions.map((txn) => {
+                      {paginatedItems.map((txn) => {
                         const isMoneyIn = txn.type === "money_in";
                         const isTransfer = txn.type === "transfer";
 
@@ -1032,6 +1048,19 @@ export default function CashAndBank() {
                     </tbody>
                   </table>
                 </div>
+
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
               </div>
             )}
           </div>

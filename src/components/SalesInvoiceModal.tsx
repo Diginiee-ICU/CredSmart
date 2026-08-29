@@ -1130,16 +1130,77 @@ export function SalesInvoiceModal({
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
     let safeCatalog = (productsCatalog || []).filter(Boolean);
 
-    if (activeCustomer && activeCustomer.keepSameInventory === false && activeCustomer.customItems && activeCustomer.customItems.length > 0) {
-      const allowedIds = new Set(activeCustomer.customItems.map((ci) => ci.productId));
-      safeCatalog = safeCatalog.filter((p) => allowedIds.has(p.id));
+    const customPriceMap = new Map<string, number>();
+    const customItemsList = activeCustomer?.customItems || [];
+
+    if (activeCustomer && activeCustomer.keepSamePrice === false && customItemsList.length > 0) {
+      customItemsList.forEach((ci) => {
+        if (ci.productId) customPriceMap.set(ci.productId, ci.customPrice);
+        if (ci.productName) customPriceMap.set(ci.productName.toLowerCase().trim(), ci.customPrice);
+        if (ci.barcode) customPriceMap.set(ci.barcode.trim(), ci.customPrice);
+      });
     }
 
-    const customPriceMap = new Map<string, number>();
-    if (activeCustomer && activeCustomer.keepSamePrice === false && activeCustomer.customItems) {
-      activeCustomer.customItems.forEach((ci) => {
-        customPriceMap.set(ci.productId, ci.customPrice);
-      });
+    const synthesizedCustomSuggestions: UnifiedProductSuggestion[] = customItemsList.map((ci) => {
+      const existing = safeCatalog.find(
+        (p) =>
+          p.id === ci.productId ||
+          (ci.barcode && p.barcode === ci.barcode) ||
+          (ci.productName && p.name?.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+      );
+
+      if (existing) {
+        const tags = (existing as any).tags || {};
+        const defaultRate =
+          tags && tags.selling_price !== undefined && tags.selling_price !== null
+            ? Number(tags.selling_price)
+            : existing.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0;
+        const rate =
+          activeCustomer?.keepSamePrice === false && ci.customPrice !== undefined
+            ? ci.customPrice
+            : customPriceMap.get(existing.id) ?? defaultRate;
+
+        return {
+          id: existing.id,
+          name: existing.name || ci.productName || "Unnamed Item",
+          category: existing.category || ci.category || "General",
+          barcode: existing.barcode || ci.barcode || undefined,
+          sku: existing.sku || ci.sku,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as any).hsn || undefined,
+          unit: ci.unit || existing.unit || "Pcs",
+          altUnit: (existing as any).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as any).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          rate,
+          gstRate: ci.gstRate || (tags && tags.gst_rate !== undefined ? Number(tags.gst_rate) : 18),
+          stock: existing.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || ci.customStock || 0,
+          isDb: true,
+        };
+      }
+
+      return {
+        id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+        name: ci.productName || "Custom Product",
+        category: ci.category || "General",
+        barcode: ci.barcode || undefined,
+        sku: ci.sku,
+        hsn: ci.hsnCode,
+        unit: ci.unit || "Pcs",
+        rate: ci.customPrice || ci.standardPrice || 0,
+        gstRate: ci.gstRate || 18,
+        stock: ci.customStock || 999,
+        isDb: true,
+      };
+    });
+
+    if (activeCustomer && activeCustomer.keepSameInventory === false && customItemsList.length > 0) {
+      if (!query) return synthesizedCustomSuggestions.slice(0, 15);
+      const q = query.toLowerCase();
+      return synthesizedCustomSuggestions.filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        const barcode = (p.barcode || "").toLowerCase();
+        const sku = (p.sku || "").toLowerCase();
+        return name.includes(q) || barcode.includes(q) || sku.includes(q);
+      }).slice(0, 15);
     }
 
     const toSuggestion = (p: ProductCatalogOption): UnifiedProductSuggestion => {
@@ -1147,7 +1208,11 @@ export function SalesInvoiceModal({
       const defaultRate = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
         ? Number(tags.selling_price)
         : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
-      const rate = customPriceMap.has(p.id) ? (customPriceMap.get(p.id) ?? defaultRate) : defaultRate;
+      const matchRate =
+        customPriceMap.get(p.id) ??
+        (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+        (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+      const rate = matchRate !== undefined ? matchRate : defaultRate;
       const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
       const hsnVal = tags?.hsn_code || tags?.hsn || (p as any).hsn || undefined;
       const altUnitVal = (p as any).altUnit || tags?.alt_unit || undefined;
@@ -1170,18 +1235,28 @@ export function SalesInvoiceModal({
       };
     };
 
-    if (!query) return safeCatalog.slice(0, 12).map(toSuggestion);
+    const uniqueAdditional = synthesizedCustomSuggestions.filter(
+      (cp) =>
+        !safeCatalog.some(
+          (p) =>
+            p.id === cp.id ||
+            (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+        )
+    );
+
+    const fullCatalogSuggestions = [...safeCatalog.map(toSuggestion), ...uniqueAdditional];
+
+    if (!query) return fullCatalogSuggestions.slice(0, 15);
 
     const q = query.toLowerCase();
-    return safeCatalog
+    return fullCatalogSuggestions
       .filter((p) => {
         const name = (p?.name || "").toLowerCase();
         const barcode = (p?.barcode || "").toLowerCase();
         const sku = (p?.sku || "").toLowerCase();
         return name.includes(q) || barcode.includes(q) || sku.includes(q);
       })
-      .slice(0, 15)
-      .map(toSuggestion);
+      .slice(0, 15);
   };
 
   const upiPayload = upiId

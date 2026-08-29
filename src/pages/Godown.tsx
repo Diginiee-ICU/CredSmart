@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Warehouse,
   Plus,
@@ -278,6 +280,33 @@ export default function GodownPage() {
   const totalValuationAll = godowns.reduce((sum, g) => sum + (g.totalValuation || 0), 0);
   const activeTransfersCount = transfers.filter((t) => t.status !== "completed").length;
 
+  const filteredGodowns = useMemo(() => {
+    if (!search) return godowns;
+    const q = search.toLowerCase();
+    return godowns.filter(
+      (g) =>
+        g.name.toLowerCase().includes(q) ||
+        (g.code && g.code.toLowerCase().includes(q)) ||
+        (g.city && g.city.toLowerCase().includes(q)) ||
+        (g.address && g.address.toLowerCase().includes(q))
+    );
+  }, [godowns, search]);
+
+  const filteredTransfers = useMemo(() => {
+    if (!search) return transfers;
+    const q = search.toLowerCase();
+    return transfers.filter(
+      (t) =>
+        t.transferNumber.toLowerCase().includes(q) ||
+        t.productName.toLowerCase().includes(q) ||
+        t.sourceGodownName.toLowerCase().includes(q) ||
+        t.destGodownName.toLowerCase().includes(q)
+    );
+  }, [transfers, search]);
+
+  const godownPagination = usePagination(filteredGodowns, 12);
+  const transferPagination = usePagination(filteredTransfers, 25);
+
   return (
     <div className="h-full flex flex-col p-3 sm:p-5 space-y-4 overflow-hidden font-sans">
       {/* ------------------------------------------------------------- */}
@@ -434,8 +463,9 @@ export default function GodownPage() {
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin pb-28 md:pb-0">
         {activeTab === "godowns" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {godowns.map((godown) => {
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {godownPagination.paginatedItems.map((godown) => {
             const usagePercent = Math.min(
               100,
               Math.round(((godown.totalItemsStored || 0) / (godown.capacityUnits || 50000)) * 100)
@@ -552,8 +582,22 @@ export default function GodownPage() {
               </div>
             );
           })}
-        </div>
-      )}
+            </div>
+
+            <PaginationBar
+              page={godownPagination.page}
+              totalPages={godownPagination.totalPages}
+              totalItems={godownPagination.totalItems}
+              startIndex={godownPagination.startIndex}
+              endIndex={godownPagination.endIndex}
+              hasNext={godownPagination.hasNext}
+              hasPrev={godownPagination.hasPrev}
+              onPageChange={godownPagination.setPage}
+              pageSize={godownPagination.pageSize}
+              onPageSizeChange={godownPagination.setPageSize}
+            />
+          </div>
+        )}
 
       {/* ------------------------------------------------------------- */}
       {/* TAB 2: STOCK TRANSFERS LOG TABLE */}
@@ -609,7 +653,7 @@ export default function GodownPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {transfers.map((t) => (
+                {transferPagination.paginatedItems.map((t) => (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3.5 font-mono">
                       <p className="font-bold text-foreground text-xs">{t.transferNumber}</p>
@@ -658,6 +702,19 @@ export default function GodownPage() {
               </tbody>
             </table>
           </div>
+
+          <PaginationBar
+            page={transferPagination.page}
+            totalPages={transferPagination.totalPages}
+            totalItems={transferPagination.totalItems}
+            startIndex={transferPagination.startIndex}
+            endIndex={transferPagination.endIndex}
+            hasNext={transferPagination.hasNext}
+            hasPrev={transferPagination.hasPrev}
+            onPageChange={transferPagination.setPage}
+            pageSize={transferPagination.pageSize}
+            onPageSizeChange={transferPagination.setPageSize}
+          />
         </div>
       )}
       </div>

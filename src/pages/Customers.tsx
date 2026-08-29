@@ -62,6 +62,10 @@ interface Customer {
   address: string | null;
   created_at: string;
   balance: number;
+  custom_fields?: any;
+  customItems?: any[];
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
 }
 
 interface FormData {
@@ -217,7 +221,7 @@ export default function Customers() {
     try {
       const { data: custs, error } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address, created_at")
+        .select("id, name, phone, email, address, created_at, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -245,7 +249,31 @@ export default function Customers() {
       });
 
       if (custs) {
-        setCustomers(custs.map((c) => ({ ...c, balance: balanceMap[c.id] || 0 })));
+        setCustomers(
+          custs.map((c: any) => {
+            let cf = c.custom_fields;
+            if (typeof cf === "string") {
+              try {
+                cf = JSON.parse(cf);
+              } catch {
+                cf = {};
+              }
+            }
+            if (!cf || typeof cf !== "object") cf = {};
+            const customItems = Array.isArray(cf.customItems) ? cf.customItems : Array.isArray(cf.custom_items) ? cf.custom_items : [];
+            const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+            const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+            return {
+              ...c,
+              balance: balanceMap[c.id] || 0,
+              custom_fields: cf,
+              customItems,
+              keepSamePrice,
+              keepSameInventory,
+            };
+          })
+        );
       }
     } catch (err) {
       console.error("fetchCustomers unexpected error:", err);

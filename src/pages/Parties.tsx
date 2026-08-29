@@ -172,12 +172,41 @@ export default function Parties() {
 
       const mergedParties: Party[] = [];
 
+      const parsePartyCustomFields = (rawCf: any, rawRecord: any) => {
+        let cf = rawCf;
+        if (typeof cf === "string") {
+          try {
+            cf = JSON.parse(cf);
+          } catch {
+            cf = {};
+          }
+        }
+        if (!cf || typeof cf !== "object") cf = {};
+
+        let customItems = cf.customItems || cf.custom_items || rawRecord?.custom_items || rawRecord?.customItems;
+        if (typeof customItems === "string") {
+          try {
+            customItems = JSON.parse(customItems);
+          } catch {
+            customItems = [];
+          }
+        }
+        if (!Array.isArray(customItems)) customItems = [];
+
+        const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+        const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+        return {
+          cf,
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
+        };
+      };
+
       (dbCustomers || []).forEach((c: any) => {
         const bal = creditBalanceMap[c.id] || 0;
-        const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
-        const keepSamePrice = cf.keepSamePrice !== false;
-        const keepSameInventory = cf.keepSameInventory !== false;
-        const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+        const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(c.custom_fields, c);
 
         mergedParties.push({
           id: c.id,
@@ -195,7 +224,12 @@ export default function Parties() {
           balance: bal,
           creditLimit: c.credit_limit ? Number(c.credit_limit) : 50000,
           creditPeriodDays: c.credit_period_days ? Number(c.credit_period_days) : 30,
-          customFields: cf,
+          customFields: {
+            ...cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          },
           keepSamePrice,
           keepSameInventory,
           customItems,
@@ -208,10 +242,7 @@ export default function Parties() {
       (dbSuppliers || []).forEach((s: any) => {
         const bal = creditBalanceMap[s.id] || 0;
         const payableBal = -Math.abs(bal);
-        const cf = typeof s.custom_fields === "object" && s.custom_fields !== null ? s.custom_fields : {};
-        const keepSamePrice = cf.keepSamePrice !== false;
-        const keepSameInventory = cf.keepSameInventory !== false;
-        const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+        const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(s.custom_fields, s);
 
         mergedParties.push({
           id: s.id,
@@ -230,7 +261,12 @@ export default function Parties() {
           balance: payableBal,
           creditLimit: s.credit_limit ? Number(s.credit_limit) : 100000,
           creditPeriodDays: s.credit_period_days ? Number(s.credit_period_days) : 45,
-          customFields: cf,
+          customFields: {
+            ...cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          },
           keepSamePrice,
           keepSameInventory,
           customItems,
@@ -334,10 +370,11 @@ export default function Parties() {
     }
 
     try {
-      const customFieldsPayload = partyData.customFields || {
-        keepSamePrice: partyData.keepSamePrice,
-        keepSameInventory: partyData.keepSameInventory,
-        customItems: partyData.customItems,
+      const customFieldsPayload = {
+        ...(partyData.customFields || {}),
+        keepSamePrice: partyData.keepSamePrice !== false,
+        keepSameInventory: partyData.keepSameInventory !== false,
+        customItems: partyData.customItems || [],
       };
 
       if (editingParty) {
