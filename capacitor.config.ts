@@ -11,6 +11,18 @@ const config: CapacitorConfig = {
   appId: 'com.credsmart.pos',
   appName: 'CredSmart',
   webDir: 'dist',
+  plugins: {
+    StatusBar: {
+      overlaysWebView: false,
+      style: 'LIGHT',
+      backgroundColor: '#FFFFFF',
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'DARK',
+      resizeOnFullScreen: true,
+    },
+  },
   ...(serverUrl
     ? {
         server: {
