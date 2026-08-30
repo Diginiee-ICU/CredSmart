@@ -898,9 +898,14 @@ export function PurchaseInvoiceModal({
       const copy = [...prev];
       const pRecord = (product && typeof product === "object" ? product : {}) as Record<string, unknown>;
       const pTags = (pRecord.tags && typeof pRecord.tags === "object" ? pRecord.tags : {}) as Record<string, unknown>;
+      const primaryU = product.unit || (pTags.unit as string) || (pRecord.unit as string) || copy[index].unit || "Pcs";
       const altU = (product.altUnit as string) || (pTags.alt_unit as string) || (pRecord.alt_unit as string) || undefined;
       const altConvRaw = product.altUnitConversion ?? pTags.alt_unit_conversion ?? pRecord.alt_unit_conversion ?? undefined;
       const altConv = altConvRaw != null && !isNaN(Number(altConvRaw)) ? Number(altConvRaw) : undefined;
+
+      const hasAlt = altU && altConv && altConv > 1;
+      const defaultAltQty = hasAlt ? 1 : undefined;
+      const defaultQty = hasAlt ? altConv : 1;
 
       copy[index] = {
         ...copy[index],
@@ -908,10 +913,11 @@ export function PurchaseInvoiceModal({
         productName: product.name,
         barcode: product.barcode || undefined,
         hsn: product.hsn || copy[index].hsn || "",
-        unit: product.unit || (pTags.unit as string) || copy[index].unit || "Pcs",
+        unit: primaryU,
         altUnit: altU,
         altUnitConversion: altConv,
-        altQty: undefined,
+        altQty: defaultAltQty,
+        quantity: defaultQty,
         rate: product.costPrice || 0,
         taxRate: product.gstRate !== undefined ? product.gstRate : 18,
       };

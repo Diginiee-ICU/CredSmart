@@ -130,20 +130,25 @@ export function formatItemQuantityDisplay(it: InvoiceItemData): {
 } {
   const cleanUnit = it.unit ? (it.unit.toUpperCase() === "PCS" ? "Pcs" : it.unit) : "Pcs";
   const conv = it.altUnitConversion && Number(it.altUnitConversion) > 1 ? Number(it.altUnitConversion) : undefined;
-  const altUnitName = it.altUnit;
+  const altUnitName = it.altUnit ? it.altUnit.trim() : undefined;
 
   if (altUnitName && conv) {
     let altQtyVal = it.altQty;
-    if (altQtyVal == null && it.qty > 0) {
-      if (it.unit && it.unit.toUpperCase() === altUnitName.toUpperCase()) {
-        altQtyVal = it.qty;
-      } else {
+    let baseUnitName = cleanUnit;
+
+    if (it.unit && it.unit.toUpperCase() === altUnitName.toUpperCase()) {
+      // Billed directly in altUnit
+      altQtyVal = it.qty > 0 ? it.qty : (it.altQty ?? 1);
+      baseUnitName = it.primaryUnit && it.primaryUnit.toUpperCase() !== altUnitName.toUpperCase()
+        ? it.primaryUnit
+        : "Pcs";
+    } else {
+      if (altQtyVal == null && it.qty > 0) {
         altQtyVal = Math.round(it.qty / conv) || (it.qty / conv);
       }
     }
 
     if (altQtyVal != null && altQtyVal > 0) {
-      const baseUnitName = (it.unit && it.unit.toUpperCase() !== altUnitName.toUpperCase()) ? cleanUnit : "Pcs";
       return {
         isDual: true,
         primaryLine: `${altQtyVal} ${altUnitName}`,
