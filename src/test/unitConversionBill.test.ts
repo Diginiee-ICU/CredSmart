@@ -149,4 +149,23 @@ describe("Invoice Line Item Dual Unit Display & Calculation", () => {
     expect(display.primaryLine).toBe("3 LADDER");
     expect(display.secondaryLine).toBe("(3*7 STEPS)");
   });
+
+  it("handles 1 SET = 7 STEPS alternate unit billing from AddItemsToBillModal (e.g. 1 SET top line, (1*7 STEPS) bottom line)", () => {
+    const setItem: InvoiceItemData = {
+      name: "Stainless Steel Ladder 7 Steps",
+      qty: 7, // 7 primary units (STEPS)
+      unit: "STEPS",
+      altUnit: "SET",
+      altQty: 1, // 1 SET billed
+      altUnitConversion: 7, // 1 SET = 7 STEPS
+      rate: 2000,
+      total: 16520,
+    };
+
+    const display = formatItemQuantityDisplay(setItem);
+
+    expect(display.isDual).toBe(true);
+    expect(display.primaryLine).toBe("1 SET");
+    expect(display.secondaryLine).toBe("(1*7 STEPS)");
+  });
 });

@@ -1,3 +1,86 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  TrendingUp,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Landmark,
+  RefreshCw,
+  Gift,
+  Users2,
+  FileText,
+  Clock,
+  ArrowRight,
+  Plus,
+  Sparkles,
+  ShieldCheck,
+  Calendar as CalendarIcon,
+  Send,
+  Receipt,
+  Star,
+  CheckCircle2,
+  Building2,
+  Lock,
+  ChevronDown,
+  ArrowDown,
+  ArrowUp,
+  Wallet,
+  Search,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/hooks/useOrganization";
+import { useToast } from "@/hooks/use-toast";
+import { ROUTE_PATHS } from "@/config/routes";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
+import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
+import { CreateItemModal } from "@/components/items/CreateItemModal";
+import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
+import {
+  Wallet3DGraphic,
+  Invoice3DGraphic,
+  Bank3DGraphic,
+  CredsmartLogo,
+} from "@/components/ui/Liquid3DCardGraphics";
+import { documentsService } from "@/services/documentsService";
+import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
+import { cn } from "@/lib/utils";
+
+interface TransactionRow {
+  id: string;
+  date: string;
+  type: string;
+  txnNo: string;
+  partyName: string;
+  amount: number;
+  status: "PAID" | "PENDING" | "OVERDUE";
+}
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const { orgId } = useOrganization();
+  const { toast } = useToast();
+
+  const [toCollect, setToCollect] = useState(0);
+  const [toPay, setToPay] = useState(0);
+  const [cashBankBalance, setCashBankBalance] = useState(0);
+  const [totalMtdSales, setTotalMtdSales] = useState(0);
+  const [latestTransactions, setLatestTransactions] = useState<TransactionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [chartTimeframe, setChartTimeframe] = useState("This Month");
+
+  // Raw Historical Data for Real-Time Analytics
+  const [salesHistory, setSalesHistory] = useState<{ id: string; total: number; created_at: string }[]>([]);
   const [creditTxHistory, setCreditTxHistory] = useState<
     { id: string; party_type: string; amount: number; type: string; created_at: string }[]
   >([]);
@@ -461,6 +544,11 @@
           </p>
         </div>
 
+        {/* Mobile Did You Know? Note Card Box */}
+        <div className="w-full">
+          <FeatureTipsDropdown compact={true} />
+        </div>
+
         {/* FINANCIAL LEDGER SUMMARY Section Header */}
         <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-mono font-bold tracking-wider uppercase pt-1">
           <span>FINANCIAL LEDGER SUMMARY</span>
@@ -601,43 +689,9 @@
             </div>
           </div>
 
-          {/* Action Icons in Desktop View */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => toast({ title: "Fiscal Period", description: "Fiscal Year 2026-27 active." })}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
-              title="Calendar"
-            >
-              <CalendarIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => toast({ title: "Invoice Gateway", description: "WhatsApp & SMS invoice gateway ready." })}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
-              title="Send Gateway"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowCreateItemModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
-              title="+ Add Item Master"
-            >
-              <Gift className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowCreatePartyModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
-              title="+ Add Party Master"
-            >
-              <Users2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowSalesInvoiceModal(true)}
-              className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-white transition-colors shadow-2xs backdrop-blur-md cursor-pointer hover-3d-glow"
-              title="+ Create Invoice"
-            >
-              <Building2 className="w-4 h-4" />
-            </button>
+          {/* Right: Did You Know? Feature Note Card Box (Just Below Header) */}
+          <div className="flex items-center shrink-0">
+            <FeatureTipsDropdown />
           </div>
         </div>
 
