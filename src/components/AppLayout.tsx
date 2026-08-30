@@ -37,7 +37,6 @@ import { CreateBusinessModal } from "@/components/CreateBusinessModal";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
 import {
   DropdownMenu,
