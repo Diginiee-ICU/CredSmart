@@ -268,31 +268,6 @@ export default function Parties() {
             customItems,
           },
           keepSamePrice,
-          keepSameInventory,
-          customItems,
-          sharedLedgerEnabled: true,
-          sharedLedgerStatus: "synced",
-          created_at: s.created_at,
-        });
-      });
-
-      const finalParties = mergedParties.length === 0 ? DEFAULT_SAMPLE_PARTIES : mergedParties;
-      setParties(finalParties);
-
-      // Perform Automated Ledger Reconciliation Audit
-      const audit = performFullLedgerReconciliation({
-        orgId,
-  };
-
-  // Calculations for Metrics Cards
-  const totalPartiesCount = parties.length;
-  const toCollectTotal = parties
-    .filter((p) => p.balance > 0)
-    .reduce((sum, p) => sum + p.balance, 0);
-  const toPayTotal = parties
-    .filter((p) => p.balance < 0)
-    .reduce((sum, p) => sum + Math.abs(p.balance), 0);
-
   // Sorting and Filtering
   const filteredParties = useMemo(() => {
     return parties
