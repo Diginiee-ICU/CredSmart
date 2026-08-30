@@ -365,6 +365,14 @@ export default function Customers() {
         if (error) throw error;
         toast.success("Customer updated successfully");
       } else {
+        const normName = form.name.trim().toLowerCase();
+        const existing = customers.find((c) => c.name.trim().toLowerCase() === normName);
+        if (existing) {
+          toast.error(`A customer named "${form.name.trim()}" already exists!`);
+          setSaving(false);
+          return;
+        }
+
         const { error } = await supabase
           .from("customers")
           .insert({

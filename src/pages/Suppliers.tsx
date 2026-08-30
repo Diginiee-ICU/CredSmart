@@ -343,6 +343,14 @@ export default function Suppliers() {
         if (error) throw error;
         toast.success("Supplier updated successfully");
       } else {
+        const normName = nameTrimmed.toLowerCase();
+        const existing = suppliers.find((s) => s.name.trim().toLowerCase() === normName);
+        if (existing) {
+          toast.error(`A supplier named "${nameTrimmed}" already exists!`);
+          setSaving(false);
+          return;
+        }
+
         const { error } = await supabase.from("suppliers").insert({
           organization_id: orgId,
           name: nameTrimmed,

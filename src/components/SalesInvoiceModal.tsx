@@ -941,6 +941,20 @@ export function SalesInvoiceModal({
       toast.error("Please enter a customer name");
       return;
     }
+
+    const normName = newCustName.trim().toLowerCase();
+    const existing = customers.find((c) => c.name.trim().toLowerCase() === normName);
+    if (existing) {
+      toast.info(`Selected existing customer "${existing.name}"`);
+      handleSelectCustomer(existing);
+      setShowNewCustomerDialog(false);
+      setNewCustName("");
+      setNewCustPhone("");
+      setNewCustGstin("");
+      setNewCustAddress("");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("customers")

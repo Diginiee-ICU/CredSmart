@@ -1029,6 +1029,20 @@ export function PurchaseInvoiceModal({
       toast.error("Please enter a party name");
       return;
     }
+
+    const normName = newSuppName.trim().toLowerCase();
+    const existing = suppliers.find((s) => s.name.trim().toLowerCase() === normName);
+    if (existing) {
+      toast.info(`Selected existing supplier "${existing.name}"`);
+      handleSelectSupplier(existing);
+      setShowNewSupplierDialog(false);
+      setNewSuppName("");
+      setNewSuppPhone("");
+      setNewSuppGstin("");
+      setNewSuppAddress("");
+      return;
+    }
+
     try {
       // Insert into customers table (shared with Sales Invoice party list)
       const { data, error } = await supabase
