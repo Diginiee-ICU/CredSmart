@@ -301,24 +301,6 @@ export default function Parties() {
     }
   }, [orgId]);
 
-  const handleRunAudit = () => {
-    setIsAuditing(true);
-    setTimeout(() => {
-      const audit = performFullLedgerReconciliation({
-        orgId,
-        orgName: "CredSmart Business",
-      toast.success("Party deleted successfully.");
-      fetchParties();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete party.";
-      toast.error(message);
-    }
-  };
-
-  // Bulk Delete
-  const handleBulkDelete = () => {
-    if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} selected parties?`)) return;
     setParties((prev) => prev.filter((p) => !selectedIds.has(p.id)));
     setSelectedIds(new Set());
     toast.success("Selected parties removed.");
