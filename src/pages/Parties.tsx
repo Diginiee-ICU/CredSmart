@@ -315,22 +315,6 @@ export default function Parties() {
       toast.success("Automated Ledger Integrity Verification completed!");
     }, 500);
   };
-
-  useEffect(() => {
-    fetchParties();
-  }, [fetchParties]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("new") === "1") {
-      setEditingParty(null);
-      setShowCreateModal(true);
-    } else if (params.get("bulk") === "1") {
-
-    if (!orgId) {
-      setParties((prev) => prev.filter((p) => p.id !== party.id));
-      toast.success("Party deleted.");
-      return;
     }
 
     try {
