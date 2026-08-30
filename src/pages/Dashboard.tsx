@@ -45,18 +45,6 @@ import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModa
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
-import {
-  Wallet3DGraphic,
-  Invoice3DGraphic,
-  Bank3DGraphic,
-  CredsmartLogo,
-} from "@/components/ui/Liquid3DCardGraphics";
-import { documentsService } from "@/services/documentsService";
-import { cn } from "@/lib/utils";
-
-interface TransactionRow {
-  id: string;
-  date: string;
   type: string;
   txnNo: string;
   partyName: string;
