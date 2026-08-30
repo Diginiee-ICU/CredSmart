@@ -13,6 +13,8 @@ import { NetworkInvoicesProvider } from "@/hooks/useNetworkInvoices";
 import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole } from "@/config/routes";
 import ScrollToTop from "@/components/ScrollToTop";
 import { NativePlatformBridge } from "@/components/native/NativePlatformBridge";
+import { isNativePlatform } from "@/services/nativeCapacitor";
+import { MobileAppStartingCards } from "@/components/mobile/MobileAppStartingCards";
 
 // Direct page imports for rock-solid zero-delay rendering
 import Dashboard from "@/pages/Dashboard";
@@ -182,7 +184,21 @@ function HomeRoute() {
     return <Navigate to={dest} replace />;
   }
 
+  // Inside Native Mobile App (Capacitor/Android APK/AAB) or mobile app mode:
+  // Render Mobile App Starting Cards onboarding tour directly
+  if (isNativePlatform() || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches)) {
+    return <MobileAppStartingCards />;
+  }
+
   return <Landing />;
+}
+
+// Wrapper for public marketing routes: on mobile app, redirect to App Starting Cards / Auth
+function PublicMarketingRoute({ element }: { element: React.ReactElement }) {
+  if (isNativePlatform() || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches)) {
+    return <Navigate to={ROUTE_PATHS.landing} replace />;
+  }
+  return element;
 }
 
 const App = () => (
@@ -199,21 +215,21 @@ const App = () => (
                 <BrowserRouter>
                   <ScrollToTop />
                   <Routes>
-                {/* Public Routes */}
+                {/* Public & Mobile App Routes */}
                 <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                 <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
-                <Route path={ROUTE_PATHS.features} element={<Features />} />
-                <Route path={ROUTE_PATHS.pricing} element={<Pricing />} />
-                <Route path={ROUTE_PATHS.gstBillingGuide} element={<GstBillingGuide />} />
-                <Route path={ROUTE_PATHS.compareVyapar} element={<CompareVyapar />} />
-                <Route path={ROUTE_PATHS.compareMyBillBook} element={<CompareMyBillBook />} />
-                <Route path={ROUTE_PATHS.compareTally} element={<CompareTally />} />
-                <Route path={ROUTE_PATHS.barcodeGuide} element={<BarcodeGuide />} />
-                <Route path={ROUTE_PATHS.eInvoicingGuide} element={<EInvoicingGuide />} />
-                <Route path={ROUTE_PATHS.about} element={<About />} />
-                <Route path={ROUTE_PATHS.contact} element={<Contact />} />
-                <Route path={ROUTE_PATHS.security} element={<Security />} />
-                <Route path={ROUTE_PATHS.faq} element={<FaqPage />} />
+                <Route path={ROUTE_PATHS.features} element={<PublicMarketingRoute element={<Features />} />} />
+                <Route path={ROUTE_PATHS.pricing} element={<PublicMarketingRoute element={<Pricing />} />} />
+                <Route path={ROUTE_PATHS.gstBillingGuide} element={<PublicMarketingRoute element={<GstBillingGuide />} />} />
+                <Route path={ROUTE_PATHS.compareVyapar} element={<PublicMarketingRoute element={<CompareVyapar />} />} />
+                <Route path={ROUTE_PATHS.compareMyBillBook} element={<PublicMarketingRoute element={<CompareMyBillBook />} />} />
+                <Route path={ROUTE_PATHS.compareTally} element={<PublicMarketingRoute element={<CompareTally />} />} />
+                <Route path={ROUTE_PATHS.barcodeGuide} element={<PublicMarketingRoute element={<BarcodeGuide />} />} />
+                <Route path={ROUTE_PATHS.eInvoicingGuide} element={<PublicMarketingRoute element={<EInvoicingGuide />} />} />
+                <Route path={ROUTE_PATHS.about} element={<PublicMarketingRoute element={<About />} />} />
+                <Route path={ROUTE_PATHS.contact} element={<PublicMarketingRoute element={<Contact />} />} />
+                <Route path={ROUTE_PATHS.security} element={<PublicMarketingRoute element={<Security />} />} />
+                <Route path={ROUTE_PATHS.faq} element={<PublicMarketingRoute element={<FaqPage />} />} />
                 <Route path={ROUTE_PATHS.privacyPolicy} element={<PrivacyPolicy />} />
                 <Route path={ROUTE_PATHS.termsOfService} element={<TermsOfService />} />
 

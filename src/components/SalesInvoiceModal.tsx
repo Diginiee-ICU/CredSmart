@@ -598,16 +598,28 @@ export function SalesInvoiceModal({
   // State Code / Interstate
   const orgStateCode = "27"; // Maharashtra
   const isInterState = useMemo(() => {
-    const custCode = (placeOfSupply || "").slice(0, 2);
+      const custCode = (placeOfSupply || "").slice(0, 2);
     return custCode !== "" && custCode !== orgStateCode;
   }, [placeOfSupply]);
 
   // Recalculate Line Items
   const recalculatedItems = useMemo(() => {
     return items.map((item) => {
-      const billedQty = item.altUnit && item.altUnitConversion && item.altQty != null && item.altQty > 0
-        ? Number(item.altQty)
-        : (Number(item.quantity) || 0);
+      const billedQty = (() => {
+        if (item.altQty != null && Number(item.altQty) > 0) {
+          return Number(item.altQty);
+        }
+        if (item.altUnit && item.altUnitConversion && Number(item.altUnitConversion) > 1) {
+          if (item.unit && item.unit.toUpperCase() === item.altUnit.toUpperCase()) {
+            return Number(item.quantity) || 1;
+          }
+          const conv = Number(item.altUnitConversion);
+          if (item.quantity && item.quantity >= conv) {
+            return Number((item.quantity / conv).toFixed(4));
+          }
+        }
+        return Number(item.quantity) || 0;
+      })();
 
       const rawSub = billedQty * (Number(item.rate) || 0);
       const discount = item.discountPercent > 0

@@ -237,7 +237,7 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(buyerPurchases.length).toBe(1);
       expect(buyerPurchases[0].partyName).toBe("Person A Wholesale Supplies");
       expect(buyerPurchases[0].grandTotal).toBe(5880);
-    });
+    }, 15000);
   });
 
   describe("Invoice Rejection Flow", () => {

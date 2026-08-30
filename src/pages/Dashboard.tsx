@@ -52,7 +52,6 @@ import {
   CredsmartLogo,
 } from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
-import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {
@@ -522,31 +521,29 @@ export default function Dashboard() {
     return chartData.reduce((sum, item) => sum + (item.sales || 0), 0);
   }, [chartData]);
 
-  return (
+    return (
     <div className="flex-1 w-full min-w-0 h-full overflow-y-auto p-3 sm:p-5 lg:p-6 space-y-4 font-sans select-none scrollbar-thin">
       {/* =========================================================================
-          1. MOBILE VIEW ONLY (< 768px) - 100% Matching Reference Image 3
+          1. MOBILE VIEW ONLY (< 768px)
           ========================================================================= */}
       <div className="block md:hidden space-y-4 pb-28 pt-1">
-        {/* Mobile Title & Live Reconciled Status */}
+        {/* Mobile Title */}
         <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
               Dashboard
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>LIVE RECONCILED</span>
-            </span>
+            <button
+              onClick={handleRefresh}
+              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-600 dark:text-slate-400 transition-all cursor-pointer active:scale-95 shadow-2xs"
+              title="Refresh"
+            >
+              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin text-blue-600")} />
+            </button>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">
             Commercial financial metrics, receivables, payables, and live invoice feed
           </p>
-        </div>
-
-        {/* Mobile Did You Know? Note Card Box */}
-        <div className="w-full">
-          <FeatureTipsDropdown compact={true} />
         </div>
 
         {/* FINANCIAL LEDGER SUMMARY Section Header */}
@@ -554,17 +551,10 @@ export default function Dashboard() {
           <span>FINANCIAL LEDGER SUMMARY</span>
           <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
             <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
-            <button
-              onClick={handleRefresh}
-              className="p-0.5 rounded hover:text-slate-900 transition-colors cursor-pointer hover-3d-glow"
-              title="Refresh"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-blue-600")} />
-            </button>
           </div>
         </div>
 
-        {/* 3 Large 3D Metric Cards (Vertical Stack on Mobile, Matching Image 3) */}
+        {/* 3 Large 3D Metric Cards */}
         <div className="space-y-3.5">
           {/* Card 1: TO COLLECT */}
           <div

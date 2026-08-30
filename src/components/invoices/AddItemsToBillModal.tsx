@@ -216,11 +216,13 @@ export function AddItemsToBillModal({
           const hasAltUnit = !!(product.altUnit && product.altUnitConversion && product.altUnitConversion > 1);
           const useAlt = hasAltUnit && unitMode === "alt";
 
-          // Base qty is always in primary units — this is used for all financial calculations
+          // Base qty is in primary units for inventory stock tracking
           const convFactor = useAlt ? (product.altUnitConversion || 1) : 1;
           const baseQty = enteredQty * convFactor;
 
-          const taxable = rate * baseQty;
+          // Billed qty for pricing is enteredQty when using alt unit, or baseQty when using primary unit
+          const billedQty = useAlt ? enteredQty : baseQty;
+          const taxable = rate * billedQty;
           const taxAmt = (taxable * gstRate) / 100;
           const total = taxable + taxAmt;
 

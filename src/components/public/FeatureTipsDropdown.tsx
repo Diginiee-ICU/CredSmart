@@ -179,7 +179,7 @@ export function FeatureTipsDropdown({
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className={cn("relative select-none", className)}
+      className={cn("relative select-none w-full sm:w-auto", className)}
       title="CredSmart Pro Note (Auto-slideshow • Hover to pause)"
     >
       {/* ========================================================================= */}
@@ -191,7 +191,7 @@ export function FeatureTipsDropdown({
           "relative overflow-hidden transition-all duration-300 rounded-2xl border backdrop-blur-xl shadow-xs hover:shadow-md",
           activeAnimClass,
           compact
-            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/35 dark:border-amber-500/40 px-3 py-1.5 max-w-[320px]"
+            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/35 dark:border-amber-500/40 px-3 py-1.5 w-full max-w-full sm:max-w-[360px]"
             : "bg-gradient-to-r from-amber-50/70 via-white/95 to-orange-50/60 dark:from-slate-900/95 dark:via-slate-850 dark:to-slate-900/95 border-amber-500/30 dark:border-amber-500/40 px-3.5 py-2 w-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[520px]"
         )}
       >
