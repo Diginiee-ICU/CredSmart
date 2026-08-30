@@ -191,37 +191,39 @@ export function FeatureTipsDropdown({
           "relative overflow-hidden transition-all duration-300 rounded-2xl border backdrop-blur-xl shadow-xs hover:shadow-md",
           activeAnimClass,
           compact
-            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/35 dark:border-amber-500/40 px-2.5 py-1 max-w-[280px] xs:max-w-[340px]"
-            : "bg-gradient-to-r from-amber-50/60 via-white/95 to-amber-50/40 dark:from-slate-900/95 dark:via-slate-900/95 dark:to-amber-950/20 border-amber-500/40 dark:border-amber-500/45 px-3 py-1.5 max-w-[320px] xs:max-w-[380px] md:max-w-[430px] lg:max-w-[460px]"
+            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/35 dark:border-amber-500/40 px-3 py-1.5 max-w-[320px]"
+            : "bg-gradient-to-r from-amber-50/70 via-white/95 to-orange-50/60 dark:from-slate-900/95 dark:via-slate-850 dark:to-slate-900/95 border-amber-500/30 dark:border-amber-500/40 px-3.5 py-2 w-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[520px]"
         )}
       >
         {/* Top Header Row: 💡 DID YOU KNOW? + Category Badge + Counter */}
-        <div className="flex items-center justify-between gap-1.5 mb-0.5">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            {/* Glowing Icon */}
-            <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <IconComponent className="w-2.5 h-2.5 stroke-[2.5]" />
+            {/* Glowing 3D Icon */}
+            <div className="w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <IconComponent className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
             </div>
 
             {/* Title Label */}
-            <span className="text-[10px] font-black tracking-wider uppercase font-mono text-amber-800 dark:text-amber-300 shrink-0">
+            <span className="text-[10px] sm:text-[10.5px] font-black tracking-wider uppercase font-mono text-amber-800 dark:text-amber-300 shrink-0">
               DID YOU KNOW?
             </span>
 
             {/* Category Tag */}
-            <span className="hidden xs:inline-flex items-center px-1.5 py-0.2 rounded text-[8.5px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/25 shrink-0 truncate">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[8.5px] sm:text-[9px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/25 shrink-0 truncate">
               {currentNote.badge}
             </span>
           </div>
 
           {/* Micro Slide Indicator */}
-          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 shrink-0 font-medium">
-            #{String(orderIndex + 1).padStart(2, "0")}
-          </span>
+          <div className="flex items-center gap-0.5 text-[9px] sm:text-[9.5px] font-mono text-slate-400 dark:text-slate-400 shrink-0 font-bold">
+            <span>{String(orderIndex + 1).padStart(2, "0")}</span>
+            <span className="text-slate-300 dark:text-slate-600">/</span>
+            <span>{String(DID_YOU_KNOW_NOTES.length).padStart(2, "0")}</span>
+          </div>
         </div>
 
-        {/* Note Body Text */}
-        <p className="text-[10.5px] sm:text-[11px] text-slate-700 dark:text-slate-200 leading-snug tracking-tight truncate">
+        {/* Note Body Text (1-2 lines short, clear & premium) */}
+        <p className="text-[11px] sm:text-xs text-slate-700 dark:text-slate-200 font-medium leading-snug tracking-tight line-clamp-2">
           {currentNote.note}
         </p>
 
@@ -232,7 +234,7 @@ export function FeatureTipsDropdown({
             style={{
               animation: isPaused ? "none" : "progressFill 5.5s linear forwards",
             }}
-            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 origin-left"
+            className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 origin-left"
           />
         </div>
       </div>

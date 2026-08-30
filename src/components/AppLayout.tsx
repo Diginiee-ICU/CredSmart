@@ -359,11 +359,6 @@ export default function AppLayout() {
               </button>
             </div>
 
-            {/* CENTER-RIGHT: Feature Intelligence Dropdown Ticker (Permanent) */}
-            <div className="flex items-center shrink-0">
-              <FeatureTipsDropdown align="right" />
-            </div>
-
             {/* RIGHT: Action buttons */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-1 sm:ml-auto">
               {/* Mobile search */}
