@@ -2011,7 +2011,164 @@ export function PurchaseInvoiceModal({
               {/* 3. LINE ITEMS TABLE (Direct POS-Style + Auto Add Next Line) */}
               {/* ───────────────────────────────────────────────────────────── */}
               <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
-                <div className="overflow-x-auto">
+                                {/* 1. MOBILE INVOICE ITEMS CARDS VIEW (< md screens) */}
+                <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800 p-3 space-y-3">
+                  {recalculatedItems.map((item, idx) => (
+                    <div key={item.id} className="pt-3 first:pt-0 space-y-2.5">
+                      {/* Card Header: Row Number + Product Button + Delete Button */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
+                              #{idx + 1}
+                            </span>
+                            {item.hsn && (
+                              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                HSN: {item.hsn}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAddItemsTargetRow(idx);
+                              try {
+                                if ((productsCatalog || []).length === 0) {
+                                  await fetchProducts();
+                                }
+                              } catch (e) {
+                                console.warn('Failed to refresh product catalog', e);
+                              }
+                              setShowAddItemsModal(true);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2 shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <Package className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="truncate text-xs font-medium text-slate-900 dark:text-white">
+                                {item.productName || "Add Item To Bill"}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground shrink-0 font-mono">Select ▾</span>
+                          </button>
+                        </div>
+
+                        {/* Direct Mobile Delete Button (To delete wrong added item in 1 tap) */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(idx)}
+                          className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shrink-0 mt-5 cursor-pointer shadow-2xs"
+                          title="Delete wrong added item"
+                        >
+                          <Trash2 className="w-4 h-4 text-rose-500" />
+                        </button>
+                      </div>
+
+                      {/* Mobile Item Controls: Qty, Unit, Price, Discount, Tax, Line Total */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                        {/* Quantity */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Qty</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.altUnit && item.altUnitConversion && item.altQty != null ? item.altQty : item.quantity}
+                            onChange={(e) => {
+                              const val = Math.max(1, Number(e.target.value));
+                              if (item.altUnit && item.altUnitConversion && item.altQty != null) {
+                                handleUpdateItemFields(idx, {
+                                  altQty: val,
+                                  quantity: val * item.altUnitConversion,
+                                });
+                              } else {
+                                handleUpdateItem(idx, "quantity", val);
+                              }
+                            }}
+                            className="h-8 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        {/* Unit */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Unit</Label>
+                          <Select
+                            value={item.unit || "Pcs"}
+                            onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-56">
+                              {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                <SelectItem key={u} value={u} className="text-xs">
+                                  {u}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Price / Rate */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Cost (₹)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => handleUpdateItem(idx, "rate", Number(e.target.value))}
+                            className="h-8 text-xs font-mono text-right"
+                          />
+                        </div>
+
+                        {/* Discount */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Disc %</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={item.discountPercent || ""}
+                            onChange={(e) => handleUpdateItem(idx, "discountPercent", Number(e.target.value))}
+                            placeholder="0%"
+                            className="h-8 text-xs font-mono text-center"
+                          />
+                        </div>
+
+                        {/* Tax */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Tax</Label>
+                          <Select
+                            value={String(item.taxRate)}
+                            onValueChange={(val) => handleUpdateItem(idx, "taxRate", Number(val))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">0%</SelectItem>
+                              <SelectItem value="5">5%</SelectItem>
+                              <SelectItem value="12">12%</SelectItem>
+                              <SelectItem value="18">18%</SelectItem>
+                              <SelectItem value="28">28%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Line Total */}
+                        <div className="flex flex-col justify-end">
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Amount</Label>
+                          <div className="h-8 flex items-center justify-end px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white text-xs border border-slate-200 dark:border-slate-700">
+                            ₹{item.lineTotal.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 2. DESKTOP DATA TABLE (>= md screens) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
