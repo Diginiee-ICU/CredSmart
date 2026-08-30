@@ -172,7 +172,7 @@ export default function Parties() {
 
       const mergedParties: Party[] = [];
 
-      const parsePartyCustomFields = (rawCf: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, rawRecord: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
+      const parsePartyCustomFields = (rawCf: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, rawRecord: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         let cf = rawCf;
         if (typeof cf === "string") {
           try {
@@ -204,7 +204,7 @@ export default function Parties() {
         };
       };
 
-      (dbCustomers || []).forEach((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
+      (dbCustomers || []).forEach((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[c.id] || 0;
         const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(c.custom_fields, c);
 
@@ -239,7 +239,7 @@ export default function Parties() {
         });
       });
 
-      (dbSuppliers || []).forEach((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
+      (dbSuppliers || []).forEach((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[s.id] || 0;
         const payableBal = -Math.abs(bal);
         const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(s.custom_fields, s);
@@ -256,6 +256,375 @@ export default function Parties() {
           address: s.address,
           pan: s.pan || undefined,
           pincode: s.pincode || undefined,
+          shippingAddress: s.shipping_address || undefined,
+          openingBalance: payableBal,
+          balance: payableBal,
+          creditLimit: s.credit_limit ? Number(s.credit_limit) : 100000,
+          creditPeriodDays: s.credit_period_days ? Number(s.credit_period_days) : 45,
+          customFields: {
+            ...cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          },
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
+          sharedLedgerEnabled: true,
+          sharedLedgerStatus: "synced",
+          created_at: s.created_at,
+        });
+      });
+
+      const finalParties = mergedParties.length === 0 ? DEFAULT_SAMPLE_PARTIES : mergedParties;
+      setParties(finalParties);
+
+      // Perform Automated Ledger Reconciliation Audit
+      const audit = performFullLedgerReconciliation({
+        orgId,
+        orgName: "CredSmart Business",
+        parties: finalParties,
+        creditTransactions: credits || [],
+      });
+      setAuditResult(audit);
+    } catch (err) {
+      console.error("Error fetching parties:", err);
+      setParties(DEFAULT_SAMPLE_PARTIES);
+      const audit = performFullLedgerReconciliation({
+        orgName: "CredSmart Business",
+        parties: DEFAULT_SAMPLE_PARTIES,
+        creditTransactions: [],
+      });
+      setAuditResult(audit);
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId]);
+
+  useEffect(() => {
+    fetchParties();
+  }, [fetchParties]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("new") === "1") {
+      setEditingParty(null);
+      setShowCreateModal(true);
+    } else if (params.get("bulk") === "1") {
+      setExcelModalTab("excel");
+      setShowExcelUploadModal(true);
+    }
+  }, [location.search]);
+
+  // Keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.altKey || e.metaKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setEditingParty(null);
+        setShowCreateModal(true);
+      }
+      if ((e.altKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setShowKeyboardModal((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleRunAudit = () => {
+    setIsAuditing(true);
+    setTimeout(() => {
+      const audit = performFullLedgerReconciliation({
+        orgId,
+        orgName: "CredSmart Business",
+        parties,
+        creditTransactions: rawCreditTransactions,
+      });
+      setAuditResult(audit);
+      setIsAuditing(false);
+      toast.success("Automated Ledger Integrity Verification completed!");
+    }, 500);
+  };
+
+  // Save / Create / Update Party
+  const handleSaveParty = async (partyData: Omit<Party, "id" | "created_at">) => {
+    if (!orgId) {
+      if (editingParty) {
+        setParties((prev) =>
+          prev.map((p) => (p.id === editingParty.id ? { ...p, ...partyData } : p))
+        );
+        toast.success(`Updated party "${partyData.name}"`);
+      } else {
+        const normName = partyData.name.trim().toLowerCase();
+        const existing = parties.find(
+          (p) => p.name.trim().toLowerCase() === normName && p.partyType === partyData.partyType
+        );
+        if (existing) {
+          toast.error(`A ${partyData.partyType} named "${partyData.name.trim()}" already exists!`);
+          return;
+        }
+        const newParty: Party = {
+          ...partyData,
+          id: `party-${Date.now()}`,
+          created_at: new Date().toISOString(),
+        };
+        setParties((prev) => [newParty, ...prev]);
+        toast.success(`Created new party "${partyData.name}"`);
+      }
+      return;
+    }
+
+    try {
+      const customFieldsPayload = {
+        ...(partyData.customFields || {}),
+        keepSamePrice: partyData.keepSamePrice !== false,
+        keepSameInventory: partyData.keepSameInventory !== false,
+        customItems: partyData.customItems || [],
+      };
+
+      if (editingParty) {
+        const targetTable = editingParty.partyType === "customer" ? "customers" : "suppliers";
+        await supabase
+          .from(targetTable)
+          .update({
+            name: partyData.name.trim(),
+            phone: partyData.phone,
+            email: partyData.email,
+            address: partyData.address,
+            trade_name: partyData.tradeName || null,
+            pan: partyData.pan || null,
+            pincode: partyData.pincode || null,
+            shipping_address: partyData.shippingAddress || null,
+            category: partyData.category || "General",
+            credit_limit: partyData.creditLimit || null,
+            credit_period_days: partyData.creditPeriodDays || null,
+            custom_fields: customFieldsPayload,
+          })
+          .eq("id", editingParty.id);
+
+        toast.success(`Updated party "${partyData.name}"`);
+      } else {
+        const normName = partyData.name.trim().toLowerCase();
+        const existing = parties.find(
+          (p) => p.name.trim().toLowerCase() === normName && p.partyType === partyData.partyType
+        );
+        if (existing) {
+          toast.error(`A ${partyData.partyType} named "${partyData.name.trim()}" already exists!`);
+          return;
+        }
+
+        const isSupplier = partyData.partyType === "supplier";
+        const targetTable = isSupplier ? "suppliers" : "customers";
+
+        const { data: newRecord, error } = await supabase
+          .from(targetTable)
+          .insert({
+            organization_id: orgId,
+            name: partyData.name.trim(),
+            phone: partyData.phone,
+            email: partyData.email,
+            address: partyData.address,
+            trade_name: partyData.tradeName || null,
+            pan: partyData.pan || null,
+            pincode: partyData.pincode || null,
+            shipping_address: partyData.shippingAddress || null,
+            category: partyData.category || "General",
+            credit_limit: partyData.creditLimit || null,
+            credit_period_days: partyData.creditPeriodDays || null,
+            custom_fields: customFieldsPayload,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (partyData.openingBalance !== 0 && newRecord) {
+          await supabase.from("credit_transactions").insert({
+            organization_id: orgId,
+            party_id: newRecord.id,
+            party_type: isSupplier ? "supplier" : "customer",
+            amount: Math.abs(partyData.openingBalance),
+            type: partyData.openingBalance > 0 ? "credit" : "payment",
+            description: "Opening balance",
+            created_by: user?.id || "admin",
+          });
+        }
+        toast.success(`Created party "${partyData.name}"!`);
+      }
+      fetchParties();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save party.";
+      toast.error(message);
+    }
+  };
+
+  // Bulk Import Parties from Excel or Software Migration
+  const handleBulkImportParties = async (importedList: Partial<Party>[]) => {
+    if (!orgId) {
+      const newItems: Party[] = importedList.map((p, i) => ({
+        id: `party-imp-${Date.now()}-${i}`,
+        name: p.name || "Unnamed Party",
+        tradeName: p.tradeName,
+        phone: p.phone || null,
+        email: p.email || null,
+        partyType: p.partyType || "customer",
+        category: p.category || "General",
+        gstin: p.gstin || null,
+        pan: p.pan || null,
+        address: p.address || null,
+        city: p.city || null,
+        state: p.state || null,
+        pincode: p.pincode || null,
+        openingBalance: p.openingBalance || 0,
+        balance: p.balance || p.openingBalance || 0,
+        creditLimit: p.creditLimit || 50000,
+        creditPeriodDays: p.creditPeriodDays || 30,
+        sharedLedgerEnabled: true,
+        sharedLedgerStatus: "synced",
+        created_at: new Date().toISOString(),
+      }));
+      setParties((prev) => [...newItems, ...prev]);
+      return;
+    }
+
+    try {
+      for (const p of importedList) {
+        const isSupplier = p.partyType === "supplier";
+        const targetTable = isSupplier ? "suppliers" : "customers";
+        const { data: newParty, error: pErr } = await supabase
+          .from(targetTable)
+          .insert({
+            organization_id: orgId,
+            name: p.name || "Unnamed Party",
+            phone: p.phone || undefined,
+            email: p.email || undefined,
+            address: p.address || undefined,
+            gstin: p.gstin || undefined,
+          })
+          .select()
+          .single();
+
+        if (newParty && !pErr && Number(p.openingBalance) !== 0) {
+          await supabase.from("credit_transactions").insert({
+            organization_id: orgId,
+            party_id: newParty.id,
+            party_type: isSupplier ? "supplier" : "customer",
+            amount: Math.abs(Number(p.openingBalance)),
+            type: Number(p.openingBalance) > 0 ? "credit" : "payment",
+            description: "Opening balance import",
+            created_by: user?.id || "admin",
+          });
+        }
+      }
+      toast.success(`Successfully imported ${importedList.length} parties!`);
+      fetchParties();
+    } catch (err: unknown) {
+      console.error("Bulk party import error:", err);
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save imported parties.";
+      toast.error(message);
+    }
+  };
+
+  // Delete Party
+  const handleDeleteParty = async (party: Party) => {
+    if (!confirm(`Are you sure you want to delete party "${party.name}"?`)) return;
+
+    if (!orgId) {
+      setParties((prev) => prev.filter((p) => p.id !== party.id));
+      toast.success("Party deleted.");
+      return;
+    }
+
+    try {
+      if (party.partyType === "supplier") {
+        await supabase.from("suppliers").delete().eq("id", party.id);
+      } else {
+        await supabase.from("customers").delete().eq("id", party.id);
+      }
+      toast.success("Party deleted successfully.");
+      fetchParties();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete party.";
+      toast.error(message);
+    }
+  };
+
+  // Bulk Delete
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected parties?`)) return;
+    setParties((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+    setSelectedIds(new Set());
+    toast.success("Selected parties removed.");
+  };
+
+  // Bulk Export
+  const handleBulkExport = () => {
+    const listToExport =
+      selectedIds.size > 0 ? parties.filter((p) => selectedIds.has(p.id)) : parties;
+    const csv = exportPartiesToCSV(listToExport);
+    downloadCSV(`CredSmart_Parties_Export_${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    toast.success(`Exported ${listToExport.length} parties to CSV!`);
+  };
+
+  // Merge Duplicates Helper
+  const handleMergeDuplicates = async () => {
+    const groups: { [key: string]: Party[] } = {};
+    parties.forEach((p) => {
+      const key = `${p.partyType}-${p.name.trim().toLowerCase()}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    const duplicateKeys = Object.keys(groups).filter((k) => groups[k].length > 1);
+    if (duplicateKeys.length === 0) {
+      toast.info("No duplicate parties found!");
+      return;
+    }
+
+    let mergedCount = 0;
+    for (const key of duplicateKeys) {
+      const list = groups[key];
+      const primary = list[0];
+      const duplicates = list.slice(1);
+
+      if (orgId) {
+        for (const dup of duplicates) {
+          const targetTable = dup.partyType === "supplier" ? "suppliers" : "customers";
+          await supabase.from("credit_transactions").update({ party_id: primary.id }).eq("party_id", dup.id);
+          await supabase.from(targetTable).delete().eq("id", dup.id);
+          mergedCount++;
+        }
+      }
+    }
+
+    toast.success(`Successfully merged ${mergedCount} duplicate parties!`);
+    fetchParties();
+  };
+
+  // Calculations for Metrics Cards
+  const totalPartiesCount = parties.length;
+  const toCollectTotal = parties
+    .filter((p) => p.balance > 0)
+    .reduce((sum, p) => sum + p.balance, 0);
+  const toPayTotal = parties
+    .filter((p) => p.balance < 0)
+    .reduce((sum, p) => sum + Math.abs(p.balance), 0);
+
+  // Sorting and Filtering
+  const filteredParties = useMemo(() => {
+    return parties
+      .filter((party) => {
+        // Category / Type filter
+        if (categoryFilter === "customer" && party.partyType !== "customer") return false;
+        if (categoryFilter === "supplier" && party.partyType !== "supplier") return false;
+        if (categoryFilter === "both" && party.partyType !== "both") return false;
+        if (categoryFilter === "to_collect" && party.balance <= 0) return false;
+        if (categoryFilter === "to_pay" && party.balance >= 0) return false;
+        if (categoryFilter === "zero_balance" && party.balance !== 0) return false;
+        if (
           categoryFilter !== "all" &&
           categoryFilter !== "customer" &&
           categoryFilter !== "supplier" &&
@@ -309,14 +678,6 @@ export default function Parties() {
     hasNext: partiesHasNext,
     hasPrev: partiesHasPrev,
   } = usePagination(filteredParties, 25);
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredParties.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredParties.map((p) => p.id)));
-    }
-  };
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -473,13 +834,11 @@ setSortDirection("asc");
                 Outstanding Receivables (To Collect)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
-                  setReportModalType("payables");
-                  setShowReportsModal(true);
-                }}
-                className="text-xs cursor-pointer text-rose-600 dark:text-rose-400"
+                onClick={handleMergeDuplicates}
+                className="text-xs cursor-pointer text-amber-600 dark:text-amber-400 font-semibold"
               >
-                Outstanding Payables (To Pay)
+                <RefreshCw className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                Merge Duplicate Parties
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
