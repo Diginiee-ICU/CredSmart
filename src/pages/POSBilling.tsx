@@ -92,6 +92,7 @@ import {
   triggerHapticSuccess,
   triggerHapticDelete,
 } from "@/utils/soundAndHaptics";
+import { notifyStockUpdated } from "@/services/stockService";
 
 // --- Types ---
 
@@ -1505,6 +1506,7 @@ export default function POSBilling() {
                   console.warn("Stock update notice:", uErr);
                 }
               }
+              notifyStockUpdated(orgId);
 
               // Record Udhar / Credit Ledger if Payment Mode is Credit
               if (currentTab.paymentMode === "Credit" && currentTab.customer) {
