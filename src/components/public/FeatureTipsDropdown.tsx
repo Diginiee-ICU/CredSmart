@@ -25,12 +25,10 @@ interface FeatureTipsDropdownProps {
 }
 
 const ANIMATION_EFFECTS = [
-  "animate-drop-bounce",
-  "animate-flip-curtain",
-  "animate-liquid-glide",
-  "animate-elastic-snap",
-  "animate-matrix-sweep",
-  "animate-pendulum-swing",
+  "animate-pop-down-spring",
+  "animate-pop-down-drop",
+  "animate-pop-down-glide",
+  "animate-pop-down-snap",
 ];
 
 export function FeatureTipsDropdown({
@@ -144,116 +142,97 @@ export function FeatureTipsDropdown({
   }, [selectedCategory]);
 
   const categories = [
-    { id: "all", label: "All Features" },
-    { id: "pos", label: "POS & Billing" },
-    { id: "inventory", label: "Inventory" },
-    { id: "gst", label: "GST & Tax" },
-    { id: "khata", label: "Khata CRM" },
+    { id: "all", label: "All" },
+    { id: "pos", label: "POS" },
+    { id: "inventory", label: "Stock" },
+    { id: "gst", label: "GST" },
+    { id: "khata", label: "Khata" },
     { id: "growth", label: "Multi-Store" },
     { id: "security", label: "Security" },
   ];
 
-  const activeAnimationClass = ANIMATION_EFFECTS[currentEffectIndex] || "animate-drop-bounce";
+  const activeAnimationClass = ANIMATION_EFFECTS[currentEffectIndex] || "animate-pop-down-spring";
 
   return (
     <div ref={dropdownRef} className={cn("relative select-none", className)}>
       {/* ========================================================================= */}
-      {/* 1. MEDIUM HEADER-ATTACHED MESSAGE BOX (Dynamic Drop-Down Notch & Capsule) */}
+      {/* 1. SHORT, SIMPLE & PREMIUM POP-DOWN PILL */}
       {/* ========================================================================= */}
       <div
-        key={`msg-box-${animationKey}`}
+        key={`pop-pill-${animationKey}`}
         className={cn(
-          "relative flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border transition-all duration-300 shadow-md backdrop-blur-md",
+          "group inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md backdrop-blur-md select-none",
           activeAnimationClass,
-          compact
-            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/30 hover:border-amber-500/60 shadow-amber-500/5 max-w-[310px] sm:max-w-[390px]"
-            : "bg-gradient-to-r from-white/95 via-amber-50/40 to-white/95 dark:from-slate-900/95 dark:via-amber-950/20 dark:to-slate-900/95 border-amber-500/40 hover:border-amber-500/70 shadow-amber-500/10 max-w-[340px] xs:max-w-[420px] md:max-w-[490px] lg:max-w-[540px]"
+          isOpen
+            ? "bg-amber-500/15 border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.2)] text-amber-900 dark:text-amber-300"
+            : "bg-white/90 dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-700/80 hover:border-amber-400/60 text-slate-800 dark:text-slate-200"
         )}
       >
-        {/* Hanging Notch Tether from Header Top */}
-        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500/50 rounded-full blur-[0.5px]" />
-
-        {/* 3D Glowing Animated Icon Badge */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="relative flex items-center justify-center shrink-0 cursor-pointer group/icon"
-          title="Click to explore all features"
-        >
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-center shadow-xs group-hover/icon:scale-105 transition-transform">
-            <IconComponent className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.5]" />
-          </div>
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
-        </button>
-
-        {/* Medium Message Body (2-line layout on desktop, 1-line on compact) */}
+        {/* Glowing Mini Icon */}
         <div
-          onClick={() => setIsOpen(true)}
-          className="flex-1 min-w-0 cursor-pointer text-left py-0.5"
+          onClick={() => setIsOpen((v) => !v)}
+          className="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform"
         >
-          {/* Top Line: Category Chip + Title */}
-          <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 shrink-0">
-              {currentTip.categoryLabel}
-            </span>
-            <h4 className="text-xs sm:text-[12px] font-black text-slate-900 dark:text-white truncate tracking-tight">
-              {currentTip.title}
-            </h4>
-          </div>
-
-          {/* Bottom Line (Snippet / Pro-tip) */}
-          {!compact && (
-            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 leading-tight">
-              {currentTip.snippet || currentTip.proTip || currentTip.description}
-            </p>
-          )}
+          <IconComponent className="w-3 h-3 stroke-[2.5]" />
         </div>
 
-        {/* Right Side Controls */}
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          {/* Quick Navigate / Explore Button */}
-          {currentTip.actionRoute && !compact && (
-            <button
-              type="button"
-              onClick={() => handleActionClick(currentTip.actionRoute!)}
-              className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer"
-              title={`Open ${currentTip.title}`}
-            >
-              <span>Explore</span>
-              <ArrowRight className="w-2.5 h-2.5" />
-            </button>
-          )}
+        {/* Category Tag */}
+        <span
+          onClick={() => setIsOpen((v) => !v)}
+          className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/25 shrink-0"
+        >
+          {currentTip.categoryLabel}
+        </span>
 
-          {/* Shuffle / Next Controls */}
+        {/* Feature Title (Single-line, Short & Crisp) */}
+        <div
+          onClick={() => setIsOpen((v) => !v)}
+          className="flex items-center min-w-0 max-w-[120px] xs:max-w-[170px] sm:max-w-[220px] md:max-w-[280px]"
+        >
+          <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white truncate tracking-tight">
+            {currentTip.title}
+          </span>
+        </div>
+
+        {/* Quick 1-tap Explore Action */}
+        {currentTip.actionRoute && !compact && (
           <button
             type="button"
-            onClick={handleShuffle}
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Random feature"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleActionClick(currentTip.actionRoute!);
+            }}
+            className="hidden xl:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer ml-0.5"
+            title={`Open ${currentTip.title}`}
           >
-            <Shuffle className="w-3 h-3" />
+            <span>Explore</span>
+            <ArrowRight className="w-2.5 h-2.5" />
           </button>
+        )}
 
+        {/* Next / Shuffle & Chevron */}
+        <div className="flex items-center gap-0.5 pl-0.5 border-l border-slate-200 dark:border-slate-700 shrink-0">
           <button
             type="button"
-            onClick={handleNext}
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Next feature"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            className="p-0.5 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+            title="Next tip"
           >
             <ChevronRight className="w-3 h-3" />
           </button>
 
-          {/* Dropdown Expand Toggle */}
           <button
             type="button"
             onClick={() => setIsOpen((v) => !v)}
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="View all features"
+            className="p-0.5 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+            title="Toggle feature directory"
           >
             <ChevronDown
               className={cn(
-                "w-3 h-3 transition-transform duration-300 stroke-[2.5]",
+                "w-3 h-3 transition-transform duration-200 stroke-[2.5]",
                 isOpen ? "rotate-180 text-amber-500" : ""
               )}
             />
