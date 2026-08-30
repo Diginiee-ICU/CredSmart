@@ -256,30 +256,6 @@ export default function Parties() {
           address: s.address,
           pan: s.pan || undefined,
           pincode: s.pincode || undefined,
-          shippingAddress: s.shipping_address || undefined,
-          openingBalance: payableBal,
-          balance: payableBal,
-          creditLimit: s.credit_limit ? Number(s.credit_limit) : 100000,
-          creditPeriodDays: s.credit_period_days ? Number(s.credit_period_days) : 45,
-          customFields: {
-            ...cf,
-            keepSamePrice,
-            keepSameInventory,
-            customItems,
-          },
-          keepSamePrice,
-  // Sorting and Filtering
-  const filteredParties = useMemo(() => {
-    return parties
-      .filter((party) => {
-        // Category / Type filter
-        if (categoryFilter === "customer" && party.partyType !== "customer") return false;
-        if (categoryFilter === "supplier" && party.partyType !== "supplier") return false;
-        if (categoryFilter === "both" && party.partyType !== "both") return false;
-        if (categoryFilter === "to_collect" && party.balance <= 0) return false;
-        if (categoryFilter === "to_pay" && party.balance >= 0) return false;
-        if (categoryFilter === "zero_balance" && party.balance !== 0) return false;
-        if (
           categoryFilter !== "all" &&
           categoryFilter !== "customer" &&
           categoryFilter !== "supplier" &&
