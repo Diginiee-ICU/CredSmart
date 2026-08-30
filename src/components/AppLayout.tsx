@@ -290,7 +290,7 @@ export default function AppLayout() {
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="h-14 sm:h-20 md:h-[6rem] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
+        <header className="h-14 sm:h-16 md:h-20 lg:h-22 shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
@@ -302,7 +302,7 @@ export default function AppLayout() {
                 <img
                   src="/logo-static.jpeg"
                   alt="CredSmart"
-                  className="h-11 sm:h-12 md:h-14 w-auto max-w-[170px] sm:max-w-[240px] md:max-w-[300px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-11 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[170px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -314,7 +314,7 @@ export default function AppLayout() {
                 aria-expanded={sidebarOpen}
                 title={sidebarOpen ? "Close Menu" : "Open Menu"}
                 className={cn(
-                  "flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
+                  "flex items-center justify-center h-9 sm:h-10 md:h-10.5 px-2 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
                   sidebarOpen
                     ? "bg-amber-500/15 border-amber-400/50 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
                     : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400/50 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
@@ -330,12 +330,12 @@ export default function AppLayout() {
             </div>
 
             {/* SEPARATOR */}
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 shrink-0 hidden md:block" />
+            <div className="h-7 sm:h-8 md:h-9 w-px bg-slate-200 dark:bg-slate-700 shrink-0 hidden md:block" />
 
             {/* CENTER-LEFT: Page title (desktop only) */}
             <div className="hidden md:flex flex-col justify-center min-w-max shrink-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
+                <h1 className="text-sm md:text-base font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
                   {title}
                 </h1>
                 <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -347,10 +347,10 @@ export default function AppLayout() {
             </div>
 
             {/* Search bar (desktop) */}
-            <div className="hidden xl:flex items-center w-40 xl:w-52 mx-2 shrink">
+            <div className="hidden xl:flex items-center w-48 xl:w-64 mx-3 shrink">
               <button
                 onClick={() => setOpenCommand(true)}
-                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-10 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
+                className="relative w-full h-9.5 sm:h-10 md:h-10.5 flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-10 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
               >
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
                 <span className="truncate">Search...</span>
@@ -359,7 +359,7 @@ export default function AppLayout() {
             </div>
 
             {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-1 sm:ml-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-1 sm:ml-auto">
               {/* Mobile search */}
               <button
                 onClick={() => setOpenCommand(true)}
@@ -371,11 +371,11 @@ export default function AppLayout() {
 
               {/* New Invoice split button */}
               <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                <div className="flex items-center rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0">
+                <div className="flex items-center h-9 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setSalesInvoiceModalOpen(true)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                    className="flex items-center gap-1.5 h-full px-2.5 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
                   >
                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                     <span className="hidden sm:inline">New Invoice</span>
@@ -384,7 +384,7 @@ export default function AppLayout() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="px-1 sm:px-1.5 py-1.5 sm:py-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                      className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
                       aria-label="More creation options"
                     >
                       <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -423,7 +423,16 @@ export default function AppLayout() {
               </DropdownMenu>
 
               {/* Bell */}
-              <button onClick={() => setNotifOpen(true)} className={cn("p-2 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer shrink-0", pendingCount > 0 ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400" : "border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")} title="Notifications">
+              <button
+                onClick={() => setNotifOpen(true)}
+                className={cn(
+                  "w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer shrink-0 shadow-2xs hover-3d-glow",
+                  pendingCount > 0
+                    ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
+                )}
+                title="Notifications"
+              >
                 <Bell className="w-4 h-4" />
                 {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
                 {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
@@ -432,7 +441,11 @@ export default function AppLayout() {
               {/* Profile dropdown */}
               <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-[11px] sm:text-xs font-black shadow-xs hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0" title={org?.name || "Account"}>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-2xs hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0"
+                    title={org?.name || "Account"}
+                  >
                     {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
                   </button>
                 </DropdownMenuTrigger>
@@ -757,14 +770,14 @@ export default function AppLayout() {
       {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-RIGHT ON DESKTOP) */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div
-        className="hidden md:flex fixed bottom-3 right-4 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-80 hover:opacity-100"
+        className="hidden md:flex fixed bottom-4 right-6 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-85 hover:opacity-100"
         title="CredSmart POS & ERP"
       >
-        <div className="flex items-center justify-center p-1.5 rounded-xl bg-white/40 backdrop-blur-md border border-slate-200/50 shadow-lg">
+        <div className="flex items-center justify-center p-2.5 md:p-3 lg:p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xl">
           <img
             src="/logo-static.jpeg"
             alt="CredSmart"
-            className="h-6 w-auto object-contain rounded-md drop-shadow-sm mix-blend-multiply"
+            className="h-10 md:h-14 lg:h-18 xl:h-20 w-auto max-w-[240px] md:max-w-[320px] lg:max-w-[400px] object-contain rounded-xl drop-shadow-md mix-blend-multiply dark:mix-blend-normal"
           />
         </div>
       </div>

@@ -2261,71 +2261,30 @@ export default function POSBilling() {
           </div>
         </div>
 
-        {/* Center: Title & Turbo Speed Indicator */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide uppercase flex items-center gap-2">
-            <span className="hidden sm:inline">Point of Sale</span>
-            <span className="sm:hidden font-mono">POS</span>
-          </h1>
-
-          <div className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] sm:text-[10px] font-mono font-semibold text-emerald-700 shadow-2xs">
-            <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
-            </span>
-            <span className="tracking-wider">TURBO</span>
-          </div>
-
-          {/* Feature Intelligence Dropdown Ticker (Permanent on POS) */}
-          <div className="flex items-center">
-            <FeatureTipsDropdown compact={true} align="center" />
-          </div>
-
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-700">
-            <Clock className="w-3 h-3 text-indigo-600" />
-            <span>{currentTime}</span>
-          </div>
+        {/* Center: Feature Intelligence Note Card Box (Cleanly centered) */}
+        <div className="flex items-center justify-center flex-1 mx-2 min-w-0">
+          <FeatureTipsDropdown compact={true} align="center" />
         </div>
 
-        {/* Right: Tutorial, Fullscreen & Settings */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right: Quick Hotkeys & Help */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => setShowTutorialModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer hover-3d-glow shrink-0"
             title="View Hotkey Guide & Tutorial"
           >
             <PlayCircle className="w-3.5 h-3.5 text-indigo-600" />
             <span className="hidden sm:inline">Shortcuts</span>
             <span className="sm:hidden">Help</span>
           </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95"
-            title="POS Settings [CTRL + S]"
-          >
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Settings</span>
-            <kbd className="hidden lg:inline text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
-              CTRL + S
-            </kbd>
-          </button>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. MULTI-TAB HELD BILLS BAR */}
+      {/* 2. MULTI-TAB HELD BILLS BAR + SHIFTED CONTROLS (TIME, FULLSCREEN, SETTINGS) */}
       {/* ========================================================================= */}
-      <div className="h-10 sm:h-11 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20">
-        <div className="flex items-center gap-1.5 h-full py-1">
+      <div className="h-10 sm:h-11 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20 gap-2">
+        <div className="flex items-center gap-1.5 h-full py-1 shrink-0">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
             const itemsCount = tab.items.reduce((acc, it) => acc + it.quantity, 0);
@@ -2372,7 +2331,7 @@ export default function POSBilling() {
           {tabs.length < 5 && (
             <button
               onClick={handleHoldBillAndCreate}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-dashed border-indigo-300 rounded-lg transition-all ml-1 shadow-2xs"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-dashed border-indigo-300 rounded-lg transition-all ml-1 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
               title="Hold Current Bill and Start New One [CTRL + B]"
             >
               <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -2385,15 +2344,48 @@ export default function POSBilling() {
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-3 text-xs text-slate-500 font-mono">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-slate-800 font-semibold">{currentTab.title}</span>
-          </span>
-          <span className="text-slate-300">•</span>
-          <span>{currentTab.items.length} Line(s)</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+        {/* Right Section in 2nd Line: Bill stats + Shifted Time, Fullscreen, and Settings buttons */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="hidden lg:flex items-center gap-2.5 text-xs text-slate-500 font-mono">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-slate-800 font-semibold">{currentTab.title}</span>
+            </span>
+            <span className="text-slate-300">•</span>
+            <span>{currentTab.items.length} Line(s)</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-200 hidden lg:block" />
+
+          {/* Shifted Live Time Clock */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-mono text-slate-700 shadow-2xs shrink-0">
+            <Clock className="w-3 h-3 text-indigo-600" />
+            <span>{currentTime}</span>
+          </div>
+
+          {/* Shifted Fullscreen Toggle Button */}
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Shifted POS Settings Button */}
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
+            title="POS Settings [CTRL + S]"
+          >
+            <Settings className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Settings</span>
+            <kbd className="hidden xl:inline text-[9px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-normal">
+              CTRL+S
+            </kbd>
+          </button>
         </div>
       </div>
 
