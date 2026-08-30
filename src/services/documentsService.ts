@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentType, DocumentStatus } from "@/types/documents";
+import { stockService } from "@/services/stockService";
 
 const STORAGE_KEY_PREFIX = "credsmart_docs_";
 
@@ -405,6 +406,7 @@ export const documentsService = {
     // 3. Save / Update in Local Storage cache
     const existingList = this.getLocalDocuments(orgId, docType);
     const index = existingList.findIndex((d) => d.id === doc.id || d.documentNumber === doc.documentNumber);
+    const previousDoc = index >= 0 ? existingList[index] : undefined;
 
     if (index >= 0) {
       existingList[index] = { ...doc, updated_at: new Date().toISOString() };
@@ -413,12 +415,25 @@ export const documentsService = {
     }
 
     this.saveLocalDocuments(orgId, docType, existingList);
+
+    // 4. Update Inventory Stock (Deduct on sales/challan, Add on purchases/credit returns)
+    try {
+      if (previousDoc) {
+        await stockService.handleDocumentStock(doc, "update", previousDoc);
+      } else {
+        await stockService.handleDocumentStock(doc, "create");
+      }
+    } catch (stockErr) {
+      console.warn("Stock handling notice in saveDocument:", stockErr);
+    }
+
     return doc;
   },
 
   // Delete Document
   async deleteDocument(orgId: string, docType: string, docId: string): Promise<boolean> {
     const list = this.getLocalDocuments(orgId, docType);
+    const targetDoc = list.find((d) => d.id === docId);
     const updated = list.filter((d) => d.id !== docId);
     this.saveLocalDocuments(orgId, docType, updated);
 
@@ -437,6 +452,15 @@ export const documentsService = {
         await supabase.from("purchase_invoices").delete().eq("id", docId);
       } catch (error) {
         console.warn("Failed to delete purchase document from Supabase:", error);
+      }
+    }
+
+    // Revert inventory stock effect on document deletion
+    if (targetDoc) {
+      try {
+        await stockService.handleDocumentStock(targetDoc, "delete");
+      } catch (stockErr) {
+        console.warn("Stock revert notice in deleteDocument:", stockErr);
       }
     }
 

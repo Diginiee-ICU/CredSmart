@@ -52,6 +52,7 @@ import {
   CredsmartLogo,
 } from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
+import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {

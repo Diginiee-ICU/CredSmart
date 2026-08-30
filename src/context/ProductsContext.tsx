@@ -161,6 +161,20 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [org?.id, orgId, refreshProducts]);
 
+  // Real-time listener for stock adjustments from invoices, POS bills, and inventory updates
+  useEffect(() => {
+    const handleStockUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ orgId?: string }>;
+      const targetId = customEvent.detail?.orgId || orgId || org?.id || localStorage.getItem("credsmart_active_org_id");
+      if (targetId) {
+        refreshProducts(targetId);
+      }
+    };
+
+    window.addEventListener("credsmart:stock_updated", handleStockUpdate);
+    return () => window.removeEventListener("credsmart:stock_updated", handleStockUpdate);
+  }, [org?.id, orgId, refreshProducts]);
+
   return (
     <ProductsContext.Provider value={{ products, loading, refreshProducts, addOrUpdateProduct, getById }}>
       {children}
