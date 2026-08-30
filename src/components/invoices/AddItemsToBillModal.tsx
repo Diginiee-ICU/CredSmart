@@ -232,9 +232,9 @@ export function AddItemsToBillModal({
             barcode: product.barcode || undefined,
             quantity: baseQty,                      // always primary units
             unit: product.unit || "PCS",            // primary unit label
-            altUnit: useAlt ? product.altUnit : undefined,
+            altUnit: product.altUnit || undefined,
             altQty: useAlt ? enteredQty : undefined,
-            altUnitConversion: useAlt ? convFactor : undefined,
+            altUnitConversion: product.altUnitConversion || undefined,
             rate: rate,
             discountPercent: 0,
             discountAmount: 0,

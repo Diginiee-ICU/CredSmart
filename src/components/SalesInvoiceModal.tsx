@@ -491,7 +491,21 @@ export function SalesInvoiceModal({
           setDueDate(editingDoc.dueDate);
         }
         setPaymentTerms(editingDoc.paymentTerms || "Due on Receipt");
-        setItems(editingDoc.items && editingDoc.items.length > 0 ? editingDoc.items : [createNewRow("row-1")]);
+        const loadedItems = (editingDoc.items && editingDoc.items.length > 0 ? editingDoc.items : [createNewRow("row-1")]).map((it) => {
+          const matchedProd = (productsCatalog || []).find(
+            (p) => p.id === it.productId || (it.productName && p.name.toLowerCase().trim() === it.productName.toLowerCase().trim())
+          );
+          const pTags = ((matchedProd as unknown) as { tags?: Record<string, unknown> })?.tags || {};
+          const resolvedAltUnit = it.altUnit || matchedProd?.altUnit || (pTags.alt_unit as string) || undefined;
+          const resolvedAltConvRaw = it.altUnitConversion ?? matchedProd?.altUnitConversion ?? pTags.alt_unit_conversion ?? undefined;
+          const resolvedAltConv = resolvedAltConvRaw != null ? Number(resolvedAltConvRaw) : undefined;
+          return {
+            ...it,
+            altUnit: resolvedAltUnit,
+            altUnitConversion: resolvedAltConv,
+          };
+        });
+        setItems(loadedItems);
         setPaymentMethod(editingDoc.paymentMethod || "Cash");
         setAmountReceived(editingDoc.paidAmount || 0);
         setNotes(editingDoc.notes || "");
@@ -718,15 +732,21 @@ export function SalesInvoiceModal({
   const handleSelectProduct = (index: number, product: UnifiedProductSuggestion) => {
     setItems((prev) => {
       const copy = [...prev];
+      const pRecord = (product && typeof product === "object" ? product : {}) as Record<string, unknown>;
+      const pTags = (pRecord.tags && typeof pRecord.tags === "object" ? pRecord.tags : {}) as Record<string, unknown>;
+      const altU = (product.altUnit as string) || (pTags.alt_unit as string) || (pRecord.alt_unit as string) || undefined;
+      const altConvRaw = product.altUnitConversion ?? pTags.alt_unit_conversion ?? pRecord.alt_unit_conversion ?? undefined;
+      const altConv = altConvRaw != null && !isNaN(Number(altConvRaw)) ? Number(altConvRaw) : undefined;
+
       copy[index] = {
         ...copy[index],
         productId: product.id,
         productName: product.name,
         barcode: product.barcode || undefined,
         hsn: product.hsn || copy[index].hsn || "",
-        unit: product.unit || copy[index].unit || "Pcs",
-        altUnit: product.altUnit || undefined,
-        altUnitConversion: product.altUnitConversion || undefined,
+        unit: product.unit || (pTags.unit as string) || copy[index].unit || "Pcs",
+        altUnit: altU,
+        altUnitConversion: altConv,
         altQty: undefined,
         rate: product.rate,
         batchNumber: product.batchNumber || undefined,

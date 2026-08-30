@@ -11,6 +11,8 @@ export interface ProductCatalogOption {
   brand?: string | null;
   sku?: string;
   unit?: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   selling_price?: number;
   sellingPrice?: number;
   purchase_price?: number;
@@ -35,15 +37,16 @@ export interface ProductCatalogOption {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function normalizeProduct(p: unknown): ProductCatalogOption {
-  const tags = p.tags || {};
-  const batches = p.product_batches || [];
+  const pRecord = (p && typeof p === "object" ? p : {}) as Record<string, unknown>;
+  const tags = (pRecord.tags && typeof pRecord.tags === "object" ? pRecord.tags : {}) as Record<string, unknown>;
+  const batches = Array.isArray(pRecord.product_batches) ? pRecord.product_batches : [];
   const firstBatch = batches[0];
 
   const mrpVal =
     Number(firstBatch?.mrp) ||
     Number(tags.mrp) ||
     Number(tags.selling_price) ||
-    Number(p.selling_price) ||
+    Number(pRecord.selling_price) ||
     0;
 
   const costVal =
@@ -54,23 +57,28 @@ export function normalizeProduct(p: unknown): ProductCatalogOption {
 
   const totalStock =
     batches.length > 0
-      ? batches.reduce((sum: number, b: unknown) => sum + (Number(b.stock) || 0), 0)
+      ? batches.reduce((sum: number, b: unknown) => sum + (Number((b as Record<string, unknown>)?.stock) || 0), 0)
       : Number(tags.stock ?? tags.opening_stock ?? 0);
 
-  const unitVal = tags.unit || p.unit || "PCS";
-  const gstRateVal = Number(tags.gst_rate) || Number(p.tax_rate) || 18;
-  const hsnVal = tags.hsn_code || tags.hsn || (p as unknown).hsn || (p as unknown).hsn_code || "";
+  const unitVal = (tags.unit as string) || (pRecord.unit as string) || "PCS";
+  const altUnitVal = (tags.alt_unit as string) || (pRecord.altUnit as string) || (pRecord.alt_unit as string) || undefined;
+  const altConvRaw = tags.alt_unit_conversion ?? pRecord.altUnitConversion ?? pRecord.alt_unit_conversion ?? undefined;
+  const altConvVal = altConvRaw != null && !isNaN(Number(altConvRaw)) ? Number(altConvRaw) : undefined;
+  const gstRateVal = Number(tags.gst_rate) || Number(pRecord.tax_rate) || 18;
+  const hsnVal = (tags.hsn_code as string) || (tags.hsn as string) || (pRecord.hsn as string) || (pRecord.hsn_code as string) || "";
   const minAlert = Number(tags.min_stock_alert) || 5;
 
   return {
-    ...p,
-    id: p.id,
-    name: p.name || "Unnamed Product",
-    category: p.category || "General",
-    brand: p.brand || null,
-    barcode: p.barcode || null,
-    sku: p.sku || "",
+    ...pRecord,
+    id: String(pRecord.id || ""),
+    name: String(pRecord.name || "Unnamed Product"),
+    category: String(pRecord.category || "General"),
+    brand: pRecord.brand ? String(pRecord.brand) : null,
+    barcode: pRecord.barcode ? String(pRecord.barcode) : null,
+    sku: String(pRecord.sku || ""),
     unit: unitVal,
+    altUnit: altUnitVal,
+    altUnitConversion: altConvVal,
     selling_price: mrpVal,
     sellingPrice: mrpVal,
     purchase_price: costVal,

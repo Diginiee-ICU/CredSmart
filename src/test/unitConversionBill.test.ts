@@ -130,4 +130,23 @@ describe("Invoice Line Item Dual Unit Display & Calculation", () => {
     expect(display.primaryLine).toBe("3 PACKET");
     expect(display.secondaryLine).toBe("(3*4 Pcs)");
   });
+
+  it("handles ladder / step custom conversion units (e.g. 3 LADDER = 21 STEPS)", () => {
+    const ladderItem: InvoiceItemData = {
+      name: "Stainless Steel Ladder 7 Steps",
+      qty: 21, // 21 base units (STEPS)
+      unit: "STEPS",
+      altUnit: "LADDER",
+      altQty: 3, // 3 ladders billed
+      altUnitConversion: 7, // 1 LADDER = 7 STEPS
+      rate: 2000,
+      total: 49560,
+    };
+
+    const display = formatItemQuantityDisplay(ladderItem);
+
+    expect(display.isDual).toBe(true);
+    expect(display.primaryLine).toBe("3 LADDER");
+    expect(display.secondaryLine).toBe("(3*7 STEPS)");
+  });
 });
