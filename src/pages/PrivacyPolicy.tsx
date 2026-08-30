@@ -72,10 +72,22 @@ export default function PrivacyPolicy() {
               </p>
             </section>
 
-            <section className="space-y-3">
-              <h2 className="text-base sm:text-lg font-bold text-[#0A1931]">4. Contact Our Grievance Desk</h2>
+            <section id="data-deletion" className="space-y-3 pt-2">
+              <h2 className="text-base sm:text-lg font-bold text-[#0A1931]">4. Account &amp; Data Deletion Requests</h2>
               <p>
-                For data protection inquiries or to exercise your rights under the DPDP Act, 2023, reach our Grievance Officer at <a href="mailto:grievance@credsmart.in" className="text-blue-600 font-semibold hover:underline">grievance@credsmart.in</a>.
+                Users can request permanent deletion of their account, business profile, and all associated transaction data at any time. To request account and data deletion:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
+                <li>Send an email to <a href="mailto:support@credalert.business" className="text-blue-600 font-semibold hover:underline">support@credalert.business</a> with the subject <strong>"Account Deletion Request"</strong> from your registered login email.</li>
+                <li>Alternatively, submit an online request via our portal at <a href="https://pos.credalert.business/contact" className="text-blue-600 font-semibold hover:underline">pos.credalert.business/contact</a>.</li>
+                <li>Upon identity verification, your organization data, credentials, and stored records will be permanently purged within 30 business days in compliance with DPDP Act 2023.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base sm:text-lg font-bold text-[#0A1931]">5. Contact Our Grievance Desk</h2>
+              <p>
+                For data protection inquiries or grievance escalation under the DPDP Act, 2023, reach our Grievance Officer at <a href="mailto:grievance@credalert.business" className="text-blue-600 font-semibold hover:underline">grievance@credalert.business</a>.
               </p>
             </section>
           </div>
