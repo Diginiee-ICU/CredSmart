@@ -38,7 +38,7 @@ import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
-import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
+import { FeatureBubbleNotification } from "@/components/notifications/FeatureBubbleNotification";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -519,27 +519,6 @@ export default function AppLayout() {
           </header>
         )}
 
-                {/* Dynamic Note Card Sub-header Bar (Visible across ALL Protected Routes just below header) */}
-        {!isPosRoute && (
-          <div className="shrink-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-2.5 sm:px-6 py-1.5 flex flex-col sm:flex-row items-center sm:justify-between gap-1.5 sm:gap-3 z-10 shadow-2xs">
-            {/* Left: Quick Status & Enterprise Route Info (Desktop) */}
-            <div className="hidden sm:flex items-center gap-2.5 min-w-0">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>LIVE RECONCILED</span>
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-medium truncate">
-                {title} • Encrypted Enterprise Network
-              </span>
-            </div>
-
-            {/* Note Card Box (Centered full width on mobile, right-aligned on desktop) */}
-            <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end min-w-0">
-              <FeatureTipsDropdown compact={true} />
-            </div>
-          </div>
-        )}
-
         {/* Global Command Palette Dialog */}
         <CommandDialog open={openCommand} onOpenChange={setOpenCommand}>
           <CommandInput placeholder="Type a command or search..." />
@@ -622,6 +601,9 @@ export default function AppLayout() {
 
         {/* Global B2B Inward Alerts & Notifications Center */}
         <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} />
+
+        {/* Global Floating Feature Intelligence Bubble Notification */}
+        <FeatureBubbleNotification />
 
         {/* 3D Dropdown Navigation Menu Popover (Desktop) & Bottom Dock (Mobile) */}
         <AppSidebar

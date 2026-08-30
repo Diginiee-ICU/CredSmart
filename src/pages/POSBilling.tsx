@@ -63,7 +63,6 @@ import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
-import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -2261,11 +2260,6 @@ export default function POSBilling() {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Center: Feature Intelligence Note Card Box (Cleanly centered) */}
-        <div className="flex items-center justify-center flex-1 mx-2 min-w-0">
-          <FeatureTipsDropdown compact={true} align="center" />
         </div>
 
         {/* Right: Quick Hotkeys & Help */}
