@@ -307,22 +307,6 @@ export default function Parties() {
       const audit = performFullLedgerReconciliation({
         orgId,
         orgName: "CredSmart Business",
-        parties,
-        creditTransactions: rawCreditTransactions,
-      });
-      setAuditResult(audit);
-      setIsAuditing(false);
-      toast.success("Automated Ledger Integrity Verification completed!");
-    }, 500);
-  };
-    }
-
-    try {
-      if (party.partyType === "supplier") {
-        await supabase.from("suppliers").delete().eq("id", party.id);
-      } else {
-        await supabase.from("customers").delete().eq("id", party.id);
-      }
       toast.success("Party deleted successfully.");
       fetchParties();
     } catch (err: unknown) {
