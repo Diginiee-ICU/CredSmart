@@ -605,7 +605,11 @@ export function SalesInvoiceModal({
   // Recalculate Line Items
   const recalculatedItems = useMemo(() => {
     return items.map((item) => {
-      const rawSub = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+      const billedQty = item.altUnit && item.altUnitConversion && item.altQty != null && item.altQty > 0
+        ? Number(item.altQty)
+        : (Number(item.quantity) || 0);
+
+      const rawSub = billedQty * (Number(item.rate) || 0);
       const discount = item.discountPercent > 0
         ? (rawSub * item.discountPercent) / 100
         : item.discountAmount || 0;
@@ -639,8 +643,14 @@ export function SalesInvoiceModal({
   // Document Grand Totals
   const totals = useMemo(() => {
     const totalQty = recalculatedItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-    const rawSubtotal = recalculatedItems.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.rate) || 0), 0);
-    const itemDiscounts = recalculatedItems.reduce((acc, it) => acc + ((Number(it.quantity) || 0) * (Number(it.rate) || 0) - it.taxableAmount), 0);
+    const rawSubtotal = recalculatedItems.reduce((acc, it) => {
+      const q = it.altUnit && it.altUnitConversion && it.altQty != null && it.altQty > 0 ? Number(it.altQty) : (Number(it.quantity) || 0);
+      return acc + q * (Number(it.rate) || 0);
+    }, 0);
+    const itemDiscounts = recalculatedItems.reduce((acc, it) => {
+      const q = it.altUnit && it.altUnitConversion && it.altQty != null && it.altQty > 0 ? Number(it.altQty) : (Number(it.quantity) || 0);
+      return acc + (q * (Number(it.rate) || 0) - it.taxableAmount);
+    }, 0);
     const taxableTotal = recalculatedItems.reduce((acc, it) => acc + it.taxableAmount, 0);
 
     const overallDisc = overallDiscountType === "percent"
