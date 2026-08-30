@@ -52,7 +52,6 @@ import {
   CredsmartLogo,
 } from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
-import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {
@@ -689,10 +688,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right: Did You Know? Feature Note Card Box (Just Below Header) */}
-          <div className="flex items-center shrink-0">
-            <FeatureTipsDropdown />
-          </div>
         </div>
 
         {/* 4 Frosted Liquid Glass Metric Cards (Matching Image 1 & 4) */}

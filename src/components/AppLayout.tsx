@@ -38,6 +38,7 @@ import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
+import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -516,6 +517,27 @@ export default function AppLayout() {
               </DropdownMenu>
             </div>
           </header>
+        )}
+
+        {/* Dynamic Note Card Sub-header Bar (Visible across ALL Protected Routes just below header) */}
+        {!isPosRoute && (
+          <div className="shrink-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-6 py-1.5 flex items-center justify-between gap-3 z-10 shadow-2xs">
+            {/* Left: Quick Status & Enterprise Route Info */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>LIVE RECONCILED</span>
+              </span>
+              <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400 font-mono font-medium truncate">
+                {title} • Encrypted Enterprise Network
+              </span>
+            </div>
+
+            {/* Right: Dynamic Note Card Box */}
+            <div className="flex items-center shrink-0 min-w-0">
+              <FeatureTipsDropdown />
+            </div>
+          </div>
         )}
 
         {/* Global Command Palette Dialog */}
