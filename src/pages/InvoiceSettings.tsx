@@ -52,7 +52,7 @@ const STORAGE_KEY = "credsmart_invoice_settings";
 
 const defaultInitialSettings: InvoiceSettingsState = {
   theme: "stylish",
-  styling: "uttarakhand_2",
+  styling: "classic",
   primaryColor: "#0284C7", // Royal Blue default
   showPartyBalance: false,
   enableFreeQty: false,
@@ -61,15 +61,15 @@ const defaultInitialSettings: InvoiceSettingsState = {
   showPhoneNumber: true,
   showTimestamp: false,
   priceHistory: false,
-  autoApplyLuxury: true,
+  autoApplyLuxury: false,
 
-  industryType: "Other services",
+  industryType: "General",
   showPoNumber: false,
-  poNumber: "PO-2026-902",
+  poNumber: "",
   showEwayBill: false,
-  ewayBillNumber: "EWB-881920391",
+  ewayBillNumber: "",
   showVehicleNumber: false,
-  vehicleNumber: "UK-07-AB-4491",
+  vehicleNumber: "",
   invoiceCustomFields: [],
 
   partyCustomFields: [],
