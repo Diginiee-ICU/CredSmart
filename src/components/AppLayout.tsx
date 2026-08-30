@@ -391,7 +391,7 @@ export default function AppLayout() {
                     </button>
                   </DropdownMenuTrigger>
                 </div>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
                   <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <button
                       type="button"
@@ -430,13 +430,13 @@ export default function AppLayout() {
               </button>
 
               {/* Profile dropdown */}
-              <DropdownMenu>
+              <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-[11px] sm:text-xs font-black shadow-xs hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0" title={org?.name || "Account"}>
                     {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-[220] animate-in fade-in zoom-in-95 duration-150">
+                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-2 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || "CredSmart Business"}</h4>
@@ -454,7 +454,15 @@ export default function AppLayout() {
                       const isActive = business.id === orgId;
                       const bizName = business.name || "Store";
                       return (
-                        <DropdownMenuItem key={business.id} onClick={() => { if (business.id) switchOrganization(business.id); toast.success(`Switched to "${bizName}"`); }} className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-50 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-400/40" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54]")}>
+                        <DropdownMenuItem
+                          key={business.id}
+                          onSelect={() => {
+                            setProfileMenuOpen(false);
+                            if (business.id) switchOrganization(business.id);
+                            toast.success(`Switched to "${bizName}"`);
+                          }}
+                          className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-50 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-400/40" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54]")}
+                        >
                           <div className="min-w-0 pr-2"><p className="truncate text-xs font-semibold">{bizName}</p><p className="text-[10px] text-slate-500 font-mono truncate">{business.business_type || "Retail"}</p></div>
                           {isActive && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />}
                         </DropdownMenuItem>
@@ -462,13 +470,35 @@ export default function AppLayout() {
                     })}
                   </div>
                   <div className="pt-1.5 pb-1 border-t border-[#1F1C5C]">
-                    <button type="button" onClick={() => setCreateBusinessModalOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:brightness-110 text-white text-xs font-bold transition-all shadow-md cursor-pointer hover-3d-glow">
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setProfileMenuOpen(false);
+                        setCreateBusinessModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:brightness-110 text-white text-xs font-bold transition-all shadow-md cursor-pointer hover-3d-glow focus:bg-gradient-to-r focus:from-amber-500 focus:to-orange-600 focus:text-white"
+                    >
                       <Plus className="w-3.5 h-3.5" /><span>+ Add Business / Branch</span>
-                    </button>
+                    </DropdownMenuItem>
                   </div>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
-                  <DropdownMenuItem onClick={() => navigate(ROUTE_PATHS.businessSettings)} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Settings className="w-4 h-4 text-slate-400" /><span>Store &amp; Business Settings</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"><LogOut className="w-4 h-4 text-rose-500 dark:text-rose-400" /><span>Sign Out of CredSmart</span></DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setProfileMenuOpen(false);
+                      navigate(ROUTE_PATHS.businessSettings);
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400" /><span>Store &amp; Business Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setProfileMenuOpen(false);
+                      signOut();
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-500 dark:text-rose-400" /><span>Sign Out of CredSmart</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
