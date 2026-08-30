@@ -688,6 +688,14 @@ export default function Parties() {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredParties.length && filteredParties.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredParties.map((p) => p.id)));
+    }
+  };
+
   const handleSort = (field: "name" | "balance") => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));

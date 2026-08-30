@@ -186,7 +186,6 @@ export const documentsService = {
             id,
             invoice_number,
             total_amount,
-            tax_amount,
             status,
             created_at,
             notes,
@@ -199,6 +198,7 @@ export const documentsService = {
         if (!error && data) {
           const supabaseDocs: BusinessDocument[] = (data as PurchaseInvoiceRow[]).map((inv) => {
             const supplier = inv.suppliers;
+            const total = Number(inv.total_amount || 0);
             return {
               id: inv.id,
               organizationId: orgId,
@@ -211,17 +211,17 @@ export const documentsService = {
               docDate: inv.created_at ? inv.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
               dueDate: undefined,
               items: [],
-              subtotal: Number(inv.total_amount || 0) - Number(inv.tax_amount || 0),
+              subtotal: total,
               discountTotal: 0,
-              taxableTotal: Number(inv.total_amount || 0) - Number(inv.tax_amount || 0),
-              cgstTotal: Number((inv.tax_amount || 0) / 2),
-              sgstTotal: Number((inv.tax_amount || 0) / 2),
+              taxableTotal: total,
+              cgstTotal: 0,
+              sgstTotal: 0,
               igstTotal: 0,
-              taxTotal: Number(inv.tax_amount || 0),
+              taxTotal: 0,
               roundOff: 0,
-              grandTotal: Number(inv.total_amount || 0),
-              paidAmount: inv.status === "received" ? Number(inv.total_amount || 0) : 0,
-              balanceDue: inv.status === "received" ? 0 : Number(inv.total_amount || 0),
+              grandTotal: total,
+              paidAmount: inv.status === "received" ? total : 0,
+              balanceDue: inv.status === "received" ? 0 : total,
               status: (inv.status === "received" ? "paid" : inv.status === "draft" ? "draft" : "unpaid") as DocumentStatus,
               notes: inv.notes || "",
               created_at: inv.created_at,
@@ -375,7 +375,6 @@ export const documentsService = {
             supplier_id: resolvedSupplierId, // null if party is a customer, not a supplier
             invoice_number: doc.documentNumber,
             total_amount: doc.grandTotal,
-            tax_amount: doc.taxTotal,
             status: doc.status === "paid" ? "received" : "sent",
             notes: doc.notes || null,
             created_by: userId,

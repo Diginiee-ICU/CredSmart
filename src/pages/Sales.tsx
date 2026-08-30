@@ -292,6 +292,21 @@ export default function Sales() {
     }
   };
 
+  const handleTogglePaymentStatus = async (doc: BusinessDocument, newStatus: "paid" | "unpaid" | "partial") => {
+    if (!orgId) return;
+    const paidAmount = newStatus === "paid" ? doc.grandTotal : 0;
+    const balanceDue = newStatus === "paid" ? 0 : doc.grandTotal;
+    const updatedDoc: BusinessDocument = {
+      ...doc,
+      status: newStatus,
+      paidAmount,
+      balanceDue,
+    };
+    await documentsService.saveDocument(updatedDoc, user?.id);
+    toast.success(`Invoice ${doc.documentNumber} marked as ${newStatus.toUpperCase()}`);
+    loadDocuments();
+  };
+
   const handleOpenReceipt = (doc: BusinessDocument) => {
     const receipt: ReceiptData = {
       docType: doc.docType,
@@ -373,10 +388,10 @@ export default function Sales() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
+                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
                   isActive
-                    ? "glowing-btn-blue text-blue-900 dark:text-blue-100 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
+                    ? "bg-blue-600 dark:bg-blue-600 text-white shadow-md shadow-blue-500/25 border border-blue-500"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -696,9 +711,12 @@ export default function Sales() {
                           <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded border border-border/60 text-foreground">
                             {doc.documentNumber}
                           </span>
-                          <span
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
+                            title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
                             className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
+                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer transition-all active:scale-95",
                               doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
                               doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
                               doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
@@ -707,7 +725,7 @@ export default function Sales() {
                             )}
                           >
                             {doc.status}
-                          </span>
+                          </button>
                         </div>
                         <h4 className="font-bold text-sm text-foreground mt-1">{doc.partyName}</h4>
                         {doc.partyPhone && (
@@ -895,24 +913,41 @@ export default function Sales() {
                               <Share2 className="w-3.5 h-3.5" />
                               <span>Share PDF to WhatsApp</span>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingDoc(doc);
-                                setCreateModalOpen(true);
-                              }}
-                              className="gap-2"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Edit Document</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteDocument(doc)}
-                              className="gap-2 text-rose-600"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {doc.status !== "paid" ? (
+                                <DropdownMenuItem
+                                  onClick={() => handleTogglePaymentStatus(doc, "paid")}
+                                  className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Mark as Paid</span>
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => handleTogglePaymentStatus(doc, "unpaid")}
+                                  className="gap-2 font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Mark as Unpaid</span>
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingDoc(doc);
+                                  setCreateModalOpen(true);
+                                }}
+                                className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Edit Document</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteDocument(doc)}
+                                className="gap-2 text-rose-600 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -1043,18 +1078,21 @@ export default function Sales() {
                           ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </td>
                         <td className="py-3 px-3">
-                          <span
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
+                            title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
                             className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
-                              doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
+                              "px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xs",
+                              doc.status === "paid" && "bg-emerald-100 hover:bg-emerald-200 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
+                              doc.status === "partial" && "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
+                              doc.status === "unpaid" && "bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
                               doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
                               doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
                             )}
                           >
                             {doc.status}
-                          </span>
+                          </button>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -1231,19 +1269,36 @@ export default function Sales() {
                                   <span>Share PDF to WhatsApp</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                {doc.status !== "paid" ? (
+                                  <DropdownMenuItem
+                                    onClick={() => handleTogglePaymentStatus(doc, "paid")}
+                                    className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>Mark as Paid</span>
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => handleTogglePaymentStatus(doc, "unpaid")}
+                                    className="gap-2 font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    <span>Mark as Unpaid</span>
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setEditingDoc(doc);
                                     setCreateModalOpen(true);
                                   }}
-                                  className="gap-2"
+                                  className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                   <span>Edit Document</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteDocument(doc)}
-                                  className="gap-2 text-rose-600"
+                                  className="gap-2 text-rose-600 cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                   <span>Delete</span>

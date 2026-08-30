@@ -334,9 +334,9 @@ export default function AppLayout() {
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 shrink-0 hidden md:block" />
 
             {/* CENTER-LEFT: Page title (desktop only) */}
-            <div className="hidden md:flex flex-col justify-center min-w-0 flex-1">
+            <div className="hidden md:flex flex-col justify-center min-w-max shrink-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
                   {title}
                 </h1>
                 <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -344,18 +344,18 @@ export default function AppLayout() {
                   <span className="tracking-wide">SYNC LIVE</span>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{subtitle}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[240px] lg:max-w-[320px] mt-0.5">{subtitle}</p>
             </div>
 
             {/* Search bar (desktop) */}
-            <div className="hidden lg:flex items-center max-w-xs w-full mx-2">
+            <div className="hidden xl:flex items-center w-40 xl:w-52 mx-2 shrink">
               <button
                 onClick={() => setOpenCommand(true)}
-                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-12 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
+                className="relative w-full flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-10 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
               >
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
                 <span className="truncate">Search...</span>
-                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">⌘K</kbd>
+                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">⌘K</kbd>
               </button>
             </div>
 
@@ -676,9 +676,6 @@ export default function AppLayout() {
                 category: itemData.category || "General",
                 barcode: itemData.barcode || null,
                 sku: itemData.sku,
-                unit: itemData.unit,
-                selling_price: itemData.sellingPrice,
-                tax_rate: Number(itemData.gstRate) || 18,
                 tags: {
                   selling_price: itemData.sellingPrice,
                   purchase_price: itemData.purchasePrice,

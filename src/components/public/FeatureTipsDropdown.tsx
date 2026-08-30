@@ -24,6 +24,15 @@ interface FeatureTipsDropdownProps {
   align?: "left" | "center" | "right";
 }
 
+const ANIMATION_EFFECTS = [
+  "animate-drop-bounce",
+  "animate-flip-curtain",
+  "animate-liquid-glide",
+  "animate-elastic-snap",
+  "animate-matrix-sweep",
+  "animate-pendulum-swing",
+];
+
 export function FeatureTipsDropdown({
   className,
   compact = false,
@@ -35,6 +44,7 @@ export function FeatureTipsDropdown({
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [animationKey, setAnimationKey] = useState(0);
+  const [currentEffectIndex, setCurrentEffectIndex] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -54,6 +64,15 @@ export function FeatureTipsDropdown({
   const currentTip: FeatureTip = FEATURE_TIPS_DATA[currentIndex] || FEATURE_TIPS_DATA[0];
   const IconComponent = currentTip.icon || Sparkles;
 
+  const triggerNextEffect = useCallback(() => {
+    setCurrentEffectIndex((prev) => {
+      let next = Math.floor(Math.random() * ANIMATION_EFFECTS.length);
+      if (next === prev) next = (prev + 1) % ANIMATION_EFFECTS.length;
+      return next;
+    });
+    setAnimationKey((prev) => prev + 1);
+  }, []);
+
   // Next Tip function
   const handleNext = useCallback(() => {
     setOrderIndex((prev) => {
@@ -61,8 +80,8 @@ export function FeatureTipsDropdown({
       setCurrentIndex(shuffledIndices[nextOrder]);
       return nextOrder;
     });
-    setAnimationKey((prev) => prev + 1);
-  }, [shuffledIndices]);
+    triggerNextEffect();
+  }, [shuffledIndices, triggerNextEffect]);
 
   // Previous Tip function
   const handlePrev = useCallback(() => {
@@ -71,17 +90,17 @@ export function FeatureTipsDropdown({
       setCurrentIndex(shuffledIndices[nextOrder]);
       return nextOrder;
     });
-    setAnimationKey((prev) => prev + 1);
-  }, [shuffledIndices]);
+    triggerNextEffect();
+  }, [shuffledIndices, triggerNextEffect]);
 
   // Random Shuffle function
   const handleShuffle = useCallback(() => {
     const randomIdx = Math.floor(Math.random() * FEATURE_TIPS_DATA.length);
     setCurrentIndex(randomIdx);
-    setAnimationKey((prev) => prev + 1);
-  }, []);
+    triggerNextEffect();
+  }, [triggerNextEffect]);
 
-  // Auto-play timer effect (cycles every 7 seconds)
+  // Auto-play timer effect (cycles every 6.5 seconds)
   useEffect(() => {
     if (!isAutoPlaying || isOpen) {
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
@@ -90,7 +109,7 @@ export function FeatureTipsDropdown({
 
     autoPlayTimerRef.current = setInterval(() => {
       handleNext();
-    }, 7000);
+    }, 6500);
 
     return () => {
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
@@ -134,67 +153,113 @@ export function FeatureTipsDropdown({
     { id: "security", label: "Security" },
   ];
 
+  const activeAnimationClass = ANIMATION_EFFECTS[currentEffectIndex] || "animate-drop-bounce";
+
   return (
     <div ref={dropdownRef} className={cn("relative select-none", className)}>
       {/* ========================================================================= */}
-      {/* 1. COMPACT / REGULAR HEADER TICKER PILL (Permanently Attached) */}
+      {/* 1. MEDIUM HEADER-ATTACHED MESSAGE BOX (Dynamic Drop-Down Notch & Capsule) */}
       {/* ========================================================================= */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        title={`CredSmart Feature Showcase: ${currentTip.title} (Click to explore)`}
+      <div
+        key={`msg-box-${animationKey}`}
         className={cn(
-          "group flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border transition-all duration-300 cursor-pointer shadow-xs",
-          isOpen
-            ? "bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.25)] text-amber-900 dark:text-amber-300"
-            : "bg-white/90 dark:bg-slate-800/90 hover:bg-amber-500/10 border-amber-500/30 hover:border-amber-500/60 text-slate-800 dark:text-slate-200"
+          "relative flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border transition-all duration-300 shadow-md backdrop-blur-md",
+          activeAnimationClass,
+          compact
+            ? "bg-white/95 dark:bg-slate-900/95 border-amber-500/30 hover:border-amber-500/60 shadow-amber-500/5 max-w-[310px] sm:max-w-[390px]"
+            : "bg-gradient-to-r from-white/95 via-amber-50/40 to-white/95 dark:from-slate-900/95 dark:via-amber-950/20 dark:to-slate-900/95 border-amber-500/40 hover:border-amber-500/70 shadow-amber-500/10 max-w-[340px] xs:max-w-[420px] md:max-w-[490px] lg:max-w-[540px]"
         )}
       >
-        {/* Animated Sparkle / Feature Icon with Pulse */}
-        <div className="relative flex items-center justify-center shrink-0">
-          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-xs">
+        {/* Hanging Notch Tether from Header Top */}
+        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500/50 rounded-full blur-[0.5px]" />
+
+        {/* 3D Glowing Animated Icon Badge */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="relative flex items-center justify-center shrink-0 cursor-pointer group/icon"
+          title="Click to explore all features"
+        >
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-center shadow-xs group-hover/icon:scale-105 transition-transform">
             <IconComponent className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.5]" />
           </div>
           <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
           <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        </button>
+
+        {/* Medium Message Body (2-line layout on desktop, 1-line on compact) */}
+        <div
+          onClick={() => setIsOpen(true)}
+          className="flex-1 min-w-0 cursor-pointer text-left py-0.5"
+        >
+          {/* Top Line: Category Chip + Title */}
+          <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 shrink-0">
+              {currentTip.categoryLabel}
+            </span>
+            <h4 className="text-xs sm:text-[12px] font-black text-slate-900 dark:text-white truncate tracking-tight">
+              {currentTip.title}
+            </h4>
+          </div>
+
+          {/* Bottom Line (Snippet / Pro-tip) */}
+          {!compact && (
+            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 leading-tight">
+              {currentTip.snippet || currentTip.proTip || currentTip.description}
+            </p>
+          )}
         </div>
 
-        {/* Ticker Content with Smooth Slide/Fade Animation */}
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0 max-w-[140px] xs:max-w-[190px] sm:max-w-[260px] md:max-w-[320px]">
-          <span
-            key={`badge-${animationKey}`}
-            className="hidden md:inline-flex px-1.5 py-0.2 text-[9px] font-bold font-mono uppercase tracking-wider rounded bg-amber-500/15 text-amber-800 dark:text-amber-300 shrink-0 border border-amber-500/30 animate-in fade-in zoom-in-95 duration-300"
+        {/* Right Side Controls */}
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          {/* Quick Navigate / Explore Button */}
+          {currentTip.actionRoute && !compact && (
+            <button
+              type="button"
+              onClick={() => handleActionClick(currentTip.actionRoute!)}
+              className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer"
+              title={`Open ${currentTip.title}`}
+            >
+              <span>Explore</span>
+              <ArrowRight className="w-2.5 h-2.5" />
+            </button>
+          )}
+
+          {/* Shuffle / Next Controls */}
+          <button
+            type="button"
+            onClick={handleShuffle}
+            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Random feature"
           >
-            {currentTip.categoryLabel}
-          </span>
+            <Shuffle className="w-3 h-3" />
+          </button>
 
-          <span
-            key={`title-${animationKey}`}
-            className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white truncate tracking-tight animate-in fade-in slide-in-from-bottom-1 duration-300"
+          <button
+            type="button"
+            onClick={handleNext}
+            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Next feature"
           >
-            {currentTip.title}
-          </span>
-        </div>
+            <ChevronRight className="w-3 h-3" />
+          </button>
 
-        {/* Explore Pill / Hotkey Indicator (Desktop) */}
-        {currentTip.hotkey && !compact && (
-          <span className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-600 shrink-0">
-            {currentTip.hotkey}
-          </span>
-        )}
-
-        {/* Dropdown Indicator Chevron */}
-        <div className="pl-0.5 shrink-0 text-slate-400 group-hover:text-amber-500 transition-colors">
-          <ChevronDown
-            className={cn(
-              "w-3.5 h-3.5 transition-transform duration-300 stroke-[2.5]",
-              isOpen ? "rotate-180 text-amber-500" : ""
-            )}
-          />
+          {/* Dropdown Expand Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsOpen((v) => !v)}
+            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="View all features"
+          >
+            <ChevronDown
+              className={cn(
+                "w-3 h-3 transition-transform duration-300 stroke-[2.5]",
+                isOpen ? "rotate-180 text-amber-500" : ""
+              )}
+            />
+          </button>
         </div>
-      </button>
+      </div>
 
       {/* ========================================================================= */}
       {/* 2. EXPANDED GLASSMORPHISM FEATURE DROPDOWN PANEL */}

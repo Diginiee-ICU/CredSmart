@@ -1179,9 +1179,6 @@ export default function Dashboard() {
                 category: itemData.category || "General",
                 barcode: itemData.barcode || null,
                 sku: itemData.sku,
-                unit: itemData.unit,
-                selling_price: itemData.sellingPrice,
-                tax_rate: Number(itemData.gstRate) || 18,
                 tags: {
                   selling_price: itemData.sellingPrice,
                   purchase_price: itemData.purchasePrice,

@@ -99,7 +99,7 @@ export default function Inventory() {
     try {
       const { data: prods, error: prodsErr } = await supabase
         .from("products")
-        .select("id, name, brand, category, barcode, unit")
+        .select("id, name, brand, category, barcode, tags")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -143,7 +143,9 @@ export default function Inventory() {
         const totalStock = pBatches.reduce((s, b) => s + (Number(b.stock) || 0), 0);
         const totalValue = pBatches.reduce((s, b) => s + (Number(b.cost_price) || 0) * (Number(b.stock) || 0), 0);
         const avgMrp = pBatches.length > 0 ? pBatches.reduce((s, b) => s + (Number(b.mrp) || 0), 0) / pBatches.length : 0;
-        return { ...p, batches: pBatches, totalStock, totalValue, avgMrp };
+        const tagsObj = typeof p.tags === "object" && p.tags !== null ? (p.tags as Record<string, any>) : {};
+        const unit = typeof tagsObj.unit === "string" ? tagsObj.unit : "PCS";
+        return { ...p, unit, batches: pBatches, totalStock, totalValue, avgMrp };
       });
 
       if (isMounted) setProducts(enriched);
@@ -580,17 +582,17 @@ export default function Inventory() {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95",
                   filter === f.id
-                    ? "glowing-btn-blue text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-foreground"
+                    ? "bg-blue-600 dark:bg-blue-600 text-white shadow-md shadow-blue-500/25 border border-blue-500"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent"
                 )}
               >
-                {f.label}
+                <span>{f.label}</span>
                 <span
                   className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full",
-                    filter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
+                    "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    filter === f.id ? "bg-white/25 text-white" : "bg-slate-200/80 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                   )}
                 >
                   {f.count}
