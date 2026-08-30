@@ -282,24 +282,6 @@ export default function Parties() {
       // Perform Automated Ledger Reconciliation Audit
       const audit = performFullLedgerReconciliation({
         orgId,
-        orgName: "CredSmart Business",
-        parties: finalParties,
-        creditTransactions: credits || [],
-      });
-      setAuditResult(audit);
-    } catch (err) {
-      console.error("Error fetching parties:", err);
-      setParties(DEFAULT_SAMPLE_PARTIES);
-      const audit = performFullLedgerReconciliation({
-        orgName: "CredSmart Business",
-        parties: DEFAULT_SAMPLE_PARTIES,
-        creditTransactions: [],
-  const handleBulkExport = () => {
-    const listToExport =
-      selectedIds.size > 0 ? parties.filter((p) => selectedIds.has(p.id)) : parties;
-    const csv = exportPartiesToCSV(listToExport);
-    downloadCSV(`CredSmart_Parties_Export_${new Date().toISOString().slice(0, 10)}.csv`, csv);
-    toast.success(`Exported ${listToExport.length} parties to CSV!`);
   };
 
   // Calculations for Metrics Cards
