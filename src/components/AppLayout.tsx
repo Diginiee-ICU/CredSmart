@@ -37,6 +37,7 @@ import { CreateBusinessModal } from "@/components/CreateBusinessModal";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
 import {
   DropdownMenu,
@@ -300,9 +301,9 @@ export default function AppLayout() {
                 className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
               >
                 <img
-                  src="/IMG_9301.GIF"
+                  src="/logo-static.jpeg"
                   alt="CredSmart"
-                  className="h-9 sm:h-14 md:h-[4.5rem] w-auto max-w-[110px] sm:max-w-[260px] md:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-11 sm:h-12 md:h-14 w-auto max-w-[170px] sm:max-w-[240px] md:max-w-[300px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -358,8 +359,13 @@ export default function AppLayout() {
               </button>
             </div>
 
+            {/* CENTER-RIGHT: Feature Intelligence Dropdown Ticker (Permanent) */}
+            <div className="flex items-center shrink-0">
+              <FeatureTipsDropdown align="right" />
+            </div>
+
             {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-1 sm:ml-auto">
               {/* Mobile search */}
               <button
                 onClick={() => setOpenCommand(true)}

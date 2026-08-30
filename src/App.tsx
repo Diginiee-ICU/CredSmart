@@ -49,6 +49,10 @@ import Features from "@/pages/public/Features";
 import Pricing from "@/pages/public/Pricing";
 import GstBillingGuide from "@/pages/public/GstBillingGuide";
 import CompareVyapar from "@/pages/public/CompareVyapar";
+import CompareMyBillBook from "@/pages/public/CompareMyBillBook";
+import CompareTally from "@/pages/public/CompareTally";
+import BarcodeGuide from "@/pages/public/BarcodeGuide";
+import EInvoicingGuide from "@/pages/public/EInvoicingGuide";
 import About from "@/pages/public/About";
 import Contact from "@/pages/public/Contact";
 import Security from "@/pages/public/Security";
@@ -202,6 +206,10 @@ const App = () => (
                 <Route path={ROUTE_PATHS.pricing} element={<Pricing />} />
                 <Route path={ROUTE_PATHS.gstBillingGuide} element={<GstBillingGuide />} />
                 <Route path={ROUTE_PATHS.compareVyapar} element={<CompareVyapar />} />
+                <Route path={ROUTE_PATHS.compareMyBillBook} element={<CompareMyBillBook />} />
+                <Route path={ROUTE_PATHS.compareTally} element={<CompareTally />} />
+                <Route path={ROUTE_PATHS.barcodeGuide} element={<BarcodeGuide />} />
+                <Route path={ROUTE_PATHS.eInvoicingGuide} element={<EInvoicingGuide />} />
                 <Route path={ROUTE_PATHS.about} element={<About />} />
                 <Route path={ROUTE_PATHS.contact} element={<Contact />} />
                 <Route path={ROUTE_PATHS.security} element={<Security />} />

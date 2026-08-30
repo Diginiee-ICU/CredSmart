@@ -35,9 +35,41 @@
     <priority>0.85</priority>
   </url>
 
-  <!-- Comparison: CredSmart vs Vyapar & myBillBook -->
+  <!-- Comparison: CredSmart vs Vyapar -->
   <url>
     <loc>https://pos.credalert.bussiness/compare-vyapar</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Comparison: CredSmart vs myBillBook -->
+  <url>
+    <loc>https://pos.credalert.bussiness/compare-mybillbook</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Comparison: CredSmart vs Tally Prime -->
+  <url>
+    <loc>https://pos.credalert.bussiness/compare-tally</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Barcode Label Guide -->
+  <url>
+    <loc>https://pos.credalert.bussiness/barcode-generator-guide</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- e-Invoicing IRN Guide -->
+  <url>
+    <loc>https://pos.credalert.bussiness/e-invoicing-guide</loc>
     <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>

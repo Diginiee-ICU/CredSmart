@@ -7,6 +7,10 @@ Allow: /features
 Allow: /pricing
 Allow: /gst-billing-guide
 Allow: /compare-vyapar
+Allow: /compare-mybillbook
+Allow: /compare-tally
+Allow: /barcode-generator-guide
+Allow: /e-invoicing-guide
 Allow: /about
 Allow: /contact
 Allow: /security

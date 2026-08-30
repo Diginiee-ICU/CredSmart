@@ -63,6 +63,7 @@ import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { FeatureTipsDropdown } from "@/components/public/FeatureTipsDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -2273,6 +2274,11 @@ export default function POSBilling() {
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
             </span>
             <span className="tracking-wider">TURBO</span>
+          </div>
+
+          {/* Feature Intelligence Dropdown Ticker (Permanent on POS) */}
+          <div className="flex items-center">
+            <FeatureTipsDropdown compact={true} align="center" />
           </div>
 
           <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-700">

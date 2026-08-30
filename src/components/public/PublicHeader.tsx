@@ -65,8 +65,8 @@ export function PublicHeader() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo with Shield and "by CredAlert" */}
-        <Link to="/" className="focus:outline-none flex items-center">
-          <CredSmartLogo size="md" />
+        <Link to="/" className="focus:outline-none flex items-center py-0.5">
+          <CredSmartLogo size="md" className="scale-110 sm:scale-100 origin-left" />
         </Link>
 
         {/* Center Navigation Links (Exact from Reference Image) */}

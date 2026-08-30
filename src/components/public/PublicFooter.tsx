@@ -92,8 +92,28 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
+                <Link to="/barcode-generator-guide" className="hover:text-slate-200 transition-colors">
+                  Barcode Label Guide
+                </Link>
+              </li>
+              <li>
+                <Link to="/e-invoicing-guide" className="hover:text-slate-200 transition-colors">
+                  e-Invoicing IRN Guide
+                </Link>
+              </li>
+              <li>
                 <Link to="/compare-vyapar" className="hover:text-slate-200 transition-colors">
                   CredSmart vs Vyapar
+                </Link>
+              </li>
+              <li>
+                <Link to="/compare-mybillbook" className="hover:text-slate-200 transition-colors">
+                  CredSmart vs myBillBook
+                </Link>
+              </li>
+              <li>
+                <Link to="/compare-tally" className="hover:text-slate-200 transition-colors">
+                  CredSmart vs Tally Prime
                 </Link>
               </li>
               <li>

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { SEOHead } from "@/components/public/SEOHead";
+import { PublicConversionBanner } from "@/components/public/PublicConversionBanner";
 import { ROUTE_PATHS } from "@/config/routes";
 import { cn } from "@/lib/utils";
 
@@ -25,32 +26,31 @@ export default function FaqPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set([0, 1]));
 
-// eslint-disable-next-line react-hooks/exhaustive-deps
   const faqData = [
     {
       category: "general",
-      q: "What is CredSmart POS?",
-      a: "CredSmart POS is India's #1 free GST billing, point-of-sale, and inventory management software. It allows retail shop owners, wholesalers, and distributors to generate GST invoices, manage stock, track customer Udhar Khata, design barcode labels, and file GSTR-1 returns with zero software cost.",
+      q: "What is CredSmart?",
+      a: "CredSmart is India's free GST billing, point-of-sale, and inventory management software by CredAlert. It allows retail shop owners, wholesalers, and distributors to generate GST invoices, manage stock, track customer Udhar Khata, design barcode labels, and file GSTR-1 returns with zero software cost.",
     },
     {
       category: "general",
-      q: "Is CredSmart POS really 100% free forever?",
-      a: "Yes. CredSmart POS has zero software fees, zero monthly or annual subscriptions, zero transaction commissions on standard cash/UPI sales, and no hidden trial limits. You get full access to all 12 modules from day one.",
+      q: "Is CredSmart really 100% free forever?",
+      a: "Yes. CredSmart has zero software fees, zero monthly or annual subscriptions, zero transaction commissions on standard cash/UPI sales, and no hidden trial limits. You get full access to all modules from day one.",
     },
     {
       category: "general",
       q: "How does CredSmart compare to Vyapar or myBillBook?",
-      a: "Unlike Vyapar and myBillBook which charge ₹3,000 to ₹7,000 annually per computer, CredSmart POS is completely free. In addition, CredSmart offers built-in barcode label design, 1-tap multi-store switching, real-time cloud sync across devices, and access to a directory of 3.2M+ verified Indian businesses.",
+      a: "Unlike Vyapar and myBillBook which charge ₹3,000 to ₹7,000 annually per computer, CredSmart is completely free. In addition, CredSmart offers built-in barcode label design, 1-tap multi-store switching, real-time cloud sync across devices, and access to a directory of 3.2M+ verified Indian businesses.",
     },
     {
       category: "pos",
       q: "Which thermal printers and barcode scanners are supported?",
-      a: "CredSmart POS is compatible with all standard ESC/POS USB, Bluetooth, and Wi-Fi thermal printers (both 2-inch 58mm and 3-inch 80mm rolls) such as TVS, Epson, Everycom, NGX, and Pegasus. It also works with all standard USB and wireless handheld 1D/2D barcode scanners.",
+      a: "CredSmart is compatible with all standard ESC/POS USB, Bluetooth, and Wi-Fi thermal printers (both 2-inch 58mm and 3-inch 80mm rolls) such as TVS, Epson, Everycom, NGX, and Pegasus. It also works with all standard USB and wireless handheld 1D/2D barcode scanners.",
     },
     {
       category: "pos",
       q: "Can I bill multiple customers at once during rush hours?",
-      a: "Yes. The POS Billing Terminal supports up to 5 concurrent 'Held Bills'. If a customer forgets an item or delays payment, you can park their cart with Ctrl+B or by clicking Hold, bill the next customer, and resume the held bill instantly with Ctrl+1 through Ctrl+5.",
+      a: "Yes. The POS Billing Terminal supports up to 5 concurrent 'Held Bills'. If a customer forgets an item or delays payment, you can park their cart, bill the next customer, and resume the held bill instantly.",
     },
     {
       category: "gst",
@@ -59,33 +59,33 @@ export default function FaqPage() {
     },
     {
       category: "gst",
-      q: "How do I export my monthly GSTR-1 for tax filing?",
-      a: "Navigate to the Reports hub and click 'GSTR-1 JSON (GST Portal)'. CredSmart automatically generates the official GSTN Schema 2.0 JSON file with B2B, B2CL, B2CS, and HSN summary tables, ready for immediate upload on the official GST portal.",
+      q: "How do I export my monthly GSTR-1 tax filing report?",
+      a: "Go to Reports > GSTR-1 Report. You can export official GST Portal JSON Schema 2.0 files or multi-sheet Excel workbooks ready to upload directly to the GSTN portal or email to your CA in 1 click.",
     },
     {
       category: "inventory",
-      q: "Can I design and print custom barcode stickers for my products?",
-      a: "Yes. Use the Barcode Label Studio to choose from standard thermal roll sizes (50x38mm, 38x25mm) or full A4 sticker sheets (24, 40, or 65 stickers per page). Customize your shop name, product title, barcode, selling price, and MRP before printing.",
+      q: "Can I print barcode labels for loose items without manufacturer barcodes?",
+      a: "Yes. CredSmart includes a built-in Barcode & QR Code Label Designer. You can generate custom Code 128 or EAN-13 barcodes, format price stickers, and print them onto thermal roll rolls or standard A4 sheets.",
     },
     {
       category: "inventory",
-      q: "Does CredSmart support batch numbers and expiry tracking?",
-      a: "Yes. You can assign batch numbers, manufacturing dates, and expiry dates to your items—ideal for pharmacies, medical stores, packaged food, and FMCG distributors.",
+      q: "Does CredSmart support multiple warehouses or godowns?",
+      a: "Yes. You can create multiple godowns, record inter-godown transfers, track stock levels by location, and set minimum stock alerts for each warehouse.",
     },
     {
       category: "khata",
-      q: "How does the Customer Udhar Khata ledger work?",
-      a: "Every credit sale automatically reflects on the customer's Khata statement with a running balance. You can record partial cash/UPI settlements and send detailed PDF ledger statements or payment reminders directly to their WhatsApp with 1 tap.",
+      q: "How does Customer Udhar Khata work with WhatsApp?",
+      a: "Every credit sale is automatically logged to the customer's digital ledger. You can view running balances, record partial settlements, and send formatted PDF statement summaries directly to the customer's WhatsApp with 1 tap.",
     },
     {
       category: "multi_store",
-      q: "Can I manage multiple retail branches or warehouses?",
-      a: "Yes. You can create unlimited business branches under one account. Switch between stores in 1 tap from both the desktop sidebar and mobile drawer without having to log in and out.",
+      q: "Can I manage multiple retail branches under one account?",
+      a: "Yes. You can add multiple shops or branches under your account and switch between them instantly in 1 tap without logging out.",
     },
     {
       category: "security",
-      q: "Is my store's financial data secure and backed up?",
-      a: "Yes. CredSmart uses 256-bit TLS encryption in transit and at rest, multi-tenant Row-Level Security (RLS) on database tables, automated continuous cloud backups, and conforms with the Digital Personal Data Protection Act, 2023.",
+      q: "Is my store's financial data secure and private?",
+      a: "Yes. All data is encrypted with 256-bit SSL encryption, protected by multi-tenant Row-Level Security (RLS), and backed up continuously across secure cloud servers. We strictly adhere to the DPDP Act, 2023.",
     },
   ];
 
@@ -148,47 +148,51 @@ export default function FaqPage() {
       />
 
       {/* Hero */}
-      <section className="pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-800/80 text-center">
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-200/80 text-center overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-200/30 via-indigo-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-4 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <HelpCircle className="w-3.5 h-3.5" /> Help &amp; Knowledge Center
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold uppercase tracking-wider">
+            <HelpCircle className="w-3.5 h-3.5 text-amber-600" /> Help &amp; Knowledge Center
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A1931] tracking-tight leading-tight">
             Frequently Asked Questions
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Everything you need to know about CredSmart POS features, pricing, GST compliance, hardware setups, and data safety.
+          <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Everything you need to know about CredSmart POS, 100% free pricing, hardware setups, and GST compliance.
           </p>
 
-          {/* Search Box */}
-          <div className="max-w-xl mx-auto pt-4 relative">
-            <Search className="w-5 h-5 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by keyword (e.g. thermal printer, GST, pricing, held bills)..."
-              className="h-12 pl-12 pr-4 glass-card-3d text-slate-900 dark:text-white rounded-2xl shadow-xl focus:border-amber-400 text-sm"
-            />
+          {/* Search Bar */}
+          <div className="max-w-xl mx-auto pt-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Search questions (e.g. thermal printer, GST filing, pricing)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-4 h-13 rounded-2xl bg-white border-slate-200 shadow-sm text-slate-900 focus:border-blue-600 text-sm"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Categories & List */}
-      <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* Categories & Accordions */}
+      <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        
         {/* Category Pills */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex items-center justify-center flex-wrap gap-2">
           {categories.map((cat) => (
             <button
               key={cat.id}
-              type="button"
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
                 activeCategory === cat.id
-                  ? "glowing-btn-amber text-white font-bold shadow-md"
-                  : "bg-slate-900/60 text-slate-400 border border-slate-800 hover:text-white hover:bg-slate-800"
+                  ? "bg-[#0A1931] text-white shadow-md"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               {cat.label}
@@ -196,12 +200,21 @@ export default function FaqPage() {
           ))}
         </div>
 
-        {/* FAQ Accordion List */}
-        <div className="space-y-3 pt-4">
+        {/* FAQ Accordions */}
+        <div className="space-y-3.5">
           {filteredFaqs.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 space-y-2">
-              <p className="text-base font-semibold">No questions found matching your search</p>
-              <p className="text-xs">Try searching for other terms or clear your search query.</p>
+            <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 p-8">
+              <p className="text-slate-600 font-medium text-sm">No matching questions found for "{searchQuery}".</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory("all");
+                }}
+                className="mt-4 border-slate-300 text-slate-700"
+              >
+                Clear Search
+              </Button>
             </div>
           ) : (
             filteredFaqs.map((faq, idx) => {
@@ -209,27 +222,26 @@ export default function FaqPage() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl glass-card-3d overflow-hidden transition-all relative"
+                  className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all"
                 >
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
                   <button
                     type="button"
                     onClick={() => toggleFaq(idx)}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-white/5 dark:hover:bg-white/5 transition-colors cursor-pointer pl-6"
+                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
                   >
-                    <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                    <span className="text-base font-bold text-[#0A1931] flex items-center gap-3">
+                      <HelpCircle className="w-4 h-4 text-[#FF6A00] shrink-0" />
                       {faq.q}
                     </span>
                     <ChevronDown
                       className={cn(
-                        "w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200",
-                        isOpen && "rotate-180 text-amber-500 dark:text-amber-400"
+                        "w-5 h-5 text-slate-400 transition-transform duration-200 shrink-0",
+                        isOpen && "rotate-180 text-slate-900"
                       )}
                     />
                   </button>
-
                   {isOpen && (
-                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-200/80 dark:border-slate-800/80 pt-4 pl-6 animate-in fade-in duration-150">
+                    <div className="px-6 pb-6 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pl-13">
                       {faq.a}
                     </div>
                   )}
@@ -239,6 +251,14 @@ export default function FaqPage() {
           )}
         </div>
       </section>
+
+      {/* Bottom Conversion Banner */}
+      <PublicConversionBanner
+        title="Still Have Questions?"
+        highlightedText="We're Here to Help."
+        subtitle="Start your free account now or speak with our support team."
+        ctaText="Get Started 100% Free"
+      />
     </PublicLayout>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { SEOHead } from "@/components/public/SEOHead";
+import { PublicConversionBanner } from "@/components/public/PublicConversionBanner";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function GstBillingGuide() {
@@ -93,143 +94,117 @@ export default function GstBillingGuide() {
       />
 
       {/* Hero */}
-      <section className="pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-800/80">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-            <BookOpen className="w-3.5 h-3.5" /> Educational Knowledge Pillar
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-200/80 text-center overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-200/30 via-indigo-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
+        <div className="max-w-4xl mx-auto px-4 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-800 text-xs font-bold uppercase tracking-wider">
+            <BookOpen className="w-3.5 h-3.5 text-blue-600" /> Educational Knowledge Pillar
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A1931] tracking-tight leading-tight">
             The Complete Guide to GST Billing &amp; Invoicing in India
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Everything Indian shop owners, wholesalers, and accountants need to know about GST rates, mandatory tax invoice fields, HSN codes, and 1-click GSTR-1 filing.
           </p>
         </div>
       </section>
 
-      {/* Main Content Article */}
-      <article className="py-16 max-w-4xl mx-auto px-4 space-y-12 text-slate-300 text-sm sm:text-base leading-relaxed">
-        {/* Section 1 */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <Receipt className="w-6 h-6 text-amber-400" />
-            1. Understanding the Three Types of GST
-          </h2>
-          <p>
-            Under the Indian Goods and Services Tax (GST) framework, tax is levied based on whether a transaction is <strong>Intra-State</strong> (within the same state) or <strong>Inter-State</strong> (between different states or union territories):
+      {/* Main Content */}
+      <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        
+        {/* GST Slabs Table */}
+        <div className="space-y-4">
+          <h2 className="text-2xl font-black text-[#0A1931]">1. Official GST Rates &amp; Product Slabs</h2>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            GST in India follows a multi-tier tax structure determined by the GST Council. Products and services are classified under five primary rate slabs:
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500 rounded-l-2xl" />
-              <span className="text-xs font-black text-amber-500 dark:text-amber-400 font-mono pl-1">CGST (Central GST)</span>
-              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
-                Levied by the Central Government on intra-state supplies. Appears as 50% of the total tax rate (e.g., 9% on an 18% slab).
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 to-blue-600 rounded-l-2xl" />
-              <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 font-mono pl-1">SGST / UTGST (State GST)</span>
-              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
-                Levied by the State or Union Territory Government on intra-state supplies, matching CGST equally.
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl glass-card-3d space-y-2 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-600 rounded-l-2xl" />
-              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono pl-1">IGST (Integrated GST)</span>
-              <p className="text-xs text-slate-600 dark:text-slate-400 pl-1">
-                Levied by the Central Government on all inter-state supplies, export/import of goods, equal to CGST + SGST combined.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2 */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-indigo-500" />
-            2. Mandatory Fields on a Legal GST Tax Invoice
-          </h2>
-          <p>
-            According to Rule 46 of the CGST Rules, a valid GST tax invoice must include the following statutory components:
-          </p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {[
-              "Supplier Legal Name, Registered Address, and GSTIN",
-              "Consecutive serial number (unique for each financial year)",
-              "Date of issue of the invoice",
-              "Customer Name, Address, and GSTIN (for B2B transactions)",
-              "HSN code (4 or 6 digits) for goods or SAC code for services",
-              "Description of goods or services, quantity, and unit of measure",
-              "Total value of supply and taxable value after discounts",
-              "Rate of tax (CGST, SGST, IGST) and corresponding tax amount",
-              "Place of Supply along with State Name and Code",
-              "Digital signature or physical signature of the authorized person",
-            ].map((field, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 p-3 rounded-xl glass-card-3d">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>{field}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Section 3 */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <Scale className="w-6 h-6 text-emerald-500" />
-            3. Standard GST Slabs in India
-          </h2>
-          <div className="overflow-x-auto rounded-2xl glass-card-3d scrollbar-thin">
+          <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-900/40 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-200/80 dark:border-slate-800">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-mono text-[11px]">
                 <tr>
-                  <th className="p-4">Rate</th>
-                  <th className="p-4">Classification</th>
-                  <th className="p-4">Typical Goods / Services</th>
+                  <th className="p-4">Tax Rate</th>
+                  <th className="p-4">Category</th>
+                  <th className="p-4">Examples of Goods &amp; Services</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
-                {gstSlabs.map((s, idx) => (
-                  <tr key={idx} className="hover:bg-white/5">
-                    <td className="p-4 font-black text-amber-500 dark:text-amber-400 font-mono">{s.rate}</td>
-                    <td className="p-4 font-bold text-slate-900 dark:text-slate-200">{s.category}</td>
-                    <td className="p-4 text-slate-600 dark:text-slate-400 text-xs">{s.examples}</td>
+              <tbody className="divide-y divide-slate-100">
+                {gstSlabs.map((slab, i) => (
+                  <tr key={i} className="hover:bg-slate-50/50">
+                    <td className="p-4 font-bold text-amber-700 font-mono">{slab.rate}</td>
+                    <td className="p-4 font-semibold text-slate-900">{slab.category}</td>
+                    <td className="p-4 text-slate-600">{slab.examples}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
 
-        {/* Section 4 */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <FileSpreadsheet className="w-6 h-6 text-rose-500" />
-            4. How CredSmart POS Automates GST Compliance
-          </h2>
-          <p>
-            Manually calculating taxes, sorting out HSN codes, and preparing monthly GSTR-1 summaries is tedious and error-prone. CredSmart POS fully automates every step:
-          </p>
-          <div className="p-6 rounded-2xl glass-card-3d space-y-3 relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
-            <p className="text-slate-900 dark:text-slate-200 font-black text-sm pl-1">
-              Automatic Tax Splits &amp; 1-Click JSON Filing
+        {/* CGST vs SGST vs IGST */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-bold text-xs">
+              INTRA
+            </div>
+            <h3 className="text-base font-bold text-[#0A1931]">Intra-State (CGST + SGST)</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              When the seller and buyer are in the same Indian state. The total GST rate is split equally: 50% Central GST (CGST) and 50% State GST (SGST).
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">
-              When you bill a customer, CredSmart automatically checks their state code against your store&apos;s registered GSTIN, calculating CGST/SGST or IGST in real time. At the end of the month, export the official <strong>GSTR-1 JSON Schema 2.0</strong> file for immediate upload to the GST Portal—saving hours of manual bookkeeping.
-            </p>
-            <div className="pt-2 pl-1">
-              <Link to={ROUTE_PATHS.auth}>
-                <button className="h-10 px-5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center">
-                  Create Your First GST Invoice Free <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[2.5]" />
-                </button>
-              </Link>
+            <div className="p-3 rounded-xl bg-slate-50 text-xs font-mono text-slate-700">
+              18% GST = 9% CGST + 9% SGST
             </div>
           </div>
-        </section>
-      </article>
+
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-xs">
+              INTER
+            </div>
+            <h3 className="text-base font-bold text-[#0A1931]">Inter-State (IGST)</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              When goods are sold across state borders or Union Territories. The entire tax amount is levied as Integrated GST (IGST) to the Central Government.
+            </p>
+            <div className="p-3 rounded-xl bg-slate-50 text-xs font-mono text-slate-700">
+              18% GST = 18% IGST
+            </div>
+          </div>
+        </div>
+
+        {/* Mandatory Invoice Requirements */}
+        <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+          <h2 className="text-xl font-black text-[#0A1931]">2. Mandatory Fields on a Legal GST Tax Invoice</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+            {[
+              "Supplier Name & 15-digit GSTIN",
+              "Consecutive Serialized Invoice Number",
+              "Date of Invoice Issue",
+              "Recipient Name & GSTIN (for B2B)",
+              "Place of Supply with State Code",
+              "HSN Code for Goods / SAC for Services",
+              "Itemized Quantity, Unit & Rate",
+              "Taxable Value & Discount Amount",
+              "CGST, SGST, IGST Breakdown",
+              "Reverse Charge (RCM) applicability",
+              "Signature of Authorized Signatory",
+              "Dynamic UPI Payment QR Code",
+            ].map((field, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-slate-700 p-2.5 rounded-xl bg-slate-50">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{field}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Conversion Banner */}
+      <PublicConversionBanner
+        title="Ready to Automate Your GST Billing?"
+        highlightedText="100% Free."
+        subtitle="CredSmart automatically handles CGST, SGST, IGST calculations, HSN codes, and 1-click GSTR-1 filings."
+        ctaText="Start Free GST Billing"
+      />
     </PublicLayout>
   );
 }
