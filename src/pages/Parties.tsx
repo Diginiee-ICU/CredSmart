@@ -294,19 +294,6 @@ export default function Parties() {
         orgName: "CredSmart Business",
         parties: DEFAULT_SAMPLE_PARTIES,
         creditTransactions: [],
-      });
-      setAuditResult(audit);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId]);
-
-    setParties((prev) => prev.filter((p) => !selectedIds.has(p.id)));
-    setSelectedIds(new Set());
-    toast.success("Selected parties removed.");
-  };
-
-  // Bulk Export
   const handleBulkExport = () => {
     const listToExport =
       selectedIds.size > 0 ? parties.filter((p) => selectedIds.has(p.id)) : parties;
