@@ -92,4 +92,42 @@ describe("Invoice Line Item Dual Unit Display & Calculation", () => {
     expect(display.primaryLine).toBe("2 LTR");
     expect(display.secondaryLine).toBe(null);
   });
+
+  it("handles purchase invoice inward items with dual units (e.g. 10 BOX with 20 PCS each)", () => {
+    const purchaseItem: InvoiceItemData = {
+      name: "Detergent Powder 500g",
+      qty: 200, // 200 primary units
+      unit: "PCS",
+      altUnit: "BOX",
+      altQty: 10, // 10 boxes inward
+      altUnitConversion: 20, // 1 BOX = 20 PCS
+      rate: 45,
+      total: 9000,
+    };
+
+    const display = formatItemQuantityDisplay(purchaseItem);
+
+    expect(display.isDual).toBe(true);
+    expect(display.primaryLine).toBe("10 BOX");
+    expect(display.secondaryLine).toBe("(10*20 Pcs)");
+  });
+
+  it("preserves custom alternate unit labels with clean casing (e.g. 3 PACKET = 12 PCS)", () => {
+    const packetItem: InvoiceItemData = {
+      name: "Tea Powder",
+      qty: 12,
+      unit: "PCS",
+      altUnit: "PACKET",
+      altQty: 3,
+      altUnitConversion: 4,
+      rate: 110,
+      total: 1320,
+    };
+
+    const display = formatItemQuantityDisplay(packetItem);
+
+    expect(display.isDual).toBe(true);
+    expect(display.primaryLine).toBe("3 PACKET");
+    expect(display.secondaryLine).toBe("(3*4 Pcs)");
+  });
 });

@@ -762,8 +762,16 @@ export default function Sales() {
                               items: doc.items.map((it) => ({
                                 name: it.productName,
                                 quantity: it.quantity,
+                                unit: it.unit,
+                                altUnit: it.altUnit,
+                                altQty: it.altQty,
+                                altUnitConversion: it.altUnitConversion,
                                 rate: it.rate,
                                 total: it.lineTotal,
+                                hsn: it.hsn,
+                                taxRate: it.taxRate,
+                                batchNo: it.batchNumber,
+                                expDate: it.expiryDate,
                               })),
                             });
                           }}
@@ -791,8 +799,16 @@ export default function Sales() {
                               items: doc.items.map((it) => ({
                                 name: it.productName,
                                 quantity: it.quantity,
+                                unit: it.unit,
+                                altUnit: it.altUnit,
+                                altQty: it.altQty,
+                                altUnitConversion: it.altUnitConversion,
                                 rate: it.rate,
                                 total: it.lineTotal,
+                                hsn: it.hsn,
+                                taxRate: it.taxRate,
+                                batchNo: it.batchNumber,
+                                expDate: it.expiryDate,
                               })),
                             });
                           }}
@@ -837,8 +853,16 @@ export default function Sales() {
                                   items: doc.items.map((it) => ({
                                     name: it.productName,
                                     quantity: it.quantity,
+                                    unit: it.unit,
+                                    altUnit: it.altUnit,
+                                    altQty: it.altQty,
+                                    altUnitConversion: it.altUnitConversion,
                                     rate: it.rate,
                                     total: it.lineTotal,
+                                    hsn: it.hsn,
+                                    taxRate: it.taxRate,
+                                    batchNo: it.batchNumber,
+                                    expDate: it.expiryDate,
                                   })),
                                 });
                               }}
@@ -1065,8 +1089,16 @@ export default function Sales() {
                                   items: doc.items.map((it) => ({
                                     name: it.productName,
                                     quantity: it.quantity,
+                                    unit: it.unit,
+                                    altUnit: it.altUnit,
+                                    altQty: it.altQty,
+                                    altUnitConversion: it.altUnitConversion,
                                     rate: it.rate,
                                     total: it.lineTotal,
+                                    hsn: it.hsn,
+                                    taxRate: it.taxRate,
+                                    batchNo: it.batchNumber,
+                                    expDate: it.expiryDate,
                                   })),
                                 });
                               }}
@@ -1093,8 +1125,16 @@ export default function Sales() {
                                   items: doc.items.map((it) => ({
                                     name: it.productName,
                                     quantity: it.quantity,
+                                    unit: it.unit,
+                                    altUnit: it.altUnit,
+                                    altQty: it.altQty,
+                                    altUnitConversion: it.altUnitConversion,
                                     rate: it.rate,
                                     total: it.lineTotal,
+                                    hsn: it.hsn,
+                                    taxRate: it.taxRate,
+                                    batchNo: it.batchNumber,
+                                    expDate: it.expiryDate,
                                   })),
                                 });
                               }}
@@ -1140,8 +1180,16 @@ export default function Sales() {
                                       items: doc.items.map((it) => ({
                                         name: it.productName,
                                         quantity: it.quantity,
+                                        unit: it.unit,
+                                        altUnit: it.altUnit,
+                                        altQty: it.altQty,
+                                        altUnitConversion: it.altUnitConversion,
                                         rate: it.rate,
                                         total: it.lineTotal,
+                                        hsn: it.hsn,
+                                        taxRate: it.taxRate,
+                                        batchNo: it.batchNumber,
+                                        expDate: it.expiryDate,
                                       })),
                                     });
                                   }}
@@ -1164,8 +1212,16 @@ export default function Sales() {
                                       items: doc.items.map((it) => ({
                                         name: it.productName,
                                         quantity: it.quantity,
+                                        unit: it.unit,
+                                        altUnit: it.altUnit,
+                                        altQty: it.altQty,
+                                        altUnitConversion: it.altUnitConversion,
                                         rate: it.rate,
                                         total: it.lineTotal,
+                                        hsn: it.hsn,
+                                        taxRate: it.taxRate,
+                                        batchNo: it.batchNumber,
+                                        expDate: it.expiryDate,
                                       })),
                                     });
                                   }}

@@ -1417,6 +1417,7 @@ export default function POSBilling() {
             batch: ci.batch,
             quantity: ci.quantity,
             altUnit: altU,
+            altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
             altUnitConversion: altConv ? Number(altConv) : undefined,
             unit: ci.product.unit || "PCS",
           };
@@ -1544,6 +1545,7 @@ export default function POSBilling() {
                       quantity: ci.quantity,
                       unit: ci.product.unit || "PCS",
                       altUnit: altU,
+                      altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
                       altUnitConversion: altConv ? Number(altConv) : undefined,
                       rate: ci.sp,
                       discountPercent: ci.discountPercent || 0,

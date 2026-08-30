@@ -59,6 +59,7 @@ import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 import { PartyCustomItem } from "@/types/parties";
 
@@ -1094,7 +1095,44 @@ export function PurchaseInvoiceModal({
     if (onPrintRequest) {
       onPrintRequest(docToPrint);
     } else {
-      toast.error("No print handler available");
+      downloadExactInvoicePdf({
+        invoiceNumber: docToPrint.documentNumber,
+        referenceNumber: docToPrint.referenceNumber,
+        docType: docToPrint.docType as any,
+        date: docToPrint.docDate,
+        dueDate: docToPrint.dueDate,
+        customerName: docToPrint.partyName,
+        customerPhone: docToPrint.partyPhone,
+        customerAddress: docToPrint.partyAddress,
+        customerGstin: docToPrint.partyGstin,
+        storeName: org?.name || "CredSmart Store",
+        storePhone: org?.phone,
+        storeEmail: org?.email,
+        storeAddress: org?.address,
+        storeGstin: org?.gstin,
+        totalAmount: docToPrint.grandTotal,
+        subtotal: docToPrint.subtotal,
+        discountAmount: docToPrint.discountTotal ?? 0,
+        tax: docToPrint.taxTotal ?? 0,
+        roundOff: docToPrint.roundOff ?? 0,
+        paymentMethod: docToPrint.paymentMethod,
+        notes: docToPrint.notes,
+        terms: docToPrint.terms,
+        items: docToPrint.items.map((it) => ({
+          name: it.productName,
+          quantity: it.quantity,
+          unit: it.unit || "PCS",
+          altUnit: it.altUnit,
+          altQty: it.altQty,
+          altUnitConversion: it.altUnitConversion,
+          rate: it.rate,
+          total: it.lineTotal,
+          hsn: it.hsn,
+          taxRate: it.taxRate,
+          batchNo: it.batchNumber,
+          expDate: it.expiryDate,
+        })),
+      });
     }
   };
 
@@ -1164,8 +1202,49 @@ export function PurchaseInvoiceModal({
       toast.success(`Purchase Bill ${fullDocumentNumber} recorded successfully!`);
       onSaved(saved);
 
-      if (andPrint && onPrintRequest) {
-        onPrintRequest(saved);
+      if (andPrint) {
+        if (onPrintRequest) {
+          onPrintRequest(saved);
+        } else {
+          downloadExactInvoicePdf({
+            invoiceNumber: saved.documentNumber,
+            referenceNumber: saved.referenceNumber,
+            docType: saved.docType as any,
+            date: saved.docDate,
+            dueDate: saved.dueDate,
+            customerName: saved.partyName,
+            customerPhone: saved.partyPhone,
+            customerAddress: saved.partyAddress,
+            customerGstin: saved.partyGstin,
+            storeName: org?.name || "CredSmart Store",
+            storePhone: org?.phone,
+            storeEmail: org?.email,
+            storeAddress: org?.address,
+            storeGstin: org?.gstin,
+            totalAmount: saved.grandTotal,
+            subtotal: saved.subtotal,
+            discountAmount: saved.discountTotal ?? 0,
+            tax: saved.taxTotal ?? 0,
+            roundOff: saved.roundOff ?? 0,
+            paymentMethod: saved.paymentMethod,
+            notes: saved.notes,
+            terms: saved.terms,
+            items: saved.items.map((it) => ({
+              name: it.productName,
+              quantity: it.quantity,
+              unit: it.unit || "PCS",
+              altUnit: it.altUnit,
+              altQty: it.altQty,
+              altUnitConversion: it.altUnitConversion,
+              rate: it.rate,
+              total: it.lineTotal,
+              hsn: it.hsn,
+              taxRate: it.taxRate,
+              batchNo: it.batchNumber,
+              expDate: it.expiryDate,
+            })),
+          });
+        }
       }
 
       if (saveAndNew) {

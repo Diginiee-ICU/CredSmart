@@ -130,7 +130,7 @@ export function formatItemQuantityDisplay(it: InvoiceItemData): {
 } {
   const cleanUnit = it.unit ? (it.unit.toUpperCase() === "PCS" ? "Pcs" : it.unit) : "Pcs";
 
-  // Case 1: Explicit altQty and altUnit provided
+  // Case 1: Explicit altQty and altUnit provided (e.g. altQty = 1 PKT, altUnitConversion = 4, base unit = PCS)
   if (it.altUnit && it.altQty != null && it.altQty > 0) {
     const altUnitName = it.altUnit;
     const altQtyVal = it.altQty;
