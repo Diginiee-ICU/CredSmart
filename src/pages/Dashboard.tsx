@@ -29,32 +29,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { supabase } from "@/integrations/supabase/client";
-import { useOrganization } from "@/hooks/useOrganization";
-import { useToast } from "@/hooks/use-toast";
-import { ROUTE_PATHS } from "@/config/routes";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
-import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
-import { CreateItemModal } from "@/components/items/CreateItemModal";
-import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
-  type: string;
-  txnNo: string;
-  partyName: string;
-  amount: number;
-  status: "PAID" | "PENDING" | "OVERDUE";
-}
-
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const { orgId } = useOrganization();
   const { toast } = useToast();
 
   const [toCollect, setToCollect] = useState(0);
