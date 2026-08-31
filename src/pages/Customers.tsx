@@ -512,8 +512,38 @@ export default function Customers() {
         </div>
       </div>
 
-      {/* Stats Cards - 3D Frosted Glass */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+      {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
+      <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+            Customers
+          </span>
+          <p className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+            {customers.length}
+          </p>
+        </div>
+
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+            Receivables
+          </span>
+          <p className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
+            ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </p>
+        </div>
+
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+            Due Count
+          </span>
+          <p className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight truncate mt-0.5">
+            {customersWithDue}
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Cards - 3D Frosted Glass (Tablet / Desktop) */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
         {/* Total Customers */}
         <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
@@ -547,7 +577,7 @@ export default function Customers() {
         </div>
 
         {/* Customers with Balance */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden col-span-2 lg:col-span-1 group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
             <span className="text-[9px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">With Balance Due</span>
@@ -568,40 +598,40 @@ export default function Customers() {
       </div>
 
       {/* Search & Credit Filters - Frosted Glass Container */}
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xs space-y-2">
+        <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by customer name, phone number, or email..."
-              className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+              placeholder="Search by customer name, phone..."
+              className="w-full h-8.5 pl-8 pr-8 rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1 p-0.5 bg-slate-100/70 dark:bg-slate-800/60 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto no-scrollbar">
             {([
-              { id: "all", label: "All Customers", count: customers.length },
+              { id: "all", label: "All", count: customers.length },
               { id: "due", label: "With Balance", count: customersWithDue },
-              { id: "clear", label: "Settled (₹0)", count: customers.length - customersWithDue },
+              { id: "clear", label: "Settled", count: customers.length - customersWithDue },
             ] as const).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setCreditFilter(f.id)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+                  "px-2.5 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer",
                   creditFilter === f.id
                     ? "glowing-btn-amber text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground"
@@ -610,7 +640,7 @@ export default function Customers() {
                 {f.label}
                 <span
                   className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    "text-[9px] px-1 py-0.2 rounded-full",
                     creditFilter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -655,30 +685,26 @@ export default function Customers() {
       {/* Customer List Container */}
       <div className="rounded-2xl overflow-hidden shadow-xs">
         {filtered.length === 0 ? (
-          <div className="py-16 text-center px-4 bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
-              <Users2 className="w-7 h-7 opacity-50" />
+          <div className="py-12 text-center px-4 bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-2 text-muted-foreground">
+              <Users2 className="w-6 h-6 opacity-50" />
             </div>
-            <h3 className="text-base font-bold text-foreground">No Customers Found</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+            <h3 className="text-xs font-bold text-foreground">No Customers Found</h3>
+            <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-0.5">
               {customers.length === 0
                 ? "Start building your customer base by clicking the Add Customer button above."
                 : "No customer records matched your search or credit filter."}
             </p>
             {customers.length === 0 && (
-              <Button onClick={openCreate} size="sm" className="mt-4 gap-1.5 text-xs font-semibold">
-                <Plus className="w-4 h-4" /> Add First Customer
+              <Button onClick={openCreate} size="sm" className="mt-3 gap-1.5 text-xs font-semibold">
+                <Plus className="w-3.5 h-3.5" /> Add First Customer
               </Button>
             )}
           </div>
         ) : (
           <>
-            {/* Mobile View: Swipeable Cards */}
-            <div className="block md:hidden space-y-2.5">
-              <p className="text-[11px] text-muted-foreground px-1 flex items-center justify-between">
-                <span>👉 Swipe Right for <b>WhatsApp Reminder</b></span>
-                <span>👈 Swipe Left to <b>Call</b></span>
-              </p>
+            {/* Mobile View: High-Density Swipeable Cards */}
+            <div className="block md:hidden space-y-2 pb-36 overscroll-y-contain">
               {paginatedCustomers.map((c) => {
                 const hasDue = c.balance > 0;
                 return (
@@ -693,17 +719,18 @@ export default function Customers() {
                     leftActionIcon={Phone}
                     leftActionColor="blue"
                   >
-                    <div className="p-4 space-y-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-2xs">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm shrink-0 border border-amber-500/20">
+                    <div className="p-2.5 space-y-1.5 bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-2xs">
+                      {/* Line 1: Name + Phone + Balance */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 border border-amber-500/20">
                             {c.name.slice(0, 2).toUpperCase()}
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground text-sm">{c.name}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs text-foreground truncate">{c.name}</p>
                             {c.phone && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                <Phone className="w-3 h-3 text-muted-foreground" /> {c.phone}
+                              <p className="text-[10px] text-muted-foreground font-mono truncate">
+                                {c.phone}
                               </p>
                             )}
                           </div>
@@ -712,7 +739,7 @@ export default function Customers() {
                         {/* Balance Badge */}
                         <span
                           className={cn(
-                            "px-2.5 py-1 rounded-full text-xs font-bold shrink-0",
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 font-mono",
                             hasDue
                               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
@@ -722,71 +749,56 @@ export default function Customers() {
                         </span>
                       </div>
 
-                      {c.address && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 truncate">
-                          <MapPin className="w-3 h-3 shrink-0" /> {c.address}
-                        </p>
-                      )}
-
-                      {/* Actions row */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/40 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      {/* Line 2: Actions row */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 gap-1">
+                        <button
+                          className="h-6 px-2 text-[10.5px] font-bold gap-1 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-lg flex items-center active:scale-95 transition-all cursor-pointer"
                           onClick={() => navigate(`/customers/${c.id}/ledger`)}
                         >
-                          <FileText className="w-3.5 h-3.5" /> Ledger Statement
-                        </Button>
+                          <FileText className="w-3 h-3" />
+                          <span>Ledger</span>
+                        </button>
 
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            className="p-1 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 active:scale-95 transition-all cursor-pointer"
                             onClick={() => handleSendWhatsAppReminder(c)}
-                            title="Send WhatsApp Reminder"
+                            title="WhatsApp"
                           >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 active:scale-95 transition-all cursor-pointer"
                             onClick={() => openCreditModal(c)}
                             title="Manage Credit"
                           >
-                            <IndianRupee className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
+                            <IndianRupee className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
                             onClick={() => openEdit(c)}
-                            title="Edit Customer"
+                            title="Edit"
                           >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-destructive hover:bg-destructive/10 active:scale-95 transition-all cursor-pointer"
                             onClick={() => setDeleteConfirm(c.id)}
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
                       {deleteConfirm === c.id && (
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 mt-2">
-                          <span className="text-xs font-medium text-destructive">Delete this customer?</span>
-                          <div className="flex gap-2">
-                            <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(c.id)}>
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20 mt-1">
+                          <span className="text-[11px] font-medium text-destructive">Delete customer?</span>
+                          <div className="flex gap-1.5">
+                            <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(c.id)}>
                               Delete
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setDeleteConfirm(null)}>
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setDeleteConfirm(null)}>
                               Cancel
                             </Button>
                           </div>

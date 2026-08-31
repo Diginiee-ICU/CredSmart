@@ -291,7 +291,7 @@ export default function AppLayout() {
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="h-14 sm:h-16 md:h-20 lg:h-22 shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
+        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">

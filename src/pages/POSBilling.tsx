@@ -2229,7 +2229,7 @@ export default function POSBilling() {
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
       {/* ========================================================================= */}
-      <header className="h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
+      <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
         {/* Left: Exit POS & Terminal Identity */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button

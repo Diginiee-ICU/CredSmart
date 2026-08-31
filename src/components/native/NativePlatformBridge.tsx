@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import {
-  isNativePlatform,
   initNativeCapabilities,
   updateNativeStatusBar,
   setupHardwareBackButton,
@@ -49,7 +48,7 @@ export const NativePlatformBridge: React.FC = () => {
   return (
     <aside
       aria-label="Offline notice"
-      className="fixed top-0 inset-x-0 z-banner bg-amber-500 text-slate-950 px-3 py-1.5 text-xs font-bold flex items-center justify-center gap-2 shadow-md animate-in slide-in-from-top duration-200"
+      className="fixed top-0 inset-x-0 z-banner bg-amber-500 text-slate-950 px-3 py-1.5 pt-[calc(0.375rem+env(safe-area-inset-top,0px))] text-xs font-bold flex items-center justify-center gap-2 shadow-md animate-in slide-in-from-top duration-200"
     >
       <WifiOff className="w-3.5 h-3.5" />
       <span>Working in Offline Mode. POS entries will sync when network is restored.</span>

@@ -473,8 +473,79 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Metric Cards - 3D Glass Cards (Compact on Mobile) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
+        {/* Mobile Compact 4-Col KPI Mini Strip (Mobile Only) */}
+        <div className="grid grid-cols-4 sm:hidden gap-1.5 shrink-0">
+          <div
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              statusFilter === "all"
+                ? "ring-1.5 ring-blue-500/50 bg-blue-500/10 border-blue-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
+              Volume
+            </div>
+            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setStatusFilter("paid")}
+            className={cn(
+              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              statusFilter === "paid"
+                ? "ring-1.5 ring-emerald-500/50 bg-emerald-500/10 border-emerald-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[8.5px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
+              Settled
+            </div>
+            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setStatusFilter("unpaid")}
+            className={cn(
+              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              statusFilter === "unpaid"
+                ? "ring-1.5 ring-rose-500/50 bg-rose-500/10 border-rose-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">
+              Dues
+            </div>
+            <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setStatusFilter("cancelled")}
+            className={cn(
+              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              statusFilter === "cancelled"
+                ? "ring-1.5 ring-slate-500/50 bg-slate-500/10 border-slate-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[8.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono truncate">
+              Void
+            </div>
+            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+              {metrics.cancelledAmount > 0 ? `₹${metrics.cancelledAmount.toLocaleString("en-IN")}` : "—"}
+            </div>
+          </div>
+        </div>
+
+        {/* Metric Cards - 3D Glass Cards (Tablet / Desktop) */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
           {/* Total Volume */}
           <div
             onClick={() => setStatusFilter("all")}
@@ -561,22 +632,22 @@ export default function Sales() {
         </div>
 
         {/* Filter Bar - Frosted Glass Container */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 glass-panel">
-          <div className="flex flex-1 items-center gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 p-2 sm:p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 glass-panel">
+          <div className="flex flex-1 items-center gap-1.5 sm:gap-2 flex-wrap">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[180px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <div className="relative flex-1 min-w-[140px] max-w-sm">
+              <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search by party, phone, invoice..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
+                className="pl-7 sm:pl-8 h-8 sm:h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl"
               />
             </div>
 
             {/* Date Range Preset Selector */}
             <Select value={selectedPreset} onValueChange={handleDatePresetChange}>
-              <SelectTrigger className="h-9 w-[140px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl">
+              <SelectTrigger className="h-8 sm:h-9 w-[110px] sm:w-[140px] text-[11px] sm:text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl">
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent>
@@ -590,7 +661,7 @@ export default function Sales() {
 
             {/* Status Filter Selector */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-[120px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl">
+              <SelectTrigger className="h-8 sm:h-9 w-[95px] sm:w-[120px] text-[11px] sm:text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -604,25 +675,21 @@ export default function Sales() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Bulk Actions Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 text-xs font-semibold gap-1.5 border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl shadow-xs"
+                  className="h-8 sm:h-9 px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold gap-1.5 border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-lg sm:rounded-xl shadow-xs"
                 >
                   <Layers className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Bulk Actions</span>
+                  <span className="hidden sm:inline">Bulk Actions</span>
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
-                  <Download className="w-4 h-4" />
-                  <span>Export to Excel/CSV</span>
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem
                   onClick={() => {
                     if (selectedDocIds.size === 0) {
@@ -633,8 +700,8 @@ export default function Sales() {
                   }}
                   className="gap-2"
                 >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Selected ({selectedDocIds.size})</span>
+                  <Download className="w-4 h-4" />
+                  <span>Export Selected</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -659,7 +726,7 @@ export default function Sales() {
                 setEditingDoc(null);
                 setCreateModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -670,11 +737,11 @@ export default function Sales() {
         {/* Transactions Table Card / Mobile Card Stream - 3D Glass Container */}
         <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2 pb-36 space-y-2 scrollbar-thin overscroll-y-contain">
             {filteredDocuments.length === 0 ? (
-              <div className="py-16 text-center space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
-                  <FileText className="w-7 h-7 stroke-[1.5]" />
+              <div className="py-12 text-center space-y-2.5">
+                <div className="w-12 h-12 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
+                  <FileText className="w-6 h-6 stroke-[1.5]" />
                 </div>
                 <p className="text-xs font-bold text-foreground">No Transactions Found</p>
                 <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
@@ -699,70 +766,65 @@ export default function Sales() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-3.5 rounded-2xl border transition-all bg-card space-y-2.5 shadow-2xs active:scale-[0.99]",
+                      "p-2.5 rounded-xl border transition-all bg-card/95 space-y-1.5 shadow-2xs active:scale-[0.99]",
                       isSelected
-                        ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+                        ? "border-indigo-500 ring-1.5 ring-indigo-500/30 bg-indigo-50/20"
                         : "border-border/80 hover:border-border"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded border border-border/60 text-foreground">
-                            {doc.documentNumber}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
-                            title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
-                            className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer transition-all active:scale-95",
-                              doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
-                              doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
-                            )}
-                          >
-                            {doc.status}
-                          </button>
-                        </div>
-                        <h4 className="font-bold text-sm text-foreground mt-1">{doc.partyName}</h4>
-                        {doc.partyPhone && (
-                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{doc.partyPhone}</p>
-                        )}
+                    {/* Line 1: Invoice Number + Status Badge + Grand Total */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono font-bold text-xs bg-muted/90 px-1.5 py-0.5 rounded border border-border/60 text-foreground truncate">
+                          {doc.documentNumber}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
+                          title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
+                          className={cn(
+                            "px-1.5 py-0.2 rounded-full text-[9px] font-bold capitalize cursor-pointer transition-all active:scale-95 shrink-0",
+                            doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
+                            doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
+                            doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
+                            doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
+                            doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
+                          )}
+                        >
+                          {doc.status}
+                        </button>
                       </div>
 
-                      <div className="text-right">
-                        <span className="text-base font-black font-mono text-foreground">
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-black font-mono text-foreground">
                           ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </span>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{doc.docDate}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                      <span className="text-[11px] font-medium text-muted-foreground">
-                        {calculateDueInText(doc)}
-                      </span>
+                    {/* Line 2: Customer Name + Date + Quick Actions */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-xs text-foreground truncate">{doc.partyName}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.2">
+                          <span>{doc.docDate}</span>
+                          <span>•</span>
+                          <span className={doc.status === "unpaid" ? "text-rose-500 font-semibold" : ""}>{calculateDueInText(doc)}</span>
+                        </div>
+                      </div>
 
-                      <div className="flex items-center gap-1 sm:gap-1.5">
-                        {/* 1. Print Receipt */}
-                        <Button
-                          variant="outline"
-                          size="sm"
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Print */}
+                        <button
                           onClick={() => handleOpenReceipt(doc)}
-                          className="h-7 px-2 text-[11px] font-semibold gap-1 border-border bg-white dark:bg-slate-900 shadow-2xs cursor-pointer"
+                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all cursor-pointer"
                           title="Print Invoice"
                         >
-                          <Printer className="w-3.5 h-3.5 text-indigo-600" />
-                          <span className="hidden sm:inline">Print</span>
-                        </Button>
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
 
-                        {/* 2. Download PDF */}
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        {/* Download PDF */}
+                        <button
                           onClick={() => {
                             downloadExactInvoicePdf({
                               invoiceNumber: doc.documentNumber,
@@ -793,17 +855,14 @@ export default function Sales() {
                               })),
                             });
                           }}
-                          className="h-7 px-2 text-[11px] font-semibold border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30 shadow-2xs cursor-pointer gap-1"
+                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-amber-600 dark:text-amber-400 active:scale-95 transition-all cursor-pointer"
                           title="Download PDF"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">PDF</span>
-                        </Button>
+                        </button>
 
-                        {/* 3. WhatsApp PDF Share */}
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        {/* WhatsApp */}
+                        <button
                           onClick={() => {
                             shareInvoicePdfToWhatsApp({
                               invoiceNumber: doc.documentNumber,
@@ -830,20 +889,18 @@ export default function Sales() {
                               })),
                             });
                           }}
-                          className="h-7 px-2 text-[11px] font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 shadow-2xs cursor-pointer"
-                          title="Share to WhatsApp"
+                          className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer"
+                          title="WhatsApp Share"
                         >
-                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current shrink-0" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                          </svg>
-                        </Button>
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
 
-                        {/* 4. Dropdown Menu */}
+                        {/* More Options Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <button className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground active:scale-95 transition-all cursor-pointer">
                               <MoreVertical className="w-3.5 h-3.5" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52">
                             <DropdownMenuItem
@@ -855,99 +912,47 @@ export default function Sales() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                downloadExactInvoicePdf({
-                                  invoiceNumber: doc.documentNumber,
-                                  docType: doc.docType as any,
-                                  customerName: doc.partyName,
-                                  customerPhone: doc.partyPhone,
-                                  storeName: org?.name || "CredSmart Store",
-                                  storePhone: org?.phone,
-                                  totalAmount: doc.grandTotal,
-                                  subtotal: doc.subtotal,
-                                  discountAmount: doc.discountTotal ?? 0,
-                                  tax: doc.taxTotal ?? 0,
-                                  date: doc.docDate,
-                                  isEstimate: doc.docType === "quotation",
-                                  items: doc.items.map((it) => ({
-                                    name: it.productName,
-                                    quantity: it.quantity,
-                                    unit: it.unit,
-                                    altUnit: it.altUnit,
-                                    altQty: it.altQty,
-                                    altUnitConversion: it.altUnitConversion,
-                                    rate: it.rate,
-                                    total: it.lineTotal,
-                                    hsn: it.hsn,
-                                    taxRate: it.taxRate,
-                                    batchNo: it.batchNumber,
-                                    expDate: it.expiryDate,
-                                  })),
-                                });
+                                setEditingDoc(doc);
+                                setCreateModalOpen(true);
                               }}
-                              className="gap-2 font-semibold text-amber-600 dark:text-amber-400"
+                              className="gap-2"
                             >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Download PDF</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Edit Invoice</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => {
-                                shareInvoicePdfToWhatsApp({
-                                  invoiceNumber: doc.documentNumber,
-                                  customerName: doc.partyName,
-                                  customerPhone: doc.partyPhone,
-                                  storeName: org?.name || "CredSmart Store",
-                                  storePhone: org?.phone,
-                                  totalAmount: doc.grandTotal,
-                                  date: doc.docDate,
-                                  isEstimate: doc.docType === "quotation",
-                                  items: doc.items.map((it) => ({
-                                    name: it.productName,
-                                    quantity: it.quantity,
-                                    rate: it.rate,
-                                    total: it.lineTotal,
-                                  })),
-                                });
-                              }}
-                              className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400"
+                              onClick={() => handleDuplicate(doc)}
+                              className="gap-2"
                             >
-                              <Share2 className="w-3.5 h-3.5" />
-                              <span>Share PDF to WhatsApp</span>
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Duplicate Invoice</span>
                             </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {doc.status !== "paid" ? (
-                                <DropdownMenuItem
-                                  onClick={() => handleTogglePaymentStatus(doc, "paid")}
-                                  className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
-                                >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Mark as Paid</span>
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem
-                                  onClick={() => handleTogglePaymentStatus(doc, "unpaid")}
-                                  className="gap-2 font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                  <span>Mark as Unpaid</span>
-                                </DropdownMenuItem>
-                              )}
+                            <DropdownMenuSeparator />
+                            {doc.status !== "paid" ? (
                               <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingDoc(doc);
-                                  setCreateModalOpen(true);
-                                }}
-                                className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
+                                onClick={() => handleTogglePaymentStatus(doc, "paid")}
+                                className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
                               >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>Edit Document</span>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Mark as Paid</span>
                               </DropdownMenuItem>
+                            ) : (
                               <DropdownMenuItem
-                                onClick={() => handleDeleteDocument(doc)}
-                                className="gap-2 text-rose-600 cursor-pointer"
+                                onClick={() => handleTogglePaymentStatus(doc, "unpaid")}
+                                className="gap-2 font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete</span>
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>Mark as Unpaid</span>
                               </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(doc.id)}
+                              className="gap-2 text-rose-600 dark:text-rose-400 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
