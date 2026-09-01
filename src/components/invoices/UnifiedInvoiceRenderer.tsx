@@ -174,7 +174,10 @@ export function formatItemQuantityDisplay(it: InvoiceItemData): {
 
 export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceProps>(
   (
-    {
+    props,
+    ref
+  ) => {
+    const {
       docType = "sales_invoice",
       copyType = "ORIGINAL FOR RECIPIENT",
       invoiceNumber,
@@ -198,9 +201,14 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       upiId: propUpiId,
       layout = "a4",
       className,
-    },
-    ref
-  ) => {
+    } = props;
+
+    // Resolve aliases for backward compatibility
+    const resolvedRawDate = date || (props as any).invoiceDate || Date.now();
+    const resolvedPartyInfo = partyInfo || (props as any).party;
+    const resolvedBankDetails = propBankDetails || (props as any).bankDetails;
+    const resolvedUpiId = propUpiId || (props as any).upiId;
+
     const activeSettings = propSettings || loadInvoiceSettings();
     const swatch = getThemeColorSwatch(activeSettings.primaryColor);
     const primaryHex = swatch.hex || "#0284C7";
@@ -209,10 +217,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const isPurchase = docType === "purchase_invoice" || docType === "debit_note" || docType === "payment_out";
 
     // Format Dates
-    const parsedDate = date instanceof Date ? date : new Date(date || Date.now());
+    const parsedDate = resolvedRawDate instanceof Date ? resolvedRawDate : new Date(resolvedRawDate);
     const formattedDate = !isNaN(parsedDate.getTime())
       ? parsedDate.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" })
-      : String(date);
+      : String(resolvedRawDate);
 
     const formattedTime = time || (activeSettings.showTimestamp && !isNaN(parsedDate.getTime())
       ? parsedDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
@@ -239,15 +247,15 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     };
 
     const safeParty = {
-      name: partyInfo?.name || (isPurchase ? "Vendor / Supplier" : "Walk-in Customer"),
-      phone: partyInfo?.phone || "",
-      email: partyInfo?.email || "",
-      address: partyInfo?.address || "",
-      state: partyInfo?.state || "",
-      stateCode: partyInfo?.stateCode || (partyInfo?.gstin ? partyInfo.gstin.substring(0, 2) : ""),
-      gstin: partyInfo?.gstin || "",
-      pan: partyInfo?.pan || (partyInfo?.gstin && partyInfo.gstin.length >= 12 ? partyInfo.gstin.substring(2, 12) : ""),
-      balance: partyInfo?.balance,
+      name: resolvedPartyInfo?.name || (isPurchase ? "Vendor / Supplier" : "Walk-in Customer"),
+      phone: resolvedPartyInfo?.phone || "",
+      email: resolvedPartyInfo?.email || "",
+      address: resolvedPartyInfo?.address || "",
+      state: resolvedPartyInfo?.state || "",
+      stateCode: resolvedPartyInfo?.stateCode || (resolvedPartyInfo?.gstin ? resolvedPartyInfo.gstin.substring(0, 2) : ""),
+      gstin: resolvedPartyInfo?.gstin || "",
+      pan: resolvedPartyInfo?.pan || (resolvedPartyInfo?.gstin && resolvedPartyInfo.gstin.length >= 12 ? resolvedPartyInfo.gstin.substring(2, 12) : ""),
+      balance: resolvedPartyInfo?.balance,
     };
 
     const safeShipping = {
@@ -637,26 +645,26 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
               </div>
             </div>
 
-            {/* Metadata 3-Column Subgrid (5 Columns) */}
-            <div className="col-span-5 p-2 bg-slate-50/50 flex flex-col justify-between text-[10px] space-y-1">
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                <div>
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500 block">Invoice No:</span>
-                  <span className="font-mono font-black text-slate-900 text-xs">{invoiceNumber}</span>
+            {/* Metadata Box (5 Columns) */}
+            <div className="col-span-5 p-2 bg-slate-50/70 flex flex-col justify-between text-[9.5px] space-y-1">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
+                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Invoice No:</span>
+                  <span className="font-mono font-black text-slate-900 text-[11px] whitespace-nowrap">{invoiceNumber}</span>
                 </div>
-                <div>
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500 block">Invoice Date:</span>
-                  <span className="font-bold text-slate-800">{formattedDate}</span>
+                <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
+                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Invoice Date:</span>
+                  <span className="font-bold text-slate-800 whitespace-nowrap">{formattedDate}</span>
                 </div>
                 {dueDate && (
-                  <div>
-                    <span className="text-[8.5px] font-bold uppercase text-slate-500 block">Due Date:</span>
-                    <span className="font-medium text-slate-800">{dueDate}</span>
+                  <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
+                    <span className="text-[8.5px] font-bold uppercase text-slate-500">Due Date:</span>
+                    <span className="font-semibold text-slate-800 whitespace-nowrap">{dueDate}</span>
                   </div>
                 )}
-                <div>
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500 block">Place of Supply:</span>
-                  <span className="font-semibold text-slate-800 truncate block">{resolvedPlaceOfSupply}</span>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Place of Supply:</span>
+                  <span className="font-semibold text-slate-800 truncate max-w-[110px] text-right">{resolvedPlaceOfSupply}</span>
                 </div>
               </div>
 
@@ -920,105 +928,107 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           </table>
         </div>
 
-        {/* Statutory HSN/SAC Tax Summary Matrix */}
-        <div className="mt-2 border border-slate-300 overflow-hidden text-[9px]">
-          <div className="px-2 py-0.5 bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[8px] text-slate-700 flex justify-between">
-            <span>HSN/SAC TAX BREAKDOWN ({isInterstate ? "INTERSTATE IGST" : "INTRASTATE CGST + SGST"})</span>
-            <span className="font-mono">GST COMPLIANT</span>
-          </div>
-          <table className="w-full text-center border-collapse">
-            <thead className="bg-slate-50 font-bold border-b border-slate-300 text-[8.5px]">
-              <tr>
-                <th className="py-1 px-1.5 border-r border-slate-300">HSN/SAC</th>
-                <th className="py-1 px-1.5 border-r border-slate-300 text-right">Taxable Value</th>
-                {isInterstate ? (
-                  <>
-                    <th className="py-1 px-1 border-r border-slate-300">IGST Rate</th>
-                    <th className="py-1 px-1.5 border-r border-slate-300 text-right">IGST Amount</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="py-1 px-1 border-r border-slate-300">CGST Rate</th>
-                    <th className="py-1 px-1.5 border-r border-slate-300 text-right">CGST Amount</th>
-                    <th className="py-1 px-1 border-r border-slate-300">SGST Rate</th>
-                    <th className="py-1 px-1.5 border-r border-slate-300 text-right">SGST Amount</th>
-                  </>
-                )}
-                <th className="py-1 px-1.5 border-r border-slate-300">Cess</th>
-                <th className="py-1 px-1.5 text-right">Total Tax Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-[8.5px]">
-              {hsnSummaryList.map((row, idx) => (
-                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}>
-                  <td className="py-1 px-1.5 border-r border-slate-200 font-mono font-bold text-slate-800">
-                    {row.hsn}
-                  </td>
-                  <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
-                    ₹{row.taxableValue.toFixed(2)}
+        {/* Statutory HSN/SAC Tax Summary Matrix (Render when tax or taxable items exist) */}
+        {(totalTax > 0 || (hsnSummaryList.length > 0 && totalTaxable > 0 && hsnSummaryList.some(r => r.hsn !== "-"))) && (
+          <div className="mt-2 border border-slate-300 overflow-hidden text-[9px]">
+            <div className="px-2 py-0.5 bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[8px] text-slate-700 flex justify-between">
+              <span>HSN/SAC TAX BREAKDOWN ({isInterstate ? "INTERSTATE IGST" : "INTRASTATE CGST + SGST"})</span>
+              <span className="font-mono">GST COMPLIANT</span>
+            </div>
+            <table className="w-full text-center border-collapse">
+              <thead className="bg-slate-50 font-bold border-b border-slate-300 text-[8.5px]">
+                <tr>
+                  <th className="py-1 px-1.5 border-r border-slate-300">HSN/SAC</th>
+                  <th className="py-1 px-1.5 border-r border-slate-300 text-right">Taxable Value</th>
+                  {isInterstate ? (
+                    <>
+                      <th className="py-1 px-1 border-r border-slate-300">IGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">IGST Amount</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="py-1 px-1 border-r border-slate-300">CGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">CGST Amount</th>
+                      <th className="py-1 px-1 border-r border-slate-300">SGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">SGST Amount</th>
+                    </>
+                  )}
+                  <th className="py-1 px-1.5 border-r border-slate-300">Cess</th>
+                  <th className="py-1 px-1.5 text-right">Total Tax Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-[8.5px]">
+                {hsnSummaryList.map((row, idx) => (
+                  <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}>
+                    <td className="py-1 px-1.5 border-r border-slate-200 font-mono font-bold text-slate-800">
+                      {row.hsn}
+                    </td>
+                    <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
+                      ₹{row.taxableValue.toFixed(2)}
+                    </td>
+                    {isInterstate ? (
+                      <>
+                        <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.igstRate}%</td>
+                        <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
+                          ₹{row.igstAmount.toFixed(2)}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.cgstRate}%</td>
+                        <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
+                          ₹{row.cgstAmount.toFixed(2)}
+                        </td>
+                        <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.sgstRate}%</td>
+                        <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
+                          ₹{row.sgstAmount.toFixed(2)}
+                        </td>
+                      </>
+                    )}
+                    <td className="py-1 px-1.5 border-r border-slate-200 font-mono text-slate-700">
+                      {row.cessAmount > 0 ? `₹${row.cessAmount.toFixed(2)}` : "0"}
+                    </td>
+                    <td className="py-1 px-1.5 text-right font-mono font-bold text-slate-900">
+                      ₹{row.totalTax.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+                {/* HSN Total Summary row */}
+                <tr className="bg-slate-100 font-bold border-t border-slate-300 text-slate-900">
+                  <td className="py-1 px-1.5 border-r border-slate-300 font-black">Total</td>
+                  <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
+                    ₹{totalTaxable.toFixed(2)}
                   </td>
                   {isInterstate ? (
                     <>
-                      <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.igstRate}%</td>
-                      <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
-                        ₹{row.igstAmount.toFixed(2)}
+                      <td className="py-1 px-1 border-r border-slate-300" />
+                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
+                        ₹{igstVal.toFixed(2)}
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.cgstRate}%</td>
-                      <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
-                        ₹{row.cgstAmount.toFixed(2)}
+                      <td className="py-1 px-1 border-r border-slate-300" />
+                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
+                        ₹{cgstVal.toFixed(2)}
                       </td>
-                      <td className="py-1 px-1 border-r border-slate-200 text-slate-600">{row.sgstRate}%</td>
-                      <td className="py-1 px-1.5 border-r border-slate-200 text-right font-mono text-slate-800">
-                        ₹{row.sgstAmount.toFixed(2)}
+                      <td className="py-1 px-1 border-r border-slate-300" />
+                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
+                        ₹{sgstVal.toFixed(2)}
                       </td>
                     </>
                   )}
-                  <td className="py-1 px-1.5 border-r border-slate-200 font-mono text-slate-700">
-                    {row.cessAmount > 0 ? `₹${row.cessAmount.toFixed(2)}` : "0"}
+                  <td className="py-1 px-1.5 border-r border-slate-300 font-mono font-black">
+                    {totalCess > 0 ? `₹${totalCess.toFixed(2)}` : "0"}
                   </td>
-                  <td className="py-1 px-1.5 text-right font-mono font-bold text-slate-900">
-                    ₹{row.totalTax.toFixed(2)}
+                  <td className="py-1 px-1.5 text-right font-mono font-black text-slate-900">
+                    ₹{totalTax.toFixed(2)}
                   </td>
                 </tr>
-              ))}
-              {/* HSN Total Summary row */}
-              <tr className="bg-slate-100 font-bold border-t border-slate-300 text-slate-900">
-                <td className="py-1 px-1.5 border-r border-slate-300 font-black">Total</td>
-                <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                  ₹{totalTaxable.toFixed(2)}
-                </td>
-                {isInterstate ? (
-                  <>
-                    <td className="py-1 px-1 border-r border-slate-300" />
-                    <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                      ₹{igstVal.toFixed(2)}
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="py-1 px-1 border-r border-slate-300" />
-                    <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                      ₹{cgstVal.toFixed(2)}
-                    </td>
-                    <td className="py-1 px-1 border-r border-slate-300" />
-                    <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                      ₹{sgstVal.toFixed(2)}
-                    </td>
-                  </>
-                )}
-                <td className="py-1 px-1.5 border-r border-slate-300 font-mono font-black">
-                  {totalCess > 0 ? `₹${totalCess.toFixed(2)}` : "0"}
-                </td>
-                <td className="py-1 px-1.5 text-right font-mono font-black text-slate-900">
-                  ₹{totalTax.toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Full-width Amount in Words Banner */}
         <div className="my-2 p-1.5 border border-slate-300 bg-slate-50/70 text-left text-[9.5px]">

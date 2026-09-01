@@ -1509,13 +1509,15 @@ export function SalesInvoiceModal({
           {/* 2. BODY CONTENT */}
           {/* ───────────────────────────────────────────────────────────── */}
           {viewMode === "preview" ? (
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-200 dark:bg-slate-900 flex justify-center scrollbar-thin">
-              <div className="w-full max-w-3xl bg-white dark:bg-card shadow-xl rounded-xl border border-border p-4 sm:p-6 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-100 dark:bg-slate-900 flex justify-center scrollbar-thin">
+              <div className="w-full max-w-4xl flex justify-center">
                 <UnifiedInvoiceRenderer
                   docType="sales_invoice"
                   invoiceNumber={fullDocumentNumber}
-                  invoiceDate={docDate}
+                  date={docDate}
                   dueDate={showDueDate ? dueDate : undefined}
+                  placeOfSupply={placeOfSupply}
+                  deliveryCharge={0}
                   storeInfo={{
                     name: org?.name || "CredSmart Store",
                     phone: org?.phone || "",
@@ -1524,35 +1526,38 @@ export function SalesInvoiceModal({
                     gstin: org?.gstin || "",
                     pan: org?.pan || "",
                     logoUrl: org?.logo_url || "",
-                    bank_name: bankAccount.bankName || org?.bank_name,
-                    account_number: bankAccount.accountNumber || org?.account_number,
-                    ifsc: bankAccount.ifsc || org?.ifsc,
-                    account_holder: bankAccount.accountHolder || org?.account_holder || org?.name,
-                    upi_id: upiId || org?.upi_id,
+                    bank_name: (showBankDetails && bankAccount.bankName) ? bankAccount.bankName : org?.bank_name,
+                    account_number: (showBankDetails && bankAccount.accountNumber) ? bankAccount.accountNumber : org?.account_number,
+                    ifsc: (showBankDetails && bankAccount.ifsc) ? bankAccount.ifsc : org?.ifsc,
+                    account_holder: (showBankDetails && bankAccount.accountHolder) ? bankAccount.accountHolder : (org?.account_holder || org?.name),
+                    branch: (showBankDetails && bankAccount.branch) ? bankAccount.branch : "",
+                    upi_id: (showPaymentQr && upiId) ? upiId : org?.upi_id,
                   }}
-                  party={{
-                    name: partyName || "Customer",
+                  partyInfo={{
+                    name: partyName || "Walk-in Customer",
                     phone: partyPhone,
                     address: partyAddress,
                     gstin: partyGstin,
                     state: placeOfSupply,
                   }}
-                  items={recalculatedItems.map((it) => ({
-                    id: it.id,
-                    name: it.productName || "Item",
-                    hsn: it.hsn,
-                    qty: Number(it.quantity) || 1,
-                    unit: it.unit || "Pcs",
-                    altUnit: it.altUnit,
-                    altQty: it.altQty,
-                    altUnitConversion: it.altUnitConversion,
-                    rate: Number(it.rate) || 0,
-                    discount: it.discountPercent || 0,
-                    discountPercent: it.discountPercent,
-                    taxRate: it.taxRate || 18,
-                    taxAmount: (it.taxRate || 18) * (it.taxableAmount || 0) / 100,
-                    total: it.lineTotal,
-                  }))}
+                  items={recalculatedItems
+                    .filter((it) => (it.productName && it.productName.trim() !== "") || Number(it.rate) > 0 || Number(it.lineTotal) > 0)
+                    .map((it) => ({
+                      id: it.id,
+                      name: it.productName || "Item",
+                      hsn: it.hsn,
+                      qty: Number(it.quantity) || 1,
+                      unit: it.unit || "Pcs",
+                      altUnit: it.altUnit,
+                      altQty: it.altQty,
+                      altUnitConversion: it.altUnitConversion,
+                      rate: Number(it.rate) || 0,
+                      discount: it.discountPercent || 0,
+                      discountPercent: it.discountPercent,
+                      taxRate: it.taxRate || 0,
+                      taxAmount: ((it.taxRate || 0) * (it.taxableAmount || 0)) / 100,
+                      total: it.lineTotal,
+                    }))}
                   totals={{
                     subtotal: totals.rawSubtotal,
                     discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
