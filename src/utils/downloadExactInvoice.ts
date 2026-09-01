@@ -119,6 +119,7 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
       root.render(
         React.createElement(UnifiedInvoiceRenderer, {
           docType,
+          copyType: "ORIGINAL FOR RECIPIENT",
           invoiceNumber: payload.invoiceNumber,
           referenceNumber: payload.referenceNumber,
           date: payload.date || new Date(),
@@ -189,6 +190,7 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
       root2.render(
         React.createElement(UnifiedInvoiceRenderer, {
           docType,
+          copyType: "ORIGINAL FOR RECIPIENT",
           invoiceNumber: payload.invoiceNumber,
           referenceNumber: payload.referenceNumber,
           date: payload.date || new Date(),

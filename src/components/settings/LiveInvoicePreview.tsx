@@ -16,76 +16,50 @@ interface LiveInvoicePreviewProps {
 
 export function LiveInvoicePreview({
   settings,
-  businessName = "Business Store",
-  businessPhone = "",
-  businessEmail = "",
-  businessAddress = "",
-  businessGstin = "",
+  businessName = "Sharma Store",
+  businessPhone = "+91 98765 43210",
+  businessEmail = "billing@sharmastore.in",
+  businessAddress = "812, Street 12, Ramra Nagar, Mumbai, Maharashtra, 400001",
+  businessGstin = "27AABCU5007R1Z12",
   businessLogo = "",
 }: LiveInvoicePreviewProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-  // Sample items matching in.PNG
+  // High-fidelity sample items matching Master B2B Invoice Specification
   const sampleItems = [
     {
       id: "1",
-      name: "SAMSUNG A30",
-      description: "samsung smartphone with amoled display",
-      hsn: "8517",
-      qty: 1,
+      name: "REAL ACTIVE JUICE 1L",
+      description: "100% natural mixed fruit juice pack",
+      hsn: "2009",
+      qty: 10,
       unit: "PCS",
-      freeQty: 0,
-      rate: 10000,
-      discount: 1000,
-      discountPercent: 10,
-      taxRate: 18,
-      taxAmount: 1620,
-      total: 10620,
+      mrp: 65,
+      rate: 53.57,
+      discount: 0,
+      discountPercent: 0,
+      taxRate: 12,
+      taxAmount: 64.29,
+      total: 600,
       batchNo: "BAT-9941",
-      expDate: "12/2027",
-      mfgDate: "01/2025",
-      priceHistory: "₹9,800.00 (Last Bill)",
+      expDate: "12/2026",
     },
     {
       id: "2",
-      name: "PARLE-G 200G (BOX)",
-      description: "crispy glucose biscuits box",
-      hsn: "1905",
-      qty: 24,
-      unit: "Pcs",
-      altUnit: "BOX",
-      altQty: 1,
-      altUnitConversion: 24,
-      freeQty: 1,
-      rate: 342.86,
-      discount: 51.43,
-      discountPercent: 15,
-      taxRate: 5,
-      taxAmount: 14.57,
-      total: 306,
-      batchNo: "BAT-5512",
-      expDate: "09/2026",
-      mfgDate: "03/2025",
-      priceHistory: "₹345.00 (Last Bill)",
-    },
-    {
-      id: "3",
-      name: "PUMA DRY-FIT T-SHIRT",
-      description: "sports performance dry fit cotton",
-      hsn: "6109",
-      qty: 2,
+      name: "COLGATE TOTAL TOOTHPASTE 150G",
+      description: "antibacterial active protection paste",
+      hsn: "3306",
+      qty: 8,
       unit: "PCS",
-      freeQty: 0,
-      rate: 900,
+      mrp: 190,
+      rate: 160.71,
       discount: 0,
       discountPercent: 0,
-      taxRate: 5,
-      taxAmount: 90,
-      total: 1890,
-      batchNo: "BAT-1102",
-      expDate: "N/A",
-      mfgDate: "11/2024",
-      priceHistory: "₹920.00 (Last Bill)",
+      taxRate: 12,
+      taxAmount: 154.29,
+      total: 1440,
+      batchNo: "BAT-5512",
+      expDate: "09/2027",
     },
   ];
 
@@ -124,9 +98,9 @@ export function LiveInvoicePreview({
         max-width: 100% !important;
         min-width: 0 !important;
         box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 0 !important;
-        padding: 0 !important;
+        padding: 12px !important;
         margin: 0 auto !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
@@ -140,7 +114,7 @@ export function LiveInvoicePreview({
       <html lang="en">
       <head>
         <meta charset="utf-8">
-        <title>Tax Invoice - 1 Page Fit</title>
+        <title>Tax Invoice - 1 Page Master Standard</title>
         ${headStyles}
         <style>${printSpecificStyles}</style>
       </head>
@@ -169,9 +143,9 @@ export function LiveInvoicePreview({
       <div className="flex items-center justify-between px-3 py-2 bg-card rounded-xl border border-border shadow-xs text-xs">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-semibold text-foreground">Live Single-Page Preview</span>
+          <span className="font-semibold text-foreground">Single Master GST Invoice</span>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-bold">
-            1-Page A4 Guarantee
+            100% Tax Compliant
           </span>
         </div>
         <Button
@@ -190,43 +164,65 @@ export function LiveInvoicePreview({
           settings={settings}
           layout="a4"
           docType="sales_invoice"
+          copyType="ORIGINAL FOR RECIPIENT"
           invoiceNumber="INV-2026-0042"
           referenceNumber="REF-9021"
           date={new Date()}
-          dueDate="2026-03-05"
+          dueDate="2026-03-25"
+          deliveryCharge={50}
           storeInfo={{
-            name: businessName,
-            phone: businessPhone,
-            email: businessEmail,
-            address: businessAddress,
-            gstin: businessGstin,
+            name: businessName || "Sharma Store",
+            phone: businessPhone || "+91 98765 43210",
+            email: businessEmail || "billing@sharmastore.in",
+            address: businessAddress || "812, Street 12, Ramra Nagar, Mumbai, Maharashtra, 400001",
+            state: "Maharashtra",
+            stateCode: "27",
+            gstin: businessGstin || "27AABCU5007R1Z12",
+            pan: "PPCS4567K",
             logoUrl: businessLogo,
+            bank_name: "HDFC Bank",
+            account_number: "50200012345678",
+            ifsc: "HDFC0001234",
+            branch: "Nariman Point",
+            account_holder: businessName || "Sharma Store",
+            upi_id: "store@okhdfcbank",
           }}
           partyInfo={{
-            name: "Sample Customer / Client",
-            phone: "",
-            email: "",
-            address: "",
-            gstin: "",
+            name: "MOHIT GUPTA",
+            phone: "9123456789",
+            email: "mohit.gupta@enterprise.in",
+            address: "121, South Nagar, Gachibowli Colony, Prayagraj, 211011",
+            state: "Uttar Pradesh",
+            stateCode: "09",
+            gstin: "09AAECB47361Z6",
             balance: 14500,
             type: "customer",
           }}
+          shippingInfo={{
+            name: "MOHIT GUPTA",
+            phone: "9123456789",
+            address: "121, South Nagar, Gachibowli Colony, Prayagraj, 211011",
+            state: "Uttar Pradesh",
+            gstin: "09AAECB47361Z6",
+          }}
           items={sampleItems}
           totals={{
-            subtotal: 12816.0,
-            discountTotal: 1051.43,
-            discountLabel: "Festive Promo (10%)",
-            taxableAmount: 11091.43,
-            cgst: 862.29,
-            sgst: 862.29,
-            taxTotal: 1724.57,
-            roundOff: 0.5,
-            grandTotal: 12816.5,
-            paidAmount: 0.0,
-            balanceDue: 12816.5,
+            subtotal: 2040.0,
+            discountTotal: 10.0,
+            discountLabel: "Trade Discount",
+            taxableAmount: 1821.43,
+            cgst: 0,
+            sgst: 0,
+            igst: 218.57,
+            taxTotal: 218.57,
+            roundOff: 0.0,
+            grandTotal: 2080.0,
+            paidAmount: 200.0,
+            balanceDue: 1880.0,
           }}
-          paymentMethod="UPI"
-          notes="Thank you for shopping with CredSmart Enterprises."
+          paymentMethod="UPI / Advance"
+          notes="Thank you for shopping with Sharma Store."
+          terms="1. Goods once sold cannot be returned or exchanged.&#10;2. All disputes are subject to local jurisdiction only.&#10;3. This is a computer generated invoice."
         />
       </div>
     </div>

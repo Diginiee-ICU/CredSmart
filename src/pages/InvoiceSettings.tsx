@@ -1,25 +1,15 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
-  Sparkles,
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
   Save,
   Check,
-  Plus,
+  ChevronDown,
+  ChevronUp,
   Trash2,
   Info,
   Palette,
-  FileText,
-  Building2,
-  Receipt,
-  QrCode,
-  Landmark,
   Eye,
   Sliders,
-  CheckCircle2,
+  ShieldCheck,
 } from "lucide-react";
 import { SettingsNavSidebar } from "@/components/settings/SettingsNavSidebar";
 import { LiveInvoicePreview } from "@/components/settings/LiveInvoicePreview";
@@ -39,8 +29,6 @@ import {
 } from "@/components/ui/select";
 import {
   InvoiceSettingsState,
-  InvoiceTheme,
-  InvoiceThemeStyling,
   COLOR_SWATCHES,
   INDUSTRY_TYPES,
   CustomField,
@@ -51,10 +39,10 @@ import { cn } from "@/lib/utils";
 const STORAGE_KEY = "credsmart_invoice_settings";
 
 const defaultInitialSettings: InvoiceSettingsState = {
-  theme: "stylish",
+  theme: "advanced_gst",
   styling: "classic",
   primaryColor: "#0284C7", // Royal Blue default
-  showPartyBalance: false,
+  showPartyBalance: true,
   enableFreeQty: false,
   showItemDescription: true,
   showAlternateUnit: false,
@@ -89,7 +77,7 @@ const defaultInitialSettings: InvoiceSettingsState = {
   termsAndConditionsType: "Sales Invoices",
   termsAndConditions: {
     "Sales Invoices":
-      "1. Goods once sold will not be taken back or exchanged.\n2. All disputes are subject to Dehradun jurisdiction only.",
+      "1. Goods once sold will not be taken back or exchanged.\n2. All disputes are subject to local jurisdiction only.\n3. This is a computer generated invoice.",
     Quotations:
       "1. Quotation valid for 15 days from the date of issue.\n2. 50% advance along with confirmed purchase order.",
     "Delivery Challans":
@@ -113,7 +101,6 @@ export default function InvoiceSettings() {
 
   const [saving, setSaving] = useState(false);
   const [mobileTab, setMobileTab] = useState<"customize" | "preview">("customize");
-  const stylingScrollRef = useRef<HTMLDivElement>(null);
 
   // Accordion Sections State
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -121,7 +108,7 @@ export default function InvoiceSettings() {
     invoiceDetails: false,
     partyDetails: false,
     itemColumns: false,
-    miscellaneous: false,
+    miscellaneous: true,
   });
 
   const toggleSection = (key: string) => {
@@ -157,20 +144,16 @@ export default function InvoiceSettings() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       toast({
         title: "Invoice Settings Saved!",
-        description: "Your live invoice customization and theme settings are now active across the POS.",
+        description: "Your master invoice customization and brand settings are active across all bills.",
       });
     } catch (err: unknown) {
-      toast({ title: "Error saving settings", description: err.message, variant: "destructive" });
+      toast({
+        title: "Error saving settings",
+        description: err instanceof Error ? err.message : "Failed to save",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
-    }
-  };
-
-  // Styling Pill Scroll
-  const scrollStyling = (direction: "left" | "right") => {
-    if (stylingScrollRef.current) {
-      const offset = direction === "left" ? -150 : 150;
-      stylingScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
     }
   };
 
@@ -226,34 +209,17 @@ export default function InvoiceSettings() {
     );
   };
 
-  const themes: Array<{ id: InvoiceTheme; label: string; badge?: string }> = [
-    { id: "stylish", label: "Stylish" },
-    { id: "luxury", label: "Luxury", badge: "NEW" },
-    { id: "advanced_gst", label: "Advanced GST (Tally)" },
-    { id: "modern", label: "Modern" },
-    { id: "classic", label: "Classic" },
-  ];
-
-  const themeStylings: Array<{ id: InvoiceThemeStyling; label: string }> = [
-    { id: "uttarakhand_2", label: "Uttarakhand 2" },
-    { id: "uttarakhand", label: "Uttarakhand" },
-    { id: "jagganth", label: "Jagganth" },
-    { id: "uttar_pradesh", label: "Uttar Pradesh" },
-    { id: "maharashtra", label: "Maharashtra" },
-    { id: "gujarat", label: "Gujarat" },
-  ];
-
   return (
     <div className="min-h-full h-auto lg:h-full flex flex-col p-2 sm:p-4 space-y-2 sm:space-y-3 overflow-y-auto lg:overflow-hidden max-w-[1700px] mx-auto w-full">
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch overflow-visible lg:overflow-hidden">
-        {/* Left Navigation Sidebar Matching in.PNG */}
+        {/* Left Navigation Sidebar */}
         <div className="shrink-0 w-full lg:w-56 overflow-visible lg:overflow-y-auto">
           <SettingsNavSidebar activeItem="invoice" />
         </div>
 
-        {/* Main Split-Screen Customizer Area - 3D Glass Container */}
+        {/* Main Split-Screen Customizer Area */}
         <main className="flex-1 min-h-0 w-full glass-card-3d rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
-          {/* Top Header Bar - Compact & Responsive */}
+          {/* Top Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
             <div>
               <div className="flex items-center gap-2.5">
@@ -262,11 +228,11 @@ export default function InvoiceSettings() {
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>GST THEME ENGINE</span>
+                  <span>MASTER GST STANDARD</span>
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Live interactive theme customizer with real-time tax template rendering
+                Single unified professional GST format with dual address, HSN tax matrix, and digital signature
               </p>
             </div>
 
@@ -330,8 +296,8 @@ export default function InvoiceSettings() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-bold text-foreground">Live Invoice Preview</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  Theme: <strong className="text-foreground capitalize">{settings.theme}</strong> ({settings.styling})
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  Master Format • 1-Page Standard
                 </span>
               </div>
 
@@ -339,11 +305,11 @@ export default function InvoiceSettings() {
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto rounded-xl border border-border/70 p-2 sm:p-3 bg-muted/20 scrollbar-thin">
                 <LiveInvoicePreview
                   settings={settings}
-                  businessName={org?.name || "Business Store"}
-                  businessPhone={org?.phone || ""}
-                  businessEmail={org?.email || ""}
-                  businessAddress={org?.address || ""}
-                  businessGstin={org?.gstin || ""}
+                  businessName={org?.name || "Sharma Store"}
+                  businessPhone={org?.phone || "+91 98765 43210"}
+                  businessEmail={org?.email || "billing@sharmastore.in"}
+                  businessAddress={org?.address || "812, Street 12, Ramra Nagar, Mumbai, Maharashtra"}
+                  businessGstin={org?.gstin || "27AABCU5007R1Z12"}
                   businessLogo={org?.logo_url || ""}
                 />
               </div>
@@ -356,185 +322,28 @@ export default function InvoiceSettings() {
                 mobileTab === "customize" ? "block" : "hidden xl:block"
               )}
             >
-              {/* Themes Card */}
-              <div className="p-3.5 sm:p-4 rounded-2xl border border-border/90 bg-card shadow-xs space-y-3.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-[#6366F1] flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#6366F1]" />
+              {/* Single Master Theme Banner & Color Customizer Card */}
+              <div className="p-3.5 sm:p-4 rounded-2xl border border-border/90 bg-card shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Master Invoice Design Standard</span>
                   </div>
-                  <span>Themes</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Active Everywhere
+                  </span>
                 </div>
 
-                {/* Theme Thumbnails / Buttons Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                  {themes.slice(0, 3).map((thm) => {
-                    const isSelected = settings.theme === thm.id;
-                    return (
-                      <button
-                        key={thm.id}
-                        type="button"
-                        onClick={() => updateSetting("theme", thm.id)}
-                        className={cn(
-                          "relative p-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 group bg-slate-50/50 dark:bg-slate-900/40",
-                          isSelected
-                            ? "border-[#6366F1] ring-2 ring-[#6366F1]/20 bg-indigo-50/20 dark:bg-indigo-950/20"
-                            : "border-border/80 hover:border-border"
-                        )}
-                      >
-                        {/* Mini Simulated Invoice Card Preview */}
-                        <div className="w-full h-14 sm:h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-0.5">
-                            <div className="w-4 h-1.5 rounded-xs bg-slate-300" />
-                            <div
-                              className="w-6 h-1.5 rounded-xs"
-                              style={{ backgroundColor: settings.primaryColor }}
-                            />
-                          </div>
-                          <div className="space-y-0.5">
-                            <div className="w-full h-1 bg-slate-100 rounded-xs" />
-                            <div className="w-4/5 h-1 bg-slate-100 rounded-xs" />
-                            <div className="w-3/5 h-1 bg-slate-100 rounded-xs" />
-                          </div>
-                          <div className="flex justify-end">
-                            <div
-                              className="w-5 h-1.5 rounded-xs"
-                              style={{ backgroundColor: settings.primaryColor }}
-                            />
-                          </div>
-                        </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  CredSmart applies one single, high-fidelity Indian GST standard invoice layout across POS receipts, sales bills, and PDF downloads.
+                </p>
 
-                        {thm.badge && (
-                          <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full text-[8px] font-black bg-rose-500 text-white shadow-xs">
-                            {thm.badge}
-                          </span>
-                        )}
-
-                        <span
-                          className={cn(
-                            "text-[11px] font-semibold truncate max-w-full",
-                            isSelected ? "text-[#6366F1] font-bold" : "text-slate-700 dark:text-slate-300"
-                          )}
-                        >
-                          {thm.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Second row of themes */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                  {themes.slice(3).map((thm) => {
-                    const isSelected = settings.theme === thm.id;
-                    return (
-                      <button
-                        key={thm.id}
-                        type="button"
-                        onClick={() => updateSetting("theme", thm.id)}
-                        className={cn(
-                          "relative p-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 group bg-slate-50/50 dark:bg-slate-900/40",
-                          isSelected
-                            ? "border-[#6366F1] ring-2 ring-[#6366F1]/20 bg-indigo-50/20"
-                            : "border-border/80 hover:border-border"
-                        )}
-                      >
-                        <div className="w-full h-14 sm:h-16 rounded-md bg-white border border-slate-200 p-1 flex flex-col justify-between shadow-2xs">
-                          <div className="w-6 h-1.5 rounded-xs bg-slate-300" />
-                          <div className="space-y-0.5">
-                            <div className="w-full h-1 bg-slate-100 rounded-xs" />
-                            <div className="w-3/4 h-1 bg-slate-100 rounded-xs" />
-                          </div>
-                          <div className="w-5 h-1.5 rounded-xs bg-slate-400 self-end" />
-                        </div>
-                        <span
-                          className={cn(
-                            "text-[11px] font-semibold truncate max-w-full",
-                            isSelected ? "text-[#6366F1] font-bold" : "text-slate-700 dark:text-slate-300"
-                          )}
-                        >
-                          {thm.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    type="button"
-                    onClick={() => toast({ title: "More enterprise themes are unlocked in Pro!" })}
-                    className="p-2 rounded-xl border border-dashed border-border text-center flex flex-col items-center justify-center gap-1 hover:border-[#6366F1] text-xs font-bold text-[#6366F1] transition-all bg-card"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>See All</span>
-                  </button>
-                </div>
-
-                {/* Theme Styling Carousel */}
+                {/* Select Brand Color Swatches */}
                 <div className="pt-2 border-t border-border/70 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-3.5 h-3.5 text-[#6366F1]" />
-                    <span className="text-xs font-bold text-foreground">Theme Styling</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
-                      New
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">Brand Color Accent</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{settings.primaryColor}</span>
                   </div>
-
-                  <div className="relative flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => scrollStyling("left")}
-                      className="p-1 rounded-full bg-card border shadow-xs hover:bg-muted text-muted-foreground shrink-0 z-10 mr-1"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-
-                    <div
-                      ref={stylingScrollRef}
-                      className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 px-0.5"
-                    >
-                      {themeStylings.map((ts) => {
-                        const isSelected = settings.styling === ts.id;
-                        return (
-                          <button
-                            key={ts.id}
-                            type="button"
-                            onClick={() => updateSetting("styling", ts.id)}
-                            className={cn(
-                              "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border",
-                              isSelected
-                                ? "bg-slate-900 text-white border-slate-900 font-semibold shadow-xs"
-                                : "bg-card text-muted-foreground hover:text-foreground border-border/80 hover:border-border"
-                            )}
-                          >
-                            {ts.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => scrollStyling("right")}
-                      className="p-1 rounded-full bg-card border shadow-xs hover:bg-muted text-muted-foreground shrink-0 z-10 ml-1"
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Create Custom Theme Action Button */}
-                <div className="pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => toast({ title: "Custom Theme Builder activated!" })}
-                    className="w-full h-9 rounded-xl bg-[#5B68DF] hover:bg-[#4E5BC9] text-white text-xs font-bold shadow-xs transition-transform active:scale-[0.99]"
-                  >
-                    Create your own theme
-                  </Button>
-                </div>
-
-                {/* Select Color Swatches */}
-                <div className="pt-2 border-t border-border/70 space-y-2">
-                  <span className="text-xs font-bold text-foreground">Select Color</span>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {COLOR_SWATCHES.map((swatch) => {
                       const isSelected =
@@ -545,7 +354,7 @@ export default function InvoiceSettings() {
                           type="button"
                           onClick={() => updateSetting("primaryColor", swatch.hex)}
                           className={cn(
-                            "w-full aspect-square rounded-lg transition-transform flex items-center justify-center shadow-xs",
+                            "w-full aspect-square rounded-lg transition-transform flex items-center justify-center shadow-xs cursor-pointer",
                             isSelected
                               ? "ring-2 ring-offset-2 ring-primary scale-110 shadow-sm"
                               : "hover:scale-105 opacity-90 hover:opacity-100"
@@ -561,7 +370,7 @@ export default function InvoiceSettings() {
                 </div>
               </div>
 
-              {/* Accordion 1: Theme Settings (Matching in2.PNG) */}
+              {/* Accordion 1: Theme Settings / Display Toggles */}
               <div className="rounded-2xl border border-border/90 bg-card overflow-hidden shadow-xs">
                 <button
                   type="button"
@@ -569,10 +378,8 @@ export default function InvoiceSettings() {
                   className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/40 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-foreground">Theme Settings</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
-                      New
-                    </span>
+                    <Palette className="w-3.5 h-3.5 text-[#6366F1]" />
+                    <span className="text-xs font-bold text-foreground">Display & Visibility Options</span>
                   </div>
                   {openSections.themeSettings ? (
                     <ChevronUp className="w-4 h-4 text-muted-foreground" />
@@ -590,18 +397,7 @@ export default function InvoiceSettings() {
                         onCheckedChange={(c) => updateSetting("showPartyBalance", Boolean(c))}
                       />
                       <label htmlFor="party-bal" className="font-medium text-foreground cursor-pointer">
-                        Show party balance in invoice
-                      </label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="free-qty"
-                        checked={settings.enableFreeQty}
-                        onCheckedChange={(c) => updateSetting("enableFreeQty", Boolean(c))}
-                      />
-                      <label htmlFor="free-qty" className="font-medium text-foreground cursor-pointer">
-                        Enable free item quantity
+                        Show customer / party balance in invoice
                       </label>
                     </div>
 
@@ -612,7 +408,7 @@ export default function InvoiceSettings() {
                         onCheckedChange={(c) => updateSetting("showItemDescription", Boolean(c))}
                       />
                       <label htmlFor="item-desc" className="font-medium text-foreground cursor-pointer">
-                        Show item description in invoice
+                        Show item description in invoice table
                       </label>
                     </div>
 
@@ -623,7 +419,7 @@ export default function InvoiceSettings() {
                         onCheckedChange={(c) => updateSetting("showAlternateUnit", Boolean(c))}
                       />
                       <label htmlFor="alt-unit" className="font-medium text-foreground cursor-pointer">
-                        Show Alternate Unit in Invoice
+                        Show dual units & conversions (e.g. 1 Box = 24 Pcs)
                       </label>
                     </div>
 
@@ -634,7 +430,7 @@ export default function InvoiceSettings() {
                         onCheckedChange={(c) => updateSetting("showPhoneNumber", Boolean(c))}
                       />
                       <label htmlFor="phone-num" className="font-medium text-foreground cursor-pointer">
-                        Show phone number on Invoice
+                        Show phone & contact numbers on invoice
                       </label>
                     </div>
 
@@ -646,48 +442,23 @@ export default function InvoiceSettings() {
                           onCheckedChange={(c) => updateSetting("showTimestamp", Boolean(c))}
                         />
                         <label htmlFor="show-time" className="font-medium text-foreground cursor-pointer">
-                          Show time on Invoices
+                          Show timestamp on invoices
                         </label>
                       </div>
                       <Info className="w-3.5 h-3.5 text-muted-foreground" title="Prints exact transaction time" />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="price-hist"
-                          checked={settings.priceHistory}
-                          onCheckedChange={(c) => updateSetting("priceHistory", Boolean(c))}
-                        />
-                        <label htmlFor="price-hist" className="font-medium text-foreground cursor-pointer">
-                          Price History
-                        </label>
-                      </div>
-                      <Info className="w-3.5 h-3.5 text-muted-foreground" title="Shows previous billed rate" />
-                    </div>
-
-                    <div className="flex items-center space-x-2 pt-1 border-t border-border/60">
-                      <Checkbox
-                        id="auto-luxury"
-                        checked={settings.autoApplyLuxury}
-                        onCheckedChange={(c) => updateSetting("autoApplyLuxury", Boolean(c))}
-                      />
-                      <label htmlFor="auto-luxury" className="font-medium text-foreground cursor-pointer">
-                        Auto-apply luxury theme for sharing
-                      </label>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Accordion 2: Invoice Details (Matching in3.PNG) */}
+              {/* Accordion 2: Invoice Details */}
               <div className="rounded-2xl border border-border/90 bg-card overflow-hidden shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleSection("invoiceDetails")}
                   className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/40 transition-colors"
                 >
-                  <span className="text-xs font-bold text-foreground">Invoice Details</span>
+                  <span className="text-xs font-bold text-foreground">Document & Transport Metadata</span>
                   {openSections.invoiceDetails ? (
                     <ChevronUp className="w-4 h-4 text-muted-foreground" />
                   ) : (
@@ -716,7 +487,7 @@ export default function InvoiceSettings() {
                       </Select>
                     </div>
 
-                    {/* PO Number Checkbox & input */}
+                    {/* PO Number */}
                     <div className="space-y-1.5">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -725,7 +496,7 @@ export default function InvoiceSettings() {
                           onCheckedChange={(c) => updateSetting("showPoNumber", Boolean(c))}
                         />
                         <label htmlFor="po-num" className="font-medium text-foreground cursor-pointer">
-                          PO Number
+                          PO / Order Reference Number
                         </label>
                       </div>
                       {settings.showPoNumber && (
@@ -733,12 +504,12 @@ export default function InvoiceSettings() {
                           placeholder="PO-2026-902"
                           value={settings.poNumber}
                           onChange={(e) => updateSetting("poNumber", e.target.value)}
-                          className="h-8 text-xs rounded-lg font-mono pl-6"
+                          className="h-8 text-xs rounded-lg font-mono pl-3"
                         />
                       )}
                     </div>
 
-                    {/* E-way Bill Checkbox & input */}
+                    {/* E-way Bill */}
                     <div className="space-y-1.5">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -755,12 +526,12 @@ export default function InvoiceSettings() {
                           placeholder="EWB-881920391"
                           value={settings.ewayBillNumber}
                           onChange={(e) => updateSetting("ewayBillNumber", e.target.value)}
-                          className="h-8 text-xs rounded-lg font-mono pl-6"
+                          className="h-8 text-xs rounded-lg font-mono pl-3"
                         />
                       )}
                     </div>
 
-                    {/* Vehicle Number Checkbox & input */}
+                    {/* Vehicle Number */}
                     <div className="space-y-1.5">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -769,7 +540,7 @@ export default function InvoiceSettings() {
                           onCheckedChange={(c) => updateSetting("showVehicleNumber", Boolean(c))}
                         />
                         <label htmlFor="veh-num" className="font-medium text-foreground cursor-pointer">
-                          Vehicle Number
+                          Dispatch Vehicle Number
                         </label>
                       </div>
                       {settings.showVehicleNumber && (
@@ -777,7 +548,7 @@ export default function InvoiceSettings() {
                           placeholder="UK-07-AB-4491"
                           value={settings.vehicleNumber}
                           onChange={(e) => updateSetting("vehicleNumber", e.target.value)}
-                          className="h-8 text-xs rounded-lg font-mono pl-6 uppercase"
+                          className="h-8 text-xs rounded-lg font-mono pl-3 uppercase"
                         />
                       )}
                     </div>
@@ -810,7 +581,7 @@ export default function InvoiceSettings() {
                         <button
                           type="button"
                           onClick={() => handleRemoveInvoiceField(cf.id)}
-                          className="text-rose-500 hover:text-rose-600 p-1"
+                          className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -820,22 +591,22 @@ export default function InvoiceSettings() {
                     <button
                       type="button"
                       onClick={handleAddInvoiceField}
-                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-1"
+                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-1 cursor-pointer"
                     >
-                      + Add Custom Field
+                      + Add Custom Document Field
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Accordion 3: Party Details (Matching iii.PNG) */}
+              {/* Accordion 3: Party Details */}
               <div className="rounded-2xl border border-border/90 bg-card overflow-hidden shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleSection("partyDetails")}
                   className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/40 transition-colors"
                 >
-                  <span className="text-xs font-bold text-foreground">Party Details</span>
+                  <span className="text-xs font-bold text-foreground">Party & Consignee Details</span>
                   {openSections.partyDetails ? (
                     <ChevronUp className="w-4 h-4 text-muted-foreground" />
                   ) : (
@@ -872,7 +643,7 @@ export default function InvoiceSettings() {
                         <button
                           type="button"
                           onClick={() => handleRemovePartyField(pcf.id)}
-                          className="text-rose-500 hover:text-rose-600 p-1"
+                          className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -882,15 +653,15 @@ export default function InvoiceSettings() {
                     <button
                       type="button"
                       onClick={handleAddPartyField}
-                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-2"
+                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-2 cursor-pointer"
                     >
-                      + Add Custom Field
+                      + Add Custom Party Field
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Accordion 4: Item Table Columns (Matching nii.PNG) */}
+              {/* Accordion 4: Item Table Columns */}
               <div className="rounded-2xl border border-border/90 bg-card overflow-hidden shadow-xs">
                 <button
                   type="button"
@@ -914,7 +685,7 @@ export default function InvoiceSettings() {
                         onCheckedChange={(c) => updateColumns("pricePerItem", Boolean(c))}
                       />
                       <label htmlFor="col-rate" className="font-medium text-foreground cursor-pointer">
-                        Price/Item (₹)
+                        Price/Item Rate (₹)
                       </label>
                     </div>
 
@@ -978,7 +749,7 @@ export default function InvoiceSettings() {
                         <button
                           type="button"
                           onClick={() => handleRemoveCustomColumn(cc.id)}
-                          className="text-rose-500 hover:text-rose-600 p-1"
+                          className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -988,7 +759,7 @@ export default function InvoiceSettings() {
                     <button
                       type="button"
                       onClick={handleAddCustomColumn}
-                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-1"
+                      className="text-xs font-semibold text-[#0284C7] hover:underline inline-flex items-center gap-1 pt-1 cursor-pointer"
                     >
                       + Add Custom Column
                     </button>
@@ -996,19 +767,14 @@ export default function InvoiceSettings() {
                 )}
               </div>
 
-              {/* Accordion 5: Miscellaneous Details (Matching inn.PNG) */}
+              {/* Accordion 5: Bank, UPI QR, Terms & Signature */}
               <div className="rounded-2xl border border-border/90 bg-card overflow-hidden shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleSection("miscellaneous")}
                   className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/40 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-foreground">Miscellaneous Details</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
-                      New
-                    </span>
-                  </div>
+                  <span className="text-xs font-bold text-foreground">Bank, UPI QR, Terms &amp; Signature</span>
                   {openSections.miscellaneous ? (
                     <ChevronUp className="w-4 h-4 text-muted-foreground" />
                   ) : (
@@ -1020,13 +786,13 @@ export default function InvoiceSettings() {
                   <div className="p-4 pt-0 space-y-4 text-xs border-t border-border/60">
                     {/* Bank Account */}
                     <div className="space-y-1.5 pt-2">
-                      <Label className="text-[11px] font-semibold text-muted-foreground">Bank Account</Label>
+                      <Label className="text-[11px] font-semibold text-muted-foreground">Default Bank Account</Label>
                       <Select
                         value={settings.selectedBankAccountId}
                         onValueChange={(val) => updateSetting("selectedBankAccountId", val)}
                       >
                         <SelectTrigger className="h-9 rounded-xl text-xs">
-                          <SelectValue placeholder="Select Account" />
+                          <SelectValue placeholder="Select Business Bank Account" />
                         </SelectTrigger>
                         <SelectContent>
                           {settings.bankAccounts.map((b) => (
@@ -1040,18 +806,18 @@ export default function InvoiceSettings() {
 
                     {/* Payment QR */}
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-semibold text-muted-foreground">Payment QR</Label>
+                      <Label className="text-[11px] font-semibold text-muted-foreground">Default UPI ID for QR Code</Label>
                       <Input
                         value={settings.selectedPaymentQrUpi}
                         onChange={(e) => updateSetting("selectedPaymentQrUpi", e.target.value)}
-                        placeholder="yourname@bank"
+                        placeholder="yourname@okbank"
                         className="h-9 rounded-xl font-mono text-xs"
                       />
                     </div>
 
                     {/* Terms and Conditions Editor */}
                     <div className="space-y-2 pt-2 border-t border-border/60">
-                      <Label className="text-[11px] font-semibold text-muted-foreground">Terms and Conditions</Label>
+                      <Label className="text-[11px] font-semibold text-muted-foreground">Terms &amp; Conditions</Label>
                       <Select
                         value={settings.termsAndConditionsType}
                         onValueChange={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => updateSetting("termsAndConditionsType", val)} // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1078,21 +844,11 @@ export default function InvoiceSettings() {
                         rows={3}
                         className="w-full rounded-xl border border-input bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30 resize-none font-medium"
                       />
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toast({ title: "Terms and conditions updated!" })}
-                        className="h-7 text-xs rounded-lg px-4"
-                      >
-                        Save
-                      </Button>
                     </div>
 
                     {/* Signature Mode & Pad */}
                     <div className="space-y-2 pt-2 border-t border-border/60">
-                      <Label className="text-[11px] font-semibold text-muted-foreground">Signature</Label>
+                      <Label className="text-[11px] font-semibold text-muted-foreground">Authorized Digital Signature</Label>
                       <SignaturePad
                         value={settings.signatureDataUrl}
                         onChange={(val) => updateSetting("signatureDataUrl", val)}
