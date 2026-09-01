@@ -669,50 +669,74 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             </div>
           </div>
 
-          {/* Dual Address Grid: BILL TO & SHIP TO */}
-          <div className="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300 text-[10px]">
-            {/* BILL TO (BUYER) */}
-            <div className="p-2 space-y-0.5 bg-white">
+          {/* Address Section: Full-Width BILL TO or Dual BILL/SHIP TO */}
+          {shippingInfo && shippingInfo.address && shippingInfo.address !== safeParty.address ? (
+            <div className="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300 text-[10px]">
+              {/* BILL TO (BUYER) */}
+              <div className="p-2 space-y-0.5 bg-white">
+                <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
+                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
+                    BILL TO (BUYER)
+                  </span>
+                  {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
+                    <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
+                      Bal: ₹{Number(safeParty.balance).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeParty.name}</p>
+                {safeParty.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeParty.address}</p>}
+                <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
+                  {safeParty.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeParty.phone}</strong></span>}
+                  {safeParty.state && <span>State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
+                </div>
+                {safeParty.gstin && (
+                  <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeParty.gstin}</strong></p>
+                )}
+              </div>
+
+              {/* SHIP TO (CONSIGNEE / DELIVERY) */}
+              <div className="p-2 space-y-0.5 bg-white">
+                <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
+                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
+                    SHIP TO (CONSIGNEE)
+                  </span>
+                  <span className="text-[8px] text-slate-400 font-medium">Delivery Address</span>
+                </div>
+                <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeShipping.name}</p>
+                {safeShipping.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeShipping.address}</p>}
+                <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
+                  {safeShipping.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeShipping.phone}</strong></span>}
+                  {safeShipping.state && <span>State: <strong className="text-slate-900">{safeShipping.state}</strong></span>}
+                </div>
+                {safeShipping.gstin && (
+                  <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeShipping.gstin}</strong></p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-2 border-t border-slate-300 text-[10px] space-y-0.5 bg-white">
               <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
-                <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                  BILL TO (BUYER)
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
+                    BILL TO:
+                  </span>
+                  <span className="font-black text-slate-900 text-[11px] uppercase">{safeParty.name}</span>
+                </div>
                 {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
                   <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
                     Bal: ₹{Number(safeParty.balance).toFixed(2)}
                   </span>
                 )}
               </div>
-              <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeParty.name}</p>
-              {safeParty.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeParty.address}</p>}
-              <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
-                {safeParty.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeParty.phone}</strong></span>}
-                {safeParty.state && <span>State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
-              </div>
-              {safeParty.gstin && (
-                <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeParty.gstin}</strong></p>
-              )}
+              <p className="text-[9.5px] text-slate-700 leading-snug">
+                {safeParty.address && <span>Address: {safeParty.address}</span>}
+                {safeParty.state && <span> | State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
+                {safeParty.phone && <span> | Mob: <strong className="text-slate-900">{safeParty.phone}</strong></span>}
+                {safeParty.gstin && <span> | GSTIN: <strong className="font-mono text-slate-900">{safeParty.gstin}</strong></span>}
+              </p>
             </div>
-
-            {/* SHIP TO (CONSIGNEE / DELIVERY) */}
-            <div className="p-2 space-y-0.5 bg-white">
-              <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
-                <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                  SHIP TO (CONSIGNEE)
-                </span>
-                <span className="text-[8px] text-slate-400 font-medium">Delivery Address</span>
-              </div>
-              <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeShipping.name}</p>
-              {safeShipping.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeShipping.address}</p>}
-              <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
-                {safeShipping.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeShipping.phone}</strong></span>}
-                {safeShipping.state && <span>State: <strong className="text-slate-900">{safeShipping.state}</strong></span>}
-              </div>
-              {safeShipping.gstin && (
-                <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeShipping.gstin}</strong></p>
-              )}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Line Items Table */}

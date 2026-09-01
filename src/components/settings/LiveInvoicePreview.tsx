@@ -29,37 +29,30 @@ export function LiveInvoicePreview({
   const sampleItems = [
     {
       id: "1",
-      name: "REAL ACTIVE JUICE 1L",
-      description: "100% natural mixed fruit juice pack",
-      hsn: "2009",
-      qty: 10,
-      unit: "PCS",
-      mrp: 65,
-      rate: 53.57,
+      name: "birla cement super",
+      description: "high grade Portland pozzolana cement",
+      hsn: "2523",
+      qty: 1,
+      unit: "Bag",
+      rate: 352,
       discount: 0,
-      discountPercent: 0,
       taxRate: 12,
-      taxAmount: 64.29,
-      total: 600,
-      batchNo: "BAT-9941",
-      expDate: "12/2026",
+      taxAmount: 42.24,
+      total: 394.24,
     },
     {
       id: "2",
-      name: "COLGATE TOTAL TOOTHPASTE 150G",
-      description: "antibacterial active protection paste",
-      hsn: "3306",
-      qty: 8,
-      unit: "PCS",
-      mrp: 190,
-      rate: 160.71,
+      name: "river sand",
+      description: "washed construction river sand",
+      hsn: "25051011",
+      qty: 1,
+      unit: "Tonne",
+      rate: 1600,
       discount: 0,
-      discountPercent: 0,
-      taxRate: 12,
-      taxAmount: 154.29,
-      total: 1440,
-      batchNo: "BAT-5512",
-      expDate: "09/2027",
+      taxRate: 28,
+      taxAmount: 448,
+      cessAmount: 960,
+      total: 3008,
     },
   ];
 
@@ -165,64 +158,56 @@ export function LiveInvoicePreview({
           layout="a4"
           docType="sales_invoice"
           copyType="ORIGINAL FOR RECIPIENT"
-          invoiceNumber="INV-2026-0042"
+          invoiceNumber="35"
           referenceNumber="REF-9021"
-          date={new Date()}
-          dueDate="2026-03-25"
-          deliveryCharge={50}
+          date={new Date("2024-06-23")}
+          dueDate="2024-07-25"
+          deliveryCharge={0}
           storeInfo={{
-            name: businessName || "Sharma Store",
+            name: businessName || "Swift Distributors",
             phone: businessPhone || "+91 98765 43210",
-            email: businessEmail || "billing@sharmastore.in",
-            address: businessAddress || "812, Street 12, Ramra Nagar, Mumbai, Maharashtra, 400001",
-            state: "Maharashtra",
-            stateCode: "27",
-            gstin: businessGstin || "27AABCU5007R1Z12",
+            email: businessEmail || "sales@swiftgrow.in",
+            address: businessAddress || "1278, 8 main, vijaynagar, Bangalore, Karnataka, 560040",
+            state: "Karnataka",
+            stateCode: "29",
+            gstin: businessGstin || "29AABCU5007R1Z12",
             pan: "PPCS4567K",
             logoUrl: businessLogo,
-            bank_name: "HDFC Bank",
-            account_number: "50200012345678",
-            ifsc: "HDFC0001234",
-            branch: "Nariman Point",
-            account_holder: businessName || "Sharma Store",
-            upi_id: "store@okhdfcbank",
+            bank_name: "State Bank of India",
+            account_number: "40928172910",
+            ifsc: "SBIN0001234",
+            branch: "Main Branch, Bengaluru",
+            account_holder: businessName || "Swift Distributors",
+            upi_id: "swiftgrow@oksbi",
           }}
           partyInfo={{
-            name: "MOHIT GUPTA",
-            phone: "9123456789",
-            email: "mohit.gupta@enterprise.in",
-            address: "121, South Nagar, Gachibowli Colony, Prayagraj, 211011",
-            state: "Uttar Pradesh",
-            stateCode: "09",
-            gstin: "09AAECB47361Z6",
+            name: "STAR CONSTRUCTIONS",
+            phone: "999177700",
+            email: "contact@starconstructions.in",
+            address: "15, 4 cross, r r nagar, Bengaluru, 560048",
+            state: "Karnataka",
+            stateCode: "29",
+            gstin: "29AAECS47361Z6",
             balance: 14500,
             type: "customer",
           }}
-          shippingInfo={{
-            name: "MOHIT GUPTA",
-            phone: "9123456789",
-            address: "121, South Nagar, Gachibowli Colony, Prayagraj, 211011",
-            state: "Uttar Pradesh",
-            gstin: "09AAECB47361Z6",
-          }}
           items={sampleItems}
           totals={{
-            subtotal: 2040.0,
-            discountTotal: 10.0,
-            discountLabel: "Trade Discount",
-            taxableAmount: 1821.43,
-            cgst: 0,
-            sgst: 0,
-            igst: 218.57,
-            taxTotal: 218.57,
+            subtotal: 1952.0,
+            discountTotal: 0,
+            taxableAmount: 1952.0,
+            cgst: 245.12,
+            sgst: 245.12,
+            cess: 960.0,
+            taxTotal: 1450.24,
             roundOff: 0.0,
-            grandTotal: 2080.0,
-            paidAmount: 200.0,
-            balanceDue: 1880.0,
+            grandTotal: 3402.24,
+            paidAmount: 3402.24,
+            balanceDue: 0.0,
           }}
-          paymentMethod="UPI / Advance"
-          notes="Thank you for shopping with Sharma Store."
-          terms="1. Goods once sold cannot be returned or exchanged.&#10;2. All disputes are subject to local jurisdiction only.&#10;3. This is a computer generated invoice."
+          paymentMethod="Bank / UPI"
+          notes="Thank you for your business."
+          terms="1. All disputes are subject to bengaluru jurisdiction only.&#10;2. Goods once sold will not be taken back.&#10;3. This is a computer generated tax invoice."
         />
       </div>
     </div>
