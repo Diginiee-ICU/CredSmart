@@ -755,170 +755,113 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 className="font-black uppercase tracking-wider text-slate-800 border-b border-slate-300 text-[9px]"
                 style={{ backgroundColor: bgLightHex }}
               >
-                <th className="py-1.5 px-2 text-center w-7 border-r border-slate-300">S.No</th>
-                <th className="py-1.5 px-2 border-r border-slate-300">ITEMS / DESCRIPTION</th>
-                {hasHsn && <th className="py-1.5 px-1.5 text-center border-r border-slate-300">HSN</th>}
-                <th className="py-1.5 px-2 text-center border-r border-slate-300">QTY</th>
-                {hasMrp && <th className="py-1.5 px-1.5 text-right border-r border-slate-300">MRP</th>}
-                <th className="py-1.5 px-2 text-right border-r border-slate-300">RATE</th>
-                {hasDiscount && <th className="py-1.5 px-1.5 text-right border-r border-slate-300">DISC.</th>}
-                <th className="py-1.5 px-2 text-right border-r border-slate-300">TAX (GST %)</th>
-                {hasCess && <th className="py-1.5 px-1.5 text-right border-r border-slate-300">CESS</th>}
-                <th className="py-1.5 px-2 text-right">AMOUNT</th>
+                <th className="py-1.5 px-2 text-center w-8 border-r border-slate-300">S.No</th>
+                <th className="py-1.5 px-2 border-r border-slate-300">ITEMS</th>
+                <th className="py-1.5 px-2 text-center border-r border-slate-300 w-24">HSN</th>
+                <th className="py-1.5 px-2 text-center border-r border-slate-300 w-20">QTY</th>
+                <th className="py-1.5 px-2 text-right border-r border-slate-300 w-24">RATE</th>
+                <th className="py-1.5 px-2 text-right w-28">AMOUNT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {safeItems.map((it, idx) => {
-                const itemTaxRate = it.taxRate || 0;
-                const itemTaxAmt = it.taxAmount !== undefined ? it.taxAmount : ((it.rate * it.qty - (it.discount || 0)) * itemTaxRate) / 100;
-                const itemCessAmt = it.cessAmount || 0;
-
-                return (
-                  <tr key={it.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                    <td className="py-1.5 px-2 text-center font-mono text-slate-500 border-r border-slate-200">
-                      {idx + 1}
-                    </td>
-                    <td className="py-1.5 px-2 border-r border-slate-200">
-                      <p className="font-bold text-slate-900 leading-tight">{it.name}</p>
-                      {it.description && (
-                        <p className="text-[8.5px] text-slate-500 italic mt-0.5">{it.description}</p>
-                      )}
-                      {(it.batchNo || it.expDate) && (
-                        <p className="text-[8px] font-mono text-slate-500 mt-0.5">
-                          {it.batchNo ? `Batch: ${it.batchNo} ` : ""}
-                          {it.expDate ? `Exp: ${it.expDate}` : ""}
-                        </p>
-                      )}
-                    </td>
-                    {hasHsn && (
-                      <td className="py-1.5 px-1.5 text-center font-mono text-slate-600 border-r border-slate-200">
-                        {it.hsn || "-"}
-                      </td>
+              {safeItems.map((it, idx) => (
+                <tr key={it.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                  <td className="py-1.5 px-2 text-center font-mono text-slate-500 border-r border-slate-200">
+                    {idx + 1}
+                  </td>
+                  <td className="py-1.5 px-2 border-r border-slate-200">
+                    <p className="font-bold text-slate-900 leading-tight">{it.name}</p>
+                    {it.description && (
+                      <p className="text-[8.5px] text-slate-500 italic mt-0.5">{it.description}</p>
                     )}
-                    <td className="py-1.5 px-2 text-center font-semibold border-r border-slate-200">
-                      {(() => {
-                        const q = formatItemQuantityDisplay(it);
-                        return q.isDual ? (
-                          <div className="leading-tight">
-                            <span className="font-bold text-slate-900 block">{q.primaryLine}</span>
-                            <span className="block text-[8px] text-slate-600 font-mono mt-0.5 font-medium">
-                              {q.secondaryLine}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="font-bold text-slate-900">{q.primaryLine}</span>
-                        );
-                      })()}
-                    </td>
-                    {hasMrp && (
-                      <td className="py-1.5 px-1.5 text-right font-mono text-slate-600 border-r border-slate-200">
-                        {it.mrp ? `₹${it.mrp.toFixed(2)}` : "-"}
-                      </td>
+                    {(it.batchNo || it.expDate) && (
+                      <p className="text-[8px] font-mono text-slate-500 mt-0.5">
+                        {it.batchNo ? `Batch: ${it.batchNo} ` : ""}
+                        {it.expDate ? `Exp: ${it.expDate}` : ""}
+                      </p>
                     )}
-                    <td className="py-1.5 px-2 text-right font-mono text-slate-800 border-r border-slate-200">
-                      ₹{(it.rate || 0).toFixed(2)}
-                    </td>
-                    {hasDiscount && (
-                      <td className="py-1.5 px-1.5 text-right font-mono text-slate-600 border-r border-slate-200">
-                        {it.discount && it.discount > 0 ? (
-                          <>
-                            <span>₹{it.discount.toFixed(2)}</span>
-                            {it.discountPercent ? <span className="block text-[7.5px] text-slate-400">({it.discountPercent}%)</span> : null}
-                          </>
-                        ) : "-"}
-                      </td>
-                    )}
-                    <td className="py-1.5 px-2 text-right font-mono text-slate-700 border-r border-slate-200">
-                      <span>₹{itemTaxAmt.toFixed(2)}</span>
-                      <span className="block text-[8px] text-slate-500 font-normal">({itemTaxRate}%)</span>
-                    </td>
-                    {hasCess && (
-                      <td className="py-1.5 px-1.5 text-right font-mono text-slate-600 border-r border-slate-200">
-                        {itemCessAmt > 0 ? `₹${itemCessAmt.toFixed(2)}` : "0.0"}
-                      </td>
-                    )}
-                    <td className="py-1.5 px-2 text-right font-mono font-bold text-slate-900">
-                      ₹{(it.total || 0).toFixed(2)}
-                    </td>
-                  </tr>
-                );
-              })}
+                  </td>
+                  <td className="py-1.5 px-2 text-center font-mono text-slate-700 border-r border-slate-200">
+                    {it.hsn || "-"}
+                  </td>
+                  <td className="py-1.5 px-2 text-center font-semibold border-r border-slate-200">
+                    {(() => {
+                      const q = formatItemQuantityDisplay(it);
+                      return q.isDual ? (
+                        <div className="leading-tight">
+                          <span className="font-bold text-slate-900 block">{q.primaryLine}</span>
+                          <span className="block text-[8px] text-slate-600 font-mono mt-0.5 font-medium">
+                            {q.secondaryLine}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-bold text-slate-900">{q.primaryLine}</span>
+                      );
+                    })()}
+                  </td>
+                  <td className="py-1.5 px-2 text-right font-mono text-slate-800 border-r border-slate-200">
+                    ₹{(it.rate || 0).toFixed(2)}
+                  </td>
+                  <td className="py-1.5 px-2 text-right font-mono font-bold text-slate-900">
+                    ₹{(it.total || (it.rate * it.qty) || 0).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
 
               {/* Delivery Charge row (if > 0) */}
               {deliveryCharge > 0 && (
                 <tr className="bg-slate-50/60 font-semibold border-t border-slate-200">
-                  <td colSpan={2} className="py-1 px-2 text-left font-bold text-slate-700">
+                  <td colSpan={5} className="py-1 px-2 text-left font-bold text-slate-700 border-r border-slate-200">
                     DELIVERY CHARGE
                   </td>
-                  {hasHsn && <td className="border-r border-slate-200" />}
-                  <td className="border-r border-slate-200" />
-                  {hasMrp && <td className="border-r border-slate-200" />}
-                  <td className="border-r border-slate-200" />
-                  {hasDiscount && <td className="border-r border-slate-200" />}
-                  <td className="border-r border-slate-200" />
-                  {hasCess && <td className="border-r border-slate-200" />}
                   <td className="py-1 px-2 text-right font-mono text-slate-900 font-bold">
                     ₹{deliveryCharge.toFixed(2)}
                   </td>
                 </tr>
               )}
 
+              {/* Discount row (if > 0) */}
+              {totals?.discountTotal && totals.discountTotal > 0 ? (
+                <tr className="bg-emerald-50/40 font-semibold border-t border-slate-200 text-emerald-800">
+                  <td colSpan={5} className="py-1 px-2 text-left font-bold border-r border-slate-200">
+                    DISCOUNT
+                  </td>
+                  <td className="py-1 px-2 text-right font-mono font-bold text-emerald-700">
+                    -₹{totals.discountTotal.toFixed(2)}
+                  </td>
+                </tr>
+              ) : null}
+
               {/* Total Summary Row */}
               <tr className="font-bold bg-slate-100/90 text-slate-900 border-t-2 border-slate-300">
-                <td colSpan={2} className="py-1.5 px-2 text-left font-black tracking-wider text-[9.5px]">
+                <td colSpan={3} className="py-1.5 px-2 text-left font-black tracking-wider text-[9.5px] border-r border-slate-300">
                   TOTAL AMOUNT
                 </td>
-                {hasHsn && <td className="py-1.5 px-1.5 text-center font-mono">-</td>}
-                <td className="py-1.5 px-2 text-center font-mono font-black">{totalQty}</td>
-                {hasMrp && <td className="py-1.5 px-1.5" />}
-                <td className="py-1.5 px-2" />
-                {hasDiscount && (
-                  <td className="py-1.5 px-1.5 text-right font-mono text-slate-700">
-                    {totals?.discountTotal ? `₹${totals.discountTotal.toFixed(2)}` : "-"}
-                  </td>
-                )}
-                <td className="py-1.5 px-2 text-right font-mono text-slate-800">
-                  ₹{totalTax.toFixed(2)}
+                <td className="py-1.5 px-2 text-center font-mono font-black border-r border-slate-300">
+                  {totalQty}
                 </td>
-                {hasCess && (
-                  <td className="py-1.5 px-1.5 text-right font-mono text-slate-800">
-                    ₹{totalCess.toFixed(2)}
-                  </td>
-                )}
+                <td className="py-1.5 px-2 border-r border-slate-300" />
                 <td className="py-1.5 px-2 text-right font-mono font-black text-slate-900">
                   ₹{grandTotalVal.toFixed(2)}
                 </td>
               </tr>
 
-              {/* Payment Reconciliation Rows */}
+              {/* Received Amount Row */}
               <tr className="bg-white border-t border-slate-200 text-[9px]">
-                <td colSpan={2} className="py-1 px-2 font-bold text-slate-700">
+                <td colSpan={5} className="py-1 px-2 font-bold text-slate-700 border-r border-slate-200">
                   RECEIVED AMOUNT ({paymentMethod})
                 </td>
-                <td colSpan={hasHsn ? 1 : 0} />
-                <td />
-                {hasMrp && <td />}
-                <td />
-                {hasDiscount && <td />}
-                <td />
-                {hasCess && <td />}
                 <td className="py-1 px-2 text-right font-mono font-bold text-emerald-700">
                   ₹{paidAmountVal.toFixed(2)}
                 </td>
               </tr>
 
+              {/* Balance Due Row (if > 0) */}
               {balanceDueVal > 0 && (
                 <tr className="bg-rose-50/40 border-t border-slate-200 text-[9px]">
-                  <td colSpan={2} className="py-1 px-2 font-bold text-rose-700">
+                  <td colSpan={5} className="py-1 px-2 font-bold text-rose-700 border-r border-slate-200">
                     BALANCE AMOUNT DUE
                   </td>
-                  <td colSpan={hasHsn ? 1 : 0} />
-                  <td />
-                  {hasMrp && <td />}
-                  <td />
-                  {hasDiscount && <td />}
-                  <td />
-                  {hasCess && <td />}
                   <td className="py-1 px-2 text-right font-mono font-black text-rose-700">
                     ₹{balanceDueVal.toFixed(2)}
                   </td>
