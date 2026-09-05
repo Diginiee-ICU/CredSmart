@@ -252,20 +252,22 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
             format: "a4",
           });
 
-          const imgWidth = 210;
-          const pageHeight = 297;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          let heightLeft = imgHeight;
-          let position = 0;
+          // Always fit to exactly one A4 page (210mm x 297mm)
+          // The invoice component's internal CSS scale already fits content to 1123px.
+          // We scale the captured image to fill the full A4 width and let it fill the height.
+          const pageWidthMm = 210;
+          const pageHeightMm = 297;
+          const imgAspect = canvas.height / canvas.width;
+          const imgHeightMm = pageWidthMm * imgAspect;
 
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-          heightLeft -= pageHeight;
-
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-            heightLeft -= pageHeight;
+          // If content is taller than page, scale it down to fit the page height.
+          if (imgHeightMm > pageHeightMm) {
+            const scaleToFit = pageHeightMm / imgHeightMm;
+            const scaledWidth = pageWidthMm * scaleToFit;
+            const marginX = (pageWidthMm - scaledWidth) / 2;
+            pdf.addImage(imgData, "PNG", marginX, 0, scaledWidth, pageHeightMm, undefined, "FAST");
+          } else {
+            pdf.addImage(imgData, "PNG", 0, 0, pageWidthMm, imgHeightMm, undefined, "FAST");
           }
 
           const safeInvoiceNumber = (payload.invoiceNumber || "invoice").replace(/[/\\:*?"<>|]/g, "-");
