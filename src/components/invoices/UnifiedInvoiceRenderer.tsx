@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo, useLayoutEffect, useRef, useState } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { InvoiceSettingsState } from "@/types/invoice-settings";
 import { loadInvoiceSettings, getThemeColorSwatch } from "@/utils/invoiceThemeLoader";
@@ -404,28 +404,6 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const hasHsn = safeItems.some((it) => it.hsn && it.hsn.trim() !== "");
 
     // ─────────────────────────────────────────────────────────────
-    // AUTO-SCALE: Fit entire invoice to one A4 page (1123px @ 96dpi)
-    // Uses CSS transform:scale so the layout is pixel-perfect at any item count.
-    // ─────────────────────────────────────────────────────────────
-    const A4_MAX_PX = 1123;
-    const innerRef = useRef<HTMLDivElement>(null);
-    const [scale, setScale] = useState(1);
-
-    useLayoutEffect(() => {
-      if (!innerRef.current) return;
-      // ResizeObserver gives us accurate height after each paint
-      const ro = new ResizeObserver(() => {
-        if (!innerRef.current) return;
-        const h = innerRef.current.getBoundingClientRect().height;
-        if (h > 0) {
-          setScale(h > A4_MAX_PX ? A4_MAX_PX / h : 1);
-        }
-      });
-      ro.observe(innerRef.current);
-      return () => ro.disconnect();
-    }, [items, totals, notes, terms, hsnSummaryList]);
-
-    // ─────────────────────────────────────────────────────────────
     // 1. THERMAL POS RECEIPT LAYOUT (80mm & 58mm)
     // ─────────────────────────────────────────────────────────────
     if (layout === "80mm" || layout === "58mm") {
@@ -597,25 +575,18 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
     // ─────────────────────────────────────────────────────────────
     // 2. SINGLE MASTER PROFESSIONAL GST A4 INVOICE STANDARD
+    // Preview: full-size, readable, scrollable in modal.
+    // PDF/Print: scaled to 1 page via downloadExactInvoice.ts
     // ─────────────────────────────────────────────────────────────
     return (
       <div
         ref={ref}
-        className={cn("w-full max-w-[780px] mx-auto relative overflow-hidden", className)}
-        style={{
-          height: scale < 1 ? `${A4_MAX_PX * scale}px` : undefined,
-        }}
+        id="unified-invoice-document"
+        className={cn(
+          "bg-white text-slate-800 w-full max-w-[780px] mx-auto p-3 sm:p-4 relative border border-slate-300 box-border font-sans leading-tight shadow-md rounded-lg",
+          className
+        )}
       >
-        <div
-          ref={innerRef}
-          id="unified-invoice-document"
-          className="bg-white text-slate-800 w-full max-w-[780px] mx-auto p-3 sm:p-4 transition-all duration-200 relative border border-slate-300 one-page-invoice box-border font-sans leading-tight shadow-md rounded-lg"
-          style={{
-            transformOrigin: "top center",
-            transform: scale < 1 ? `scale(${scale})` : undefined,
-            marginBottom: scale < 1 ? `${(scale - 1) * 100}%` : undefined,
-          }}
-        >
         {/* Top Header Section */}
         <div className="border border-slate-300 bg-white">
           {/* Main Title Bar with Copy Type */}
@@ -1088,7 +1059,6 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           <div className="font-mono text-slate-400">
             <span>IT Act 2000 Ready • 100% Tax Compliant</span>
           </div>
-        </div>
         </div>
       </div>
     );

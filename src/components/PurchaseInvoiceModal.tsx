@@ -58,6 +58,7 @@ import {
 import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
+import { InvoiceFitView } from "@/components/invoices/InvoiceFitView";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
@@ -1576,7 +1577,6 @@ export function PurchaseInvoiceModal({
               >
                 Save &amp; New
               </Button>
-
             </div>
           </div>
 
@@ -1584,72 +1584,70 @@ export function PurchaseInvoiceModal({
           {/* 2. BODY CONTENT */}
           {/* ───────────────────────────────────────────────────────────── */}
           {viewMode === "preview" ? (
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-100 dark:bg-slate-900 flex justify-center scrollbar-thin">
-              <div className="w-full max-w-4xl flex justify-center">
-                <UnifiedInvoiceRenderer
-                  docType="purchase_invoice"
-                  invoiceNumber={fullDocumentNumber}
-                  date={docDate}
-                  dueDate={showDueDate ? dueDate : undefined}
-                  placeOfSupply={placeOfSupply}
-                  deliveryCharge={0}
-                  storeInfo={{
-                    name: org?.name || "CredSmart Store",
-                    phone: org?.phone || "",
-                    email: org?.email || "",
-                    address: org?.address || "",
-                    gstin: org?.gstin || "",
-                    pan: org?.pan || "",
-                    logoUrl: org?.logo_url || "",
-                    bank_name: (showBankDetails && bankAccount.bankName) ? bankAccount.bankName : org?.bank_name,
-                    account_number: (showBankDetails && bankAccount.accountNumber) ? bankAccount.accountNumber : org?.account_number,
-                    ifsc: (showBankDetails && bankAccount.ifsc) ? bankAccount.ifsc : org?.ifsc,
-                    account_holder: (showBankDetails && bankAccount.accountHolder) ? bankAccount.accountHolder : (org?.account_holder || org?.name),
-                    branch: (showBankDetails && bankAccount.branch) ? bankAccount.branch : "",
-                    upi_id: (showPaymentQr && upiId) ? upiId : org?.upi_id,
-                  }}
-                  partyInfo={{
-                    name: partyName || "Supplier",
-                    phone: partyPhone,
-                    address: partyAddress,
-                    gstin: partyGstin,
-                    state: placeOfSupply,
-                  }}
-                  items={recalculatedItems
-                    .filter((it) => (it.productName && it.productName.trim() !== "") || Number(it.rate) > 0 || Number(it.lineTotal) > 0)
-                    .map((it) => ({
-                      id: it.id,
-                      name: it.productName || "Item",
-                      hsn: it.hsn,
-                      qty: Number(it.quantity) || 1,
-                      unit: it.unit || "Pcs",
-                      altUnit: it.altUnit,
-                      altQty: it.altQty,
-                      altUnitConversion: it.altUnitConversion,
-                      rate: Number(it.rate) || 0,
-                      discount: it.discountPercent || 0,
-                      discountPercent: it.discountPercent,
-                      taxRate: it.taxRate || 0,
-                      taxAmount: ((it.taxRate || 0) * (it.taxableAmount || 0)) / 100,
-                      total: it.lineTotal,
-                    }))}
-                  totals={{
-                    subtotal: totals.rawSubtotal,
-                    discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
-                    taxableAmount: totals.taxableTotal,
-                    taxTotal: totals.taxTotal,
-                    cgst: totals.cgstTotal,
-                    sgst: totals.sgstTotal,
-                    igst: totals.igstTotal,
-                    grandTotal: totals.grandTotal,
-                  }}
-                  notes={showNotes ? notes : undefined}
-                  terms={terms}
-                  propBankDetails={showBankDetails && bankAccount.accountNumber ? bankAccount : undefined}
-                  propUpiId={showPaymentQr && upiId ? upiId : undefined}
-                />
-              </div>
-            </div>
+            <InvoiceFitView className="flex-1 min-h-0">
+              <UnifiedInvoiceRenderer
+                docType="purchase_invoice"
+                invoiceNumber={fullDocumentNumber}
+                date={docDate}
+                dueDate={showDueDate ? dueDate : undefined}
+                placeOfSupply={placeOfSupply}
+                deliveryCharge={0}
+                storeInfo={{
+                  name: org?.name || "CredSmart Store",
+                  phone: org?.phone || "",
+                  email: org?.email || "",
+                  address: org?.address || "",
+                  gstin: org?.gstin || "",
+                  pan: org?.pan || "",
+                  logoUrl: org?.logo_url || "",
+                  bank_name: (showBankDetails && bankAccount.bankName) ? bankAccount.bankName : org?.bank_name,
+                  account_number: (showBankDetails && bankAccount.accountNumber) ? bankAccount.accountNumber : org?.account_number,
+                  ifsc: (showBankDetails && bankAccount.ifsc) ? bankAccount.ifsc : org?.ifsc,
+                  account_holder: (showBankDetails && bankAccount.accountHolder) ? bankAccount.accountHolder : (org?.account_holder || org?.name),
+                  branch: (showBankDetails && bankAccount.branch) ? bankAccount.branch : "",
+                  upi_id: (showPaymentQr && upiId) ? upiId : org?.upi_id,
+                }}
+                partyInfo={{
+                  name: partyName || "Supplier",
+                  phone: partyPhone,
+                  address: partyAddress,
+                  gstin: partyGstin,
+                  state: placeOfSupply,
+                }}
+                items={recalculatedItems
+                  .filter((it) => (it.productName && it.productName.trim() !== "") || Number(it.rate) > 0 || Number(it.lineTotal) > 0)
+                  .map((it) => ({
+                    id: it.id,
+                    name: it.productName || "Item",
+                    hsn: it.hsn,
+                    qty: Number(it.quantity) || 1,
+                    unit: it.unit || "Pcs",
+                    altUnit: it.altUnit,
+                    altQty: it.altQty,
+                    altUnitConversion: it.altUnitConversion,
+                    rate: Number(it.rate) || 0,
+                    discount: it.discountPercent || 0,
+                    discountPercent: it.discountPercent,
+                    taxRate: it.taxRate || 0,
+                    taxAmount: ((it.taxRate || 0) * (it.taxableAmount || 0)) / 100,
+                    total: it.lineTotal,
+                  }))}
+                totals={{
+                  subtotal: totals.rawSubtotal,
+                  discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
+                  taxableAmount: totals.taxableTotal,
+                  taxTotal: totals.taxTotal,
+                  cgst: totals.cgstTotal,
+                  sgst: totals.sgstTotal,
+                  igst: totals.igstTotal,
+                  grandTotal: totals.grandTotal,
+                }}
+                notes={showNotes ? notes : undefined}
+                terms={terms}
+                propBankDetails={showBankDetails && bankAccount.accountNumber ? bankAccount : undefined}
+                propUpiId={showPaymentQr && upiId ? upiId : undefined}
+              />
+            </InvoiceFitView>
           ) : (
             <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill From (Dropdown Format) & Purchase Bill Details */}
