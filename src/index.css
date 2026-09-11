@@ -216,6 +216,9 @@
     box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.45), 0 10px 15px -5px rgba(245, 158, 11, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.6) !important;
     border-color: rgba(251, 191, 36, 0.6) !important;
   }
+  .bill-editor-shell {
+    overflow: hidden !important;
+  }
   
   .bill-editor-shell .bill-panel {
     border-radius: 0 !important;

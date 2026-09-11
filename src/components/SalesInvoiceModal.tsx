@@ -150,6 +150,7 @@ export function SalesInvoiceModal({
 
   // Mode: "edit" | "preview"
   const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
+  const [mobileTab, setMobileTab] = useState<'party'|'items'|'summary'>('items');
 
   // Document Type
   const [docType, setDocType] = useState<SalesDocumentType>(initialDocType);
@@ -328,6 +329,7 @@ export function SalesInvoiceModal({
 
   useEffect(() => {
     if (open) {
+      setMobileTab('items');
       editorBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
       if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0;
     }
@@ -1341,7 +1343,7 @@ export function SalesInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bill-editor-shell z-modal w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-visible bg-white dark:bg-slate-950">
+        <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950">
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
@@ -1410,7 +1412,7 @@ export function SalesInvoiceModal({
                 variant="outline"
                 size="sm"
                 onClick={() => handlePrint()}
-                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+                className="h-8 px-2.5 sm:px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
                 title="Print"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -1422,9 +1424,11 @@ export function SalesInvoiceModal({
                 size="sm"
                 disabled={saving}
                 onClick={() => handleSave(false, true)}
-                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+                className="h-8 px-2.5 sm:px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1.5"
+                title="Save & New"
               >
-                Save &amp; New
+                <Save className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Save &amp; New</span>
               </Button>
 
             </div>
@@ -1499,13 +1503,41 @@ export function SalesInvoiceModal({
                 />
             </InvoiceFitView>
           ) : (
-            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
-              {/* TOP ROW: Bill To (Dropdown Format) & Invoice Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                {/* ───────────────────────────────────────────────────────────── */}
+            <>
+            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+              
+              {/* MOBILE TAB BAR */}
+              <div className="lg:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                <button 
+                  type="button" 
+                  onClick={() => setMobileTab('party')} 
+                  className={cn("flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors", mobileTab === 'party' ? "border-primary text-primary" : "border-transparent text-slate-500 hover:text-slate-700")}
+                >
+                  Party & Details
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setMobileTab('items')} 
+                  className={cn("flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors", mobileTab === 'items' ? "border-primary text-primary" : "border-transparent text-slate-500 hover:text-slate-700")}
+                >
+                  Items
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setMobileTab('summary')} 
+                  className={cn("flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors", mobileTab === 'summary' ? "border-primary text-primary" : "border-transparent text-slate-500 hover:text-slate-700")}
+                >
+                  Summary
+                </button>
+              </div>
+
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* LEFT COLUMN: PARTY & DETAILS */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div className={cn("lg:col-span-4 overflow-y-auto border-r border-slate-200 dark:border-slate-800 p-3 space-y-3", mobileTab === 'party' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
+                
                 {/* BILL TO CARD (Dropdown Format with Balance) */}
-                {/* ───────────────────────────────────────────────────────────── */}
-                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
+                <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-primary" />
@@ -1745,7 +1777,7 @@ export function SalesInvoiceModal({
                 {/* ───────────────────────────────────────────────────────────── */}
                 {/* INVOICE DETAILS CARD */}
                 {/* ───────────────────────────────────────────────────────────── */}
-                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                       Invoice Details
@@ -1889,8 +1921,10 @@ export function SalesInvoiceModal({
               </div>
 
               {/* ───────────────────────────────────────────────────────────── */}
-              {/* 3. LINE ITEMS TABLE (Direct POS-Style + Auto Add Next Line) */}
+              {/* CENTER COLUMN: ITEMS */}
               {/* ───────────────────────────────────────────────────────────── */}
+              <div className={cn("lg:col-span-5 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", mobileTab === 'items' ? "flex" : "hidden lg:flex")}>
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-0 space-y-2">
               {activeCustomer && (activeCustomer.keepSamePrice === false || activeCustomer.keepSameInventory === false) && (
                 <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs mb-2">
                   <div className="flex items-center gap-2 text-primary font-medium">
@@ -2317,7 +2351,7 @@ export function SalesInvoiceModal({
                 </div>
 
                 {/* Subtotals Summary Strip */}
-                <div className="px-4 py-2.5 bg-slate-100/90 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <div className="shrink-0 px-4 py-2.5 bg-slate-100/90 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <span>Subtotal</span>
                   <div className="flex items-center gap-6 font-mono">
                     <span>Qty: <strong className="text-slate-900 dark:text-white">{totals.totalQty}</strong></span>
@@ -2325,14 +2359,16 @@ export function SalesInvoiceModal({
                     <span>Total: <strong className="text-slate-900 dark:text-white">₹{totals.rawSubtotal.toFixed(2)}</strong></span>
                   </div>
                 </div>
-              </div>
+              </div> {/* close internal bill-panel */}
+              </div> {/* close inner flex-1 */}
+              </div> {/* close CENTER COLUMN */}
 
               {/* ───────────────────────────────────────────────────────────── */}
-              {/* 4. BOTTOM SECTION: Split 2 Columns */}
+              {/* RIGHT COLUMN: SUMMARY & PAYMENT */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* LEFT COLUMN: Notes, Terms, Bank Details, Payment QR */}
-                <div className="lg:col-span-6 space-y-4">
+              <div className={cn("lg:col-span-3 overflow-y-auto p-3 space-y-3", mobileTab === 'summary' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
+                {/* SECTION: Notes, Terms, Bank Details, Payment QR */}
+                <div className="space-y-3">
                   {showNotes ? (
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 space-y-1.5 shadow-2xs">
                       <div className="flex items-center justify-between">
@@ -2373,8 +2409,8 @@ export function SalesInvoiceModal({
 
                 </div>
 
-                {/* RIGHT COLUMN: Calculations, Totals, Settlement & Stamp */}
-                <div className="bill-panel lg:col-span-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
+                {/* SECTION: Calculations, Totals, Settlement & Stamp */}
+                <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3.5">
                   {showAdditionalCharges ? (
                     <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
                       <div className="flex items-center justify-between">
@@ -2582,6 +2618,29 @@ export function SalesInvoiceModal({
                 </div>
               </div>
             </div>
+            
+            {/* ───────────────────────────────────────────────────────────── */}
+            {/* MOBILE BOTTOM ACTION BAR */}
+            {/* ───────────────────────────────────────────────────────────── */}
+            <div className="lg:hidden shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2.5 flex items-center justify-between gap-3 pb-[env(safe-area-inset-bottom)] z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grand Total</span>
+                <span className="text-sm font-black font-mono text-slate-900 dark:text-white">
+                  ₹ {totals.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                disabled={saving}
+                onClick={() => handleSave(true, false)}
+                className="h-9 px-4 text-xs font-bold rounded-lg bg-primary text-primary-foreground shadow-2xs gap-1.5 flex items-center shrink-0 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Save &amp; Print
+              </Button>
+            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
