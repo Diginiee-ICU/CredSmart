@@ -1569,8 +1569,7 @@ export function PurchaseInvoiceModal({
                   propBankDetails={showBankDetails && bankAccount.accountNumber ? bankAccount : undefined}
                   propUpiId={showPaymentQr && upiId ? upiId : undefined}
                 />
-              </div>
-            </div>
+              </InvoiceFitView>
           ) : (
             <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill From (Dropdown Format) & Purchase Bill Details */}
