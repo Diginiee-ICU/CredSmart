@@ -286,6 +286,7 @@ export function PurchaseInvoiceModal({
 
     const catalogOptions = productsCatalog.map((p) => {
       const tags = (p as unknown).tags || {};
+      const productName = p.name || (p as typeof p & { productName?: string; title?: string }).productName || (p as typeof p & { title?: string }).title || "Unnamed Item";
       const selling =
         tags && tags.selling_price !== undefined && tags.selling_price !== null
           ? Number(tags.selling_price)
@@ -307,7 +308,7 @@ export function PurchaseInvoiceModal({
 
       return {
         id: p.id,
-        name: p.name,
+        name: productName,
         category: p.category || "General",
         barcode: p.barcode,
         sku: p.sku,

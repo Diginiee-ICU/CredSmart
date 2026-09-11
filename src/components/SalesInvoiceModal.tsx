@@ -259,6 +259,7 @@ export function SalesInvoiceModal({
 
     return catalog.map((p) => {
       const tags = (p as unknown).tags || {};
+      const productName = p.name || (p as typeof p & { productName?: string; title?: string }).productName || (p as typeof p & { title?: string }).title || "Unnamed Item";
       const defaultSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
         ? Number(tags.selling_price)
         : (p.product_batches?.[0]?.mrp || 0);
@@ -270,7 +271,7 @@ export function SalesInvoiceModal({
 
       return {
         id: p.id,
-        name: p.name,
+        name: productName,
         category: p.category || "General",
         barcode: p.barcode,
         sku: p.sku,
