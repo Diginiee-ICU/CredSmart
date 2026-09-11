@@ -56,6 +56,7 @@ import {
 } from "@/utils/suggestionData";
 import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
+import { calculateInvoiceBreakdown } from "@/utils/invoiceCalculations";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
@@ -474,84 +475,24 @@ export function SalesInvoiceModal({
   }, [placeOfSupply]);
 
   // Recalculate Line Items
-  const recalculatedItems = useMemo(() => {
-    return items.map((item) => {
-      const rawSub = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-      const discount = item.discountPercent > 0
-        ? (rawSub * item.discountPercent) / 100
-        : item.discountAmount || 0;
-      const taxable = Math.max(0, rawSub - discount);
-
-      const taxAmount = (taxable * (Number(item.taxRate) || 0)) / 100;
-      let cgst = 0;
-      let sgst = 0;
-      let igst = 0;
-
-      if (isInterState) {
-        igst = taxAmount;
-      } else {
-        cgst = taxAmount / 2;
-        sgst = taxAmount / 2;
-      }
-
-      const lineTotal = taxable + taxAmount;
-
-      return {
-        ...item,
-        taxableAmount: Number(taxable.toFixed(2)),
-        cgstAmount: Number(cgst.toFixed(2)),
-        sgstAmount: Number(sgst.toFixed(2)),
-        igstAmount: Number(igst.toFixed(2)),
-        lineTotal: Number(lineTotal.toFixed(2)),
-      };
+  const { recalculatedItems, totals } = useMemo(() => {
+    return calculateInvoiceBreakdown({
+      items: items.map((item) => ({
+        quantity: Number(item.quantity) || 0,
+        rate: Number(item.rate) || 0,
+        discountPercent: Number(item.discountPercent) || 0,
+        discountAmount: Number(item.discountAmount) || 0,
+        taxRate: Number(item.taxRate) || 0,
+      })),
+      overallDiscountType,
+      overallDiscountValue,
+      showAdditionalCharges,
+      additionalChargesAmount,
+      autoRoundOff,
+      manualRoundOff,
+      isInterState,
     });
-  }, [items, isInterState]);
-
-  // Document Grand Totals
-  const totals = useMemo(() => {
-    const totalQty = recalculatedItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-    const rawSubtotal = recalculatedItems.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.rate) || 0), 0);
-    const itemDiscounts = recalculatedItems.reduce((acc, it) => acc + ((Number(it.quantity) || 0) * (Number(it.rate) || 0) - it.taxableAmount), 0);
-    const taxableTotal = recalculatedItems.reduce((acc, it) => acc + it.taxableAmount, 0);
-
-    const overallDisc = overallDiscountType === "percent"
-      ? (taxableTotal * (overallDiscountValue || 0)) / 100
-      : overallDiscountValue || 0;
-
-    const finalTaxable = Math.max(0, taxableTotal - overallDisc);
-    const cgstTotal = recalculatedItems.reduce((acc, it) => acc + it.cgstAmount, 0);
-    const sgstTotal = recalculatedItems.reduce((acc, it) => acc + it.sgstAmount, 0);
-    const igstTotal = recalculatedItems.reduce((acc, it) => acc + it.igstAmount, 0);
-    const taxTotal = cgstTotal + sgstTotal + igstTotal;
-
-    const addCharges = showAdditionalCharges ? Number(additionalChargesAmount) || 0 : 0;
-    const unroundedGrand = finalTaxable + taxTotal + addCharges;
-
-    let roundedGrand = unroundedGrand;
-    let roundOff = 0;
-
-    if (autoRoundOff) {
-      roundedGrand = Math.round(unroundedGrand);
-      roundOff = Number((roundedGrand - unroundedGrand).toFixed(2));
-    } else {
-      roundedGrand = Number((unroundedGrand + (Number(manualRoundOff) || 0)).toFixed(2));
-      roundOff = Number(manualRoundOff) || 0;
-    }
-
-    return {
-      totalQty,
-      rawSubtotal: Number(rawSubtotal.toFixed(2)),
-      itemDiscounts: Number(itemDiscounts.toFixed(2)),
-      taxableTotal: Number(finalTaxable.toFixed(2)),
-      cgstTotal: Number(cgstTotal.toFixed(2)),
-      sgstTotal: Number(sgstTotal.toFixed(2)),
-      igstTotal: Number(igstTotal.toFixed(2)),
-      taxTotal: Number(taxTotal.toFixed(2)),
-      additionalCharges: addCharges,
-      roundOff,
-      grandTotal: Math.max(0, roundedGrand),
-    };
-  }, [recalculatedItems, overallDiscountType, overallDiscountValue, showAdditionalCharges, additionalChargesAmount, autoRoundOff, manualRoundOff]);
+  }, [items, overallDiscountType, overallDiscountValue, showAdditionalCharges, additionalChargesAmount, autoRoundOff, manualRoundOff, isInterState]);
 
   // Mark as fully paid sync
   useEffect(() => {
@@ -717,7 +658,7 @@ export function SalesInvoiceModal({
         paymentTerms,
         items: validItems,
         subtotal: totals.rawSubtotal,
-        discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
+        discountTotal: totals.totalDiscount,
         taxableTotal: totals.taxableTotal,
         cgstTotal: totals.cgstTotal,
         sgstTotal: totals.sgstTotal,
@@ -960,7 +901,7 @@ export function SalesInvoiceModal({
                   }))}
                   totals={{
                     subtotal: totals.rawSubtotal,
-                    discountTotal: totals.itemDiscounts + (overallDiscountValue || 0),
+                    discountTotal: totals.totalDiscount,
                     taxableAmount: totals.taxableTotal,
                     taxTotal: totals.taxTotal,
                     cgst: totals.cgstTotal,
