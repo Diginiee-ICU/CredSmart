@@ -2395,91 +2395,7 @@ export function PurchaseInvoiceModal({
                     </button>
                   )}
 
-                  {/* Terms & Conditions */}
-                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => setTermsOpen((prev) => !prev)}
-                      className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                    >
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        Purchase Terms &amp; Conditions
-                      </span>
-                      {termsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                    </button>
-                    {termsOpen && (
-                      <div className="px-3.5 pb-3.5 pt-0">
-                        <Textarea
-                          value={terms}
-                          onChange={(e) => setTerms(e.target.value)}
-                          rows={2}
-                          className="text-xs text-slate-600 dark:text-slate-300 font-sans resize-none leading-relaxed bg-slate-50/50 dark:bg-slate-800/30"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Details Card */}
-                  {showBankDetails && (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-2xs space-y-2.5">
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                        Our Payout Bank Account
-                      </span>
-
-                      {bankAccount.accountNumber ? (
-                        <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                          <div>
-                            <span className="text-slate-500 text-[11px]">Account Number:</span>
-                            <p className="font-mono font-bold text-slate-900 dark:text-white">
-                              {bankAccount.accountNumber}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 text-[11px]">IFSC Code:</span>
-                            <p className="font-mono font-bold text-slate-900 dark:text-white">
-                              {bankAccount.ifsc}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 text-[11px]">Bank &amp; Branch:</span>
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">
-                              {bankAccount.bankName} {bankAccount.branch ? `, ${bankAccount.branch}` : ""}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 text-[11px]">Account Holder:</span>
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">
-                              {bankAccount.accountHolder || org?.name || "Business"}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic">
-                          No default bank configured in settings.
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                        <button
-                          type="button"
-                          onClick={() => setShowBankDetails(false)}
-                          className="text-rose-500 hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                        >
-                          <Trash2 className="w-3 h-3" /> Remove
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newAcc = prompt("Enter Bank Account Number:", bankAccount.accountNumber);
-                            if (newAcc !== null) setBankAccount((p) => ({ ...p, accountNumber: newAcc }));
-                          }}
-                          className="text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                        >
-                          <RotateCcw className="w-3 h-3" /> Change
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Empty left column */}
                 </div>
 
                 {/* RIGHT COLUMN: Calculations, Totals, Settlement */}
@@ -2685,39 +2601,7 @@ export function PurchaseInvoiceModal({
                     </span>
                   </div>
 
-                  {/* Stamp / Signature Box */}
-                  {showStamp && (
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col items-end">
-                      <div className="w-36 h-16 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-center p-1 overflow-hidden">
-                        {stampUrl ? (
-                          <img src={stampUrl} alt="Store Stamp" className="max-h-full max-w-full object-contain" />
-                        ) : (
-                          <div className="text-center">
-                            <span className="text-[10px] text-muted-foreground font-serif italic">Authorized Signatory</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] mt-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setShowStamp(false)}
-                          className="text-rose-500 hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          <Trash2 className="w-3 h-3" /> Remove
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newUrl = prompt("Enter Signature / Stamp Image URL:", stampUrl);
-                            if (newUrl !== null) setStampUrl(newUrl);
-                          }}
-                          className="text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          <RotateCcw className="w-3 h-3" /> Change
-                        </button>
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>
