@@ -609,6 +609,7 @@ export function SalesInvoiceModal({
   const { recalculatedItems, totals } = useMemo(() => {
     return calculateInvoiceBreakdown({
       items: items.map((item) => ({
+        ...item,
         quantity: Number(item.quantity) || 0,
         rate: Number(item.rate) || 0,
         discountPercent: Number(item.discountPercent) || 0,
