@@ -1,7 +1,65 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentType, DocumentStatus } from "@/types/documents";
+import { stockService } from "@/services/stockService";
 
 const STORAGE_KEY_PREFIX = "credsmart_docs_";
+
+export function normalizeDocumentBillingFields<T extends Partial<BusinessDocument>>(doc: T): T & Pick<BusinessDocument, "billingAddress" | "billingPincode" | "billingPlaceOfSupply"> {
+  const safePartyAddress = (doc.partyAddress || "").trim();
+  const safeBillingAddress = (doc.billingAddress || safePartyAddress).trim();
+  const safeBillingPincode = (doc.billingPincode || "").trim();
+  const safeBillingPlaceOfSupply = (doc.billingPlaceOfSupply || doc.placeOfSupply || "27-Maharashtra").trim();
+
+  return {
+    ...doc,
+    partyAddress: safePartyAddress || undefined,
+    billingAddress: safeBillingAddress || undefined,
+    billingPincode: safeBillingPincode || undefined,
+    billingPlaceOfSupply: safeBillingPlaceOfSupply || undefined,
+  } as T & Pick<BusinessDocument, "billingAddress" | "billingPincode" | "billingPlaceOfSupply">;
+}
+
+type CustomerSummary = {
+  name?: string | null;
+  phone?: string | null;
+  gstin?: string | null;
+};
+
+type SalesRow = {
+  id: string;
+  invoice_number?: string | null;
+  subtotal?: number | string | null;
+  discount_amount?: number | string | null;
+  payment_method?: string | null;
+  created_at?: string | null;
+  customer_id?: string | null;
+  customers?: CustomerSummary | null;
+  tax?: number | string | null;
+  total?: number | string | null;
+};
+
+type PurchaseInvoiceRow = {
+  id: string;
+  invoice_number?: string | null;
+  total_amount?: number | string | null;
+  tax_amount?: number | string | null;
+  status?: string | null;
+  created_at?: string | null;
+  notes?: string | null;
+  supplier_id?: string | null;
+  suppliers?: CustomerSummary | null;
+};
+
+type PurchaseReturnRow = {
+  id: string;
+  return_number?: string | null;
+  total_amount?: number | string | null;
+  status?: string | null;
+  reason?: string | null;
+  created_at?: string | null;
+  supplier_id?: string | null;
+  suppliers?: CustomerSummary | null;
+};
 
 function getStorageKey(orgId: string, docType: string): string {
   return `${STORAGE_KEY_PREFIX}${orgId}_${docType}`;
@@ -12,7 +70,18 @@ export const documentsService = {
   getLocalDocuments(orgId: string, docType: string): BusinessDocument[] {
     try {
       const data = localStorage.getItem(getStorageKey(orgId, docType));
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+
+      const parsed = JSON.parse(data) as BusinessDocument[];
+      const normalized = parsed.map((doc) => normalizeDocumentBillingFields(doc));
+      const changed = normalized.some((doc, index) => {
+        const original = parsed[index];
+        return JSON.stringify(doc) !== JSON.stringify(original);
+      });
+      if (changed) {
+        this.saveLocalDocuments(orgId, docType, normalized);
+      }
+      return normalized;
     } catch {
       return [];
     }
@@ -21,8 +90,8 @@ export const documentsService = {
   saveLocalDocuments(orgId: string, docType: string, docs: BusinessDocument[]) {
     try {
       localStorage.setItem(getStorageKey(orgId, docType), JSON.stringify(docs));
-    } catch (e) {
-      console.error("Failed to save local docs:", e);
+    } catch (error) {
+      console.error("Failed to save local docs:", error);
     }
   },
 
@@ -54,7 +123,7 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && sales) {
-          const supabaseDocs: BusinessDocument[] = sales.map((s: any) => {
+          const supabaseDocs: BusinessDocument[] = (sales as SalesRow[]).map((s) => {
             const customer = s.customers;
             const isEstimate = s.payment_method?.toLowerCase() === "estimate";
             return {
@@ -118,7 +187,6 @@ export const documentsService = {
             id,
             invoice_number,
             total_amount,
-            tax_amount,
             status,
             created_at,
             notes,
@@ -129,8 +197,9 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          const supabaseDocs: BusinessDocument[] = data.map((inv: any) => {
+          const supabaseDocs: BusinessDocument[] = (data as PurchaseInvoiceRow[]).map((inv) => {
             const supplier = inv.suppliers;
+            const total = Number(inv.total_amount || 0);
             return {
               id: inv.id,
               organizationId: orgId,
@@ -143,17 +212,17 @@ export const documentsService = {
               docDate: inv.created_at ? inv.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
               dueDate: undefined,
               items: [],
-              subtotal: Number(inv.total_amount || 0) - Number(inv.tax_amount || 0),
+              subtotal: total,
               discountTotal: 0,
-              taxableTotal: Number(inv.total_amount || 0) - Number(inv.tax_amount || 0),
-              cgstTotal: Number((inv.tax_amount || 0) / 2),
-              sgstTotal: Number((inv.tax_amount || 0) / 2),
+              taxableTotal: total,
+              cgstTotal: 0,
+              sgstTotal: 0,
               igstTotal: 0,
-              taxTotal: Number(inv.tax_amount || 0),
+              taxTotal: 0,
               roundOff: 0,
-              grandTotal: Number(inv.total_amount || 0),
-              paidAmount: inv.status === "received" ? Number(inv.total_amount || 0) : 0,
-              balanceDue: inv.status === "received" ? 0 : Number(inv.total_amount || 0),
+              grandTotal: total,
+              paidAmount: inv.status === "received" ? total : 0,
+              balanceDue: inv.status === "received" ? 0 : total,
               status: (inv.status === "received" ? "paid" : inv.status === "draft" ? "draft" : "unpaid") as DocumentStatus,
               notes: inv.notes || "",
               created_at: inv.created_at,
@@ -191,7 +260,7 @@ export const documentsService = {
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          const supabaseDocs: BusinessDocument[] = data.map((ret: any) => ({
+          const supabaseDocs: BusinessDocument[] = (data as PurchaseReturnRow[]).map((ret) => ({
             id: ret.id,
             organizationId: orgId,
             docType: docType,
@@ -236,6 +305,9 @@ export const documentsService = {
 
   // Save or Update Document
   async saveDocument(doc: BusinessDocument, userId?: string): Promise<BusinessDocument> {
+    if (!doc.id) {
+      doc.id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    }
     const orgId = doc.organizationId;
     const docType = doc.docType;
 
@@ -282,16 +354,28 @@ export const documentsService = {
     }
 
     // 2. If purchase invoice, attempt saving to Supabase purchase_invoices
-    if (docType === "purchase_invoice" && userId && doc.partyId) {
+    // Note: partyId may be a customer UUID (unified party list) or supplier UUID
+    // We try to resolve it against suppliers table; if it fails (customer ID), save without supplier_id FK
+    if (docType === "purchase_invoice" && userId) {
       try {
+        // Check if partyId exists in suppliers table
+        let resolvedSupplierId: string | null = null;
+        if (doc.partyId) {
+          const { data: suppCheck } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("id", doc.partyId)
+            .maybeSingle();
+          if (suppCheck) resolvedSupplierId = doc.partyId;
+        }
+
         const { data: piData, error: piErr } = await supabase
           .from("purchase_invoices")
           .insert({
             organization_id: orgId,
-            supplier_id: doc.partyId,
+            supplier_id: resolvedSupplierId, // null if party is a customer, not a supplier
             invoice_number: doc.documentNumber,
             total_amount: doc.grandTotal,
-            tax_amount: doc.taxTotal,
             status: doc.status === "paid" ? "received" : "sent",
             notes: doc.notes || null,
             created_by: userId,
@@ -306,8 +390,8 @@ export const documentsService = {
               purchase_invoice_id: piData.id,
               product_id: it.productId || null,
               quantity: it.quantity,
-              unit_cost: it.rate,
-              tax_rate: it.taxRate,
+              cost_price: it.rate,
+              mrp: it.rate,
               batch_number: it.batchNumber || "BATCH-01",
               expiry_date: it.expiryDate || null,
             }));
@@ -322,6 +406,7 @@ export const documentsService = {
     // 3. Save / Update in Local Storage cache
     const existingList = this.getLocalDocuments(orgId, docType);
     const index = existingList.findIndex((d) => d.id === doc.id || d.documentNumber === doc.documentNumber);
+    const previousDoc = index >= 0 ? existingList[index] : undefined;
 
     if (index >= 0) {
       existingList[index] = { ...doc, updated_at: new Date().toISOString() };
@@ -330,12 +415,25 @@ export const documentsService = {
     }
 
     this.saveLocalDocuments(orgId, docType, existingList);
+
+    // 4. Update Inventory Stock (Deduct on sales/challan, Add on purchases/credit returns)
+    try {
+      if (previousDoc) {
+        await stockService.handleDocumentStock(doc, "update", previousDoc);
+      } else {
+        await stockService.handleDocumentStock(doc, "create");
+      }
+    } catch (stockErr) {
+      console.warn("Stock handling notice in saveDocument:", stockErr);
+    }
+
     return doc;
   },
 
   // Delete Document
   async deleteDocument(orgId: string, docType: string, docId: string): Promise<boolean> {
     const list = this.getLocalDocuments(orgId, docType);
+    const targetDoc = list.find((d) => d.id === docId);
     const updated = list.filter((d) => d.id !== docId);
     this.saveLocalDocuments(orgId, docType, updated);
 
@@ -343,14 +441,27 @@ export const documentsService = {
     if (docType === "sales_invoice") {
       try {
         await supabase.from("sales").delete().eq("id", docId);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to delete sales document from Supabase:", error);
+      }
     }
 
     // If purchase invoice
     if (docType === "purchase_invoice") {
       try {
         await supabase.from("purchase_invoices").delete().eq("id", docId);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to delete purchase document from Supabase:", error);
+      }
+    }
+
+    // Revert inventory stock effect on document deletion
+    if (targetDoc) {
+      try {
+        await stockService.handleDocumentStock(targetDoc, "delete");
+      } catch (stockErr) {
+        console.warn("Stock revert notice in deleteDocument:", stockErr);
+      }
     }
 
     return true;
@@ -362,7 +473,7 @@ export const documentsService = {
     let paidAmount = 0;
     let unpaidAmount = 0;
     let cancelledAmount = 0;
-    let totalCount = docs.length;
+    const totalCount = docs.length;
     let paidCount = 0;
     let unpaidCount = 0;
     let cancelledCount = 0;

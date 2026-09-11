@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
@@ -11,6 +13,7 @@ import {
   ShoppingCart,
   ArrowUpDown,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   CheckCircle2,
   Calendar,
@@ -19,6 +22,7 @@ import {
   X,
   FileSpreadsheet,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +34,12 @@ interface AuditEntry {
   action: string;
   entity_type: string;
   entity_id: string | null;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   created_at: string;
   profile?: { full_name: string | null };
 }
 
-const actionIcons: Record<string, { icon: any; color: string; bg: string }> = {
+const actionIcons: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
   sale: { icon: ShoppingCart, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
   stock_adjustment: { icon: ArrowUpDown, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
   product: { icon: Package, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
@@ -60,19 +64,7 @@ export default function ActivityLog() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  useEffect(() => {
-    if (orgLoading) return;
-
-    if (!orgId) {
-      setLogs([]);
-      setLoading(false);
-      return;
-    }
-
-    fetchLogs();
-  }, [orgId, orgLoading]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
     try {
@@ -91,22 +83,17 @@ export default function ActivityLog() {
 
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map((d) => d.user_id))].filter(Boolean);
-        let profiles: any[] | undefined = undefined;
-        if (userIds.length > 0) {
-          const { data: pData, error: pError } = await supabase
-            .from("profiles")
-            .select("id, full_name")
-            .in("id", userIds);
-          if (pError) {
-            console.error("fetchLogs profiles error:", pError);
-          } else {
-            profiles = pData || [];
-          }
-        }
+        const profiles: Array<{ id: string; full_name: string | null }> | undefined =
+          userIds.length > 0
+            ? (await supabase
+                .from("profiles")
+                .select("id, full_name")
+                .in("id", userIds)).data ?? []
+            : [];
 
         const enriched: AuditEntry[] = data.map((d) => ({
           ...d,
-          details: (d.details as Record<string, any>) || {},
+          details: typeof d.details === "object" && d.details !== null ? (d.details as Record<string, unknown>) : {},
           profile: profiles?.find((p) => p.id === d.user_id) || undefined,
         }));
         setLogs(enriched);
@@ -119,7 +106,19 @@ export default function ActivityLog() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
+
+  useEffect(() => {
+    if (orgLoading) return;
+
+    if (!orgId) {
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchLogs();
+  }, [fetchLogs, orgId, orgLoading]);
 
   const entityTypes = useMemo(() => {
     return Array.from(new Set(logs.map((l) => l.entity_type))).filter(Boolean);
@@ -140,6 +139,20 @@ export default function ActivityLog() {
   const activeStaffCount = useMemo(() => {
     return new Set(logs.map((l) => l.user_id).filter(Boolean)).size;
   }, [logs]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedLogs,
+    totalPages,
+    totalItems: totalLogCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   if (orgLoading || loading) {
     return (
@@ -281,7 +294,7 @@ export default function ActivityLog() {
           </div>
         ) : (
           <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-border">
-            {filtered.map((log) => {
+            {paginatedLogs.map((log) => {
               const meta = actionIcons[log.entity_type] || {
                 icon: Activity,
                 color: "text-primary",
@@ -377,6 +390,22 @@ export default function ActivityLog() {
                 </div>
               );
             })}
+
+            {/* Pagination */}
+            <div className="pt-4">
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalLogCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
           </div>
         )}
       </div>

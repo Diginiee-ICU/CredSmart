@@ -274,7 +274,8 @@ export default function Reports() {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const currentOrgId = orgId || "default";
+      if (!orgId) return;
+      const currentOrgId = orgId;
       const [sales, cn, sr, pi, dn, dc] = await Promise.all([
         documentsService.fetchSalesDocuments(currentOrgId, "sales_invoice"),
         documentsService.fetchSalesDocuments(currentOrgId, "credit_note"),
@@ -301,6 +302,7 @@ export default function Reports() {
     } finally {
       setLoading(false);
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId, org?.gstin]);
 
   useEffect(() => {

@@ -134,8 +134,9 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right";
     variant?: "sidebar" | "floating" | "inset";
     collapsible?: "offcanvas" | "icon" | "none";
+    theme?: "default" | "glass";
   }
->(({ side = "left", variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
+>(({ side = "left", variant = "sidebar", collapsible = "offcanvas", theme = "default", className, children, ...props }, ref) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
@@ -156,14 +157,17 @@ const Sidebar = React.forwardRef<
         <SheetContent
           data-sidebar="sidebar"
           data-mobile="true"
-          className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-          side={side}
-        >
+                  className={cn(
+                    "w-[--sidebar-width] p-0 [&>button]:hidden",
+                    theme === "glass" ? "liquid-glass text-card-foreground" : "bg-sidebar text-sidebar-foreground"
+                  )}
+                  style={
+                    {
+                      "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+                    } as React.CSSProperties
+                  }
+                  side={side}
+                >
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
@@ -206,7 +210,10 @@ const Sidebar = React.forwardRef<
       >
         <div
           data-sidebar="sidebar"
-          className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          className={cn(
+            "flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow",
+            theme === "glass" ? "liquid-glass text-card-foreground" : "bg-sidebar text-sidebar-foreground"
+          )}
         >
           {children}
         </div>
@@ -633,5 +640,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+// eslint-disable-next-line react-refresh/only-export-components
   useSidebar,
 };

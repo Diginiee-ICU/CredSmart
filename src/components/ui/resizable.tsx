@@ -1,3 +1,4 @@
+import * as React from "react";
 import { GripVertical } from "lucide-react";
 import * as ResizablePrimitive from "react-resizable-panels";
 
@@ -10,7 +11,12 @@ const ResizablePanelGroup = ({ className, ...props }: React.ComponentProps<typeo
   />
 );
 
-const ResizablePanel = ResizablePrimitive.Panel;
+const ResizablePanel = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof ResizablePrimitive.Panel> & { variant?: "default" | "glass" }>(
+  ({ className, variant = "default", ...props }, ref) => (
+    <ResizablePrimitive.Panel ref={ref} className={cn(variant === "glass" ? "liquid-glass" : "", className)} {...props} />
+  )
+);
+ResizablePanel.displayName = "ResizablePanel";
 
 const ResizableHandle = ({
   withHandle,

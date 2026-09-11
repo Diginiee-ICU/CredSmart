@@ -1,0 +1,231 @@
+diff --git a/src/components/PurchaseInvoiceModal.tsx b/src/components/PurchaseInvoiceModal.tsx
+index 3a3e753..8c8f079 100644
+--- a/src/components/PurchaseInvoiceModal.tsx
++++ b/src/components/PurchaseInvoiceModal.tsx
+@@ -158,6 +158,35 @@ export function PurchaseInvoiceModal({
+   const [newSuppGstin, setNewSuppGstin] = useState("");
+   const [newSuppAddress, setNewSuppAddress] = useState("");
+ 
++  // Billing Address fields (new)
++  const [billingAddress, setBillingAddress] = useState("");
++  const [billingPincode, setBillingPincode] = useState("");
++  const [billingPlaceOfSupply, setBillingPlaceOfSupply] = useState("27-Maharashtra");
++  const [sameAsSupplier, setSameAsSupplier] = useState(false);
++
++  // Sync billing when 'same as above' toggled or party address/state changes
++  useEffect(() => {
++    if (sameAsSupplier) {
++      setBillingAddress(partyAddress || "");
++      setBillingPincode("");
++      setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
++    }
++  }, [sameAsSupplier, partyAddress, placeOfSupply]);
++
++  const handleBillingAddressChange = (value: string) => {
++    setBillingAddress(value);
++    if (sameAsSupplier && value !== (partyAddress || "")) {
++      setSameAsSupplier(false);
++    }
++  };
++
++  const handleBillingPlaceChange = (value: string) => {
++    setBillingPlaceOfSupply(value);
++    if (sameAsSupplier && value !== (placeOfSupply || "27-Maharashtra")) {
++      setSameAsSupplier(false);
++    }
++  };
++
+   // Purchase Bill Details
+   const [billPrefix, setBillPrefix] = useState("PUR/26-27/");
+   const [billNumberSeq, setBillNumberSeq] = useState("201");
+@@ -267,6 +296,10 @@ export function PurchaseInvoiceModal({
+   const [showPaymentQr, setShowPaymentQr] = useState(true);
+   const [upiId, setUpiId] = useState("");
+ 
++  // Signature & Stamp
++  const [showStamp, setShowStamp] = useState(true);
++  const [stampUrl, setStampUrl] = useState<string>("");
++
+   // Financial Calculations & Settlement
+   const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
+   const [additionalChargesAmount, setAdditionalChargesAmount] = useState<number>(0);
+@@ -306,6 +339,7 @@ export function PurchaseInvoiceModal({
+           });
+         }
+         if (parsed.upiId) setUpiId(parsed.upiId);
++        if (parsed.signatureUrl) setStampUrl(parsed.signatureUrl);
+       } else if (org) {
+         if (org.upi_id) setUpiId(org.upi_id);
+         if (org.account_number) {
+@@ -439,6 +473,14 @@ export function PurchaseInvoiceModal({
+         setPartyPhone(editingDoc.partyPhone || "");
+         setPartyGstin(editingDoc.partyGstin || "");
+         setPartyAddress(editingDoc.partyAddress || "");
++        
++        // Billing fields from editing document (if available)
++        const legacyBillingAddress = editingDoc.billingAddress ?? editingDoc.partyAddress ?? "";
++        setBillingAddress(legacyBillingAddress);
++        setBillingPincode(editingDoc.billingPincode || "");
++        setBillingPlaceOfSupply(editingDoc.billingPlaceOfSupply || editingDoc.placeOfSupply || "27-Maharashtra");
++        setSameAsSupplier(Boolean(editingDoc.partyAddress && legacyBillingAddress === editingDoc.partyAddress));
++        
+         setPlaceOfSupply(editingDoc.placeOfSupply || "27-Maharashtra");
+         setDocDate(editingDoc.docDate || new Date().toISOString().split("T")[0]);
+         if (editingDoc.dueDate) {
+@@ -467,6 +509,11 @@ export function PurchaseInvoiceModal({
+         setPartyPhone("");
+         setPartyGstin("");
+         setPartyAddress("");
++        // Reset billing fields for new document
++        setBillingAddress("");
++        setBillingPincode("");
++        setBillingPlaceOfSupply("27-Maharashtra");
++        setSameAsSupplier(false);
+         setDocDate(new Date().toISOString().split("T")[0]);
+         setShowDueDate(false);
+         setEwayBillNo("");
+@@ -864,6 +911,9 @@ export function PurchaseInvoiceModal({
+ 
+     setSaving(true);
+     try {
++      const resolvedBillingAddress = sameAsSupplier ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
++      const resolvedBillingPlaceOfSupply = sameAsSupplier ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
++
+       const finalDoc: Omit<BusinessDocument, "id"> = {
+         organizationId: orgId,
+         docType,
+@@ -874,6 +924,9 @@ export function PurchaseInvoiceModal({
+         partyPhone: partyPhone.trim() || undefined,
+         partyGstin: partyGstin.trim() || undefined,
+         partyAddress: partyAddress.trim() || undefined,
++        billingAddress: resolvedBillingAddress,
++        billingPincode: sameAsSupplier ? undefined : (billingPincode.trim() || undefined),
++        billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
+         placeOfSupply,
+         docDate,
+         dueDate: showDueDate ? dueDate : docDate,
+@@ -900,6 +953,7 @@ export function PurchaseInvoiceModal({
+         notes: showNotes ? notes : undefined,
+         terms,
+         transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
++        signatureUrl: showStamp && stampUrl ? stampUrl : undefined,
+         created_at: editingDoc?.created_at || new Date().toISOString(),
+       };
+ 
+@@ -1321,6 +1375,76 @@ export function PurchaseInvoiceModal({
+                       </div>
+                     </div>
+                   )}
++
++                  {/* Shipping & Billing Details */}
++                  <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
++                    <div className="flex items-center justify-between gap-3">
++                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
++                        Billing Address
++                      </Label>
++                      <div className="flex items-center gap-2">
++                        <Checkbox
++                          id="same-as-supplier-address"
++                          checked={sameAsSupplier}
++                          onCheckedChange={(checked) => {
++                            const isChecked = Boolean(checked);
++                            setSameAsSupplier(isChecked);
++                            if (isChecked) {
++                              setBillingAddress(partyAddress || "");
++                              setBillingPincode("");
++                              setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
++                            }
++                          }}
++                        />
++                        <Label htmlFor="same-as-supplier-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
++                          Same as party address
++                        </Label>
++                      </div>
++                    </div>
++
++                    <Textarea
++                      value={billingAddress}
++                      onChange={(e) => handleBillingAddressChange(e.target.value)}
++                      disabled={sameAsSupplier}
++                      placeholder="Enter billing address"
++                      className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
++                    />
++
++                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
++                      <div>
++                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
++                          Pincode
++                        </Label>
++                        <Input
++                          value={billingPincode}
++                          onChange={(e) => {
++                            setBillingPincode(e.target.value);
++                            if (sameAsSupplier) setSameAsSupplier(false);
++                          }}
++                          placeholder="400001"
++                          className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
++                        />
++                      </div>
++
++                      <div>
++                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
++                          State
++                        </Label>
++                        <Select value={billingPlaceOfSupply} onValueChange={handleBillingPlaceChange}>
++                          <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
++                            <SelectValue />
++                          </SelectTrigger>
++                          <SelectContent>
++                            {INDIAN_STATES_AND_CODES.map((state) => (
++                              <SelectItem key={state} value={state}>
++                                {state}
++                              </SelectItem>
++                            ))}
++                          </SelectContent>
++                        </Select>
++                      </div>
++                    </div>
++                  </div>
+                 </div>
+ 
+                 {/* PURCHASE BILL DETAILS CARD */}
+@@ -2187,6 +2311,39 @@ export function PurchaseInvoiceModal({
+                       Γé╣ {Math.max(0, totals.grandTotal - amountPaid).toFixed(2)}
+                     </span>
+                   </div>
++                  {/* Stamp / Signature Box */}
++                  {showStamp && (
++                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col items-end">
++                      <div className="w-36 h-16 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-center p-1 overflow-hidden">
++                        {stampUrl ? (
++                          <img src={stampUrl} alt="Store Stamp" className="max-h-full max-w-full object-contain" />
++                        ) : (
++                          <div className="text-center">
++                            <span className="text-[10px] text-muted-foreground font-serif italic">Authorized Signatory</span>
++                          </div>
++                        )}
++                      </div>
++                      <div className="flex items-center gap-2 text-[11px] mt-1.5">
++                        <button
++                          type="button"
++                          onClick={() => setShowStamp(false)}
++                          className="text-rose-500 hover:underline flex items-center gap-0.5 cursor-pointer"
++                        >
++                          <Trash2 className="w-3 h-3" /> Remove
++                        </button>
++                        <button
++                          type="button"
++                          onClick={() => {
++                            const newUrl = prompt("Enter Signature / Stamp Image URL:", stampUrl);
++                            if (newUrl !== null) setStampUrl(newUrl);
++                          }}
++                          className="text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
++                        >
++                          <RotateCcw className="w-3 h-3" /> Change
++                        </button>
++                      </div>
++                    </div>
++                  )}
+                 </div>
+               </div>
+             </div>

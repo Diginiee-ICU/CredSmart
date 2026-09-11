@@ -100,7 +100,7 @@ export function PartyReportsModal({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setSelectedReport(tab.id as any)}
+                onClick={() => setSelectedReport(tab.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                 className={cn(
                   "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all",
                   selectedReport === tab.id

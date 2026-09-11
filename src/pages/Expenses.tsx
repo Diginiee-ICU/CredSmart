@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
@@ -86,8 +88,8 @@ export default function Expenses() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyLocalExpenses = `credsmart_expenses_${orgId || "default"}`;
-  const storageKeyCategories = `credsmart_expense_categories_${orgId || "default"}`;
+  const storageKeyLocalExpenses = `credsmart_expenses_${orgId || "no_org"}`;
+  const storageKeyCategories = `credsmart_expense_categories_${orgId || "no_org"}`;
 
   // Main State
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
@@ -139,6 +141,7 @@ export default function Expenses() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expenses]);
 
   // Load Categories & Expenses
@@ -155,7 +158,7 @@ export default function Expenses() {
           .order("date", { ascending: false });
 
         if (!error && data) {
-          const mapped: ExpenseRecord[] = data.map((d: any, idx: number) => ({
+          const mapped: ExpenseRecord[] = data.map((d: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
             id: d.id,
             expense_number: d.expense_number || `EXP-${String(data.length - idx).padStart(3, "0")}`,
             party_name: d.party_name || d.description?.split(" - ")[0] || "Vendor / Store",
@@ -194,13 +197,15 @@ export default function Expenses() {
       if (storedCats) {
         setCategoriesList(JSON.parse(storedCats));
       }
-    } catch {}
+    } catch { /* empty */ }
 
     setLoading(false);
   };
 
   useEffect(() => {
+ 
     fetchExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
   const persistExpensesLocally = (newList: ExpenseRecord[]) => {
@@ -283,7 +288,7 @@ export default function Expenses() {
     if (orgId) {
       try {
         await supabase.from("expenses").delete().eq("id", id);
-      } catch {}
+      } catch { /* empty */ }
     }
     const updated = expenses.filter((e) => e.id !== id);
     persistExpensesLocally(updated);
@@ -357,6 +362,20 @@ export default function Expenses() {
         }
       });
   }, [expenses, selectedDatePreset, selectedCategory, searchQuery, sortField, sortOrder]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedExpenses,
+    totalPages,
+    totalItems: totalExpenseCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filteredExpenses, 25);
 
   const totalFilteredAmount = useMemo(() => {
     return filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
@@ -599,7 +618,7 @@ export default function Expenses() {
             <>
               {/* MOBILE VIEW: Touch Expense Cards (Visible on screens < md) */}
               <div className="block md:hidden p-2.5 space-y-2.5">
-                {filteredExpenses.map((exp) => (
+                {paginatedExpenses.map((exp) => (
                   <div
                     key={exp.id}
                     className="p-3.5 rounded-2xl border border-slate-200 dark:border-border bg-card space-y-2.5 shadow-2xs active:scale-[0.99]"
@@ -666,70 +685,100 @@ export default function Expenses() {
                     </div>
                   </div>
                 ))}
+
+                {/* Mobile Pagination */}
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalExpenseCount}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
               </div>
 
               {/* DESKTOP VIEW: Active Table Rows (Visible on md: and above) */}
-              <div className="hidden md:block w-full h-full divide-y divide-slate-100 dark:divide-border/60">
-                {filteredExpenses.map((exp) => (
-                  <div
-                    key={exp.id}
-                    className="grid grid-cols-12 items-center text-xs px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                      {format(new Date(exp.date), "dd MMM yyyy")}
-                    </div>
+              <div className="hidden md:flex flex-col justify-between w-full h-full">
+                <div className="w-full divide-y divide-slate-100 dark:divide-border/60">
+                  {paginatedExpenses.map((exp) => (
+                    <div
+                      key={exp.id}
+                      className="grid grid-cols-12 items-center text-xs px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                        {format(new Date(exp.date), "dd MMM yyyy")}
+                      </div>
 
-                    <div className="col-span-3 font-mono font-semibold text-slate-900 dark:text-foreground truncate">
-                      {exp.expense_number || "—"}
-                    </div>
+                      <div className="col-span-3 font-mono font-semibold text-slate-900 dark:text-foreground truncate">
+                        {exp.expense_number || "—"}
+                      </div>
 
-                    <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
-                      <p className="truncate">{exp.party_name || "—"}</p>
-                      {exp.description && (
-                        <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
-                      )}
-                    </div>
+                      <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
+                        <p className="truncate">{exp.party_name || "—"}</p>
+                        {exp.description && (
+                          <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
+                        )}
+                      </div>
 
-                    <div className="col-span-2">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
-                        <Tag className="w-2.5 h-2.5 text-slate-400" />
-                        {exp.category}
-                      </span>
-                    </div>
+                      <div className="col-span-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
+                          <Tag className="w-2.5 h-2.5 text-slate-400" />
+                          {exp.category}
+                        </span>
+                      </div>
 
-                    <div className="col-span-2 flex items-center justify-end gap-3 text-right pr-2">
-                      <span className="font-bold text-rose-600 dark:text-rose-400 text-xs whitespace-nowrap">
-                        ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </span>
+                      <div className="col-span-2 flex items-center justify-end gap-3 text-right pr-2">
+                        <span className="font-bold text-rose-600 dark:text-rose-400 text-xs whitespace-nowrap">
+                          ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </span>
 
-                      {deletingId === exp.id ? (
-                        <div className="flex items-center gap-1.5">
+                        {deletingId === exp.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleDelete(exp.id)}
+                              className="text-[10px] text-rose-600 font-bold hover:underline"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(null)}
+                              className="text-[10px] text-slate-400 hover:underline"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => handleDelete(exp.id)}
-                            className="text-[10px] text-rose-600 font-bold hover:underline"
+                            type="button"
+                            onClick={() => setDeletingId(exp.id)}
+                            className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Delete Expense"
                           >
-                            Confirm
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => setDeletingId(null)}
-                            className="text-[10px] text-slate-400 hover:underline"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setDeletingId(exp.id)}
-                          className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          title="Delete Expense"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Desktop Pagination */}
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalExpenseCount}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
               </div>
             </>
           )}

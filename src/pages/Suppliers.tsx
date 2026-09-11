@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
@@ -22,6 +24,7 @@ import {
   ExternalLink,
   Sparkles,
   KeyRound,
+  ShoppingBag,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +50,10 @@ interface Supplier {
   address: string | null;
   created_at: string;
   balance: number;
+  custom_fields?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
+  customItems?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
 }
 
 interface FormData {
@@ -81,7 +88,14 @@ export default function Suppliers() {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditDesc, setCreditDesc] = useState("");
   const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
-  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+  type CreditHistoryEntry = {
+    id: string;
+    amount: number | string | null;
+    type: "credit" | "payment";
+    description: string | null;
+    created_at: string;
+  };
+  const [creditHistory, setCreditHistory] = useState<CreditHistoryEntry[]>([]);
 
   const triggerGstAutoFill = async (targetId: string, showToast = true) => {
     const clean = targetId.trim().toUpperCase();
@@ -118,9 +132,10 @@ export default function Suppliers() {
           toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (showToast) {
-        toast.error(err?.message || "Failed to fetch tax details.");
+        const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to fetch tax details.";
+        toast.error(message);
       }
     } finally {
       setIsLookingUpGst(false);
@@ -150,7 +165,7 @@ export default function Suppliers() {
     try {
       const { data, error } = await supabase
         .from("suppliers")
-        .select("id, name, phone, email, gstin, address, created_at")
+        .select("id, name, phone, email, gstin, address, created_at, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -177,7 +192,37 @@ export default function Suppliers() {
         balanceMap[c.party_id] += c.type === "credit" ? Number(c.amount || 0) : -Number(c.amount || 0);
       });
 
-      if (data) setSuppliers(data.map((s) => ({ ...s, balance: balanceMap[s.id] || 0 })));
+      if (data) {
+        setSuppliers(
+          data.map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+            let cf = s.custom_fields;
+            if (typeof cf === "string") {
+              try {
+                cf = JSON.parse(cf);
+              } catch {
+                cf = {};
+              }
+            }
+            if (!cf || typeof cf !== "object") cf = {};
+            const customItems = Array.isArray(cf.customItems)
+              ? cf.customItems
+              : Array.isArray(cf.custom_items)
+              ? cf.custom_items
+              : [];
+            const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+            const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+            return {
+              ...s,
+              balance: balanceMap[s.id] || 0,
+              custom_fields: cf,
+              customItems,
+              keepSamePrice,
+              keepSameInventory,
+            };
+          })
+        );
+      }
     } catch (err) {
       console.error("fetchSuppliers unexpected error:", err);
       setSuppliers([]);
@@ -208,6 +253,20 @@ export default function Suppliers() {
       return matchSearch && matchFilter;
     });
   }, [suppliers, search, filterType]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const gstinSuppliersCount = useMemo(() => {
     return suppliers.filter((s) => s.gstin && s.gstin.trim().length > 0).length;
@@ -284,6 +343,14 @@ export default function Suppliers() {
         if (error) throw error;
         toast.success("Supplier updated successfully");
       } else {
+        const normName = nameTrimmed.toLowerCase();
+        const existing = suppliers.find((s) => s.name.trim().toLowerCase() === normName);
+        if (existing) {
+          toast.error(`A supplier named "${nameTrimmed}" already exists!`);
+          setSaving(false);
+          return;
+        }
+
         const { error } = await supabase.from("suppliers").insert({
           organization_id: orgId,
           name: nameTrimmed,
@@ -297,8 +364,9 @@ export default function Suppliers() {
       }
       setShowForm(false);
       fetchSuppliers();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save supplier");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save supplier";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -317,9 +385,10 @@ export default function Suppliers() {
         toast.success("Supplier deleted");
         fetchSuppliers();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDelete error:", err);
-      toast.error(err.message || "Failed to delete");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete";
+      toast.error(message);
     }
     setDeleteConfirm(null);
   };
@@ -373,9 +442,10 @@ export default function Suppliers() {
       toast.success(creditType === "credit" ? "Credit recorded" : "Payment recorded");
       setCreditModal(null);
       fetchSuppliers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleCreditSubmit error:", err);
-      toast.error(err.message || "Failed to save credit transaction");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save credit transaction";
+      toast.error(message);
     }
   };
 
@@ -588,7 +658,7 @@ export default function Suppliers() {
           <>
             {/* Mobile View: Cards */}
             <div className="block md:hidden divide-y divide-border">
-              {filtered.map((s) => (
+              {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -697,7 +767,7 @@ export default function Suppliers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filtered.map((s) => (
+                  {paginatedItems.map((s) => (
                     <tr key={s.id} className="hover:bg-muted/30 transition-colors group">
                       {/* Name */}
                       <td className="px-5 py-4">
@@ -833,6 +903,19 @@ export default function Suppliers() {
                 </tbody>
               </table>
             </div>
+
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </>
         )}
       </div>

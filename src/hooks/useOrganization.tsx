@@ -37,6 +37,7 @@ export interface OrgContextValue {
   loading: boolean;
   refresh: () => Promise<void>;
   userRole: string | null;
+  userPermissions: Record<string, boolean> | null;
   switchOrganization: (id: string) => Promise<void>;
   createOrganization: (data: {
     name: string;
@@ -94,9 +95,34 @@ interface OnboardingProductSeed {
   batchNumber: string;
 }
 
+// Minimal shape for scraped product payloads coming from onboarding flows
+interface ScrapedProductMinimal {
+  name?: string;
+  barcode?: string;
+  brand?: string;
+  category?: string;
+  costPrice?: number | string;
+  mrp?: number | string;
+}
+
 interface MembershipRow {
   organization_id: string;
   role: string;
+}
+
+// Lightweight typed view of organization rows returned from Supabase
+interface OrganizationRow {
+  id: string;
+  name?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  gstin?: string;
+  pan?: string;
+  invoice_prefix?: string;
+  logo_url?: string;
+  tax_rate?: number;
+  business_type?: string;
 }
 
 type BootstrapOrgResult = {
@@ -105,6 +131,7 @@ type BootstrapOrgResult = {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getPendingOnboarding = (): PendingOnboardingData | null => {
   try {
     const raw = localStorage.getItem(PENDING_ONBOARDING_KEY) || localStorage.getItem(LEGACY_PENDING_ONBOARDING_KEY);
@@ -114,13 +141,13 @@ export const getPendingOnboarding = (): PendingOnboardingData | null => {
 
     // New format: { __savedAt: number, payload: PendingOnboardingData }
     if (parsed && typeof parsed === "object" && "__savedAt" in parsed && "payload" in parsed) {
-      const savedAt = Number((parsed as any).__savedAt) || 0;
+      const savedAt = Number((parsed as { __savedAt?: unknown }).__savedAt) || 0;
       if (Date.now() - savedAt > PENDING_ONBOARDING_TTL_MS) {
         localStorage.removeItem(PENDING_ONBOARDING_KEY);
         localStorage.removeItem(LEGACY_PENDING_ONBOARDING_KEY);
         return null;
       }
-      return (parsed as any).payload as PendingOnboardingData;
+      return (parsed as { payload?: PendingOnboardingData }).payload as PendingOnboardingData;
     }
 
     // Legacy format: raw payload object
@@ -132,6 +159,7 @@ export const getPendingOnboarding = (): PendingOnboardingData | null => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const setPendingOnboarding = (payload: PendingOnboardingData) => {
   try {
     const wrapper = { __savedAt: Date.now(), payload };
@@ -141,6 +169,7 @@ export const setPendingOnboarding = (payload: PendingOnboardingData) => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const clearPendingOnboarding = () => {
   try {
     localStorage.removeItem(PENDING_ONBOARDING_KEY);
@@ -178,6 +207,7 @@ interface LocalOrgRecord {
   role?: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getLocalOrgRegistry = (userId: string): LocalOrgRecord[] => {
   try {
     const raw = localStorage.getItem(`credsmart_org_registry_${userId}`);
@@ -189,6 +219,7 @@ export const getLocalOrgRegistry = (userId: string): LocalOrgRecord[] => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const saveLocalOrgRegistry = (userId: string, org: LocalOrgRecord) => {
   try {
     const current = getLocalOrgRegistry(userId);
@@ -197,7 +228,7 @@ export const saveLocalOrgRegistry = (userId: string, org: LocalOrgRecord) => {
       ? current.map((o) => (o.id === org.id ? { ...o, ...org } : o))
       : [org, ...current];
     localStorage.setItem(`credsmart_org_registry_${userId}`, JSON.stringify(updated));
-  } catch {}
+  } catch { /* empty */ }
 };
 
 const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => {
@@ -242,7 +273,7 @@ const fetchMembership = async (userId: string) => {
   return all.length > 0 ? all[0] : null;
 };
 
-const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | { businessType: string; scrapedProducts?: any[] }) => {
+const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | { businessType: string; scrapedProducts?: ScrapedProductMinimal[] }) => {
   const baseSeeds = seedProductsByBusinessType[payload.businessType] || seedProductsByBusinessType["Other"];
   const scraped = payload.scrapedProducts || [];
 
@@ -257,7 +288,7 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
       stock: sp.batch.stock,
       batchNumber: sp.batch.batchNumber,
     })),
-    ...scraped.map((sp: any, idx: number) => ({
+    ...scraped.map((sp: ScrapedProductMinimal, idx: number) => ({
       name: sp.name,
       barcode: sp.barcode,
       brand: sp.brand,
@@ -267,6 +298,7 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
       stock: 0,
       batchNumber: `IMPORTED-${String(idx + 1).padStart(2, "0")}`,
     })),
+
   ].filter((p) => p.name.trim().length > 0);
 
   if (onboardingProducts.length === 0) return;
@@ -382,13 +414,13 @@ const saveOrgBankAndUpi = (
     if (invoiceSettingsRaw) {
       try {
         const parsed = JSON.parse(invoiceSettingsRaw);
-        parsed.bankAccounts = [bankAccount];
-        parsed.selectedBankAccountId = bankAccount.id;
+        parsed.bankAccounts = bankAccounts;
+        parsed.selectedBankAccountId = bankAccounts[0]?.id || '';
         if (details.upiId) {
           parsed.selectedPaymentQrUpi = details.upiId;
         }
         localStorage.setItem("credsmart_invoice_settings", JSON.stringify(parsed));
-      } catch {}
+      } catch { /* empty */ }
     }
   } catch (e) {
     console.warn("Failed to cache organization bank & upi details:", e);
@@ -529,6 +561,7 @@ const OrgContext = createContext<OrgContextValue>({
   loading: true,
   refresh: async () => {},
   userRole: null,
+  userPermissions: null,
   switchOrganization: async () => {},
   createOrganization: async () => null,
 });
@@ -540,6 +573,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<OrgData[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
   const provisionAttemptedRef = useRef<Set<string>>(new Set());
 
   const fetchOrg = useCallback(async () => {
@@ -598,11 +632,24 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       setOrgId(currentActiveOrgId);
       localStorage.setItem(ACTIVE_ORG_KEY, currentActiveOrgId);
-      setUserRole(matchedMembership.role === "cashier" ? "cashier" : "store_owner");
+      setUserRole(matchedMembership.role || "store_owner");
+
+      // Load granular custom feature permissions
+      const permsKey = `org_user_permissions_${currentActiveOrgId}_${user.id}`;
+      const savedPerms = localStorage.getItem(permsKey);
+      if (savedPerms) {
+        try {
+          setUserPermissions(JSON.parse(savedPerms));
+        } catch {
+          setUserPermissions(null);
+        }
+      } else {
+        setUserPermissions(null);
+      }
 
       // Fetch all organizations user has access to from DB
       const orgIds = memberships.map((m) => m.organization_id);
-      let orgRows: any[] = [];
+      let orgRows: OrganizationRow[] = [];
       try {
         const { data: dbRows, error: orgError } = await supabase
           .from("organizations")
@@ -610,7 +657,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           .in("id", orgIds);
 
         if (!orgError && dbRows) {
-          orgRows = dbRows;
+          orgRows = dbRows as OrganizationRow[];
         } else if (orgError) {
           console.warn("Notice loading remote organization details:", orgError.message);
         }
@@ -647,7 +694,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
               accountHolder = b.accountHolder || "";
             }
           }
-        } catch {}
+        } catch { /* empty */ }
 
         const name = row?.name || local?.name || "My Store";
         const address = row?.address || local?.address || "";
@@ -833,7 +880,26 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchOrg();
-  }, [fetchOrg]);
+
+    const handlePermissionsUpdated = () => {
+      if (orgId && user) {
+        const permsKey = `org_user_permissions_${orgId}_${user.id}`;
+        const savedPerms = localStorage.getItem(permsKey);
+        if (savedPerms) {
+          try {
+            setUserPermissions(JSON.parse(savedPerms));
+          } catch {
+            setUserPermissions(null);
+          }
+        } else {
+          setUserPermissions(null);
+        }
+      }
+    };
+
+    window.addEventListener("credsmart_permissions_updated", handlePermissionsUpdated);
+    return () => window.removeEventListener("credsmart_permissions_updated", handlePermissionsUpdated);
+  }, [fetchOrg, orgId, user]);
 
   return (
     <OrgContext.Provider
@@ -844,6 +910,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         loading,
         refresh: fetchOrg,
         userRole,
+        userPermissions,
         switchOrganization,
         createOrganization,
       }}
@@ -853,6 +920,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useOrganization() {
   return useContext(OrgContext);
 }

@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
   RotateCcw,
+  Undo2,
   Check,
   Clock,
   X,
@@ -104,7 +107,18 @@ export default function PurchaseReturns() {
         console.error("fetchReturns error:", error);
         setReturns([]);
       } else if (data) {
-        setReturns(data.map((r: any) => ({
+        type SupplierJoin = { name?: string | null };
+        type PurchaseReturnRow = {
+          id: string;
+          return_number: string;
+          reason: string | null;
+          total_amount: number | string | null;
+          status: "draft" | "completed";
+          created_at: string;
+          suppliers?: SupplierJoin | null;
+          purchase_return_items?: Array<{ id: string }> | null;
+        };
+        setReturns((data as PurchaseReturnRow[]).map((r) => ({
           id: r.id,
           return_number: r.return_number,
           supplier_name: r.suppliers?.name || "Unknown",
@@ -195,8 +209,15 @@ export default function PurchaseReturns() {
 
       if (error) throw error;
       if (invItems && invItems.length > 0) {
+        type InvoiceItemRow = {
+          product_id: string;
+          batch_number?: string | null;
+          quantity: number | string | null;
+          cost_price: number | string | null;
+          products?: { name?: string | null } | null;
+        };
         setLineItems(
-          invItems.map((item: any) => ({
+          (invItems as InvoiceItemRow[]).map((item) => ({
             productId: item.product_id,
             productName: item.products?.name || "Product",
             batchNumber: item.batch_number || "BATCH-01",
@@ -246,9 +267,10 @@ export default function PurchaseReturns() {
 
       toast.success("Return completed — stock reversed and supplier account debited!"); 
       fetchReturns(); 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleMarkCompleted unexpected error:", err);
-      toast.error(err.message || "Failed to complete");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to complete";
+      toast.error(message);
     }
   };
 
@@ -340,23 +362,40 @@ export default function PurchaseReturns() {
       setReason("");
       setLineItems([{ productId: "", productName: "", batchNumber: "BATCH-01", quantity: 1, costPrice: 0 }]);
       fetchReturns();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleSave error:", err);
-      toast.error(err.message || "Failed to save return");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save return";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
-  const filtered = returns.filter((r) => {
-    const matchesSearch =
-      r.return_number.toLowerCase().includes(search.toLowerCase()) ||
-      r.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.reason.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || r.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = useMemo(() => {
+    return returns.filter((r) => {
+      const matchesSearch =
+        r.return_number.toLowerCase().includes(search.toLowerCase()) ||
+        r.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
+        r.reason.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || r.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [returns, search, statusFilter]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const totalReturnValue = returns.reduce((s, r) => s + Number(r.total_amount || 0), 0);
 
@@ -375,7 +414,7 @@ export default function PurchaseReturns() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="page-title flex items-center gap-2.5 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-sans">
-              <Undo2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              {typeof Undo2 !== 'undefined' ? <Undo2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> : <RotateCcw className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> }
               Purchase Returns &amp; Debit Notes
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400">
@@ -521,7 +560,7 @@ export default function PurchaseReturns() {
           <>
             {/* Mobile Cards */}
             <div className="block md:hidden divide-y divide-border/60 pb-28">
-              {filtered.map((r) => {
+              {paginatedItems.map((r) => {
                 const status = statusConfig[r.status] || statusConfig.draft;
                 const StatusIcon = status.icon;
                 return (
@@ -585,7 +624,7 @@ export default function PurchaseReturns() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => {
+                  {paginatedItems.map((r) => {
                     const status = statusConfig[r.status] || statusConfig.draft;
                     const StatusIcon = status.icon;
 
@@ -662,6 +701,19 @@ export default function PurchaseReturns() {
                 </tbody>
               </table>
             </div>
+
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </>
         )}
       </div>
@@ -810,7 +862,7 @@ export default function PurchaseReturns() {
                               className="h-10 rounded-lg"
                             />
                             {showProductDropdown === index && (
-                              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                              <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
                                 {filteredProducts(index).map((p) => (
                                   <button
                                     key={p.id}
@@ -899,5 +951,6 @@ export default function PurchaseReturns() {
     </div>
   );
 }
+
 
 

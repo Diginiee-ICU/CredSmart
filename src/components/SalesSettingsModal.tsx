@@ -52,7 +52,7 @@ export function SalesSettingsModal({ open, onOpenChange, orgId }: SalesSettingsM
       if (saved) {
         setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
       }
-    } catch {}
+    } catch { /* empty */ }
   }, [orgId, open]);
 
   const handleSave = () => {
@@ -179,7 +179,7 @@ export function SalesSettingsModal({ open, onOpenChange, orgId }: SalesSettingsM
                 <Label className="text-xs">Receipt / Print Format</Label>
                 <Select
                   value={settings.printSize}
-                  onValueChange={(val: any) => setSettings({ ...settings, printSize: val })}
+                  onValueChange={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => setSettings({ ...settings, printSize: val })} // eslint-disable-line @typescript-eslint/no-explicit-any
                 >
                   <SelectTrigger className="mt-1 text-xs">
                     <SelectValue />

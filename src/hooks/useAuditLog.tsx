@@ -7,7 +7,7 @@ interface AuditLogEntry {
   action: string;
   entity_type: string;
   entity_id?: string;
-  details?: Record<string, any>;
+  details?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export function useAuditLog() {

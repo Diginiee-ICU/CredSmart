@@ -16,76 +16,43 @@ interface LiveInvoicePreviewProps {
 
 export function LiveInvoicePreview({
   settings,
-  businessName = "Business Store",
-  businessPhone = "",
-  businessEmail = "",
-  businessAddress = "",
-  businessGstin = "",
+  businessName = "Sharma Store",
+  businessPhone = "+91 98765 43210",
+  businessEmail = "billing@sharmastore.in",
+  businessAddress = "812, Street 12, Ramra Nagar, Mumbai, Maharashtra, 400001",
+  businessGstin = "27AABCU5007R1Z12",
   businessLogo = "",
 }: LiveInvoicePreviewProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-  // Sample items matching in.PNG
+  // High-fidelity sample items matching Master B2B Invoice Specification
   const sampleItems = [
     {
       id: "1",
-      name: "SAMSUNG A30",
-      description: "samsung smartphone with amoled display",
-      hsn: "8517",
+      name: "birla cement super",
+      description: "high grade Portland pozzolana cement",
+      hsn: "2523",
       qty: 1,
-      unit: "PCS",
-      altUnit: "1 Unit",
-      freeQty: 0,
-      rate: 10000,
-      discount: 1000,
-      discountPercent: 10,
-      taxRate: 18,
-      taxAmount: 1620,
-      total: 10620,
-      batchNo: "BAT-9941",
-      expDate: "12/2027",
-      mfgDate: "01/2025",
-      priceHistory: "₹9,800.00 (Last Bill)",
+      unit: "Bag",
+      rate: 352,
+      discount: 0,
+      taxRate: 12,
+      taxAmount: 42.24,
+      total: 394.24,
     },
     {
       id: "2",
-      name: "PARLE-G 200G",
-      description: "crispy glucose biscuits box",
-      hsn: "1905",
+      name: "river sand",
+      description: "washed construction river sand",
+      hsn: "25051011",
       qty: 1,
-      unit: "BOX",
-      altUnit: "24 PACKS",
-      freeQty: 1,
-      rate: 342.86,
-      discount: 51.43,
-      discountPercent: 15,
-      taxRate: 5,
-      taxAmount: 14.57,
-      total: 306,
-      batchNo: "BAT-5512",
-      expDate: "09/2026",
-      mfgDate: "03/2025",
-      priceHistory: "₹345.00 (Last Bill)",
-    },
-    {
-      id: "3",
-      name: "PUMA DRY-FIT T-SHIRT",
-      description: "sports performance dry fit cotton",
-      hsn: "6109",
-      qty: 2,
-      unit: "PCS",
-      altUnit: "2 Units",
-      freeQty: 0,
-      rate: 900,
+      unit: "Tonne",
+      rate: 1600,
       discount: 0,
-      discountPercent: 0,
-      taxRate: 5,
-      taxAmount: 90,
-      total: 1890,
-      batchNo: "BAT-1102",
-      expDate: "N/A",
-      mfgDate: "11/2024",
-      priceHistory: "₹920.00 (Last Bill)",
+      taxRate: 28,
+      taxAmount: 448,
+      cessAmount: 960,
+      total: 3008,
     },
   ];
 
@@ -124,9 +91,9 @@ export function LiveInvoicePreview({
         max-width: 100% !important;
         min-width: 0 !important;
         box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 0 !important;
-        padding: 0 !important;
+        padding: 12px !important;
         margin: 0 auto !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
@@ -140,7 +107,7 @@ export function LiveInvoicePreview({
       <html lang="en">
       <head>
         <meta charset="utf-8">
-        <title>Tax Invoice - 1 Page Fit</title>
+        <title>Tax Invoice - 1 Page Master Standard</title>
         ${headStyles}
         <style>${printSpecificStyles}</style>
       </head>
@@ -156,7 +123,7 @@ export function LiveInvoicePreview({
               window.close();
             }, 300);
           };
-        <\/script>
+        </script>
       </body>
       </html>
     `);
@@ -169,9 +136,9 @@ export function LiveInvoicePreview({
       <div className="flex items-center justify-between px-3 py-2 bg-card rounded-xl border border-border shadow-xs text-xs">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-semibold text-foreground">Live Single-Page Preview</span>
+          <span className="font-semibold text-foreground">Single Master GST Invoice</span>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-bold">
-            1-Page A4 Guarantee
+            100% Tax Compliant
           </span>
         </div>
         <Button
@@ -190,43 +157,57 @@ export function LiveInvoicePreview({
           settings={settings}
           layout="a4"
           docType="sales_invoice"
-          invoiceNumber="INV-2026-0042"
+          copyType="ORIGINAL FOR RECIPIENT"
+          invoiceNumber="35"
           referenceNumber="REF-9021"
-          date={new Date()}
-          dueDate="2026-03-05"
+          date={new Date("2024-06-23")}
+          dueDate="2024-07-25"
+          deliveryCharge={0}
           storeInfo={{
-            name: businessName,
-            phone: businessPhone,
-            email: businessEmail,
-            address: businessAddress,
-            gstin: businessGstin,
+            name: businessName || "Swift Distributors",
+            phone: businessPhone || "+91 98765 43210",
+            email: businessEmail || "sales@swiftgrow.in",
+            address: businessAddress || "1278, 8 main, vijaynagar, Bangalore, Karnataka, 560040",
+            state: "Karnataka",
+            stateCode: "29",
+            gstin: businessGstin || "29AABCU5007R1Z12",
+            pan: "PPCS4567K",
             logoUrl: businessLogo,
+            bank_name: "State Bank of India",
+            account_number: "40928172910",
+            ifsc: "SBIN0001234",
+            branch: "Main Branch, Bengaluru",
+            account_holder: businessName || "Swift Distributors",
+            upi_id: "swiftgrow@oksbi",
           }}
           partyInfo={{
-            name: "Sample Customer / Client",
-            phone: "",
-            email: "",
-            address: "",
-            gstin: "",
+            name: "STAR CONSTRUCTIONS",
+            phone: "999177700",
+            email: "contact@starconstructions.in",
+            address: "15, 4 cross, r r nagar, Bengaluru, 560048",
+            state: "Karnataka",
+            stateCode: "29",
+            gstin: "29AAECS47361Z6",
             balance: 14500,
             type: "customer",
           }}
           items={sampleItems}
           totals={{
-            subtotal: 12816.0,
-            discountTotal: 1051.43,
-            discountLabel: "Festive Promo (10%)",
-            taxableAmount: 11091.43,
-            cgst: 862.29,
-            sgst: 862.29,
-            taxTotal: 1724.57,
-            roundOff: 0.5,
-            grandTotal: 12816.5,
-            paidAmount: 0.0,
-            balanceDue: 12816.5,
+            subtotal: 1952.0,
+            discountTotal: 0,
+            taxableAmount: 1952.0,
+            cgst: 245.12,
+            sgst: 245.12,
+            cess: 960.0,
+            taxTotal: 1450.24,
+            roundOff: 0.0,
+            grandTotal: 3402.24,
+            paidAmount: 3402.24,
+            balanceDue: 0.0,
           }}
-          paymentMethod="UPI"
-          notes="Thank you for shopping with CredSmart Enterprises."
+          paymentMethod="Bank / UPI"
+          notes="Thank you for your business."
+          terms="1. All disputes are subject to bengaluru jurisdiction only.&#10;2. Goods once sold will not be taken back.&#10;3. This is a computer generated tax invoice."
         />
       </div>
     </div>

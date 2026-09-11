@@ -12,7 +12,10 @@ export type ItemUnit =
   | "BTL"
   | "SET"
   | "GM"
-  | "ML";
+  | "ML"
+  | "STEPS"
+  | "steps"
+  | "Steps";
 
 export type GSTRate = 0 | 0.1 | 0.25 | 3 | 5 | 12 | 18 | 28;
 
@@ -39,6 +42,10 @@ export interface InventoryItem {
   category: string;
   brand: string | null;
   unit: ItemUnit;
+  /** Alternate (secondary) unit name, e.g. "PKT", "BOX", "DOZ" */
+  altUnit?: string | null;
+  /** How many primary units equal 1 alternate unit. e.g. 4 (PCS per PKT) */
+  altUnitConversion?: number | null;
   sellingPrice: number;
   purchasePrice: number;
   mrp: number;
@@ -53,7 +60,7 @@ export interface InventoryItem {
   imageUrl?: string | null;
   isLowStock: boolean;
   batches: ItemBatch[];
-  tags?: Record<string, any> | null;
+  tags?: Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any
   created_at: string;
   updated_at?: string;
 }

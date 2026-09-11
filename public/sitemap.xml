@@ -5,88 +5,120 @@
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <!-- Homepage / Main Landing -->
   <url>
-    <loc>https://credsmart.in/</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Product Features -->
   <url>
-    <loc>https://credsmart.in/features</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/features</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Free Pricing Commitment -->
   <url>
-    <loc>https://credsmart.in/pricing</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/pricing</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- GST Billing Educational & Compliance Guide -->
   <url>
-    <loc>https://credsmart.in/gst-billing-guide</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/gst-billing-guide</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
 
-  <!-- Comparison: CredSmart vs Vyapar & myBillBook -->
+  <!-- Comparison: CredSmart vs Vyapar -->
   <url>
-    <loc>https://credsmart.in/compare-vyapar</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/compare-vyapar</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Comparison: CredSmart vs myBillBook -->
+  <url>
+    <loc>https://pos.credalert.bussiness/compare-mybillbook</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Comparison: CredSmart vs Tally Prime -->
+  <url>
+    <loc>https://pos.credalert.bussiness/compare-tally</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Barcode Label Guide -->
+  <url>
+    <loc>https://pos.credalert.bussiness/barcode-generator-guide</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- e-Invoicing IRN Guide -->
+  <url>
+    <loc>https://pos.credalert.bussiness/e-invoicing-guide</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
 
   <!-- Security & Infrastructure Architecture -->
   <url>
-    <loc>https://credsmart.in/security</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/security</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- FAQ & Help Center -->
   <url>
-    <loc>https://credsmart.in/faq</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/faq</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- About Us & DPDP Mission -->
   <url>
-    <loc>https://credsmart.in/about</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/about</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
 
   <!-- Contact & Grievance Desk -->
   <url>
-    <loc>https://credsmart.in/contact</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/contact</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
 
   <!-- Privacy Policy -->
   <url>
-    <loc>https://credsmart.in/privacy-policy</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/privacy-policy</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <!-- Terms of Service -->
   <url>
-    <loc>https://credsmart.in/terms-of-service</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://pos.credalert.bussiness/terms-of-service</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

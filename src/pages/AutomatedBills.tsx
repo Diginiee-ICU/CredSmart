@@ -65,7 +65,7 @@ export default function AutomatedBills() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyRecurring = `credsmart_recurring_bills_${orgId || "default"}`;
+  const storageKeyRecurring = `credsmart_recurring_bills_${orgId || "no_org"}`;
 
   // Modals state
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
@@ -606,7 +606,7 @@ export default function AutomatedBills() {
                 </Label>
                 <select
                   value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as any)}
+                  onChange={(e) => setFrequency(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
                 >
                   <option value="monthly">Monthly (Every Month)</option>

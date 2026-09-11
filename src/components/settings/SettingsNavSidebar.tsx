@@ -327,7 +327,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Registered Email:</span>
-                <span className="font-mono text-foreground">{org?.email || "admin@store.com"}</span>
+                <span className="font-mono text-foreground">{org?.email || "Not Provided"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subscription Plan:</span>

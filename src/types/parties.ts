@@ -15,6 +15,27 @@ export interface CustomPartyField {
   value: string;
 }
 
+export interface PartyCustomItem {
+  productId: string;
+  productName: string;
+  category?: string;
+  brand?: string | null;
+  sku?: string;
+  barcode?: string | null;
+  unit?: string;
+  altUnit?: string | null;
+  altUnitConversion?: number | null;
+  standardPrice: number;
+  customPrice: number;
+  costPrice?: number;
+  gstRate?: number;
+  hsnCode?: string;
+  customStock?: number;
+  minStockAlert?: number;
+  notes?: string;
+  isActive?: boolean;
+}
+
 export interface Party {
   id: string;
   organization_id?: string;
@@ -35,7 +56,10 @@ export interface Party {
   balance: number; // Positive = Receivable (To Collect, Dr), Negative = Payable (To Pay, Cr), 0 = Settled
   creditLimit?: number | null;
   creditPeriodDays?: number | null;
-  customFields?: Record<string, string>;
+  customFields?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  keepSamePrice?: boolean; // Default true: uses standard catalogue prices. If false: uses party-specific custom prices
+  keepSameInventory?: boolean; // Default true: allows all catalogue products. If false: only customItems are allowed
+  customItems?: PartyCustomItem[];
   sharedLedgerEnabled?: boolean;
   sharedLedgerStatus?: "synced" | "pending" | "invited" | "unlinked";
   sharedLedgerCode?: string;

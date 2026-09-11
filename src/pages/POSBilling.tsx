@@ -54,10 +54,12 @@ import {
   Mic,
   MicOff,
   Radio,
+  Send,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { Product, Batch } from "@/types/pos";
+import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
@@ -65,11 +67,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { networkInvoicingService } from "@/services/networkInvoicingService";
+import { BusinessDocument, DocumentLineItem } from "@/types/documents";
+import { PartyCustomItem } from "@/types/parties";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { normalizeError } from "@/lib/normalizeError";
 import { QRCodeSVG } from "qrcode.react";
 import { buildReceiptEscPos, printViaWebUSB, EscPosBuilder } from "@/utils/escpos";
-import { STANDARD_PRODUCT_CATALOG, STANDARD_PARTY_SUGGESTIONS } from "@/utils/suggestionData";
 import {
   createSpeechRecognizer,
   parsePOSVoiceCommand,
@@ -77,6 +82,16 @@ import {
   isVoiceSupported,
   ParsedVoiceCommand,
 } from "@/utils/posVoiceService";
+import { SwipeableListItem } from "@/components/ui/SwipeableListItem";
+import {
+  playScanBeep,
+  playSuccessChime,
+  playDeleteThud,
+  triggerHapticScan,
+  triggerHapticSuccess,
+  triggerHapticDelete,
+} from "@/utils/soundAndHaptics";
+import { notifyStockUpdated } from "@/services/stockService";
 
 // --- Types ---
 
@@ -106,6 +121,10 @@ export interface CustomerInfo {
   email?: string | null;
   balance?: number;
   loyaltyPoints?: number;
+  custom_fields?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
+  customItems?: PartyCustomItem[];
 }
 
 export interface BillingTab {
@@ -160,9 +179,9 @@ const DEFAULT_SETTINGS: PosSettings = {
   directEscPosPrint: false,
 };
 
-const getTabsStorageKey = (orgId: string | null) => `credsmart_pos_tabs_${orgId || "default"}`;
+const getTabsStorageKey = (orgId: string | null) => `credsmart_pos_tabs_${orgId || "no_org"}`;
 const GLOBAL_BACKUP_STORAGE_KEY = "credsmart_pos_tabs_backup";
-const getSettingsStorageKey = (orgId: string | null) => `credsmart_pos_settings_${orgId || "default"}`;
+const getSettingsStorageKey = (orgId: string | null) => `credsmart_pos_settings_${orgId || "no_org"}`;
 
 function createNewTab(tabIndex: number): BillingTab {
   return {
@@ -234,14 +253,16 @@ export default function POSBilling() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  // Multi-Tab Held Bills State with local cart restoration
   const [tabs, setTabs] = useState<BillingTab[]>(() => {
     try {
       const saved = localStorage.getItem(getTabsStorageKey(orgId)) || localStorage.getItem(GLOBAL_BACKUP_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((t: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+            ...t,
+            items: Array.isArray(t.items) ? t.items.filter((i: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => i && i.product && i.product.id && i.batch) : [], // eslint-disable-line @typescript-eslint/no-explicit-any
+          }));
         }
       }
     } catch (e) {
@@ -260,13 +281,17 @@ export default function POSBilling() {
       if (savedOrgTabs) {
         const parsed = JSON.parse(savedOrgTabs);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const totalItems = parsed.reduce((sum: number, t: BillingTab) => sum + (t.items?.length || 0), 0);
+          const sanitizedTabs = parsed.map((t: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+            ...t,
+            items: Array.isArray(t.items) ? t.items.filter((i: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => i && i.product && i.product.id && i.batch) : [], // eslint-disable-line @typescript-eslint/no-explicit-any
+          }));
+          const totalItems = sanitizedTabs.reduce((sum: number, t: BillingTab) => sum + (t.items?.length || 0), 0);
           if (totalItems > 0 && tabs.every((t) => t.items.length === 0)) {
-            setTabs(parsed);
-            if (parsed[0]?.id) setActiveTabId(parsed[0].id);
+            setTabs(sanitizedTabs);
+            if (sanitizedTabs[0]?.id) setActiveTabId(sanitizedTabs[0].id);
             toast({
               title: "🛒 Active Cart Restored",
-              description: `Recovered ${totalItems} unbilled items across ${parsed.length} tab(s) from previous session.`,
+              description: `Recovered ${totalItems} unbilled items across ${sanitizedTabs.length} tab(s) from previous session.`,
               duration: 3000,
             });
           }
@@ -275,7 +300,7 @@ export default function POSBilling() {
     } catch (e) {
       console.warn("Cart auto-sync error:", e);
     }
-  }, [orgId]);
+  }, [orgId, tabs]);
 
   // Ensure active tab id is valid
   useEffect(() => {
@@ -311,7 +336,9 @@ export default function POSBilling() {
         const payload = JSON.stringify(tabs);
         localStorage.setItem(getTabsStorageKey(orgId), payload);
         localStorage.setItem(GLOBAL_BACKUP_STORAGE_KEY, payload);
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to save POS tabs before unload:", error);
+      }
 
       const hasItems = tabs.some((t) => t.items && t.items.length > 0);
       if (hasItems) {
@@ -327,7 +354,18 @@ export default function POSBilling() {
 
   // Active Tab Reference Helper
   const currentTab = useMemo(() => {
-    return tabs.find((t) => t.id === activeTabId) || tabs[0] || createNewTab(1);
+    const found = tabs.find((t) => t.id === activeTabId) || tabs[0] || createNewTab(1);
+    return {
+      ...found,
+      items: Array.isArray(found.items)
+        ? found.items.filter((i) => i && i.product)
+        : [],
+      additionalCharges: Array.isArray(found.additionalCharges)
+        ? found.additionalCharges
+        : [],
+      discountValue: Number(found.discountValue) || 0,
+      receivedAmount: found.receivedAmount || "",
+    };
   }, [tabs, activeTabId]);
 
   // Update current tab helper
@@ -373,7 +411,7 @@ export default function POSBilling() {
   const [voiceFeedback, setVoiceFeedback] = useState("");
   const [voiceLang, setVoiceLang] = useState<string>("en-IN");
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const speechRecognizerRef = useRef<any>(null);
+  const speechRecognizerRef = useRef<SpeechRecognition | null>(null);
 
   // Price/Qty/Discount Modal Form States
   const [modalPriceValue, setModalPriceValue] = useState("");
@@ -445,7 +483,7 @@ export default function POSBilling() {
         const productList = prods || [];
         const prodIds = productList.map((p) => p.id);
 
-        let batchMap: Record<string, Batch[]> = {};
+        const batchMap: Record<string, Batch[]> = {};
         if (prodIds.length > 0) {
           const { data: batches } = await supabase
             .from("product_batches")
@@ -466,15 +504,30 @@ export default function POSBilling() {
         }
 
         const mapped: Product[] = productList.map((p) => {
-          const pBatches = batchMap[p.id] || [
-            {
-              id: `gen-${p.id}`,
-              costPrice: 0,
-              mrp: 100,
-              stock: 99,
-              batchNumber: "General",
-            },
-          ];
+          const tags = (p.tags as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+          const fallbackMrp = Number(tags.mrp) || Number(tags.selling_price) || 100;
+          const fallbackCost = Number(tags.purchase_price) || Number(tags.cost_price) || Math.round(fallbackMrp * 0.8);
+          const fallbackStock = Number(tags.stock ?? tags.opening_stock ?? 99);
+
+          const rawBatches = batchMap[p.id] || [];
+          const pBatches: Batch[] =
+            rawBatches.length > 0
+              ? rawBatches.map((b) => ({
+                  ...b,
+                  mrp: b.mrp > 0 ? b.mrp : fallbackMrp,
+                  costPrice: b.costPrice > 0 ? b.costPrice : fallbackCost,
+                  stock: b.stock >= 0 ? b.stock : fallbackStock,
+                }))
+              : [
+                  {
+                    id: `gen-${p.id}`,
+                    costPrice: fallbackCost,
+                    mrp: fallbackMrp,
+                    stock: fallbackStock,
+                    batchNumber: "General",
+                  },
+                ];
+
           return {
             id: p.id,
             barcode: p.barcode || "",
@@ -486,29 +539,6 @@ export default function POSBilling() {
             tags: (p.tags as Record<string, string>) || undefined,
             imageUrl: p.image_url || undefined,
           };
-        });
-
-        const names = new Set(mapped.map((p) => p.name.toLowerCase().trim()));
-        STANDARD_PRODUCT_CATALOG.forEach((sp) => {
-          if (!names.has(sp.name.toLowerCase().trim())) {
-            mapped.push({
-              id: sp.id,
-              barcode: sp.barcode,
-              name: sp.name,
-              brand: "Popular",
-              category: sp.category,
-              batches: [
-                {
-                  id: `batch-${sp.id}`,
-                  costPrice: sp.purchasePrice,
-                  mrp: sp.mrp,
-                  stock: sp.stock,
-                  batchNumber: "LOT-01",
-                },
-              ],
-              sku: sp.sku,
-            });
-          }
         });
 
         setProducts(mapped);
@@ -534,34 +564,29 @@ export default function POSBilling() {
       try {
         const { data, error } = await supabase
           .from("customers")
-          .select("id, name, phone, email")
+          .select("id, name, phone, email, custom_fields")
           .eq("organization_id", orgId)
           .order("name");
 
-        const list = (data || []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email,
-          balance: 0,
-          loyaltyPoints: Math.floor(Math.random() * 250),
-        }));
+        const list = (data || []).map((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+          const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
+          const keepSamePrice = cf.keepSamePrice !== false;
+          const keepSameInventory = cf.keepSameInventory !== false;
+          const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
 
-        const custNames = new Set(list.map((c) => c.name.toLowerCase().trim()));
-        STANDARD_PARTY_SUGGESTIONS
-          .filter((p) => p.type === "customer" || p.type === "both")
-          .forEach((sp) => {
-            if (!custNames.has(sp.name.toLowerCase().trim())) {
-              list.push({
-                id: sp.id,
-                name: sp.name,
-                phone: sp.phone,
-                email: sp.email,
-                balance: sp.balance || 0,
-                loyaltyPoints: 120,
-              });
-            }
-          });
+          return {
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            email: c.email,
+            balance: 0,
+            loyaltyPoints: 0,
+            custom_fields: cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          };
+        });
 
         setCustomers(list);
       } catch (e) {
@@ -579,34 +604,41 @@ export default function POSBilling() {
       let itemDisc = 0;
       let totalQty = 0;
 
-      currentTab.items.forEach((item) => {
-        const lineSpTotal = item.sp * item.quantity;
+      const itemsList = Array.isArray(currentTab?.items) ? currentTab.items : [];
+      itemsList.forEach((item) => {
+        if (!item) return;
+        const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const itemQty = Number(item.quantity) || 1;
+        const itemDiscPct = Number(item.discountPercent) || 0;
+        const lineSpTotal = itemSp * itemQty;
         const lineDiscount =
           item.discountType === "percent"
-            ? (lineSpTotal * item.discountPercent) / 100
-            : item.discountPercent * item.quantity;
+            ? (lineSpTotal * itemDiscPct) / 100
+            : itemDiscPct * itemQty;
 
         sub += lineSpTotal;
         itemDisc += lineDiscount;
-        totalQty += item.quantity;
+        totalQty += itemQty;
       });
 
       // Bill global discount
       const discountedSub = Math.max(0, sub - itemDisc);
+      const discVal = Number(currentTab?.discountValue) || 0;
       const billDisc =
-        currentTab.discountType === "percent"
-          ? (discountedSub * currentTab.discountValue) / 100
-          : currentTab.discountValue;
+        currentTab?.discountType === "percent"
+          ? (discountedSub * discVal) / 100
+          : discVal;
 
       // Additional charges
-      const charges = currentTab.additionalCharges.reduce((acc, c) => acc + Number(c.amount || 0), 0);
+      const chargesList = Array.isArray(currentTab?.additionalCharges) ? currentTab.additionalCharges : [];
+      const charges = chargesList.reduce((acc, c) => acc + Number(c?.amount || 0), 0);
 
       // Tax calculation (based on settings or org tax rate)
-      const taxRate = (org?.tax_rate ?? settings.defaultTaxRate) / 100;
+      const taxRate = Number((org?.tax_rate ?? settings.defaultTaxRate) || 0) / 100;
       const taxableBase = Math.max(0, discountedSub - billDisc);
       const tax = taxableBase * taxRate;
 
-      const grand = Math.round(taxableBase + charges + tax);
+      const grand = Math.max(0, Math.round(taxableBase + charges + tax));
 
       return {
         subTotal: sub,
@@ -624,32 +656,143 @@ export default function POSBilling() {
   const changeDue = Math.max(0, receivedNum - grandTotal);
   const balanceRemaining = Math.max(0, grandTotal - receivedNum);
 
+  // Active party products respecting customer inventory restriction & custom pricing
+  const activePartyProducts = useMemo(() => {
+    const cust = currentTab.customer;
+    const list = products;
+
+    if (cust && cust.customItems && cust.customItems.length > 0) {
+      const customPriceMap = new Map<string, number>();
+      const customItemsMap = new Map<string, PartyCustomItem>();
+
+      cust.customItems.forEach((ci) => {
+        if (ci.productId) {
+          customPriceMap.set(ci.productId, ci.customPrice);
+          customItemsMap.set(ci.productId, ci);
+        }
+        if (ci.productName) {
+          const normName = ci.productName.toLowerCase().trim();
+          customPriceMap.set(normName, ci.customPrice);
+          customItemsMap.set(normName, ci);
+        }
+        if (ci.barcode) {
+          customPriceMap.set(ci.barcode.trim(), ci.customPrice);
+          customItemsMap.set(ci.barcode.trim(), ci);
+        }
+      });
+
+      // Synthesize custom items so any product configured for this party appears in the catalog
+      const synthesizedCustomProducts: Product[] = cust.customItems.map((ci) => {
+        const existing = products.find(
+          (p) =>
+            p.id === ci.productId ||
+            (ci.barcode && p.barcode === ci.barcode) ||
+            (ci.productName && p.name.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+        );
+
+        if (existing) {
+          const customPrice = (cust.keepSamePrice === false && ci.customPrice !== undefined) ? ci.customPrice : undefined;
+          return {
+            ...existing,
+            batches: (existing.batches || []).map((b) => ({
+              ...b,
+              mrp: customPrice !== undefined ? customPrice : b.mrp,
+            })),
+          };
+        }
+
+        return {
+          id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+          name: ci.productName || "Custom Product",
+          barcode: ci.barcode || "",
+          sku: ci.sku || undefined,
+          brand: ci.brand || "",
+          category: ci.category || "General",
+          batches: [
+            {
+              id: `batch-${ci.productId || Date.now()}`,
+              mrp: ci.customPrice || ci.standardPrice || 0,
+              costPrice: ci.costPrice || 0,
+              stock: ci.customStock ?? 999,
+              batchNumber: "Party Batch",
+            },
+          ],
+          tags: {
+            unit: ci.unit || "PCS",
+            gst_rate: String(ci.gstRate || 18),
+            hsn_code: ci.hsnCode || "",
+          },
+        };
+      });
+
+      if (cust.keepSameInventory === false) {
+        return synthesizedCustomProducts;
+      }
+
+      // If keepSameInventory is true, show all catalogue products with custom price overrides + any unique party products
+      const customIds = new Set(cust.customItems.map((ci) => ci.productId));
+      const customNames = new Set(cust.customItems.map((ci) => ci.productName?.toLowerCase().trim()));
+
+      const modifiedCatalogue = products.map((p) => {
+        const matchPrice =
+          customPriceMap.get(p.id) ??
+          (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+          (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+
+        if (cust.keepSamePrice === false && matchPrice !== undefined) {
+          return {
+            ...p,
+            batches: (p.batches || []).map((b) => ({
+              ...b,
+              mrp: matchPrice,
+            })),
+          };
+        }
+        return p;
+      });
+
+      const uniqueAdditionalCustom = synthesizedCustomProducts.filter(
+        (cp) =>
+          !products.some(
+            (p) =>
+              p.id === cp.id ||
+              (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+          )
+      );
+
+      return [...modifiedCatalogue, ...uniqueAdditionalCustom];
+    }
+
+    return list;
+  }, [products, currentTab.customer]);
+
   // Filtered Products for Search Dropdown
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim() && selectedCategory === "All") return [];
 
     const query = searchQuery.toLowerCase().trim();
-    return products
+    return activePartyProducts
       .filter((p) => {
         const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
         if (!matchesCategory) return false;
         if (!query) return true;
 
-        const nameMatch = p.name.toLowerCase().includes(query);
-        const barcodeMatch = p.barcode.toLowerCase().includes(query);
-        const skuMatch = p.sku?.toLowerCase().includes(query) || false;
-        const brandMatch = p.brand.toLowerCase().includes(query);
-        const catMatch = p.category.toLowerCase().includes(query);
+        const nameMatch = p.name ? p.name.toLowerCase().includes(query) : false;
+        const barcodeMatch = p.barcode ? p.barcode.toLowerCase().includes(query) : false;
+        const skuMatch = p.sku ? p.sku.toLowerCase().includes(query) : false;
+        const brandMatch = p.brand ? p.brand.toLowerCase().includes(query) : false;
+        const catMatch = p.category ? p.category.toLowerCase().includes(query) : false;
 
         return nameMatch || barcodeMatch || skuMatch || brandMatch || catMatch;
       })
       .slice(0, 10);
-  }, [products, searchQuery, selectedCategory]);
+  }, [activePartyProducts, searchQuery, selectedCategory]);
 
   // Add Product to Current Tab
   const handleAddProduct = useCallback(
     (product: Product, customBatch?: Batch) => {
-      const batch = customBatch || product.batches[0] || {
+      const cust = currentTab.customer;
+      const rawBatch = customBatch || product.batches?.[0] || {
         id: `batch-${product.id}`,
         mrp: 100,
         costPrice: 0,
@@ -657,7 +800,27 @@ export default function POSBilling() {
         batchNumber: "Default",
       };
 
+      let effectiveMrp = rawBatch.mrp;
+      if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
+        const matched = cust.customItems.find(
+          (ci) =>
+            ci.productId === product.id ||
+            (ci.barcode && product.barcode && ci.barcode.trim() === product.barcode.trim()) ||
+            (ci.productName && product.name && ci.productName.toLowerCase().trim() === product.name.toLowerCase().trim())
+        );
+        if (matched && matched.customPrice !== undefined) {
+          effectiveMrp = matched.customPrice;
+        }
+      }
+
+      const batch: Batch = {
+        ...rawBatch,
+        mrp: effectiveMrp,
+      };
+
       soundService.playScanBeep();
+      playScanBeep();
+      triggerHapticScan();
 
       updateCurrentTab((tab) => {
         const existingIdx = tab.items.findIndex(
@@ -682,8 +845,8 @@ export default function POSBilling() {
             id: `row-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
             product,
             batch,
-            mrp: batch.mrp,
-            sp: batch.mrp, // Default SP = MRP
+            mrp: effectiveMrp,
+            sp: effectiveMrp, // Default SP = MRP (custom or standard)
             discountPercent: 0,
             discountType: "percent",
             quantity: 1,
@@ -712,6 +875,7 @@ export default function POSBilling() {
         }, 50);
       }
     },
+// eslint-disable-next-line react-hooks/exhaustive-deps
     [updateCurrentTab, settings.autoFocusSearch]
   );
 
@@ -731,9 +895,9 @@ export default function POSBilling() {
           // Match barcode
           const matched = products.find(
             (p) =>
-              p.barcode.toLowerCase() === scannedCode.toLowerCase() ||
-              p.sku?.toLowerCase() === scannedCode.toLowerCase() ||
-              p.id.toLowerCase() === scannedCode.toLowerCase()
+              (p.barcode && p.barcode.toLowerCase() === scannedCode.toLowerCase()) ||
+              (p.sku && p.sku.toLowerCase() === scannedCode.toLowerCase()) ||
+              (p.id && p.id.toLowerCase() === scannedCode.toLowerCase())
           );
 
           if (matched) {
@@ -837,6 +1001,23 @@ export default function POSBilling() {
       toast({ title: "Tab Closed", description: "Held bill was removed." });
     },
     [tabs, activeTabId]
+  );
+
+  // Cart Item Removal Handler with Haptics and Sound
+  const handleRemoveCartItem = useCallback(
+    (idx: number) => {
+      playDeleteThud();
+      triggerHapticDelete();
+      updateCurrentTab((tab) => {
+        const newItems = tab.items.filter((_, i) => i !== idx);
+        return {
+          ...tab,
+          items: newItems,
+          selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
+        };
+      });
+    },
+    [updateCurrentTab]
   );
 
   // Action Hotkey: Delete Selected Item [DEL]
@@ -1201,9 +1382,11 @@ export default function POSBilling() {
     }
   };
 
-  // Save Bill / Save & Print [F6 / F7]
+  // Save Bill / Save & Print / WhatsApp [F6 / F7]
   const handleSaveBill = useCallback(
-    async (shouldPrint: boolean = false) => {
+    async (shouldPrint: boolean = false, shouldWhatsApp: boolean = false) => {
+      if (isProcessingSave) return;
+      
       if (currentTab.items.length === 0) {
         toast({
           title: "Cannot Save Empty Bill",
@@ -1222,11 +1405,24 @@ export default function POSBilling() {
       const preparedReceipt: ReceiptData = {
         docType: "pos_invoice",
         invoiceNumber,
-        items: currentTab.items.map((ci) => ({
-          product: ci.product,
-          batch: ci.batch,
-          quantity: ci.quantity,
-        })),
+        items: currentTab.items.map((ci) => {
+          const pTags = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).tags || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+          const altU = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnit || pTags.alt_unit || undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+          const altConv = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+          return {
+            product: {
+              ...ci.product,
+              altUnit: altU,
+              altUnitConversion: altConv ? Number(altConv) : undefined,
+            },
+            batch: ci.batch,
+            quantity: ci.quantity,
+            altUnit: altU,
+            altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
+            altUnitConversion: altConv ? Number(altConv) : undefined,
+            unit: ci.product.unit || "PCS",
+          };
+        }),
         subtotal: subTotal,
         discountAmount: itemDiscountsTotal + billDiscountAmount,
         discountLabel: currentTab.discountReason || "Special Discount",
@@ -1237,7 +1433,7 @@ export default function POSBilling() {
         storeAddress: settings.storeAddress || org?.address,
         storePhone: settings.storePhone || org?.phone,
         gstin: settings.storeGstin || org?.gstin,
-        upiId: org?.upi_id || settings.selectedPaymentQrUpi,
+        upiId: org?.upi_id || settings.upiId,
         bankName: org?.bank_name,
         accountNumber: org?.account_number,
         ifsc: org?.ifsc,
@@ -1250,7 +1446,7 @@ export default function POSBilling() {
       try {
         // 2. Persist to local backup history immediately
         try {
-          const localHistoryKey = `pos_sales_history_${orgId || "default"}`;
+          const localHistoryKey = `pos_sales_history_${orgId || "no_org"}`;
           const existingHistory = JSON.parse(localStorage.getItem(localHistoryKey) || "[]");
           existingHistory.unshift({
             invoiceNumber,
@@ -1309,6 +1505,7 @@ export default function POSBilling() {
                   console.warn("Stock update notice:", uErr);
                 }
               }
+              notifyStockUpdated(orgId);
 
               // Record Udhar / Credit Ledger if Payment Mode is Credit
               if (currentTab.paymentMode === "Credit" && currentTab.customer) {
@@ -1332,6 +1529,71 @@ export default function POSBilling() {
                 payment: currentTab.paymentMode,
                 customer: currentTab.customer?.name || "Walk-in",
               });
+
+              // B2B Network Sync: Auto-dispatch to buyer if customer matches a CredSmart business
+              if (currentTab.customer && org) {
+                try {
+                  const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => {
+                    const pTags = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).tags || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    const altU = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnit || pTags.alt_unit || undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    const altConv = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    return {
+                      id: `pos-item-${Date.now()}-${idx}`,
+                      productName: ci.product.name,
+                      productId: ci.product.id,
+                      barcode: ci.product.barcode || undefined,
+                      batchNumber: ci.batch.batchNumber || undefined,
+                      expiryDate: ci.batch.expiryDate,
+                      quantity: ci.quantity,
+                      unit: ci.product.unit || "PCS",
+                      altUnit: altU,
+                      altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
+                      altUnitConversion: altConv ? Number(altConv) : undefined,
+                      rate: ci.sp,
+                      discountPercent: ci.discountPercent || 0,
+                      discountAmount: ci.discountAmount || 0,
+                      taxRate: ci.product.gstRate || 0,
+                      taxableAmount: ci.taxableAmount || (ci.sp * ci.quantity),
+                      cgstAmount: (ci.gstAmount || 0) / 2,
+                      sgstAmount: (ci.gstAmount || 0) / 2,
+                      igstAmount: 0,
+                      lineTotal: Number((ci.sp * ci.quantity).toFixed(2)),
+                    };
+                  });
+
+                  const posDoc: BusinessDocument = {
+                    id: sale.id,
+                    organizationId: orgId,
+                    docType: "sales_invoice",
+                    documentNumber: invoiceNumber,
+                    partyId: currentTab.customer.id,
+                    partyName: currentTab.customer.name,
+                    partyPhone: currentTab.customer.phone || undefined,
+                    partyGstin: currentTab.customer.gstin || undefined,
+                    partyAddress: currentTab.customer.address || undefined,
+                    docDate: new Date().toISOString().split("T")[0],
+                    paymentMethod: currentTab.paymentMode,
+                    items: mappedItems,
+                    subtotal: subTotal,
+                    discountTotal: itemDiscountsTotal + billDiscountAmount,
+                    taxableTotal: subTotal - (itemDiscountsTotal + billDiscountAmount),
+                    cgstTotal: taxAmount / 2,
+                    sgstTotal: taxAmount / 2,
+                    igstTotal: 0,
+                    taxTotal: taxAmount,
+                    roundOff: 0,
+                    grandTotal: grandTotal,
+                    paidAmount: currentTab.paymentMode === "Credit" ? 0 : grandTotal,
+                    balanceDue: currentTab.paymentMode === "Credit" ? grandTotal : 0,
+                    status: currentTab.paymentMode === "Credit" ? "unpaid" : "paid",
+                    created_at: new Date().toISOString(),
+                  };
+
+                  networkInvoicingService.sendSalesInvoiceToNetwork(posDoc, org, user.id);
+                } catch (netErr) {
+                  console.warn("POS network dispatch notice:", netErr);
+                }
+              }
             }
           } catch (dbErr) {
             console.warn("Cloud sync will retry in background:", dbErr);
@@ -1340,14 +1602,39 @@ export default function POSBilling() {
 
         // 4. Audio Chime & Success Feedback
         soundService.playSuccessChime();
+        playSuccessChime();
+        triggerHapticSuccess();
 
-        // 5. Trigger Print Modal if requested
+        // 5. Trigger Print Modal or WhatsApp if requested
         if (shouldPrint || settings.autoPrintOnSave) {
           setReceiptData(preparedReceipt);
         }
 
+        if (shouldWhatsApp) {
+          try {
+            shareInvoicePdfToWhatsApp({
+              invoiceNumber,
+              customerName: currentTab.customer?.name || "Customer",
+              customerPhone: currentTab.customer?.phone || undefined,
+              storeName,
+              storePhone: settings.storePhone || org?.phone,
+              totalAmount: grandTotal,
+              date: new Date().toISOString(),
+              isEstimate: false,
+              items: currentTab.items.map((ci) => ({
+                name: ci.product.name,
+                quantity: ci.quantity,
+                rate: ci.sp,
+                total: Number((ci.sp * ci.quantity).toFixed(2)),
+              })),
+            });
+          } catch (waErr) {
+            console.warn("WhatsApp share notice:", waErr);
+          }
+        }
+
         toast({
-          title: "Bill Completed Successfully! 🎉",
+          title: shouldWhatsApp ? "Bill Saved & WhatsApp Dispatched! 🚀" : "Bill Completed Successfully! 🎉",
           description: `Invoice #${invoiceNumber} recorded for ₹${grandTotal.toLocaleString("en-IN")}.`,
           duration: 3500,
         });
@@ -1361,7 +1648,7 @@ export default function POSBilling() {
           setTabs([reset]);
           setActiveTabId(reset.id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Save bill error:", err);
         // Even on unexpected error, complete locally
         setMobileActiveView("cart");
@@ -1375,7 +1662,9 @@ export default function POSBilling() {
       } finally {
         setIsProcessingSave(false);
       }
+ 
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       currentTab,
       subTotal,
@@ -1426,10 +1715,10 @@ export default function POSBilling() {
         tax: 5,
         total: 105,
         paymentMethod: "Cash",
-        storeName: settings.storeName || "CredSmart Retail Store",
-        storeAddress: settings.storeAddress || "Hardware Terminal Integration",
-        storePhone: settings.storePhone || "+91 98765 43210",
-        gstin: settings.storeGstin || "29AAAAA0000A1Z5",
+        storeName: org?.name || settings.storeName || "CredSmart POS Terminal",
+        storeAddress: org?.address || settings.storeAddress || "",
+        storePhone: org?.phone || settings.storePhone || "",
+        gstin: org?.gstin || settings.storeGstin || "",
         date: new Date(),
       };
 
@@ -1471,8 +1760,8 @@ export default function POSBilling() {
         title: "⚡ ESC/POS Test Stream Generated",
         description: `Downloaded ${printerWidth} raw byte stream (${bytes.length} bytes) for spooling.`,
       });
-    } catch (err: any) {
-      toast({ title: "Test Print Failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Test Print Failed", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -1488,14 +1777,14 @@ export default function POSBilling() {
         // Search products from catalog or standard suggestions
         const match = products.find(
           (p) =>
-            p.name.toLowerCase().includes(query) ||
+            (p.name && p.name.toLowerCase().includes(query)) ||
             (p.barcode && p.barcode.toLowerCase() === query) ||
             (p.sku && p.sku.toLowerCase() === query) ||
             (p.category && p.category.toLowerCase().includes(query))
         );
 
         if (match) {
-          const batch = match.batches[0] || {
+          const batch = match.batches?.[0] || {
             id: `batch-${match.id}`,
             mrp: 100,
             costPrice: 0,
@@ -1602,7 +1891,7 @@ export default function POSBilling() {
 
       if (cmd.intent === "SET_PAYMENT_MODE" && cmd.paymentMode) {
         const mode = cmd.paymentMode;
-        updateCurrentTab((tab) => ({ ...tab, paymentMode: mode as any }));
+        updateCurrentTab((tab) => ({ ...tab, paymentMode: mode as BillingTab["paymentMode"] }));
         const msg = `Payment mode set to ${mode}`;
         setVoiceFeedback(msg);
         speakPOSMessage(msg, settings.soundEnabled);
@@ -1704,7 +1993,9 @@ export default function POSBilling() {
     if (speechRecognizerRef.current) {
       try {
         speechRecognizerRef.current.stop();
-      } catch {}
+      } catch (error) {
+        console.warn("Unable to stop speech recognition:", error);
+      }
       speechRecognizerRef.current = null;
     }
     setIsListening(false);
@@ -1934,11 +2225,11 @@ export default function POSBilling() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden h-[100dvh] w-full max-w-full">
+    <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden relative select-none">
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
       {/* ========================================================================= */}
-      <header className="h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
+      <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
         {/* Left: Exit POS & Terminal Identity */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -1971,66 +2262,25 @@ export default function POSBilling() {
           </div>
         </div>
 
-        {/* Center: Title & Turbo Speed Indicator */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide uppercase flex items-center gap-2">
-            <span className="hidden sm:inline">Point of Sale</span>
-            <span className="sm:hidden font-mono">POS</span>
-          </h1>
-
-          <div className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] sm:text-[10px] font-mono font-semibold text-emerald-700 shadow-2xs">
-            <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
-            </span>
-            <span className="tracking-wider">TURBO</span>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-700">
-            <Clock className="w-3 h-3 text-indigo-600" />
-            <span>{currentTime}</span>
-          </div>
-        </div>
-
-        {/* Right: Tutorial, Fullscreen & Settings */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right: Quick Hotkeys & Help */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => setShowTutorialModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer hover-3d-glow shrink-0"
             title="View Hotkey Guide & Tutorial"
           >
             <PlayCircle className="w-3.5 h-3.5 text-indigo-600" />
             <span className="hidden sm:inline">Shortcuts</span>
             <span className="sm:hidden">Help</span>
           </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95"
-            title="POS Settings [CTRL + S]"
-          >
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Settings</span>
-            <kbd className="hidden lg:inline text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
-              CTRL + S
-            </kbd>
-          </button>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. MULTI-TAB HELD BILLS BAR */}
+      {/* 2. MULTI-TAB HELD BILLS BAR + SHIFTED CONTROLS (TIME, FULLSCREEN, SETTINGS) */}
       {/* ========================================================================= */}
-      <div className="h-10 sm:h-11 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20">
-        <div className="flex items-center gap-1.5 h-full py-1">
+      <div className="h-10 sm:h-11 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20 gap-2">
+        <div className="flex items-center gap-1.5 h-full py-1 shrink-0">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
             const itemsCount = tab.items.reduce((acc, it) => acc + it.quantity, 0);
@@ -2077,7 +2327,7 @@ export default function POSBilling() {
           {tabs.length < 5 && (
             <button
               onClick={handleHoldBillAndCreate}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-dashed border-indigo-300 rounded-lg transition-all ml-1 shadow-2xs"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-dashed border-indigo-300 rounded-lg transition-all ml-1 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
               title="Hold Current Bill and Start New One [CTRL + B]"
             >
               <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -2090,15 +2340,48 @@ export default function POSBilling() {
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-3 text-xs text-slate-500 font-mono">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-slate-800 font-semibold">{currentTab.title}</span>
-          </span>
-          <span className="text-slate-300">•</span>
-          <span>{currentTab.items.length} Line(s)</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+        {/* Right Section in 2nd Line: Bill stats + Shifted Time, Fullscreen, and Settings buttons */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="hidden lg:flex items-center gap-2.5 text-xs text-slate-500 font-mono">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-slate-800 font-semibold">{currentTab.title}</span>
+            </span>
+            <span className="text-slate-300">•</span>
+            <span>{currentTab.items.length} Line(s)</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-200 hidden lg:block" />
+
+          {/* Shifted Live Time Clock */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-mono text-slate-700 shadow-2xs shrink-0">
+            <Clock className="w-3 h-3 text-indigo-600" />
+            <span>{currentTime}</span>
+          </div>
+
+          {/* Shifted Fullscreen Toggle Button */}
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Shifted POS Settings Button */}
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
+            title="POS Settings [CTRL + S]"
+          >
+            <Settings className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Settings</span>
+            <kbd className="hidden xl:inline text-[9px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-normal">
+              CTRL+S
+            </kbd>
+          </button>
         </div>
       </div>
 
@@ -2136,13 +2419,13 @@ export default function POSBilling() {
       {/* ========================================================================= */}
       {/* 3. MAIN TERMINAL WORKSPACE (LEFT WORKBENCH + RIGHT SUMMARY) */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 w-full h-full overflow-hidden bg-slate-50">
         {/* ========================================================================= */}
         {/* LEFT COLUMN: ACTION RIBBON + SEARCH/BARCODE + CART ITEMS TABLE */}
         {/* ========================================================================= */}
         <div
           className={cn(
-            "flex-1 flex flex-col min-w-0 border-r border-slate-200 bg-white overflow-hidden h-full",
+            "flex-1 flex flex-col min-w-0 border-r border-slate-200 bg-white overflow-hidden h-full min-h-0",
             mobileActiveView === "cart" ? "flex" : "hidden lg:flex"
           )}
         >
@@ -2387,10 +2670,10 @@ export default function POSBilling() {
                       <div className="flex items-center gap-4 text-right">
                         <div className="flex flex-col">
                           <span className="font-extrabold text-base font-mono text-emerald-600">
-                            ₹{p.batches[0]?.mrp || 100}
+                            ₹{p.batches?.[0]?.mrp || 100}
                           </span>
                           <span className="text-[10px] text-emerald-700 font-mono">
-                            Stock: {p.batches[0]?.stock || 0}
+                            Stock: {p.batches?.[0]?.stock || 0}
                           </span>
                         </div>
                         <button className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-transform active:scale-95">
@@ -2405,7 +2688,7 @@ export default function POSBilling() {
           </div>
 
           {/* CART ITEM WORKBENCH CONTAINER (Mobile Cards + Desktop Table) */}
-          <div className="flex-1 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-50/50 overscroll-contain touch-pan-y">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto relative flex flex-col bg-slate-50/50 overscroll-contain touch-pan-y">
             {/* 1. DESKTOP DATA TABLE (Visible on lg: and larger screens) */}
             <div className="hidden lg:block">
               <table className="w-full text-left border-collapse min-w-[720px]">
@@ -2489,14 +2772,17 @@ export default function POSBilling() {
                       </td>
                     </tr>
                   ) : (
-                    currentTab.items.map((item, idx) => {
+                    (currentTab.items || []).map((item, idx) => {
                       const isSelected = idx === currentTab.selectedItemIndex;
+                      const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+                      const itemQty = Number(item.quantity) || 1;
+                      const itemDiscPct = Number(item.discountPercent) || 0;
                       const lineAmount =
-                        (item.sp -
+                        Math.max(0, itemSp -
                           (item.discountType === "percent"
-                            ? (item.sp * item.discountPercent) / 100
-                            : item.discountPercent)) *
-                        item.quantity;
+                            ? (itemSp * itemDiscPct) / 100
+                            : itemDiscPct)) *
+                        itemQty;
 
                       return (
                         <tr
@@ -2638,16 +2924,7 @@ export default function POSBilling() {
                           {/* DELETE ACTION */}
                           <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => {
-                                updateCurrentTab((tab) => {
-                                  const newItems = tab.items.filter((_, i) => i !== idx);
-                                  return {
-                                    ...tab,
-                                    items: newItems,
-                                    selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
-                                  };
-                                });
-                              }}
+                              onClick={() => handleRemoveCartItem(idx)}
                               className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-600 transition-colors"
                               title="Remove item"
                             >
@@ -2662,7 +2939,7 @@ export default function POSBilling() {
               </table>
             </div>
 
-            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Scrolling) */}
+            {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Swipe-to-Delete) */}
             <div className="block lg:hidden p-3 space-y-2.5 pb-28 touch-pan-y overscroll-contain">
               {currentTab.items.length === 0 ? (
                 <div className="py-12 text-center text-slate-500 space-y-3">
@@ -2682,142 +2959,147 @@ export default function POSBilling() {
                   </button>
                 </div>
               ) : (
-                currentTab.items.map((item, idx) => {
+                (currentTab.items || []).map((item, idx) => {
                   const isSelected = idx === currentTab.selectedItemIndex;
+                  const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  const itemQty = Number(item.quantity) || 1;
+                  const itemDiscPct = Number(item.discountPercent) || 0;
                   const lineAmount =
-                    (item.sp -
+                    Math.max(0, itemSp -
                       (item.discountType === "percent"
-                        ? (item.sp * item.discountPercent) / 100
-                        : item.discountPercent)) *
-                    item.quantity;
+                        ? (itemSp * itemDiscPct) / 100
+                        : itemDiscPct)) *
+                    itemQty;
 
                   return (
-                    <div
+                    <SwipeableListItem
                       key={item.id}
-                      onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
-                      className={cn(
-                        "p-3 rounded-xl border transition-all bg-white shadow-2xs",
-                        isSelected
-                          ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30"
-                          : "border-slate-200 hover:border-slate-300"
-                      )}
+                      leftAction={{
+                        icon: <Trash2 className="w-5 h-5" />,
+                        label: "Delete",
+                        color: "bg-rose-600",
+                        onTrigger: () => handleRemoveCartItem(idx),
+                      }}
                     >
-                      {/* Header: Item Name + Delete Button */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                              #{idx + 1}
-                            </span>
-                            <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-500">
-                            <span>{item.itemCode}</span>
-                            {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateCurrentTab((tab) => {
-                              const newItems = tab.items.filter((_, i) => i !== idx);
-                              return {
-                                ...tab,
-                                items: newItems,
-                                selectedItemIndex: newItems.length > 0 ? Math.min(idx, newItems.length - 1) : -1,
-                              };
-                            });
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
-                          title="Remove item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Price, Steppers, & Line Amount */}
-                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-                        {/* Selling Price & Discount */}
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                                handleOpenChangePrice();
-                              }}
-                              className="text-xs font-bold text-slate-900 font-mono hover:text-indigo-600 cursor-pointer underline decoration-dotted"
-                            >
-                              ₹{item.sp.toFixed(2)}
-                            </span>
-                            {item.discountPercent > 0 && (
-                              <span className="text-[9px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
+                      <div
+                        onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
+                        className={cn(
+                          "p-3 rounded-xl border transition-all bg-white shadow-2xs w-full",
+                          isSelected
+                            ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30"
+                            : "border-slate-200 hover:border-slate-300"
+                        )}
+                      >
+                        {/* Header: Item Name + Delete Button */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                                #{idx + 1}
                               </span>
-                            )}
+                              <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-500">
+                              <span>{item.itemCode}</span>
+                              {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
+                            </div>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono line-through">
-                            MRP: ₹{item.mrp.toFixed(2)}
-                          </span>
-                        </div>
 
-                        {/* Touch-Friendly Quantity Stepper */}
-                        <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => {
-                              updateCurrentTab((tab) => {
-                                const newItems = tab.items.map((it, i) => {
-                                  if (i === idx) {
-                                    return { ...it, quantity: Math.max(1, it.quantity - 1) };
-                                  }
-                                  return it;
-                                });
-                                return { ...tab, items: newItems };
-                              });
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveCartItem(idx);
                             }}
-                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
+                            title="Remove item (or swipe left)"
                           >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <span
-                            onClick={() => {
-                              updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
-                              handleOpenChangeQty();
-                            }}
-                            className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-slate-900 cursor-pointer hover:bg-slate-50"
-                          >
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateCurrentTab((tab) => {
-                                const newItems = tab.items.map((it, i) => {
-                                  if (i === idx) {
-                                    return { ...it, quantity: it.quantity + 1 };
-                                  }
-                                  return it;
-                                });
-                                return { ...tab, items: newItems };
-                              });
-                            }}
-                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Line Total */}
-                        <div className="text-right">
-                          <span className="text-sm font-black font-mono text-emerald-600">
-                            ₹{lineAmount.toFixed(2)}
-                          </span>
+                        {/* Price, Steppers, & Line Amount */}
+                        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+                          {/* Selling Price & Discount */}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                  handleOpenChangePrice();
+                                }}
+                                className="text-xs font-bold text-slate-900 font-mono hover:text-indigo-600 cursor-pointer underline decoration-dotted"
+                              >
+                                ₹{item.sp.toFixed(2)}
+                              </span>
+                              {item.discountPercent > 0 && (
+                                <span className="text-[9px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono line-through">
+                              MRP: ₹{item.mrp.toFixed(2)}
+                            </span>
+                          </div>
+
+                          {/* Touch-Friendly Quantity Stepper */}
+                          <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentTab((tab) => {
+                                  const newItems = tab.items.map((it, i) => {
+                                    if (i === idx) {
+                                      return { ...it, quantity: Math.max(1, it.quantity - 1) };
+                                    }
+                                    return it;
+                                  });
+                                  return { ...tab, items: newItems };
+                                });
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span
+                              onClick={() => {
+                                updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
+                                handleOpenChangeQty();
+                              }}
+                              className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-slate-900 cursor-pointer hover:bg-slate-50"
+                            >
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentTab((tab) => {
+                                  const newItems = tab.items.map((it, i) => {
+                                    if (i === idx) {
+                                      return { ...it, quantity: it.quantity + 1 };
+                                    }
+                                    return it;
+                                  });
+                                  return { ...tab, items: newItems };
+                                });
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Line Total */}
+                          <div className="text-right">
+                            <span className="text-sm font-black font-mono text-emerald-600">
+                              ₹{lineAmount.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </SwipeableListItem>
                   );
                 })
               )}
@@ -2854,8 +3136,8 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         <div
           className={cn(
-            "w-full lg:w-[410px] bg-slate-50/90 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto shadow-sm h-full flex-1 min-h-0 overscroll-contain touch-pan-y pb-28 lg:pb-4",
-            mobileActiveView === "checkout" ? "flex" : "hidden lg:flex"
+            "w-full lg:w-[410px] xl:w-[440px] shrink-0 bg-slate-50/95 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto shadow-sm h-full min-h-0 overscroll-contain touch-pan-y pb-24 lg:pb-4",
+            mobileActiveView === "checkout" ? "flex flex-1" : "hidden lg:flex"
           )}
         >
           {/* Mobile Top Back-to-Cart Trigger */}
@@ -2998,7 +3280,7 @@ export default function POSBilling() {
                       onClick={() => {
                         updateCurrentTab((tab) => ({
                           ...tab,
-                          paymentMode: pm.mode as any,
+                          paymentMode: pm.mode as BillingTab["paymentMode"],
                         }));
                         if (pm.mode === "UPI") {
                           setShowUPIQRModal(true);
@@ -3147,22 +3429,33 @@ export default function POSBilling() {
                   Walk-in Customer (Tap to attach phone / points)
                 </div>
               )}
+
+              {currentTab.customer && (currentTab.customer.keepSamePrice === false || currentTab.customer.keepSameInventory === false) && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-[11px] text-indigo-700 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>
+                    Custom Party Catalog:
+                    {currentTab.customer.keepSamePrice === false && " Custom Rates"}
+                    {currentTab.customer.keepSameInventory === false && ` (${currentTab.customer.customItems?.length || 0} items only)`}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* DUAL PRIMARY ACTION CTA BUTTONS */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200 mt-4 shrink-0">
+          {/* TRIPLE PRIMARY ACTION CTA BUTTONS */}
+          <div className="grid grid-cols-3 gap-2 pt-3 sm:pt-4 border-t border-slate-200 mt-4 shrink-0">
             {/* Save & Print */}
             <button
               onClick={() => handleSaveBill(true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               title="Save bill and print receipt"
             >
-              <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">Save &amp; Print</span>
-              <span className="sm:hidden">Print Bill</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-emerald-800 px-1 py-0.5 rounded font-normal">
+              <Printer className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">Save &amp; Print</span>
+              <span className="xl:hidden">Print</span>
+              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-emerald-800 px-1 py-0.5 rounded font-normal">
                 F6
               </kbd>
             </button>
@@ -3171,15 +3464,27 @@ export default function POSBilling() {
             <button
               onClick={() => handleSaveBill(false)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               title="Save bill directly"
             >
-              <Check className="w-4 h-4" />
-              <span className="hidden sm:inline">Save Bill</span>
-              <span className="sm:hidden">Save Bill</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono opacity-80 bg-indigo-800 px-1 py-0.5 rounded font-normal">
+              <Check className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">Save Bill</span>
+              <span className="xl:hidden">Save</span>
+              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-indigo-800 px-1 py-0.5 rounded font-normal">
                 F7
               </kbd>
+            </button>
+
+            {/* Save & WhatsApp */}
+            <button
+              onClick={() => handleSaveBill(false, true)}
+              disabled={isProcessingSave || currentTab.items.length === 0}
+              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Save bill and dispatch WhatsApp receipt"
+            >
+              <Send className="w-4 h-4 shrink-0" />
+              <span className="hidden xl:inline">WhatsApp</span>
+              <span className="xl:hidden">WA</span>
             </button>
           </div>
         </div>
@@ -3323,7 +3628,7 @@ export default function POSBilling() {
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      defaultPaymentMode: e.target.value as any,
+                      defaultPaymentMode: e.target.value as PosSettings["defaultPaymentMode"],
                     }))
                   }
                   className="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
@@ -3342,7 +3647,7 @@ export default function POSBilling() {
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      receiptFormat: e.target.value as any,
+                      receiptFormat: e.target.value as PosSettings["receiptFormat"],
                     }))
                   }
                   className="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
@@ -3425,7 +3730,9 @@ export default function POSBilling() {
                   try {
                     localStorage.setItem(getSettingsStorageKey(orgId), JSON.stringify(settings));
                     toast({ title: "Settings Saved ✨", description: "Terminal preferences updated." });
-                  } catch {}
+                  } catch (error) {
+                    console.warn("Failed to save POS settings locally:", error);
+                  }
                   setShowSettingsModal(false);
                 }}
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20"
@@ -3774,7 +4081,7 @@ export default function POSBilling() {
                 .filter(
                   (c) =>
                     !customerSearchTerm ||
-                    c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                    (c.name && c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())) ||
                     c.phone?.includes(customerSearchTerm)
                 )
                 .map((c) => (
@@ -4075,7 +4382,9 @@ export default function POSBilling() {
                   try {
                     localStorage.removeItem(getTabsStorageKey(orgId));
                     localStorage.removeItem(GLOBAL_BACKUP_STORAGE_KEY);
-                  } catch {}
+                  } catch (error) {
+                    console.warn("Failed to clear POS cart backup:", error);
+                  }
                   setShowExitConfirmModal(false);
                   navigate(ROUTE_PATHS.dashboard);
                 }}

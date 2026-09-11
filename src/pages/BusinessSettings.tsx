@@ -290,12 +290,14 @@ export default function BusinessSettings() {
       try {
         const invRaw = localStorage.getItem("credsmart_invoice_settings");
         if (invRaw) {
-          const parsed = JSON.parse(invRaw);
+          const parsed = JSON.parse(invRaw) as { bankAccounts?: BankAccountDetails[]; selectedPaymentQrUpi?: string };
           parsed.bankAccounts = bankAccounts;
           if (upiId) parsed.selectedPaymentQrUpi = upiId.trim();
           localStorage.setItem("credsmart_invoice_settings", JSON.stringify(parsed));
         }
-      } catch {}
+      } catch (syncError) {
+        console.warn("Failed to sync invoice settings:", syncError);
+      }
 
       // Update Supabase organization record & local registry
       if (orgId) {
@@ -332,7 +334,9 @@ export default function BusinessSettings() {
               business_type: selectedBusinessTypes.join(", "),
             });
           }
-        } catch {}
+        } catch (registryError) {
+          console.warn("Failed to save local org registry:", registryError);
+        }
 
         await refresh();
       }
@@ -341,10 +345,11 @@ export default function BusinessSettings() {
         title: "Changes Saved Successfully!",
         description: "Your company details have been updated across your invoices and POS.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Error saving changes";
       toast({
         title: "Error saving changes",
-        description: err.message,
+        description: message,
         variant: "destructive",
       });
     } finally {

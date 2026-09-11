@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, isWithinInterval, parseISO } from "date-fns";
@@ -88,10 +90,10 @@ export default function CashAndBank() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const storageKeyAccounts = `credsmart_bank_accounts_${orgId || "default"}`;
-  const storageKeyTransactions = `credsmart_bank_txns_${orgId || "default"}`;
-  const storageKeyCash = `credsmart_cash_in_hand_${orgId || "default"}`;
-  const storageKeyUnlinked = `credsmart_unlinked_balance_${orgId || "default"}`;
+  const storageKeyAccounts = `credsmart_bank_accounts_${orgId || "no_org"}`;
+  const storageKeyTransactions = `credsmart_bank_txns_${orgId || "no_org"}`;
+  const storageKeyCash = `credsmart_cash_in_hand_${orgId || "no_org"}`;
+  const storageKeyUnlinked = `credsmart_unlinked_balance_${orgId || "no_org"}`;
 
   // State
   const [cashInHand, setCashInHand] = useState<number>(0);
@@ -253,6 +255,20 @@ export default function CashAndBank() {
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, selectedAccountId, dateFilter, searchQuery]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filteredTransactions, 25);
 
   // Add / Reduce Money Action
   const handleAddReduceMoney = (e: React.FormEvent) => {
@@ -856,7 +872,7 @@ export default function CashAndBank() {
               <div className="w-full h-full flex flex-col">
                 {/* MOBILE VIEW: Touch Bank Transaction Cards (Visible on screens < md) */}
                 <div className="block md:hidden space-y-2.5 w-full">
-                  {filteredTransactions.map((txn) => {
+                  {paginatedItems.map((txn) => {
                     const isMoneyIn = txn.type === "money_in";
                     const isTransfer = txn.type === "transfer";
 
@@ -947,7 +963,7 @@ export default function CashAndBank() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-border/60">
-                      {filteredTransactions.map((txn) => {
+                      {paginatedItems.map((txn) => {
                         const isMoneyIn = txn.type === "money_in";
                         const isTransfer = txn.type === "transfer";
 
@@ -1032,6 +1048,19 @@ export default function CashAndBank() {
                     </tbody>
                   </table>
                 </div>
+
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
               </div>
             )}
           </div>
@@ -1136,7 +1165,7 @@ export default function CashAndBank() {
                 </Label>
                 <select
                   value={moneyMode}
-                  onChange={(e) => setMoneyMode(e.target.value as any)}
+                  onChange={(e) => setMoneyMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
                 >
                   <option value="cash">Cash</option>
@@ -1312,7 +1341,7 @@ export default function CashAndBank() {
               </Label>
               <select
                 value={transferMode}
-                onChange={(e) => setTransferMode(e.target.value as any)}
+                onChange={(e) => setTransferMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                 className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
               >
                 <option value="neft_rtgs">NEFT / RTGS / IMPS</option>
@@ -1440,7 +1469,7 @@ export default function CashAndBank() {
                 </Label>
                 <select
                   value={accountType}
-                  onChange={(e) => setAccountType(e.target.value as any)}
+                  onChange={(e) => setAccountType(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                   className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
                 >
                   <option value="current">Current Account</option>

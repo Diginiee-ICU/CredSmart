@@ -16,16 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { SEOHead } from "@/components/public/SEOHead";
+import { PublicConversionBanner } from "@/components/public/PublicConversionBanner";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function Security() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "CredSmart POS Security & Data Privacy Architecture",
+    name: "CredSmart Security & Data Privacy Architecture",
     description:
       "Overview of CredSmart's bank-grade security infrastructure: 256-bit encryption, Row-Level Security (RLS), DPDP 2023 compliance, and automated backups.",
-    url: "https://credsmart.in/security",
+    url: "https://pos.credalert.bussiness/security",
   };
 
   const securityFeatures = [
@@ -64,64 +65,64 @@ export default function Security() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Security & Data Privacy Architecture — CredSmart POS"
-        description="Learn how CredSmart POS protects your business data with 256-bit encryption, Row-Level Security (RLS), DPDP Act compliance, and immutable audit trails."
-        keywords="POS security India, cloud billing security, DPDP compliant billing software, GST data encryption, row level security billing app"
-        canonicalUrl="https://credsmart.in/security"
+        title="Security & Data Privacy Architecture — CredSmart by CredAlert"
+        description="Learn how CredSmart protects your business billing and accounting records with 256-bit SSL encryption, Supabase RLS, immutable audit logs, and DPDP alignment."
+        keywords="CredSmart security, billing software encryption, safe GST invoice cloud, DPDP 2023 compliance, row level security POS, business data protection"
+        canonicalUrl="https://pos.credalert.bussiness/security"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Security Architecture", url: "/security" },
+        ]}
         structuredData={structuredData}
       />
 
       {/* Hero */}
-      <section className="pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-800/80 text-center">
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-200/80 text-center overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-200/30 via-indigo-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-4 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-            <Shield className="w-3.5 h-3.5" /> Institutional Security Standards
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-800 text-xs font-bold uppercase tracking-wider">
+            <Shield className="w-3.5 h-3.5 text-blue-600" /> Bank-Grade Security &amp; Compliance
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-            Bank-Grade Security for Your Commercial Ledger
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A1931] tracking-tight leading-tight">
+            Security &amp; Data Privacy Architecture
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Your billing records, tax calculations, customer ledgers, and trade secrets are protected with modern cloud cryptography and statutory safeguards.
+          <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Your billing records, customer debts, and inventory catalogs are protected with enterprise encryption, multi-tenant isolation, and DPDP Act alignment.
           </p>
         </div>
       </section>
 
-      {/* Security Architecture Grid */}
+      {/* Security Features Grid */}
       <section className="py-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {securityFeatures.map((sec, idx) => {
-            const Icon = sec.icon;
+          {securityFeatures.map((feat, idx) => {
+            const Icon = feat.icon;
             return (
               <div
                 key={idx}
-                className="p-6 sm:p-8 rounded-3xl glass-card-3d space-y-4 hover:border-indigo-400/40 transition-colors relative overflow-hidden"
+                className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-blue-500 to-cyan-500 rounded-l-2xl" />
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center shadow-xs">
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-l-2xl" />
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shadow-xs">
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">{sec.title}</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{sec.desc}</p>
+                <h3 className="text-lg font-black text-[#0A1931]">{feat.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{feat.desc}</p>
               </div>
             );
           })}
         </div>
-
-        {/* Section 2(1)(w) IT Act Card */}
-        <div className="mt-12 p-8 rounded-3xl glass-card-3d space-y-3 relative overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
-          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Scale className="w-5 h-5 text-amber-500" />
-            Statutory Intermediary Compliance &amp; Legal Safe-Harbour
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            CredSmart POS operates as a digital technology intermediary governed by Section 2(1)(w) of the Information Technology Act, 2000. We do not alter or tamper with commercial records created by businesses. All commercial disputes, Right-of-Reply workflows, and legal hold processes follow statutory guidelines.
-          </p>
-        </div>
       </section>
+
+      {/* Bottom Conversion Banner */}
+      <PublicConversionBanner
+        title="Your Business Data. 100% Protected."
+        highlightedText="Always Safe."
+        subtitle="Experience institutional-grade data privacy and secure cloud billing."
+        ctaText="Start Free & Secure"
+      />
     </PublicLayout>
   );
 }
-

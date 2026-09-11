@@ -173,7 +173,7 @@ export default function PrintSettings() {
       );
       localStorage.setItem("pos_receipt_footer", receiptFooter.trim());
       toast({ title: "Print & Hardware Preferences Saved Successfully!" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Error saving print settings", description: err.message, variant: "destructive" });
     }
   };

@@ -144,7 +144,7 @@ export interface GSTR1Data {
   b2cs: GSTR1B2CSItem[];
   cdnr: GSTR1CDNRParty[];
   cdnur: GSTR1CDNURItem[];
-  exp: any[];
+  exp: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[];  
   hsn: {
     data: GSTR1HSNRecord[];
   };
@@ -386,13 +386,13 @@ export function processGSTR1Data(
         rateMap.set(rate, current);
 
         // HSN aggregation
-        const hsnCode = item.hsn?.trim() || "9983";
+        const hsnCode = item.hsn?.trim() || "";
         const unit = (item.unit || "NOS").toUpperCase();
-        const hsnKey = `${hsnCode}_${unit}_${rate}`;
+        const hsnKey = `${hsnCode || "GENERAL"}_${unit}_${rate}`;
 
         const existingHsn = hsnMap.get(hsnKey) || {
           num: hsnMap.size + 1,
-          hsn_sc: hsnCode,
+          hsn_sc: hsnCode || "OTHERS",
           desc: item.productName || "General Goods / Services",
           uqc: unit,
           qty: 0,
@@ -649,25 +649,41 @@ export function processGSTR1Data(
       };
     }
 
-    const docNums = docs.map((d) => d.documentNumber).sort();
-    const fromDoc = docNums[0];
-    const toDoc = docNums[docNums.length - 1];
-    const cancelledCount = docs.filter((d) => d.status === "cancelled").length;
-    const totalCount = docs.length;
+    // Group by series prefix (e.g. "INV-", "CN-") to handle multiple series correctly
+    const seriesMap = new Map<string, BusinessDocument[]>();
+    docs.forEach((d) => {
+      const match = d.documentNumber.match(/^(.*?)(\d+)$/);
+      const docPrefix = match ? match[1] : prefix;
+      if (!seriesMap.has(docPrefix)) seriesMap.set(docPrefix, []);
+      seriesMap.get(docPrefix)!.push(d);
+    });
+
+    const docEntries: GSTR1DocDetails[] = [];
+    let seq = 1;
+
+    seriesMap.forEach((seriesDocs) => {
+      const docNums = seriesDocs
+        .map((d) => d.documentNumber)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+      const fromDoc = docNums[0];
+      const toDoc = docNums[docNums.length - 1];
+      const cancelledCount = seriesDocs.filter((d) => d.status === "cancelled").length;
+      const totalCount = seriesDocs.length;
+
+      docEntries.push({
+        num: seq++,
+        from: fromDoc,
+        to: toDoc,
+        totnum: totalCount,
+        cancel: cancelledCount,
+        net_issue: totalCount - cancelledCount,
+      });
+    });
 
     return {
       doc_num: docNum,
       doc_typ: docTyp,
-      docs: [
-        {
-          num: 1,
-          from: fromDoc,
-          to: toDoc,
-          totnum: totalCount,
-          cancel: cancelledCount,
-          net_issue: totalCount - cancelledCount,
-        },
-      ],
+      docs: docEntries,
     };
   };
 
@@ -729,8 +745,8 @@ export function processGSTR3BData(
   let outwardCamt = 0;
   let outwardSamt = 0;
   let outwardIamt = 0;
-  let zeroRatedTxval = 0;
-  let nilExemptTxval = 0;
+  const zeroRatedTxval = 0;
+  const nilExemptTxval = 0;
 
   // Inter-state unregistered supplies (Table 3.2)
   const unregInterMap = new Map<string, { txval: number; iamt: number }>();
@@ -924,7 +940,7 @@ function escapeXml(str: string | number | null | undefined): string {
     .replace(/'/g, "&apos;");
 }
 
-function buildXmlCell(value: any, isHeader = false, isNumeric = false): string {
+function buildXmlCell(value: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, isHeader = false, isNumeric = false): string {  
   const styleAttr = isHeader ? ' ss:StyleID="HeaderStyle"' : isNumeric ? ' ss:StyleID="NumberStyle"' : ' ss:StyleID="TextStyle"';
   const type = isNumeric && !isNaN(Number(value)) ? "Number" : "String";
   const content = isNumeric && !isNaN(Number(value)) ? Number(value).toFixed(2) : escapeXml(value);

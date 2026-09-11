@@ -6,6 +6,60 @@
 
 import { ReceiptData } from "@/components/ReceiptModal";
 
+type UsbEndpoint = {
+  direction?: string;
+  endpointNumber: number;
+};
+
+type UsbInterface = {
+  alternates: Array<{ endpoints: UsbEndpoint[] }>;
+};
+
+type UsbDeviceLike = {
+  configuration: { interfaces: UsbInterface[] } | null;
+  selectConfiguration: (configuration: number) => Promise<void>;
+  claimInterface: (interfaceNumber: number) => Promise<void>;
+  transferOut: (endpointNumber: number, data: Uint8Array) => Promise<void>;
+  close: () => Promise<void>;
+  open: () => Promise<void>;
+};
+
+type BluetoothCharacteristicLike = {
+  properties: {
+    write?: boolean;
+    writeWithoutResponse?: boolean;
+  };
+  writeValue: (value: Uint8Array) => Promise<void>;
+};
+
+type BluetoothServiceLike = {
+  getCharacteristics: () => Promise<BluetoothCharacteristicLike[]>;
+};
+
+type BluetoothDeviceLike = {
+  gatt: {
+    connect: () => Promise<{
+      getPrimaryServices: () => Promise<BluetoothServiceLike[]>;
+      disconnect: () => void;
+    }>;
+  };
+};
+
+type NavigatorWithUsb = Navigator & {
+  usb?: {
+    requestDevice: (options: { filters: unknown[] }) => Promise<UsbDeviceLike>;
+  };
+};
+
+type NavigatorWithBluetooth = Navigator & {
+  bluetooth?: {
+    requestDevice: (options: {
+      acceptAllDevices: boolean;
+      optionalServices: string[];
+    }) => Promise<BluetoothDeviceLike>;
+  };
+};
+
 // --- ESC/POS Command Constants ---
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -648,7 +702,10 @@ export async function printViaWebUSB(bytes: Uint8Array): Promise<{ success: bool
       return { success: false, error: "WebUSB is not supported by your browser. Please use Chrome/Edge or standard print dialog." };
     }
 
-    const usb = (navigator as any).usb;
+    const usb = (navigator as NavigatorWithUsb).usb;
+    if (!usb) {
+      return { success: false, error: "WebUSB is not supported by your browser. Please use Chrome/Edge or standard print dialog." };
+    }
     const device = await usb.requestDevice({ filters: [] });
     await device.open();
 
@@ -658,9 +715,13 @@ export async function printViaWebUSB(bytes: Uint8Array): Promise<{ success: bool
     await device.claimInterface(0);
 
     // Locate OUT endpoint
-    const iface = device.configuration.interfaces[0];
+     const iface = device.configuration?.interfaces[0];
+    if (!iface) {
+      await device.close();
+      return { success: false, error: "No USB interface found on printer." };
+    }
     const alternate = iface.alternates[0];
-    const outEndpoint = alternate.endpoints.find((e: any) => e.direction === "out");
+    const outEndpoint = alternate?.endpoints.find((e: UsbEndpoint) => e.direction === "out");
 
     if (!outEndpoint) {
       await device.close();
@@ -670,9 +731,10 @@ export async function printViaWebUSB(bytes: Uint8Array): Promise<{ success: bool
     await device.transferOut(outEndpoint.endpointNumber, bytes);
     await device.close();
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.warn("WebUSB Print Exception:", err);
-    return { success: false, error: err.message || "Failed to communicate with USB printer." };
+    const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to communicate with USB printer.";
+    return { success: false, error: message };
   }
 }
 
@@ -685,7 +747,10 @@ export async function printViaWebBluetooth(bytes: Uint8Array): Promise<{ success
       return { success: false, error: "Web Bluetooth is not supported in this browser." };
     }
 
-    const bluetooth = (navigator as any).bluetooth;
+    const bluetooth = (navigator as NavigatorWithBluetooth).bluetooth;
+    if (!bluetooth) {
+      return { success: false, error: "Web Bluetooth is not supported in this browser." };
+    }
     // Request thermal printer device (common thermal services or standard serial)
     const device = await bluetooth.requestDevice({
       acceptAllDevices: true,
@@ -699,7 +764,7 @@ export async function printViaWebBluetooth(bytes: Uint8Array): Promise<{ success
     const server = await device.gatt.connect();
     const services = await server.getPrimaryServices();
 
-    let targetCharacteristic: any = null;
+    let targetCharacteristic: BluetoothCharacteristicLike | null = null;
     for (const service of services) {
       const characteristics = await service.getCharacteristics();
       for (const char of characteristics) {
@@ -725,8 +790,9 @@ export async function printViaWebBluetooth(bytes: Uint8Array): Promise<{ success
 
     server.disconnect();
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.warn("Web Bluetooth Print Exception:", err);
-    return { success: false, error: err.message || "Failed to send Bluetooth print payload." };
+    const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to send Bluetooth print payload.";
+    return { success: false, error: message };
   }
 }

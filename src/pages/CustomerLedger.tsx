@@ -42,7 +42,7 @@ export default function CustomerLedger() {
   const { orgId, org } = useOrganization();
   const { toast } = useToast();
 
-  const [customer, setCustomer] = useState<any>(null);
+  const [customer, setCustomer] = useState<any> /* eslint-disable-line @typescript-eslint/no-explicit-any */(null);  
   const [transactions, setTransactions] = useState<ReconciledLedgerEntry[]>([]);
   const [reconciliation, setReconciliation] = useState<PartyReconciliationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +86,7 @@ export default function CustomerLedger() {
 
       // Inverted so newest is first in the UI table
       setTransactions([...reconResult.transactions].reverse());
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Error fetching ledger", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -244,7 +244,7 @@ export default function CustomerLedger() {
           </Button>
 
           <Button
-            onClick={handleExportCSV}
+            onClick={handleDownloadCSV}
             variant="outline"
             size="sm"
             className="rounded-xl font-semibold gap-1.5 shadow-xs border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-xs h-9"

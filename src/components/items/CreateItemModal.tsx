@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   Package,
@@ -72,9 +72,13 @@ const UNIT_OPTIONS: ItemUnit[] = [
   "SET",
   "GM",
   "ML",
+  "STEPS",
 ];
 
 const GST_RATES: GSTRate[] = [0, 0.1, 0.25, 3, 5, 12, 18, 28];
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
 
 export function CreateItemModal({
   isOpen,
@@ -102,6 +106,9 @@ export function CreateItemModal({
   const [category, setCategory] = useState(allCategories[0] || "General");
   const [brand, setBrand] = useState("");
   const [unit, setUnit] = useState<ItemUnit>("PCS");
+  const [enableAltUnit, setEnableAltUnit] = useState(false);
+  const [altUnit, setAltUnit] = useState<string>("PKT");
+  const [altUnitConversion, setAltUnitConversion] = useState<string>("4");
 
   // Pricing & Tax
   const [sellingPrice, setSellingPrice] = useState("");
@@ -133,14 +140,34 @@ export function CreateItemModal({
       setBarcode(initialData.barcode || "");
       setCategory(initialData.category || allCategories[0] || "General");
       setBrand(initialData.brand || "");
-      setUnit(initialData.unit || "PCS");
-      setSellingPrice(initialData.sellingPrice?.toString() || "");
-      setPurchasePrice(initialData.purchasePrice?.toString() || "");
-      setMrp(initialData.mrp?.toString() || "");
-      setGstRate(initialData.gstRate || 18);
-      setHsnCode(initialData.hsnCode || "");
-      setOpeningStock(initialData.openingStock?.toString() || "0");
-      setMinStockAlert(initialData.minStockAlert?.toString() || "10");
+      setUnit(initialData.unit || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.unit || "PCS"); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      // Load alternate unit from item or tags
+      const savedAltUnit = initialData.altUnit || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.alt_unit || null; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const savedConv = initialData.altUnitConversion ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.alt_unit_conversion ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (savedAltUnit && savedConv) {
+        setEnableAltUnit(true);
+        setAltUnit(savedAltUnit);
+        setAltUnitConversion(String(savedConv));
+      } else {
+        setEnableAltUnit(false);
+        setAltUnit("PKT");
+        setAltUnitConversion("4");
+      }
+
+      const initSelling = initialData.sellingPrice ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.selling_price ?? initialData.mrp ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.selling_price ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.mrp ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const initPurchase = initialData.purchasePrice ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.purchase_price ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.purchase_price ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const initMrp = initialData.mrp ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.mrp ?? initSelling ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const initStock = initialData.currentStock ?? initialData.openingStock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.stock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.stock ?? "0"; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const initMinAlert = initialData.minStockAlert ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.min_stock_alert ?? "10"; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      setSellingPrice(initSelling ? String(initSelling) : "");
+      setPurchasePrice(initPurchase ? String(initPurchase) : "");
+      setMrp(initMrp ? String(initMrp) : "");
+      setGstRate(initialData.gstRate || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tax_rate || 18); // eslint-disable-line @typescript-eslint/no-explicit-any
+      setHsnCode(initialData.hsnCode || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.hsn_code || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
+      setOpeningStock(String(initStock));
+      setMinStockAlert(String(initMinAlert));
       setGodownId(initialData.godownId || godowns[0]?.id || "g-main");
       if (initialData.batches && initialData.batches.length > 0) {
         setTrackBatches(true);
@@ -161,6 +188,9 @@ export function CreateItemModal({
       setCategory(allCategories[0] || "General");
       setBrand("");
       setUnit("PCS");
+      setEnableAltUnit(false);
+      setAltUnit("PKT");
+      setAltUnitConversion("4");
       setSellingPrice("");
       setPurchasePrice("");
       setMrp("");
@@ -174,7 +204,17 @@ export function CreateItemModal({
       setExpiryDate("");
       setManufacturingDate("");
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, isOpen]);
+
+  const formScrollRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      formScrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (formScrollRef.current) formScrollRef.current.scrollTop = 0;
+    }
+  }, [isOpen, activeTab]);
 
   if (!isOpen) return null;
 
@@ -212,6 +252,7 @@ export function CreateItemModal({
     const mrpVal = parseFloat(mrp) || sPrice;
     const opStock = parseFloat(openingStock) || 0;
     const minStock = parseFloat(minStockAlert) || 5;
+    const convFactor = enableAltUnit ? (parseFloat(altUnitConversion) || 1) : null;
 
     const batches: ItemBatch[] = [];
     if (trackBatches || batchNumber.trim()) {
@@ -237,6 +278,8 @@ export function CreateItemModal({
       category: category || "General",
       brand: brand.trim() || null,
       unit,
+      altUnit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : null,
+      altUnitConversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : null,
       sellingPrice: sPrice,
       purchasePrice: pPrice,
       mrp: mrpVal,
@@ -248,14 +291,19 @@ export function CreateItemModal({
       godownId,
       godownName: godowns.find((g) => g.id === godownId)?.name,
       batches,
+      // Also store in tags for backward-compat with existing DB queries
+      tags: {
+        alt_unit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined,
+        alt_unit_conversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : undefined,
+      },
     };
 
     setIsSubmitting(true);
     try {
       await onSave(payload);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save item.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save item."));
     } finally {
       setIsSubmitting(false);
     }
@@ -298,7 +346,7 @@ export function CreateItemModal({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "basic" | "pricing" | "stock" | "batch")}
               className={cn(
                 "px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap",
                 activeTab === tab.id
@@ -312,7 +360,7 @@ export function CreateItemModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+        <form ref={formScrollRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
           {/* TAB 1: Basic Details */}
           {activeTab === "basic" && (
             <div className="space-y-5">
@@ -410,7 +458,7 @@ export function CreateItemModal({
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Primary Unit *</Label>
-                  <Select value={unit} onValueChange={(val: any) => setUnit(val)}>
+                  <Select value={unit} onValueChange={(val) => setUnit(val as ItemUnit)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Unit" />
                     </SelectTrigger>
@@ -423,6 +471,69 @@ export function CreateItemModal({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Alternate Unit Configuration */}
+              <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-foreground text-xs">Enable Alternate Unit</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Allow selling in a secondary unit (e.g. PKT, BOX, DOZ) with an auto conversion
+                    </p>
+                  </div>
+                  <Switch checked={enableAltUnit} onCheckedChange={setEnableAltUnit} />
+                </div>
+
+                {enableAltUnit && (
+                  <div className="animate-in fade-in duration-200 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Alternate Unit</Label>
+                        <Select
+                          value={altUnit}
+                          onValueChange={(val) => setAltUnit(val)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Alt Unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {UNIT_OPTIONS.filter((u) => u !== unit).map((u) => (
+                              <SelectItem key={u} value={u}>
+                                {u}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="alt-unit-conversion" className="text-xs font-semibold">
+                          {unit}s per {altUnit || "Alt Unit"}
+                        </Label>
+                        <Input
+                          id="alt-unit-conversion"
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="e.g. 4"
+                          value={altUnitConversion}
+                          onChange={(e) => setAltUnitConversion(e.target.value)}
+                          className="font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+                    {/* Live preview */}
+                    {altUnit && altUnitConversion && parseFloat(altUnitConversion) > 1 && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs">
+                        <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="text-blue-700">
+                          On invoices: <strong>1 {altUnit} = {altUnitConversion} {unit}</strong>
+                          {" "}&nbsp;·&nbsp; Selling 2 {altUnit} will bill as {(parseFloat(altUnitConversion) * 2) || "?"} {unit}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -551,7 +662,7 @@ export function CreateItemModal({
                   </div>
 
                   {showHsnDropdown && hsnSuggestions.length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-border text-xs">
+                    <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-border text-xs">
                       {hsnSuggestions.map((h) => (
                         <button
                           key={h.code}
@@ -710,13 +821,15 @@ export function CreateItemModal({
               )}
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              {activeTab !== "batch" ? (
+              {activeTab !== "batch" && (
                 <Button
                   type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     if (activeTab === "basic") setActiveTab("pricing");
                     else if (activeTab === "pricing") setActiveTab("stock");
@@ -726,16 +839,15 @@ export function CreateItemModal({
                 >
                   Continue →
                 </Button>
-              ) : (
-                <Button type="submit" disabled={isSubmitting} className="gap-2 font-bold">
-                  {isSubmitting ? (
-                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
-                  {initialData ? "Update Item" : "Save & Create Item"}
-                </Button>
               )}
+              <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2 font-bold bg-primary text-primary-foreground shadow-md">
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                {initialData ? "Update Item" : "Save Item"}
+              </Button>
             </div>
           </div>
         </form>

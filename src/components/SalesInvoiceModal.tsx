@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ import {
   ChevronUp,
   Eye,
   Package,
+  Sparkles,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +60,13 @@ import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
 import { calculateInvoiceBreakdown } from "@/utils/invoiceCalculations";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
+import { InvoiceFitView } from "@/components/invoices/InvoiceFitView";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
+import { useProducts } from "@/context/ProductsContext";
+import { networkInvoicingService } from "@/services/networkInvoicingService";
+import { ConnectedOrgInfo } from "@/types/networkInvoicing";
+import { PartyCustomItem } from "@/types/parties";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 
 interface CustomerOption {
@@ -69,6 +77,10 @@ interface CustomerOption {
   gstin?: string;
   address?: string;
   balance?: number;
+  custom_fields?: Record<string, unknown>;
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
+  customItems?: PartyCustomItem[];
 }
 
 interface ProductCatalogOption {
@@ -79,8 +91,11 @@ interface ProductCatalogOption {
   brand: string | null;
   sku?: string;
   unit?: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   selling_price?: number;
   tax_rate?: number;
+  tags?: Record<string, unknown>;
   product_batches?: {
     id: string;
     batch_number: string;
@@ -98,6 +113,8 @@ interface UnifiedProductSuggestion {
   sku?: string;
   hsn?: string;
   unit: string;
+  altUnit?: string;
+  altUnitConversion?: number;
   rate: number;
   mrp?: number;
   gstRate: number;
@@ -115,6 +132,9 @@ interface SalesInvoiceModalProps {
   onSaved: (doc: BusinessDocument) => void;
   onPrintRequest?: (doc: BusinessDocument) => void;
 }
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
 
 export function SalesInvoiceModal({
   open,
@@ -144,6 +164,39 @@ export function SalesInvoiceModal({
   const [partyGstin, setPartyGstin] = useState("");
   const [partyAddress, setPartyAddress] = useState("");
   const [placeOfSupply, setPlaceOfSupply] = useState("27-Maharashtra");
+  const [connectedPartner, setConnectedPartner] = useState<ConnectedOrgInfo | null>(null);
+
+  // Auto-detect if customer is a connected CredSmart partner business
+  useEffect(() => {
+    let isMounted = true;
+    if (!partyName.trim()) {
+      setConnectedPartner(null);
+      return;
+    }
+    networkInvoicingService.findConnectedOrganization({
+      orgId: selectedCustomerId,
+      phone: partyPhone,
+      gstin: partyGstin,
+      name: partyName,
+    }).then((partner) => {
+      if (isMounted) {
+        if (partner && partner.id !== orgId) {
+          setConnectedPartner(partner);
+        } else {
+          setConnectedPartner(null);
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [partyName, partyPhone, partyGstin, selectedCustomerId, orgId]);
+
+  // Billing Address fields (new)
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingPincode, setBillingPincode] = useState("");
+  const [billingPlaceOfSupply, setBillingPlaceOfSupply] = useState("27-Maharashtra");
+  const [sameAsParty, setSameAsParty] = useState(false);
 
   // Inline New Customer Modal
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
@@ -163,8 +216,8 @@ export function SalesInvoiceModal({
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
 
-  // Products catalog & Item search
-  const [productsCatalog, setProductsCatalog] = useState<ProductCatalogOption[]>([]);
+  // Products catalog & Item search (shared store)
+  const { products: productsCatalog, refreshProducts, addOrUpdateProduct } = useProducts();
   const [itemSearchText, setItemSearchText] = useState<Record<number, string>>({});
   const [activeItemDropdown, setActiveItemDropdown] = useState<number | null>(null);
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
@@ -181,20 +234,56 @@ export function SalesInvoiceModal({
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
+  // When AddItems modal is opened from a specific row, this remembers the row index so
+  // selected items can be inserted/handled for that row if needed.
+  const [addItemsTargetRow, setAddItemsTargetRow] = useState<number | null>(null);
+
+  const activeCustomer = useMemo(() => {
+    return customers.find((c) => c.id === selectedCustomerId) || null;
+  }, [customers, selectedCustomerId]);
 
   const billItemOptions: BillItemOption[] = useMemo(() => {
-    return productsCatalog.map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category || "General",
-      barcode: p.barcode,
-      sku: p.sku,
-      unit: p.unit || "Pcs",
-      sellingPrice: p.selling_price || 0,
-      gstRate: p.tax_rate !== undefined ? p.tax_rate : 18,
-      stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-    }));
-  }, [productsCatalog]);
+    let catalog = productsCatalog || [];
+
+    if (activeCustomer && activeCustomer.keepSameInventory === false && activeCustomer.customItems && activeCustomer.customItems.length > 0) {
+      const allowedIds = new Set(activeCustomer.customItems.map((ci) => ci.productId));
+      catalog = catalog.filter((p) => allowedIds.has(p.id));
+    }
+
+    const customPriceMap = new Map<string, number>();
+    if (activeCustomer && activeCustomer.keepSamePrice === false && activeCustomer.customItems) {
+      activeCustomer.customItems.forEach((ci) => {
+        customPriceMap.set(ci.productId, ci.customPrice);
+      });
+    }
+
+    return catalog.map((p) => {
+      const tags = (p as unknown).tags || {};
+      const defaultSelling = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
+        ? Number(tags.selling_price)
+        : (p.product_batches?.[0]?.mrp || 0);
+      const selling = customPriceMap.has(p.id) ? (customPriceMap.get(p.id) ?? defaultSelling) : defaultSelling;
+      const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined;
+      const altUnitVal = (p as unknown).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        barcode: p.barcode,
+        sku: p.sku,
+        hsn: hsnVal,
+        unit: p.unit || "Pcs",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
+        sellingPrice: selling,
+        gstRate: gst,
+        stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
+      };
+    });
+  }, [productsCatalog, activeCustomer]);
 
   // Line items
   const [items, setItems] = useState<DocumentLineItem[]>([
@@ -233,6 +322,15 @@ export function SalesInvoiceModal({
     branch: "",
     accountHolder: "",
   });
+
+  const editorBodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      editorBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0;
+    }
+  }, [open, viewMode]);
   const [showPaymentQr, setShowPaymentQr] = useState(true);
   const [upiId, setUpiId] = useState("");
 
@@ -270,7 +368,7 @@ export function SalesInvoiceModal({
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         if (parsed.bankAccounts && parsed.bankAccounts.length > 0) {
-          const def = parsed.bankAccounts.find((b: any) => b.isDefault) || parsed.bankAccounts[0];
+          const def = parsed.bankAccounts.find((b: { isDefault?: boolean }) => b.isDefault) || parsed.bankAccounts[0];
           setBankAccount({
             accountNumber: def.accountNumber || "",
             ifsc: def.ifsc || "",
@@ -304,7 +402,7 @@ export function SalesInvoiceModal({
     try {
       const { data: custData } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address")
+        .select("id, name, phone, email, address, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -325,10 +423,21 @@ export function SalesInvoiceModal({
       });
 
       if (custData) {
-        const merged = custData.map((c) => ({
-          ...c,
-          balance: balanceMap[c.id] || 0,
-        }));
+        const merged = custData.map((c: unknown) => {
+          const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
+          const keepSamePrice = cf.keepSamePrice !== false;
+          const keepSameInventory = cf.keepSameInventory !== false;
+          const customItems = Array.isArray(cf.customItems) ? cf.customItems : [];
+
+          return {
+            ...c,
+            balance: balanceMap[c.id] || 0,
+            custom_fields: cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          };
+        });
         setCustomers(merged);
       }
     } catch (e) {
@@ -339,12 +448,7 @@ export function SalesInvoiceModal({
   const fetchProducts = async () => {
     if (!orgId) return;
     try {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, barcode, sku, category, unit, selling_price, tax_rate, brand, product_batches(id, batch_number, mrp, stock, expiry_date)")
-        .eq("organization_id", orgId)
-        .order("name");
-      if (data) setProductsCatalog(data);
+      await refreshProducts(orgId);
     } catch (e) {
       console.error(e);
     }
@@ -376,6 +480,12 @@ export function SalesInvoiceModal({
         setPartyPhone(editingDoc.partyPhone || "");
         setPartyGstin(editingDoc.partyGstin || "");
         setPartyAddress(editingDoc.partyAddress || "");
+        // Billing fields from editing document (if available)
+        const legacyBillingAddress = editingDoc.billingAddress ?? editingDoc.partyAddress ?? "";
+        setBillingAddress(legacyBillingAddress);
+        setBillingPincode(editingDoc.billingPincode || "");
+        setBillingPlaceOfSupply(editingDoc.billingPlaceOfSupply || editingDoc.placeOfSupply || "27-Maharashtra");
+        setSameAsParty(Boolean(editingDoc.partyAddress && legacyBillingAddress === editingDoc.partyAddress));
         setPlaceOfSupply(editingDoc.placeOfSupply || "27-Maharashtra");
         setDocDate(editingDoc.docDate || new Date().toISOString().split("T")[0]);
         if (editingDoc.dueDate) {
@@ -383,7 +493,21 @@ export function SalesInvoiceModal({
           setDueDate(editingDoc.dueDate);
         }
         setPaymentTerms(editingDoc.paymentTerms || "Due on Receipt");
-        setItems(editingDoc.items && editingDoc.items.length > 0 ? editingDoc.items : [createNewRow("row-1")]);
+        const loadedItems = (editingDoc.items && editingDoc.items.length > 0 ? editingDoc.items : [createNewRow("row-1")]).map((it) => {
+          const matchedProd = (productsCatalog || []).find(
+            (p) => p.id === it.productId || (it.productName && p.name.toLowerCase().trim() === it.productName.toLowerCase().trim())
+          );
+          const pTags = ((matchedProd as unknown) as { tags?: Record<string, unknown> })?.tags || {};
+          const resolvedAltUnit = it.altUnit || matchedProd?.altUnit || (pTags.alt_unit as string) || undefined;
+          const resolvedAltConvRaw = it.altUnitConversion ?? matchedProd?.altUnitConversion ?? pTags.alt_unit_conversion ?? undefined;
+          const resolvedAltConv = resolvedAltConvRaw != null ? Number(resolvedAltConvRaw) : undefined;
+          return {
+            ...it,
+            altUnit: resolvedAltUnit,
+            altUnitConversion: resolvedAltConv,
+          };
+        });
+        setItems(loadedItems);
         setPaymentMethod(editingDoc.paymentMethod || "Cash");
         setAmountReceived(editingDoc.paidAmount || 0);
         setNotes(editingDoc.notes || "");
@@ -404,6 +528,11 @@ export function SalesInvoiceModal({
         setPartyPhone("");
         setPartyGstin("");
         setPartyAddress("");
+        // Reset billing fields for new document
+        setBillingAddress("");
+        setBillingPincode("");
+        setBillingPlaceOfSupply("27-Maharashtra");
+        setSameAsParty(false);
         setDocDate(new Date().toISOString().split("T")[0]);
         setShowDueDate(false);
         setEwayBillNo("");
@@ -420,6 +549,7 @@ export function SalesInvoiceModal({
         setPaymentMethod("Cash");
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingDoc, initialDocType]);
 
   const createNewRow = (id: string): DocumentLineItem => ({
@@ -470,7 +600,7 @@ export function SalesInvoiceModal({
   // State Code / Interstate
   const orgStateCode = "27"; // Maharashtra
   const isInterState = useMemo(() => {
-    const custCode = (placeOfSupply || "").slice(0, 2);
+      const custCode = (placeOfSupply || "").slice(0, 2);
     return custCode !== "" && custCode !== orgStateCode;
   }, [placeOfSupply]);
 
@@ -483,6 +613,9 @@ export function SalesInvoiceModal({
         discountPercent: Number(item.discountPercent) || 0,
         discountAmount: Number(item.discountAmount) || 0,
         taxRate: Number(item.taxRate) || 0,
+        altQty: item.altQty != null ? Number(item.altQty) : undefined,
+        altUnit: item.altUnit,
+        altUnitConversion: item.altUnitConversion != null ? Number(item.altUnitConversion) : undefined,
       })),
       overallDiscountType,
       overallDiscountValue,
@@ -501,10 +634,41 @@ export function SalesInvoiceModal({
     }
   }, [markAsFullyPaid, totals.grandTotal]);
 
-  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: any) => {
+  // Sync billing when 'same as above' toggled or party address/state changes
+  useEffect(() => {
+    if (sameAsParty) {
+      setBillingAddress(partyAddress || "");
+      setBillingPincode("");
+      setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
+    }
+  }, [sameAsParty, partyAddress, placeOfSupply]);
+
+  const handleBillingAddressChange = (value: string) => {
+    setBillingAddress(value);
+    if (sameAsParty && value !== (partyAddress || "")) {
+      setSameAsParty(false);
+    }
+  };
+
+  const handleBillingPlaceChange = (value: string) => {
+    setBillingPlaceOfSupply(value);
+    if (sameAsParty && value !== (placeOfSupply || "27-Maharashtra")) {
+      setSameAsParty(false);
+    }
+  };
+
+  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
     setItems((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleUpdateItemFields = (index: number, fields: Partial<DocumentLineItem>) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], ...fields };
       return copy;
     });
   };
@@ -513,13 +677,28 @@ export function SalesInvoiceModal({
   const handleSelectProduct = (index: number, product: UnifiedProductSuggestion) => {
     setItems((prev) => {
       const copy = [...prev];
+      const pRecord = (product && typeof product === "object" ? product : {}) as Record<string, unknown>;
+      const pTags = (pRecord.tags && typeof pRecord.tags === "object" ? pRecord.tags : {}) as Record<string, unknown>;
+      const primaryU = product.unit || (pTags.unit as string) || (pRecord.unit as string) || copy[index].unit || "Pcs";
+      const altU = (product.altUnit as string) || (pTags.alt_unit as string) || (pRecord.alt_unit as string) || undefined;
+      const altConvRaw = product.altUnitConversion ?? pTags.alt_unit_conversion ?? pRecord.alt_unit_conversion ?? undefined;
+      const altConv = altConvRaw != null && !isNaN(Number(altConvRaw)) ? Number(altConvRaw) : undefined;
+
+      const hasAlt = altU && altConv && altConv > 1;
+      const defaultAltQty = hasAlt ? 1 : undefined;
+      const defaultQty = hasAlt ? altConv : 1;
+
       copy[index] = {
         ...copy[index],
         productId: product.id,
         productName: product.name,
         barcode: product.barcode || undefined,
         hsn: product.hsn || copy[index].hsn || "",
-        unit: product.unit || copy[index].unit || "Pcs",
+        unit: primaryU,
+        altUnit: altU,
+        altUnitConversion: altConv,
+        altQty: defaultAltQty,
+        quantity: defaultQty,
         rate: product.rate,
         batchNumber: product.batchNumber || undefined,
         taxRate: product.gstRate !== undefined ? product.gstRate : 18,
@@ -544,7 +723,45 @@ export function SalesInvoiceModal({
   };
 
   const handleItemCreated = (product: CreatedProductResult) => {
-    fetchProducts();
+    const normalizedHsn = (product.hsn || "").trim();
+    const catalogRow: ProductCatalogOption = {
+      id: product.id,
+      name: product.name,
+      category: product.category || "General",
+      barcode: product.barcode || null,
+      sku: product.sku,
+      unit: product.unit || "Pcs",
+      altUnit: product.altUnit,
+      altUnitConversion: product.altUnitConversion,
+      tags: {
+        hsn_code: normalizedHsn,
+        gst_rate: product.taxRate,
+        selling_price: product.sellingPrice,
+        purchase_price: product.purchasePrice,
+        mrp: product.sellingPrice || product.purchasePrice || 0,
+        unit: product.unit || "Pcs",
+        alt_unit: product.altUnit,
+        alt_unit_conversion: product.altUnitConversion,
+        min_stock_alert: 5,
+      },
+      product_batches: [
+        {
+          id: product.batchNumber || `batch-${product.id}`,
+          batch_number: product.batchNumber || "BATCH-01",
+          mrp: product.sellingPrice || product.purchasePrice || 0,
+          stock: product.stock || 0,
+          expiry_date: null,
+        },
+      ],
+    };
+
+    // Update shared product store so all views get refreshed
+    try {
+      addOrUpdateProduct(catalogRow);
+    } catch (e) {
+      console.warn('Failed to update shared product store', e);
+    }
+
     if (targetRowIndexForNewItem !== null) {
       setItems((prev) => {
         const copy = [...prev];
@@ -554,8 +771,11 @@ export function SalesInvoiceModal({
             productId: product.id,
             productName: product.name,
             barcode: product.barcode || undefined,
-            hsn: product.hsn || copy[targetRowIndexForNewItem].hsn || "",
+            hsn: normalizedHsn,
             unit: product.unit || copy[targetRowIndexForNewItem].unit || "Pcs",
+            altUnit: product.altUnit || undefined,
+            altUnitConversion: product.altUnitConversion || undefined,
+            altQty: undefined,
             rate: product.sellingPrice,
             taxRate: product.taxRate,
             batchNumber: product.batchNumber || undefined,
@@ -571,6 +791,78 @@ export function SalesInvoiceModal({
 
       focusItemInput(targetRowIndexForNewItem + 1);
     }
+
+    setTargetRowIndexForNewItem(null);
+    setInitialNewItemName("");
+    setShowQuickCreateItemModal(false);
+  };
+
+  // When user selects multiple items from the AddItemsToBillModal, insert them
+  // at the row that opened the modal (addItemsTargetRow) if set; otherwise append.
+  // The function preserves the existing behavior of ensuring a trailing empty row.
+  const handleBatchAddItemsAtTarget = (newItems: DocumentLineItem[]) => {
+    if (!newItems || newItems.length === 0) return;
+    const target = addItemsTargetRow;
+
+    setItems((prev) => {
+      const copy = [...prev];
+
+      // Normalize incoming items into the local DocumentLineItem shape
+      const mapped = newItems.map((ni) => ({
+        id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        productId: (ni as unknown).productId || (ni as unknown).id || undefined,
+        productName: (ni as unknown).productName || (ni as unknown).name || "",
+        barcode: (ni as unknown).barcode || undefined,
+        hsn: (ni as unknown).hsn || "",
+        quantity: Number((ni as unknown).quantity) || 1,
+        unit: (ni as unknown).unit || "Pcs",
+        altUnit: (ni as unknown).altUnit || undefined,
+        altQty: (ni as unknown).altQty !== undefined ? Number((ni as unknown).altQty) : undefined,
+        altUnitConversion: (ni as unknown).altUnitConversion ? Number((ni as unknown).altUnitConversion) : undefined,
+        rate: Number((ni as unknown).rate) || 0,
+        discountPercent: Number((ni as unknown).discountPercent) || 0,
+        discountAmount: Number((ni as unknown).discountAmount) || 0,
+        taxRate: Number((ni as unknown).taxRate) || 18,
+        taxableAmount: Number((ni as unknown).taxableAmount) || 0,
+        cgstAmount: Number((ni as unknown).cgstAmount) || 0,
+        sgstAmount: Number((ni as unknown).sgstAmount) || 0,
+        igstAmount: Number((ni as unknown).igstAmount) || 0,
+        lineTotal: Number((ni as unknown).lineTotal) || 0,
+      } as DocumentLineItem));
+
+      // Determine insertion index
+      let insertAt = copy.length; // default append
+      if (typeof target === "number" && target >= 0 && target < copy.length) {
+        insertAt = target;
+      }
+
+      // If target row exists and is empty (no productName), replace that row with first mapped item
+      if (typeof target === "number" && target >= 0 && target < copy.length && (!copy[target].productName || copy[target].productName.trim() === "")) {
+        // replace that single row with mapped items
+        copy.splice(target, 1, ...mapped);
+      } else {
+        // splice in mapped items at insertAt
+        copy.splice(insertAt, 0, ...mapped);
+      }
+
+      // Ensure trailing blank row exists
+      const last = copy[copy.length - 1];
+      if (!last || (last.productName && last.productName.trim() !== "")) {
+        copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+      }
+
+      return copy;
+    });
+
+    // reset the remembered target and close modal
+    setAddItemsTargetRow(null);
+    setShowAddItemsModal(false);
+
+    // Focus first new inserted row after a tick
+    setTimeout(() => {
+      const focusIndex = typeof target === "number" && target >= 0 ? target : (items.length - 1);
+      focusItemInput(focusIndex + (newItems?.length ? newItems.length - 1 : 0));
+    }, 80);
   };
 
   const handleSelectCustomer = (c: CustomerOption) => {
@@ -593,6 +885,20 @@ export function SalesInvoiceModal({
       toast.error("Please enter a customer name");
       return;
     }
+
+    const normName = newCustName.trim().toLowerCase();
+    const existing = customers.find((c) => c.name.trim().toLowerCase() === normName);
+    if (existing) {
+      toast.info(`Selected existing customer "${existing.name}"`);
+      handleSelectCustomer(existing);
+      setShowNewCustomerDialog(false);
+      setNewCustName("");
+      setNewCustPhone("");
+      setNewCustGstin("");
+      setNewCustAddress("");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("customers")
@@ -623,8 +929,8 @@ export function SalesInvoiceModal({
       setNewCustPhone("");
       setNewCustGstin("");
       setNewCustAddress("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create customer");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to create customer"));
     }
   };
 
@@ -642,6 +948,9 @@ export function SalesInvoiceModal({
 
     setSaving(true);
     try {
+      const resolvedBillingAddress = sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+      const resolvedBillingPlaceOfSupply = sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
+
       const finalDoc: Omit<BusinessDocument, "id"> = {
         organizationId: orgId,
         docType,
@@ -652,6 +961,9 @@ export function SalesInvoiceModal({
         partyPhone: partyPhone.trim() || undefined,
         partyGstin: partyGstin.trim() || undefined,
         partyAddress: partyAddress.trim() || undefined,
+        billingAddress: resolvedBillingAddress,
+        billingPincode: sameAsParty ? undefined : (billingPincode.trim() || undefined),
+        billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
         placeOfSupply,
         docDate,
         dueDate: showDueDate ? dueDate : docDate,
@@ -682,11 +994,71 @@ export function SalesInvoiceModal({
       };
 
       const saved = await documentsService.saveDocument(finalDoc, user?.id);
-      toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+
+      // Auto-share with CredSmart network buyer for approval & auto-purchase sync
+      if (docType === "sales_invoice") {
+        try {
+          const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
+          if (netInvoice) {
+            toast.success(
+              `⚡ Sales Invoice #${fullDocumentNumber} saved & shared with ${netInvoice.recipientOrgName} for purchase approval!`,
+              { duration: 5000 }
+            );
+          } else {
+            toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+          }
+        } catch (netErr) {
+          console.warn("Network dispatch notice:", netErr);
+          toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+        }
+      } else {
+        toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+      }
       onSaved(saved);
 
-      if (andPrint && onPrintRequest) {
-        onPrintRequest(saved);
+      if (andPrint) {
+        if (onPrintRequest) {
+          onPrintRequest(saved);
+        } else {
+          downloadExactInvoicePdf({
+            invoiceNumber: saved.documentNumber,
+            referenceNumber: saved.referenceNumber,
+            docType: saved.docType as any,
+            date: saved.docDate,
+            dueDate: saved.dueDate,
+            customerName: saved.partyName,
+            customerPhone: saved.partyPhone,
+            customerAddress: saved.partyAddress,
+            customerGstin: saved.partyGstin,
+            storeName: org?.name || "CredSmart Store",
+            storePhone: org?.phone,
+            storeEmail: org?.email,
+            storeAddress: org?.address,
+            storeGstin: org?.gstin,
+            totalAmount: saved.grandTotal,
+            subtotal: saved.subtotal,
+            discountAmount: saved.discountTotal ?? 0,
+            tax: saved.taxTotal ?? 0,
+            roundOff: saved.roundOff ?? 0,
+            paymentMethod: saved.paymentMethod,
+            notes: saved.notes,
+            terms: saved.terms,
+            items: saved.items.map((it) => ({
+              name: it.productName,
+              quantity: it.quantity,
+              unit: it.unit || "PCS",
+              altUnit: it.altUnit,
+              altQty: it.altQty,
+              altUnitConversion: it.altUnitConversion,
+              rate: it.rate,
+              total: it.lineTotal,
+              hsn: it.hsn,
+              taxRate: it.taxRate,
+              batchNo: it.batchNumber,
+              expDate: it.expiryDate,
+            })),
+          });
+        }
       }
 
       if (saveAndNew) {
@@ -698,65 +1070,262 @@ export function SalesInvoiceModal({
         setPartyPhone("");
         setPartyGstin("");
         setPartyAddress("");
+        setBillingAddress("");
+        setBillingPincode("");
+        setBillingPlaceOfSupply("27-Maharashtra");
+        setSameAsParty(false);
         setItems([createNewRow("row-1")]);
         setAmountReceived(0);
         setMarkAsFullyPaid(false);
       } else {
         onOpenChange(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save invoice");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save invoice"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Print current invoice without saving (validation guards applied)
+  const handlePrint = () => {
+    if (!partyName.trim()) {
+      toast.error("Please enter or select a customer name (Bill To)");
+      return;
+    }
+
+    const validItems = recalculatedItems.filter((it) => it.productName.trim() !== "");
+    if (validItems.length === 0) {
+      toast.error("Please add at least one line item");
+      return;
+    }
+
+    const resolvedBillingAddress = sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
+    const resolvedBillingPlaceOfSupply = sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
+
+    const docToPrint: BusinessDocument = {
+      id: editingDoc?.id || `preview-${Date.now()}`,
+      organizationId: orgId,
+      docType,
+      documentNumber: fullDocumentNumber,
+      referenceNumber: ewayBillNo.trim() || undefined,
+      partyId: selectedCustomerId || undefined,
+      partyName: partyName.trim(),
+      partyPhone: partyPhone.trim() || undefined,
+      partyGstin: partyGstin.trim() || undefined,
+      partyAddress: partyAddress.trim() || undefined,
+      billingAddress: resolvedBillingAddress,
+      billingPincode: sameAsParty ? undefined : (billingPincode.trim() || undefined),
+      billingPlaceOfSupply: resolvedBillingPlaceOfSupply,
+      placeOfSupply,
+      docDate,
+      dueDate: showDueDate ? dueDate : docDate,
+      paymentTerms,
+      items: validItems,
+      subtotal: totals.rawSubtotal,
+      discountTotal: totals.totalDiscount,
+      taxableTotal: totals.taxableTotal,
+      cgstTotal: totals.cgstTotal,
+      sgstTotal: totals.sgstTotal,
+      igstTotal: totals.igstTotal,
+      taxTotal: totals.taxTotal,
+      roundOff: totals.roundOff,
+      grandTotal: totals.grandTotal,
+      paidAmount: amountReceived,
+      balanceDue: Math.max(0, totals.grandTotal - amountReceived),
+      status: amountReceived >= totals.grandTotal ? "paid" : amountReceived > 0 ? "partial" : "unpaid",
+      paymentMethod,
+      notes: showNotes ? notes : undefined,
+      terms,
+      transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
+      created_at: new Date().toISOString(),
+    };
+
+    if (onPrintRequest) {
+      onPrintRequest(docToPrint);
+    } else {
+      downloadExactInvoicePdf({
+        invoiceNumber: docToPrint.documentNumber,
+        referenceNumber: docToPrint.referenceNumber,
+        docType: docToPrint.docType as any,
+        date: docToPrint.docDate,
+        dueDate: docToPrint.dueDate,
+        customerName: docToPrint.partyName,
+        customerPhone: docToPrint.partyPhone,
+        customerAddress: docToPrint.partyAddress,
+        customerGstin: docToPrint.partyGstin,
+        storeName: org?.name || "CredSmart Store",
+        storePhone: org?.phone,
+        storeEmail: org?.email,
+        storeAddress: org?.address,
+        storeGstin: org?.gstin,
+        totalAmount: docToPrint.grandTotal,
+        subtotal: docToPrint.subtotal,
+        discountAmount: docToPrint.discountTotal ?? 0,
+        tax: docToPrint.taxTotal ?? 0,
+        roundOff: docToPrint.roundOff ?? 0,
+        paymentMethod: docToPrint.paymentMethod,
+        notes: docToPrint.notes,
+        terms: docToPrint.terms,
+        items: docToPrint.items.map((it) => ({
+          name: it.productName,
+          quantity: it.quantity,
+          unit: it.unit || "PCS",
+          altUnit: it.altUnit,
+          altQty: it.altQty,
+          altUnitConversion: it.altUnitConversion,
+          rate: it.rate,
+          total: it.lineTotal,
+          hsn: it.hsn,
+          taxRate: it.taxRate,
+          batchNo: it.batchNumber,
+          expDate: it.expiryDate,
+        })),
+      });
     }
   };
 
   const filteredCustomers = useMemo(() => {
     if (!customerSearch) return customers.slice(0, 20);
     const q = customerSearch.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.phone && c.phone.includes(q)) ||
-        (c.gstin && c.gstin.toLowerCase().includes(q))
-    );
+    return customers.filter((c) => {
+      const safeName = (c?.name || "").toLowerCase();
+      const safePhone = c?.phone || "";
+      const safeGstin = c?.gstin || "";
+      return safeName.includes(q) || safePhone.includes(q) || safeGstin.toLowerCase().includes(q);
+    });
   }, [customers, customerSearch]);
 
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
-    if (!query) return productsCatalog.slice(0, 12).map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category || "General",
-      barcode: p.barcode || undefined,
-      sku: p.sku,
-      unit: p.unit || "Pcs",
-      rate: p.selling_price || 0,
-      gstRate: p.tax_rate || 18,
-      stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
-      isDb: true,
-    }));
+    const safeCatalog = (productsCatalog || []).filter(Boolean);
 
-    const q = query.toLowerCase();
-    return productsCatalog
-      .filter(
+    const customPriceMap = new Map<string, number>();
+    const customItemsList = activeCustomer?.customItems || [];
+
+    if (activeCustomer && activeCustomer.keepSamePrice === false && customItemsList.length > 0) {
+      customItemsList.forEach((ci) => {
+        if (ci.productId) customPriceMap.set(ci.productId, ci.customPrice);
+        if (ci.productName) customPriceMap.set(ci.productName.toLowerCase().trim(), ci.customPrice);
+        if (ci.barcode) customPriceMap.set(ci.barcode.trim(), ci.customPrice);
+      });
+    }
+
+    const synthesizedCustomSuggestions: UnifiedProductSuggestion[] = customItemsList.map((ci) => {
+      const existing = safeCatalog.find(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.barcode && p.barcode.toLowerCase().includes(q)) ||
-          (p.sku && p.sku.toLowerCase().includes(q))
-      )
-      .slice(0, 15)
-      .map((p) => ({
+          p.id === ci.productId ||
+          (ci.barcode && p.barcode === ci.barcode) ||
+          (ci.productName && p.name?.toLowerCase().trim() === ci.productName.toLowerCase().trim())
+      );
+
+      if (existing) {
+        const tags = (existing as unknown).tags || {};
+        const defaultRate =
+          tags && tags.selling_price !== undefined && tags.selling_price !== null
+            ? Number(tags.selling_price)
+            : existing.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0;
+        const rate =
+          activeCustomer?.keepSamePrice === false && ci.customPrice !== undefined
+            ? ci.customPrice
+            : customPriceMap.get(existing.id) ?? defaultRate;
+
+        return {
+          id: existing.id,
+          name: existing.name || ci.productName || "Unnamed Item",
+          category: existing.category || ci.category || "General",
+          barcode: existing.barcode || ci.barcode || undefined,
+          sku: existing.sku || ci.sku,
+          hsn: ci.hsnCode || tags?.hsn_code || tags?.hsn || (existing as unknown).hsn || undefined,
+          unit: ci.unit || existing.unit || "Pcs",
+          altUnit: (existing as unknown).altUnit || tags?.alt_unit || undefined,
+          altUnitConversion: (existing as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined,
+          rate,
+          gstRate: ci.gstRate || (tags && tags.gst_rate !== undefined ? Number(tags.gst_rate) : 18),
+          stock: existing.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || ci.customStock || 0,
+          isDb: true,
+        };
+      }
+
+      return {
+        id: ci.productId || `custom-${Date.now()}-${Math.random()}`,
+        name: ci.productName || "Custom Product",
+        category: ci.category || "General",
+        barcode: ci.barcode || undefined,
+        sku: ci.sku,
+        hsn: ci.hsnCode,
+        unit: ci.unit || "Pcs",
+        rate: ci.customPrice || ci.standardPrice || 0,
+        gstRate: ci.gstRate || 18,
+        stock: ci.customStock || 999,
+        isDb: true,
+      };
+    });
+
+    if (activeCustomer && activeCustomer.keepSameInventory === false && customItemsList.length > 0) {
+      if (!query) return synthesizedCustomSuggestions.slice(0, 15);
+      const q = query.toLowerCase();
+      return synthesizedCustomSuggestions.filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        const barcode = (p.barcode || "").toLowerCase();
+        const sku = (p.sku || "").toLowerCase();
+        return name.includes(q) || barcode.includes(q) || sku.includes(q);
+      }).slice(0, 15);
+    }
+
+    const toSuggestion = (p: ProductCatalogOption): UnifiedProductSuggestion => {
+      const tags = (p as unknown).tags || {};
+      const defaultRate = tags && (tags.selling_price !== undefined && tags.selling_price !== null)
+        ? Number(tags.selling_price)
+        : (p.product_batches?.reduce((sum, b) => sum + (Number(b.mrp) || 0), 0) || 0);
+      const matchRate =
+        customPriceMap.get(p.id) ??
+        (p.name ? customPriceMap.get(p.name.toLowerCase().trim()) : undefined) ??
+        (p.barcode ? customPriceMap.get(p.barcode.trim()) : undefined);
+      const rate = matchRate !== undefined ? matchRate : defaultRate;
+      const gst = tags && (tags.gst_rate !== undefined && tags.gst_rate !== null) ? Number(tags.gst_rate) : 18;
+      const hsnVal = tags?.hsn_code || tags?.hsn || (p as unknown).hsn || undefined;
+      const altUnitVal = (p as unknown).altUnit || tags?.alt_unit || undefined;
+      const altConvVal = (p as unknown).altUnitConversion ?? tags?.alt_unit_conversion ?? undefined;
+
+      return {
         id: p.id,
-        name: p.name,
+        name: p.name || "Unnamed Item",
         category: p.category || "General",
         barcode: p.barcode || undefined,
         sku: p.sku,
+        hsn: hsnVal,
         unit: p.unit || "Pcs",
-        rate: p.selling_price || 0,
-        gstRate: p.tax_rate || 18,
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : undefined,
+        rate,
+        gstRate: gst,
         stock: p.product_batches?.reduce((sum, b) => sum + (Number(b.stock) || 0), 0) || 0,
         isDb: true,
-      }));
+      };
+    };
+
+    const uniqueAdditional = synthesizedCustomSuggestions.filter(
+      (cp) =>
+        !safeCatalog.some(
+          (p) =>
+            p.id === cp.id ||
+            (p.name && cp.name && p.name.toLowerCase().trim() === cp.name.toLowerCase().trim())
+        )
+    );
+
+    const fullCatalogSuggestions = [...safeCatalog.map(toSuggestion), ...uniqueAdditional];
+
+    if (!query) return fullCatalogSuggestions.slice(0, 15);
+
+    const q = query.toLowerCase();
+    return fullCatalogSuggestions
+      .filter((p) => {
+        const name = (p?.name || "").toLowerCase();
+        const barcode = (p?.barcode || "").toLowerCase();
+        const sku = (p?.sku || "").toLowerCase();
+        return name.includes(q) || barcode.includes(q) || sku.includes(q);
+      })
+      .slice(0, 15);
   };
 
   const upiPayload = upiId
@@ -770,7 +1339,7 @@ export function SalesInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bill-editor-shell z-[60] w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-visible bg-white dark:bg-slate-950">
+        <DialogContent className="bill-editor-shell z-modal w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-7xl sm:w-[98vw] sm:h-auto sm:max-h-[96vh] sm:rounded-none sm:border flex flex-col gap-0 overflow-visible bg-white dark:bg-slate-950">
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
@@ -792,35 +1361,6 @@ export function SalesInvoiceModal({
               </h2>
             </div>
 
-            {/* Center Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setViewMode("edit")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
-                  viewMode === "edit"
-                    ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                Edit Mode
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("preview")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
-                  viewMode === "preview"
-                    ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                Preview Mode
-              </button>
-            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
@@ -834,6 +1374,46 @@ export function SalesInvoiceModal({
                 <Settings className="w-4 h-4" />
               </Button>
 
+              <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mr-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("edit")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
+                    viewMode === "edit"
+                      ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("preview")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer",
+                    viewMode === "preview"
+                      ? "bg-white dark:bg-slate-900 text-primary shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </button>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handlePrint()}
+                className="h-8 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer"
+                title="Print"
+              >
+                <Printer className="w-3.5 h-3.5" />
+              </Button>
+
               <Button
                 type="button"
                 variant="outline"
@@ -845,26 +1425,6 @@ export function SalesInvoiceModal({
                 Save &amp; New
               </Button>
 
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(false, false)}
-                  className="h-8 px-4 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-l-lg shadow-sm cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5 mr-1.5" />
-                  {saving ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(true, false)}
-                  className="h-8 px-2 text-xs font-bold bg-primary/95 hover:bg-primary text-primary-foreground rounded-r-lg border-l border-primary-foreground/20 shadow-sm cursor-pointer"
-                  title="Save & Print"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                </Button>
-              </div>
             </div>
           </div>
 
@@ -872,31 +1432,52 @@ export function SalesInvoiceModal({
           {/* 2. BODY CONTENT */}
           {/* ───────────────────────────────────────────────────────────── */}
           {viewMode === "preview" ? (
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-200 dark:bg-slate-900 flex justify-center scrollbar-thin">
-              <div className="w-full max-w-3xl bg-white dark:bg-card shadow-xl rounded-xl border border-border p-4 sm:p-6 overflow-hidden">
-                <UnifiedInvoiceRenderer
-                  docType="sales_invoice"
-                  invoiceNumber={fullDocumentNumber}
-                  invoiceDate={docDate}
-                  dueDate={showDueDate ? dueDate : undefined}
-                  party={{
-                    name: partyName || "Customer",
-                    phone: partyPhone,
-                    address: partyAddress,
-                    gstin: partyGstin,
-                    state: placeOfSupply,
-                  }}
-                  items={recalculatedItems.map((it) => ({
+            <InvoiceFitView className="flex-1 min-h-0">
+              <UnifiedInvoiceRenderer
+                docType="sales_invoice"
+                invoiceNumber={fullDocumentNumber}
+                date={docDate}
+                dueDate={showDueDate ? dueDate : undefined}
+                placeOfSupply={placeOfSupply}
+                deliveryCharge={0}
+                storeInfo={{
+                  name: org?.name || "CredSmart Store",
+                  phone: org?.phone || "",
+                  email: org?.email || "",
+                  address: org?.address || "",
+                  gstin: org?.gstin || "",
+                  pan: org?.pan || "",
+                  logoUrl: org?.logo_url || "",
+                  bank_name: (showBankDetails && bankAccount.bankName) ? bankAccount.bankName : org?.bank_name,
+                  account_number: (showBankDetails && bankAccount.accountNumber) ? bankAccount.accountNumber : org?.account_number,
+                  ifsc: (showBankDetails && bankAccount.ifsc) ? bankAccount.ifsc : org?.ifsc,
+                  account_holder: (showBankDetails && bankAccount.accountHolder) ? bankAccount.accountHolder : (org?.account_holder || org?.name),
+                  branch: (showBankDetails && bankAccount.branch) ? bankAccount.branch : "",
+                  upi_id: (showPaymentQr && upiId) ? upiId : org?.upi_id,
+                }}
+                partyInfo={{
+                  name: partyName || "Walk-in Customer",
+                  phone: partyPhone,
+                  address: partyAddress,
+                  gstin: partyGstin,
+                  state: placeOfSupply,
+                }}
+                items={recalculatedItems
+                  .filter((it) => (it.productName && it.productName.trim() !== "") || Number(it.rate) > 0 || Number(it.lineTotal) > 0)
+                  .map((it) => ({
                     id: it.id,
                     name: it.productName || "Item",
                     hsn: it.hsn,
                     qty: Number(it.quantity) || 1,
                     unit: it.unit || "Pcs",
+                    altUnit: it.altUnit,
+                    altQty: it.altQty,
+                    altUnitConversion: it.altUnitConversion,
                     rate: Number(it.rate) || 0,
                     discount: it.discountPercent || 0,
                     discountPercent: it.discountPercent,
-                    taxRate: it.taxRate || 18,
-                    taxAmount: (it.taxRate || 18) * (it.taxableAmount || 0) / 100,
+                    taxRate: it.taxRate || 0,
+                    taxAmount: ((it.taxRate || 0) * (it.taxableAmount || 0)) / 100,
                     total: it.lineTotal,
                   }))}
                   totals={{
@@ -917,7 +1498,7 @@ export function SalesInvoiceModal({
               </div>
             </div>
           ) : (
-            <div className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
+            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 overflow-y-auto p-1 sm:p-1 space-y-1 scrollbar-thin">
               {/* TOP ROW: Bill To (Dropdown Format) & Invoice Details */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* ───────────────────────────────────────────────────────────── */}
@@ -935,7 +1516,7 @@ export function SalesInvoiceModal({
                       className="text-muted-foreground hover:text-primary transition-colors"
                       title="Add Customer"
                     >
-                      <Settings className="w-3.5 h-3.5" />
+                      <UserPlus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
@@ -968,7 +1549,7 @@ export function SalesInvoiceModal({
                     </div>
 
                     {showCustomerDropdown && (
-                      <div className="absolute z-[70] left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+                      <div className="absolute z-[200] left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                         {/* Table Header Strip */}
                         <div className="px-3.5 py-2 bg-slate-100/90 dark:bg-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                           <span>Party Name</span>
@@ -1073,8 +1654,91 @@ export function SalesInvoiceModal({
                           Change
                         </Button>
                       </div>
+
+                      {connectedPartner && (
+                        <div className="mt-2 pt-2 border-t border-emerald-500/20 flex items-start gap-2 bg-emerald-500/10 p-2 rounded-md">
+                          <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          <div className="text-[11px] flex-1">
+                            <span className="font-bold text-emerald-800 dark:text-emerald-300">
+                              ⚡ Connected CredSmart Store: {connectedPartner.name}
+                            </span>
+                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                              Saving this invoice will automatically send an in-app notification to {connectedPartner.name} to approve &amp; inward this into their Purchases.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
+
+                  <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                        Billing Address
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="same-as-party-address"
+                          checked={sameAsParty}
+                          onCheckedChange={(checked) => {
+                            const isChecked = Boolean(checked);
+                            setSameAsParty(isChecked);
+                            if (isChecked) {
+                              setBillingAddress(partyAddress || "");
+                              setBillingPincode("");
+                              setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
+                            }
+                          }}
+                        />
+                        <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                          Same as Party Address
+                        </Label>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      value={billingAddress}
+                      onChange={(e) => handleBillingAddressChange(e.target.value)}
+                      disabled={sameAsParty}
+                      placeholder="Enter billing address"
+                      className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          Pincode
+                        </Label>
+                        <Input
+                          value={billingPincode}
+                          onChange={(e) => {
+                            setBillingPincode(e.target.value);
+                            if (sameAsParty) setSameAsParty(false);
+                          }}
+                          placeholder="400001"
+                          className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                          State
+                        </Label>
+                        <Select value={billingPlaceOfSupply} onValueChange={handleBillingPlaceChange}>
+                          <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INDIAN_STATES_AND_CODES.map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* ───────────────────────────────────────────────────────────── */}
@@ -1226,18 +1890,191 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* 3. LINE ITEMS TABLE (Direct POS-Style + Auto Add Next Line) */}
               {/* ───────────────────────────────────────────────────────────── */}
+              {activeCustomer && (activeCustomer.keepSamePrice === false || activeCustomer.keepSameInventory === false) && (
+                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs mb-2">
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      <strong>Custom Party Catalog Active:</strong> {activeCustomer.name}
+                      {activeCustomer.keepSamePrice === false && " • Custom Prices Applied"}
+                      {activeCustomer.keepSameInventory === false && ` • Restricted to ${activeCustomer.customItems?.length || 0} product(s)`}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] bg-background font-semibold">
+                    Party Rule Active
+                  </Badge>
+                </div>
+              )}
               <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
-                <div className="overflow-x-auto">
+                                {/* 1. MOBILE INVOICE ITEMS CARDS VIEW (< md screens) */}
+                <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800 p-3 space-y-3">
+                  {recalculatedItems.map((item, idx) => (
+                    <div key={item.id} className="pt-3 first:pt-0 space-y-2.5">
+                      {/* Card Header: Row Number + Product Button + Delete Button */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
+                              #{idx + 1}
+                            </span>
+                            {item.hsn && (
+                              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                HSN: {item.hsn}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAddItemsTargetRow(idx);
+                              try {
+                                if ((productsCatalog || []).length === 0) {
+                                  await fetchProducts();
+                                }
+                              } catch (e) {
+                                console.warn('Failed to refresh product catalog', e);
+                              }
+                              setShowAddItemsModal(true);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2 shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <Package className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="truncate text-xs font-medium text-slate-900 dark:text-white">
+                                {item.productName || "Add Item To Bill"}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground shrink-0 font-mono">Select ▾</span>
+                          </button>
+                        </div>
+
+                        {/* Direct Mobile Delete Button (To delete wrong added item in 1 tap) */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(idx)}
+                          className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shrink-0 mt-5 cursor-pointer shadow-2xs"
+                          title="Delete wrong added item"
+                        >
+                          <Trash2 className="w-4 h-4 text-rose-500" />
+                        </button>
+                      </div>
+
+                      {/* Mobile Item Controls: Qty, Unit, Price, Discount, Tax, Line Total */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                        {/* Quantity */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Qty</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.altUnit && item.altUnitConversion && item.altQty != null ? item.altQty : item.quantity}
+                            onChange={(e) => {
+                              const val = Math.max(1, Number(e.target.value));
+                              if (item.altUnit && item.altUnitConversion && item.altQty != null) {
+                                handleUpdateItemFields(idx, {
+                                  altQty: val,
+                                  quantity: val * item.altUnitConversion,
+                                });
+                              } else {
+                                handleUpdateItem(idx, "quantity", val);
+                              }
+                            }}
+                            className="h-8 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        {/* Unit */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Unit</Label>
+                          <Select
+                            value={item.unit || "Pcs"}
+                            onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-56">
+                              {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                <SelectItem key={u} value={u} className="text-xs">
+                                  {u}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Price / Rate */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Price (₹)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => handleUpdateItem(idx, "rate", Number(e.target.value))}
+                            className="h-8 text-xs font-mono text-right"
+                          />
+                        </div>
+
+                        {/* Discount */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Disc %</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={item.discountPercent || ""}
+                            onChange={(e) => handleUpdateItem(idx, "discountPercent", Number(e.target.value))}
+                            placeholder="0%"
+                            className="h-8 text-xs font-mono text-center"
+                          />
+                        </div>
+
+                        {/* Tax */}
+                        <div>
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Tax</Label>
+                          <Select
+                            value={String(item.taxRate)}
+                            onValueChange={(val) => handleUpdateItem(idx, "taxRate", Number(val))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">0%</SelectItem>
+                              <SelectItem value="5">5%</SelectItem>
+                              <SelectItem value="12">12%</SelectItem>
+                              <SelectItem value="18">18%</SelectItem>
+                              <SelectItem value="28">28%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Line Total */}
+                        <div className="flex flex-col justify-end">
+                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Amount</Label>
+                          <div className="h-8 flex items-center justify-end px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white text-xs border border-slate-200 dark:border-slate-700">
+                            ₹{item.lineTotal.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 2. DESKTOP DATA TABLE (>= md screens) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                         <th className="py-2.5 px-3 w-10 text-center">NO</th>
-                        <th className="py-2.5 px-3 min-w-[280px]">ITEMS</th>
-                        <th className="py-2.5 px-2 w-24">HSN</th>
-                        <th className="py-2.5 px-2 w-20 text-center">QTY</th>
+                        <th className="py-2.5 px-3 min-w-[260px]">ITEMS</th>
+                        <th className="py-2.5 px-2 w-20">HSN</th>
+                        <th className="py-2.5 px-2 w-16 text-center">QTY</th>
+                        <th className="py-2.5 px-2 w-24 text-center">UNIT</th>
                         <th className="py-2.5 px-2 w-28 text-right">PRICE/ITEM (₹)</th>
-                        <th className="py-2.5 px-2 w-24 text-center">DISCOUNT</th>
-                        <th className="py-2.5 px-2 w-24 text-center">TAX</th>
+                        <th className="py-2.5 px-2 w-20 text-center">DISCOUNT</th>
+                        <th className="py-2.5 px-2 w-20 text-center">TAX</th>
                         <th className="py-2.5 px-3 w-28 text-right">AMOUNT (₹)</th>
                         <th className="py-2.5 px-2 w-10 text-center">
                           <Settings className="w-3.5 h-3.5 text-muted-foreground mx-auto" />
@@ -1251,119 +2088,41 @@ export function SalesInvoiceModal({
                             {idx + 1}
                           </td>
 
-                          {/* Item Search Autocomplete & Auto-Advance */}
-                          <td className="py-2 px-3 relative">
-                            <Input
-                              ref={(el) => {
-                                itemInputRefs.current[idx] = el;
-                              }}
-                              value={item.productName}
-                              onChange={(e) => {
-                                handleUpdateItem(idx, "productName", e.target.value);
-                                setItemSearchText((prev) => ({ ...prev, [idx]: e.target.value }));
-                                setActiveItemDropdown(idx);
-                              }}
-                              onFocus={() => {
-                                setActiveItemDropdown(idx);
-                                if (!itemSearchText[idx] && item.productName) {
-                                  setItemSearchText((prev) => ({ ...prev, [idx]: item.productName }));
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  const matches = getFilteredProducts(itemSearchText[idx] || item.productName);
-                                  if (matches.length > 0) {
-                                    handleSelectProduct(idx, matches[0]);
-                                  } else if (idx === recalculatedItems.length - 1) {
-                                    handleAddRow();
-                                  }
-                                }
-                              }}
-                              onBlur={() => {
-                                setTimeout(() => {
-                                  setActiveItemDropdown((curr) => (curr === idx ? null : curr));
-                                }, 220);
-                              }}
-                              placeholder="Enter Item Name / Barcode..."
-                              className="h-8 text-xs font-medium bg-transparent"
-                            />
-
-                            {activeItemDropdown === idx && (
-                              <div className="absolute z-[70] left-3 top-full mt-1 w-[min(440px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-64 overflow-y-auto p-1.5 text-left divide-y divide-slate-100 dark:divide-slate-800">
-                                {getFilteredProducts(itemSearchText[idx] || item.productName).length > 0 ? (
-                                  <>
-                                    <div className="space-y-0.5 pb-1">
-                                      {getFilteredProducts(itemSearchText[idx] || item.productName).map((prod) => (
-                                        <button
-                                          key={prod.id}
-                                          type="button"
-                                          onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            handleSelectProduct(idx, prod);
-                                          }}
-                                          className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
-                                        >
-                                          <div className="flex-1 min-w-0">
-                                            <span className="font-bold text-slate-900 dark:text-white truncate block">
-                                              {prod.name}
-                                            </span>
-                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
-                                              {prod.barcode && <span>Code: {prod.barcode}</span>}
-                                              <span>Stock: {prod.stock} {prod.unit}</span>
-                                            </div>
-                                          </div>
-                                          <div className="text-right shrink-0">
-                                            <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                                              ₹{prod.rate}
-                                            </span>
-                                            <p className="text-[10px] text-muted-foreground font-mono">{prod.gstRate}% GST</p>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-
-                                    {/* Direct Create Item Action at Bottom of Matches */}
-                                    <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800">
+                          {/* Product selection replaced by an explicit Add Items button (opens modal)
+                              per user's request: typing field replaced with a simple button that shows
+                              the full inventory. This preserves Create New Item flow via the modal too. */}
+                                  <td className="py-2 px-3 relative">
+                                    <div className="flex items-center gap-2">
                                       <button
                                         type="button"
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
+                                        onClick={async () => {
+                                          // Remember which row opened the Add Items modal — useful if
+                                          // the batch-add handler wants to insert at that row.
+                                          setAddItemsTargetRow(idx);
+                                          // If catalog is empty for some reason (stale state), try fetching again
+                                          try {
+                                            if ((productsCatalog || []).length === 0) {
+                                              // fetchProducts is defined in this component scope
+                                              await fetchProducts();
+                                            }
+                                          } catch (e) {
+                                            console.warn('Failed to refresh product catalog before opening Add Items modal', e);
+                                          }
+                                          setShowAddItemsModal(true);
                                         }}
-                                        className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                                        className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
                                       >
-                                        <div className="flex items-center gap-1.5 truncate">
-                                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                          <span className="truncate">Create "{itemSearchText[idx] || item.productName || "New Item"}"</span>
+                                        <div className="flex items-center gap-2">
+                                          <Package className="w-4 h-4 text-primary" />
+                                          <div className="text-left">
+                                            <div className="truncate text-sm font-medium text-slate-900 dark:text-white">{item.productName || "Add Item To Bill"}</div>
+                                            <div className="text-[10px] text-muted-foreground">{item.hsn ? `HSN: ${item.hsn}` : "Select from inventory"}</div>
+                                          </div>
                                         </div>
-                                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary shrink-0 ml-1">
-                                          + Add to Inventory
-                                        </span>
+                                        <div className="text-xs text-muted-foreground">Open</div>
                                       </button>
                                     </div>
-                                  </>
-                                ) : (
-                                  <div className="p-3 text-center space-y-2">
-                                    <p className="text-xs text-muted-foreground font-medium">
-                                      No catalog item matching "{itemSearchText[idx] || item.productName || ""}"
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        handleOpenCreateItemDialog(idx, itemSearchText[idx] || item.productName);
-                                      }}
-                                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
-                                    >
-                                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                      <span>+ Create Item &amp; Add to Inventory</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </td>
+                                  </td>
 
                           {/* HSN */}
                           <td className="py-2 px-2">
@@ -1380,8 +2139,18 @@ export function SalesInvoiceModal({
                             <Input
                               type="number"
                               min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleUpdateItem(idx, "quantity", Math.max(1, Number(e.target.value)))}
+                              value={item.altUnit && item.altUnitConversion && item.altQty != null ? item.altQty : item.quantity}
+                              onChange={(e) => {
+                                const val = Math.max(1, Number(e.target.value));
+                                if (item.altUnit && item.altUnitConversion && item.altQty != null) {
+                                  handleUpdateItemFields(idx, {
+                                    altQty: val,
+                                    quantity: val * item.altUnitConversion,
+                                  });
+                                } else {
+                                  handleUpdateItem(idx, "quantity", val);
+                                }
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
@@ -1394,6 +2163,70 @@ export function SalesInvoiceModal({
                               }}
                               className="h-8 text-xs text-center font-mono font-semibold bg-transparent"
                             />
+                            {item.altUnit && item.altUnitConversion && item.altQty != null && (
+                              <span className="block text-[9px] text-blue-600 dark:text-blue-400 font-mono font-semibold text-center mt-0.5 whitespace-nowrap">
+                                ({item.altQty}*{item.altUnitConversion} {item.unit || "Pcs"})
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Unit */}
+                          <td className="py-2 px-2">
+                            {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="inline-flex rounded-md border border-primary/40 overflow-hidden text-[10px] font-bold bg-white dark:bg-slate-900 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateItemFields(idx, { altQty: undefined })}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors cursor-pointer",
+                                      item.altQty == null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.unit || "PCS"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const altQ = Math.max(1, Math.round((item.quantity || 1) / item.altUnitConversion!));
+                                      handleUpdateItemFields(idx, {
+                                        altQty: altQ,
+                                        quantity: altQ * item.altUnitConversion!,
+                                      });
+                                    }}
+                                    className={cn(
+                                      "px-2 py-1 transition-colors border-l border-primary/40 cursor-pointer",
+                                      item.altQty != null
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    )}
+                                  >
+                                    {item.altUnit}
+                                  </button>
+                                </div>
+                                <span className="text-[8.5px] text-muted-foreground font-mono whitespace-nowrap">
+                                  1 {item.altUnit} = {item.altUnitConversion} {item.unit || "Pcs"}
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                value={item.unit || "Pcs"}
+                                onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-56">
+                                  {["PCS", "KG", "LTR", "BOX", "NOS", "MTR", "PKT", "DOZ", "BAG", "CAN", "BTL", "SET", "GM", "ML", "STEPS"].map((u) => (
+                                    <SelectItem key={u} value={u} className="text-xs">
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                           </td>
 
                           {/* Price / Rate */}
@@ -1474,49 +2307,12 @@ export function SalesInvoiceModal({
                 {/* Direct Add Item Row Actions (Like POS) */}
                 <div className="p-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
-                    {/* Primary Button: Add Items to Bill (Opens Popup Modal) */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAddItemsModal(true)}
-                      className="py-2 px-3.5 rounded-xl glowing-btn-blue text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
-                    >
-                      <Package className="w-4 h-4 text-cyan-300 stroke-[2.2]" />
-                      <span>+ Add Items to Bill</span>
-                    </button>
+                      {/* Buttons removed as per user request: Add Item To Bill, Create New Item, Add Blank Row */}
+                    </div>
 
-                    {/* Secondary Button: Create New Item Inline */}
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCreateItemDialog(recalculatedItems.length - 1, "")}
-                      className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-                    >
-                      <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>+ Create New Item</span>
-                    </button>
-
-                    {/* Optional: Add Empty Row */}
-                    <button
-                      type="button"
-                      onClick={handleAddRow}
-                      className="py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-primary bg-white/50 dark:bg-slate-800/50 hover:bg-primary/5 text-slate-700 dark:text-slate-300 hover:text-primary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Blank Row</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddItemsModal(true)}
-                      className="h-9 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 shrink-0 rounded-xl cursor-pointer"
-                    >
-                      <ScanBarcode className="w-4 h-4 text-primary" />
-                      <span>Scan Barcode</span>
-                    </Button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      {/* Scan Barcode removed as per user request */}
+                    </div>
                 </div>
 
                 {/* Subtotals Summary Strip */}
@@ -1778,7 +2574,7 @@ export function SalesInvoiceModal({
                       <div className="grid grid-cols-2 gap-2">
                         <Select
                           value={overallDiscountType}
-                          onValueChange={(val: any) => setOverallDiscountType(val)}
+                          onValueChange={(val) => setOverallDiscountType(val as "flat" | "percent")}
                         >
                           <SelectTrigger className="h-7 text-xs">
                             <SelectValue />
@@ -1952,7 +2748,7 @@ export function SalesInvoiceModal({
       {/* INLINE QUICK ADD CUSTOMER MODAL */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
-        <DialogContent className="max-w-md rounded-2xl p-5">
+        <DialogContent className="z-modal max-w-md rounded-2xl p-5">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-primary" />
@@ -2031,7 +2827,7 @@ export function SalesInvoiceModal({
         open={showAddItemsModal}
         onOpenChange={setShowAddItemsModal}
         items={billItemOptions}
-        onAddSelectedItems={handleBatchAddItems}
+        onAddSelectedItems={handleBatchAddItemsAtTarget}
         priceMode="sales"
         onOpenCreateItem={() => {
           setShowAddItemsModal(false);

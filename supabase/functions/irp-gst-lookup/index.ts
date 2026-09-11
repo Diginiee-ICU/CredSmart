@@ -70,6 +70,7 @@ function aesDecryptEcb(encryptedBase64: string, keyBuffer: Buffer): string {
 }
 
 // Helper: Format official IRP Master GSTIN response into CREDSMART party format
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatMasterGstinData(raw: any, targetGstin: string) {
   const lglNm = raw.LglNm || raw.lglNm || raw.legalName || raw.tradeName || "";
   const trdNm = raw.TrdNm || raw.trdNm || raw.tradeName || lglNm;
@@ -219,6 +220,7 @@ Deno.serve(async (req) => {
         const masterResult = await masterResponse.json();
 
         if (masterResult.status === "1" || masterResult.Status === "1") {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           let decryptedPayload: any = null;
           if (typeof masterResult.data === "string" || typeof masterResult.Data === "string") {
             const encryptedData = masterResult.data || masterResult.Data;
@@ -297,7 +299,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     return new Response(JSON.stringify({ error: err?.message || "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -21,20 +21,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { SEOHead } from "@/components/public/SEOHead";
+import { PublicConversionBanner } from "@/components/public/PublicConversionBanner";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function Features() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "ItemPage",
-    name: "CredSmart POS Features — Complete Free GST Billing & ERP Suite",
+    name: "CredSmart Features — Complete Free GST Billing & ERP Suite",
     description:
-      "Explore the 12 powerful modules of CredSmart POS: POS Billing, GST Invoices, Inventory, Khata Ledgers, Barcode Studio, E-Invoicing, GSTR-1 Tax Exports, and Multi-Branch Management.",
-    url: "https://credsmart.in/features",
+      "Explore the powerful modules of CredSmart: POS Billing, GST Invoices, Inventory, Khata Ledgers, Barcode Studio, E-Invoicing, GSTR-1 Tax Exports, and Multi-Branch Management.",
+    url: "https://pos.credalert.bussiness/features",
     publisher: {
       "@type": "Organization",
-      name: "CredSmart POS",
-      url: "https://credsmart.in",
+      name: "CredSmart by CredAlert",
+      url: "https://pos.credalert.bussiness",
     },
   };
 
@@ -50,7 +51,7 @@ export default function Features() {
         "Automatic discount & line item price overrides",
         "Quick cash chips (₹100, ₹200, ₹500) calculation",
       ],
-      color: "from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400",
+      color: "from-amber-500/15 to-orange-500/10 border-amber-500/20 text-amber-600",
     },
     {
       icon: Receipt,
@@ -63,7 +64,7 @@ export default function Features() {
         "Dynamic UPI Payment QR codes printed directly on invoice",
         "B2B and B2C billing with custom invoice numbering series",
       ],
-      color: "from-indigo-500/20 to-blue-500/10 border-indigo-500/30 text-indigo-400",
+      color: "from-blue-500/15 to-indigo-500/10 border-blue-500/20 text-blue-600",
     },
     {
       icon: QrCode,
@@ -76,7 +77,7 @@ export default function Features() {
         "Code 128, EAN-13, and QR Code barcode encoding",
         "Batch print queue synced with purchase invoices",
       ],
-      color: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400",
+      color: "from-emerald-500/15 to-teal-500/10 border-emerald-500/20 text-emerald-600",
     },
     {
       icon: Package,
@@ -89,7 +90,7 @@ export default function Features() {
         "Stock valuation reports (FIFO / Average Costing)",
         "Low-stock alerts & out-of-stock indicators",
       ],
-      color: "from-purple-500/20 to-pink-500/10 border-purple-500/30 text-purple-400",
+      color: "from-purple-500/15 to-pink-500/10 border-purple-500/20 text-purple-600",
     },
     {
       icon: Users2,
@@ -102,7 +103,7 @@ export default function Features() {
         "SharedLedger bilateral balance reconciliation",
         "Credit limits & overdue collection tracking",
       ],
-      color: "from-sky-500/20 to-cyan-500/10 border-sky-500/30 text-sky-400",
+      color: "from-sky-500/15 to-cyan-500/10 border-sky-500/20 text-sky-600",
     },
     {
       icon: FileSpreadsheet,
@@ -115,7 +116,7 @@ export default function Features() {
         "Direct email dispatch to your CA with 1 click",
         "Zero manual data entry during monthly tax filing",
       ],
-      color: "from-rose-500/20 to-red-500/10 border-rose-500/30 text-rose-400",
+      color: "from-rose-500/15 to-red-500/10 border-rose-500/20 text-rose-600",
     },
     {
       icon: Printer,
@@ -128,7 +129,7 @@ export default function Features() {
         "Custom brand colors, company watermark, and signature stamp",
         "Dynamic bank QR codes for instant UPI settlements",
       ],
-      color: "from-amber-500/20 to-yellow-500/10 border-amber-500/30 text-amber-400",
+      color: "from-amber-500/15 to-yellow-500/10 border-amber-500/20 text-amber-600",
     },
     {
       icon: Building2,
@@ -141,7 +142,7 @@ export default function Features() {
         "Consolidated business overview across all outlets",
         "Zero additional charge per added branch",
       ],
-      color: "from-emerald-500/20 to-green-500/10 border-emerald-500/30 text-emerald-400",
+      color: "from-emerald-500/15 to-green-500/10 border-emerald-500/20 text-emerald-600",
     },
     {
       icon: Search,
@@ -149,92 +150,97 @@ export default function Features() {
       title: "B2B Vendor & Supplier Discovery",
       desc: "Search through 3.2M+ verified MCA and GSTIN registered companies across India. Discover authorized distributors, compare suppliers, and import vendor details instantly.",
       points: [
-        "3.2M+ verified Indian company profiles with official MCA data",
-        "Instant import of supplier GSTIN and address into your Khata",
-        "Direct purchase order creation and invoice matching",
-        "Commercial verification and right-of-reply safe harbour",
+        "Search 3.2M+ registered Indian businesses by GSTIN, PIN, or name",
+        "Instant supplier contact, address, and director profiles",
+        "1-click import into your vendor purchase database",
+        "Completely free directory access included",
       ],
-      color: "from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400",
-    },
-    {
-      icon: BarChart3,
-      badge: "Executive Insights",
-      title: "Real-Time Financial Analytics & P&L",
-      desc: "Monitor your store's sales trends, gross profit margins, fast-moving items, and cash & bank liquidity with interactive, real-time visual charts.",
-      points: [
-        "Daily, weekly, and monthly sales trend charts",
-        "Item velocity & top-selling SKU analytics",
-        "Payment mode distribution (UPI vs Cash vs Card vs Udhar)",
-        "Real-time cash flow & bank liquidity balance tracking",
-      ],
-      color: "from-violet-500/20 to-purple-500/10 border-violet-500/30 text-violet-400",
+      color: "from-blue-500/15 to-cyan-500/10 border-blue-500/20 text-blue-600",
     },
     {
       icon: ShieldCheck,
-      badge: "RBAC Security",
-      title: "Role-Based Staff Access & Audit Logs",
-      desc: "Delegate tasks to your team while protecting sensitive financial data. Create accounts for Store Owners, Managers, and Cashiers with granular permissions.",
+      badge: "Risk Intelligence",
+      title: "CredAlert Counterparty Credit Intelligence",
+      desc: "Protect your cash flow before offering credit terms. Verify customer and supplier credibility, identify high-risk defaulters, and view commercial credit scores in real time.",
       points: [
-        "Separate interfaces for Cashiers, Managers, and Owners",
-        "Restricted access to financial reports and purchase margins",
-        "Timestamped audit logs tracking all deletions, edits, and refunds",
-        "256-bit SSL encryption and row-level database security",
+        "Automated credit risk ratings on checkout",
+        "Early warning indicators for disputed transactions",
+        "Secure trade dispute filing & ledger sharing",
+        "Enterprise-grade commercial intelligence",
       ],
-      color: "from-cyan-500/20 to-blue-500/10 border-cyan-500/30 text-cyan-400",
+      color: "from-indigo-500/15 to-purple-500/10 border-indigo-500/20 text-indigo-600",
+    },
+    {
+      icon: BarChart3,
+      badge: "Financial Analytics",
+      title: "Profit & Loss, Sales & Tax Analytics",
+      desc: "Gain deep visibility into your retail operation. Real-time gross margin calculations, top-selling product reports, customer purchase patterns, and cashier performance logs.",
+      points: [
+        "Daily, weekly, and monthly sales trend dashboards",
+        "Net profit and margin breakdown per SKU",
+        "Fast-moving vs dead inventory velocity metrics",
+        "Exportable Excel and PDF financial statements",
+      ],
+      color: "from-teal-500/15 to-emerald-500/10 border-teal-500/20 text-teal-600",
     },
     {
       icon: Zap,
-      badge: "Cloud Sync",
-      title: "Universal Cross-Device Cloud Sync",
-      desc: "Access your billing, inventory, and Khata from any device. Seamless real-time sync across desktop computers, POS laptops, iPads, tablets, and smartphones.",
+      badge: "Cloud Sync & PWA",
+      title: "Instant Multi-Device Cloud Synchronization",
+      desc: "Seamlessly work across phone, tablet, laptop, and billing PC with real-time Supabase cloud sync. Your data is continuously backed up with 256-bit SSL encryption.",
       points: [
         "100% cloud-backed with zero data loss risk",
         "Dedicated mobile view with 5-tab bottom navigation",
         "No heavy software installations or manual database backups",
         "Works smoothly even on low-spec hardware and slow internet",
       ],
-      color: "from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400",
+      color: "from-amber-500/15 to-orange-500/10 border-amber-500/20 text-amber-600",
     },
   ];
 
   return (
     <PublicLayout>
       <SEOHead
-        title="Features — Free GST Billing & POS Software Suite | CredSmart POS"
-        description="Discover the complete feature suite of CredSmart POS: Fast POS Billing, GST Invoices, Inventory, Multi-Godown Control, Barcode Generator, Customer Udhar Khata, GSTR-1 Exports, and Multi-Branch Management."
+        title="Features — Free GST Billing & POS Software Suite | CredSmart by CredAlert"
+        description="Discover the complete feature suite of CredSmart: Fast POS Billing, GST Invoices, Inventory, Multi-Godown Control, Barcode Generator, Customer Udhar Khata, GSTR-1 Exports, and Multi-Branch Management."
         keywords="POS billing features, GST invoice maker features, inventory management software India, free barcode generator, GSTR-1 export software, multi godown software India, customer khata ledger app"
-        canonicalUrl="https://credsmart.in/features"
+        canonicalUrl="https://pos.credalert.bussiness/features"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Features", url: "/features" },
+        ]}
         structuredData={structuredData}
       />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-slate-800/80">
-        <div className="absolute inset-0 bg-radial-gradient from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-slate-200/80">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-200/30 via-indigo-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" /> All-In-One Enterprise Architecture
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" /> All-In-One Enterprise Architecture
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-[1.15]">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A1931] tracking-tight max-w-4xl mx-auto leading-[1.12]">
             Everything Your Retail &amp; Wholesale Business Needs.{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400">
+            <span className="text-[#FF6A00]">
               100% Free Forever.
             </span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Eliminate expensive subscriptions. CredSmart POS provides enterprise-grade POS billing, GST compliance, inventory control, and customer Khata ledgers with zero paywalls.
+          <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Eliminate expensive subscriptions. CredSmart provides enterprise-grade POS billing, GST compliance, inventory control, and customer Khata ledgers with zero paywalls.
           </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <Link to={ROUTE_PATHS.auth}>
-              <button className="h-12 px-8 rounded-xl glowing-btn-amber text-white font-bold text-sm shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+              <button className="h-12 px-8 rounded-xl bg-gradient-to-r from-[#FF6A00] to-[#FF8533] hover:from-[#E65F00] hover:to-[#FF6A00] text-white font-bold text-sm shadow-xl shadow-orange-500/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center">
                 Start Free Billing Now <ArrowRight className="w-4 h-4 ml-2 stroke-[2.5]" />
               </button>
             </Link>
             <Link to="/pricing">
               <Button
                 variant="outline"
-                className="h-12 px-6 rounded-xl border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold"
+                className="h-12 px-6 rounded-xl border-slate-300 bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-sm font-semibold shadow-xs"
               >
                 View ₹0 Pricing Breakdown
               </Button>
@@ -246,10 +252,10 @@ export default function Features() {
       {/* 12 Features Grid */}
       <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-black text-[#0A1931] tracking-tight">
             12 Master Modules Engineered for Growth
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600">
             From single-counter retail shops to multi-branch distributors, CredSmart scales effortlessly with your commercial demands.
           </p>
         </div>
@@ -260,9 +266,9 @@ export default function Features() {
             return (
               <div
                 key={idx}
-                className="glass-card-3d p-6 sm:p-8 flex flex-col justify-between hover:border-amber-400/40 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-amber-400/40 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
                 <div className="space-y-4 pl-1">
                   <div className="flex items-center justify-between">
                     <div
@@ -270,23 +276,23 @@ export default function Features() {
                     >
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-800/80 text-amber-400 border border-amber-500/30">
+                    <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                       {feat.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                  <h3 className="text-lg font-black text-[#0A1931] group-hover:text-[#FF6A00] transition-colors">
                     {feat.title}
                   </h3>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                     {feat.desc}
                   </p>
 
-                  <ul className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                  <ul className="space-y-2 pt-3 border-t border-slate-100">
                     {feat.points.map((pt, pIdx) => (
-                      <li key={pIdx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <li key={pIdx} className="flex items-start gap-2 text-xs text-slate-700">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                         <span>{pt}</span>
                       </li>
                     ))}
@@ -298,22 +304,13 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <section className="py-16 bg-gradient-to-b from-transparent via-amber-500/5 to-transparent border-t border-slate-800/80">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
-          <h2 className="text-2xl sm:text-4xl font-black text-white">
-            Ready to Upgrade Your Billing Experience?
-          </h2>
-          <p className="text-sm text-slate-400">
-            Join thousands of Indian shop owners and enterprises who trust CredSmart POS. No credit card required. Free forever.
-          </p>
-          <Link to={ROUTE_PATHS.auth}>
-            <Button className="h-12 px-8 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-slate-950 font-bold text-sm shadow-xl active:scale-95 transition-all">
-              Create Your Free Store Account <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* Bottom Conversion Banner */}
+      <PublicConversionBanner
+        title="Ready to Upgrade Your Billing Experience?"
+        highlightedText="100% Free Forever."
+        subtitle="Join thousands of Indian shop owners and enterprises who trust CredSmart. No credit card required."
+        ctaText="Create Your Free Store Account"
+      />
     </PublicLayout>
   );
 }

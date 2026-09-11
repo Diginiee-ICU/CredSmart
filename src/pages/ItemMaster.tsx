@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -17,6 +17,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { normalizeError } from "@/lib/normalizeError";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ProductRow {
@@ -31,6 +32,35 @@ interface ProductRow {
   batches: { id: string; mrp: number; stock: number; costPrice: number; batchNumber: string; expiryDate: string | null }[];
 }
 
+type SaveProductInput = {
+  name: string;
+  brand?: string;
+  category?: string;
+  barcode?: string;
+  sku?: string;
+  imageUrl?: string;
+  tags?: Record<string, string>;
+  batches?: Array<{
+    id?: string;
+    batchNumber?: string;
+    costPrice?: number | string;
+    mrp?: number | string;
+    stock?: number | string;
+    expiryDate?: string | null;
+  }>;
+};
+
+type ProductImport = {
+  name: string;
+  brand?: string;
+  category?: string;
+  barcode?: string;
+  imageUrl?: string;
+  costPrice?: number;
+  mrp?: number;
+  stock?: number;
+};
+
 export default function ItemMaster() {
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -44,19 +74,7 @@ export default function ItemMaster() {
   const [bulkEditField, setBulkEditField] = useState<"category" | "brand" | null>(null);
   const [bulkEditValue, setBulkEditValue] = useState("");
 
-  useEffect(() => {
-    if (orgLoading) return;
-
-    if (!orgId) {
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
-
-    fetchProducts();
-  }, [orgId, orgLoading]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
     try {
@@ -107,16 +125,28 @@ export default function ItemMaster() {
       }));
 
       setProducts(enriched);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchProducts failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to load products", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
       setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId, toast]);
 
-  const handleSaveProduct = async (data: any) => {
+  useEffect(() => {
+    if (orgLoading) return;
+
+    if (!orgId) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchProducts();
+  }, [fetchProducts, orgId, orgLoading]);
+
+  const handleSaveProduct = async (data: SaveProductInput) => {
     if (!orgId) return;
     try {
       const barcodeToSave = data.barcode?.trim() || data.sku || "";
@@ -161,8 +191,8 @@ export default function ItemMaster() {
 
       // Initial batch creation
       const validBatches = (data.batches || [])
-        .filter((b: any) => b.mrp || b.costPrice || b.stock || b.batchNumber)
-        .map((b: any) => ({
+        .filter((b) => b && (b.mrp || b.costPrice || b.stock || b.batchNumber))
+        .map((b) => ({
           product_id: prod.id,
           batch_number: b.batchNumber?.trim() || "BATCH-01",
           cost_price: parseFloat(b.costPrice) || 0,
@@ -190,13 +220,13 @@ export default function ItemMaster() {
       setShowAddModal(false);
       setEditingProduct(null);
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleSaveProduct failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to save product", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
-  const handleUpdateProduct = async (id: string, data: any) => {
+  const handleUpdateProduct = async (id: string, data: SaveProductInput) => {
     if (!orgId) return;
     try {
       const barcodeToSave = data.barcode?.trim() || data.sku || "";
@@ -276,13 +306,13 @@ export default function ItemMaster() {
       setShowAddModal(false);
       setEditingProduct(null);
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleUpdateProduct failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to update product", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
-  const handleBulkImport = async (importedProducts: any[]) => {
+  const handleBulkImport = async (importedProducts: ProductImport[]) => {
     if (!orgId) return;
     try {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -326,9 +356,9 @@ export default function ItemMaster() {
       setShowAddModal(false);
       setEditingProduct(null);
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleBulkImport failed:", err);
-      toast({ title: "Import failed", description: err?.message || "Failed to import products", variant: "destructive" });
+      toast({ title: "Import failed", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -365,9 +395,9 @@ export default function ItemMaster() {
 
       toast({ title: "Deleted", description: `${name} removed from catalog.` });
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDeleteProduct failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to delete product", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -402,9 +432,9 @@ export default function ItemMaster() {
       toast({ title: "Deleted", description: `${ids.length} product(s) removed.` });
       setSelectedIds(new Set());
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleBulkDelete failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to delete products", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -424,9 +454,9 @@ export default function ItemMaster() {
       setBulkEditField(null);
       setBulkEditValue("");
       fetchProducts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleBulkEdit failed:", err);
-      toast({ title: "Error", description: err?.message || "Failed to update products", variant: "destructive" });
+      toast({ title: "Error", description: normalizeError(err), variant: "destructive" });
     }
   };
 
@@ -582,7 +612,7 @@ export default function ItemMaster() {
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-card card-shadow overflow-hidden">
+      <div className="rounded-xl border border-border bg-card card-shadow overflow-hidden glass-panel">
         {/* Mobile card view */}
         <div className="block md:hidden divide-y divide-border">
           {filtered.map((product) => (

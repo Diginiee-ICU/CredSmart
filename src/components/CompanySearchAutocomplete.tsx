@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { searchCompanies } from "@/lib/turso";
 import { cn } from "@/lib/utils";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const CIN_STATE_MAP: Record<string, { name: string; code: string }> = {
   MH: { name: "Maharashtra", code: "27" },
   DL: { name: "Delhi", code: "07" },
@@ -73,7 +74,17 @@ export function CompanySearchAutocomplete({
   className,
 }: CompanySearchAutocompleteProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  interface CompanySearchResult {
+    company_name: string;
+    company_address?: string;
+    pin_code?: string;
+    phone_number?: string;
+    cin?: string;
+    company_roc?: string;
+    // add other optional fields returned by searchCompanies as needed
+  }
+
+  const [results, setResults] = useState<CompanySearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,13 +128,14 @@ export function CompanySearchAutocomplete({
       try {
         const data = await searchCompanies(val);
         if (queryId === currentQueryIdRef.current) {
-          setResults(data || []);
+          setResults((data as CompanySearchResult[]) || []);
           setError(null);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (queryId === currentQueryIdRef.current) {
           console.error("CompanySearchAutocomplete error:", err);
-          setError(err?.message || "Search failed");
+          const message = err instanceof Error ? err.message : String(err);
+          setError(message || "Search failed");
           setResults([]);
         }
       } finally {
@@ -134,7 +146,7 @@ export function CompanySearchAutocomplete({
     }, 250);
   };
 
-  const handleSelectCompany = (comp: any) => {
+  const handleSelectCompany = (comp: CompanySearchResult) => {
     const rawCin = (comp.cin || "").toUpperCase().trim();
     let state = "";
     let stateCode = "";
@@ -196,7 +208,7 @@ export function CompanySearchAutocomplete({
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-border/60 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute z-[9999] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-border/60 animate-in fade-in zoom-in-95 duration-100">
           <div className="px-3 py-1.5 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
             <span>Found in MCA 3M+ Database</span>
             <span>Click to Auto-fill</span>
@@ -234,8 +246,21 @@ export function CompanySearchAutocomplete({
       )}
 
       {open && !loading && query.trim().length >= 2 && results.length === 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-4 text-center text-xs text-muted-foreground">
-          {error ? `Search error: ${error}` : `No registered companies found matching "${query}"`}
+        <div className="absolute z-[9999] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-4 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
+          {error ? (
+            <>
+              <span className="text-red-500">Search error: {error}</span>
+              <button 
+                type="button"
+                onClick={() => handleChange(query)}
+                className="px-3 py-1 bg-primary text-primary-foreground rounded-md text-xs hover:bg-primary/90 transition-colors"
+              >
+                Retry Search
+              </button>
+            </>
+          ) : (
+            `No registered companies found matching "${query}"`
+          )}
         </div>
       )}
     </div>

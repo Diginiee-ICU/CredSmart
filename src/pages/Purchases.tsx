@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   ChevronDown,
@@ -33,9 +35,13 @@ import {
   Smartphone,
   X,
   Upload,
+  Loader2,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
+import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
+import { NetworkInvoicePreviewModal } from "@/components/notifications/NetworkInvoicePreviewModal";
+import { NetworkInvoice } from "@/types/networkInvoicing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -64,8 +70,10 @@ import { SalesSettingsModal } from "@/components/SalesSettingsModal";
 import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 import { MobileScanModal } from "@/components/MobileScanModal";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 
-const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any }[] = [
+const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
   { id: "purchase_invoice", label: "Purchase Invoices", icon: Truck },
   { id: "payment_out", label: "Payment Out", icon: Wallet },
   { id: "purchase_return", label: "Purchase Return", icon: RotateCcw },
@@ -86,6 +94,7 @@ export default function Purchases() {
   const { org, orgId } = useOrganization();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active Tab / Sub-view
@@ -114,13 +123,60 @@ export default function Purchases() {
   // Top banner dismiss state
   const [bannerVisible, setBannerVisible] = useState(true);
 
+  // Network Invoicing
+  const {
+    pendingInvoices,
+    pendingCount,
+    approveInvoice,
+    rejectInvoice,
+    approvingId,
+    rejectingId,
+  } = useNetworkInvoices();
+  const [inspectingInvoice, setInspectingInvoice] = useState<NetworkInvoice | null>(null);
+  const [inspectModalOpen, setInspectModalOpen] = useState(false);
+
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<BusinessDocument | null>(null);
+  const [prefilledSupplier, setPrefilledSupplier] = useState<{
+    id?: string;
+    name: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+  } | null>(null);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [mobileScanModalOpen, setMobileScanModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as {
+      openForm?: boolean;
+      prefilledSupplier?: {
+        id?: string;
+        name: string;
+        phone?: string;
+        address?: string;
+        gstin?: string;
+      };
+      supplierId?: string;
+      supplierName?: string;
+    } | null;
+
+    if (state?.openForm) {
+      if (state.prefilledSupplier) {
+        setPrefilledSupplier(state.prefilledSupplier);
+      } else if (state.supplierId || state.supplierName) {
+        setPrefilledSupplier({
+          id: state.supplierId,
+          name: state.supplierName || "",
+        });
+      }
+      setEditingDoc(null);
+      setCreateModalOpen(true);
+    }
+  }, [location.state]);
 
   // Fetch Documents
   const loadDocuments = useCallback(async () => {
@@ -144,6 +200,14 @@ export default function Purchases() {
   useEffect(() => {
     loadDocuments();
     setSelectedDocIds(new Set());
+
+    const handleReload = () => {
+      loadDocuments();
+    };
+    window.addEventListener("credsmart_network_update", handleReload);
+    return () => {
+      window.removeEventListener("credsmart_network_update", handleReload);
+    };
   }, [loadDocuments]);
 
   // Global Keyboard Shortcuts
@@ -201,6 +265,20 @@ export default function Purchases() {
         }
       });
   }, [documents, searchQuery, statusFilter, dateRange, sortField, sortOrder]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedDocs,
+    totalPages,
+    totalItems: totalDocCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filteredDocuments, 25);
 
   // Metrics
   const metrics = useMemo(() => {
@@ -267,6 +345,8 @@ export default function Purchases() {
           brand: "",
           category: "",
           unit: it.unit || "PCS",
+          altUnit: it.altUnit,
+          altUnitConversion: it.altUnitConversion,
           hsn: it.hsn || "",
           gstRate: it.taxRate || 0,
         },
@@ -276,6 +356,10 @@ export default function Purchases() {
           expiryDate: it.expiryDate,
         },
         quantity: it.quantity,
+        altUnit: it.altUnit,
+        altQty: it.altQty,
+        altUnitConversion: it.altUnitConversion,
+        unit: it.unit || "PCS",
       })),
       subtotal: doc.subtotal,
       discountAmount: doc.discountTotal,
@@ -324,10 +408,10 @@ export default function Purchases() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
+                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
                   isActive
-                    ? "glowing-btn-amber text-amber-300 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-md shadow-orange-500/20 border border-amber-400"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -409,8 +493,165 @@ export default function Purchases() {
           </div>
         </div>
 
-        {/* 3 Frosted 3D Glass Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* PENDING INWARD INVOICES (AUTO-SYNC APPROVAL BANNER) */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        {activeTab === "purchase_invoice" && pendingInvoices.length > 0 && (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-primary/5 border border-amber-500/30 shadow-md shrink-0 space-y-3 animate-in fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500 text-white shadow-xs">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                    <span>Incoming Sales Invoices Awaiting Inward Approval</span>
+                    <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.2 rounded-full font-mono">
+                      {pendingInvoices.length} Pending
+                    </Badge>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Other CredSmart businesses generated invoices in your name. Approving will automatically record them as inward purchase bills.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {pendingInvoices.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="p-3 rounded-xl bg-card border border-amber-500/30 shadow-xs flex flex-col justify-between gap-2.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        Sale was Created by <span className="text-primary">{inv.senderOrgName}</span> on your name
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                        <span className="font-mono font-medium text-foreground bg-muted px-1.5 py-0.2 rounded">
+                          #{inv.invoiceNumber}
+                        </span>
+                        <span>·</span>
+                        <span>{inv.docDate}</span>
+                        <span>·</span>
+                        <span>{inv.items.length} item{inv.items.length > 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">
+                        ₹{inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2 flex-wrap sm:flex-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInspectingInvoice(inv);
+                        setInspectModalOpen(true);
+                      }}
+                      className="text-xs text-primary hover:underline font-bold flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-primary/5 active:scale-95 cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View Bill</span>
+                    </button>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 sm:h-7 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 font-semibold px-3 active:scale-95 flex-1 sm:flex-none"
+                        onClick={async () => {
+                          await rejectInvoice(inv.id);
+                          await loadDocuments();
+                        }}
+                        disabled={rejectingId === inv.id || approvingId === inv.id}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-9 sm:h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 active:scale-95 flex-1 sm:flex-none shadow-xs"
+                        onClick={async () => {
+                          const ok = await approveInvoice(inv.id);
+                          if (ok) await loadDocuments();
+                        }}
+                        disabled={approvingId === inv.id || rejectingId === inv.id}
+                      >
+                        {approvingId === inv.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Approve &amp; Inward
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
+        <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
+          <div
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              statusFilter === "all"
+                ? "ring-1.5 ring-amber-500/50 bg-amber-500/10 border-amber-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">
+              Purchases
+            </div>
+            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setStatusFilter("paid")}
+            className={cn(
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              statusFilter === "paid"
+                ? "ring-1.5 ring-emerald-500/50 bg-emerald-500/10 border-emerald-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
+              Paid Out
+            </div>
+            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setStatusFilter("unpaid")}
+            className={cn(
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              statusFilter === "unpaid"
+                ? "ring-1.5 ring-rose-500/50 bg-rose-500/10 border-rose-500/40"
+                : "border-border/70"
+            )}
+          >
+            <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">
+              Payables
+            </div>
+            <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
+              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Frosted 3D Glass Metric Cards (Tablet / Desktop) */}
+        <div className="hidden sm:grid sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
           {/* Total Purchases */}
           <div
             onClick={() => setStatusFilter("all")}
@@ -429,7 +670,7 @@ export default function Purchases() {
             <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
               ₹ {metrics.totalAmount.toLocaleString("en-IN")}
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills &amp; vendor orders</p>
+            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills & vendor orders</p>
           </div>
 
           {/* Paid */}
@@ -476,17 +717,17 @@ export default function Purchases() {
         </div>
 
         {/* Filter Bar - Frosted Glass Container */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 p-2 sm:p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
           {/* Left: Search & Date Picker */}
-          <div className="flex items-center gap-2 flex-1 max-w-xl flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 max-w-xl">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[180px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative flex-1 min-w-[140px]">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by bill #, supplier name, mobile..."
-                className="pl-8 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
+                placeholder="Search by bill #, supplier..."
+                className="pl-7 sm:pl-8 h-8 sm:h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl"
               />
             </div>
 
@@ -496,7 +737,7 @@ export default function Purchases() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl gap-1.5 shadow-xs shrink-0"
+                  className="h-8 sm:h-9 px-2 sm:px-3 text-[11px] sm:text-xs font-medium border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-lg sm:rounded-xl gap-1 sm:gap-1.5 shadow-xs shrink-0"
                 >
                   <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>{selectedPreset}</span>
@@ -534,7 +775,7 @@ export default function Purchases() {
                 setEditingDoc(null);
                 setCreateModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -545,11 +786,11 @@ export default function Purchases() {
         {/* Transactions Table Card / Mobile Stream - 3D Glass Container */}
         <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2 pb-36 space-y-2 scrollbar-thin overscroll-y-contain">
             {filteredDocuments.length === 0 ? (
-              <div className="py-16 text-center space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
-                  <Truck className="w-7 h-7 stroke-[1.5]" />
+              <div className="py-12 text-center space-y-2.5">
+                <div className="w-12 h-12 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
+                  <Truck className="w-6 h-6 stroke-[1.5]" />
                 </div>
                 <p className="text-xs font-bold text-foreground">No Purchases Found</p>
                 <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
@@ -568,98 +809,168 @@ export default function Purchases() {
                 </Button>
               </div>
             ) : (
-              filteredDocuments.map((doc) => {
+              paginatedDocs.map((doc) => {
                 const isSelected = selectedDocIds.has(doc.id);
                 return (
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-3.5 rounded-2xl border transition-all bg-card space-y-2.5 shadow-2xs active:scale-[0.99]",
+                      "p-2.5 rounded-xl border transition-all bg-card/95 space-y-1.5 shadow-2xs active:scale-[0.99]",
                       isSelected
-                        ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+                        ? "border-amber-500 ring-1.5 ring-amber-500/30 bg-amber-50/20"
                         : "border-border/80 hover:border-border"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded border border-border/60 text-foreground">
-                            {doc.documentNumber}
-                          </span>
-                          {doc.referenceNumber && (
-                            <span className="text-[10px] text-muted-foreground font-mono">
-                              Ref: {doc.referenceNumber}
-                            </span>
+                    {/* Line 1: Voucher Number + Status + Grand Total */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono font-bold text-xs bg-muted/90 px-1.5 py-0.5 rounded border border-border/60 text-foreground truncate">
+                          {doc.documentNumber}
+                        </span>
+                        <span
+                          className={cn(
+                            "px-1.5 py-0.2 rounded-full text-[9px] font-bold uppercase shrink-0",
+                            (doc.status === "paid" || doc.status === "received") && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
+                            doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
+                            doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
+                            doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
                           )}
-                          <span
-                            className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
-                              (doc.status === "paid" || doc.status === "received") && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
-                            )}
-                          >
-                            {doc.status}
+                        >
+                          {doc.status}
+                        </span>
+                        {(doc.notes?.includes("Auto-imported from Sales Invoice") || doc.referenceNumber?.startsWith("INV")) && (
+                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded-full shrink-0">
+                            <Sparkles className="w-2 h-2 text-emerald-500" />
+                            Sync
                           </span>
-                        </div>
-                        <h4 className="font-bold text-sm text-foreground mt-1">{doc.partyName}</h4>
-                        {doc.partyPhone && (
-                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{doc.partyPhone}</p>
                         )}
                       </div>
 
-                      <div className="text-right">
-                        <span className="text-base font-black font-mono text-foreground">
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-black font-mono text-foreground">
                           ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </span>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{doc.docDate}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                      <span className="text-[11px] font-medium text-muted-foreground">
-                        {calculateDueInText(doc)}
-                      </span>
+                    {/* Line 2: Supplier Name + Date + Quick Actions */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-xs text-foreground truncate">{doc.partyName}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.2">
+                          <span>{doc.docDate}</span>
+                          <span>•</span>
+                          <span className={doc.status === "unpaid" ? "text-rose-500 font-semibold" : ""}>{calculateDueInText(doc)}</span>
+                        </div>
+                      </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Print */}
+                        <button
                           onClick={() => handleOpenReceipt(doc)}
-                          className="h-7 px-2.5 text-[11px] font-semibold gap-1 border-border"
+                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all cursor-pointer"
+                          title="Print Receipt"
                         >
-                          <Printer className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>View Bill</span>
-                        </Button>
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Download PDF */}
+                        <button
+                          onClick={() => {
+                            downloadExactInvoicePdf({
+                              invoiceNumber: doc.documentNumber,
+                              docType: doc.docType as any,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: org?.name || "CredSmart Store",
+                              storePhone: org?.phone,
+                              totalAmount: doc.grandTotal,
+                              subtotal: doc.subtotal,
+                              discountAmount: doc.discountTotal ?? 0,
+                              tax: doc.taxTotal ?? 0,
+                              date: doc.docDate,
+                              isEstimate: false,
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                unit: it.unit,
+                                altUnit: it.altUnit,
+                                altQty: it.altQty,
+                                altUnitConversion: it.altUnitConversion,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                                hsn: it.hsn,
+                                taxRate: it.taxRate,
+                                batchNo: it.batchNumber,
+                                expDate: it.expiryDate,
+                              })),
+                            });
+                          }}
+                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-amber-600 dark:text-amber-400 active:scale-95 transition-all cursor-pointer"
+                          title="Download PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* WhatsApp */}
+                        <button
+                          onClick={() => {
+                            shareInvoicePdfToWhatsApp({
+                              invoiceNumber: doc.documentNumber,
+                              customerName: doc.partyName,
+                              customerPhone: doc.partyPhone,
+                              storeName: "CredSmart Store",
+                              totalAmount: doc.grandTotal,
+                              date: doc.docDate,
+                              isEstimate: false,
+                              items: doc.items.map((it) => ({
+                                name: it.productName,
+                                quantity: it.quantity,
+                                unit: it.unit,
+                                altUnit: it.altUnit,
+                                altQty: it.altQty,
+                                altUnitConversion: it.altUnitConversion,
+                                rate: it.rate,
+                                total: it.lineTotal,
+                                hsn: it.hsn,
+                                taxRate: it.taxRate,
+                                batchNo: it.batchNumber,
+                                expDate: it.expiryDate,
+                              })),
+                            });
+                          }}
+                          className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer"
+                          title="WhatsApp Share"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* More Menu */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <button className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground active:scale-95 transition-all cursor-pointer">
                               <MoreVertical className="w-3.5 h-3.5" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem
                               onClick={() => {
                                 setEditingDoc(doc);
                                 setCreateModalOpen(true);
                               }}
-                              className="gap-2"
                             >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Edit Bill</span>
+                              Edit Voucher
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Download CSV</span>
+                            <DropdownMenuItem onClick={() => handleDuplicate(doc)}>
+                              Duplicate Voucher
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteDocument(doc)}
-                              className="gap-2 text-rose-600"
+                              onClick={() => handleDelete(doc.id)}
+                              className="text-rose-600 dark:text-rose-400"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
+                              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                              Delete Voucher
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -669,6 +980,22 @@ export default function Purchases() {
                 );
               })
             )}
+          </div>
+
+          {/* Mobile Pagination */}
+          <div className="md:hidden">
+            <PaginationBar
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalDocCount}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </div>
 
           {/* DESKTOP VIEW: Untouched Desktop Data Table (Visible on md: and above) */}
@@ -720,8 +1047,8 @@ export default function Purchases() {
               </thead>
 
               <tbody className="divide-y divide-border/60">
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map((doc) => {
+                {paginatedDocs.length > 0 ? (
+                  paginatedDocs.map((doc) => {
                     const isSelected = selectedDocIds.has(doc.id);
                     return (
                       <tr
@@ -743,13 +1070,19 @@ export default function Purchases() {
                           {doc.docDate}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-mono font-semibold text-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50 text-[11px]">
                               {doc.documentNumber}
                             </span>
                             {doc.referenceNumber && (
                               <span className="text-[10px] text-muted-foreground font-mono">
                                 (Ref: {doc.referenceNumber})
+                              </span>
+                            )}
+                            {(doc.notes?.includes("Auto-imported from Sales Invoice") || doc.referenceNumber?.startsWith("INV")) && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.2 rounded-full">
+                                <Sparkles className="w-2.5 h-2.5 text-emerald-500" />
+                                Auto-Synced
                               </span>
                             )}
                           </div>
@@ -870,6 +1203,22 @@ export default function Purchases() {
                 )}
               </tbody>
             </table>
+
+            {/* Desktop Pagination */}
+            <div className="hidden md:block">
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalDocCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -891,7 +1240,9 @@ export default function Purchases() {
         orgId={orgId || ""}
         initialDocType={activeTab}
         editingDoc={editingDoc}
+        prefilledSupplier={prefilledSupplier}
         onSaved={() => loadDocuments()}
+        onPrintRequest={(doc) => handleOpenReceipt(doc)}
       />
 
       {/* Mobile Scan & OCR Modal */}
@@ -929,6 +1280,23 @@ export default function Purchases() {
           }}
         />
       )}
+
+      {/* Incoming B2B Network Invoice Inspection Modal */}
+      <NetworkInvoicePreviewModal
+        open={inspectModalOpen}
+        onOpenChange={setInspectModalOpen}
+        invoice={inspectingInvoice}
+        onApprove={async (id) => {
+          const ok = await approveInvoice(id);
+          if (ok) await loadDocuments();
+        }}
+        onReject={async (id) => {
+          await rejectInvoice(id);
+          await loadDocuments();
+        }}
+        isApproving={approvingId === inspectingInvoice?.id}
+        isRejecting={rejectingId === inspectingInvoice?.id}
+      />
     </div>
   );
 }

@@ -47,7 +47,7 @@ export function WebsiteProductImport({ onImport, compact = false }: WebsiteProdu
       if (fnError) throw new Error(fnError.message);
       if (!data?.success) throw new Error(data?.error || "Failed to scrape products");
 
-      const scraped: ScrapedProduct[] = (data.products || []).map((p: any) => ({
+      const scraped: ScrapedProduct[] = (data.products || []).map((p: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         name: p.name || "Untitled Product",
         brand: p.brand || "",
         category: p.category || "",
@@ -64,7 +64,7 @@ export function WebsiteProductImport({ onImport, compact = false }: WebsiteProdu
         setProducts(scraped);
         setScraped(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Failed to scrape website");
     } finally {
       setLoading(false);

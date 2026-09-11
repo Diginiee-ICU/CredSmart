@@ -93,7 +93,7 @@ export function PartyExcelUploadModal({
       await onImport(parsedParties);
       toast.success(`Imported ${parsedParties.length} parties successfully!`);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.message || "Failed to bulk import parties.");
     } finally {
       setIsProcessing(false);
@@ -158,35 +158,36 @@ export function PartyExcelUploadModal({
         {activeTab === "excel" && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs scrollbar-thin">
             {/* Upload Box */}
-            <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-emerald-500/30 hover:border-emerald-500/60 bg-emerald-500/5 flex flex-col items-center justify-center gap-3 text-center transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <Upload className="w-6 h-6" />
+            <div className="p-6 sm:p-8 rounded-3xl border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <Upload className="w-7 h-7 stroke-[2.2]" />
               </div>
               <div>
-                <p className="font-bold text-sm text-foreground">Upload Party Spreadsheet (.csv / .xlsx)</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Columns: Party Name, Phone Number, Email, Party Type (Customer/Supplier), Category, Address, Opening Balance
+                <p className="font-black text-base text-slate-900 dark:text-white">Upload Party Spreadsheet (.xlsx / .csv)</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+                  Direct import with automatic ledger column mapping: <span className="font-semibold text-slate-700 dark:text-slate-300">Party Name, Phone, Email, Type (Customer/Supplier), Category, Address, Opening Balance</span>
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
-                <Button
-                  size="sm"
+              <div className="flex items-center gap-3 pt-2 flex-wrap justify-center">
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="gap-1.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  className="relative flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-600 text-white font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.4)] hover:shadow-[0_6px_22px_rgba(16,185,129,0.55)] border border-emerald-400/40 active:scale-95 transition-all duration-150 cursor-pointer overflow-hidden group"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Select File
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                  <span>Choose Party File (.xlsx / .csv)</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleDownloadTemplate}
-                  className="gap-1.5 cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  <Download className="w-4 h-4 text-emerald-600" />
-                  Download Sample Template
-                </Button>
+                  <Download className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                  <span>Download Sample Template</span>
+                </button>
               </div>
               <input
                 ref={fileInputRef}
@@ -287,7 +288,7 @@ export function PartyExcelUploadModal({
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedSoftware(s.id as any)}
+                    onClick={() => setSelectedSoftware(s.id as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
                     className={cn(
                       "p-3.5 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
                       selectedSoftware === s.id
@@ -378,28 +379,29 @@ export function PartyExcelUploadModal({
           </Button>
 
           {activeTab === "excel" ? (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={handleConfirmImport}
               disabled={parsedParties.length === 0 || isProcessing}
-              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-sm"
+              className="relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 disabled:opacity-50 text-white font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.4)] hover:shadow-[0_6px_22px_rgba(16,185,129,0.55)] border border-emerald-400/40 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed overflow-hidden group"
             >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
               {isProcessing ? (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200 group-hover:scale-110 transition-transform" />
               )}
-              Import {parsedParties.length} Parties
-            </Button>
+              <span>Import {parsedParties.length} Parties</span>
+            </button>
           ) : (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-cyan-600/30 active:scale-95 transition-all cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Select {selectedSoftware.toUpperCase()} Export File
-            </Button>
+              <span>Select {selectedSoftware.toUpperCase()} Export File</span>
+            </button>
           )}
         </div>
       </div>

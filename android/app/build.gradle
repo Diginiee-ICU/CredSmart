@@ -14,6 +14,8 @@ if (signingPropsFile.exists()) {
         signingProps[key] = value
     }
 }
+def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "9").toInteger()
+def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.0.8"
 
 android {
     namespace = "com.credsmart.pos"
@@ -22,8 +24,8 @@ android {
         applicationId "com.credsmart.pos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode releaseVersionCode
+        versionName releaseVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -32,8 +34,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     signingConfigs {
         release {
@@ -47,9 +49,11 @@ android {
     }
     buildTypes {
         release {
-            if (signingPropsFile.exists()) {
-                signingConfig signingConfigs.release
+            def requiredSigningKeys = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+            if (!signingPropsFile.exists() || !requiredSigningKeys.every { signingProps[it] }) {
+                throw new GradleException("Missing complete android/signing.properties for signed release builds.")
             }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

@@ -28,6 +28,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
+
 interface ProductLibraryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +38,7 @@ interface ProductLibraryModalProps {
   mode?: "library" | "software" | "excel";
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PRESET_LIBRARY_ITEMS: Partial<InventoryItem>[] = [
   // FMCG & Grocery
   {
@@ -307,8 +311,8 @@ export function ProductLibraryModal({
       await onAddProducts(itemsToAdd);
       toast.success(`Added ${itemsToAdd.length} products with barcodes, GST rates & stock!`);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to add products from library.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to add products from library."));
     } finally {
       setIsAdding(false);
     }
@@ -325,7 +329,7 @@ export function ProductLibraryModal({
       const parts = lines[i].split(/[,\t]/).map((p) => p.trim());
       if (parts.length < 2) continue;
 
-      const obj: any = {};
+      const obj: Record<string, string | number> = {};
       headers.forEach((h, idx) => {
         const val = parts[idx] || "";
         if (h.includes("name") || h.includes("item")) obj.name = val;
@@ -334,28 +338,34 @@ export function ProductLibraryModal({
         else if (h.includes("brand")) obj.brand = val;
         else if (h.includes("category")) obj.category = val;
         else if (h.includes("unit")) obj.unit = val;
-        else if (h.includes("selling") || h.includes("sp") || h.includes("rate") || h.includes("saleprice")) obj.sellingPrice = parseFloat(val) || 0;
-        else if (h.includes("purchase") || h.includes("cost") || h.includes("pp")) obj.purchasePrice = parseFloat(val) || 0;
-        else if (h.includes("mrp")) obj.mrp = parseFloat(val) || 0;
-        else if (h.includes("gst") || h.includes("tax")) obj.gstRate = parseFloat(val) || 18;
+        else if (h.includes("selling") || h.includes("sp") || h.includes("rate") || h.includes("saleprice")) obj.sellingPrice = Number.parseFloat(val) || 0;
+        else if (h.includes("purchase") || h.includes("cost") || h.includes("pp")) obj.purchasePrice = Number.parseFloat(val) || 0;
+        else if (h.includes("mrp")) obj.mrp = Number.parseFloat(val) || 0;
+        else if (h.includes("gst") || h.includes("tax")) obj.gstRate = Number.parseFloat(val) || 18;
         else if (h.includes("hsn")) obj.hsnCode = val;
-        else if (h.includes("stock") || h.includes("qty") || h.includes("quantity")) obj.openingStock = parseFloat(val) || 0;
+        else if (h.includes("stock") || h.includes("qty") || h.includes("quantity")) obj.openingStock = Number.parseFloat(val) || 0;
       });
 
       if (obj.name) {
+        const sellingPrice = typeof obj.sellingPrice === "number" ? obj.sellingPrice : Number.parseFloat(String(obj.sellingPrice ?? "0")) || 100;
+        const purchasePrice = typeof obj.purchasePrice === "number" ? obj.purchasePrice : Number.parseFloat(String(obj.purchasePrice ?? "0")) || Math.round(sellingPrice * 0.8);
+        const mrp = typeof obj.mrp === "number" ? obj.mrp : Number.parseFloat(String(obj.mrp ?? "0")) || sellingPrice || 100;
+        const gstRate = typeof obj.gstRate === "number" ? obj.gstRate : Number.parseFloat(String(obj.gstRate ?? "0")) || 18;
+        const openingStock = typeof obj.openingStock === "number" ? obj.openingStock : Number.parseFloat(String(obj.openingStock ?? "0")) || 10;
+
         results.push({
-          name: obj.name,
-          barcode: obj.barcode || undefined,
-          sku: obj.sku || `SKU-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          category: obj.category || "General",
-          brand: obj.brand || "General",
-          unit: obj.unit || "PCS",
-          sellingPrice: obj.sellingPrice || 100,
-          purchasePrice: obj.purchasePrice || Math.round((obj.sellingPrice || 100) * 0.8),
-          mrp: obj.mrp || obj.sellingPrice || 100,
-          gstRate: obj.gstRate || 18,
-          hsnCode: obj.hsnCode || "9999",
-          openingStock: obj.openingStock || 10,
+          name: String(obj.name),
+          barcode: typeof obj.barcode === "string" ? obj.barcode : undefined,
+          sku: typeof obj.sku === "string" ? obj.sku : `SKU-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+          category: typeof obj.category === "string" ? obj.category : "General",
+          brand: typeof obj.brand === "string" ? obj.brand : "General",
+          unit: typeof obj.unit === "string" ? obj.unit : "PCS",
+          sellingPrice,
+          purchasePrice,
+          mrp,
+          gstRate,
+          hsnCode: typeof obj.hsnCode === "string" ? obj.hsnCode.trim() : "",
+          openingStock,
           minStockAlert: 5,
         });
       }
@@ -408,8 +418,8 @@ export function ProductLibraryModal({
       await onAddProducts(parsedItems);
       toast.success(`Successfully imported ${parsedItems.length} products into inventory!`);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to import items.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to import items."));
     } finally {
       setIsAdding(false);
     }
@@ -565,35 +575,36 @@ export function ProductLibraryModal({
         {/* Tab 2: Bulk Upload via Excel / CSV */}
         {activeTab === "excel" && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs scrollbar-thin">
-            <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-primary/5 flex flex-col items-center justify-center gap-3 text-center transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                <Upload className="w-6 h-6" />
+            <div className="p-6 sm:p-8 rounded-3xl border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <Upload className="w-7 h-7 stroke-[2.2]" />
               </div>
               <div>
-                <p className="font-bold text-sm text-foreground">Upload Your Excel / CSV Product Sheet</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Supports columns: Item Name, Barcode, Selling Price, Purchase Price, MRP, GST Rate, HSN Code, Opening Stock
+                <p className="font-black text-base text-slate-900 dark:text-white">Upload Excel / CSV Product Master Sheet</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+                  Direct import with automatic column detection: <span className="font-semibold text-slate-700 dark:text-slate-300">Item Name, Barcode, Selling Price, Purchase Price, MRP, GST Rate, HSN Code, Opening Stock</span>
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
-                <Button
-                  size="sm"
+              <div className="flex items-center gap-3 pt-2 flex-wrap justify-center">
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="gap-1.5 font-bold cursor-pointer"
+                  className="relative flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-600 text-white font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.4)] hover:shadow-[0_6px_22px_rgba(16,185,129,0.55)] border border-emerald-400/40 active:scale-95 transition-all duration-150 cursor-pointer overflow-hidden group"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Select File (.xlsx / .csv)
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                  <span>Choose Excel / CSV File</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleDownloadTemplate}
-                  className="gap-1.5 cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  <Download className="w-4 h-4 text-primary" />
-                  Download Sample Template
-                </Button>
+                  <Download className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                  <span>Download Sample Template</span>
+                </button>
               </div>
               <input
                 ref={fileInputRef}
@@ -606,37 +617,36 @@ export function ProductLibraryModal({
 
             {/* Parsed Items Preview */}
             {parsedItems.length > 0 && (
-              <div className="border border-border rounded-xl overflow-hidden bg-card shadow-2xs space-y-2">
-                <div className="px-4 py-2.5 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
+              <div className="border border-emerald-500/30 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-md space-y-2">
+                <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/15 to-teal-500/10 border-b border-emerald-500/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                      {parsedItems.length} Products Ready to Import
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-black text-xs text-emerald-800 dark:text-emerald-300">
+                      {parsedItems.length} Products Verified &amp; Ready for Inward Import
                     </span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
+                    type="button"
                     onClick={() => setParsedItems([])}
-                    className="h-7 text-xs text-rose-600 hover:text-rose-700"
+                    className="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                   >
-                    Clear
-                  </Button>
+                    Clear All
+                  </button>
                 </div>
 
-                <div className="max-h-56 overflow-y-auto divide-y divide-border">
+                <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
                   {parsedItems.map((item, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between text-xs">
+                    <div key={idx} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       <div>
-                        <p className="font-bold text-foreground">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">
+                        <p className="font-bold text-slate-900 dark:text-white">{item.name}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           {item.barcode && `Barcode: ${item.barcode} · `}
-                          HSN: {item.hsnCode} · GST: {item.gstRate}% · Stock: {item.openingStock} {item.unit}
+                          HSN: {item.hsnCode || "N/A"} · GST: {item.gstRate}% · Stock: {item.openingStock} {item.unit}
                         </p>
                       </div>
                       <div className="text-right font-mono">
-                        <p className="font-bold">₹ {item.sellingPrice}</p>
-                        <p className="text-[10px] text-muted-foreground">MRP: ₹ {item.mrp}</p>
+                        <p className="font-black text-emerald-600 dark:text-emerald-400">₹ {item.sellingPrice}</p>
+                        <p className="text-[10px] text-slate-500">MRP: ₹ {item.mrp}</p>
                       </div>
                     </div>
                   ))}
@@ -662,7 +672,7 @@ export function ProductLibraryModal({
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedSoftware(s.id as any)}
+                    onClick={() => setSelectedSoftware(s.id as typeof selectedSoftware)}
                     className={cn(
                       "p-3.5 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
                       selectedSoftware === s.id
@@ -753,46 +763,47 @@ export function ProductLibraryModal({
           </Button>
 
           {activeTab === "library" && (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={handleImportSelected}
               disabled={selectedIndices.size === 0 || isAdding}
-              className="gap-1.5 font-bold text-xs cursor-pointer shadow-sm"
+              className="relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed overflow-hidden"
             >
               {isAdding ? (
-                <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <CheckCircle2 className="w-3.5 h-3.5" />
               )}
               Add {selectedIndices.size} Items to Inventory
-            </Button>
+            </button>
           )}
 
           {activeTab === "excel" && (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={handleConfirmExcelImport}
               disabled={parsedItems.length === 0 || isAdding}
-              className="gap-1.5 font-bold text-xs cursor-pointer shadow-sm"
+              className="relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 disabled:opacity-50 text-white font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.4)] hover:shadow-[0_6px_22px_rgba(16,185,129,0.55)] border border-emerald-400/40 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed overflow-hidden group"
             >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
               {isAdding ? (
-                <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200 group-hover:scale-110 transition-transform" />
               )}
-              Import {parsedItems.length} Products
-            </Button>
+              <span>Import {parsedItems.length} Products</span>
+            </button>
           )}
 
           {activeTab === "software" && (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="gap-1.5 font-bold text-xs cursor-pointer shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-cyan-600/30 active:scale-95 transition-all cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Select {selectedSoftware.toUpperCase()} Export File
-            </Button>
+              <span>Select {selectedSoftware.toUpperCase()} Export File</span>
+            </button>
           )}
         </div>
       </div>

@@ -13,19 +13,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { SEOHead } from "@/components/public/SEOHead";
+import { PublicConversionBanner } from "@/components/public/PublicConversionBanner";
 import { ROUTE_PATHS } from "@/config/routes";
 
 export default function CompareVyapar() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "CredSmart POS vs Vyapar & myBillBook",
+    name: "CredSmart vs Vyapar & myBillBook",
     description:
-      "Detailed feature and price comparison between CredSmart POS, Vyapar, and myBillBook for Indian retail and wholesale businesses.",
+      "Detailed feature and price comparison between CredSmart, Vyapar, and myBillBook for Indian retail and wholesale businesses.",
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
     },
   };
 
@@ -59,8 +61,8 @@ export default function CompareVyapar() {
       notes: "Add all your shops and godowns under one account with zero extra fees.",
     },
     {
-      feature: "B2B Verified Vendor Directory",
-      credsmart: "3.2M+ Verified Indian Companies",
+      feature: "B2B MCA Vendor Discovery",
+      credsmart: "3.2M+ MCA Companies Included",
       competitor: "Not Available",
       winner: "credsmart",
       notes: "Search through MCA/GSTIN-verified suppliers and import their details directly into your Khata.",
@@ -84,91 +86,86 @@ export default function CompareVyapar() {
   return (
     <PublicLayout>
       <SEOHead
-        title="CredSmart POS vs Vyapar & myBillBook — Why Switch? | CredSmart"
-        description="Looking for the best free alternative to Vyapar or myBillBook? Compare CredSmart POS features, pricing, cloud sync, barcode printing, and multi-branch management."
+        title="CredSmart vs Vyapar & myBillBook — 100% Free Alternative | CredSmart by CredAlert"
+        description="Looking for the best free alternative to Vyapar or myBillBook? Compare CredSmart features, pricing, cloud sync, barcode printing, and multi-branch management."
         keywords="Vyapar alternative free, myBillBook alternative free, CredSmart vs Vyapar, CredSmart vs myBillBook, best billing software India, free GST invoice app comparison"
-        canonicalUrl="https://credsmart.in/compare-vyapar"
+        canonicalUrl="https://pos.credalert.bussiness/compare-vyapar"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Compare Vyapar", url: "/compare-vyapar" },
+        ]}
         structuredData={structuredData}
       />
 
       {/* Hero */}
-      <section className="pt-12 pb-16 md:pt-20 md:pb-24 text-center border-b border-slate-800/80">
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 text-center border-b border-slate-200/80 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-200/30 via-indigo-100/20 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-4 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <Star className="w-3.5 h-3.5 fill-amber-400/20" /> Honest Software Comparison
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold uppercase tracking-wider">
+            <Star className="w-3.5 h-3.5 fill-amber-600/20 text-amber-600" /> Honest Software Comparison
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A1931] tracking-tight leading-tight">
             The Modern, Free Alternative to{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400">
+            <span className="text-[#FF6A00]">
               Vyapar &amp; myBillBook
             </span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Stop paying ₹3,000 to ₹7,000 every year for basic billing software. Discover why thousands of businesses are migrating to CredSmart POS.
+          <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Stop paying thousands annually for basic billing software. See why retailers and distributors are switching to CredSmart.
           </p>
+        </div>
+      </section>
 
-          <div className="pt-4 flex justify-center">
-            <Link to={ROUTE_PATHS.auth}>
-              <button className="h-12 px-8 rounded-xl glowing-btn-amber text-white font-bold text-sm shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center">
-                Switch to CredSmart 100% Free <ArrowRight className="w-4 h-4 ml-2 stroke-[2.5]" />
-              </button>
-            </Link>
+      {/* Comparison Table */}
+      <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-4">
+          <div className="overflow-x-auto rounded-3xl bg-white border border-slate-200/80 shadow-md">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-mono text-[11px]">
+                <tr>
+                  <th className="p-4 sm:p-5">Feature</th>
+                  <th className="p-4 sm:p-5 text-amber-700 font-bold bg-amber-50/80 border-x border-amber-200">
+                    CredSmart (100% Free)
+                  </th>
+                  <th className="p-4 sm:p-5">Vyapar / myBillBook (Paid)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {comparisons.map((c, i) => (
+                  <tr key={i} className="hover:bg-slate-50/60">
+                    <td className="p-4 sm:p-5">
+                      <div className="font-bold text-slate-900">{c.feature}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{c.notes}</div>
+                    </td>
+                    <td className="p-4 sm:p-5 font-bold text-amber-700 bg-amber-50/30 border-x border-amber-200">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{c.credsmart}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 sm:p-5 text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span>{c.competitor}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* Comparison Grid */}
-      <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-2 mb-10">
-          <h2 className="text-2xl sm:text-3xl font-black text-white">
-            Feature-by-Feature Breakdown
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            How CredSmart POS out-delivers legacy offline software on every metric.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {comparisons.map((item, idx) => (
-            <div
-              key={idx}
-              className="p-6 rounded-2xl glass-card-3d hover:border-amber-400/40 transition-colors space-y-4 relative overflow-hidden"
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-rose-600 rounded-l-2xl" />
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pl-1">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">{item.feature}</h3>
-                <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 w-fit">
-                  CredSmart Wins
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 pl-1">
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-bold font-mono">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500" />
-                    <span>CredSmart POS</span>
-                  </div>
-                  <p className="text-xs font-black">{item.credsmart}</p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-100/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-bold font-mono text-slate-400">
-                    <XCircle className="w-4 h-4 text-slate-400" />
-                    <span>Vyapar / myBillBook</span>
-                  </div>
-                  <p className="text-xs font-semibold">{item.competitor}</p>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic border-t border-slate-200/80 dark:border-slate-800/60 pt-3 pl-1">
-                💡 {item.notes}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Bottom Conversion Banner */}
+      <PublicConversionBanner
+        title="Ready to Switch and Save ₹5,000+ Yearly?"
+        highlightedText="100% Free."
+        subtitle="Import your existing products and customers in minutes with zero disruption."
+        ctaText="Make the Switch Free"
+      />
     </PublicLayout>
   );
 }

@@ -4,6 +4,9 @@ export interface InvoiceCalculationItemInput {
   discountPercent: number;
   discountAmount: number;
   taxRate: number;
+  altQty?: number;
+  altUnit?: string;
+  altUnitConversion?: number;
 }
 
 export interface InvoiceCalculationInput {
@@ -19,7 +22,11 @@ export interface InvoiceCalculationInput {
 
 export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
   const recalculatedItems = input.items.map((item) => {
-    const rawSub = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+    const primaryQty = Number(item.quantity) || 0;
+    const effectiveQty = item.altQty != null && Number(item.altQty) > 0
+      ? Number(item.altQty)
+      : primaryQty;
+    const rawSub = effectiveQty * (Number(item.rate) || 0);
     const itemDiscount = item.discountPercent > 0
       ? (rawSub * (Number(item.discountPercent) || 0)) / 100
       : Number(item.discountAmount) || 0;
@@ -41,6 +48,7 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
 
     return {
       ...item,
+      quantity: primaryQty,
       taxableAmount: Number(taxable.toFixed(2)),
       cgstAmount: Number(cgst.toFixed(2)),
       sgstAmount: Number(sgst.toFixed(2)),
@@ -49,12 +57,18 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
     };
   });
 
-  const rawSubtotal = recalculatedItems.reduce(
-    (acc, item) => acc + ((Number(item.quantity) || 0) * (Number(item.rate) || 0)),
-    0
-  );
+  const rawSubtotal = recalculatedItems.reduce((acc, item) => {
+    const effectiveQty = item.altQty != null && Number(item.altQty) > 0
+      ? Number(item.altQty)
+      : (Number(item.quantity) || 0);
+    return acc + (effectiveQty * (Number(item.rate) || 0));
+  }, 0);
+
   const itemDiscounts = recalculatedItems.reduce((acc, item) => {
-    const lineSub = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+    const effectiveQty = item.altQty != null && Number(item.altQty) > 0
+      ? Number(item.altQty)
+      : (Number(item.quantity) || 0);
+    const lineSub = effectiveQty * (Number(item.rate) || 0);
     return acc + (lineSub - Number(item.taxableAmount || 0));
   }, 0);
 
@@ -67,7 +81,6 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
   const weightedItems = recalculatedItems.map((item) => {
     const itemTaxableValue = Number(item.taxableAmount || 0);
     const share = taxableBase > 0 ? (itemTaxableValue / taxableBase) : 0;
-    const discountedTaxable = itemTaxableValue - (itemTaxableValue * (overallDiscount / Math.max(taxableBase, 1)));
     const weightedTaxable = finalTaxable * share;
     const taxRate = Number(item.taxRate) || 0;
     const taxAmount = (weightedTaxable * taxRate) / 100;

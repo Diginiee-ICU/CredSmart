@@ -1,0 +1,42 @@
+{
+  "short_name": "CredSmart",
+  "name": "CredSmart by CredAlert — Free GST Billing & POS",
+  "description": "India's all-in-one free GST billing, POS software, inventory & customer khata by CredAlert.",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#030712",
+  "theme_color": "#1D4ED8",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}

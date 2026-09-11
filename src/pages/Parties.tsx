@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Users2,
   Share2,
@@ -81,6 +83,16 @@ import { ROUTE_PATHS } from "@/config/routes";
 
 const DEFAULT_SAMPLE_PARTIES: Party[] = [];
 
+type CreditTransactionRecord = {
+  party_id: string;
+  party_type: "customer" | "supplier";
+  amount: number | string | null;
+  type: "credit" | "payment";
+  created_at?: string;
+  reference_id?: string | null;
+  description?: string | null;
+};
+
 export default function Parties() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,7 +126,7 @@ export default function Parties() {
   const [showReconciliationModal, setShowReconciliationModal] = useState(false);
   const [auditResult, setAuditResult] = useState<OrganizationReconciliationAudit | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
-  const [rawCreditTransactions, setRawCreditTransactions] = useState<any[]>([]);
+  const [rawCreditTransactions, setRawCreditTransactions] = useState<CreditTransactionRecord[]>([]);
 
   // Fetch Parties from Supabase (customers + suppliers + credit balances)
   const fetchParties = useCallback(async () => {
@@ -130,13 +142,13 @@ export default function Parties() {
       // 1. Fetch Customers
       const { data: dbCustomers, error: custErr } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address, created_at")
+        .select("id, name, phone, email, address, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
         .eq("organization_id", orgId);
 
       // 2. Fetch Suppliers
       const { data: dbSuppliers, error: suppErr } = await supabase
         .from("suppliers")
-        .select("id, name, phone, email, address, gstin, created_at")
+        .select("id, name, phone, email, address, gstin, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
         .eq("organization_id", orgId);
 
       // 3. Fetch Credit Transactions
@@ -160,42 +172,104 @@ export default function Parties() {
 
       const mergedParties: Party[] = [];
 
-      (dbCustomers || []).forEach((c) => {
+      const parsePartyCustomFields = (rawCf: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, rawRecord: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
+        let cf = rawCf;
+        if (typeof cf === "string") {
+          try {
+            cf = JSON.parse(cf);
+          } catch {
+            cf = {};
+          }
+        }
+        if (!cf || typeof cf !== "object") cf = {};
+
+        let customItems = cf.customItems || cf.custom_items || rawRecord?.custom_items || rawRecord?.customItems;
+        if (typeof customItems === "string") {
+          try {
+            customItems = JSON.parse(customItems);
+          } catch {
+            customItems = [];
+          }
+        }
+        if (!Array.isArray(customItems)) customItems = [];
+
+        const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+        const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+        return {
+          cf,
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
+        };
+      };
+
+      (dbCustomers || []).forEach((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[c.id] || 0;
+        const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(c.custom_fields, c);
+
         mergedParties.push({
           id: c.id,
           name: c.name,
+          tradeName: c.trade_name || undefined,
           phone: c.phone,
           email: c.email,
           partyType: "customer",
-          category: "Retailer",
+          category: c.category || "Retailer",
           address: c.address,
+          pan: c.pan || undefined,
+          pincode: c.pincode || undefined,
+          shippingAddress: c.shipping_address || undefined,
           openingBalance: bal,
           balance: bal,
-          creditLimit: 50000,
-          creditPeriodDays: 30,
+          creditLimit: c.credit_limit ? Number(c.credit_limit) : 50000,
+          creditPeriodDays: c.credit_period_days ? Number(c.credit_period_days) : 30,
+          customFields: {
+            ...cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          },
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
           sharedLedgerEnabled: true,
           sharedLedgerStatus: "synced",
           created_at: c.created_at,
         });
       });
 
-      (dbSuppliers || []).forEach((s) => {
+      (dbSuppliers || []).forEach((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
         const bal = creditBalanceMap[s.id] || 0;
         const payableBal = -Math.abs(bal);
+        const { cf, keepSamePrice, keepSameInventory, customItems } = parsePartyCustomFields(s.custom_fields, s);
+
         mergedParties.push({
           id: s.id,
           name: s.name,
+          tradeName: s.trade_name || undefined,
           phone: s.phone,
           email: s.email,
           gstin: s.gstin,
           partyType: "supplier",
-          category: "Distributor",
+          category: s.category || "Distributor",
           address: s.address,
+          pan: s.pan || undefined,
+          pincode: s.pincode || undefined,
+          shippingAddress: s.shipping_address || undefined,
           openingBalance: payableBal,
           balance: payableBal,
-          creditLimit: 100000,
-          creditPeriodDays: 45,
+          creditLimit: s.credit_limit ? Number(s.credit_limit) : 100000,
+          creditPeriodDays: s.credit_period_days ? Number(s.credit_period_days) : 45,
+          customFields: {
+            ...cf,
+            keepSamePrice,
+            keepSameInventory,
+            customItems,
+          },
+          keepSamePrice,
+          keepSameInventory,
+          customItems,
           sharedLedgerEnabled: true,
           sharedLedgerStatus: "synced",
           created_at: s.created_at,
@@ -226,21 +300,6 @@ export default function Parties() {
       setLoading(false);
     }
   }, [orgId]);
-
-  const handleRunAudit = () => {
-    setIsAuditing(true);
-    setTimeout(() => {
-      const audit = performFullLedgerReconciliation({
-        orgId,
-        orgName: "CredSmart Business",
-        parties,
-        creditTransactions: rawCreditTransactions,
-      });
-      setAuditResult(audit);
-      setIsAuditing(false);
-      toast.success("Automated Ledger Integrity Verification completed!");
-    }, 500);
-  };
 
   useEffect(() => {
     fetchParties();
@@ -274,16 +333,38 @@ export default function Parties() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const handleRunAudit = () => {
+    setIsAuditing(true);
+    setTimeout(() => {
+      const audit = performFullLedgerReconciliation({
+        orgId,
+        orgName: "CredSmart Business",
+        parties,
+        creditTransactions: rawCreditTransactions,
+      });
+      setAuditResult(audit);
+      setIsAuditing(false);
+      toast.success("Automated Ledger Integrity Verification completed!");
+    }, 500);
+  };
+
   // Save / Create / Update Party
   const handleSaveParty = async (partyData: Omit<Party, "id" | "created_at">) => {
     if (!orgId) {
-      // Local fallback state
       if (editingParty) {
         setParties((prev) =>
           prev.map((p) => (p.id === editingParty.id ? { ...p, ...partyData } : p))
         );
         toast.success(`Updated party "${partyData.name}"`);
       } else {
+        const normName = partyData.name.trim().toLowerCase();
+        const existing = parties.find(
+          (p) => p.name.trim().toLowerCase() === normName && p.partyType === partyData.partyType
+        );
+        if (existing) {
+          toast.error(`A ${partyData.partyType} named "${partyData.name.trim()}" already exists!`);
+          return;
+        }
         const newParty: Party = {
           ...partyData,
           id: `party-${Date.now()}`,
@@ -296,88 +377,86 @@ export default function Parties() {
     }
 
     try {
+      const customFieldsPayload = {
+        ...(partyData.customFields || {}),
+        keepSamePrice: partyData.keepSamePrice !== false,
+        keepSameInventory: partyData.keepSameInventory !== false,
+        customItems: partyData.customItems || [],
+      };
+
       if (editingParty) {
-        if (editingParty.partyType === "customer" || partyData.partyType === "customer") {
-          await supabase
-            .from("customers")
-            .update({
-              name: partyData.name,
-              phone: partyData.phone,
-              email: partyData.email,
-              address: partyData.address,
-            })
-            .eq("id", editingParty.id);
-        } else {
-          await supabase
-            .from("suppliers")
-            .update({
-              name: partyData.name,
-              phone: partyData.phone,
-              email: partyData.email,
-              address: partyData.address,
-              gstin: partyData.gstin,
-            })
-            .eq("id", editingParty.id);
-        }
+        const targetTable = editingParty.partyType === "customer" ? "customers" : "suppliers";
+        await supabase
+          .from(targetTable)
+          .update({
+            name: partyData.name.trim(),
+            phone: partyData.phone,
+            email: partyData.email,
+            address: partyData.address,
+            trade_name: partyData.tradeName || null,
+            pan: partyData.pan || null,
+            pincode: partyData.pincode || null,
+            shipping_address: partyData.shippingAddress || null,
+            category: partyData.category || "General",
+            credit_limit: partyData.creditLimit || null,
+            credit_period_days: partyData.creditPeriodDays || null,
+            custom_fields: customFieldsPayload,
+          })
+          .eq("id", editingParty.id);
+
         toast.success(`Updated party "${partyData.name}"`);
       } else {
-        if (partyData.partyType === "supplier") {
-          const { data: newSupp, error } = await supabase
-            .from("suppliers")
-            .insert({
-              name: partyData.name,
-              phone: partyData.phone,
-              email: partyData.email,
-              address: partyData.address,
-              gstin: partyData.gstin,
-              organization_id: orgId,
-            })
-            .select()
-            .single();
+        const normName = partyData.name.trim().toLowerCase();
+        const existing = parties.find(
+          (p) => p.name.trim().toLowerCase() === normName && p.partyType === partyData.partyType
+        );
+        if (existing) {
+          toast.error(`A ${partyData.partyType} named "${partyData.name.trim()}" already exists!`);
+          return;
+        }
 
-          if (error) throw error;
-          if (partyData.openingBalance !== 0 && newSupp) {
-            await supabase.from("credit_transactions").insert({
-              organization_id: orgId,
-              party_id: newSupp.id,
-              party_type: "supplier",
-              amount: Math.abs(partyData.openingBalance),
-              type: partyData.openingBalance > 0 ? "credit" : "payment",
-              description: "Opening balance",
-              created_by: user?.id || "admin",
-            });
-          }
-        } else {
-          const { data: newCust, error } = await supabase
-            .from("customers")
-            .insert({
-              name: partyData.name,
-              phone: partyData.phone,
-              email: partyData.email,
-              address: partyData.address,
-              organization_id: orgId,
-            })
-            .select()
-            .single();
+        const isSupplier = partyData.partyType === "supplier";
+        const targetTable = isSupplier ? "suppliers" : "customers";
 
-          if (error) throw error;
-          if (partyData.openingBalance !== 0 && newCust) {
-            await supabase.from("credit_transactions").insert({
-              organization_id: orgId,
-              party_id: newCust.id,
-              party_type: "customer",
-              amount: Math.abs(partyData.openingBalance),
-              type: partyData.openingBalance > 0 ? "credit" : "payment",
-              description: "Opening balance",
-              created_by: user?.id || "admin",
-            });
-          }
+        const { data: newRecord, error } = await supabase
+          .from(targetTable)
+          .insert({
+            organization_id: orgId,
+            name: partyData.name.trim(),
+            phone: partyData.phone,
+            email: partyData.email,
+            address: partyData.address,
+            trade_name: partyData.tradeName || null,
+            pan: partyData.pan || null,
+            pincode: partyData.pincode || null,
+            shipping_address: partyData.shippingAddress || null,
+            category: partyData.category || "General",
+            credit_limit: partyData.creditLimit || null,
+            credit_period_days: partyData.creditPeriodDays || null,
+            custom_fields: customFieldsPayload,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (partyData.openingBalance !== 0 && newRecord) {
+          await supabase.from("credit_transactions").insert({
+            organization_id: orgId,
+            party_id: newRecord.id,
+            party_type: isSupplier ? "supplier" : "customer",
+            amount: Math.abs(partyData.openingBalance),
+            type: partyData.openingBalance > 0 ? "credit" : "payment",
+            description: "Opening balance",
+            created_by: user?.id || "admin",
+          });
         }
         toast.success(`Created party "${partyData.name}"!`);
       }
       fetchParties();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save party.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save party.";
+      toast.error(message);
     }
   };
 
@@ -441,9 +520,10 @@ export default function Parties() {
       }
       toast.success(`Successfully imported ${importedList.length} parties!`);
       fetchParties();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Bulk party import error:", err);
-      toast.error(err.message || "Failed to save imported parties.");
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save imported parties.";
+      toast.error(message);
     }
   };
 
@@ -465,8 +545,9 @@ export default function Parties() {
       }
       toast.success("Party deleted successfully.");
       fetchParties();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete party.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to delete party.";
+      toast.error(message);
     }
   };
 
@@ -486,6 +567,41 @@ export default function Parties() {
     const csv = exportPartiesToCSV(listToExport);
     downloadCSV(`CredSmart_Parties_Export_${new Date().toISOString().slice(0, 10)}.csv`, csv);
     toast.success(`Exported ${listToExport.length} parties to CSV!`);
+  };
+
+  // Merge Duplicates Helper
+  const handleMergeDuplicates = async () => {
+    const groups: { [key: string]: Party[] } = {};
+    parties.forEach((p) => {
+      const key = `${p.partyType}-${p.name.trim().toLowerCase()}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    const duplicateKeys = Object.keys(groups).filter((k) => groups[k].length > 1);
+    if (duplicateKeys.length === 0) {
+      toast.info("No duplicate parties found!");
+      return;
+    }
+
+    let mergedCount = 0;
+    for (const key of duplicateKeys) {
+      const list = groups[key];
+      const primary = list[0];
+      const duplicates = list.slice(1);
+
+      if (orgId) {
+        for (const dup of duplicates) {
+          const targetTable = dup.partyType === "supplier" ? "suppliers" : "customers";
+          await supabase.from("credit_transactions").update({ party_id: primary.id }).eq("party_id", dup.id);
+          await supabase.from(targetTable).delete().eq("id", dup.id);
+          mergedCount++;
+        }
+      }
+    }
+
+    toast.success(`Successfully merged ${mergedCount} duplicate parties!`);
+    fetchParties();
   };
 
   // Calculations for Metrics Cards
@@ -548,13 +664,20 @@ export default function Parties() {
       });
   }, [parties, categoryFilter, search, sortField, sortDirection]);
 
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredParties.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredParties.map((p) => p.id)));
-    }
-  };
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  const {
+    page: partiesPage,
+    setPage: setPartiesPage,
+    pageSize: partiesPageSize,
+    setPageSize: setPartiesPageSize,
+    paginatedItems: paginatedParties,
+    totalPages: partiesTotalPages,
+    totalItems: partiesTotalItems,
+    startIndex: partiesStartIndex,
+    endIndex: partiesEndIndex,
+    hasNext: partiesHasNext,
+    hasPrev: partiesHasPrev,
+  } = usePagination(filteredParties, 25);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -563,6 +686,14 @@ export default function Parties() {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredParties.length && filteredParties.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredParties.map((p) => p.id)));
+    }
   };
 
   const handleSort = (field: "name" | "balance") => {
@@ -711,13 +842,11 @@ setSortDirection("asc");
                 Outstanding Receivables (To Collect)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
-                  setReportModalType("payables");
-                  setShowReportsModal(true);
-                }}
-                className="text-xs cursor-pointer text-rose-600 dark:text-rose-400"
+                onClick={handleMergeDuplicates}
+                className="text-xs cursor-pointer text-amber-600 dark:text-amber-400 font-semibold"
               >
-                Outstanding Payables (To Pay)
+                <RefreshCw className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                Merge Duplicate Parties
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -867,16 +996,17 @@ setSortDirection("asc");
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Bulk Upload Parties Button - Always visible on mobile & desktop */}
+          {/* Bulk Upload Parties Button - 3D Tactile Emerald/Teal Gradient */}
           <button
             onClick={() => {
               setExcelModalTab("excel");
               setShowExcelUploadModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glowing-btn-blue text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-600 text-white font-bold text-xs shadow-[0_4px_14px_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.5)] border border-emerald-400/40 active:scale-95 transition-all duration-200 cursor-pointer shrink-0 overflow-hidden group"
             title="Bulk Upload Parties from Excel / CSV"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-300" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200 group-hover:scale-110 transition-transform" />
             <span>Bulk Parties</span>
           </button>
 
@@ -950,7 +1080,7 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       {/* PARTIES TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col">
+      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col glass-panel">
         {/* MOBILE VIEW: High-Touch Party Cards (Visible on screens < md) */}
         <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
           {loading ? (
@@ -978,7 +1108,7 @@ setSortDirection("asc");
               </Button>
             </div>
           ) : (
-            filteredParties.map((party) => {
+            paginatedParties.map((party) => {
               const isSelected = selectedIds.has(party.id);
               const isCustomer = party.partyType === "customer";
               const isSupplier = party.partyType === "supplier";
@@ -1132,6 +1262,22 @@ setSortDirection("asc");
           )}
         </div>
 
+        {/* Mobile Pagination */}
+        <div className="md:hidden">
+          <PaginationBar
+            page={partiesPage}
+            totalPages={partiesTotalPages}
+            totalItems={partiesTotalItems}
+            startIndex={partiesStartIndex}
+            endIndex={partiesEndIndex}
+            hasNext={partiesHasNext}
+            hasPrev={partiesHasPrev}
+            onPageChange={setPartiesPage}
+            pageSize={partiesPageSize}
+            onPageSizeChange={setPartiesPageSize}
+          />
+        </div>
+
         {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
@@ -1171,7 +1317,7 @@ setSortDirection("asc");
                     <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
                   </div>
                 </th>
-                <th className="px-4 py-3.5 text-center w-16">Actions</th>
+                <th className="px-4 py-3.5 text-center w-16 sticky right-0 bg-muted/80 backdrop-blur-xs z-10 border-l border-border/50">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -1206,7 +1352,7 @@ setSortDirection("asc");
                   </td>
                 </tr>
               ) : (
-                filteredParties.map((party) => {
+                paginatedParties.map((party) => {
                   const isSelected = selectedIds.has(party.id);
                   const isCustomer = party.partyType === "customer";
                   const isSupplier = party.partyType === "supplier";
@@ -1362,7 +1508,7 @@ setSortDirection("asc");
                       </td>
 
                       {/* Actions Menu */}
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-4 py-3.5 text-center sticky right-0 bg-background group-hover:bg-muted/30 transition-colors z-10 border-l border-border/50">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -1481,10 +1627,26 @@ setSortDirection("asc");
           </table>
         </div>
 
+        {/* Desktop Pagination */}
+        <div className="hidden md:block">
+          <PaginationBar
+            page={partiesPage}
+            totalPages={partiesTotalPages}
+            totalItems={partiesTotalItems}
+            startIndex={partiesStartIndex}
+            endIndex={partiesEndIndex}
+            hasNext={partiesHasNext}
+            hasPrev={partiesHasPrev}
+            onPageChange={setPartiesPage}
+            pageSize={partiesPageSize}
+            onPageSizeChange={setPartiesPageSize}
+          />
+        </div>
+
         {/* Table Footer summary */}
         <div className="p-4 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>
-            Showing <strong className="text-foreground">{filteredParties.length}</strong> of{" "}
+            Showing <strong className="text-foreground">{partiesTotalItems === 0 ? 0 : `${partiesStartIndex}–${partiesEndIndex}`}</strong> of{" "}
             {parties.length} parties
           </span>
           <div className="flex items-center gap-4">

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import {
   Plus,
   Search,
@@ -22,6 +24,12 @@ import {
   ShieldCheck,
   KeyRound,
   FileSpreadsheet,
+  MessageSquare,
+  Send,
+  Columns,
+  LayoutGrid,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +45,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { ROUTE_PATHS } from "@/config/routes";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
 import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
+import { SwipeableListItem } from "@/components/ui/SwipeableListItem";
+import {
+  playSuccessChime,
+  playScanBeep,
+  triggerHapticSuccess,
+  triggerHapticScan,
+  triggerHapticDelete,
+} from "@/utils/soundAndHaptics";
 
 interface Customer {
   id: string;
@@ -46,6 +62,10 @@ interface Customer {
   address: string | null;
   created_at: string;
   balance: number;
+  custom_fields?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // eslint-disable-line @typescript-eslint/no-explicit-any
+  customItems?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  keepSamePrice?: boolean;
+  keepSameInventory?: boolean;
 }
 
 interface FormData {
@@ -80,7 +100,59 @@ export default function Customers() {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditDesc, setCreditDesc] = useState("");
   const [creditType, setCreditType] = useState<"credit" | "payment">("credit");
-  const [creditHistory, setCreditHistory] = useState<any[]>([]);
+  const [creditHistory, setCreditHistory] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // Split-screen & Selected customer state
+  const [desktopLayoutMode, setDesktopLayoutMode] = useState<"split" | "table">("split");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedTransactions, setSelectedTransactions] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [loadingTx, setLoadingTx] = useState(false);
+
+  const fetchCustomerTransactions = useCallback(async (customerId: string) => {
+    if (!orgId || !customerId) return;
+    setLoadingTx(true);
+    try {
+      const { data: txData } = await supabase
+        .from("credit_transactions")
+        .select("*")
+        .eq("party_id", customerId)
+        .order("created_at", { ascending: false })
+        .limit(15);
+      setSelectedTransactions(txData || []);
+    } catch (e) {
+      console.error("Failed to load customer transactions:", e);
+    } finally {
+      setLoadingTx(false);
+    }
+  }, [orgId]);
+
+  const handleSelectCustomer = (c: Customer) => {
+    setSelectedCustomerId(c.id);
+    playScanBeep();
+    triggerHapticScan();
+    fetchCustomerTransactions(c.id);
+  };
+
+  const handleSendWhatsAppReminder = (c: Customer) => {
+    const rawPhone = c.phone ? c.phone.replace(/\D/g, "") : "";
+    const phoneParam = rawPhone.length >= 10 ? `91${rawPhone.slice(-10)}` : "";
+    const balanceText = c.balance > 0 ? `₹${c.balance.toFixed(2)}` : "₹0.00";
+    const message = `Hello *${c.name}*,\n\nThis is a friendly reminder regarding your pending balance of *${balanceText}* at our store.\n\nPlease clear the balance at your earliest convenience via UPI or cash.\n\nThank you!`;
+    const waUrl = phoneParam
+      ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+    triggerHapticSuccess();
+    toast.success(`WhatsApp reminder opened for ${c.name}`);
+  };
+
+  const handleQuickCall = (c: Customer) => {
+    if (c.phone) {
+      window.location.href = `tel:${c.phone}`;
+    } else {
+      toast.error("No phone number saved for this customer.");
+    }
+  };
 
   const triggerGstAutoFill = async (targetId: string, showToast = true) => {
     const clean = targetId.trim().toUpperCase();
@@ -117,7 +189,7 @@ export default function Customers() {
           toast.info(`State: ${result.state} • PAN: ${result.pan} detected`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (showToast) {
         toast.error(err?.message || "Failed to fetch tax details.");
       }
@@ -149,7 +221,7 @@ export default function Customers() {
     try {
       const { data: custs, error } = await supabase
         .from("customers")
-        .select("id, name, phone, email, address, created_at")
+        .select("id, name, phone, email, address, created_at, custom_fields")
         .eq("organization_id", orgId)
         .order("name");
 
@@ -177,7 +249,31 @@ export default function Customers() {
       });
 
       if (custs) {
-        setCustomers(custs.map((c) => ({ ...c, balance: balanceMap[c.id] || 0 })));
+        setCustomers(
+          custs.map((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+            let cf = c.custom_fields;
+            if (typeof cf === "string") {
+              try {
+                cf = JSON.parse(cf);
+              } catch {
+                cf = {};
+              }
+            }
+            if (!cf || typeof cf !== "object") cf = {};
+            const customItems = Array.isArray(cf.customItems) ? cf.customItems : Array.isArray(cf.custom_items) ? cf.custom_items : [];
+            const keepSamePrice = cf.keepSamePrice !== false && cf.keep_same_price !== false;
+            const keepSameInventory = cf.keepSameInventory !== false && cf.keep_same_inventory !== false;
+
+            return {
+              ...c,
+              balance: balanceMap[c.id] || 0,
+              custom_fields: cf,
+              customItems,
+              keepSamePrice,
+              keepSameInventory,
+            };
+          })
+        );
       }
     } catch (err) {
       console.error("fetchCustomers unexpected error:", err);
@@ -208,6 +304,20 @@ export default function Customers() {
       return matchSearch && matchCredit;
     });
   }, [customers, search, creditFilter]);
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    paginatedItems: paginatedCustomers,
+    totalPages,
+    totalItems: totalCustomerCount,
+    startIndex,
+    endIndex,
+    hasNext,
+    hasPrev,
+  } = usePagination(filtered, 25);
 
   const totalOutstandingCredit = useMemo(() => {
     return customers.reduce((s, c) => s + Math.max(c.balance, 0), 0);
@@ -255,6 +365,14 @@ export default function Customers() {
         if (error) throw error;
         toast.success("Customer updated successfully");
       } else {
+        const normName = form.name.trim().toLowerCase();
+        const existing = customers.find((c) => c.name.trim().toLowerCase() === normName);
+        if (existing) {
+          toast.error(`A customer named "${form.name.trim()}" already exists!`);
+          setSaving(false);
+          return;
+        }
+
         const { error } = await supabase
           .from("customers")
           .insert({
@@ -269,7 +387,7 @@ export default function Customers() {
       }
       setShowForm(false);
       fetchCustomers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.message || "Failed to save customer");
     } finally {
       setSaving(false);
@@ -284,7 +402,7 @@ export default function Customers() {
         toast.success("Customer deleted");
         fetchCustomers();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDelete error:", err);
       toast.error(err.message || "Failed to delete");
     }
@@ -340,7 +458,7 @@ export default function Customers() {
       toast.success(creditType === "credit" ? "Credit given recorded" : "Payment received recorded");
       setCreditModal(null);
       fetchCustomers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleCreditSubmit error:", err);
       toast.error(err.message || "Failed to save transaction");
     }
@@ -394,8 +512,38 @@ export default function Customers() {
         </div>
       </div>
 
-      {/* Stats Cards - 3D Frosted Glass */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+      {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
+      <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+            Customers
+          </span>
+          <p className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
+            {customers.length}
+          </p>
+        </div>
+
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+            Receivables
+          </span>
+          <p className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
+            ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </p>
+        </div>
+
+        <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
+          <span className="text-[8.5px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+            Due Count
+          </span>
+          <p className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight truncate mt-0.5">
+            {customersWithDue}
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Cards - 3D Frosted Glass (Tablet / Desktop) */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
         {/* Total Customers */}
         <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
@@ -429,7 +577,7 @@ export default function Customers() {
         </div>
 
         {/* Customers with Balance */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden col-span-2 lg:col-span-1 group select-none">
+        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
           <div className="flex items-center justify-between">
             <span className="text-[9px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">With Balance Due</span>
@@ -450,49 +598,49 @@ export default function Customers() {
       </div>
 
       {/* Search & Credit Filters - Frosted Glass Container */}
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xs space-y-2">
+        <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by customer name, phone number, or email..."
-              className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+              placeholder="Search by customer name, phone..."
+              className="w-full h-8.5 pl-8 pr-8 rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all text-xs"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
-          {/* Credit status filter pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto">
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1 p-0.5 bg-slate-100/70 dark:bg-slate-800/60 rounded-lg sm:rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0 overflow-x-auto no-scrollbar">
             {([
-              { id: "all", label: "All Customers", count: customers.length },
-              { id: "due", label: "Balance Due", count: customersWithDue },
-              { id: "clear", label: "Settled / Clear", count: customers.length - customersWithDue },
+              { id: "all", label: "All", count: customers.length },
+              { id: "due", label: "With Balance", count: customersWithDue },
+              { id: "clear", label: "Settled", count: customers.length - customersWithDue },
             ] as const).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setCreditFilter(f.id)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+                  "px-2.5 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer",
                   creditFilter === f.id
-                    ? "glowing-btn-blue text-white shadow-xs"
+                    ? "glowing-btn-amber text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground"
                 )}
               >
                 {f.label}
                 <span
                   className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    "text-[9px] px-1 py-0.2 rounded-full",
                     creditFilter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -501,294 +649,610 @@ export default function Customers() {
               </button>
             ))}
           </div>
+
+          {/* View Mode Toggle for Desktop */}
+          <div className="hidden md:flex items-center gap-1 p-1 bg-slate-100/70 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+            <button
+              onClick={() => setDesktopLayoutMode("split")}
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                desktopLayoutMode === "split"
+                  ? "bg-amber-500 text-slate-950 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-foreground"
+              )}
+              title="Split-Screen Khata Workspace"
+            >
+              <Columns className="w-3.5 h-3.5" />
+              <span>Split Khata</span>
+            </button>
+            <button
+              onClick={() => setDesktopLayoutMode("table")}
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                desktopLayoutMode === "table"
+                  ? "bg-amber-500 text-slate-950 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-foreground"
+              )}
+              title="Full Data Table"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Table View</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Customer List Container */}
-      <div className="glass-card-3d rounded-2xl overflow-hidden shadow-sm">
+      <div className="rounded-2xl overflow-hidden shadow-xs">
         {filtered.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
-              <Users2 className="w-7 h-7 opacity-50" />
+          <div className="py-12 text-center px-4 bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-2 text-muted-foreground">
+              <Users2 className="w-6 h-6 opacity-50" />
             </div>
-            <h3 className="text-base font-bold text-foreground">No Customers Found</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+            <h3 className="text-xs font-bold text-foreground">No Customers Found</h3>
+            <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-0.5">
               {customers.length === 0
                 ? "Start building your customer base by clicking the Add Customer button above."
                 : "No customer records matched your search or credit filter."}
             </p>
             {customers.length === 0 && (
-              <Button onClick={openCreate} size="sm" className="mt-4 gap-1.5 text-xs font-semibold">
-                <Plus className="w-4 h-4" /> Add First Customer
+              <Button onClick={openCreate} size="sm" className="mt-3 gap-1.5 text-xs font-semibold">
+                <Plus className="w-3.5 h-3.5" /> Add First Customer
               </Button>
             )}
           </div>
         ) : (
           <>
-            {/* Mobile View: Cards */}
-            <div className="block md:hidden divide-y divide-border">
-              {filtered.map((c) => {
+            {/* Mobile View: High-Density Swipeable Cards */}
+            <div className="block md:hidden space-y-2 pb-36 overscroll-y-contain">
+              {paginatedCustomers.map((c) => {
                 const hasDue = c.balance > 0;
                 return (
-                  <div key={c.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
-                          {c.name.slice(0, 2).toUpperCase()}
+                  <SwipeableListItem
+                    key={c.id}
+                    onSwipeRight={() => handleSendWhatsAppReminder(c)}
+                    rightActionLabel="WhatsApp"
+                    rightActionIcon={Send}
+                    rightActionColor="emerald"
+                    onSwipeLeft={() => handleQuickCall(c)}
+                    leftActionLabel="Call"
+                    leftActionIcon={Phone}
+                    leftActionColor="blue"
+                  >
+                    <div className="p-2.5 space-y-1.5 bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-2xs">
+                      {/* Line 1: Name + Phone + Balance */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 border border-amber-500/20">
+                            {c.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs text-foreground truncate">{c.name}</p>
+                            {c.phone && (
+                              <p className="text-[10px] text-muted-foreground font-mono truncate">
+                                {c.phone}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-foreground text-sm">{c.name}</p>
-                          {c.phone && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <Phone className="w-3 h-3 text-muted-foreground" /> {c.phone}
-                            </p>
+
+                        {/* Balance Badge */}
+                        <span
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 font-mono",
+                            hasDue
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           )}
+                        >
+                          {hasDue ? `₹${c.balance.toFixed(2)} Due` : "Clear (₹0)"}
+                        </span>
+                      </div>
+
+                      {/* Line 2: Actions row */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 gap-1">
+                        <button
+                          className="h-6 px-2 text-[10.5px] font-bold gap-1 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-lg flex items-center active:scale-95 transition-all cursor-pointer"
+                          onClick={() => navigate(`/customers/${c.id}/ledger`)}
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>Ledger</span>
+                        </button>
+
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            className="p-1 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 active:scale-95 transition-all cursor-pointer"
+                            onClick={() => handleSendWhatsAppReminder(c)}
+                            title="WhatsApp"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 active:scale-95 transition-all cursor-pointer"
+                            onClick={() => openCreditModal(c)}
+                            title="Manage Credit"
+                          >
+                            <IndianRupee className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
+                            onClick={() => openEdit(c)}
+                            title="Edit"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1 rounded-lg text-destructive hover:bg-destructive/10 active:scale-95 transition-all cursor-pointer"
+                            onClick={() => setDeleteConfirm(c.id)}
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
-                      {/* Balance Badge */}
-                      <span
-                        className={cn(
-                          "px-2.5 py-1 rounded-full text-xs font-bold shrink-0",
-                          hasDue
-                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        )}
-                      >
-                        {hasDue ? `₹${c.balance.toFixed(2)} Due` : "Clear (₹0)"}
-                      </span>
-                    </div>
-
-                    {c.address && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 truncate">
-                        <MapPin className="w-3 h-3 shrink-0" /> {c.address}
-                      </p>
-                    )}
-
-                    {/* Actions row */}
-                    <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/40 hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                        onClick={() => navigate(`/customers/${c.id}/ledger`)}
-                      >
-                        <FileText className="w-3.5 h-3.5" /> Ledger Statement
-                      </Button>
-
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                          onClick={() => openCreditModal(c)}
-                          title="Manage Credit"
-                        >
-                          <IndianRupee className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => openEdit(c)}
-                          title="Edit Customer"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => setDeleteConfirm(c.id)}
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {deleteConfirm === c.id && (
-                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 mt-2">
-                        <span className="text-xs font-medium text-destructive">Delete this customer?</span>
-                        <div className="flex gap-2">
-                          <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(c.id)}>
-                            Delete
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setDeleteConfirm(null)}>
-                            Cancel
-                          </Button>
+                      {deleteConfirm === c.id && (
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20 mt-1">
+                          <span className="text-[11px] font-medium text-destructive">Delete customer?</span>
+                          <div className="flex gap-1.5">
+                            <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(c.id)}>
+                              Delete
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setDeleteConfirm(null)}>
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </SwipeableListItem>
                 );
               })}
+
+              {/* Mobile Pagination */}
+              <PaginationBar
+                page={page}
+                totalPages={totalPages}
+                totalItems={totalCustomerCount}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                hasNext={hasNext}
+                hasPrev={hasPrev}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
             </div>
 
-            {/* Desktop View: Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full min-w-[780px] text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
-                    <th className="text-left px-5 py-3.5">Customer Name</th>
-                    <th className="text-left px-5 py-3.5">Phone Number</th>
-                    <th className="text-left px-5 py-3.5">Email Address</th>
-                    <th className="text-left px-5 py-3.5">City / Address</th>
-                    <th className="text-right px-5 py-3.5">Credit Balance</th>
-                    <th className="text-right px-5 py-3.5">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filtered.map((c) => {
-                    const hasDue = c.balance > 0;
+            {/* Desktop View: Split-Screen Khata Workspace or Full Table */}
+            {desktopLayoutMode === "split" ? (
+              <div className="hidden md:grid grid-cols-12 gap-5 items-start min-h-[580px]">
+                {/* LEFT PANE: Customer Selection List (4 of 12 cols) */}
+                <div className="col-span-5 lg:col-span-4 max-h-[720px] overflow-y-auto space-y-2 pr-1 rounded-2xl flex flex-col justify-between">
+                  <div className="space-y-2">
+                    {paginatedCustomers.map((c) => {
+                      const isSelected = selectedCustomerId === c.id;
+                      const hasDue = c.balance > 0;
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => handleSelectCustomer(c)}
+                          className={cn(
+                            "p-3.5 rounded-2xl border transition-all cursor-pointer select-none",
+                            isSelected
+                              ? "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500/50 shadow-md ring-1 ring-amber-400/40"
+                              : "bg-white/80 dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={cn(
+                                  "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-transform",
+                                  isSelected
+                                    ? "bg-amber-500 text-slate-950 shadow-xs scale-105"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                )}
+                              >
+                                {c.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className={cn("font-bold text-xs truncate", isSelected ? "text-amber-950 dark:text-amber-200 font-extrabold" : "text-foreground")}>
+                                  {c.name}
+                                </p>
+                                {c.phone && (
+                                  <p className="text-[11px] text-muted-foreground font-mono flex items-center gap-1 mt-0.5">
+                                    <Phone className="w-3 h-3" /> {c.phone}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0",
+                                hasDue
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              )}
+                            >
+                              {hasDue ? `₹${c.balance.toFixed(2)}` : "₹0"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <PaginationBar
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalCustomerCount}
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    hasNext={hasNext}
+                    hasPrev={hasPrev}
+                    onPageChange={setPage}
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    compact
+                    className="mt-2 rounded-xl border"
+                  />
+                </div>
+
+                {/* RIGHT PANE: Selected Customer Khata Ledger & Transactions (8 of 12 cols) */}
+                <div className="col-span-7 lg:col-span-8 sticky top-20 space-y-4">
+                  {(() => {
+                    const activeCust = customers.find((c) => c.id === selectedCustomerId) || filtered[0];
+                    if (!activeCust) {
+                      return (
+                        <div className="p-12 text-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl">
+                          <Users2 className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm font-bold text-foreground">Select a customer from the left list</p>
+                        </div>
+                      );
+                    }
+
+                    const hasDue = activeCust.balance > 0;
+
                     return (
-                      <tr key={c.id} className="hover:bg-muted/30 transition-colors group">
-                        {/* Name */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
-                              {c.name.slice(0, 2).toUpperCase()}
+                      <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 backdrop-blur-xl">
+                        {/* Header Banner */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-base shadow-md">
+                              {activeCust.name.slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-foreground">{c.name}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                Added {new Date(c.created_at).toLocaleDateString("en-IN")}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-base font-black text-foreground">{activeCust.name}</h3>
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-muted-foreground font-semibold">
+                                  ID: {activeCust.id.slice(0, 8)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                                {activeCust.phone && (
+                                  <span className="flex items-center gap-1 font-mono text-foreground font-medium">
+                                    <Phone className="w-3.5 h-3.5 text-amber-500" /> {activeCust.phone}
+                                  </span>
+                                )}
+                                {activeCust.email && (
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="w-3.5 h-3.5" /> {activeCust.email}
+                                  </span>
+                                )}
+                                {activeCust.address && (
+                                  <span className="flex items-center gap-1 truncate max-w-[200px]" title={activeCust.address}>
+                                    <MapPin className="w-3.5 h-3.5" /> {activeCust.address}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </td>
 
-                        {/* Phone */}
-                        <td className="px-5 py-4">
-                          {c.phone ? (
-                            <span className="text-foreground font-mono text-xs flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                              {c.phone}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-
-                        {/* Email */}
-                        <td className="px-5 py-4">
-                          {c.email ? (
-                            <span className="text-muted-foreground text-xs truncate max-w-[180px] block">
-                              {c.email}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-
-                        {/* Address */}
-                        <td className="px-5 py-4">
-                          {c.address ? (
-                            <span className="text-muted-foreground text-xs truncate max-w-[160px] block" title={c.address}>
-                              {c.address}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-
-                        {/* Credit Balance */}
-                        <td className="px-5 py-4 text-right">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold",
-                              hasDue
-                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                            )}
-                          >
-                            {hasDue ? (
-                              <>
-                                <AlertCircle className="w-3.5 h-3.5" />
-                                ₹{c.balance.toFixed(2)}
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Clear (₹0)
-                              </>
-                            )}
-                          </span>
-                        </td>
-
-                        {/* Action buttons */}
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center gap-2 shrink-0">
                             <Button
-                              variant="ghost"
                               size="sm"
-                              className="h-8 px-2.5 text-xs gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
-                              title="View Ledger Statement"
-                              onClick={() => navigate(`/customers/${c.id}/ledger`)}
+                              variant="outline"
+                              onClick={() => handleSendWhatsAppReminder(activeCust)}
+                              className="h-8 gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-bold cursor-pointer"
                             >
-                              <FileText className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline">Ledger</span>
+                              <Send className="w-3.5 h-3.5" /> WhatsApp
                             </Button>
-
                             <Button
-                              variant="ghost"
                               size="sm"
-                              className="h-8 px-2.5 text-xs gap-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50"
-                              title="Manage Credit"
-                              onClick={() => openCreditModal(c)}
+                              onClick={() => openCreditModal(activeCust)}
+                              className="h-8 gap-1.5 text-xs glowing-btn-amber font-bold cursor-pointer"
                             >
-                              <IndianRupee className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline">Credit</span>
+                              <IndianRupee className="w-3.5 h-3.5" /> Payment In
                             </Button>
-
                             <Button
+                              size="sm"
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => openEdit(c)}
-                              title="Edit Customer"
+                              onClick={() => navigate(`/customers/${activeCust.id}/ledger`)}
+                              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                              title="Open Full Ledger Statement"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <ExternalLink className="w-4 h-4" />
                             </Button>
+                          </div>
+                        </div>
 
-                            {deleteConfirm === c.id ? (
-                              <div className="flex items-center gap-1 bg-destructive/10 p-1 rounded-lg border border-destructive/20">
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="h-6 text-[11px] px-2"
-                                  onClick={() => handleDelete(c.id)}
-                                >
-                                  Confirm
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 text-[11px] px-2"
-                                  onClick={() => setDeleteConfirm(null)}
-                                >
-                                  Cancel
-                                </Button>
+                        {/* Balance Stats Row */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Net Due Balance</p>
+                            <p className="text-lg font-black text-rose-700 dark:text-rose-300 mt-0.5">₹{activeCust.balance.toFixed(2)}</p>
+                          </div>
+                          <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Status</p>
+                            <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
+                              {hasDue ? "Payment Due" : "Settled (All Clear)"}
+                            </p>
+                          </div>
+                          <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Joined On</p>
+                            <p className="text-xs font-semibold text-foreground mt-1.5">
+                              {new Date(activeCust.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Transactions Preview Table */}
+                        <div className="space-y-2 pt-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-amber-500" /> Recent Ledger Entries
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/customers/${activeCust.id}/ledger`)}
+                              className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <span>Full Statement</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-200/70 dark:border-slate-800 overflow-hidden">
+                            {loadingTx ? (
+                              <div className="p-6 text-center text-xs text-muted-foreground animate-pulse">
+                                Loading transactions...
+                              </div>
+                            ) : selectedTransactions.length === 0 ? (
+                              <div className="p-6 text-center text-xs text-muted-foreground">
+                                No credit/payment transactions recorded yet for this customer.
                               </div>
                             ) : (
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="bg-slate-50 dark:bg-slate-800/50 text-muted-foreground border-b border-slate-200/70 dark:border-slate-800 text-[11px] uppercase tracking-wider">
+                                    <th className="text-left py-2.5 px-3">Date</th>
+                                    <th className="text-left py-2.5 px-3">Type</th>
+                                    <th className="text-left py-2.5 px-3">Description</th>
+                                    <th className="text-right py-2.5 px-3">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                                  {selectedTransactions.map((tx) => (
+                                    <tr key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                      <td className="py-2 px-3 text-muted-foreground font-mono text-[11px]">
+                                        {new Date(tx.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                                      </td>
+                                      <td className="py-2 px-3 font-semibold">
+                                        <span className={cn("px-1.5 py-0.5 rounded text-[10px] uppercase font-bold", tx.type === "credit" ? "bg-rose-100 dark:bg-rose-950/50 text-rose-600" : "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600")}>
+                                          {tx.type === "credit" ? "Debit / Sale" : "Payment Received"}
+                                        </span>
+                                      </td>
+                                      <td className="py-2 px-3 text-muted-foreground truncate max-w-[160px]">
+                                        {tx.description || "Credit transaction"}
+                                      </td>
+                                      <td className={cn("py-2 px-3 text-right font-bold font-mono", tx.type === "credit" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
+                                        {tx.type === "credit" ? "+" : "-"}₹{Number(tx.amount || 0).toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : (
+              /* Traditional Full Table View */
+              <div className="hidden md:block overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                <table className="w-full min-w-[780px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
+                      <th className="text-left px-5 py-3.5">Customer Name</th>
+                      <th className="text-left px-5 py-3.5">Phone Number</th>
+                      <th className="text-left px-5 py-3.5">Email Address</th>
+                      <th className="text-left px-5 py-3.5">City / Address</th>
+                      <th className="text-right px-5 py-3.5">Credit Balance</th>
+                      <th className="text-right px-5 py-3.5">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {paginatedCustomers.map((c) => {
+                      const hasDue = c.balance > 0;
+                      return (
+                        <tr key={c.id} className="hover:bg-muted/30 transition-colors group">
+                          {/* Name */}
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                                {c.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground">{c.name}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Added {new Date(c.created_at).toLocaleDateString("en-IN")}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Phone */}
+                          <td className="px-5 py-4">
+                            {c.phone ? (
+                              <span className="text-foreground font-mono text-xs flex items-center gap-1.5">
+                                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                                {c.phone}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* Email */}
+                          <td className="px-5 py-4">
+                            {c.email ? (
+                              <span className="text-muted-foreground text-xs truncate max-w-[180px] block">
+                                {c.email}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* Address */}
+                          <td className="px-5 py-4">
+                            {c.address ? (
+                              <span className="text-muted-foreground text-xs truncate max-w-[160px] block" title={c.address}>
+                                {c.address}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* Credit Balance */}
+                          <td className="px-5 py-4 text-right">
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold",
+                                hasDue
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              )}
+                            >
+                              {hasDue ? (
+                                <>
+                                  <AlertCircle className="w-3.5 h-3.5" />
+                                  ₹{c.balance.toFixed(2)}
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Clear (₹0)
+                                </>
+                              )}
+                            </span>
+                          </td>
+
+                          {/* Action buttons */}
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2.5 text-xs gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                                title="View Ledger Statement"
+                                onClick={() => navigate(`/customers/${c.id}/ledger`)}
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span className="hidden xl:inline">Ledger</span>
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2.5 text-xs gap-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                                title="Send WhatsApp Reminder"
+                                onClick={() => handleSendWhatsAppReminder(c)}
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                                <span className="hidden xl:inline">WhatsApp</span>
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2.5 text-xs gap-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                                title="Manage Credit"
+                                onClick={() => openCreditModal(c)}
+                              >
+                                <IndianRupee className="w-3.5 h-3.5" />
+                                <span className="hidden xl:inline">Credit</span>
+                              </Button>
+
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteConfirm(c.id)}
-                                title="Delete Customer"
+                                className="h-8 w-8"
+                                onClick={() => openEdit(c)}
+                                title="Edit Customer"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Pencil className="w-3.5 h-3.5" />
                               </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+
+                              {deleteConfirm === c.id ? (
+                                <div className="flex items-center gap-1 bg-destructive/10 p-1 rounded-lg border border-destructive/20">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-6 text-[11px] px-2"
+                                    onClick={() => handleDelete(c.id)}
+                                  >
+                                    Confirm
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-[11px] px-2"
+                                    onClick={() => setDeleteConfirm(null)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setDeleteConfirm(c.id)}
+                                  title="Delete Customer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Desktop Full Table Pagination */}
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalItems={totalCustomerCount}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
