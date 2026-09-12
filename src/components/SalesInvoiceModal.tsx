@@ -68,6 +68,7 @@ import { networkInvoicingService } from "@/services/networkInvoicingService";
 import { ConnectedOrgInfo } from "@/types/networkInvoicing";
 import { PartyCustomItem } from "@/types/parties";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
+import { MobileCreateInvoice } from "@/components/invoices/mobile/MobileCreateInvoice";
 
 interface CustomerOption {
   id: string;
@@ -1384,10 +1385,43 @@ export function SalesInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950">
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* 1. TOP HEADER BAR */}
-          {/* ───────────────────────────────────────────────────────────── */}
+        <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950 lg:block">
+          
+          <MobileCreateInvoice
+            onClose={() => onOpenChange(false)}
+            docType={docType}
+            docDate={docDate}
+            dueDate={dueDate}
+            showDueDate={showDueDate}
+            invoicePrefix={invoicePrefix}
+            invoiceNumberSeq={invoiceNumberSeq}
+            selectedCustomerId={selectedCustomerId}
+            partyName={partyName}
+            customers={customers}
+            items={items}
+            recalculatedItems={recalculatedItems}
+            totals={totals}
+            onSetSelectedCustomerId={(id) => {
+              setSelectedCustomerId(id);
+              const cust = customers.find(c => c.id === id);
+              if (cust) {
+                setPartyName(cust.name);
+                setPartyPhone(cust.phone || "");
+                setPartyGstin(cust.gstin || "");
+                setPartyAddress(cust.address || "");
+              }
+            }}
+            onUpdateItem={handleUpdateItem}
+            onRemoveItem={handleRemoveRow}
+            onSave={handleSave}
+            catalog={billItemOptions}
+            onAddSelectedItems={handleBatchAddItemsAtTarget}
+          />
+
+          <div className="hidden lg:flex flex-col h-full w-full">
+            {/* ───────────────────────────────────────────────────────────── */}
+            {/* 1. TOP HEADER BAR */}
+            {/* ───────────────────────────────────────────────────────────── */}
           <div className="bill-editor-toolbar px-3 py-2.5 sm:px-4 sm:py-2.5 border-b border-slate-200 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3">
               <Button
@@ -2724,6 +2758,7 @@ export function SalesInvoiceModal({
             </div>
             </>
           )}
+          </div>
         </DialogContent>
       </Dialog>
 
