@@ -128,7 +128,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
 
       {/* 3.6 Items Section */}
       <div className="bg-white">
-        {props.recalculatedItems.length === 0 ? (
+        {props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length === 0 ? (
           <>
             <div className="px-4 pt-4 pb-2 text-[12px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
               <ChevronUp className="w-4 h-4 text-slate-500" /> ITEMS
@@ -147,17 +147,20 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
             <div className="flex justify-between items-center px-4 py-4 bg-white">
               <div className="flex items-center gap-2 text-[12px] font-bold text-slate-700 uppercase tracking-wider">
                 <ChevronUp className="w-4 h-4 text-slate-500" />
-                ITEMS ({props.recalculatedItems.length})
+                ITEMS ({props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length})
               </div>
               <button onClick={() => setIsItemModalOpen(true)} className="text-[15px] font-bold text-indigo-700 flex items-center gap-1">
                 + Item
               </button>
             </div>
             
-            {props.recalculatedItems.map((item, idx) => (
-              <div key={idx} className="flex justify-between items-start px-4 py-4 border-b border-slate-100 bg-white">
+            {props.recalculatedItems.filter(item => item.productName && item.productName.trim() !== "").map((item, idx) => {
+              // We need the original index for editing
+              const originalIndex = props.recalculatedItems.indexOf(item);
+              return (
+              <div key={originalIndex} className="flex justify-between items-start px-4 py-4 border-b border-slate-100 bg-white">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[15px] font-bold text-slate-900">{item.name || "Unnamed Item"}</span>
+                  <span className="text-[15px] font-bold text-slate-900">{item.productName || "Unnamed Item"}</span>
                   <div className="flex flex-col gap-0.5 mt-0.5">
                     <span className="text-[10px] text-slate-400 font-medium tracking-wide">Qty x Rate</span>
                     <span className="text-[12px] text-slate-600 font-medium">{item.quantity} {item.unit || "Pcs"} x {item.rate}</span>
@@ -166,14 +169,15 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
                 <div className="flex flex-col items-end gap-2 mt-1">
                   <span className="text-[15px] font-bold text-slate-900">₹ {Number(item.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:0})}</span>
                   <button 
-                    onClick={() => setEditingItemIndex(idx)}
+                    onClick={() => setEditingItemIndex(originalIndex)}
                     className="border border-indigo-200 bg-white rounded-3xl px-4 py-1 text-[10px] font-bold text-indigo-600 uppercase"
                   >
                     EDIT
                   </button>
                 </div>
               </div>
-            ))}
+            );
+            })}
             
             <div className="flex justify-between items-center px-4 pt-6 pb-2 bg-white">
               <span className="text-[15px] font-bold text-slate-800">Item Subtotal</span>
@@ -223,7 +227,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
       </div>
 
       {/* Smart Banner shown only when empty */}
-      {props.recalculatedItems.length === 0 && (
+      {props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length === 0 && (
         <div className="relative bg-[#FFF4ED] rounded-xl p-4 mx-4 mt-4 border border-[#FFE4D6]">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[15px] font-bold text-slate-800">Now create Invoices instantly</h3>
