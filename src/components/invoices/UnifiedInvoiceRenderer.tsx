@@ -664,7 +664,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 </div>
                 <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
                   <span className="text-[8.5px] font-bold uppercase text-slate-500">Invoice Date:</span>
-                  <span className="font-bold text-slate-800 whitespace-nowrap">{formattedDate}</span>
+                  <span className="font-bold text-slate-800 whitespace-nowrap">{formattedDate} {formattedTime}</span>
                 </div>
                 {dueDate && (
                   <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
