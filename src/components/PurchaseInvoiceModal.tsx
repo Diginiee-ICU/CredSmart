@@ -1934,18 +1934,10 @@ export function PurchaseInvoiceModal({
                   </div>
 
                   {/* Row 2: Bill Date */}
-                  <div>
-                    <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                      Bill Date
-                    </Label>
-                    <div className="relative mt-1">
-                      <Input
-                        type="date"
-                        value={docDate}
-                        onChange={(e) => setDocDate(e.target.value)}
-                        className="h-8 text-xs font-medium pl-8 bg-slate-50/50 dark:bg-slate-800/50"
-                      />
-                      <CalendarIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Date & Time</Label>
+                    <div className="h-8 text-xs font-medium bg-slate-50 dark:bg-slate-800/50 flex items-center px-3 rounded-md border border-input text-slate-500">
+                      Auto-generated
                     </div>
                   </div>
 
@@ -2004,66 +1996,26 @@ export function PurchaseInvoiceModal({
                   {/* ── Optional Fields Toggle Row ── */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                     <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">Optional Fields</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {/* E-Way Bill Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => { setShowEwayBill(v => !v); if (showEwayBill) setEwayBillNo(""); }}
-                        className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
-                          showEwayBill
-                            ? "bg-primary/10 border-primary text-primary"
-                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
-                        )}
-                      >
-                        <span className={cn("w-1.5 h-1.5 rounded-full", showEwayBill ? "bg-primary" : "bg-slate-400")} />
-                        E-Way Bill
-                      </button>
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold text-slate-500 cursor-pointer" htmlFor="toggle-eway">E-Way Bill</Label>
+                        <Switch id="toggle-eway" checked={showEwayBill} onCheckedChange={(c) => { setShowEwayBill(c); if (!c) setEwayBillNo(""); }} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold text-slate-500 cursor-pointer" htmlFor="toggle-billing">Billing Address</Label>
+                        <Switch id="toggle-billing" checked={showBillingAddress} onCheckedChange={(c) => { setShowBillingAddress(c); if (!c) { setBillingAddress(""); setBillingPincode(""); setSameAsSupplier(false); } }} />
+                      </div>
 
-                      {/* Billing Address Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => { setShowBillingAddress(v => !v); if (showBillingAddress) { setBillingAddress(""); setBillingPincode(""); setSameAsSupplier(false); } }}
-                        className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
-                          showBillingAddress
-                            ? "bg-primary/10 border-primary text-primary"
-                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
-                        )}
-                      >
-                        <span className={cn("w-1.5 h-1.5 rounded-full", showBillingAddress ? "bg-primary" : "bg-slate-400")} />
-                        Billing Address
-                      </button>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold text-slate-500 cursor-pointer" htmlFor="toggle-vehicle">Vehicle No</Label>
+                        <Switch id="toggle-vehicle" checked={showVehicleNo} onCheckedChange={(c) => { setShowVehicleNo(c); if (!c) setVehicleNumber(""); }} />
+                      </div>
 
-                      {/* Vehicle No Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => { setShowVehicleNo(v => !v); if (showVehicleNo) setVehicleNumber(""); }}
-                        className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
-                          showVehicleNo
-                            ? "bg-primary/10 border-primary text-primary"
-                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
-                        )}
-                      >
-                        <span className={cn("w-1.5 h-1.5 rounded-full", showVehicleNo ? "bg-primary" : "bg-slate-400")} />
-                        Vehicle No
-                      </button>
-
-                      {/* PO Reference Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => { setShowPoReference(v => !v); if (showPoReference) setPoReference(""); }}
-                        className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
-                          showPoReference
-                            ? "bg-primary/10 border-primary text-primary"
-                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
-                        )}
-                      >
-                        <span className={cn("w-1.5 h-1.5 rounded-full", showPoReference ? "bg-primary" : "bg-slate-400")} />
-                        PO Reference
-                      </button>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold text-slate-500 cursor-pointer" htmlFor="toggle-po">PO Reference</Label>
+                        <Switch id="toggle-po" checked={showPoReference} onCheckedChange={(c) => { setShowPoReference(c); if (!c) setPoReference(""); }} />
+                      </div>
                     </div>
 
                     {/* Inline fields — only shown when toggled ON */}

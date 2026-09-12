@@ -95,6 +95,17 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
     }
   }, [initialSupplierId, initialSupplier, suppliers]);
 
+  useEffect(() => {
+    if (showProductDropdown === null) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('.product-dropdown-container')) {
+        setShowProductDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showProductDropdown]);
+
   const fetchSuppliers = async () => {
     const { data } = await supabase
       .from("suppliers")
@@ -362,7 +373,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
                       </div>
                     ) : (
                       <>
-                        <div className="relative">
+                        <div className="relative product-dropdown-container">
                           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                           <Input
                             placeholder="Search product..."
@@ -373,11 +384,10 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
                               setShowProductDropdown(index);
                             }}
                             onFocus={() => setShowProductDropdown(index)}
-                            onBlur={() => setTimeout(() => setShowProductDropdown(null), 200)}
                           />
                         </div>
                         {showProductDropdown === index && (
-                          <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          <div className="absolute z-[200] top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto product-dropdown-container">
                             {filteredProducts(index).map((p) => (
                               <button
                                 key={p.id}
