@@ -167,7 +167,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 mt-1">
-                  <span className="text-[15px] font-bold text-slate-900">₹ {Number(item.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:0})}</span>
+                  <span className="text-[15px] font-bold text-slate-900">₹ {Number(item.lineTotal || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                   <button 
                     onClick={() => setEditingItemIndex(originalIndex)}
                     className="border border-indigo-200 bg-white rounded-3xl px-4 py-1 text-[10px] font-bold text-indigo-600 uppercase"
