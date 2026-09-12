@@ -23,7 +23,7 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
     const newLineItem: DocumentLineItem = {
       id: crypto.randomUUID(),
       productId: item.id,
-      name: item.name,
+      productName: item.name,
       quantity: 1,
       rate: item.sellingPrice || item.rate || 0,
       taxRate: item.gstRate || 0,

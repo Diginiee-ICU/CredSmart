@@ -874,28 +874,33 @@ export function SalesInvoiceModal({
         lineTotal: Number((ni as unknown).lineTotal) || 0,
       } as DocumentLineItem));
 
-      // Determine insertion index
-      let insertAt = copy.length; // default append
-      if (typeof target === "number" && target >= 0 && target < copy.length) {
-        insertAt = target;
-      }
+        // Determine insertion index
+        let insertAt = copy.length; // default append
+        let replaceCount = 0;
+        
+        if (typeof target === "number" && target >= 0 && target < copy.length) {
+          insertAt = target;
+          if (!copy[target].productName || copy[target].productName.trim() === "") {
+            replaceCount = 1;
+          }
+        } else {
+          // If no specific target, but the last row is blank, replace it
+          if (copy.length > 0 && (!copy[copy.length - 1].productName || copy[copy.length - 1].productName.trim() === "")) {
+            insertAt = copy.length - 1;
+            replaceCount = 1;
+          }
+        }
 
-      // If target row exists and is empty (no productName), replace that row with first mapped item
-      if (typeof target === "number" && target >= 0 && target < copy.length && (!copy[target].productName || copy[target].productName.trim() === "")) {
-        // replace that single row with mapped items
-        copy.splice(target, 1, ...mapped);
-      } else {
-        // splice in mapped items at insertAt
-        copy.splice(insertAt, 0, ...mapped);
-      }
+        copy.splice(insertAt, replaceCount, ...mapped);
 
-      // Ensure trailing blank row exists
-      const last = copy[copy.length - 1];
-      if (!last || (last.productName && last.productName.trim() !== "")) {
-        copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
-      }
+        // Ensure trailing blank row exists ONLY if we aren't using the mobile interface
+        // We can just add it unconditionally since mobile filters it out, but let's avoid infinite growth
+        const last = copy[copy.length - 1];
+        if (!last || (last.productName && last.productName.trim() !== "")) {
+          copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+        }
 
-      return copy;
+        return copy;
     });
 
     // reset the remembered target and close modal
