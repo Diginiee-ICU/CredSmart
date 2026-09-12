@@ -69,6 +69,7 @@ import { ConnectedOrgInfo } from "@/types/networkInvoicing";
 import { PartyCustomItem } from "@/types/parties";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 import { MobileCreateInvoice } from "@/components/invoices/mobile/MobileCreateInvoice";
+import { MobileInvoiceSuccessView } from "@/components/invoices/mobile/MobileInvoiceSuccessView";
 
 interface CustomerOption {
   id: string;
@@ -253,6 +254,7 @@ export function SalesInvoiceModal({
 
   // Quick Create Item State
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
+  const [mobileSuccessInvoice, setMobileSuccessInvoice] = useState<BusinessDocument | null>(null);
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
   // When AddItems modal is opened from a specific row, this remembers the row index so
