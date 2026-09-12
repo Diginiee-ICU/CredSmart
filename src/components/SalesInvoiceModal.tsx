@@ -1874,18 +1874,10 @@ export function SalesInvoiceModal({
                   </div>
 
                   {/* Row 2: Sales Invoice Date */}
-                  <div>
-                    <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                      Sales Invoice Date
-                    </Label>
-                    <div className="relative mt-1">
-                      <Input
-                        type="date"
-                        value={docDate}
-                        onChange={(e) => setDocDate(e.target.value)}
-                        className="h-8 text-xs font-medium pl-8 bg-slate-50/50 dark:bg-slate-800/50"
-                      />
-                      <CalendarIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Date & Time</Label>
+                    <div className="h-8 text-xs font-medium bg-slate-50 dark:bg-slate-800/50 flex items-center px-3 rounded-md border border-input text-slate-500">
+                      Auto-generated
                     </div>
                   </div>
 
