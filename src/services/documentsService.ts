@@ -405,7 +405,7 @@ export const documentsService = {
 
     // 3. Save / Update in Local Storage cache
     const existingList = this.getLocalDocuments(orgId, docType);
-    const index = existingList.findIndex((d) => d.id === doc.id || d.documentNumber === doc.documentNumber);
+    const index = existingList.findIndex((d) => d.id === doc.id);
     const previousDoc = index >= 0 ? existingList[index] : undefined;
 
     if (index >= 0) {

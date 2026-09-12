@@ -1551,7 +1551,7 @@ export function SalesInvoiceModal({
             </InvoiceFitView>
           ) : (
             <>
-            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+            <div ref={editorBodyRef} className="bill-editor-body flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
               
               {/* MOBILE TAB BAR */}
               <div className="lg:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
@@ -1581,7 +1581,7 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* LEFT COLUMN: PARTY & DETAILS */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className={cn("lg:col-span-4 overflow-y-auto border-r border-slate-200 dark:border-slate-800 p-3 space-y-3", mobileTab === 'party' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
+              <div className={cn("lg:w-[280px] xl:w-[320px] shrink-0 overflow-y-auto border-r border-slate-200 dark:border-slate-800 p-3 space-y-3", mobileTab === 'party' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
                 
                 {/* BILL TO CARD (Dropdown Format with Balance) */}
                 <div className="bill-panel bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
@@ -2053,7 +2053,7 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* CENTER COLUMN: ITEMS */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className={cn("lg:col-span-5 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", mobileTab === 'items' ? "flex" : "hidden lg:flex")}>
+              <div className={cn("flex-1 min-w-0 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", mobileTab === 'items' ? "flex" : "hidden lg:flex")}>
                 <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-0 space-y-2">
               {activeCustomer && (activeCustomer.keepSamePrice === false || activeCustomer.keepSameInventory === false) && (
                 <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs mb-2">
@@ -2229,19 +2229,19 @@ export function SalesInvoiceModal({
 
                 {/* 2. DESKTOP DATA TABLE (>= md screens) */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full min-w-[760px] text-left text-xs border-collapse">
+                  <table className="w-full min-w-[600px] text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        <th className="py-2.5 px-3 w-10 text-center">NO</th>
-                        <th className="py-2.5 px-3 min-w-[260px]">ITEMS</th>
-                        <th className="py-2.5 px-2 w-20">HSN</th>
-                        <th className="py-2.5 px-2 w-16 text-center">QTY</th>
-                        <th className="py-2.5 px-2 w-24 text-center">UNIT</th>
-                        <th className="py-2.5 px-2 w-28 text-right">PRICE/ITEM (₹)</th>
-                        <th className="py-2.5 px-2 w-20 text-center">DISCOUNT</th>
-                        <th className="py-2.5 px-2 w-20 text-center">TAX</th>
-                        <th className="py-2.5 px-3 w-28 text-right">AMOUNT (₹)</th>
-                        <th className="py-2.5 px-2 w-10 text-center">
+                      <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th className="py-2.5 px-1.5 w-8 text-center">NO</th>
+                        <th className="py-2.5 px-2 min-w-[150px] w-auto">ITEMS</th>
+                        <th className="py-2.5 px-1.5 w-16">HSN</th>
+                        <th className="py-2.5 px-1.5 w-14 text-center">QTY</th>
+                        <th className="py-2.5 px-1.5 w-20 text-center">UNIT</th>
+                        <th className="py-2.5 px-1.5 w-20 text-right">PRICE</th>
+                        <th className="py-2.5 px-1.5 w-16 text-center">DISC</th>
+                        <th className="py-2.5 px-1.5 w-16 text-center">TAX</th>
+                        <th className="py-2.5 px-2 w-24 text-right">AMOUNT</th>
+                        <th className="py-2.5 px-1 w-8 text-center">
                           <Settings className="w-3.5 h-3.5 text-muted-foreground mx-auto" />
                         </th>
                       </tr>
@@ -2249,14 +2249,14 @@ export function SalesInvoiceModal({
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {recalculatedItems.map((item, idx) => (
                         <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-2 px-3 text-center text-slate-400 font-mono text-xs">
+                          <td className="py-2 px-1.5 text-center text-slate-400 font-mono text-xs">
                             {idx + 1}
                           </td>
 
                           {/* Product selection replaced by an explicit Add Items button (opens modal)
                               per user's request: typing field replaced with a simple button that shows
                               the full inventory. This preserves Create New Item flow via the modal too. */}
-                                  <td className="py-2 px-3 relative">
+                                  <td className="py-2 px-2 relative">
                                     <div className="flex items-center gap-2">
                                       <button
                                         type="button"
@@ -2275,7 +2275,7 @@ export function SalesInvoiceModal({
                                           }
                                           setShowAddItemsModal(true);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
+                                        className="w-full text-left px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
                                       >
                                         <div className="flex items-center gap-2">
                                           <Package className="w-4 h-4 text-primary" />
@@ -2290,17 +2290,17 @@ export function SalesInvoiceModal({
                                   </td>
 
                           {/* HSN */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             <Input
                               value={item.hsn || ""}
                               onChange={(e) => handleUpdateItem(idx, "hsn", e.target.value)}
                               placeholder="HSN"
-                              className="h-8 text-xs font-mono bg-transparent"
+                              className="h-8 text-xs font-mono bg-transparent px-1.5"
                             />
                           </td>
 
                           {/* Qty (Pressing Enter auto advances) */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             <Input
                               type="number"
                               min="1"
@@ -2326,7 +2326,7 @@ export function SalesInvoiceModal({
                                   }
                                 }
                               }}
-                              className="h-8 text-xs text-center font-mono font-semibold bg-transparent"
+                              className="h-8 text-xs text-center font-mono font-semibold bg-transparent px-1.5"
                             />
                             {item.altUnit && item.altUnitConversion && item.altQty != null && (
                               <span className="block text-[9px] text-blue-600 dark:text-blue-400 font-mono font-semibold text-center mt-0.5 whitespace-nowrap">
@@ -2336,7 +2336,7 @@ export function SalesInvoiceModal({
                           </td>
 
                           {/* Unit */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 ? (
                               <div className="flex flex-col items-center gap-0.5">
                                 <div className="inline-flex rounded-md border border-primary/40 overflow-hidden text-[10px] font-bold bg-white dark:bg-slate-900 shadow-2xs">
@@ -2380,7 +2380,7 @@ export function SalesInvoiceModal({
                                 value={item.unit || "Pcs"}
                                 onValueChange={(val) => handleUpdateItem(idx, "unit", val)}
                               >
-                                <SelectTrigger className="h-8 text-xs bg-transparent font-medium">
+                                <SelectTrigger className="h-8 text-xs bg-transparent font-medium px-2">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-56">
@@ -2395,7 +2395,7 @@ export function SalesInvoiceModal({
                           </td>
 
                           {/* Price / Rate */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             <Input
                               type="number"
                               min="0"
@@ -2412,12 +2412,12 @@ export function SalesInvoiceModal({
                                   }
                                 }
                               }}
-                              className="h-8 text-xs text-right font-mono font-semibold bg-transparent"
+                              className="h-8 text-xs text-right font-mono font-semibold bg-transparent px-1.5"
                             />
                           </td>
 
                           {/* Discount */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             <Input
                               type="number"
                               min="0"
@@ -2425,17 +2425,17 @@ export function SalesInvoiceModal({
                               value={item.discountPercent || ""}
                               onChange={(e) => handleUpdateItem(idx, "discountPercent", Number(e.target.value))}
                               placeholder="%"
-                              className="h-8 text-xs text-center font-mono bg-transparent"
+                              className="h-8 text-xs text-center font-mono bg-transparent px-1.5"
                             />
                           </td>
 
                           {/* Tax Dropdown */}
-                          <td className="py-2 px-2">
+                          <td className="py-2 px-1.5">
                             <Select
                               value={String(item.taxRate)}
                               onValueChange={(val) => handleUpdateItem(idx, "taxRate", Number(val))}
                             >
-                              <SelectTrigger className="h-8 text-xs bg-transparent">
+                              <SelectTrigger className="h-8 text-xs bg-transparent px-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -2449,12 +2449,12 @@ export function SalesInvoiceModal({
                           </td>
 
                           {/* Amount */}
-                          <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                          <td className="py-2 px-2 text-right font-mono font-bold text-slate-900 dark:text-white">
                             ₹{item.lineTotal.toFixed(2)}
                           </td>
 
                           {/* Remove button */}
-                          <td className="py-2 px-2 text-center">
+                          <td className="py-2 px-1 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveRow(idx)}
@@ -2496,7 +2496,7 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               {/* RIGHT COLUMN: SUMMARY & PAYMENT */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className={cn("lg:col-span-3 overflow-y-auto p-3 space-y-3", mobileTab === 'summary' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
+              <div className={cn("lg:w-[280px] xl:w-[320px] shrink-0 overflow-y-auto p-3 space-y-3", mobileTab === 'summary' ? "flex flex-col" : "hidden lg:flex lg:flex-col")}>
                 {/* SECTION: Notes, Terms, Bank Details, Payment QR */}
                 <div className="space-y-3">
                   {showNotes ? (
