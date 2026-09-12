@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ArrowLeft, FileText, ScanBarcode, ChevronDown, User, X, ChevronUp, Plus } from "lucide-react";
 import { SelectPartyModal } from "./SelectPartyModal";
 import { AddItemModal } from "./AddItemModal";
+import { EditItemModal } from "./EditItemModal";
 import { DocumentLineItem } from "@/types/documents";
 
 export interface MobileCreateInvoiceProps {
@@ -29,6 +30,7 @@ export interface MobileCreateInvoiceProps {
 export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
   const [isPartyModalOpen, setIsPartyModalOpen] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   
   const handleSaveAndNew = () => {
     props.onSave(false, true);
@@ -145,7 +147,10 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                   <span className="text-[15px] font-bold text-slate-900">₹ {Number(item.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:0})}</span>
-                  <button className="border border-indigo-200 bg-white rounded-full px-3 py-0.5 text-[10px] font-bold text-indigo-500 uppercase">
+                  <button 
+                    onClick={() => setEditingItemIndex(idx)}
+                    className="border border-indigo-200 bg-white rounded-full px-3 py-0.5 text-[10px] font-bold text-indigo-500 uppercase"
+                  >
                     EDIT
                   </button>
                 </div>
@@ -233,6 +238,29 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
           onAddSelectedItems={(items) => {
              props.onAddSelectedItems(items);
              setIsItemModalOpen(false);
+          }}
+        />
+      )}
+      {editingItemIndex !== null && props.recalculatedItems[editingItemIndex] && (
+        <EditItemModal
+          item={props.recalculatedItems[editingItemIndex]}
+          onClose={() => setEditingItemIndex(null)}
+          onSave={(updatedItem) => {
+            props.onUpdateItem(editingItemIndex, 'rate', updatedItem.rate);
+            props.onUpdateItem(editingItemIndex, 'quantity', updatedItem.quantity);
+            props.onUpdateItem(editingItemIndex, 'discountPercent', updatedItem.discountPercent);
+            props.onUpdateItem(editingItemIndex, 'discountAmount', updatedItem.discountAmount);
+            props.onUpdateItem(editingItemIndex, 'taxRate', updatedItem.taxRate);
+            props.onUpdateItem(editingItemIndex, 'unit', updatedItem.unit);
+            // Since notes aren't natively supported on DocumentLineItem we cast it
+            if ((updatedItem as any).notes !== undefined) {
+              props.onUpdateItem(editingItemIndex, 'notes' as any, (updatedItem as any).notes);
+            }
+            setEditingItemIndex(null);
+          }}
+          onDelete={() => {
+            props.onRemoveItem(editingItemIndex);
+            setEditingItemIndex(null);
           }}
         />
       )}

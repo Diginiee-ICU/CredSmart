@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, Search, ScanBarcode, Mic, Plus } from "lucide-react";
 import { DocumentLineItem } from "@/types/documents";
+import { CreateNewItemModal } from "@/components/items/mobile/CreateNewItemModal";
 
 interface AddItemModalProps {
   onClose: () => void;
@@ -10,6 +11,7 @@ interface AddItemModalProps {
 
 export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemModalProps) {
   const [search, setSearch] = useState("");
+  const [isCreateItemOpen, setIsCreateItemOpen] = useState(false);
   
   const filtered = catalog.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -58,7 +60,10 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
       </div>
 
       <div className="flex justify-end p-4 border-b border-slate-100">
-        <button className="inline-flex px-4 py-2 bg-slate-100 rounded-full text-[13px] font-bold text-slate-700 items-center gap-1.5 shadow-sm">
+        <button 
+          onClick={() => setIsCreateItemOpen(true)}
+          className="inline-flex px-4 py-2 bg-slate-100 rounded-full text-[13px] font-bold text-slate-700 items-center gap-1.5 shadow-sm"
+        >
           <Plus className="w-4 h-4" /> Create New Item
         </button>
       </div>
@@ -86,6 +91,10 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
           </div>
         ))}
       </div>
+
+      {isCreateItemOpen && (
+        <CreateNewItemModal onClose={() => setIsCreateItemOpen(false)} />
+      )}
     </div>
   );
 }
