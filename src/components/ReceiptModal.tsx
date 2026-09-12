@@ -57,7 +57,7 @@ interface ReceiptModalProps {
 export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">("80mm");
+  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">(typeof window !== "undefined" && window.innerWidth < 1024 ? "a4" : "80mm");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -328,7 +328,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Format Segment Switcher */}
-            <div className="flex bg-slate-950 p-0.5 sm:p-1 rounded-xl border border-slate-800 shrink-0">
+            <div className="hidden sm:flex bg-slate-950 p-0.5 sm:p-1 rounded-xl border border-slate-800 shrink-0">
               <button
                 type="button"
                 onClick={() => setLayout("80mm")}

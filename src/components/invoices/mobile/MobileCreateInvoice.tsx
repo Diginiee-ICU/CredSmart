@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, FileText, ScanBarcode, ChevronDown, User, X, ChevronUp, Plus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { SelectPartyModal } from "./SelectPartyModal";
 import { AddItemModal } from "./AddItemModal";
 import { EditItemModal } from "./EditItemModal";
@@ -29,6 +30,9 @@ export interface MobileCreateInvoiceProps {
   onUpdateDiscount?: (type: "flat" | "percent", value: number) => void;
   onUpdateRoundOff?: (auto: boolean, manualValue: number) => void;
   onUpdateNotes?: (notes: string) => void;
+  amountReceived?: number;
+  markAsFullyPaid?: boolean;
+  onUpdatePayment?: (amountReceived: number, markAsFullyPaid: boolean) => void;
 }
 
 export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
@@ -57,7 +61,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
   };
   
   const handleGenerateBill = () => {
-    props.onSave(false, false);
+    props.onSave(true, false);
   };
 
   const invoiceNumber = `${props.invoicePrefix}${props.invoiceNumberSeq}`;
@@ -219,29 +223,12 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
                 <button onClick={() => setIsRoundOffModalOpen(true)} className="text-[14px] font-bold text-indigo-700 tracking-wide">+ Round Off</button>
               )}
 
-              <button onClick={() => {}} className="text-[14px] font-bold text-indigo-700 tracking-wide opacity-50">+ Apply TCS</button>
+              <button onClick={() => toast({title: "Coming Soon", description: "TCS is currently handled automatically by the backend."})} className="text-[14px] font-bold text-indigo-700 tracking-wide">+ Apply TCS</button>
               <button onClick={() => setIsNotesModalOpen(true)} className="text-[14px] font-bold text-indigo-700 tracking-wide">+ Notes</button>
             </div>
           </>
         )}
       </div>
-
-      {/* Smart Banner shown only when empty */}
-      {props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length === 0 && (
-        <div className="relative bg-[#FFF4ED] rounded-xl p-4 mx-4 mt-4 border border-[#FFE4D6]">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-[15px] font-bold text-slate-800">Now create Invoices instantly</h3>
-            <button className="text-slate-400 p-0.5"><X className="w-[18px] h-[18px]"/></button>
-          </div>
-          <p className="text-[13px] text-slate-600 mb-4">Instantly add Invoices Bills from bill Image or PDF</p>
-          <button className="w-full bg-[#E85C2A] text-white py-3 rounded-lg flex justify-center items-center font-bold gap-2 shadow-sm text-[15px]">
-            <ScanBarcode className="w-[18px] h-[18px]" />
-            Scan & Record Invoices Bills
-          </button>
-        </div>
-      )}
-
-      
 
       {/* 3.8 Sticky Footer Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 pb-[max(0px,env(safe-area-inset-bottom))]">
