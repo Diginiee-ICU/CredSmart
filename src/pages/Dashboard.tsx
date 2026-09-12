@@ -43,6 +43,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
+import { ReceiptModal } from "@/components/ReceiptModal";
+import { ReceiptData } from "@/pages/Sales";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import {
@@ -87,6 +89,59 @@ export default function Dashboard() {
 
   // Direct Module States (Opens directly instead of navigating)
   const [showSalesInvoiceModal, setShowSalesInvoiceModal] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+  const handleOpenReceipt = (doc: any) => {
+    const receipt: ReceiptData = {
+      docType: doc.docType,
+      invoiceNumber: doc.documentNumber,
+      referenceNumber: doc.referenceNumber,
+      items: doc.items.map((it: any) => ({
+        product: {
+          id: it.productId || it.id,
+          name: it.productName,
+          barcode: it.barcode || "",
+          brand: "",
+          category: "",
+          unit: it.unit || "PCS",
+          altUnit: it.altUnit,
+          altUnitConversion: it.altUnitConversion,
+          hsn: it.hsn || "",
+          gstRate: it.taxRate || 0,
+          batches: [],
+        },
+        batch: {
+          id: it.id,
+          productId: it.productId || it.id,
+          batchNumber: it.batchNumber || "",
+          mrp: 0,
+          purchaseRate: 0,
+          salesRate: it.rate,
+          stock: it.quantity,
+          expiryDate: it.expiryDate,
+        },
+        quantity: it.quantity,
+        rate: it.rate,
+        discount: (it.discountTotal || 0) / (it.quantity || 1),
+        discountType: "amount",
+        tax: it.taxRate,
+        lineTotal: it.lineTotal,
+      })),
+      subtotal: doc.subtotal,
+      discountAmount: doc.discountTotal || 0,
+      tax: doc.taxTotal || 0,
+      roundOff: doc.roundOff || 0,
+      total: doc.grandTotal,
+      paymentMethod: doc.paymentMethod || "Cash",
+      notes: doc.notes || "",
+      terms: doc.terms,
+      date: doc.docDate,
+      customerName: doc.partyName,
+      customerPhone: doc.partyPhone,
+    };
+    setReceiptData(receipt);
+  };
+
   const [showCreateItemModal, setShowCreateItemModal] = useState(false);
   const [showCreatePartyModal, setShowCreatePartyModal] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
