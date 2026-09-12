@@ -1174,6 +1174,7 @@ export default function Dashboard() {
             fetchDashboardData();
             toast({ title: "Invoice Created", description: "Successfully generated and recorded." });
           }}
+          onPrintRequest={handleOpenReceipt}
         />
       )}
 

@@ -1,16 +1,26 @@
 import React, { useState } from "react";
-import { ArrowLeft, Settings, Search, Calendar, ScanBarcode, Barcode, Camera, FileText } from "lucide-react";
+import { ArrowLeft, Settings, Search, Calendar, ScanBarcode, Barcode, Camera, FileText, ChevronDown, Layers } from "lucide-react";
 
 interface CreateNewItemModalProps {
   onClose: () => void;
   // Normally would take onSave or similar handlers
 }
 
+const UNIT_OPTIONS = [
+  "PCS", "KG", "GM", "LTR", "ML", "BOX", "PKT", "DOZ",
+  "MTR", "CM", "IN", "FT", "SQFT", "BTL", "CAN", "BAG", "ROLL"
+];
+
 export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
   const [isProduct, setIsProduct] = useState(true);
   const [activeTab, setActiveTab] = useState<'pricing' | 'stock' | 'other' | 'party'>('pricing');
   const [lowStockAlert, setLowStockAlert] = useState(false);
   const [showOnlineStore, setShowOnlineStore] = useState(true);
+  
+  const [unit, setUnit] = useState("PCS");
+  const [enableAltUnit, setEnableAltUnit] = useState(false);
+  const [altUnit, setAltUnit] = useState("BOX");
+  const [altUnitConversion, setAltUnitConversion] = useState("10");
 
   return (
     <div className="fixed inset-0 z-[60] bg-white flex flex-col h-[100dvh] overflow-hidden">
@@ -113,14 +123,73 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
         {/* Tab Content Container */}
         {activeTab === 'pricing' && (
           <div className="p-4 flex flex-col gap-5">
-            <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Unit</label>
-              <input 
-                type="text" 
-                defaultValue="PCS"
-                className="w-full border border-slate-200 rounded-lg p-3 text-[15px] outline-none font-medium text-slate-900"
-              />
-            </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1.5 block">Primary Unit</label>
+                <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+                  <select 
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="border-none outline-none bg-transparent text-[15px] font-medium text-slate-900 w-full appearance-none"
+                  >
+                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-500 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Alt Unit Toggle */}
+              <div className="flex items-center justify-between mt-1">
+                 <div className="flex items-center gap-2">
+                   <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <Layers className="w-4 h-4" />
+                   </div>
+                   <div className="flex flex-col">
+                     <span className="text-sm font-semibold text-slate-700">Alternate Unit</span>
+                     <span className="text-[10px] text-slate-400">Sell in secondary units (e.g. BOX)</span>
+                   </div>
+                 </div>
+                 <div 
+                   className={`w-11 h-6 rounded-full flex items-center px-1 transition-colors ${enableAltUnit ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                   onClick={() => setEnableAltUnit(!enableAltUnit)}
+                 >
+                   <div className={`w-4 h-4 bg-white rounded-full transition-transform ${enableAltUnit ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                 </div>
+              </div>
+
+              {enableAltUnit && (
+                <div className="bg-slate-50 rounded-xl p-4 flex flex-col gap-4 border border-slate-100">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-slate-600 mb-1.5 block">Alt Unit</label>
+                      <div className="border border-slate-200 rounded-lg p-2.5 flex items-center justify-between bg-white">
+                        <select 
+                          value={altUnit}
+                          onChange={(e) => setAltUnit(e.target.value)}
+                          className="border-none outline-none bg-transparent text-[14px] font-medium text-slate-900 w-full appearance-none"
+                        >
+                          {UNIT_OPTIONS.filter(u => u !== unit).map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-500 pointer-events-none" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-slate-600 mb-1.5 block">1 {altUnit} = ? {unit}</label>
+                      <input 
+                        type="number"
+                        value={altUnitConversion}
+                        onChange={(e) => setAltUnitConversion(e.target.value)}
+                        className="w-full border border-slate-200 rounded-lg p-2.5 text-[14px] outline-none font-medium text-slate-900 bg-white"
+                        placeholder={`e.g. 10`}
+                      />
+                    </div>
+                  </div>
+                  {altUnitConversion && Number(altUnitConversion) > 1 && (
+                    <div className="text-[11px] font-medium text-blue-700 bg-blue-100/50 p-2 rounded-lg text-center">
+                      On invoices: <strong>1 {altUnit} = {altUnitConversion} {unit}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
             
             <div>
               <label className="text-xs font-bold text-slate-600 mb-1.5 block">Sales Price</label>
@@ -187,7 +256,7 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
                     placeholder="Ex: 35"
                     className="bg-transparent border-none outline-none w-full text-[15px] font-medium text-slate-900 placeholder:text-slate-300"
                   />
-                  <span className="text-slate-400 text-[15px] shrink-0">/PCS</span>
+                  <span className="text-slate-400 text-[15px] shrink-0">/{unit}</span>
                 </div>
               </div>
               <div className="flex-1">

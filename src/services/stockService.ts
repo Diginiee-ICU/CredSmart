@@ -153,16 +153,20 @@ export const stockService = {
               stock: newStock,
               updated_at: new Date().toISOString(),
             })
-            .eq("id", targetBatch.id);
+            .eq("id", targetBatch.id)
+            .throwOnError();
         } else {
           // No batch existed; create initial batch with 0 stock
-          await supabase.from("product_batches").insert({
-            product_id: productId,
-            batch_number: item.batchNumber?.trim() || "BATCH-01",
-            cost_price: Number(item.costPrice || item.rate || 0),
-            mrp: Number(item.mrp || item.rate || 0),
-            stock: 0,
-          });
+          await supabase
+            .from("product_batches")
+            .insert({
+              product_id: productId,
+              batch_number: item.batchNumber?.trim() || "BATCH-01",
+              cost_price: Number(item.costPrice || item.rate || 0),
+              mrp: Number(item.mrp || item.rate || 0),
+              stock: 0,
+            })
+            .throwOnError();
         }
       } catch (err) {
         console.warn(`Deduct stock exception for product ${productId} (${reason}):`, err);
@@ -245,17 +249,21 @@ export const stockService = {
               expiry_date: item.expiryDate || matchedBatch.expiry_date,
               updated_at: new Date().toISOString(),
             })
-            .eq("id", matchedBatch.id);
+            .eq("id", matchedBatch.id)
+            .throwOnError();
         } else {
           // Create new batch with added stock
-          await supabase.from("product_batches").insert({
-            product_id: productId,
-            batch_number: batchNum,
-            cost_price: costVal,
-            mrp: mrpVal,
-            expiry_date: item.expiryDate || null,
-            stock: qtyToAdd,
-          });
+          await supabase
+            .from("product_batches")
+            .insert({
+              product_id: productId,
+              batch_number: batchNum,
+              cost_price: costVal,
+              mrp: mrpVal,
+              expiry_date: item.expiryDate || null,
+              stock: qtyToAdd,
+            })
+            .throwOnError();
         }
       } catch (err) {
         console.warn(`Add stock exception for product ${productId} (${reason}):`, err);
