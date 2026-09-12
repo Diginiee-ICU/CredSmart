@@ -216,6 +216,13 @@ export function SalesInvoiceModal({
   const [paymentTerms, setPaymentTerms] = useState("Due on Receipt");
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
+  
+  // Toggle visibility states
+  const [showEwayBill, setShowEwayBill] = useState(false);
+  const [showBillingAddress, setShowBillingAddress] = useState(false);
+  const [showVehicleNo, setShowVehicleNo] = useState(false);
+  const [showPoReference, setShowPoReference] = useState(false);
+  const [poReference, setPoReference] = useState("");
 
   // Products catalog & Item search (shared store)
   const { products: productsCatalog, refreshProducts, addOrUpdateProduct } = useProducts();
@@ -225,11 +232,23 @@ export function SalesInvoiceModal({
 
   // Item input refs for auto-focus
   const itemInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
   const focusItemInput = (index: number) => {
     setTimeout(() => {
       itemInputRefs.current[index]?.focus();
     }, 60);
   };
+
+  useEffect(() => {
+    if (!showCustomerDropdown) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showCustomerDropdown]);
 
   // Quick Create Item State
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
@@ -489,6 +508,7 @@ export function SalesInvoiceModal({
         setBillingPincode(editingDoc.billingPincode || "");
         setBillingPlaceOfSupply(editingDoc.billingPlaceOfSupply || editingDoc.placeOfSupply || "27-Maharashtra");
         setSameAsParty(Boolean(editingDoc.partyAddress && legacyBillingAddress === editingDoc.partyAddress));
+        setShowBillingAddress(Boolean(legacyBillingAddress && legacyBillingAddress.trim() !== ""));
         setPlaceOfSupply(editingDoc.placeOfSupply || "27-Maharashtra");
         setDocDate(editingDoc.docDate || new Date().toISOString().split("T")[0]);
         if (editingDoc.dueDate) {
@@ -516,8 +536,18 @@ export function SalesInvoiceModal({
         setNotes(editingDoc.notes || "");
         if (editingDoc.notes) setShowNotes(true);
         setTerms(editingDoc.terms || "1. Goods once sold will not be taken back or exchanged.\n2. All disputes are subject to local jurisdiction only.");
+        
         if (editingDoc.transportDetails?.vehicleNumber) {
           setVehicleNumber(editingDoc.transportDetails.vehicleNumber);
+          setShowVehicleNo(true);
+        }
+        if (editingDoc.referenceNumber) {
+          setEwayBillNo(editingDoc.referenceNumber);
+          setShowEwayBill(true);
+        }
+        if (editingDoc.custom_fields?.poReference) {
+          setPoReference(editingDoc.custom_fields.poReference);
+          setShowPoReference(true);
         }
       } else {
         const targetType = initialDocType || "sales_invoice";
@@ -536,10 +566,17 @@ export function SalesInvoiceModal({
         setBillingPincode("");
         setBillingPlaceOfSupply("27-Maharashtra");
         setSameAsParty(false);
+        setShowBillingAddress(false);
         setDocDate(new Date().toISOString().split("T")[0]);
         setShowDueDate(false);
+        
         setEwayBillNo("");
+        setShowEwayBill(false);
         setVehicleNumber("");
+        setShowVehicleNo(false);
+        setPoReference("");
+        setShowPoReference(false);
+        
         setNotes("");
         setShowNotes(false);
         setShowAdditionalCharges(false);
@@ -994,6 +1031,10 @@ export function SalesInvoiceModal({
         notes: showNotes ? notes : undefined,
         terms,
         transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
+        custom_fields: {
+          ...(typeof editingDoc?.custom_fields === 'object' && editingDoc?.custom_fields !== null ? editingDoc.custom_fields : {}),
+          poReference: showPoReference && poReference.trim() ? poReference.trim() : undefined,
+        },
         created_at: editingDoc?.created_at || new Date().toISOString(),
       };
 
@@ -1444,6 +1485,12 @@ export function SalesInvoiceModal({
                 invoiceNumber={fullDocumentNumber}
                 date={docDate}
                 dueDate={showDueDate ? dueDate : undefined}
+                time={new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                referenceNumber={showEwayBill && ewayBillNo.trim() ? ewayBillNo : undefined}
+                vehicleNumber={showVehicleNo && vehicleNumber.trim() ? vehicleNumber : undefined}
+                poReference={showPoReference && poReference.trim() ? poReference : undefined}
+                billingAddress={showBillingAddress && billingAddress.trim() ? billingAddress : undefined}
+                billingPincode={showBillingAddress && billingPincode.trim() ? billingPincode : undefined}
                 placeOfSupply={placeOfSupply}
                 deliveryCharge={0}
                 storeInfo={{
@@ -1563,7 +1610,7 @@ export function SalesInvoiceModal({
                       + Add Party
                     </button>
                   )}
-                  <div className={cn("relative", !partyName.trim() && !showCustomerDropdown && "hidden")}>
+                  <div ref={customerDropdownRef} className={cn("relative", !partyName.trim() && !showCustomerDropdown && "hidden")}>
                     <div
                       className="flex items-center justify-between border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 cursor-pointer shadow-2xs hover:border-primary/60 transition-colors"
                       onClick={() => setShowCustomerDropdown(true)}
@@ -1704,74 +1751,76 @@ export function SalesInvoiceModal({
                     </div>
                   )}
 
-                  <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                        Billing Address
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="same-as-party-address"
-                          checked={sameAsParty}
-                          onCheckedChange={(checked) => {
-                            const isChecked = Boolean(checked);
-                            setSameAsParty(isChecked);
-                            if (isChecked) {
-                              setBillingAddress(partyAddress || "");
-                              setBillingPincode("");
-                              setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
-                            }
-                          }}
-                        />
-                        <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
-                          Same as Party Address
+                  {showBillingAddress && (
+                    <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                          Billing Address
                         </Label>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="same-as-party-address"
+                            checked={sameAsParty}
+                            onCheckedChange={(checked) => {
+                              const isChecked = Boolean(checked);
+                              setSameAsParty(isChecked);
+                              if (isChecked) {
+                                setBillingAddress(partyAddress || "");
+                                setBillingPincode("");
+                                setBillingPlaceOfSupply(placeOfSupply || "27-Maharashtra");
+                              }
+                            }}
+                          />
+                          <Label htmlFor="same-as-party-address" className="text-[10px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                            Same as Party Address
+                          </Label>
+                        </div>
+                      </div>
+
+                      <Textarea
+                        value={billingAddress}
+                        onChange={(e) => handleBillingAddressChange(e.target.value)}
+                        disabled={sameAsParty}
+                        placeholder="Enter billing address"
+                        className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                            Pincode
+                          </Label>
+                          <Input
+                            value={billingPincode}
+                            onChange={(e) => {
+                              setBillingPincode(e.target.value);
+                              if (sameAsParty) setSameAsParty(false);
+                            }}
+                            placeholder="400001"
+                            className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                            State
+                          </Label>
+                          <Select value={billingPlaceOfSupply} onValueChange={handleBillingPlaceChange}>
+                            <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {INDIAN_STATES_AND_CODES.map((state) => (
+                                <SelectItem key={state} value={state}>
+                                  {state}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
-
-                    <Textarea
-                      value={billingAddress}
-                      onChange={(e) => handleBillingAddressChange(e.target.value)}
-                      disabled={sameAsParty}
-                      placeholder="Enter billing address"
-                      className="min-h-[78px] text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 disabled:opacity-100 disabled:cursor-default"
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
-                          Pincode
-                        </Label>
-                        <Input
-                          value={billingPincode}
-                          onChange={(e) => {
-                            setBillingPincode(e.target.value);
-                            if (sameAsParty) setSameAsParty(false);
-                          }}
-                          placeholder="400001"
-                          className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
-                          State
-                        </Label>
-                        <Select value={billingPlaceOfSupply} onValueChange={handleBillingPlaceChange}>
-                          <SelectTrigger className="h-8 text-xs mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {INDIAN_STATES_AND_CODES.map((state) => (
-                              <SelectItem key={state} value={state}>
-                                {state}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* ───────────────────────────────────────────────────────────── */}
@@ -1892,30 +1941,111 @@ export function SalesInvoiceModal({
                     </button>
                   )}
 
-                  {/* Row 4: E-Way Bill No & Vehicle No */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div>
-                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                        E-Way Bill No. <HelpCircle className="w-3 h-3 text-slate-400" />
-                      </Label>
-                      <Input
-                        value={ewayBillNo}
-                        onChange={(e) => setEwayBillNo(e.target.value)}
-                        placeholder="e.g. 241098765432"
-                        className="h-8 text-xs font-mono mt-1 bg-slate-50/50 dark:bg-slate-800/50"
-                      />
+                  {/* ── Optional Fields Toggle Row ── */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">Optional Fields</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {/* E-Way Bill Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => { setShowEwayBill(v => !v); if (showEwayBill) setEwayBillNo(""); }}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
+                          showEwayBill
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", showEwayBill ? "bg-primary" : "bg-slate-400")} />
+                        E-Way Bill
+                      </button>
+
+                      {/* Billing Address Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => { setShowBillingAddress(v => !v); if (showBillingAddress) { setBillingAddress(""); setBillingPincode(""); setSameAsParty(false); } }}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
+                          showBillingAddress
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", showBillingAddress ? "bg-primary" : "bg-slate-400")} />
+                        Billing Address
+                      </button>
+
+                      {/* Vehicle No Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => { setShowVehicleNo(v => !v); if (showVehicleNo) setVehicleNumber(""); }}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
+                          showVehicleNo
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", showVehicleNo ? "bg-primary" : "bg-slate-400")} />
+                        Vehicle No
+                      </button>
+
+                      {/* PO Reference Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => { setShowPoReference(v => !v); if (showPoReference) setPoReference(""); }}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer",
+                          showPoReference
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", showPoReference ? "bg-primary" : "bg-slate-400")} />
+                        PO Reference
+                      </button>
                     </div>
-                    <div>
-                      <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                        Vehicle No.
-                      </Label>
-                      <Input
-                        value={vehicleNumber}
-                        onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                        placeholder="e.g. MH-12-AB-1234"
-                        className="h-8 text-xs font-mono uppercase mt-1 bg-slate-50/50 dark:bg-slate-800/50"
-                      />
-                    </div>
+
+                    {/* Inline fields — only shown when toggled ON */}
+                    {(showEwayBill || showVehicleNo || showPoReference) && (
+                      <div className="mt-2 space-y-2">
+                        {showEwayBill && (
+                          <div>
+                            <Label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                              E-Way Bill No. <HelpCircle className="w-3 h-3 text-slate-400" />
+                            </Label>
+                            <Input
+                              value={ewayBillNo}
+                              onChange={(e) => setEwayBillNo(e.target.value)}
+                              placeholder="e.g. 241098765432"
+                              className="h-7 text-xs font-mono mt-0.5 bg-slate-50/50 dark:bg-slate-800/50"
+                            />
+                          </div>
+                        )}
+                        {showVehicleNo && (
+                          <div>
+                            <Label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Vehicle No.</Label>
+                            <Input
+                              value={vehicleNumber}
+                              onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                              placeholder="e.g. MH-12-AB-1234"
+                              className="h-7 text-xs font-mono uppercase mt-0.5 bg-slate-50/50 dark:bg-slate-800/50"
+                            />
+                          </div>
+                        )}
+                        {showPoReference && (
+                          <div>
+                            <Label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">PO Reference No.</Label>
+                            <Input
+                              value={poReference}
+                              onChange={(e) => setPoReference(e.target.value)}
+                              placeholder="e.g. PO-2026-001"
+                              className="h-7 text-xs font-mono mt-0.5 bg-slate-50/50 dark:bg-slate-800/50"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -61,6 +61,10 @@ export interface UnifiedInvoiceProps {
   copyType?: "ORIGINAL FOR RECIPIENT" | "DUPLICATE FOR TRANSPORTER" | "TRIPLICATE FOR SUPPLIER" | string;
   invoiceNumber: string;
   referenceNumber?: string;
+  vehicleNumber?: string;
+  billingAddress?: string;
+  billingPincode?: string;
+  poReference?: string;
   date: string | Date;
   dueDate?: string;
   time?: string;
@@ -182,6 +186,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       copyType = "ORIGINAL FOR RECIPIENT",
       invoiceNumber,
       referenceNumber,
+      vehicleNumber,
+      billingAddress: propBillingAddress,
+      billingPincode: propBillingPincode,
+      poReference,
       date,
       dueDate,
       time,
@@ -670,10 +678,26 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 </div>
               </div>
 
-              {referenceNumber && referenceNumber.trim() !== "" && (
-                <div className="pt-1 border-t border-slate-200 flex justify-between text-[9px]">
-                  <span className="text-slate-500">Ref / PO No:</span>
-                  <strong className="font-mono text-slate-800">{referenceNumber}</strong>
+              {(referenceNumber?.trim() || vehicleNumber?.trim() || poReference?.trim()) && (
+                <div className="pt-1 border-t border-slate-200 flex flex-col gap-0.5 text-[9px]">
+                  {referenceNumber && referenceNumber.trim() !== "" && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">E-Way Bill:</span>
+                      <strong className="font-mono text-slate-800">{referenceNumber}</strong>
+                    </div>
+                  )}
+                  {vehicleNumber && vehicleNumber.trim() !== "" && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Vehicle No:</span>
+                      <strong className="font-mono text-slate-800">{vehicleNumber}</strong>
+                    </div>
+                  )}
+                  {poReference && poReference.trim() !== "" && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">PO Ref:</span>
+                      <strong className="font-mono text-slate-800">{poReference}</strong>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -696,6 +720,12 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 </div>
                 <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeParty.name}</p>
                 {safeParty.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeParty.address}</p>}
+                {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
+                  <div className="mt-1">
+                    <span className="text-[7.5px] font-bold uppercase text-slate-500 block">Bill To Address:</span>
+                    <span className="text-[8px] text-slate-700">{propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}</span>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
                   {safeParty.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeParty.phone}</strong></span>}
                   {safeParty.state && <span>State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
@@ -745,6 +775,12 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 {safeParty.phone && <span> | Mob: <strong className="text-slate-900">{safeParty.phone}</strong></span>}
                 {safeParty.gstin && <span> | GSTIN: <strong className="font-mono text-slate-900">{safeParty.gstin}</strong></span>}
               </p>
+              {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
+                <div className="mt-1">
+                  <span className="text-[7.5px] font-bold uppercase text-slate-500 block">Bill To Address:</span>
+                  <span className="text-[8px] text-slate-700">{propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

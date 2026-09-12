@@ -95,6 +95,7 @@ export interface BusinessDocument {
     lrNumber?: string;
     dispatchDate?: string;
   };
+  custom_fields?: Record<string, any>;
   created_at: string;
   updated_at?: string;
 }
