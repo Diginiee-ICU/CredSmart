@@ -63,6 +63,7 @@ import { InvoiceFitView } from "@/components/invoices/InvoiceFitView";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
+import { MobileCreatePurchaseInvoice } from "@/components/invoices/mobile/MobileCreatePurchaseInvoice";
 import { PartyCustomItem } from "@/types/parties";
 
 interface SupplierOption {
@@ -1457,11 +1458,14 @@ export function PurchaseInvoiceModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950">
+        <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950 lg:block">
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
-          <div className="bill-editor-toolbar px-3 py-2.5 sm:px-4 sm:py-2.5 border-b border-slate-200 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
+
+            <div className="hidden lg:flex flex-col h-full w-full">
+              <div className="bill-editor-toolbar px-3 py-2.5 sm:px-4 sm:py-2.5 border-b border-slate-200 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3">
               <Button
                 type="button"
@@ -2746,6 +2750,7 @@ export function PurchaseInvoiceModal({
             </div>
             </>
           )}
+          </div>
         </DialogContent>
       </Dialog>
 
