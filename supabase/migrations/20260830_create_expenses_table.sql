@@ -27,18 +27,22 @@ CREATE INDEX IF NOT EXISTS idx_expenses_date ON public.expenses(date);
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view expenses for their organization" ON public.expenses;
 CREATE POLICY "Users can view expenses for their organization"
   ON public.expenses FOR SELECT
   USING (has_org_access(organization_id));
 
+DROP POLICY IF EXISTS "Users can create expenses for their organization" ON public.expenses;
 CREATE POLICY "Users can create expenses for their organization"
   ON public.expenses FOR INSERT
   WITH CHECK (has_org_access(organization_id));
 
+DROP POLICY IF EXISTS "Users can update expenses for their organization" ON public.expenses;
 CREATE POLICY "Users can update expenses for their organization"
   ON public.expenses FOR UPDATE
   USING (has_org_access(organization_id));
 
+DROP POLICY IF EXISTS "Users can delete expenses for their organization" ON public.expenses;
 CREATE POLICY "Users can delete expenses for their organization"
   ON public.expenses FOR DELETE
   USING (has_org_access(organization_id));

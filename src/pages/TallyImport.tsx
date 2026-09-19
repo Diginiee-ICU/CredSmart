@@ -1464,9 +1464,11 @@ export default function TallyImport() {
                 </Button>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Success Card */}
-            {importCompleted && (
+        {/* Success Card */}
+        {importCompleted && (
               <div className="p-6 rounded-3xl border border-emerald-400/50 bg-emerald-500/10 shadow-lg space-y-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md">

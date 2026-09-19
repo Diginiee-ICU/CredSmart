@@ -53,6 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient_gstin ON public.networ
 ALTER TABLE public.network_invoices ENABLE ROW LEVEL SECURITY;
 
 -- Allow members of sender or recipient organizations to read invoices
+DROP POLICY IF EXISTS "Sender and recipient org members can view network invoices" ON public.network_invoices;
 CREATE POLICY "Sender and recipient org members can view network invoices"
   ON public.network_invoices FOR SELECT
   USING (
@@ -61,11 +62,13 @@ CREATE POLICY "Sender and recipient org members can view network invoices"
   );
 
 -- Allow authenticated members to create network invoices from their organization
+DROP POLICY IF EXISTS "Sender org members can create network invoices" ON public.network_invoices;
 CREATE POLICY "Sender org members can create network invoices"
   ON public.network_invoices FOR INSERT
   WITH CHECK (has_org_access(sender_org_id));
 
 -- Allow sender or recipient org members to update network invoices (e.g. approve/reject)
+DROP POLICY IF EXISTS "Sender and recipient org members can update network invoices" ON public.network_invoices;
 CREATE POLICY "Sender and recipient org members can update network invoices"
   ON public.network_invoices FOR UPDATE
   USING (
