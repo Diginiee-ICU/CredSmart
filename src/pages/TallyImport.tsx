@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
+import { TallyBankAccount, TallyVoucher } from "@/utils/tallyXmlParser";
 import { toast } from "sonner";
 import { ROUTE_PATHS } from "@/config/routes";
 
@@ -140,6 +141,82 @@ export default function TallyImport() {
     toast.success(`✅ Successfully imported ${totalInserted} parties from Tally!`);
   }, [orgId, user]);
 
+  // ── Import Bank Accounts Handler ───────────────────────────────────────────
+
+  const handleImportBankAccounts = useCallback(async (banks: TallyBankAccount[], cashInHand: number) => {
+    if (!orgId) return;
+    const storageKeyAccounts = `credsmart_bank_accounts_${orgId}`;
+    const storageKeyCash = `credsmart_cash_in_hand_${orgId}`;
+
+    const existingRaw = localStorage.getItem(storageKeyAccounts);
+    let existingAccounts: unknown[] = [];
+    try {
+      existingAccounts = existingRaw ? JSON.parse(existingRaw) : [];
+    } catch {
+      existingAccounts = [];
+    }
+
+    const newAccounts = banks.map((b, i) => ({
+      id: `bank-tly-${Date.now()}-${i}`,
+      name: b.name,
+      bankName: b.bankName,
+      accountNumber: b.accountNumber || "—",
+      ifscCode: b.ifscCode || "—",
+      accountType: b.name.toLowerCase().includes("overdraft") || b.name.toLowerCase().includes("occ") ? "overdraft" : "current",
+      balance: b.balance,
+      isPrimary: existingAccounts.length === 0 && i === 0,
+      createdAt: new Date().toISOString(),
+    }));
+
+    localStorage.setItem(storageKeyAccounts, JSON.stringify([...existingAccounts, ...newAccounts]));
+
+    if (cashInHand > 0) {
+      const prevCash = Number(localStorage.getItem(storageKeyCash)) || 0;
+      localStorage.setItem(storageKeyCash, String(prevCash + cashInHand));
+    }
+
+    toast.success(`✅ Imported ${newAccounts.length} Bank Account(s) & Cash in Hand to Cash & Bank!`);
+  }, [orgId]);
+
+  // ── Import Vouchers / Ledger Entries Handler ────────────────────────────────
+
+  const handleImportVouchers = useCallback(async (vouchers: TallyVoucher[]) => {
+    if (!orgId) return;
+
+    // Fetch existing customers and suppliers to link vouchers by name
+    const { data: customers } = await supabase.from("customers").select("id, name").eq("organization_id", orgId);
+    const { data: suppliers } = await supabase.from("suppliers").select("id, name").eq("organization_id", orgId);
+
+    const partyMap = new Map<string, { id: string; type: "customer" | "supplier" }>();
+    (customers || []).forEach((c) => partyMap.set(c.name.toLowerCase().trim(), { id: c.id, type: "customer" }));
+    (suppliers || []).forEach((s) => partyMap.set(s.name.toLowerCase().trim(), { id: s.id, type: "supplier" }));
+
+    let insertedCount = 0;
+
+    for (const v of vouchers) {
+      const party = partyMap.get(v.partyName.toLowerCase().trim());
+      if (!party) continue;
+
+      const txnType = (v.voucherType === "Sales" || v.voucherType === "Purchase") ? "credit" : "payment";
+
+      const { error } = await supabase.from("credit_transactions").insert({
+        organization_id: orgId,
+        party_id: party.id,
+        party_type: party.type,
+        amount: v.amount,
+        type: txnType,
+        reference_id: v.voucherNumber,
+        description: v.narration || `Tally ${v.voucherType} #${v.voucherNumber}`,
+        created_by: user?.id || "admin",
+        created_at: v.date ? new Date(v.date).toISOString() : new Date().toISOString(),
+      });
+
+      if (!error) insertedCount++;
+    }
+
+    toast.success(`✅ Imported ${insertedCount} ledger voucher entries into Party Ledgers!`);
+  }, [orgId, user]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -236,6 +313,8 @@ export default function TallyImport() {
         }}
         onImportItems={handleImportItems}
         onImportParties={handleImportParties}
+        onImportBankAccounts={handleImportBankAccounts}
+        onImportVouchers={handleImportVouchers}
         defaultTab="all"
       />
     </div>

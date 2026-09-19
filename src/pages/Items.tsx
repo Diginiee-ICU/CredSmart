@@ -838,6 +838,16 @@ return (
         {/* Action buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
+            onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 font-bold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 hover-3d-glow"
+            title="Import Data from Tally or Excel"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span className="hidden sm:inline">Import Data</span>
+            <span className="sm:hidden">Import</span>
+          </button>
+
+          <button
             onClick={() => {
               setEditingItem(null);
               setShowCreateModal(true);

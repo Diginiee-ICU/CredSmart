@@ -254,6 +254,18 @@ const ALL_CREATION_OPTIONS: ActionItem[] = [
     actionKey: "bulk_items",
   },
   {
+    id: "tally_import",
+    title: "Import Data (Tally & Excel)",
+    subtitle: "Full migration of Stock Items, Ledgers, Bank Accounts & Vouchers",
+    category: "masters",
+    icon: FileSpreadsheet,
+    badge: "Tally / Full",
+    color: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-500/10 border-amber-500/20",
+    route: ROUTE_PATHS.tallyImport,
+    actionKey: "tally_import",
+  },
+  {
     id: "create_godown",
     title: "Godown / Warehouse",
     subtitle: "Set up storage location or transfer stock",

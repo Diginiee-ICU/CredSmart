@@ -425,6 +425,17 @@ export default function AppLayout() {
                 <Search className="w-3.5 h-3.5" />
               </button>
 
+              {/* Import Data button (desktop & tablet) */}
+              <button
+                type="button"
+                onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+                className="hidden lg:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 text-xs font-bold transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
+                title="Import Data from Tally or Excel"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
+                <span>Import Data</span>
+              </button>
+
               {/* New Invoice split button */}
               <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
                 <div className="flex items-center h-9 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
@@ -464,6 +475,7 @@ export default function AppLayout() {
                   <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><UserPlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><PackagePlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-800 dark:hover:text-amber-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
                   <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-800 dark:hover:text-cyan-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileText className="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
@@ -593,6 +605,10 @@ export default function AppLayout() {
                 <UserCircle className="mr-2 h-4 w-4 text-purple-600" />
                 <span>View Customer Udhar / Khata</span>
               </CommandItem>
+              <CommandItem onSelect={() => handleCommandSelect(ROUTE_PATHS.tallyImport)}>
+                <FileSpreadsheet className="mr-2 h-4 w-4 text-amber-500" />
+                <span>Import Data (Tally / Excel)</span>
+              </CommandItem>
             </CommandGroup>
 
             <CommandSeparator />
@@ -718,6 +734,8 @@ export default function AppLayout() {
             setCreateItemModalOpen(true);
           } else if (key === "party") {
             setCreatePartyModalOpen(true);
+          } else if (key === "tally_import") {
+            navigate(ROUTE_PATHS.tallyImport);
           }
         }}
       />

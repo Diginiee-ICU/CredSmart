@@ -317,6 +317,7 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
           { title: "All Parties", url: ROUTE_PATHS.parties },
           { title: "Customers", url: ROUTE_PATHS.customers },
           { title: "Suppliers", url: ROUTE_PATHS.suppliers },
+          { title: "Import from Tally / Excel", url: ROUTE_PATHS.tallyImport },
         ],
       },
       {
@@ -330,6 +331,7 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
           { title: "Stock Summary", url: ROUTE_PATHS.inventory },
           { title: "Godowns", url: ROUTE_PATHS.godown },
           { title: "Barcode Generator", url: ROUTE_PATHS.barcode },
+          { title: "Import from Tally / Excel", url: ROUTE_PATHS.tallyImport },
         ],
       },
       {
@@ -427,7 +429,7 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         icon: FileText,
       },
       {
-        title: "Tally Data Import",
+        title: "Import Data (Tally & Excel)",
         url: ROUTE_PATHS.tallyImport,
         icon: FileSpreadsheet,
         badge: "NEW",

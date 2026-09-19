@@ -38,7 +38,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 interface SettingsNavSidebarProps {
-  activeItem: "business" | "invoice" | "print" | "account" | "users";
+  activeItem: "business" | "invoice" | "print" | "account" | "users" | "import_data";
 }
 
 export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
@@ -116,6 +116,14 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
       active: activeItem === "print",
       badge: "New",
       url: ROUTE_PATHS.printSettings,
+    },
+    {
+      id: "import_data",
+      label: "Import Data",
+      icon: FileSpreadsheet,
+      active: activeItem === "import_data" || location.pathname === ROUTE_PATHS.tallyImport,
+      badge: "Tally",
+      url: ROUTE_PATHS.tallyImport,
     },
     {
       id: "reminders",

@@ -22,6 +22,8 @@ import {
   Trash2,
   Eye,
   Download,
+  Landmark,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,8 @@ import { cn } from "@/lib/utils";
 import {
   autoDetectAndParseTally,
   TallyParseResult,
+  TallyBankAccount,
+  TallyVoucher,
 } from "@/utils/tallyXmlParser";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
@@ -44,14 +48,20 @@ export interface TallyImportModalProps {
   onClose: () => void;
   onImportItems?: (items: Partial<InventoryItem>[]) => Promise<void>;
   onImportParties?: (parties: Partial<Party>[]) => Promise<void>;
+  onImportBankAccounts?: (banks: TallyBankAccount[], cashInHand: number) => Promise<void>;
+  onImportVouchers?: (vouchers: TallyVoucher[]) => Promise<void>;
   defaultTab?: "items" | "parties" | "all";
 }
 
 interface ImportStats {
   itemsImported: number;
   partiesImported: number;
+  banksImported: number;
+  vouchersImported: number;
   itemsFailed: number;
   partiesFailed: number;
+  banksFailed: number;
+  vouchersFailed: number;
   errors: string[];
 }
 
@@ -105,6 +115,8 @@ export function TallyImportModal({
   onClose,
   onImportItems,
   onImportParties,
+  onImportBankAccounts,
+  onImportVouchers,
   defaultTab = "all",
 }: TallyImportModalProps) {
   const [step, setStep] = useState<WizardStep>("upload");
@@ -113,10 +125,12 @@ export function TallyImportModal({
   const [uploadedFilename, setUploadedFilename] = useState("");
   const [importItems, setImportItems] = useState(true);
   const [importParties, setImportParties] = useState(true);
+  const [importBanks, setImportBanks] = useState(true);
+  const [importVouchers, setImportVouchers] = useState(true);
   const [conflictMode, setConflictMode] = useState<ConflictMode>("skip");
   const [isImporting, setIsImporting] = useState(false);
   const [importStats, setImportStats] = useState<ImportStats | null>(null);
-  const [previewTab, setPreviewTab] = useState<"items" | "parties" | "vouchers">("items");
+  const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
   const [showGuide, setShowGuide] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -148,7 +162,7 @@ export function TallyImportModal({
 
       if (result.totalEntities > 0) {
         toast.success(
-          `Detected ${result.items.length} items + ${result.parties.length} parties from ${file.name}`
+          `Detected ${result.items.length} items, ${result.parties.length} parties, ${result.bankAccounts.length} bank a/c, and ${result.paymentVouchers.length + result.receiptVouchers.length + result.salesVouchers.length} vouchers from ${file.name}`
         );
         setStep("preview");
       } else {
@@ -191,8 +205,12 @@ export function TallyImportModal({
     const stats: ImportStats = {
       itemsImported: 0,
       partiesImported: 0,
+      banksImported: 0,
+      vouchersImported: 0,
       itemsFailed: 0,
       partiesFailed: 0,
+      banksFailed: 0,
+      vouchersFailed: 0,
       errors: [],
     };
 
@@ -214,6 +232,33 @@ export function TallyImportModal({
         } catch (e: unknown) {
           stats.partiesFailed = parseResult.parties.length;
           stats.errors.push(`Parties import failed: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+
+      if (importBanks && parseResult.bankAccounts.length > 0 && onImportBankAccounts) {
+        try {
+          await onImportBankAccounts(parseResult.bankAccounts, parseResult.cashInHand);
+          stats.banksImported = parseResult.bankAccounts.length;
+        } catch (e: unknown) {
+          stats.banksFailed = parseResult.bankAccounts.length;
+          stats.errors.push(`Bank accounts import failed: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+
+      const allVouchers = [
+        ...parseResult.salesVouchers,
+        ...parseResult.purchaseVouchers,
+        ...parseResult.paymentVouchers,
+        ...parseResult.receiptVouchers,
+        ...parseResult.journalVouchers,
+      ];
+      if (importVouchers && allVouchers.length > 0 && onImportVouchers) {
+        try {
+          await onImportVouchers(allVouchers);
+          stats.vouchersImported = allVouchers.length;
+        } catch (e: unknown) {
+          stats.vouchersFailed = allVouchers.length;
+          stats.errors.push(`Ledger vouchers import failed: ${e instanceof Error ? e.message : String(e)}`);
         }
       }
     } finally {
@@ -445,16 +490,16 @@ export function TallyImportModal({
                       {parseResult.parties.length} Parties
                     </Badge>
                   )}
-                  {parseResult.salesVouchers.length > 0 && (
+                  {(parseResult.bankAccounts?.length > 0 || parseResult.cashInHand > 0) && (
                     <Badge className="gap-1.5 bg-emerald-500/15 text-emerald-700 border-emerald-500/20 text-xs font-bold">
-                      <ShoppingCart className="w-3 h-3" />
-                      {parseResult.salesVouchers.length} Sales
+                      <Landmark className="w-3 h-3" />
+                      {parseResult.bankAccounts?.length || 0} Banks {parseResult.cashInHand > 0 ? "+ Cash" : ""}
                     </Badge>
                   )}
-                  {parseResult.purchaseVouchers.length > 0 && (
-                    <Badge className="gap-1.5 bg-purple-500/15 text-purple-700 border-purple-500/20 text-xs font-bold">
-                      <Truck className="w-3 h-3" />
-                      {parseResult.purchaseVouchers.length} Purchases
+                  {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0) > 0 && (
+                    <Badge className="gap-1.5 bg-indigo-500/15 text-indigo-700 border-indigo-500/20 text-xs font-bold">
+                      <FileText className="w-3 h-3" />
+                      {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)} Vouchers
                     </Badge>
                   )}
                   {parseResult.companyName && (
@@ -504,10 +549,22 @@ export function TallyImportModal({
                       previewTab === "parties" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Parties ({parseResult.parties.length})
+                    Parties & Ledgers ({parseResult.parties.length})
                   </button>
                 )}
-                {(parseResult.salesVouchers.length + parseResult.purchaseVouchers.length) > 0 && (
+                {(parseResult.bankAccounts?.length > 0 || parseResult.cashInHand > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab("banks")}
+                    className={cn(
+                      "px-4 py-2 text-xs font-semibold border-b-2 transition-colors",
+                      previewTab === "banks" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Bank & Cash ({parseResult.bankAccounts?.length || 0})
+                  </button>
+                )}
+                {((parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)) > 0 && (
                   <button
                     type="button"
                     onClick={() => setPreviewTab("vouchers")}
@@ -516,7 +573,7 @@ export function TallyImportModal({
                       previewTab === "vouchers" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Vouchers ({parseResult.salesVouchers.length + parseResult.purchaseVouchers.length})
+                    Ledger Vouchers ({(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)})
                   </button>
                 )}
               </div>
@@ -591,13 +648,60 @@ export function TallyImportModal({
                   </table>
                 )}
 
+                {previewTab === "banks" && (
+                  <div className="p-3 space-y-3">
+                    {parseResult.cashInHand > 0 && (
+                      <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="w-4 h-4 text-emerald-600" />
+                          <div>
+                            <p className="text-xs font-bold text-foreground">Cash-in-Hand Ledger</p>
+                            <p className="text-[10px] text-muted-foreground">Tally Cash Account Balance</p>
+                          </div>
+                        </div>
+                        <p className="font-mono font-bold text-sm text-emerald-600">
+                          ₹{parseResult.cashInHand.toLocaleString("en-IN")}
+                        </p>
+                      </div>
+                    )}
+                    {parseResult.bankAccounts?.length > 0 ? (
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/50 sticky top-0">
+                          <tr>
+                            <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Bank Ledger Name</th>
+                            <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Account No.</th>
+                            <th className="text-left px-3 py-2 font-semibold text-muted-foreground">IFSC</th>
+                            <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Balance ₹</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {parseResult.bankAccounts.map((b, i) => (
+                            <tr key={i} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-3 py-2 font-medium text-foreground flex items-center gap-2">
+                                <Landmark className="w-3.5 h-3.5 text-primary shrink-0" />
+                                {b.name}
+                              </td>
+                              <td className="px-3 py-2 font-mono text-muted-foreground">{b.accountNumber || "—"}</td>
+                              <td className="px-3 py-2 font-mono text-muted-foreground">{b.ifscCode || "—"}</td>
+                              <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600">
+                                ₹{b.balance.toLocaleString("en-IN")}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center py-4">No bank accounts detected in this export.</p>
+                    )}
+                  </div>
+                )}
+
                 {previewTab === "vouchers" && (
                   <div className="p-4 space-y-2">
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                      <Info className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                      <p className="text-xs text-amber-700 dark:text-amber-400">
-                        <strong>Phase 2 Feature:</strong> Sales & Purchase voucher import is detected but not yet imported automatically. 
-                        Items and Parties will be imported. Voucher/invoice history import is coming soon.
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                      <p className="text-xs text-blue-700 dark:text-blue-400">
+                        <strong>Complete Ledger Statement Import:</strong> All vouchers (Receipts, Payments, Sales, Purchases) are parsed with original dates, amounts, and voucher references. Importing them updates your Customer and Supplier Ledgers with full statement history!
                       </p>
                     </div>
                     <table className="w-full text-xs">
@@ -611,14 +715,28 @@ export function TallyImportModal({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {[...parseResult.salesVouchers, ...parseResult.purchaseVouchers].slice(0, 100).map((v, i) => (
+                        {[
+                          ...(parseResult.receiptVouchers || []),
+                          ...(parseResult.paymentVouchers || []),
+                          ...(parseResult.salesVouchers || []),
+                          ...(parseResult.purchaseVouchers || []),
+                          ...(parseResult.journalVouchers || []),
+                        ].slice(0, 100).map((v, i) => (
                           <tr key={i} className="hover:bg-muted/30">
                             <td className="px-3 py-2 font-mono text-xs">{v.voucherNumber}</td>
                             <td className="px-3 py-2">
-                              <Badge variant="outline" className="text-[10px]">{v.voucherType}</Badge>
+                              <Badge variant="outline" className={cn(
+                                "text-[10px]",
+                                v.voucherType === "Receipt" ? "text-emerald-600 border-emerald-300 bg-emerald-50" :
+                                v.voucherType === "Payment" ? "text-blue-600 border-blue-300 bg-blue-50" :
+                                v.voucherType === "Sales" ? "text-amber-600 border-amber-300 bg-amber-50" :
+                                "text-purple-600 border-purple-300 bg-purple-50"
+                              )}>
+                                {v.voucherType}
+                              </Badge>
                             </td>
                             <td className="px-3 py-2 truncate max-w-[150px]">{v.partyName}</td>
-                            <td className="px-3 py-2 text-right font-mono">₹{v.amount.toLocaleString("en-IN")}</td>
+                            <td className="px-3 py-2 text-right font-mono font-bold">₹{v.amount.toLocaleString("en-IN")}</td>
                             <td className="px-3 py-2 font-mono text-muted-foreground">{v.date}</td>
                           </tr>
                         ))}
@@ -686,7 +804,7 @@ export function TallyImportModal({
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Users2 className="w-4 h-4 text-blue-600" />
-                          <span className="text-xs font-bold text-foreground">Parties / Ledgers</span>
+                          <span className="text-xs font-bold text-foreground">Parties & Ledgers</span>
                         </div>
                         <div className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center",
@@ -695,7 +813,65 @@ export function TallyImportModal({
                           {importParties && <Check className="w-3 h-3 text-white" />}
                         </div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">{parseResult.parties.length} parties detected</p>
+                      <p className="text-[11px] text-muted-foreground">{parseResult.parties.length} parties detected (with opening balance)</p>
+                    </button>
+                  )}
+
+                  {(parseResult.bankAccounts?.length > 0 || parseResult.cashInHand > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => setImportBanks(!importBanks)}
+                      className={cn(
+                        "p-4 rounded-xl border-2 text-left transition-all",
+                        importBanks
+                          ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20"
+                          : "border-border bg-card hover:border-emerald-300"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Landmark className="w-4 h-4 text-emerald-600" />
+                          <span className="text-xs font-bold text-foreground">Bank & Cash Accounts</span>
+                        </div>
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                          importBanks ? "border-emerald-500 bg-emerald-500" : "border-muted-foreground"
+                        )}>
+                          {importBanks && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {parseResult.bankAccounts?.length || 0} Bank Account(s) {parseResult.cashInHand > 0 ? `+ ₹${parseResult.cashInHand} Cash` : ""}
+                      </p>
+                    </button>
+                  )}
+
+                  {((parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setImportVouchers(!importVouchers)}
+                      className={cn(
+                        "p-4 rounded-xl border-2 text-left transition-all",
+                        importVouchers
+                          ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20"
+                          : "border-border bg-card hover:border-indigo-300"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-indigo-600" />
+                          <span className="text-xs font-bold text-foreground">Ledger Statement Vouchers</span>
+                        </div>
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                          importVouchers ? "border-indigo-500 bg-indigo-500" : "border-muted-foreground"
+                        )}>
+                          {importVouchers && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)} Receipt/Payment/Invoice Vouchers
+                      </p>
                     </button>
                   )}
                 </div>
@@ -802,8 +978,8 @@ export function TallyImportModal({
               {/* Stats grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {importStats.itemsImported > 0 && (
-                  <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center">
-                    <p className="text-2xl font-black text-emerald-700">{importStats.itemsImported}</p>
+                  <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 text-center">
+                    <p className="text-2xl font-black text-amber-700">{importStats.itemsImported}</p>
                     <p className="text-[11px] text-muted-foreground">Items Imported</p>
                   </div>
                 )}
@@ -811,6 +987,18 @@ export function TallyImportModal({
                   <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 text-center">
                     <p className="text-2xl font-black text-blue-700">{importStats.partiesImported}</p>
                     <p className="text-[11px] text-muted-foreground">Parties Imported</p>
+                  </div>
+                )}
+                {importStats.banksImported > 0 && (
+                  <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center">
+                    <p className="text-2xl font-black text-emerald-700">{importStats.banksImported}</p>
+                    <p className="text-[11px] text-muted-foreground">Bank Accounts</p>
+                  </div>
+                )}
+                {importStats.vouchersImported > 0 && (
+                  <div className="p-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 text-center">
+                    <p className="text-2xl font-black text-indigo-700">{importStats.vouchersImported}</p>
+                    <p className="text-[11px] text-muted-foreground">Ledger Entries</p>
                   </div>
                 )}
                 {importStats.itemsFailed > 0 && (

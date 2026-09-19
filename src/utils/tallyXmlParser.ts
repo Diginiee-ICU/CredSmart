@@ -3,11 +3,25 @@ import { Party } from "@/types/parties";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface TallyBankAccount {
+  name: string;
+  bankName: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  balance: number;
+}
+
 export interface TallyParseResult {
   items: Partial<InventoryItem>[];
   parties: Partial<Party>[];
+  bankAccounts: TallyBankAccount[];
+  cashInHand: number;
+  expenseCategories: string[];
   salesVouchers: TallyVoucher[];
   purchaseVouchers: TallyVoucher[];
+  paymentVouchers: TallyVoucher[];
+  receiptVouchers: TallyVoucher[];
+  journalVouchers: TallyVoucher[];
   companyName?: string;
   companyGstin?: string;
   totalEntities: number;
@@ -266,6 +280,44 @@ function parseVouchers(doc: Document, vchType: string): TallyVoucher[] {
   return vouchers;
 }
 
+function parseBankAndCashAccounts(doc: Document): {
+  bankAccounts: TallyBankAccount[];
+  cashInHand: number;
+  expenseCategories: string[];
+} {
+  const bankAccounts: TallyBankAccount[] = [];
+  let cashInHand = 0;
+  const expenseCategories: string[] = [];
+  const ledgerEls = doc.querySelectorAll("LEDGER");
+
+  ledgerEls.forEach((el) => {
+    const name = getAttr(el, "NAME") || getText(el, "NAME");
+    if (!name) return;
+    const parent = getText(el, "PARENT").toLowerCase();
+    const openingRaw = getText(el, "OPENINGBALANCE");
+    const bal = parseAmount(openingRaw);
+
+    if (parent.includes("bank") || parent.includes("occ") || parent.includes("overdraft")) {
+      const bankDetails = el.querySelector("BANKDETAILS, BANKDETAILS\\.LIST");
+      const accNum = bankDetails ? (getText(bankDetails, "ACCOUNTNUMBER") || getText(bankDetails, "ACCNO")) : "";
+      const ifsc = bankDetails ? (getText(bankDetails, "IFSCODE") || getText(bankDetails, "IFSC")) : "";
+      bankAccounts.push({
+        name,
+        bankName: name.replace(/account|a\/c|current|savings|overdraft|occ/gi, "").trim() || "Bank Account",
+        accountNumber: accNum,
+        ifscCode: ifsc,
+        balance: bal,
+      });
+    } else if (parent.includes("cash")) {
+      cashInHand += bal;
+    } else if (parent.includes("expense") || parent.includes("indirect exp") || parent.includes("direct exp")) {
+      expenseCategories.push(name);
+    }
+  });
+
+  return { bankAccounts, cashInHand, expenseCategories };
+}
+
 function parseCompanyMaster(doc: Document): { name?: string; gstin?: string } {
   const companyEl = doc.querySelector("COMPANY");
   if (!companyEl) return {};
@@ -294,22 +346,34 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
 
   const items = parseStockItems(doc);
   const parties = parseLedgers(doc);
+  const { bankAccounts, cashInHand, expenseCategories } = parseBankAndCashAccounts(doc);
   const salesVouchers = parseVouchers(doc, "Sales");
   const purchaseVouchers = parseVouchers(doc, "Purchase");
+  const paymentVouchers = parseVouchers(doc, "Payment");
+  const receiptVouchers = parseVouchers(doc, "Receipt");
+  const journalVouchers = parseVouchers(doc, "Journal");
   const company = parseCompanyMaster(doc);
 
-  if (items.length === 0 && parties.length === 0 && salesVouchers.length === 0 && purchaseVouchers.length === 0) {
+  const totalVouchers = salesVouchers.length + purchaseVouchers.length + paymentVouchers.length + receiptVouchers.length + journalVouchers.length;
+
+  if (items.length === 0 && parties.length === 0 && bankAccounts.length === 0 && totalVouchers === 0) {
     warnings.push("No recognizable Tally entities found in this XML file. Ensure you exported Stock Items or Ledger data from Tally.");
   }
 
   return {
     items,
     parties,
+    bankAccounts,
+    cashInHand,
+    expenseCategories,
     salesVouchers,
     purchaseVouchers,
+    paymentVouchers,
+    receiptVouchers,
+    journalVouchers,
     companyName: company.name,
     companyGstin: company.gstin,
-    totalEntities: items.length + parties.length + salesVouchers.length + purchaseVouchers.length,
+    totalEntities: items.length + parties.length + bankAccounts.length + totalVouchers,
     warnings,
     source: "xml",
   };
@@ -519,8 +583,14 @@ export function autoDetectAndParseTally(content: string, filename: string): Tall
   return {
     items: finalItems,
     parties: finalParties,
+    bankAccounts: [],
+    cashInHand: 0,
+    expenseCategories: [],
     salesVouchers: [],
     purchaseVouchers: [],
+    paymentVouchers: [],
+    receiptVouchers: [],
+    journalVouchers: [],
     totalEntities: finalItems.length + finalParties.length,
     warnings,
     source: "csv",
