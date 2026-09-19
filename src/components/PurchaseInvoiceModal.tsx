@@ -64,6 +64,7 @@ import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddIt
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/QuickCreateItemModal";
 import { MobileCreatePurchaseInvoice } from "@/components/invoices/mobile/MobileCreatePurchaseInvoice";
+import { MobileInvoiceSuccessView } from "@/components/invoices/mobile/MobileInvoiceSuccessView";
 import { PartyCustomItem } from "@/types/parties";
 
 interface SupplierOption {
@@ -1282,7 +1283,9 @@ export function PurchaseInvoiceModal({
         }
       }
 
-      if (saveAndNew) {
+      if (window.innerWidth < 1024) {
+        setMobileSuccessInvoice(saved);
+      } else if (saveAndNew) {
         const nextSeq = (parseInt(billNumberSeq, 10) + 1 || Math.floor(200 + Math.random() * 800)).toString();
         setBillNumberSeq(nextSeq);
         setPartyName("");
@@ -1463,7 +1466,28 @@ export function PurchaseInvoiceModal({
           {/* ───────────────────────────────────────────────────────────── */}
           {/* 1. TOP HEADER BAR */}
           {/* ───────────────────────────────────────────────────────────── */}
-          <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
+          {mobileSuccessInvoice ? (
+            <div className="lg:hidden">
+              <MobileInvoiceSuccessView
+                invoice={mobileSuccessInvoice}
+                onClose={() => {
+                  setMobileSuccessInvoice(null);
+                  onOpenChange(false);
+                }}
+                onEdit={() => setMobileSuccessInvoice(null)}
+                onDelete={() => {
+                  setMobileSuccessInvoice(null);
+                  onOpenChange(false);
+                }}
+                onDownload={() => {}}
+                onPrint={() => {}}
+                onShare={() => {}}
+                onGenerateEwayBill={() => {}}
+              />
+            </div>
+          ) : (
+            <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
+          )}
 
             <div className="hidden lg:flex flex-col h-full w-full">
               <div className="bill-editor-toolbar px-3 py-2.5 sm:px-4 sm:py-2.5 border-b border-slate-200 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
