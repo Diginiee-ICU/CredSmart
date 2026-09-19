@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { autoDetectAndParseTally } from "@/utils/tallyXmlParser";
+import { parseUniversalFile, SupportedSoftware } from "@/utils/universalDataImporter";
 import { TallyImportModal } from "@/components/TallyImportModal";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -272,50 +272,49 @@ export function ProductLibraryModal({
     new Set(PRESET_LIBRARY_ITEMS.map((_, i) => i))
   );
   const [isAdding, setIsAdding] = useState(false);
-  const [selectedSoftware, setSelectedSoftware] = useState<"vyapar" | "tally" | "mybillbook" | "marg" | "busy">("vyapar");
+  const [selectedSoftware, setSelectedSoftware] = useState<SupportedSoftware>("vyapar");
 
   // Excel / CSV state
   const [parsedItems, setParsedItems] = useState<Partial<InventoryItem>[]>([]);
   const [pastedCSV, setPastedCSV] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Tally import state
+  // Software migration state
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
-  const [tallyParsedItems, setTallyParsedItems] = useState<Partial<InventoryItem>[]>([]);
-  const tallyFileRef = useRef<HTMLInputElement>(null);
+  const [softwareParsedItems, setSoftwareParsedItems] = useState<Partial<InventoryItem>[]>([]);
+  const softwareFileRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  const handleTallyFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSoftwareFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
     try {
-      const text = await file.text();
-      const result = autoDetectAndParseTally(text, file.name);
+      const result = await parseUniversalFile(file, selectedSoftware);
       if (result.items.length === 0) {
-        toast.error("No stock items found in this Tally file. Please export Stock Items from Tally Prime and try again.");
+        toast.error(`No stock items found in this ${selectedSoftware.toUpperCase()} file. Please verify and try again.`);
         return;
       }
-      setTallyParsedItems(result.items);
+      setSoftwareParsedItems(result.items);
       setActiveTab("software");
-      toast.success(`Detected ${result.items.length} items from Tally ${file.name}. Review and confirm import below.`);
+      toast.success(`Detected ${result.items.length} items from ${selectedSoftware.toUpperCase()} (${file.name}). Ready to import!`);
       if (result.warnings.length > 0) result.warnings.forEach((w) => toast.warning(w));
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to parse Tally file.");
+      toast.error(err instanceof Error ? err.message : `Failed to parse ${selectedSoftware.toUpperCase()} file.`);
     }
   };
 
-  const handleConfirmTallyImport = async () => {
-    if (tallyParsedItems.length === 0) return;
+  const handleConfirmSoftwareImport = async () => {
+    if (softwareParsedItems.length === 0) return;
     setIsAdding(true);
     try {
-      await onAddProducts(tallyParsedItems);
-      toast.success(`Imported ${tallyParsedItems.length} items from Tally into inventory!`);
-      setTallyParsedItems([]);
+      await onAddProducts(softwareParsedItems);
+      toast.success(`Imported ${softwareParsedItems.length} items into inventory!`);
+      setSoftwareParsedItems([]);
       onClose();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to import Tally items."));
+      toast.error(getErrorMessage(err, "Failed to import items."));
     } finally {
       setIsAdding(false);
     }
@@ -418,24 +417,22 @@ export function ProductLibraryModal({
     return results;
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      if (text) {
-        const parsed = parseProductCSV(text);
-        if (parsed.length === 0) {
-          toast.error("No valid product rows found in file. Ensure headers match Item Name, Selling Price, etc.");
-        } else {
-          setParsedItems(parsed);
-          toast.success(`Successfully parsed ${parsed.length} products from file!`);
-        }
+    try {
+      const res = await parseUniversalFile(file, "custom");
+      if (res.items.length === 0) {
+        toast.error("No valid product rows found in file. Ensure headers match Item Name, Selling Price, etc.");
+      } else {
+        setParsedItems(res.items);
+        toast.success(`Successfully parsed ${res.items.length} products from ${file.name}!`);
       }
-    };
-    reader.readAsText(file);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to parse spreadsheet file.");
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -707,29 +704,31 @@ export function ProductLibraryModal({
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs scrollbar-thin">
             <div className="space-y-2">
               <p className="font-bold text-foreground text-sm">Select Your Existing Accounting &amp; POS Software</p>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
                 {[
+                  { id: "auto", label: "Auto-Detect", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800" },
                   { id: "vyapar", label: "Vyapar App", color: "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800" },
-                  { id: "tally", label: "Tally Prime / ERP 9", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800" },
-                  { id: "mybillbook", label: "My Bill Book", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800" },
-                  { id: "marg", label: "Marg ERP 9+", color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800" },
+                  { id: "tally", label: "Tally Prime / ERP 9", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800" },
+                  { id: "mybillbook", label: "My Bill Book", color: "text-cyan-600 bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800" },
                   { id: "busy", label: "Busy Accounting", color: "text-purple-600 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800" },
+                  { id: "marg", label: "Marg ERP 9+", color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800" },
+                  { id: "zoho", label: "Zoho Books", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800" },
                 ].map((s) => (
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedSoftware(s.id as typeof selectedSoftware)}
+                    onClick={() => setSelectedSoftware(s.id as SupportedSoftware)}
                     className={cn(
-                      "p-3.5 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
+                      "p-3 rounded-xl border text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
                       selectedSoftware === s.id
                         ? "border-primary ring-2 ring-primary/20 bg-primary/10 text-primary shadow-sm"
                         : "border-border hover:bg-muted text-foreground"
                     )}
                   >
-                    <div className={cn("p-2 rounded-xl border", s.color)}>
-                      <FileSpreadsheet className="w-5 h-5" />
+                    <div className={cn("p-1.5 rounded-lg border", s.color)}>
+                      <FileSpreadsheet className="w-4 h-4" />
                     </div>
-                    <span className="text-xs">{s.label}</span>
+                    <span className="text-[11px] leading-tight">{s.label}</span>
                   </button>
                 ))}
               </div>
@@ -742,6 +741,12 @@ export function ProductLibraryModal({
                 How to export from {selectedSoftware.toUpperCase()}:
               </p>
               <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground leading-relaxed text-[11px]">
+                {selectedSoftware === "auto" && (
+                  <>
+                    <li>Drop any Excel (.xlsx, .xls), CSV, or Tally XML file.</li>
+                    <li>CredSmart's signature engine will automatically recognize your software and extract items.</li>
+                  </>
+                )}
                 {selectedSoftware === "vyapar" && (
                   <>
                     <li>Open Vyapar on Desktop / Mobile &gt; Go to <strong>Items Master</strong>.</li>
@@ -776,114 +781,99 @@ export function ProductLibraryModal({
                     <li>Generate the Excel file and upload below.</li>
                   </>
                 )}
+                {selectedSoftware === "zoho" && (
+                  <>
+                    <li>Open Zoho Books &gt; Items &gt; Click the hamburger/gear menu &gt; <strong>Export Items</strong>.</li>
+                    <li>Export as CSV or XLS and upload below.</li>
+                  </>
+                )}
               </ol>
             </div>
 
-            {/* Dropzone for Software Export File — Tally-specific with real parser */}
-            {selectedSoftware === "tally" ? (
-              <div className="space-y-4">
-                {/* Tally-specific upload zone */}
-                <div className="p-4 rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-600">
-                      <Zap className="w-3.5 h-3.5" />
-                    </div>
-                    <p className="font-bold text-xs text-foreground">Upload Tally XML or CSV Export</p>
+            {/* Universal Dropzone for Software Export File */}
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-primary/15 text-primary">
+                    <Zap className="w-3.5 h-3.5" />
                   </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Supports <strong>.xml</strong> (recommended — includes HSN, GST, batches) and <strong>.csv</strong> from Stock Summary
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setTallyModalOpen(true)}
-                        className="gap-1.5 font-bold text-amber-700 border-amber-300 hover:bg-amber-50 cursor-pointer text-[11px]"
-                      >
-                        <FileSpreadsheet className="w-3 h-3" />
-                        Full Wizard
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => tallyFileRef.current?.click()}
-                        className="gap-1.5 font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        Upload Tally File
-                      </Button>
-                    </div>
-                  </div>
-                  <input
-                    ref={tallyFileRef}
-                    type="file"
-                    accept=".xml,.csv"
-                    className="hidden"
-                    onChange={handleTallyFileUpload}
-                  />
-                </div>
-
-                {/* Tally parsed items preview */}
-                {tallyParsedItems.length > 0 && (
-                  <div className="border border-amber-500/20 rounded-xl overflow-hidden bg-card">
-                    <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-amber-600" />
-                        <span className="font-bold text-amber-700 dark:text-amber-400 text-xs">
-                          {tallyParsedItems.length} Items Parsed from Tally — Ready to Import
-                        </span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setTallyParsedItems([])}
-                        className="h-6 text-[11px] text-rose-500 hover:text-rose-600"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto divide-y divide-border scrollbar-thin">
-                      {tallyParsedItems.slice(0, 100).map((item, idx) => (
-                        <div key={idx} className="px-3 py-2 flex items-center justify-between text-xs">
-                          <div>
-                            <p className="font-bold text-foreground truncate max-w-[200px]">{item.name}</p>
-                            <p className="text-[10px] text-muted-foreground font-mono">
-                              {item.unit} · HSN: {item.hsnCode || "—"} · GST: {item.gstRate}%
-                            </p>
-                          </div>
-                          <div className="text-right font-mono">
-                            <p className="font-bold">Qty: {item.openingStock ?? 0}</p>
-                            <p className="text-[10px] text-muted-foreground">₹{(item.purchasePrice ?? 0).toFixed(2)}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-between gap-4">
-                <div>
                   <p className="font-bold text-xs text-foreground">
-                    Ready to migrate from {selectedSoftware.toUpperCase()}?
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Upload your {selectedSoftware.toUpperCase()} item export file to start instant import.
+                    Upload {selectedSoftware === "auto" ? "Any Tool" : selectedSoftware.toUpperCase()} Export File
                   </p>
                 </div>
-
-                <Button
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-1.5 font-bold shrink-0 cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Upload {selectedSoftware.toUpperCase()} File
-                </Button>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Supports native <strong>.xlsx, .xls, .xml, .csv</strong> files with auto column detection
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setTallyModalOpen(true)}
+                      className="gap-1.5 font-bold text-primary border-primary/30 hover:bg-primary/10 cursor-pointer text-[11px]"
+                    >
+                      <FileSpreadsheet className="w-3 h-3" />
+                      Full Universal Wizard
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => softwareFileRef.current?.click()}
+                      className="gap-1.5 font-bold bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload File
+                    </Button>
+                  </div>
+                </div>
+                <input
+                  ref={softwareFileRef}
+                  type="file"
+                  accept=".xml,.csv,.xlsx,.xls,.txt"
+                  className="hidden"
+                  onChange={handleSoftwareFileUpload}
+                />
               </div>
-            )}
+
+              {/* Parsed items preview */}
+              {softwareParsedItems.length > 0 && (
+                <div className="border border-emerald-500/20 rounded-xl overflow-hidden bg-card">
+                  <div className="px-4 py-2.5 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400 text-xs">
+                        {softwareParsedItems.length} Items Parsed from {selectedSoftware.toUpperCase()} — Ready to Import
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSoftwareParsedItems([])}
+                      className="h-6 text-[11px] text-rose-500 hover:text-rose-600"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto divide-y divide-border scrollbar-thin">
+                    {softwareParsedItems.slice(0, 100).map((item, idx) => (
+                      <div key={idx} className="px-3 py-2 flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-bold text-foreground truncate max-w-[200px]">{item.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">
+                            {item.unit} · HSN: {item.hsnCode || "—"} · GST: {item.gstRate}%
+                          </p>
+                        </div>
+                        <div className="text-right font-mono">
+                          <p className="font-bold">Qty: {item.openingStock ?? 0}</p>
+                          <p className="text-[10px] text-muted-foreground">₹{(item.sellingPrice ?? item.purchasePrice ?? 0).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -926,40 +916,41 @@ export function ProductLibraryModal({
             </button>
           )}
 
-          {activeTab === "software" && selectedSoftware === "tally" && tallyParsedItems.length > 0 && (
+          {activeTab === "software" && softwareParsedItems.length > 0 && (
             <button
               type="button"
-              onClick={handleConfirmTallyImport}
+              onClick={handleConfirmSoftwareImport}
               disabled={isAdding}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-amber-600/30 active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer"
             >
               {isAdding ? (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <CheckCircle2 className="w-3.5 h-3.5" />
               )}
-              Import {tallyParsedItems.length} Tally Items
+              Import {softwareParsedItems.length} {selectedSoftware === "auto" ? "" : selectedSoftware.toUpperCase()} Items
             </button>
           )}
 
-          {activeTab === "software" && selectedSoftware !== "tally" && (
+          {activeTab === "software" && softwareParsedItems.length === 0 && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => softwareFileRef.current?.click()}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-cyan-600/30 active:scale-95 transition-all cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Select {selectedSoftware.toUpperCase()} Export File</span>
+              <span>Select {selectedSoftware === "auto" ? "Software" : selectedSoftware.toUpperCase()} Export File</span>
             </button>
           )}
         </div>
       </div>
     </div>
 
-    {/* Full Tally Import Wizard Modal */}
+    {/* Full Universal Import Wizard Modal */}
     <TallyImportModal
       isOpen={tallyModalOpen}
       onClose={() => setTallyModalOpen(false)}
+      initialSoftware={selectedSoftware}
       onImportItems={async (items) => {
         await onAddProducts(items);
         setTallyModalOpen(false);
