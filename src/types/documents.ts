@@ -42,6 +42,8 @@ export interface DocumentLineItem {
   /** Conversion factor: how many primary units per 1 alt unit (e.g. 4 PCS/PKT) */
   altUnitConversion?: number;
   rate: number;
+  /** Tax pricing mode: "exclusive" (Without Tax, default) or "inclusive" (With Tax) */
+  taxType?: "exclusive" | "inclusive";
   discountPercent: number;
   discountAmount: number;
   taxRate: number; // e.g. 0, 5, 12, 18, 28
@@ -56,6 +58,8 @@ export interface BusinessDocument {
   id: string;
   organizationId: string;
   docType: SalesDocumentType | PurchaseDocumentType;
+  /** Default tax type for line items: "exclusive" (Without Tax) or "inclusive" (With Tax) */
+  defaultTaxType?: "exclusive" | "inclusive";
   documentNumber: string;
   referenceNumber?: string;
   partyId?: string;

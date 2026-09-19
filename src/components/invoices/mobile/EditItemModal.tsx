@@ -21,19 +21,35 @@ export function EditItemModal({ item, onClose, onSave, onDelete }: EditItemModal
     const qty = Number(localItem.quantity || 0);
     const rate = Number(localItem.rate || 0);
     const taxRate = Number(localItem.taxRate || 0);
+    const isInclusive = localItem.taxType === 'inclusive';
     
-    const exclusiveTotal = qty * rate;
-    
+    let exclusiveTotal = 0;
     let discountValue = 0;
-    if (discountType === 'percentage') {
-      discountValue = exclusiveTotal * (Number(localItem.discountPercent || 0) / 100);
+    let taxValue = 0;
+    let finalTotal = 0;
+
+    if (isInclusive) {
+      const gross = qty * rate;
+      if (discountType === 'percentage') {
+        discountValue = gross * (Number(localItem.discountPercent || 0) / 100);
+      } else {
+        discountValue = Number(localItem.discountAmount || 0);
+      }
+      const grossAfterDiscount = Math.max(0, gross - discountValue);
+      exclusiveTotal = taxRate > 0 ? grossAfterDiscount / (1 + taxRate / 100) : grossAfterDiscount;
+      taxValue = grossAfterDiscount - exclusiveTotal;
+      finalTotal = grossAfterDiscount;
     } else {
-      discountValue = Number(localItem.discountAmount || 0);
+      const rawSub = qty * rate;
+      if (discountType === 'percentage') {
+        discountValue = rawSub * (Number(localItem.discountPercent || 0) / 100);
+      } else {
+        discountValue = Number(localItem.discountAmount || 0);
+      }
+      exclusiveTotal = Math.max(0, rawSub - discountValue);
+      taxValue = (exclusiveTotal * taxRate) / 100;
+      finalTotal = exclusiveTotal + taxValue;
     }
-    
-    const taxableAmount = exclusiveTotal - discountValue;
-    const taxValue = taxableAmount * (taxRate / 100);
-    const finalTotal = taxableAmount + taxValue;
 
     return { exclusiveTotal, discountValue, taxValue, finalTotal };
   }, [localItem, discountType]);
@@ -42,7 +58,9 @@ export function EditItemModal({ item, onClose, onSave, onDelete }: EditItemModal
     // Before saving, ensure calculated fields are updated if needed
     onSave({
       ...localItem,
-      totalAmount: finalTotal,
+      taxType: localItem.taxType || 'exclusive',
+      lineTotal: finalTotal,
+      taxableAmount: exclusiveTotal,
       taxAmount: taxValue,
       discountAmount: discountValue
     });
@@ -58,7 +76,7 @@ export function EditItemModal({ item, onClose, onSave, onDelete }: EditItemModal
             <button onClick={onClose} className="p-1 text-indigo-700 shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-[17px] font-bold text-slate-900 truncate">{localItem.name || "Sample Item"}</h2>
+            <h2 className="text-[17px] font-bold text-slate-900 truncate">{localItem.productName || localItem.name || "Sample Item"}</h2>
           </div>
           <button 
             onClick={onDelete}
@@ -88,7 +106,27 @@ export function EditItemModal({ item, onClose, onSave, onDelete }: EditItemModal
         {activeTab === 'price' && (
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Sales Price (Without Tax)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700">
+                  Rate {localItem.taxType === 'inclusive' ? '(With Tax / Incl.)' : '(Without Tax / Excl.)'}
+                </label>
+                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setLocalItem({ ...localItem, taxType: 'exclusive' })}
+                    className={`px-2 py-0.5 rounded transition-all ${localItem.taxType !== 'inclusive' ? 'bg-white text-indigo-700 shadow-xs font-black' : 'text-slate-500'}`}
+                  >
+                    Without Tax
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocalItem({ ...localItem, taxType: 'inclusive' })}
+                    className={`px-2 py-0.5 rounded transition-all ${localItem.taxType === 'inclusive' ? 'bg-indigo-600 text-white shadow-xs font-black' : 'text-slate-500'}`}
+                  >
+                    With Tax
+                  </button>
+                </div>
+              </div>
               <div className="border border-slate-200 rounded-lg px-3 py-3 flex items-center gap-2">
                 <span className="text-slate-500 font-medium">₹</span>
                 <input 

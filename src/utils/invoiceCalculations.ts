@@ -4,6 +4,8 @@ export interface InvoiceCalculationItemInput {
   discountPercent: number;
   discountAmount: number;
   taxRate: number;
+  /** "exclusive" (Without Tax, default) or "inclusive" (With Tax) */
+  taxType?: "exclusive" | "inclusive";
   altQty?: number;
   altUnit?: string;
   altUnitConversion?: number;
@@ -11,26 +13,52 @@ export interface InvoiceCalculationItemInput {
 
 export interface InvoiceCalculationInput {
   items: InvoiceCalculationItemInput[];
+  /** Default tax type for items if item.taxType is not specified */
+  defaultTaxType?: "exclusive" | "inclusive";
   overallDiscountType: "flat" | "percent";
   overallDiscountValue: number;
-  showAdditionalCharges: boolean;
-  additionalChargesAmount: number;
+  showAdditionalCharges?: boolean;
+  additionalChargesAmount?: number;
   autoRoundOff: boolean;
   manualRoundOff: number;
   isInterState: boolean;
 }
 
 export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
+  const docTaxType = input.defaultTaxType || "exclusive";
+
   const recalculatedItems = input.items.map((item) => {
     const primaryQty = Number(item.quantity) || 0;
-    const rawSub = primaryQty * (Number(item.rate) || 0);
-    const itemDiscount = item.discountPercent > 0
-      ? (rawSub * (Number(item.discountPercent) || 0)) / 100
-      : Number(item.discountAmount) || 0;
-    const taxable = Math.max(0, rawSub - itemDiscount);
-
+    const unitRate = Number(item.rate) || 0;
+    const itemTaxType = item.taxType || docTaxType;
     const taxRate = Number(item.taxRate) || 0;
-    const taxAmount = (taxable * taxRate) / 100;
+
+    let taxable = 0;
+    let taxAmount = 0;
+    let rawSub = 0;
+    let itemDiscount = 0;
+
+    if (itemTaxType === "inclusive") {
+      // Rates include GST (With Tax)
+      // rawSub is the gross amount (Qty * Rate)
+      rawSub = primaryQty * unitRate;
+      itemDiscount = item.discountPercent > 0
+        ? (rawSub * (Number(item.discountPercent) || 0)) / 100
+        : Number(item.discountAmount) || 0;
+      const grossAfterDiscount = Math.max(0, rawSub - itemDiscount);
+
+      // Back-calculate taxable value and GST
+      taxable = taxRate > 0 ? grossAfterDiscount / (1 + taxRate / 100) : grossAfterDiscount;
+      taxAmount = grossAfterDiscount - taxable;
+    } else {
+      // Rates exclude GST (Without Tax, standard)
+      rawSub = primaryQty * unitRate;
+      itemDiscount = item.discountPercent > 0
+        ? (rawSub * (Number(item.discountPercent) || 0)) / 100
+        : Number(item.discountAmount) || 0;
+      taxable = Math.max(0, rawSub - itemDiscount);
+      taxAmount = (taxable * taxRate) / 100;
+    }
 
     let cgst = 0;
     let sgst = 0;
@@ -46,6 +74,8 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
     return {
       ...item,
       quantity: primaryQty,
+      taxType: itemTaxType,
+      discountAmount: Number(itemDiscount.toFixed(2)),
       taxableAmount: Number(taxable.toFixed(2)),
       cgstAmount: Number(cgst.toFixed(2)),
       sgstAmount: Number(sgst.toFixed(2)),
@@ -59,8 +89,7 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
   }, 0);
 
   const itemDiscounts = recalculatedItems.reduce((acc, item) => {
-    const lineSub = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-    return acc + (lineSub - Number(item.taxableAmount || 0));
+    return acc + Number(item.discountAmount || 0);
   }, 0);
 
   const taxableBase = recalculatedItems.reduce((acc, item) => acc + Number(item.taxableAmount || 0), 0);

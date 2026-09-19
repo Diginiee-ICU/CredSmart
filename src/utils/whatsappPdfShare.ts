@@ -28,8 +28,9 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
   const targetElement =
     payload.customElement ||
     (payload.elementId ? document.getElementById(payload.elementId) : null) ||
-    document.getElementById("printable-invoice") ||
+    document.getElementById("unified-invoice-document") ||
     document.getElementById("receipt-printable-area") ||
+    document.getElementById("printable-invoice") ||
     (document.querySelector(".printable-invoice-container") as HTMLElement | null);
 
   if (targetElement) {
@@ -43,26 +44,49 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
       });
 
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
 
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const layoutAttr = targetElement.getAttribute("data-layout");
+      const isThermal = layoutAttr === "80mm" || layoutAttr === "58mm" || targetElement.offsetWidth < 360;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-      heightLeft -= pageHeight;
+      let pdf: jsPDF;
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-        heightLeft -= pageHeight;
+      if (isThermal) {
+        const thermalWidthMm = layoutAttr === "58mm" || targetElement.offsetWidth < 260 ? 58 : 80;
+        const thermalHeightMm = Math.max(60, (canvas.height * thermalWidthMm) / canvas.width);
+        pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: [thermalWidthMm, thermalHeightMm],
+        });
+        pdf.addImage(imgData, "PNG", 0, 0, thermalWidthMm, thermalHeightMm, undefined, "FAST");
+      } else {
+        pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // If content fits within single page height (or close to it), render cleanly on 1 page
+        if (imgHeight <= pageHeight * 1.06) {
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, Math.min(pageHeight, imgHeight), undefined, "FAST");
+        } else {
+          let heightLeft = imgHeight;
+          let position = 0;
+
+          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+          heightLeft -= pageHeight;
+
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+            heightLeft -= pageHeight;
+          }
+        }
       }
 
       return pdf.output("blob");

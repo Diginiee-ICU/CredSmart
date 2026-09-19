@@ -418,6 +418,8 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       return (
         <div
           ref={ref}
+          id="receipt-printable-area"
+          data-layout={layout}
           className={cn(
             "bg-white text-black font-mono text-xs p-4 sm:p-5 mx-auto border border-neutral-300 rounded-xl shadow-xs",
             layout === "80mm" ? "w-full max-w-[320px]" : "w-full max-w-[240px] text-[11px]",
@@ -590,6 +592,8 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       <div
         ref={ref}
         id="unified-invoice-document"
+        data-layout="a4"
+        data-printable-area="true"
         className={cn(
           "bg-white text-slate-800 w-full max-w-[780px] mx-auto p-3 sm:p-4 relative border border-slate-300 box-border font-sans leading-tight shadow-md rounded-lg",
           className
@@ -706,11 +710,11 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           {/* Address Section: Full-Width BILL TO or Dual BILL/SHIP TO */}
           {shippingInfo && shippingInfo.address && shippingInfo.address !== safeParty.address ? (
             <div className="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300 text-[10px]">
-              {/* BILL TO (BUYER) */}
+              {/* BILL TO / BILL FROM */}
               <div className="p-2 space-y-0.5 bg-white">
                 <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
                   <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                    BILL TO (BUYER)
+                    {isPurchase ? "BILL FROM (SUPPLIER)" : "BILL TO (BUYER)"}
                   </span>
                   {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
                     <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
@@ -759,7 +763,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
               <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
                 <div className="flex items-center gap-1.5">
                   <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                    BILL TO:
+                    {isPurchase ? "BILL FROM (SUPPLIER):" : "BILL TO:"}
                   </span>
                   <span className="font-black text-slate-900 text-[11px] uppercase">{safeParty.name}</span>
                 </div>

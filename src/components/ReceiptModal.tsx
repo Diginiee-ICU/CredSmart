@@ -57,8 +57,31 @@ interface ReceiptModalProps {
 export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">(typeof window !== "undefined" && window.innerWidth < 1024 ? "a4" : "80mm");
+  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("credsmart_desktop_print_layout") as "80mm" | "58mm" | "a4" | null;
+      if (saved && ["80mm", "58mm", "a4"].includes(saved)) {
+        return saved;
+      }
+      if (data.docType === "pos_invoice") {
+        return "80mm";
+      }
+      return "a4";
+    }
+    return "a4";
+  });
   const [copied, setCopied] = useState(false);
+
+  const handleLayoutChange = (newLayout: "80mm" | "58mm" | "a4") => {
+    setLayout(newLayout);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("credsmart_desktop_print_layout", newLayout);
+      } catch (e) {
+        console.warn("Could not save print layout preference:", e);
+      }
+    }
+  };
 
   useEffect(() => {
     scrollBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -171,6 +194,14 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           color: #000;
           background: #fff;
         }
+        #receipt-printable-area {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
       `;
     } else if (layout === "80mm") {
       printSpecificStyles = `
@@ -186,12 +217,20 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           color: #000;
           background: #fff;
         }
+        #receipt-printable-area {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
       `;
     } else {
       printSpecificStyles = `
         @page {
           size: A4 portrait;
-          margin: 5mm 7mm;
+          margin: 6mm 8mm;
         }
         * {
           -webkit-print-color-adjust: exact !important;
@@ -204,17 +243,15 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
-          font-size: 10px !important;
-          line-height: 1.25 !important;
         }
         #unified-invoice-document {
           width: 100% !important;
           max-width: 100% !important;
           min-width: 0 !important;
           box-shadow: none !important;
-          border: 1px solid #e2e8f0 !important;
+          border: 1px solid #cbd5e1 !important;
           border-radius: 0 !important;
-          padding: 0 !important;
+          padding: 4mm !important;
           margin: 0 auto !important;
           page-break-after: avoid !important;
           page-break-inside: avoid !important;
@@ -262,6 +299,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       totalAmount: data.total,
       date: formattedDate,
       isEstimate: data.isEstimate,
+      customElement: receiptRef.current,
       elementId: "receipt-printable-area",
       items: data.items.map((it) => ({
         name: it.product.name,
@@ -282,6 +320,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       totalAmount: data.total,
       date: formattedDate,
       isEstimate: data.isEstimate,
+      customElement: receiptRef.current,
       elementId: "receipt-printable-area",
       items: data.items.map((it) => ({
         name: (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).product?.name || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).name || "Item", // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -307,7 +346,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       aria-labelledby="receipt-modal-title"
       className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 pb-[env(safe-area-inset-bottom,0px)]"
     >
-      <div className="bg-slate-900 border-0 sm:border border-slate-800 w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[94vh] max-w-full sm:max-w-[780px] sm:rounded-3xl flex flex-col shadow-2xl text-white overflow-hidden animate-scale-in">
+      <div className="bg-slate-900 border-0 sm:border border-slate-800 w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[94vh] max-w-full sm:max-w-[820px] sm:rounded-3xl flex flex-col shadow-2xl text-white overflow-hidden animate-scale-in">
         
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-slate-800 bg-slate-900/95 shrink-0 z-10 gap-2">
@@ -327,46 +366,49 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Format Segment Switcher */}
-            <div className="hidden sm:flex bg-slate-950 p-0.5 sm:p-1 rounded-xl border border-slate-800 shrink-0">
+            {/* Desktop Dual Layout Selector */}
+            <div className="hidden sm:flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 shrink-0">
               <button
                 type="button"
-                onClick={() => setLayout("80mm")}
+                onClick={() => handleLayoutChange("a4")}
                 className={cn(
-                  "px-1.5 sm:px-3 py-1 rounded-lg text-[9px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all",
-                  layout === "80mm"
-                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200"
-                )}
-              >
-                <ScrollText className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                <span className="hidden xs:inline sm:inline">80mm</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayout("58mm")}
-                className={cn(
-                  "px-1.5 sm:px-3 py-1 rounded-lg text-[9px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all",
-                  layout === "58mm"
-                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200"
-                )}
-              >
-                <Smartphone className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                <span className="hidden xs:inline sm:inline">58mm</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayout("a4")}
-                className={cn(
-                  "px-1.5 sm:px-3 py-1 rounded-lg text-[9px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all",
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                   layout === "a4"
                     ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200"
                 )}
+                title="Print as Standard Full Page A4 Tax Invoice"
               >
-                <FileText className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                <span className="hidden xs:inline sm:inline">A4</span>
+                <FileText className="w-3.5 h-3.5" />
+                <span>📄 Standard A4</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLayoutChange("80mm")}
+                className={cn(
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                  layout === "80mm"
+                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                )}
+                title="Print as Thermal POS Roll Receipt (80mm)"
+              >
+                <ScrollText className="w-3.5 h-3.5" />
+                <span>🧾 Thermal (80mm)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLayoutChange("58mm")}
+                className={cn(
+                  "px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition-all cursor-pointer",
+                  layout === "58mm"
+                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                )}
+                title="Print as Compact Thermal Receipt (58mm)"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>58mm</span>
               </button>
             </div>
 

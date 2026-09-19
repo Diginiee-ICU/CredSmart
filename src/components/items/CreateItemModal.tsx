@@ -113,6 +113,7 @@ export function CreateItemModal({
   // Pricing & Tax
   const [sellingPrice, setSellingPrice] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
+  const [purchaseTaxType, setPurchaseTaxType] = useState<"exclusive" | "inclusive">("exclusive");
   const [mrp, setMrp] = useState("");
   const [gstRate, setGstRate] = useState<GSTRate>(18);
   const [hsnCode, setHsnCode] = useState("");
@@ -160,9 +161,11 @@ export function CreateItemModal({
       const initMrp = initialData.mrp ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.mrp ?? initSelling ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
       const initStock = initialData.currentStock ?? initialData.openingStock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.stock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.stock ?? "0"; // eslint-disable-line @typescript-eslint/no-explicit-any
       const initMinAlert = initialData.minStockAlert ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.min_stock_alert ?? "10"; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const initPurchaseTaxType = (initialData as any)?.purchaseTaxType || (initialData as any)?.tags?.purchase_tax_type || "exclusive";
 
       setSellingPrice(initSelling ? String(initSelling) : "");
       setPurchasePrice(initPurchase ? String(initPurchase) : "");
+      setPurchaseTaxType(initPurchaseTaxType === "inclusive" ? "inclusive" : "exclusive");
       setMrp(initMrp ? String(initMrp) : "");
       setGstRate(initialData.gstRate || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tax_rate || 18); // eslint-disable-line @typescript-eslint/no-explicit-any
       setHsnCode(initialData.hsnCode || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.hsn_code || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -193,6 +196,7 @@ export function CreateItemModal({
       setAltUnitConversion("4");
       setSellingPrice("");
       setPurchasePrice("");
+      setPurchaseTaxType("exclusive");
       setMrp("");
       setGstRate(18);
       setHsnCode("");
@@ -295,6 +299,7 @@ export function CreateItemModal({
       tags: {
         alt_unit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined,
         alt_unit_conversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : undefined,
+        purchase_tax_type: purchaseTaxType,
       },
     };
 
@@ -565,9 +570,37 @@ export function CreateItemModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="purchase-price" className="text-xs font-semibold">
-                    Purchase / Cost Price (₹) *
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="purchase-price" className="text-xs font-semibold">
+                      Purchase Price (₹) *
+                    </Label>
+                    <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setPurchaseTaxType("exclusive")}
+                        className={cn(
+                          "px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer",
+                          purchaseTaxType === "exclusive"
+                            ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                      >
+                        Without Tax
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPurchaseTaxType("inclusive")}
+                        className={cn(
+                          "px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer",
+                          purchaseTaxType === "inclusive"
+                            ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                      >
+                        With Tax
+                      </button>
+                    </div>
+                  </div>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
                       ₹

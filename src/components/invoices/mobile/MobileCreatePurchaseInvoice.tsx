@@ -21,6 +21,8 @@ export interface MobileCreatePurchaseInvoiceProps {
   recalculatedItems: DocumentLineItem[];
   totals: any;
   catalog: any[];
+  defaultTaxType?: "exclusive" | "inclusive";
+  onToggleDefaultTaxType?: (val: "exclusive" | "inclusive") => void;
   onSetSelectedSupplierId: (id: string) => void;
   onUpdateItem: (index: number, field: keyof DocumentLineItem, value: any) => void;
   onRemoveItem: (index: number) => void;
@@ -148,14 +150,46 @@ export function MobileCreatePurchaseInvoice(props: MobileCreatePurchaseInvoicePr
           </>
         ) : (
           <>
-            <div className="flex justify-between items-center px-4 py-4 bg-white">
-              <div className="flex items-center gap-2 text-[12px] font-bold text-slate-700 uppercase tracking-wider">
-                <ChevronUp className="w-4 h-4 text-slate-500" />
-                ITEMS ({props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length})
+            <div className="flex flex-col bg-white border-b border-slate-100">
+              <div className="flex justify-between items-center px-4 pt-3 pb-2">
+                <div className="flex items-center gap-2 text-[12px] font-bold text-slate-700 uppercase tracking-wider">
+                  <ChevronUp className="w-4 h-4 text-slate-500" />
+                  ITEMS ({props.recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length})
+                </div>
+                <button onClick={() => setIsItemModalOpen(true)} className="text-[14px] font-bold text-indigo-700 flex items-center gap-1 cursor-pointer">
+                  + Item
+                </button>
               </div>
-              <button onClick={() => setIsItemModalOpen(true)} className="text-[15px] font-bold text-indigo-700 flex items-center gap-1">
-                + Item
-              </button>
+
+              {props.onToggleDefaultTaxType && (
+                <div className="flex items-center justify-between px-4 pb-2.5 pt-1">
+                  <span className="text-xs font-semibold text-slate-500">Purchase Rates:</span>
+                  <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => props.onToggleDefaultTaxType!("exclusive")}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                        (props.defaultTaxType || "exclusive") === "exclusive"
+                          ? "bg-indigo-600 text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      Without Tax
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => props.onToggleDefaultTaxType!("inclusive")}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                        props.defaultTaxType === "inclusive"
+                          ? "bg-indigo-600 text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      With Tax (GST)
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             
             {props.recalculatedItems.filter(item => item.productName && item.productName.trim() !== "").map((item, idx) => {
@@ -294,6 +328,9 @@ export function MobileCreatePurchaseInvoice(props: MobileCreatePurchaseInvoicePr
             props.onUpdateItem(editingItemIndex, 'discountAmount', updatedItem.discountAmount);
             props.onUpdateItem(editingItemIndex, 'taxRate', updatedItem.taxRate);
             props.onUpdateItem(editingItemIndex, 'unit', updatedItem.unit);
+            if (updatedItem.taxType) {
+              props.onUpdateItem(editingItemIndex, 'taxType', updatedItem.taxType);
+            }
             // Since notes aren't natively supported on DocumentLineItem we cast it
             if ((updatedItem as any).notes !== undefined) {
               props.onUpdateItem(editingItemIndex, 'notes' as any, (updatedItem as any).notes);

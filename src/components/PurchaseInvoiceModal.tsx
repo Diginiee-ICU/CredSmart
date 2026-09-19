@@ -159,6 +159,7 @@ export function PurchaseInvoiceModal({
 
   // Document Type
   const [docType, setDocType] = useState<PurchaseDocumentType>(initialDocType);
+  const [defaultTaxType, setDefaultTaxType] = useState<"exclusive" | "inclusive">(editingDoc?.defaultTaxType || "exclusive");
 
   // Supplier / Party State
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
@@ -655,6 +656,7 @@ export function PurchaseInvoiceModal({
           };
         });
         setItems(loadedItems);
+        setDefaultTaxType(editingDoc.defaultTaxType || "exclusive");
         setPaymentMethod(editingDoc.paymentMethod || "Bank Transfer");
         setAmountPaid(editingDoc.paidAmount || 0);
         setNotes(editingDoc.notes || "");
@@ -676,6 +678,7 @@ export function PurchaseInvoiceModal({
       } else {
         const targetType = initialDocType || "purchase_invoice";
         setDocType(targetType);
+        setDefaultTaxType("exclusive");
         const randSeq = Math.floor(200 + Math.random() * 800).toString();
         setBillPrefix("PUR/26-27/");
         setBillNumberSeq(randSeq);
@@ -723,7 +726,7 @@ export function PurchaseInvoiceModal({
         setAdditionalChargesAmount(0);
         setShowDiscount(false);
         setOverallDiscountValue(0);
-        setItems([createNewRow("row-1")]);
+        setItems([createNewRow("row-1", "exclusive")]);
         setAmountPaid(0);
         setMarkAsFullyPaid(false);
         setPaymentMethod("Bank Transfer");
@@ -732,7 +735,7 @@ export function PurchaseInvoiceModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingDoc, initialDocType, prefilledSupplier]);
 
-  const createNewRow = (id: string): DocumentLineItem => ({
+  const createNewRow = (id: string, taxTypeOverride?: "exclusive" | "inclusive"): DocumentLineItem => ({
     id,
     productName: "",
     hsn: "",
@@ -742,6 +745,7 @@ export function PurchaseInvoiceModal({
     discountPercent: 0,
     discountAmount: 0,
     taxRate: 18,
+    taxType: taxTypeOverride || defaultTaxType,
     taxableAmount: 0,
     cgstAmount: 0,
     sgstAmount: 0,
@@ -779,6 +783,7 @@ export function PurchaseInvoiceModal({
         rate: Number((ni as unknown).rate) || Number((ni as unknown).costPrice) || 0,
         discountPercent: 0,
         discountAmount: 0,
+        taxType: (ni as unknown).taxType || defaultTaxType,
         taxRate: Number((ni as unknown).taxRate) || 18,
         taxableAmount: Number((ni as unknown).taxableAmount) || 0,
         cgstAmount: Number((ni as unknown).cgstAmount) || 0,
@@ -839,10 +844,12 @@ export function PurchaseInvoiceModal({
         discountPercent: Number(item.discountPercent) || 0,
         discountAmount: Number(item.discountAmount) || 0,
         taxRate: Number(item.taxRate) || 0,
+        taxType: item.taxType || defaultTaxType,
         altQty: item.altQty != null ? Number(item.altQty) : undefined,
         altUnit: item.altUnit,
         altUnitConversion: item.altUnitConversion != null ? Number(item.altUnitConversion) : undefined,
       })),
+      defaultTaxType,
       overallDiscountType,
       overallDiscountValue,
       showAdditionalCharges,
@@ -851,7 +858,7 @@ export function PurchaseInvoiceModal({
       manualRoundOff,
       isInterState,
     });
-  }, [items, overallDiscountType, overallDiscountValue, showAdditionalCharges, additionalChargesAmount, autoRoundOff, manualRoundOff, isInterState]);
+  }, [items, defaultTaxType, overallDiscountType, overallDiscountValue, showAdditionalCharges, additionalChargesAmount, autoRoundOff, manualRoundOff, isInterState]);
 
   useEffect(() => {
     if (markAsFullyPaid) {
@@ -889,6 +896,8 @@ export function PurchaseInvoiceModal({
       const defaultAltQty = hasAlt ? 1 : undefined;
       const defaultQty = hasAlt ? altConv : 1;
 
+      const purchaseTaxType = (pTags.purchase_tax_type as "exclusive" | "inclusive") || (pTags.tax_type as "exclusive" | "inclusive") || defaultTaxType;
+
       copy[index] = {
         ...copy[index],
         productId: product.id,
@@ -901,6 +910,7 @@ export function PurchaseInvoiceModal({
         altQty: defaultAltQty,
         quantity: defaultQty,
         rate: product.costPrice || 0,
+        taxType: purchaseTaxType,
         taxRate: product.gstRate !== undefined ? product.gstRate : 18,
       };
 
@@ -938,6 +948,7 @@ export function PurchaseInvoiceModal({
         gst_rate: product.taxRate,
         selling_price: product.sellingPrice,
         purchase_price: product.purchasePrice,
+        purchase_tax_type: product.purchaseTaxType || product.taxType || defaultTaxType,
         mrp: product.sellingPrice || product.purchasePrice || 0,
         unit: product.unit || "Pcs",
         alt_unit: product.altUnit,
@@ -977,6 +988,7 @@ export function PurchaseInvoiceModal({
             altUnitConversion: product.altUnitConversion || undefined,
             altQty: undefined,
             rate: product.purchasePrice || product.sellingPrice || 0,
+            taxType: product.purchaseTaxType || product.taxType || defaultTaxType,
             taxRate: product.taxRate,
             batchNumber: product.batchNumber || undefined,
           };
@@ -1088,6 +1100,7 @@ export function PurchaseInvoiceModal({
       id: editingDoc?.id || `preview-${Date.now()}`,
       organizationId: orgId,
       docType,
+      defaultTaxType,
       documentNumber: fullDocumentNumber,
       referenceNumber: ewayBillNo.trim() || undefined,
       partyId: selectedSupplierId || undefined,
@@ -1189,6 +1202,7 @@ export function PurchaseInvoiceModal({
       const finalDoc: Omit<BusinessDocument, "id"> = {
         organizationId: orgId,
         docType,
+        defaultTaxType,
         documentNumber: fullDocumentNumber,
         referenceNumber: ewayBillNo.trim() || undefined,
         partyId: selectedSupplierId || undefined,
@@ -1490,7 +1504,7 @@ export function PurchaseInvoiceModal({
               />
             </div>
           ) : (
-            <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
+            <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} defaultTaxType={defaultTaxType} onToggleDefaultTaxType={(newType) => { setDefaultTaxType(newType); setItems((prev) => prev.map((it) => ({ ...it, taxType: newType }))); }} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
           )}
 
             <div className="hidden lg:flex flex-col h-full w-full">
@@ -2098,6 +2112,60 @@ export function PurchaseInvoiceModal({
               {/* CENTER COLUMN: ITEMS */}
               {/* ───────────────────────────────────────────────────────────── */}
               <div className={cn("lg:col-span-5 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", mobileTab === 'items' ? "flex" : "hidden lg:flex")}>
+                
+                {/* Items Header Toolbar with With/Without Tax Switcher */}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Items &amp; Rates
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      ({recalculatedItems.filter(i => i.productName && i.productName.trim() !== "").length} items)
+                    </span>
+                  </div>
+
+                  {/* Purchase Tax Mode Switcher */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                      Purchase Rate:
+                    </span>
+                    <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDefaultTaxType("exclusive");
+                          setItems((prev) => prev.map((it) => ({ ...it, taxType: "exclusive" })));
+                        }}
+                        className={cn(
+                          "px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-xs font-bold transition-all cursor-pointer",
+                          defaultTaxType === "exclusive"
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                        title="Rates are without tax (GST added on top)"
+                      >
+                        Without Tax
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDefaultTaxType("inclusive");
+                          setItems((prev) => prev.map((it) => ({ ...it, taxType: "inclusive" })));
+                        }}
+                        className={cn(
+                          "px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-xs font-bold transition-all cursor-pointer",
+                          defaultTaxType === "inclusive"
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                        title="Rates are with tax (GST included in price)"
+                      >
+                        With Tax (GST Incl.)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-0 space-y-2">
                                 {/* 1. MOBILE INVOICE ITEMS CARDS VIEW (< md screens) */}
                 <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800 p-3 space-y-3">
@@ -2198,7 +2266,19 @@ export function PurchaseInvoiceModal({
 
                         {/* Price / Rate */}
                         <div>
-                          <Label className="text-[10px] text-slate-500 font-semibold uppercase">Cost (₹)</Label>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[10px] text-slate-500 font-semibold uppercase">Cost (₹)</Label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = item.taxType || defaultTaxType;
+                                handleUpdateItem(idx, "taxType", current === "inclusive" ? "exclusive" : "inclusive");
+                              }}
+                              className="text-[9px] font-bold text-primary hover:underline cursor-pointer"
+                            >
+                              {(item.taxType || defaultTaxType) === "inclusive" ? "With GST" : "No GST"}
+                            </button>
+                          </div>
                           <Input
                             type="number"
                             min="0"
@@ -2265,7 +2345,12 @@ export function PurchaseInvoiceModal({
                         <th className="py-2.5 px-2 w-20">HSN</th>
                         <th className="py-2.5 px-2 w-16 text-center">QTY</th>
                         <th className="py-2.5 px-2 w-24 text-center">UNIT</th>
-                        <th className="py-2.5 px-2 w-28 text-right">PURCHASE PRICE (₹)</th>
+                        <th className="py-2.5 px-2 w-32 text-right">
+                          <span>PURCHASE PRICE (₹)</span>
+                          <span className="block text-[9px] font-normal text-slate-400 lowercase">
+                            ({defaultTaxType === "inclusive" ? "GST incl." : "GST excl."})
+                          </span>
+                        </th>
                         <th className="py-2.5 px-2 w-20 text-center">DISCOUNT</th>
                         <th className="py-2.5 px-2 w-20 text-center">TAX</th>
                         <th className="py-2.5 px-3 w-28 text-right">AMOUNT (₹)</th>
@@ -2418,24 +2503,42 @@ export function PurchaseInvoiceModal({
 
                           {/* Price / Rate */}
                           <td className="py-2 px-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.rate}
-                              onChange={(e) => handleUpdateItem(idx, "rate", Number(e.target.value))}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  if (idx === recalculatedItems.length - 1) {
-                                    handleAddRow();
-                                  } else {
-                                    focusItemInput(idx + 1);
+                            <div className="flex flex-col items-end">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.rate}
+                                onChange={(e) => handleUpdateItem(idx, "rate", Number(e.target.value))}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    if (idx === recalculatedItems.length - 1) {
+                                      handleAddRow();
+                                    } else {
+                                      focusItemInput(idx + 1);
+                                    }
                                   }
-                                }
-                              }}
-                              className="h-8 text-xs text-right font-mono font-semibold bg-transparent"
-                            />
+                                }}
+                                className="h-8 text-xs text-right font-mono font-semibold bg-transparent"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = item.taxType || defaultTaxType;
+                                  handleUpdateItem(idx, "taxType", current === "inclusive" ? "exclusive" : "inclusive");
+                                }}
+                                className={cn(
+                                  "text-[9px] font-bold px-1 rounded mt-0.5 transition-colors cursor-pointer",
+                                  (item.taxType || defaultTaxType) === "inclusive"
+                                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                )}
+                                title="Click to toggle between With GST and Without GST for this item"
+                              >
+                                {(item.taxType || defaultTaxType) === "inclusive" ? "With GST" : "Without GST"}
+                              </button>
+                            </div>
                           </td>
 
                           {/* Discount */}

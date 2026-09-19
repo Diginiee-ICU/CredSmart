@@ -32,6 +32,8 @@ export interface CreatedProductResult {
   altUnitConversion?: number;
   sellingPrice: number;
   purchasePrice: number;
+  purchaseTaxType?: "exclusive" | "inclusive";
+  taxType?: "exclusive" | "inclusive";
   taxRate: number;
   hsn: string;
   category: string;
@@ -97,6 +99,7 @@ export function QuickCreateItemModal({
   const [altUnitConversion, setAltUnitConversion] = useState("4");
   const [sellingPrice, setSellingPrice] = useState<number | "">("");
   const [purchasePrice, setPurchasePrice] = useState<number | "">("");
+  const [purchaseTaxType, setPurchaseTaxType] = useState<"exclusive" | "inclusive">("exclusive");
   const [mrp, setMrp] = useState<number | "">("");
   const [gstRate, setGstRate] = useState<number>(18);
   const [hsn, setHsn] = useState("");
@@ -116,6 +119,7 @@ export function QuickCreateItemModal({
       setAltUnitConversion("4");
       setSellingPrice("");
       setPurchasePrice("");
+      setPurchaseTaxType("exclusive");
       setMrp("");
       setGstRate(18);
       setHsn("");
@@ -162,6 +166,7 @@ export function QuickCreateItemModal({
         hsn_code: normalizedHsn,
         selling_price: sp,
         purchase_price: pp,
+        purchase_tax_type: purchaseTaxType,
         mrp: itemMrp,
         min_stock_alert: 5,
       };
@@ -214,6 +219,8 @@ export function QuickCreateItemModal({
         altUnitConversion: finalAltConv,
         sellingPrice: sp,
         purchasePrice: pp,
+        purchaseTaxType,
+        taxType: purchaseTaxType,
         taxRate: gstRate,
         hsn: normalizedHsn,
         category: newProd.category || category,
@@ -406,9 +413,37 @@ export function QuickCreateItemModal({
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Purchase / Cost Price (₹)
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Purchase Price (₹)
+                  </Label>
+                  <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                    <button
+                      type="button"
+                      onClick={() => setPurchaseTaxType("exclusive")}
+                      className={cn(
+                        "px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer",
+                        purchaseTaxType === "exclusive"
+                          ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      Excl.
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPurchaseTaxType("inclusive")}
+                      className={cn(
+                        "px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer",
+                        purchaseTaxType === "inclusive"
+                          ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      Incl.
+                    </button>
+                  </div>
+                </div>
                 <div className="relative mt-1">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-mono">
                     ₹

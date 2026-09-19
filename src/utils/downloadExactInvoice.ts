@@ -99,79 +99,7 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
       expDate: it.expDate,
     }));
 
-    // Create off-screen container
-    const container = document.createElement("div");
-    container.style.cssText = [
-      "position:fixed",
-      "top:0",
-      "left:-9999px",
-      "width:794px",   // A4 pixel width at 96dpi
-      "min-height:1123px",
-      "background:#ffffff",
-      "z-index:-1",
-      "visibility:hidden",
-      "pointer-events:none",
-    ].join(";");
-    document.body.appendChild(container);
-
-    await new Promise<void>((resolve) => {
-      const root = createRoot(container);
-      root.render(
-        React.createElement(UnifiedInvoiceRenderer, {
-          docType,
-          copyType: "ORIGINAL FOR RECIPIENT",
-          invoiceNumber: payload.invoiceNumber,
-          referenceNumber: payload.referenceNumber,
-          date: payload.date || new Date(),
-          dueDate: payload.dueDate,
-          layout: "a4",
-          settings,
-          storeInfo: {
-            name: payload.storeName,
-            phone: payload.storePhone,
-            email: payload.storeEmail,
-            address: payload.storeAddress,
-            gstin: payload.storeGstin,
-            pan: payload.storePan,
-            logoUrl: payload.storeLogoUrl,
-          },
-          partyInfo: {
-            name: payload.customerName,
-            phone: payload.customerPhone,
-            email: payload.customerEmail,
-            address: payload.customerAddress,
-            gstin: payload.customerGstin,
-            balance: payload.partyBalance,
-            type: docType === "purchase_invoice" || docType === "debit_note" ? "supplier" : "customer",
-          },
-          items: invoiceItems,
-          totals: {
-            subtotal,
-            discountTotal,
-            discountLabel: payload.discountLabel,
-            taxableAmount,
-            cgst,
-            sgst,
-            taxTotal: tax,
-            roundOff,
-            grandTotal: payload.totalAmount,
-            paidAmount: payload.paymentMethod === "Credit" ? 0 : payload.totalAmount,
-            balanceDue: payload.paymentMethod === "Credit" ? payload.totalAmount : 0,
-          },
-          paymentMethod: payload.paymentMethod,
-          notes: payload.notes,
-          terms: payload.terms,
-        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-      );
-
-      // Wait for React to paint the DOM
-      setTimeout(() => {
-        root.unmount();
-        resolve();
-      }, 800);
-    });
-
-    // Re-render for capture (after first render, re-add and capture)
+    // Create off-screen container for high-fidelity capture
     const captureContainer = document.createElement("div");
     captureContainer.style.cssText = [
       "position:fixed",
@@ -180,14 +108,14 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
       "width:794px",
       "min-height:1123px",
       "background:#ffffff",
-      "z-index:-1",
+      "z-index:-999",
       "pointer-events:none",
     ].join(";");
     document.body.appendChild(captureContainer);
 
     await new Promise<void>((resolve) => {
-      const root2 = createRoot(captureContainer);
-      root2.render(
+      const root = createRoot(captureContainer);
+      root.render(
         React.createElement(UnifiedInvoiceRenderer, {
           docType,
           copyType: "ORIGINAL FOR RECIPIENT",
@@ -253,8 +181,6 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           });
 
           // Always fit to exactly one A4 page (210mm x 297mm)
-          // The invoice component's internal CSS scale already fits content to 1123px.
-          // We scale the captured image to fill the full A4 width and let it fill the height.
           const pageWidthMm = 210;
           const pageHeightMm = 297;
           const imgAspect = canvas.height / canvas.width;
@@ -285,15 +211,14 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
             variant: "destructive",
           });
         } finally {
-          root2.unmount();
+          root.unmount();
+          if (captureContainer.parentNode) {
+            captureContainer.parentNode.removeChild(captureContainer);
+          }
           resolve();
         }
-      }, 1000);
+      }, 500);
     });
-
-    // Cleanup
-    if (container.parentNode) container.parentNode.removeChild(container);
-    if (captureContainer.parentNode) captureContainer.parentNode.removeChild(captureContainer);
 
   } catch (err) {
     console.error("Exact invoice download failed:", err);
