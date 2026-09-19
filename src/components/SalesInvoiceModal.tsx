@@ -1114,7 +1114,9 @@ export function SalesInvoiceModal({
         }
       }
 
-      if (saveAndNew) {
+        if (window.innerWidth < 1024) {
+          setMobileSuccessInvoice(saved);
+        } else if (saveAndNew) {
         const nextSeq = (parseInt(invoiceNumberSeq, 10) + 1 || Math.floor(100 + Math.random() * 900)).toString();
         setInvoiceNumberSeq(nextSeq);
         setPartyName("");
@@ -1394,36 +1396,57 @@ export function SalesInvoiceModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="bill-editor-shell z-modal flex flex-col h-[100dvh] max-h-[100dvh] sm:h-[92vh] sm:max-h-[92vh] w-full sm:max-w-7xl sm:w-[98vw] sm:rounded-xl overflow-hidden border-none sm:border p-0 gap-0 bg-white dark:bg-slate-950 lg:block">
           
-          <MobileCreateInvoice
-            onClose={() => onOpenChange(false)}
-            docType={docType}
-            docDate={docDate}
-            dueDate={dueDate}
-            showDueDate={showDueDate}
-            invoicePrefix={invoicePrefix}
-            invoiceNumberSeq={invoiceNumberSeq}
-            selectedCustomerId={selectedCustomerId}
-            partyName={partyName}
-            customers={customers}
-            items={items}
-            recalculatedItems={recalculatedItems}
-            totals={totals}
-            onSetSelectedCustomerId={(id) => {
-              setSelectedCustomerId(id);
-              const cust = customers.find(c => c.id === id);
-              if (cust) {
-                setPartyName(cust.name);
-                setPartyPhone(cust.phone || "");
-                setPartyGstin(cust.gstin || "");
-                setPartyAddress(cust.address || "");
-              }
-            }}
-            onUpdateItem={handleUpdateItem}
-            onRemoveItem={handleRemoveRow}
-            onSave={handleSave}
-            catalog={billItemOptions}
-            onAddSelectedItems={handleBatchAddItemsAtTarget}
-          />
+          {mobileSuccessInvoice ? (
+            <div className="lg:hidden">
+              <MobileInvoiceSuccessView
+                invoice={mobileSuccessInvoice}
+                onClose={() => {
+                  setMobileSuccessInvoice(null);
+                  onOpenChange(false);
+                }}
+                onEdit={() => setMobileSuccessInvoice(null)}
+                onDelete={() => {
+                  setMobileSuccessInvoice(null);
+                  onOpenChange(false);
+                }}
+                onDownload={() => {}}
+                onPrint={() => {}}
+                onShare={() => {}}
+                onGenerateEwayBill={() => {}}
+              />
+            </div>
+          ) : (
+            <MobileCreateInvoice
+              onClose={() => onOpenChange(false)}
+              docType={docType}
+              docDate={docDate}
+              dueDate={dueDate}
+              showDueDate={showDueDate}
+              invoicePrefix={invoicePrefix}
+              invoiceNumberSeq={invoiceNumberSeq}
+              selectedCustomerId={selectedCustomerId}
+              partyName={partyName}
+              customers={customers}
+              items={items}
+              recalculatedItems={recalculatedItems}
+              totals={totals}
+              onSetSelectedCustomerId={(id) => {
+                setSelectedCustomerId(id);
+                const cust = customers.find(c => c.id === id);
+                if (cust) {
+                  setPartyName(cust.name);
+                  setPartyPhone(cust.phone || "");
+                  setPartyGstin(cust.gstin || "");
+                  setPartyAddress(cust.address || "");
+                }
+              }}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveRow}
+              onSave={handleSave}
+              catalog={billItemOptions}
+              onAddSelectedItems={handleBatchAddItemsAtTarget}
+            />
+          )}
 
           <div className="hidden lg:flex flex-col h-full w-full">
             {/* ───────────────────────────────────────────────────────────── */}

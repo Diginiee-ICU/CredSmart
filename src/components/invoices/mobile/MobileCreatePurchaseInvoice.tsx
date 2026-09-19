@@ -165,10 +165,17 @@ export function MobileCreatePurchaseInvoice(props: MobileCreatePurchaseInvoicePr
               <div key={originalIndex} className="flex justify-between items-start px-4 py-4 border-b border-slate-100 bg-white">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[15px] font-bold text-slate-900">{item.productName || "Unnamed Item"}</span>
-                  <div className="flex flex-col gap-0.5 mt-0.5">
-                    <span className="text-[10px] text-slate-400 font-medium tracking-wide">Qty x Rate</span>
-                    <span className="text-[12px] text-slate-600 font-medium">{item.quantity} {item.unit || "Pcs"} x {item.rate}</span>
-                  </div>
+                    <div className="flex flex-col gap-1 mt-0.5">
+                      <span className="text-[10px] text-slate-400 font-medium tracking-wide">Qty x Rate</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center border border-slate-200 rounded-md bg-slate-50 overflow-hidden">
+                          <button onClick={() => props.onUpdateItem(originalIndex, 'quantity', Math.max(1, (item.quantity || 1) - 1))} className="px-2.5 py-1 text-slate-600 active:bg-slate-200 font-bold leading-none">-</button>
+                          <span className="text-[13px] font-bold text-slate-800 px-2 min-w-[1.5rem] text-center">{item.quantity}</span>
+                          <button onClick={() => props.onUpdateItem(originalIndex, 'quantity', (item.quantity || 1) + 1)} className="px-2.5 py-1 text-slate-600 active:bg-slate-200 font-bold leading-none">+</button>
+                        </div>
+                        <span className="text-[12px] text-slate-600 font-medium">{item.unit || "Pcs"} x {item.rate}</span>
+                      </div>
+                    </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 mt-1">
                   <span className="text-[15px] font-bold text-slate-900">₹ {Number(item.lineTotal || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>

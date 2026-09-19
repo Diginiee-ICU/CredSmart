@@ -225,6 +225,7 @@ export function PurchaseInvoiceModal({
 
   // Quick Create Item State
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
+  const [mobileSuccessInvoice, setMobileSuccessInvoice] = useState<BusinessDocument | null>(null);
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
 
