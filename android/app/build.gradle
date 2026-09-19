@@ -14,8 +14,8 @@ if (signingPropsFile.exists()) {
         signingProps[key] = value
     }
 }
-def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "14").toInteger()
-def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.1.2"
+def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "15").toInteger()
+def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.1.3"
 
 android {
     namespace = "com.credsmart.pos"
