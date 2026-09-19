@@ -11,6 +11,7 @@ import {
   Building2,
   Users,
   Check,
+  Zap,
 } from "lucide-react";
 import { Party } from "@/types/parties";
 import {
@@ -23,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { autoDetectAndParseTally } from "@/utils/tallyXmlParser";
+import { TallyImportModal } from "@/components/TallyImportModal";
 
 interface PartyExcelUploadModalProps {
   isOpen: boolean;
@@ -43,6 +46,11 @@ export function PartyExcelUploadModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedSoftware, setSelectedSoftware] = useState<"vyapar" | "tally" | "mybillbook" | "marg" | "busy">("vyapar");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Tally import state
+  const [tallyModalOpen, setTallyModalOpen] = useState(false);
+  const [tallyParsedParties, setTallyParsedParties] = useState<Partial<Party>[]>([]);
+  const tallyFileRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -100,7 +108,44 @@ export function PartyExcelUploadModal({
     }
   };
 
+  const handleTallyFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    try {
+      const text = await file.text();
+      const result = autoDetectAndParseTally(text, file.name);
+      if (result.parties.length === 0) {
+        toast.error("No ledger/party records found in this Tally file. Please export Ledger Master from Tally Prime.");
+        return;
+      }
+      setTallyParsedParties(result.parties);
+      toast.success(`Detected ${result.parties.length} parties from Tally ${file.name}. Review and confirm import below.`);
+      if (result.warnings.length > 0) result.warnings.forEach((w) => toast.warning(w));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to parse Tally file.");
+    }
+  };
+
+  const handleConfirmTallyImport = async () => {
+    if (tallyParsedParties.length === 0) return;
+    setIsProcessing(true);
+    try {
+      await onImport(tallyParsedParties);
+      toast.success(`Imported ${tallyParsedParties.length} parties from Tally into CredSmart!`);
+      setTallyParsedParties([]);
+      onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to import Tally parties.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+
+
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl max-h-[94vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
         {/* Header */}
@@ -349,26 +394,110 @@ export function PartyExcelUploadModal({
               </ol>
             </div>
 
-            {/* Dropzone for Software Export File */}
-            <div className="p-4 rounded-xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-bold text-xs text-foreground">
-                  Ready to migrate from {selectedSoftware.toUpperCase()}?
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  Upload your {selectedSoftware.toUpperCase()} parties export file to start instant import.
-                </p>
-              </div>
+            {/* Dropzone for Software Export File — Tally-specific with real parser */}
+            {selectedSoftware === "tally" ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-600">
+                      <Zap className="w-3.5 h-3.5" />
+                    </div>
+                    <p className="font-bold text-xs text-foreground">Upload Tally Ledger XML or CSV Export</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-[11px] text-muted-foreground">
+                      Supports <strong>.xml</strong> (recommended — includes GSTIN, PAN, addresses, opening balances) and <strong>.csv</strong> from Ledger report
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setTallyModalOpen(true)}
+                        className="gap-1.5 font-bold text-amber-700 border-amber-300 hover:bg-amber-50 cursor-pointer text-[11px]"
+                      >
+                        <FileSpreadsheet className="w-3 h-3" />
+                        Full Wizard
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => tallyFileRef.current?.click()}
+                        className="gap-1.5 font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        Upload Tally File
+                      </Button>
+                    </div>
+                  </div>
+                  <input
+                    ref={tallyFileRef}
+                    type="file"
+                    accept=".xml,.csv"
+                    className="hidden"
+                    onChange={handleTallyFileUpload}
+                  />
+                </div>
 
-              <Button
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="gap-1.5 font-bold shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Upload {selectedSoftware.toUpperCase()} File
-              </Button>
-            </div>
+                {/* Tally parsed parties preview */}
+                {tallyParsedParties.length > 0 && (
+                  <div className="border border-amber-500/20 rounded-xl overflow-hidden bg-card">
+                    <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-amber-600" />
+                        <span className="font-bold text-amber-700 dark:text-amber-400 text-xs">
+                          {tallyParsedParties.length} Parties Parsed from Tally — Ready to Import
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setTallyParsedParties([])}
+                        className="h-6 text-[11px] text-rose-500 hover:text-rose-600"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <div className="max-h-44 overflow-y-auto divide-y divide-border scrollbar-thin">
+                      {tallyParsedParties.slice(0, 100).map((p, idx) => (
+                        <div key={idx} className="px-3 py-2 flex items-center justify-between text-xs">
+                          <div>
+                            <p className="font-bold text-foreground truncate max-w-[200px]">{p.name}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">
+                              {p.partyType?.toUpperCase()} · {p.gstin || "No GSTIN"} · {p.phone || "No phone"}
+                            </p>
+                          </div>
+                          <div className="text-right font-mono">
+                            <p className={`font-bold text-xs ${(p.balance ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                              {(p.balance ?? 0) >= 0 ? "+" : ""}₹{Math.abs(p.balance ?? 0).toLocaleString("en-IN")}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{p.category || "General"}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-xs text-foreground">
+                    Ready to migrate from {selectedSoftware.toUpperCase()}?
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Upload your {selectedSoftware.toUpperCase()} parties export file to start instant import.
+                  </p>
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1.5 font-bold shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload {selectedSoftware.toUpperCase()} File
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -378,7 +507,7 @@ export function PartyExcelUploadModal({
             Cancel
           </Button>
 
-          {activeTab === "excel" ? (
+          {activeTab === "excel" && (
             <button
               type="button"
               onClick={handleConfirmImport}
@@ -393,7 +522,25 @@ export function PartyExcelUploadModal({
               )}
               <span>Import {parsedParties.length} Parties</span>
             </button>
-          ) : (
+          )}
+
+          {activeTab === "software" && selectedSoftware === "tally" && tallyParsedParties.length > 0 && (
+            <button
+              type="button"
+              onClick={handleConfirmTallyImport}
+              disabled={isProcessing}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-amber-600/30 active:scale-95 transition-all cursor-pointer"
+            >
+              {isProcessing ? (
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              )}
+              Import {tallyParsedParties.length} Tally Parties
+            </button>
+          )}
+
+          {activeTab === "software" && selectedSoftware !== "tally" && (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -406,5 +553,19 @@ export function PartyExcelUploadModal({
         </div>
       </div>
     </div>
+
+    {/* Full Tally Import Wizard Modal */}
+    <TallyImportModal
+      isOpen={tallyModalOpen}
+      onClose={() => setTallyModalOpen(false)}
+      onImportParties={async (parties) => {
+        await onImport(parties);
+        setTallyModalOpen(false);
+        onClose();
+      }}
+      defaultTab="parties"
+    />
+    </>
   );
 }
+

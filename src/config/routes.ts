@@ -87,6 +87,7 @@ export const ROUTE_PATHS = {
   settingsPricing: "/settings/pricing",
   settingsRefer: "/settings/refer",
   settingsHelp: "/settings/help",
+  tallyImport: "/tally-import",
 } as const;
 
 export type AppRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
@@ -424,6 +425,12 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         title: "Invoice & Print Settings",
         url: ROUTE_PATHS.invoiceSettings,
         icon: FileText,
+      },
+      {
+        title: "Tally Data Import",
+        url: ROUTE_PATHS.tallyImport,
+        icon: FileSpreadsheet,
+        badge: "NEW",
       },
     ],
   },

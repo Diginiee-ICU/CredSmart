@@ -53,6 +53,7 @@ import GstBillingGuide from "@/pages/public/GstBillingGuide";
 import CompareVyapar from "@/pages/public/CompareVyapar";
 import CompareMyBillBook from "@/pages/public/CompareMyBillBook";
 import CompareTally from "@/pages/public/CompareTally";
+import TallyImport from "@/pages/TallyImport";
 import BarcodeGuide from "@/pages/public/BarcodeGuide";
 import EInvoicingGuide from "@/pages/public/EInvoicingGuide";
 import About from "@/pages/public/About";
@@ -218,6 +219,7 @@ const App = () => (
                     <Route path={ROUTE_PATHS.godown} element={<Godown />} />
                     <Route path={ROUTE_PATHS.customers} element={<Customers />} />
                     <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
+                    <Route path={ROUTE_PATHS.tallyImport} element={<TallyImport />} />
                     <Route path={ROUTE_PATHS.sales} element={<Sales />} />
                     <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
 
