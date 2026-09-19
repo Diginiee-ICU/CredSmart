@@ -1409,10 +1409,14 @@ export function SalesInvoiceModal({
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
                 }}
-                onDownload={() => {}}
-                onPrint={() => {}}
-                onShare={() => {}}
                 onGenerateEwayBill={() => {}}
+                storeInfo={{
+                  name: org?.name || "CredSmart Store",
+                  phone: org?.phone,
+                  email: org?.email,
+                  address: org?.address,
+                  gstin: org?.gstin,
+                }}
               />
             </div>
           ) : (
