@@ -35,6 +35,12 @@ import {
   TallyBankAccount,
   TallyVoucher,
 } from "@/utils/tallyXmlParser";
+import {
+  SOFTWARE_PROFILES,
+  SupportedSoftware,
+  UniversalImportData,
+  parseMultipleUniversalFiles,
+} from "@/utils/universalDataImporter";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
 
@@ -51,6 +57,7 @@ export interface TallyImportModalProps {
   onImportBankAccounts?: (banks: TallyBankAccount[], cashInHand: number) => Promise<void>;
   onImportVouchers?: (vouchers: TallyVoucher[]) => Promise<void>;
   defaultTab?: "items" | "parties" | "all";
+  initialSoftware?: SupportedSoftware;
 }
 
 interface ImportStats {
@@ -118,9 +125,12 @@ export function TallyImportModal({
   onImportBankAccounts,
   onImportVouchers,
   defaultTab = "all",
+  initialSoftware = "auto",
 }: TallyImportModalProps) {
   const [step, setStep] = useState<WizardStep>("upload");
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedSoftware, setSelectedSoftware] = useState<SupportedSoftware>(initialSoftware);
+  const [universalData, setUniversalData] = useState<UniversalImportData | null>(null);
   const [parseResult, setParseResult] = useState<TallyParseResult | null>(null);
   const [uploadedFilename, setUploadedFilename] = useState("");
   const [importItems, setImportItems] = useState(true);
@@ -138,35 +148,59 @@ export function TallyImportModal({
 
   // ── File Handling ────────────────────────────────────────────────────────
 
-  const handleFile = async (file: File) => {
-    if (!file) return;
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["xml", "csv", "xlsx", "xls"].includes(ext ?? "")) {
-      toast.error("Please upload a .xml or .csv file exported from Tally");
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("File too large. Maximum 50MB supported.");
-      return;
+  const handleFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(`File "${file.name}" exceeds 50MB limit.`);
+        return;
+      }
     }
 
     try {
-      const text = await file.text();
-      const result = autoDetectAndParseTally(text, file.name);
-      setParseResult(result);
-      setUploadedFilename(file.name);
+      const data = await parseMultipleUniversalFiles(files, selectedSoftware);
+      setUniversalData(data);
+      setUploadedFilename(files.map((f) => f.name).join(", "));
 
-      if (result.warnings.length > 0) {
-        result.warnings.forEach((w) => toast.warning(w));
+      const syntheticResult: TallyParseResult = {
+        items: data.items,
+        parties: data.parties.all,
+        salesVouchers: data.vouchers.filter((v) => v.voucherType === "Sales"),
+        purchaseVouchers: data.vouchers.filter((v) => v.voucherType === "Purchase"),
+        paymentVouchers: data.vouchers.filter((v) => v.voucherType === "Payment"),
+        receiptVouchers: data.vouchers.filter((v) => v.voucherType === "Receipt"),
+        journalVouchers: data.vouchers.filter((v) => v.voucherType === "Journal"),
+        bankAccounts: data.bankAccounts.map((b) => ({
+          accountName: b.accountName,
+          accountNumber: b.accountNumber,
+          ifsc: b.ifsc,
+          balance: b.balance,
+          isDr: b.balance >= 0,
+        })),
+        cashInHand: data.cashInHand,
+        companyName: data.companyName,
+        companyGstin: data.companyGstin,
+        totalEntities: data.items.length + data.parties.all.length + data.bankAccounts.length + data.vouchers.length,
+        warnings: data.warnings,
+        source: data.detectedSoftware === "tally" ? "xml" : "csv",
+      };
+
+      setParseResult(syntheticResult);
+
+      if (data.warnings.length > 0) {
+        data.warnings.forEach((w) => toast.warning(w));
       }
 
-      if (result.totalEntities > 0) {
+      if (syntheticResult.totalEntities > 0) {
+        const softName = SOFTWARE_PROFILES[data.detectedSoftware]?.name || "Accounting File";
         toast.success(
-          `Detected ${result.items.length} items, ${result.parties.length} parties, ${result.bankAccounts.length} bank a/c, and ${result.paymentVouchers.length + result.receiptVouchers.length + result.salesVouchers.length} vouchers from ${file.name}`
+          `Detected ${data.items.length} items, ${data.parties.all.length} parties from ${softName}!`
         );
         setStep("preview");
       } else {
-        toast.error("No Tally data found in this file. Please check the export format.");
+        toast.error("No recognizable items or parties found. Please verify column headers.");
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to parse file";
@@ -175,18 +209,20 @@ export function TallyImportModal({
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
     e.target.value = "";
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedSoftware]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -344,13 +380,60 @@ export function TallyImportModal({
           {/* ── Step: Upload ── */}
           {step === "upload" && (
             <div className="p-5 space-y-5">
+              {/* Software Selection Tool Grid */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+                    Select Your Accounting Software
+                  </p>
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold">
+                    1-Click Migration
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {Object.values(SOFTWARE_PROFILES).map((soft) => {
+                    const isSelected = selectedSoftware === soft.id;
+                    return (
+                      <button
+                        key={soft.id}
+                        type="button"
+                        onClick={() => setSelectedSoftware(soft.id)}
+                        className={cn(
+                          "flex flex-col items-start p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer select-none",
+                          isSelected
+                            ? cn("ring-2 ring-amber-500 shadow-sm bg-gradient-to-br", soft.color, "text-white")
+                            : "bg-card hover:bg-muted/60 border-border text-foreground hover:border-border/80"
+                        )}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className="text-xs font-black truncate">{soft.shortName}</span>
+                          <span
+                            className={cn(
+                              "text-[8.5px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0",
+                              isSelected
+                                ? "bg-white/25 text-white"
+                                : cn(soft.badgeBg, soft.badgeText)
+                            )}
+                          >
+                            {soft.badge}
+                          </span>
+                        </div>
+                        <p className={cn("text-[9.5px] line-clamp-2 leading-tight", isSelected ? "text-white/85" : "text-muted-foreground")}>
+                          {soft.tagline}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Drag-drop zone */}
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 className={cn(
-                  "p-8 sm:p-12 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 text-center transition-all duration-200 cursor-pointer",
+                  "p-8 sm:p-10 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 text-center transition-all duration-200 cursor-pointer",
                   isDragging
                     ? "border-amber-500 bg-amber-500/10 scale-[1.01]"
                     : "border-amber-500/40 hover:border-amber-500/70 bg-gradient-to-b from-amber-500/5 to-transparent hover:bg-amber-500/8"
@@ -366,72 +449,54 @@ export function TallyImportModal({
                 </div>
                 <div>
                   <p className="font-black text-base text-foreground">
-                    Drop your Tally Export File here
+                    Drop your {SOFTWARE_PROFILES[selectedSoftware]?.name} file(s) here
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Supports <span className="font-semibold text-foreground">.xml</span> (recommended) and <span className="font-semibold text-foreground">.csv</span> formats
+                    Supports <span className="font-semibold text-foreground">{SOFTWARE_PROFILES[selectedSoftware]?.supportedFormats.join(", ")}</span> formats
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tally Prime / ERP 9 • Stock Items • Ledger Master
+                    Drop a single file or multiple sheets (e.g. items + parties together)
                   </p>
                 </div>
                 <Button
                   type="button"
-                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-6"
+                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  Choose File
+                  Choose File(s)
                 </Button>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".xml,.csv,.xlsx,.xls"
+                  multiple
+                  accept=".xml,.csv,.xlsx,.xls,.txt"
                   className="hidden"
                   onChange={handleFileInput}
                 />
               </div>
 
-              {/* Format info */}
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-start gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5" />
+              {/* Selected Software Quick Guide */}
+              <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-bold text-foreground">
+                      {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.title}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">XML Format (Recommended)</p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Complete data: HSN codes, GST rates, batch info, addresses, GSTIN — everything preserved
-                    </p>
-                  </div>
+                  {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut && (
+                    <kbd className="px-2 py-0.5 rounded bg-muted border border-border text-[10px] font-mono text-muted-foreground">
+                      {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut}
+                    </kbd>
+                  )}
                 </div>
-                <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-start gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 shrink-0 mt-0.5">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">CSV Format (Limited)</p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Basic data: names, quantities, rates — good for quick migration
-                    </p>
-                  </div>
-                </div>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
+                  {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.steps.map((st, sIdx) => (
+                    <li key={sIdx} className="leading-relaxed">{st}</li>
+                  ))}
+                </ol>
               </div>
-
-              {/* Export Guide Toggle */}
-              <button
-                type="button"
-                onClick={() => setShowGuide(!showGuide)}
-                className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Info className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">
-                    How to export from Tally Prime / ERP 9
-                  </span>
-                </div>
-                <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showGuide && "rotate-90")} />
-              </button>
 
               {showGuide && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -1090,3 +1155,5 @@ export function TallyImportModal({
     </div>
   );
 }
+
+export { TallyImportModal as UniversalImportModal };
