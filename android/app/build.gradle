@@ -14,7 +14,7 @@ if (signingPropsFile.exists()) {
         signingProps[key] = value
     }
 }
-def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "13").toInteger()
+def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "14").toInteger()
 def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.1.2"
 
 android {
