@@ -39,6 +39,8 @@ export interface ExactInvoicePayload {
   paymentMethod?: string;
   notes?: string;
   terms?: string;
+  layout?: "a4" | "a4_detailed" | "80mm" | "58mm";
+  showHsnSummary?: boolean;
   items: Array<{
     name: string;
     description?: string;
@@ -123,7 +125,8 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           referenceNumber: payload.referenceNumber,
           date: payload.date || new Date(),
           dueDate: payload.dueDate,
-          layout: "a4",
+          layout: payload.layout || "a4",
+          showHsnSummary: payload.showHsnSummary !== undefined ? payload.showHsnSummary : payload.layout === "a4_detailed",
           settings,
           storeInfo: {
             name: payload.storeName,

@@ -1,8 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { CartItem } from "@/types/pos";
-import { Printer, X, CheckCircle2, FileText, ScrollText, Smartphone, Copy, Check, Zap, Download, Bluetooth, Sparkles } from "lucide-react";
+import { Printer, X, CheckCircle2, FileText, FileCheck, ScrollText, Smartphone, Copy, Check, Zap, Download, Bluetooth, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useOrganization } from "@/hooks/useOrganization";
 import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/utils/escpos";
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
@@ -35,6 +36,7 @@ export interface ReceiptData {
   storeEmail?: string;
   storeLogoUrl?: string;
   gstin?: string;
+  pan?: string;
   upiId?: string;
   bankName?: string;
   accountNumber?: string;
@@ -55,12 +57,13 @@ interface ReceiptModalProps {
 }
 
 export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
+  const { org } = useOrganization();
   const receiptRef = useRef<HTMLDivElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4">(() => {
+  const [layout, setLayout] = useState<"80mm" | "58mm" | "a4" | "a4_detailed">(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("credsmart_desktop_print_layout") as "80mm" | "58mm" | "a4" | null;
-      if (saved && ["80mm", "58mm", "a4"].includes(saved)) {
+      const saved = localStorage.getItem("credsmart_desktop_print_layout") as "80mm" | "58mm" | "a4" | "a4_detailed" | null;
+      if (saved && ["80mm", "58mm", "a4", "a4_detailed"].includes(saved)) {
         return saved;
       }
       if (data.docType === "pos_invoice") {
@@ -72,7 +75,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   });
   const [copied, setCopied] = useState(false);
 
-  const handleLayoutChange = (newLayout: "80mm" | "58mm" | "a4") => {
+  const handleLayoutChange = (newLayout: "80mm" | "58mm" | "a4" | "a4_detailed") => {
     setLayout(newLayout);
     if (typeof window !== "undefined") {
       try {
@@ -109,10 +112,20 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const cgst = data.tax / 2;
   const sgst = data.tax / 2;
 
-  const storeName = data.storeName || "CredSmart Retail Store";
-  const storeAddress = data.storeAddress || "";
-  const storePhone = data.storePhone || "";
-  const gstin = data.gstin || "";
+  // Complete Store Metadata with live organization fallback
+  const storeName = data.storeName || org?.name || "CredSmart Retail Store";
+  const storeAddress = data.storeAddress || org?.address || "";
+  const storePhone = data.storePhone || org?.phone || "";
+  const storeEmail = data.storeEmail || org?.email || "billing@credsmart.in";
+  const storeLogoUrl = data.storeLogoUrl || org?.logo_url || "";
+  const gstin = data.gstin || org?.gstin || "";
+  const pan = data.pan || org?.pan || "";
+  const bankName = data.bankName || org?.bank_name || "";
+  const accountNumber = data.accountNumber || org?.account_number || "";
+  const ifsc = data.ifsc || org?.ifsc || "";
+  const accountHolder = data.accountHolder || org?.account_holder || storeName;
+  const branch = data.branch || org?.branch || "";
+  const upiId = data.upiId || org?.upi_id || "";
 
   const handleEscPosPrint = async (directUsb = false) => {
     try {
@@ -366,7 +379,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Desktop Dual Layout Selector */}
+            {/* Desktop Layout Selector: Standard A4 / Detailed GST / Thermal 80mm / 58mm */}
             <div className="hidden sm:flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 shrink-0">
               <button
                 type="button"
@@ -374,13 +387,27 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 className={cn(
                   "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                   layout === "a4"
-                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                    ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
                     : "text-slate-400 hover:text-slate-200"
                 )}
-                title="Print as Standard Full Page A4 Tax Invoice"
+                title="Print as Standard Full Page A4 Invoice (Clean Single-Page Preview Layout)"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>📄 Standard A4</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLayoutChange("a4_detailed")}
+                className={cn(
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                  layout === "a4_detailed"
+                    ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                )}
+                title="Print as Detailed GST Tax Invoice (With Full Statutory HSN/SAC Tax Summary Matrix)"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>📑 Detailed GST</span>
               </button>
               <button
                 type="button"
@@ -423,12 +450,69 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
           </div>
         </div>
 
-        {/* Receipt Preview Body with Thermal Paper Styling */}
+        {/* Mobile Layout Switcher Bar (< sm) */}
+        <div className="flex sm:hidden items-center justify-start gap-1 px-3 py-1.5 bg-slate-950/95 border-b border-slate-800 shrink-0 overflow-x-auto scrollbar-none">
+          <button
+            type="button"
+            onClick={() => handleLayoutChange("a4")}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              layout === "a4"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
+            )}
+          >
+            <FileText className="w-3 h-3" />
+            <span>Standard A4</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleLayoutChange("a4_detailed")}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              layout === "a4_detailed"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
+            )}
+          >
+            <FileCheck className="w-3 h-3" />
+            <span>Detailed GST</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleLayoutChange("80mm")}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              layout === "80mm"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
+            )}
+          >
+            <ScrollText className="w-3 h-3" />
+            <span>80mm</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleLayoutChange("58mm")}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              layout === "58mm"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
+            )}
+          >
+            <Smartphone className="w-3 h-3" />
+            <span>58mm</span>
+          </button>
+        </div>
+
+        {/* Receipt Preview Body with Paper Styling */}
         <div ref={scrollBodyRef} className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 flex justify-center items-start">
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden p-1 text-slate-900 border border-slate-200">
             <UnifiedInvoiceRenderer
               ref={receiptRef}
               layout={layout}
+              showHsnSummary={layout === "a4_detailed"}
               docType={data.docType || (data.isEstimate ? "quotation" : "sales_invoice")}
               invoiceNumber={data.invoiceNumber}
               referenceNumber={data.referenceNumber}
@@ -438,10 +522,25 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 name: storeName,
                 address: storeAddress,
                 phone: storePhone,
-                email: data.storeEmail || "billing@credsmart.in",
+                email: storeEmail,
                 gstin: gstin,
-                logoUrl: data.storeLogoUrl || "",
+                pan: pan,
+                logoUrl: storeLogoUrl,
+                bank_name: bankName,
+                account_number: accountNumber,
+                ifsc: ifsc,
+                account_holder: accountHolder,
+                branch: branch,
+                upi_id: upiId,
               }}
+              bankDetails={{
+                bankName,
+                accountNumber,
+                ifsc,
+                accountHolder,
+                branch,
+              }}
+              upiId={upiId}
               partyInfo={{
                 name: data.customerName || (data.docType === "purchase_invoice" ? "Vendor" : "Walk-in Customer"),
                 phone: data.customerPhone,

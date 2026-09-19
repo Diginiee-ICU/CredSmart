@@ -152,6 +152,7 @@ export function SalesInvoiceModal({
 
   // Mode: "edit" | "preview"
   const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
+  const [previewLayout, setPreviewLayout] = useState<"a4" | "a4_detailed">("a4");
   const [mobileTab, setMobileTab] = useState<'party'|'items'|'summary'>('items');
 
   // Document Type
@@ -1516,6 +1517,37 @@ export function SalesInvoiceModal({
                 </button>
               </div>
 
+              {viewMode === "preview" && (
+                <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mr-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewLayout("a4")}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-semibold rounded transition-all cursor-pointer",
+                      previewLayout === "a4"
+                        ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                    title="Standard A4 (Clean Single-Page Preview Layout)"
+                  >
+                    Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewLayout("a4_detailed")}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-semibold rounded transition-all cursor-pointer",
+                      previewLayout === "a4_detailed"
+                        ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                    title="Detailed GST (With HSN/SAC Tax Summary Matrix)"
+                  >
+                    Detailed GST
+                  </button>
+                </div>
+              )}
+
               <Button
                 type="button"
                 variant="outline"
@@ -1550,6 +1582,8 @@ export function SalesInvoiceModal({
             <InvoiceFitView className="flex-1 min-h-0">
               <UnifiedInvoiceRenderer
                 docType="sales_invoice"
+                layout={previewLayout}
+                showHsnSummary={previewLayout === "a4_detailed"}
                 invoiceNumber={fullDocumentNumber}
                 date={docDate}
                 dueDate={showDueDate ? dueDate : undefined}

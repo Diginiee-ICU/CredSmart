@@ -118,7 +118,8 @@ export interface UnifiedInvoiceProps {
     branch?: string;
   };
   upiId?: string;
-  layout?: "a4" | "80mm" | "58mm";
+  layout?: "a4" | "a4_detailed" | "80mm" | "58mm";
+  showHsnSummary?: boolean;
   className?: string;
 }
 
@@ -208,8 +209,17 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       bankDetails: propBankDetails,
       upiId: propUpiId,
       layout = "a4",
+      showHsnSummary: propShowHsnSummary,
       className,
     } = props;
+
+    // Determine whether to display the detailed HSN/SAC Tax Summary Table
+    const shouldRenderHsnSummary = useMemo(() => {
+      if (propShowHsnSummary !== undefined) return propShowHsnSummary;
+      if (layout === "a4_detailed") return true;
+      if (layout === "a4") return false;
+      return false;
+    }, [propShowHsnSummary, layout]);
 
     // Resolve aliases for backward compatibility
     const resolvedRawDate = date || (props as any).invoiceDate || Date.now();
@@ -592,7 +602,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       <div
         ref={ref}
         id="unified-invoice-document"
-        data-layout="a4"
+        data-layout={layout === "a4_detailed" ? "a4" : layout}
         data-printable-area="true"
         className={cn(
           "bg-white text-slate-800 w-full max-w-[780px] mx-auto p-3 sm:p-4 relative border border-slate-300 box-border font-sans leading-tight shadow-md rounded-lg",
@@ -913,8 +923,8 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           </table>
         </div>
 
-        {/* Statutory HSN/SAC Tax Summary Matrix (Render when tax or taxable items exist) */}
-        {(totalTax > 0 || (hsnSummaryList.length > 0 && totalTaxable > 0 && hsnSummaryList.some(r => r.hsn !== "-"))) && (
+        {/* Statutory HSN/SAC Tax Summary Matrix (Render when enabled and tax exists) */}
+        {shouldRenderHsnSummary && (totalTax > 0 || (hsnSummaryList.length > 0 && totalTaxable > 0 && hsnSummaryList.some(r => r.hsn !== "-"))) && (
           <div className="mt-2 border border-slate-300 overflow-hidden text-[9px]">
             <div className="px-2 py-0.5 bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[8px] text-slate-700 flex justify-between">
               <span>HSN/SAC TAX BREAKDOWN ({isInterstate ? "INTERSTATE IGST" : "INTRASTATE CGST + SGST"})</span>
