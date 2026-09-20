@@ -66,6 +66,7 @@ import { QuickCreateItemModal, CreatedProductResult } from "@/components/items/Q
 import { MobileCreatePurchaseInvoice } from "@/components/invoices/mobile/MobileCreatePurchaseInvoice";
 import { MobileInvoiceSuccessView } from "@/components/invoices/mobile/MobileInvoiceSuccessView";
 import { PartyCustomItem } from "@/types/parties";
+import { networkInvoicingService } from "@/services/networkInvoicingService";
 
 interface SupplierOption {
   id: string;
@@ -1323,15 +1324,41 @@ export function PurchaseInvoiceModal({
   };
 
   const filteredSuppliers = useMemo(() => {
-    if (!supplierSearch) return suppliers.slice(0, 20);
     const q = supplierSearch.toLowerCase();
-    return suppliers.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        (s.phone && s.phone.includes(q)) ||
-        (s.gstin && s.gstin.toLowerCase().includes(q))
+
+    // Filter local suppliers
+    const localMatched = q
+      ? suppliers.filter(
+          (s) =>
+            s.name.toLowerCase().includes(q) ||
+            (s.phone && s.phone.includes(q)) ||
+            (s.gstin && s.gstin.toLowerCase().includes(q))
+        )
+      : suppliers.slice(0, 20);
+
+    // Merge network org suggestions (read synchronously from localStorage)
+    const networkOrgs = networkInvoicingService.getNetworkOrgSuggestions(supplierSearch, 10);
+    const seenKeys = new Set(
+      localMatched.map((s) => `${(s.name || "").toLowerCase().trim()}|${(s.phone || "").trim()}`)
     );
-  }, [suppliers, supplierSearch]);
+    const networkOnly = networkOrgs
+      .filter((o) => {
+        const key = `${(o.name || "").toLowerCase().trim()}|${(o.phone || "").trim()}`;
+        return !seenKeys.has(key) && o.id !== orgId; // exclude own org
+      })
+      .map((o) => ({
+        id: o.id,
+        name: o.name,
+        phone: o.phone || "",
+        email: o.email,
+        gstin: o.gstin,
+        address: o.address,
+        balance: 0,
+        isNetworkOrg: true as const,
+      }));
+
+    return [...localMatched, ...networkOnly].slice(0, 25);
+  }, [suppliers, supplierSearch, orgId]);
 
   const getFilteredProducts = (query: string): UnifiedPurchaseProduct[] => {
     const customPriceMap = new Map<string, number>();
@@ -1880,21 +1907,30 @@ export function PurchaseInvoiceModal({
                               className="w-full text-left px-3.5 py-2.5 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
                             >
                               <div className="flex-1 min-w-0 pr-2">
-                                <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight truncate">
+                                <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight truncate flex items-center gap-1.5">
                                   {s.name}
+                                  {(s as { isNetworkOrg?: boolean }).isNetworkOrg && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 uppercase tracking-wide shrink-0">
+                                      CredSmart
+                                    </span>
+                                  )}
                                 </p>
                                 {s.phone && (
                                   <p className="text-[10px] text-slate-500 font-mono mt-0.5">{s.phone}</p>
                                 )}
                               </div>
                               <div className="text-right shrink-0">
-                                <span className={cn(
-                                  "font-mono font-bold text-xs flex items-center justify-end gap-1",
-                                  (s.balance || 0) > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-500"
-                                )}>
-                                  ₹ {(s.balance || 0).toLocaleString("en-IN")}
-                                  {(s.balance || 0) > 0 && <span className="text-[10px] text-emerald-600">↓</span>}
-                                </span>
+                                {(s as { isNetworkOrg?: boolean }).isNetworkOrg ? (
+                                  <span className="text-[10px] text-indigo-500 font-semibold">Network</span>
+                                ) : (
+                                  <span className={cn(
+                                    "font-mono font-bold text-xs flex items-center justify-end gap-1",
+                                    (s.balance || 0) > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-500"
+                                  )}>
+                                    ₹ {(s.balance || 0).toLocaleString("en-IN")}
+                                    {(s.balance || 0) > 0 && <span className="text-[10px] text-emerald-600">↓</span>}
+                                  </span>
+                                )}
                               </div>
                             </button>
                           ))}

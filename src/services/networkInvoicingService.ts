@@ -285,7 +285,87 @@ export const networkInvoicingService = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // 3. SEND SALES INVOICE TO NETWORK (PERSON A -> PERSON B)
+  // 3. PARTY NAME AUTOCOMPLETE — NETWORK ORG SUGGESTIONS
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * Synchronously reads credsmart_registered_orgs_cache from localStorage
+   * and returns orgs whose name / phone / gstin match `query`.
+   * Returns at most `limit` results (default 15). Zero network calls.
+   */
+  getNetworkOrgSuggestions(
+    query: string,
+    limit = 15
+  ): Array<{
+    id: string;
+    name: string;
+    phone?: string;
+    gstin?: string;
+    address?: string;
+    email?: string;
+    isNetworkOrg: true;
+    source: "network";
+  }> {
+    if (typeof window === "undefined") return [];
+    const q = query.trim().toLowerCase();
+
+    // Collect all cached orgs from every relevant localStorage key
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allOrgs: any[] = [];
+    try {
+      const cachedRaw = localStorage.getItem("credsmart_registered_orgs_cache");
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (Array.isArray(parsed)) allOrgs.push(...parsed);
+      }
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith("credsmart_org_registry_")) {
+          try {
+            const orgs = JSON.parse(localStorage.getItem(k) || "[]");
+            if (Array.isArray(orgs)) allOrgs.push(...orgs);
+          } catch { /* ignore */ }
+        }
+      }
+      const activeOrgRaw = localStorage.getItem("credsmart_active_org_data");
+      if (activeOrgRaw) {
+        try {
+          const parsed = JSON.parse(activeOrgRaw);
+          if (parsed?.id) allOrgs.push(parsed);
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
+
+    // Deduplicate by org id
+    const seenIds = new Set<string>();
+    const unique = allOrgs.filter((o) => {
+      if (!o?.id || seenIds.has(o.id)) return false;
+      seenIds.add(o.id);
+      return true;
+    });
+
+    // Filter by query (empty query = return all up to limit)
+    const matched = q
+      ? unique.filter((o) => {
+          const name = (o.name || "").toLowerCase();
+          const phone = (o.phone || "").replace(/\D/g, "");
+          const gstin = (o.gstin || "").toLowerCase();
+          return name.includes(q) || phone.includes(q) || gstin.includes(q);
+        })
+      : unique;
+
+    return matched.slice(0, limit).map((o) => ({
+      id: o.id as string,
+      name: o.name as string,
+      phone: o.phone || undefined,
+      gstin: o.gstin || undefined,
+      address: o.address || undefined,
+      email: o.email || undefined,
+      isNetworkOrg: true as const,
+      source: "network" as const,
+    }));
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. SEND SALES INVOICE TO NETWORK (PERSON A -> PERSON B)
   // ─────────────────────────────────────────────────────────────
   async sendSalesInvoiceToNetwork(
     salesDoc: BusinessDocument,

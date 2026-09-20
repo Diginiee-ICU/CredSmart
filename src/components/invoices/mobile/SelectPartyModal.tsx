@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { X, Search, ArrowDown, ArrowUp, Plus, UserPlus } from "lucide-react";
 import { CreatePartyModal, MobileCreatedPartyResult } from "./CreatePartyModal";
 
@@ -17,6 +17,61 @@ export interface SelectPartyModalProps {
   onSelect: (id: string, party?: any) => void;
   partyType?: "customer" | "supplier";
   onPartyCreated?: (party: MobileCreatedPartyResult) => void;
+  orgId?: string; // own org id to exclude from suggestions
+}
+
+/** Reads network org cache from localStorage (synchronous, zero latency) */
+function getNetworkOrgSuggestions(query: string, ownOrgId?: string): CustomerOption[] {
+  if (typeof window === "undefined") return [];
+  const q = query.trim().toLowerCase();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allOrgs: any[] = [];
+  try {
+    const cachedRaw = localStorage.getItem("credsmart_registered_orgs_cache");
+    if (cachedRaw) {
+      const parsed = JSON.parse(cachedRaw);
+      if (Array.isArray(parsed)) allOrgs.push(...parsed);
+    }
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith("credsmart_org_registry_")) {
+        try {
+          const orgs = JSON.parse(localStorage.getItem(k) || "[]");
+          if (Array.isArray(orgs)) allOrgs.push(...orgs);
+        } catch { /* ignore */ }
+      }
+    }
+    const activeOrgRaw = localStorage.getItem("credsmart_active_org_data");
+    if (activeOrgRaw) {
+      try {
+        const parsed = JSON.parse(activeOrgRaw);
+        if (parsed?.id) allOrgs.push(parsed);
+      } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
+
+  // Deduplicate and filter
+  const seenIds = new Set<string>();
+  return allOrgs
+    .filter((o) => {
+      if (!o?.id || seenIds.has(o.id)) return false;
+      if (ownOrgId && o.id === ownOrgId) return false;
+      seenIds.add(o.id);
+      if (!q) return true;
+      const name = (o.name || "").toLowerCase();
+      const phone = (o.phone || "").replace(/\D/g, "");
+      const gstin = (o.gstin || "").toLowerCase();
+      return name.includes(q) || phone.includes(q) || gstin.includes(q);
+    })
+    .slice(0, 10)
+    .map((o) => ({
+      id: o.id as string,
+      name: o.name as string,
+      phone: o.phone || "",
+      gstin: o.gstin || undefined,
+      address: o.address || undefined,
+      balance: 0,
+      isNetworkOrg: true as const,
+    }));
 }
 
 export function SelectPartyModal({
@@ -25,12 +80,26 @@ export function SelectPartyModal({
   onSelect,
   partyType = "customer",
   onPartyCreated,
+  orgId,
 }: SelectPartyModalProps) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"all" | "contacts">("all");
   const [isCreatePartyOpen, setIsCreatePartyOpen] = useState(false);
 
-  const filtered = customers.filter(
+  // Merge local customers + network org suggestions
+  const merged = useMemo(() => {
+    const networkOrgs = getNetworkOrgSuggestions(search, orgId);
+    const seenKeys = new Set(
+      customers.map((c) => `${(c.name || "").toLowerCase().trim()}|${(c.phone || "").trim()}`)
+    );
+    const networkOnly = networkOrgs.filter((o) => {
+      const key = `${(o.name || "").toLowerCase().trim()}|${(o.phone || "").trim()}`;
+      return !seenKeys.has(key);
+    });
+    return [...customers, ...networkOnly];
+  }, [customers, search, orgId]);
+
+  const filtered = merged.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       (c.phone && c.phone.includes(search)) ||
@@ -141,6 +210,7 @@ export function SelectPartyModal({
             .map((c) => {
               const bal = c.balance ?? 0;
               const isReceivable = bal >= 0;
+              const isNetworkOrg = (c as { isNetworkOrg?: boolean }).isNetworkOrg;
 
               return (
                 <div
@@ -152,8 +222,13 @@ export function SelectPartyModal({
                   className="flex justify-between items-center p-4 border-b border-slate-100 active:bg-indigo-50/50 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   <div className="flex flex-col gap-0.5 min-w-0 pr-3">
-                    <span className="text-[15px] font-semibold text-slate-900 truncate">
+                    <span className="text-[15px] font-semibold text-slate-900 truncate flex items-center gap-1.5">
                       {c.name}
+                      {isNetworkOrg && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase tracking-wide shrink-0">
+                          CredSmart
+                        </span>
+                      )}
                     </span>
                     <div className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-1.5 flex-wrap">
                       <span className="font-mono">{c.phone || "No phone"}</span>
@@ -164,22 +239,28 @@ export function SelectPartyModal({
                         </>
                       )}
                       <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                      <span className="capitalize">{partyType}</span>
+                      <span className="capitalize">{isNetworkOrg ? "Network" : partyType}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 text-right">
-                    <span
-                      className={`text-sm font-bold font-mono ${
-                        isReceivable ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      {bal !== 0 ? (isReceivable ? "+ " : "- ") : ""}₹ {Math.abs(bal).toLocaleString("en-IN")}
-                    </span>
-                    {isReceivable ? (
-                      <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
+                    {isNetworkOrg ? (
+                      <span className="text-xs font-bold text-indigo-500">Network</span>
                     ) : (
-                      <ArrowUp className="w-3.5 h-3.5 text-rose-500" />
+                      <>
+                        <span
+                          className={`text-sm font-bold font-mono ${
+                            isReceivable ? "text-emerald-600" : "text-rose-600"
+                          }`}
+                        >
+                          {bal !== 0 ? (isReceivable ? "+ " : "- ") : ""}₹ {Math.abs(bal).toLocaleString("en-IN")}
+                        </span>
+                        {isReceivable ? (
+                          <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
+                        ) : (
+                          <ArrowUp className="w-3.5 h-3.5 text-rose-500" />
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

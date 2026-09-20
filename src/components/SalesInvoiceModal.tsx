@@ -1287,15 +1287,41 @@ export function SalesInvoiceModal({
   };
 
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch) return customers.slice(0, 20);
     const q = customerSearch.toLowerCase();
-    return customers.filter((c) => {
-      const safeName = (c?.name || "").toLowerCase();
-      const safePhone = c?.phone || "";
-      const safeGstin = c?.gstin || "";
-      return safeName.includes(q) || safePhone.includes(q) || safeGstin.toLowerCase().includes(q);
-    });
-  }, [customers, customerSearch]);
+
+    // Filter local customers
+    const localMatched = q
+      ? customers.filter((c) => {
+          const safeName = (c?.name || "").toLowerCase();
+          const safePhone = c?.phone || "";
+          const safeGstin = c?.gstin || "";
+          return safeName.includes(q) || safePhone.includes(q) || safeGstin.toLowerCase().includes(q);
+        })
+      : customers.slice(0, 20);
+
+    // Merge network org suggestions (read synchronously from localStorage)
+    const networkOrgs = networkInvoicingService.getNetworkOrgSuggestions(customerSearch, 10);
+    const seenKeys = new Set(
+      localMatched.map((c) => `${(c.name || "").toLowerCase().trim()}|${(c.phone || "").trim()}`)
+    );
+    const networkOnly = networkOrgs
+      .filter((o) => {
+        const key = `${(o.name || "").toLowerCase().trim()}|${(o.phone || "").trim()}`;
+        return !seenKeys.has(key) && o.id !== orgId; // exclude own org
+      })
+      .map((o) => ({
+        id: o.id,
+        name: o.name,
+        phone: o.phone || "",
+        email: o.email,
+        gstin: o.gstin,
+        address: o.address,
+        balance: 0,
+        isNetworkOrg: true as const,
+      }));
+
+    return [...localMatched, ...networkOnly].slice(0, 25);
+  }, [customers, customerSearch, orgId]);
 
   const getFilteredProducts = (query: string): UnifiedProductSuggestion[] => {
     const safeCatalog = (productsCatalog || []).filter(Boolean);
@@ -1847,21 +1873,30 @@ export function SalesInvoiceModal({
                               className="w-full text-left px-3.5 py-2.5 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors flex items-center justify-between gap-3 group cursor-pointer"
                             >
                               <div className="flex-1 min-w-0 pr-2">
-                                <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight truncate">
+                                <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight truncate flex items-center gap-1.5">
                                   {c.name}
+                                  {(c as { isNetworkOrg?: boolean }).isNetworkOrg && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 uppercase tracking-wide shrink-0">
+                                      CredSmart
+                                    </span>
+                                  )}
                                 </p>
                                 {c.phone && (
                                   <p className="text-[10px] text-slate-500 font-mono mt-0.5">{c.phone}</p>
                                 )}
                               </div>
                               <div className="text-right shrink-0">
-                                <span className={cn(
-                                  "font-mono font-bold text-xs flex items-center justify-end gap-1",
-                                  (c.balance || 0) > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-500"
-                                )}>
-                                  ₹ {(c.balance || 0).toLocaleString("en-IN")}
-                                  {(c.balance || 0) > 0 && <span className="text-[10px] text-emerald-600">↓</span>}
-                                </span>
+                                {(c as { isNetworkOrg?: boolean }).isNetworkOrg ? (
+                                  <span className="text-[10px] text-indigo-500 font-semibold">Network</span>
+                                ) : (
+                                  <span className={cn(
+                                    "font-mono font-bold text-xs flex items-center justify-end gap-1",
+                                    (c.balance || 0) > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-500"
+                                  )}>
+                                    ₹ {(c.balance || 0).toLocaleString("en-IN")}
+                                    {(c.balance || 0) > 0 && <span className="text-[10px] text-emerald-600">↓</span>}
+                                  </span>
+                                )}
                               </div>
                             </button>
                           ))}
