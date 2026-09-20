@@ -480,6 +480,7 @@ export const networkInvoicingService = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       recipientOrgId: targetRecipientOrgId,
       type: "sale_invoice_received",
+      category: "inward",
       title: `Sale was Created by ${senderOrg.name} on your name`,
       message: `${senderOrg.name} has created Sales Invoice #${salesDoc.documentNumber} for ₹${salesDoc.grandTotal.toLocaleString(
         "en-IN",
@@ -488,6 +489,8 @@ export const networkInvoicingService = {
       status: "unread",
       actionStatus: "pending",
       networkInvoiceId: networkInvoice.id,
+      actionUrl: "/purchases?tab=purchase_invoice",
+      actionLabel: "Review & Inward",
       data: {
         senderOrgId: senderOrg.id,
         senderOrgName: senderOrg.name,
@@ -624,8 +627,108 @@ export const networkInvoicingService = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // 5. QUERY NOTIFICATIONS FOR AN ORGANIZATION
+  // 5. QUERY NOTIFICATIONS & REAL-TIME BUSINESS ALERTS FOR AN ORG
   // ─────────────────────────────────────────────────────────────
+  getRealtimeBusinessAlerts(orgId: string): NetworkNotification[] {
+    if (!orgId) return [];
+    const alerts: NetworkNotification[] = [];
+    const nowIso = new Date().toISOString();
+
+    // 1. Check for Low Stock items
+    try {
+      const localProducts = getLocalCachedProducts(orgId);
+      for (const p of localProducts) {
+        const minAlert = Number(p.tags?.min_stock_alert ?? p.minStockAlert ?? 5);
+        const currentStock = Number(p.stock ?? p.currentStock ?? 0);
+        if (currentStock <= minAlert) {
+          alerts.push({
+            id: `alert_stock_${p.id}`,
+            recipientOrgId: orgId,
+            type: "low_stock_alert",
+            category: "inventory",
+            title: `Low Stock: ${p.name} (${currentStock} ${p.unit || "PCS"} left)`,
+            message: `Current stock of ${p.name} is ${currentStock} ${p.unit || "PCS"}, which is at or below the safety alert threshold (${minAlert}). Reorder stock to maintain smooth checkout.`,
+            status: "unread",
+            actionStatus: "pending",
+            actionUrl: "/items",
+            actionLabel: "View Inventory",
+            data: {
+              productId: p.id,
+              productName: p.name,
+              currentStock,
+              minStockAlert: minAlert,
+            },
+            created_at: nowIso,
+          });
+        }
+      }
+    } catch { /* empty */ }
+
+    // 2. Check for Overdue Customer Invoices / Outstanding Udhar
+    try {
+      const salesDocs = documentsService.getLocalDocuments(orgId, "sales_invoice");
+      const todayTimestamp = new Date().setHours(0, 0, 0, 0);
+
+      for (const doc of salesDocs) {
+        if (doc.status !== "paid" && Number(doc.balanceDue || 0) > 0 && doc.dueDate) {
+          const dueTime = new Date(doc.dueDate).getTime();
+          if (dueTime < todayTimestamp) {
+            const daysOverdue = Math.max(1, Math.round((todayTimestamp - dueTime) / (1000 * 60 * 60 * 24)));
+            alerts.push({
+              id: `alert_overdue_${doc.id}`,
+              recipientOrgId: orgId,
+              type: "payment_due_alert",
+              category: "payments",
+              title: `Payment Overdue: ${doc.partyName} (₹${Number(doc.balanceDue).toLocaleString("en-IN", { minimumFractionDigits: 2 })})`,
+              message: `Invoice #${doc.documentNumber} for ₹${Number(doc.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })} was due on ${doc.dueDate} (${daysOverdue} day${daysOverdue > 1 ? "s" : ""} overdue). Send a WhatsApp reminder to expedite payment recovery.`,
+              status: "unread",
+              actionStatus: "pending",
+              actionUrl: "/parties",
+              actionLabel: "Collect Udhar",
+              data: {
+                partyName: doc.partyName,
+                partyPhone: doc.partyPhone,
+                invoiceNumber: doc.documentNumber,
+                amountDue: doc.balanceDue,
+                daysOverdue,
+                docDate: doc.docDate,
+              },
+              created_at: nowIso,
+            });
+          }
+        }
+      }
+    } catch { /* empty */ }
+
+    // 3. Check for High-Value Invoices requiring E-Way bill compliance
+    try {
+      const salesDocs = documentsService.getLocalDocuments(orgId, "sales_invoice");
+      for (const doc of salesDocs) {
+        if (Number(doc.grandTotal || 0) >= 50000 && !doc.ewayBillNo && !doc.transportDetails?.vehicleNumber) {
+          alerts.push({
+            id: `alert_eway_${doc.id}`,
+            recipientOrgId: orgId,
+            type: "compliance_alert",
+            category: "compliance",
+            title: `E-Way Bill Compliance: #${doc.documentNumber} (₹${Number(doc.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })})`,
+            message: `Sales Invoice #${doc.documentNumber} is ₹${Number(doc.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })} (≥ ₹50,000 threshold). Government compliance mandates an E-Way Bill before movement of goods.`,
+            status: "unread",
+            actionStatus: "pending",
+            actionUrl: "/e-invoicing",
+            actionLabel: "Generate E-Way Bill",
+            data: {
+              invoiceNumber: doc.documentNumber,
+              grandTotal: doc.grandTotal,
+            },
+            created_at: nowIso,
+          });
+        }
+      }
+    } catch { /* empty */ }
+
+    return alerts;
+  },
+
   async getNotificationsForOrg(orgId: string, orgPhone?: string, orgGstin?: string): Promise<NetworkNotification[]> {
     if (!orgId) return [];
 
@@ -656,6 +759,7 @@ export const networkInvoicingService = {
               recipientOrgId: row.recipient_org_id,
               recipientUserId: row.recipient_user_id,
               type: row.type,
+              category: row.type?.startsWith("sale_invoice_") ? "inward" : "system",
               title: row.title,
               message: row.message,
               status: row.status,
@@ -669,6 +773,14 @@ export const networkInvoicingService = {
       }
     } catch (err) {
       console.warn("Supabase network_notifications fetch notice:", err);
+    }
+
+    // Merge dynamic real-time store alerts (Low stock, Payment dues, Compliance)
+    const dynamicAlerts = this.getRealtimeBusinessAlerts(orgId);
+    for (const da of dynamicAlerts) {
+      if (!matched.some((n) => n.id === da.id)) {
+        matched.push(da);
+      }
     }
 
     return matched.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -1004,6 +1116,7 @@ export const networkInvoicingService = {
         id: `notif_conf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         recipientOrgId: inv.senderOrgId,
         type: "sale_invoice_approved",
+        category: "inward",
         title: `${recipientOrg.name} Approved Invoice #${inv.invoiceNumber}`,
         message: `${recipientOrg.name} has approved your Sales Invoice #${inv.invoiceNumber} (₹${inv.grandTotal.toLocaleString(
           "en-IN"
@@ -1011,6 +1124,8 @@ export const networkInvoicingService = {
         status: "unread",
         actionStatus: "approved",
         networkInvoiceId: inv.id,
+        actionUrl: "/sales?tab=sales_invoice",
+        actionLabel: "View Sales",
         data: {
           senderOrgId: recipientOrg.id,
           senderOrgName: recipientOrg.name,

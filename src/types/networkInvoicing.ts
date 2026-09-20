@@ -54,18 +54,35 @@ export type NetworkNotificationType =
   | "sale_invoice_received"
   | "sale_invoice_approved"
   | "sale_invoice_rejected"
+  | "sale_invoice_cancelled"
+  | "low_stock_alert"
+  | "payment_due_alert"
+  | "risk_radar_alert"
+  | "compliance_alert"
   | "system_alert";
+
+export type AlertCategory =
+  | "all"
+  | "inward"
+  | "inventory"
+  | "payments"
+  | "risk"
+  | "compliance"
+  | "system";
 
 export interface NetworkNotification {
   id: string;
   recipientOrgId: string;
   recipientUserId?: string;
   type: NetworkNotificationType;
+  category?: AlertCategory;
   title: string;
   message: string;
   status: "unread" | "read";
   actionStatus: NetworkInvoiceStatus;
   networkInvoiceId?: string;
+  actionUrl?: string;
+  actionLabel?: string;
   data?: {
     senderOrgId?: string;
     senderOrgName?: string;
@@ -76,6 +93,14 @@ export interface NetworkNotification {
     itemsCount?: number;
     docDate?: string;
     purchaseInvoiceNumber?: string;
+    productId?: string;
+    productName?: string;
+    currentStock?: number;
+    minStockAlert?: number;
+    partyId?: string;
+    partyName?: string;
+    amountDue?: number;
+    daysOverdue?: number;
     [key: string]: unknown;
   };
   created_at: string;
