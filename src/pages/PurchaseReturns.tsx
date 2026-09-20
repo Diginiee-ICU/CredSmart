@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
+import { PendingInwardBanner } from "@/components/purchases/PendingInwardBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -434,6 +435,9 @@ export default function PurchaseReturns() {
           <span>New Return / Debit Note</span>
         </button>
       </div>
+
+      {/* Incoming Sales Invoices Awaiting Inward Approval Banner */}
+      <PendingInwardBanner onActionComplete={fetchReturns} />
 
       {/* Stats Cards - 3D Frosted Glass */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">

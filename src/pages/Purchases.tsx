@@ -39,9 +39,7 @@ import {
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
-import { useNetworkInvoices } from "@/hooks/useNetworkInvoices";
-import { NetworkInvoicePreviewModal } from "@/components/notifications/NetworkInvoicePreviewModal";
-import { NetworkInvoice } from "@/types/networkInvoicing";
+import { PendingInwardBanner } from "@/components/purchases/PendingInwardBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -119,21 +117,6 @@ export default function Purchases() {
   const [sortField, setSortField] = useState<"docDate" | "grandTotal">("docDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
-
-  // Top banner dismiss state
-  const [bannerVisible, setBannerVisible] = useState(true);
-
-  // Network Invoicing
-  const {
-    pendingInvoices,
-    pendingCount,
-    approveInvoice,
-    rejectInvoice,
-    approvingId,
-    rejectingId,
-  } = useNetworkInvoices();
-  const [inspectingInvoice, setInspectingInvoice] = useState<NetworkInvoice | null>(null);
-  const [inspectModalOpen, setInspectModalOpen] = useState(false);
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -507,106 +490,9 @@ export default function Purchases() {
 
         {/* ───────────────────────────────────────────────────────────── */}
         {/* PENDING INWARD INVOICES (AUTO-SYNC APPROVAL BANNER) */}
+        {/* Rendered on all pages & sub-pages in Purchase Hub */}
         {/* ───────────────────────────────────────────────────────────── */}
-        {activeTab === "purchase_invoice" && pendingInvoices.length > 0 && (
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-primary/5 border border-amber-500/30 shadow-md shrink-0 space-y-3 animate-in fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500 text-white shadow-xs">
-                  <Sparkles className="w-4 h-4 animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
-                    <span>Incoming Sales Invoices Awaiting Inward Approval</span>
-                    <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.2 rounded-full font-mono">
-                      {pendingInvoices.length} Pending
-                    </Badge>
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground">
-                    Other CredSmart businesses generated invoices in your name. Approving will automatically record them as inward purchase bills.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              {pendingInvoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="p-3 rounded-xl bg-card border border-amber-500/30 shadow-xs flex flex-col justify-between gap-2.5"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs font-bold text-foreground">
-                        Sale was Created by <span className="text-primary">{inv.senderOrgName}</span> on your name
-                      </p>
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
-                        <span className="font-mono font-medium text-foreground bg-muted px-1.5 py-0.2 rounded">
-                          #{inv.invoiceNumber}
-                        </span>
-                        <span>·</span>
-                        <span>{inv.docDate}</span>
-                        <span>·</span>
-                        <span>{inv.items.length} item{inv.items.length > 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">
-                        ₹{inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2 flex-wrap sm:flex-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInspectingInvoice(inv);
-                        setInspectModalOpen(true);
-                      }}
-                      className="text-xs text-primary hover:underline font-bold flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-primary/5 active:scale-95 cursor-pointer"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>View Bill</span>
-                    </button>
-
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 sm:h-7 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-300 dark:border-rose-800 font-semibold px-3 active:scale-95 flex-1 sm:flex-none"
-                        onClick={async () => {
-                          await rejectInvoice(inv.id);
-                          await loadDocuments();
-                        }}
-                        disabled={rejectingId === inv.id || approvingId === inv.id}
-                      >
-                        Reject
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-9 sm:h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 active:scale-95 flex-1 sm:flex-none shadow-xs"
-                        onClick={async () => {
-                          const ok = await approveInvoice(inv.id);
-                          if (ok) await loadDocuments();
-                        }}
-                        disabled={approvingId === inv.id || rejectingId === inv.id}
-                      >
-                        {approvingId === inv.id ? (
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                        )}
-                        Approve &amp; Inward
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <PendingInwardBanner onActionComplete={loadDocuments} />
 
         {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
         <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
@@ -1293,22 +1179,6 @@ export default function Purchases() {
         />
       )}
 
-      {/* Incoming B2B Network Invoice Inspection Modal */}
-      <NetworkInvoicePreviewModal
-        open={inspectModalOpen}
-        onOpenChange={setInspectModalOpen}
-        invoice={inspectingInvoice}
-        onApprove={async (id) => {
-          const ok = await approveInvoice(id);
-          if (ok) await loadDocuments();
-        }}
-        onReject={async (id) => {
-          await rejectInvoice(id);
-          await loadDocuments();
-        }}
-        isApproving={approvingId === inspectingInvoice?.id}
-        isRejecting={rejectingId === inspectingInvoice?.id}
-      />
     </div>
   );
 }
