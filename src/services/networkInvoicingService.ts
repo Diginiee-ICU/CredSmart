@@ -311,7 +311,7 @@ export const networkInvoicingService = {
     const cleanGstin = (salesDoc.partyGstin || connectedRecipient?.gstin || "").toUpperCase().trim();
     const cleanName = (salesDoc.partyName || "").trim().toLowerCase();
 
-    const networkInvoiceId = `net_inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const networkInvoiceId = generateSafeUuid();
     const nowIso = new Date().toISOString();
 
     const networkInvoice: NetworkInvoice = {
@@ -357,7 +357,7 @@ export const networkInvoicingService = {
     };
 
     // 1. Save to Supabase network_invoices table (if available with safe timeout)
-    safeDbCall(async () => {
+    await safeDbCall(async () => {
       return supabase.from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({ // eslint-disable-line @typescript-eslint/no-explicit-any
         id: networkInvoiceId,
         sender_org_id: senderOrg.id,
@@ -420,6 +420,22 @@ export const networkInvoicingService = {
       },
       created_at: nowIso,
     };
+
+    await safeDbCall(() =>
+      supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
+        id: generateSafeUuid(),
+        recipient_org_id: targetRecipientOrgId.startsWith("party_match_") ? null : targetRecipientOrgId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        status: notification.status,
+        action_status: notification.actionStatus,
+        network_invoice_id: notification.networkInvoiceId,
+        data: notification.data,
+        created_at: notification.created_at,
+      } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
+      600
+    );
 
     const existingNotifs = this.getLocalNotifications();
     existingNotifs.unshift(notification);
@@ -545,6 +561,36 @@ export const networkInvoicingService = {
       return false;
     });
 
+    try {
+      const { data: dbNotifications, error } = await supabase
+        .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+        .select("*")
+        .eq("recipient_org_id", orgId)
+        .order("created_at", { ascending: false });
+
+      if (!error && dbNotifications) {
+        for (const row of dbNotifications as any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+          if (!matched.some((notification) => notification.id === row.id)) {
+            matched.push({
+              id: row.id,
+              recipientOrgId: row.recipient_org_id,
+              recipientUserId: row.recipient_user_id,
+              type: row.type,
+              title: row.title,
+              message: row.message,
+              status: row.status,
+              actionStatus: row.action_status,
+              networkInvoiceId: row.network_invoice_id,
+              data: row.data || undefined,
+              created_at: row.created_at,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Supabase network_notifications fetch notice:", err);
+    }
+
     return matched.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
 
@@ -559,7 +605,16 @@ export const networkInvoicingService = {
     try {
       // 1. Fetch the network invoice
       const allInvoices = this.getLocalInvoices();
-      const invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+
+      if (invoiceIndex === -1) {
+        const remoteInvoices = await this.getInvoicesForOrg(recipientOrg.id, recipientOrg.phone, recipientOrg.gstin);
+        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId);
+        if (remoteInvoice) {
+          allInvoices.push(remoteInvoice);
+          invoiceIndex = allInvoices.length - 1;
+        }
+      }
 
       if (invoiceIndex === -1) {
         return { success: false, error: "Network invoice record not found" };
@@ -829,7 +884,7 @@ export const networkInvoicingService = {
       this.saveLocalInvoices(allInvoices);
 
       // Update in Supabase network_invoices table
-      safeDbCall(() => {
+      await safeDbCall(() => {
         return supabase
           .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
           .update({
@@ -856,6 +911,14 @@ export const networkInvoicingService = {
         return n;
       });
 
+      await safeDbCall(() =>
+        supabase
+          .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+          .update({ status: "read", action_status: "approved" })
+          .eq("network_invoice_id", networkInvoiceId),
+        600
+      );
+
       // 9. Add Confirmation Notification for Person A (Sender)
       const senderConfirmationNotif: NetworkNotification = {
         id: `notif_conf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -879,6 +942,21 @@ export const networkInvoicingService = {
       };
       updatedNotifs.unshift(senderConfirmationNotif);
       this.saveLocalNotifications(updatedNotifs);
+      await safeDbCall(() =>
+        supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
+          id: generateSafeUuid(),
+          recipient_org_id: inv.senderOrgId,
+          type: senderConfirmationNotif.type,
+          title: senderConfirmationNotif.title,
+          message: senderConfirmationNotif.message,
+          status: senderConfirmationNotif.status,
+          action_status: senderConfirmationNotif.actionStatus,
+          network_invoice_id: inv.id,
+          data: senderConfirmationNotif.data,
+          created_at: nowIso,
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
+        600
+      );
 
       // 10. Broadcast events across tabs & windows
       dispatchNetworkEvents("INVOICE_APPROVED", {
@@ -907,7 +985,16 @@ export const networkInvoicingService = {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const allInvoices = this.getLocalInvoices();
-      const invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+
+      if (invoiceIndex === -1) {
+        const remoteInvoices = await this.getInvoicesForOrg(recipientOrg.id, recipientOrg.phone, recipientOrg.gstin);
+        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId);
+        if (remoteInvoice) {
+          allInvoices.push(remoteInvoice);
+          invoiceIndex = allInvoices.length - 1;
+        }
+      }
 
       if (invoiceIndex === -1) {
         return { success: false, error: "Network invoice record not found" };
@@ -924,7 +1011,7 @@ export const networkInvoicingService = {
       this.saveLocalInvoices(allInvoices);
 
       // Update in Supabase
-      safeDbCall(() => {
+      await safeDbCall(() => {
         return supabase
           .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
           .update({
@@ -950,6 +1037,14 @@ export const networkInvoicingService = {
         return n;
       });
 
+      await safeDbCall(() =>
+        supabase
+          .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+          .update({ status: "read", action_status: "rejected" })
+          .eq("network_invoice_id", networkInvoiceId),
+        600
+      );
+
       // Notify Person A (Sender) about the rejection
       const senderRejectNotif: NetworkNotification = {
         id: `notif_rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -972,6 +1067,21 @@ export const networkInvoicingService = {
       };
       updatedNotifs.unshift(senderRejectNotif);
       this.saveLocalNotifications(updatedNotifs);
+      await safeDbCall(() =>
+        supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
+          id: generateSafeUuid(),
+          recipient_org_id: inv.senderOrgId,
+          type: senderRejectNotif.type,
+          title: senderRejectNotif.title,
+          message: senderRejectNotif.message,
+          status: senderRejectNotif.status,
+          action_status: senderRejectNotif.actionStatus,
+          network_invoice_id: inv.id,
+          data: senderRejectNotif.data,
+          created_at: nowIso,
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
+        600
+      );
 
       // Broadcast events
       dispatchNetworkEvents("INVOICE_REJECTED", {
