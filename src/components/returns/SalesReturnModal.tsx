@@ -905,7 +905,7 @@ export function SalesReturnModal({
                         <div className="text-right w-20">
                           <div className="text-[10px] text-muted-foreground">Rate</div>
                           <div className="text-xs font-mono font-semibold text-foreground">
-                            ₹ {item.rate.toFixed(2)}
+                            ₹ {Number(item.rate ?? 0).toFixed(2)}
                           </div>
                         </div>
 
@@ -913,7 +913,7 @@ export function SalesReturnModal({
                         <div className="text-right w-24">
                           <div className="text-[10px] text-muted-foreground">Refund</div>
                           <div className="text-xs sm:text-sm font-mono font-bold text-amber-600 dark:text-amber-400">
-                            ₹ {(item.rate * item.quantity).toFixed(2)}
+                            ₹ {(Number(item.rate ?? 0) * Number(item.quantity ?? 0)).toFixed(2)}
                           </div>
                         </div>
 
@@ -1094,12 +1094,12 @@ export function SalesReturnModal({
             </div>
             <div>
               <span className="text-muted-foreground">Taxable:</span>{" "}
-              <strong className="font-mono text-foreground">₹ {breakdown.taxableBase.toFixed(2)}</strong>
+              <strong className="font-mono text-foreground">₹ {Number(breakdown.taxableBase ?? 0).toFixed(2)}</strong>
             </div>
             {breakdown.taxTotal > 0 && (
               <div>
                 <span className="text-muted-foreground">GST:</span>{" "}
-                <strong className="font-mono text-foreground">₹ {breakdown.taxTotal.toFixed(2)}</strong>
+                <strong className="font-mono text-foreground">₹ {Number(breakdown.taxTotal ?? 0).toFixed(2)}</strong>
               </div>
             )}
             <div className="text-sm">

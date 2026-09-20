@@ -2397,7 +2397,7 @@ export function SalesInvoiceModal({
                         <div className="flex flex-col justify-end">
                           <Label className="text-[10px] text-slate-500 font-semibold uppercase">Amount</Label>
                           <div className="h-8 flex items-center justify-end px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white text-xs border border-slate-200 dark:border-slate-700">
-                            ₹{item.lineTotal.toFixed(2)}
+                            ₹{Number(item.lineTotal ?? 0).toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -2628,7 +2628,7 @@ export function SalesInvoiceModal({
 
                           {/* Amount */}
                           <td className="py-2 px-2 text-right font-mono font-bold text-slate-900 dark:text-white">
-                            ₹{item.lineTotal.toFixed(2)}
+                            ₹{Number(item.lineTotal ?? 0).toFixed(2)}
                           </td>
 
                           {/* Remove button */}
@@ -2663,8 +2663,8 @@ export function SalesInvoiceModal({
                   <span>Subtotal</span>
                   <div className="flex items-center gap-6 font-mono">
                     <span>Qty: <strong className="text-slate-900 dark:text-white">{totals.totalQty}</strong></span>
-                    <span>Tax: <strong className="text-slate-900 dark:text-white">₹{totals.taxTotal.toFixed(2)}</strong></span>
-                    <span>Total: <strong className="text-slate-900 dark:text-white">₹{totals.rawSubtotal.toFixed(2)}</strong></span>
+                    <span>Tax: <strong className="text-slate-900 dark:text-white">₹{Number(totals.taxTotal ?? 0).toFixed(2)}</strong></span>
+                    <span>Total: <strong className="text-slate-900 dark:text-white">₹{Number(totals.rawSubtotal ?? 0).toFixed(2)}</strong></span>
                   </div>
                 </div>
               </div> {/* close internal bill-panel */}
@@ -2767,7 +2767,7 @@ export function SalesInvoiceModal({
                   <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 py-1">
                     <span>Taxable Amount</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-white">
-                      ₹{totals.taxableTotal.toFixed(2)}
+                      ₹{Number(totals.taxableTotal ?? 0).toFixed(2)}
                     </span>
                   </div>
 
@@ -2862,7 +2862,7 @@ export function SalesInvoiceModal({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-slate-700 dark:text-slate-300">Total Amount Received</span>
                       <span className="font-mono font-bold text-slate-900 dark:text-white">
-                        ₹ {amountReceived.toFixed(2)}
+                        ₹ {Number(amountReceived ?? 0).toFixed(2)}
                       </span>
                     </div>
 
@@ -2918,7 +2918,7 @@ export function SalesInvoiceModal({
                   <div className="flex items-center justify-between text-xs py-2 border-t border-slate-100 dark:border-slate-800 font-semibold">
                     <span className="text-slate-600 dark:text-slate-400">Balance Amount</span>
                     <span className={cn("font-mono font-bold text-sm", totals.grandTotal - amountReceived > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
-                      ₹ {Math.max(0, totals.grandTotal - amountReceived).toFixed(2)}
+                      ₹ {Math.max(0, Number(totals.grandTotal ?? 0) - Number(amountReceived ?? 0)).toFixed(2)}
                     </span>
                   </div>
 
