@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { ArrowLeft, Settings, Search, Calendar, ScanBarcode, Barcode, Camera, FileText, ChevronDown, Layers } from "lucide-react";
+import { DocumentLineItem } from "@/types/documents";
+import { toast } from "@/hooks/use-toast";
 
 interface CreateNewItemModalProps {
   onClose: () => void;
-  // Normally would take onSave or similar handlers
+  onSave: (item: DocumentLineItem, saveAndNew: boolean) => void;
 }
 
 const UNIT_OPTIONS = [
@@ -11,16 +13,54 @@ const UNIT_OPTIONS = [
   "MTR", "CM", "IN", "FT", "SQFT", "BTL", "CAN", "BAG", "ROLL"
 ];
 
-export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
+export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps) {
   const [isProduct, setIsProduct] = useState(true);
   const [activeTab, setActiveTab] = useState<'pricing' | 'stock' | 'other' | 'party'>('pricing');
   const [lowStockAlert, setLowStockAlert] = useState(false);
   const [showOnlineStore, setShowOnlineStore] = useState(true);
   
   const [unit, setUnit] = useState("PCS");
+  const [itemName, setItemName] = useState("");
+  const [hsn, setHsn] = useState("");
+  const [salesPrice, setSalesPrice] = useState("");
+  const [purchasePrice, setPurchasePrice] = useState("");
+  const [gstRate, setGstRate] = useState("0");
   const [enableAltUnit, setEnableAltUnit] = useState(false);
   const [altUnit, setAltUnit] = useState("BOX");
   const [altUnitConversion, setAltUnitConversion] = useState("10");
+
+  const handleSave = (saveAndNew: boolean) => {
+    const name = itemName.trim();
+    if (!name) {
+      toast({ title: "Item name required", description: "Enter an item name before saving." });
+      return;
+    }
+
+    onSave({
+      id: crypto.randomUUID(),
+      productName: name,
+      quantity: 1,
+      rate: Number(salesPrice) || 0,
+      taxRate: Number(gstRate) || 0,
+      discountPercent: 0,
+      discountAmount: 0,
+      unit,
+      hsn: hsn.trim() || undefined,
+      taxableAmount: Number(salesPrice) || 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      igstAmount: 0,
+      lineTotal: Number(salesPrice) || 0,
+    }, saveAndNew);
+
+    if (saveAndNew) {
+      setItemName("");
+      setHsn("");
+      setSalesPrice("");
+      setPurchasePrice("");
+      setGstRate("0");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] bg-white flex flex-col h-[100dvh] overflow-hidden">
@@ -45,6 +85,8 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
             <input 
               type="text" 
               placeholder="Ex: Kissan Fruit Jam 500 gm"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
               className="w-full border border-slate-200 rounded-lg p-3 text-[15px] outline-none placeholder:text-slate-300 font-medium text-slate-900"
             />
           </div>
@@ -58,6 +100,8 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
                 <input 
                   type="text"
                   placeholder="Ex: 6704"
+                  value={hsn}
+                  onChange={(e) => setHsn(e.target.value)}
                   className="bg-transparent border-none outline-none w-full text-[15px] font-medium text-slate-900 placeholder:text-slate-300"
                 />
                 <Search className="w-5 h-5 text-slate-400 shrink-0" />
@@ -196,7 +240,7 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
               <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
                 <div className="flex gap-2 flex-1">
                   <span className="text-slate-400">₹</span>
-                  <input type="number" placeholder="130" className="outline-none w-full text-[15px] font-medium placeholder:text-slate-300" />
+                  <input type="number" placeholder="130" value={salesPrice} onChange={(e) => setSalesPrice(e.target.value)} className="outline-none w-full text-[15px] font-medium placeholder:text-slate-300" />
                 </div>
                 <select className="border-none outline-none bg-transparent text-slate-500 text-sm font-medium ml-2">
                   <option>Without Tax</option>
@@ -211,7 +255,7 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
                 <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
                   <div className="flex gap-2 flex-1">
                     <span className="text-slate-400">₹</span>
-                    <input type="number" placeholder="115" className="outline-none w-full text-[15px] font-medium placeholder:text-slate-300" />
+                    <input type="number" placeholder="115" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} className="outline-none w-full text-[15px] font-medium placeholder:text-slate-300" />
                   </div>
                   <select className="border-none outline-none bg-transparent text-slate-500 text-sm font-medium ml-2">
                     <option>Without Tax</option>
@@ -224,7 +268,7 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
             <div>
               <label className="text-xs font-bold text-slate-600 mb-1.5 block">GST</label>
               <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
-                <select className="border-none outline-none bg-transparent text-[15px] text-slate-900 font-medium w-full appearance-none">
+                <select value={gstRate} onChange={(e) => setGstRate(e.target.value)} className="border-none outline-none bg-transparent text-[15px] text-slate-900 font-medium w-full appearance-none">
                   <option>None</option>
                   <option>5%</option>
                   <option>12%</option>
@@ -371,10 +415,11 @@ export function CreateNewItemModal({ onClose }: CreateNewItemModalProps) {
       {/* Sticky Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 flex items-center justify-between pb-[max(1rem,env(safe-area-inset-bottom))] z-10">
         <div className="flex flex-col">
-           <span className="text-[15px] font-bold text-indigo-700">Save & New</span>
+          <button type="button" onClick={() => handleSave(true)} className="flex flex-col text-left">
+            <span className="text-[15px] font-bold text-indigo-700">Save & New</span>
            <span className="text-xs font-medium text-slate-500 mt-0.5">Create New Item</span>
-        </div>
-        <button className="bg-indigo-600 text-white px-14 py-3.5 rounded-xl font-bold text-[15px] shadow-[0_8px_16px_-4px_rgba(79,70,229,0.3)]">
+          </button>
+          <button type="button" onClick={() => handleSave(false)} className="bg-indigo-600 text-white px-14 py-3.5 rounded-xl font-bold text-[15px] shadow-[0_8px_16px_-4px_rgba(79,70,229,0.3)]">
           Save
         </button>
       </div>

@@ -316,9 +316,9 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
         <AddItemModal
           onClose={() => setIsItemModalOpen(false)}
           catalog={props.catalog}
-          onAddSelectedItems={(items) => {
+          onAddSelectedItems={(items, keepOpen) => {
              props.onAddSelectedItems(items);
-             setIsItemModalOpen(false);
+             if (!keepOpen) setIsItemModalOpen(false);
           }}
         />
       )}

@@ -6,7 +6,7 @@ import { CreateNewItemModal } from "@/components/items/mobile/CreateNewItemModal
 interface AddItemModalProps {
   onClose: () => void;
   catalog: any[];
-  onAddSelectedItems: (items: DocumentLineItem[]) => void;
+  onAddSelectedItems: (items: DocumentLineItem[], keepOpen?: boolean) => void;
 }
 
 export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemModalProps) {
@@ -93,7 +93,13 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
       </div>
 
       {isCreateItemOpen && (
-        <CreateNewItemModal onClose={() => setIsCreateItemOpen(false)} />
+        <CreateNewItemModal
+          onClose={() => setIsCreateItemOpen(false)}
+          onSave={(item, saveAndNew) => {
+            onAddSelectedItems([item], saveAndNew);
+            if (!saveAndNew) setIsCreateItemOpen(false);
+          }}
+        />
       )}
     </div>
   );
