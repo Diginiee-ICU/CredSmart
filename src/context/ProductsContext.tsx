@@ -128,12 +128,48 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         .eq("organization_id", effectiveOrg)
         .order("name");
       if (error) throw error;
-      if (data) {
-        const normalized = data.map(normalizeProduct);
-        setProducts(normalized);
+
+      const normalized = (data || []).map(normalizeProduct);
+
+      // Merge with any local cached products (e.g. newly created via B2B network inward or offline)
+      const localKey = `credsmart_cached_products_${effectiveOrg}`;
+      let localCached: unknown[] = [];
+      try {
+        const raw = localStorage.getItem(localKey);
+        localCached = raw ? JSON.parse(raw) : [];
+      } catch { /* empty */ }
+
+      const combined = [...normalized];
+      if (Array.isArray(localCached)) {
+        for (const loc of localCached) {
+          const locObj = loc as Record<string, unknown>;
+          const exists = combined.some(
+            (p) =>
+              p.id === locObj.id ||
+              (locObj.barcode && p.barcode === locObj.barcode) ||
+              (locObj.name && p.name.trim().toLowerCase() === String(locObj.name).trim().toLowerCase())
+          );
+          if (!exists) {
+            combined.push(normalizeProduct(loc));
+          }
+        }
       }
+
+      setProducts(combined);
+      try {
+        localStorage.setItem(localKey, JSON.stringify(combined));
+      } catch { /* empty */ }
     } catch (e) {
-      console.error("Failed to refresh products", e);
+      console.error("Failed to refresh products from cloud, checking local cache", e);
+      // Fallback to local storage cache if Supabase is offline / unreachable
+      try {
+        const localKey = `credsmart_cached_products_${effectiveOrg}`;
+        const raw = localStorage.getItem(localKey);
+        const localCached = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(localCached) && localCached.length > 0) {
+          setProducts(localCached.map(normalizeProduct));
+        }
+      } catch { /* empty */ }
     } finally {
       setLoading(false);
     }
@@ -143,20 +179,37 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     const normalized = normalizeProduct(p);
     setProducts((prev) => {
       const idx = prev.findIndex((x) => x.id === normalized.id);
+      let updated: ProductCatalogOption[];
       if (idx !== -1) {
-        const copy = [...prev];
-        copy[idx] = { ...copy[idx], ...normalized };
-        return copy;
+        updated = [...prev];
+        updated[idx] = { ...updated[idx], ...normalized };
+      } else {
+        updated = [normalized, ...prev];
       }
-      return [normalized, ...prev];
+      const effectiveOrg = orgId || org?.id || localStorage.getItem("credsmart_active_org_id");
+      if (effectiveOrg) {
+        try {
+          localStorage.setItem(`credsmart_cached_products_${effectiveOrg}`, JSON.stringify(updated));
+        } catch { /* empty */ }
+      }
+      return updated;
     });
-  }, []);
+  }, [org, orgId]);
 
   const getById = useCallback((id: string) => products.find((p) => p.id === id), [products]);
 
   useEffect(() => {
     const targetId = orgId || org?.id || localStorage.getItem("credsmart_active_org_id");
     if (targetId) {
+      // Immediate optimistic hydration from local cache
+      try {
+        const raw = localStorage.getItem(`credsmart_cached_products_${targetId}`);
+        const localCached = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(localCached) && localCached.length > 0) {
+          setProducts(localCached.map(normalizeProduct));
+        }
+      } catch { /* empty */ }
+
       refreshProducts(targetId);
     }
   }, [org?.id, orgId, refreshProducts]);

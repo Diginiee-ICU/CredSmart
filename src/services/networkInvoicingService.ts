@@ -8,6 +8,11 @@ import {
 import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { documentsService } from "@/services/documentsService";
 import { OrgData, getLocalOrgRegistry } from "@/hooks/useOrganization";
+import {
+  getLocalCachedProducts,
+  addOrUpdateLocalCachedProduct,
+  notifyStockUpdated,
+} from "@/services/stockService";
 
 const STORAGE_INVOICES_KEY = "credsmart_network_invoices_v1";
 const STORAGE_NOTIFICATIONS_KEY = "credsmart_network_notifications_v1";
@@ -619,30 +624,156 @@ export const networkInvoicingService = {
       const nextSeq = String(existingPurchases.length + 1).padStart(3, "0");
       const purchaseDocNumber = `PI-${currentYear}-${nextSeq}`;
 
-      // 4. Map Line Items from Sales Invoice to Purchase Bill
-      const mappedPurchaseItems: DocumentLineItem[] = inv.items.map((it, idx) => ({
-        id: `pi-item-${Date.now()}-${idx}`,
-        productId: it.productId,
-        productName: it.productName,
-        barcode: it.barcode,
-        hsn: it.hsn,
-        batchNumber: it.batchNumber || "BATCH-01",
-        expiryDate: it.expiryDate,
-        quantity: it.quantity,
-        unit: it.unit || "PCS",
-        altUnit: it.altUnit,
-        altQty: it.altQty,
-        altUnitConversion: it.altUnitConversion,
-        rate: it.rate, // Seller's selling price becomes Buyer's purchase cost price
-        discountPercent: it.discountPercent || 0,
-        discountAmount: it.discountAmount || 0,
-        taxRate: it.taxRate || 0,
-        taxableAmount: it.taxableAmount || (it.rate * it.quantity),
-        cgstAmount: it.cgstAmount || 0,
-        sgstAmount: it.sgstAmount || 0,
-        igstAmount: it.igstAmount || 0,
-        lineTotal: it.lineTotal || (it.rate * it.quantity),
-      }));
+      // 4. Resolve or Auto-Create each Line Item in Person B (Buyer)'s Store
+      const mappedPurchaseItems: DocumentLineItem[] = [];
+
+      for (let idx = 0; idx < inv.items.length; idx++) {
+        const it = inv.items[idx];
+        let resolvedProductId: string | null = null;
+
+        try {
+          const cleanBarcode = (it.barcode || "").trim();
+          const cleanName = (it.productName || "").trim();
+
+          // 1. Try matching by barcode in recipient's store
+          if (cleanBarcode) {
+            const barcodeMatch = await safeDbCall(() =>
+              supabase
+                .from("products")
+                .select("id, name")
+                .eq("organization_id", recipientOrg.id)
+                .eq("barcode", cleanBarcode)
+                .limit(1)
+                .maybeSingle()
+            );
+
+            if (barcodeMatch?.data?.id) {
+              resolvedProductId = barcodeMatch.data.id;
+            }
+          }
+
+          // 2. Try matching by product name (case-insensitive) in recipient's store
+          if (!resolvedProductId && cleanName) {
+            const nameMatch = await safeDbCall(() =>
+              supabase
+                .from("products")
+                .select("id, name")
+                .eq("organization_id", recipientOrg.id)
+                .ilike("name", cleanName)
+                .limit(1)
+                .maybeSingle()
+            );
+
+            if (nameMatch?.data?.id) {
+              resolvedProductId = nameMatch.data.id;
+            }
+          }
+
+          // 3. Fallback check in local cached products for recipient org
+          if (!resolvedProductId) {
+            const localCached = getLocalCachedProducts(recipientOrg.id);
+            if (cleanBarcode) {
+              const f = localCached.find((p) => p.barcode === cleanBarcode);
+              if (f?.id) resolvedProductId = f.id;
+            }
+            if (!resolvedProductId && cleanName) {
+              const f = localCached.find(
+                (p) => (p.name || "").trim().toLowerCase() === cleanName.toLowerCase()
+              );
+              if (f?.id) resolvedProductId = f.id;
+            }
+          }
+
+          // 4. If product does NOT exist in recipient's inventory, AUTO-CREATE IT!
+          if (!resolvedProductId && cleanName) {
+            const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}-${idx + 1}`;
+            const sp = Number(it.rate || 0);
+            const pp = Number(it.rate || 0);
+            const tagsPayload = {
+              unit: (it.unit || "PCS").toUpperCase(),
+              alt_unit: it.altUnit,
+              alt_unit_conversion: it.altUnitConversion,
+              gst_rate: it.taxRate || 0,
+              hsn_code: it.hsn || "",
+              selling_price: sp,
+              purchase_price: pp,
+              mrp: sp,
+              stock: 0, // Opening stock is 0; will be incremented by documentsService / stockService
+              min_stock_alert: 5,
+            };
+
+            const createRes = await safeDbCall(() =>
+              supabase
+                .from("products")
+                .insert({
+                  organization_id: recipientOrg.id,
+                  name: cleanName,
+                  barcode: cleanBarcode || null,
+                  category: "General",
+                  sku: generatedSku,
+                  tags: tagsPayload,
+                })
+                .select("id, name, barcode, sku, category, tags")
+                .maybeSingle()
+            );
+
+            if (createRes?.data?.id) {
+              resolvedProductId = createRes.data.id;
+            } else {
+              // Local fallback ID for offline / demo mode
+              resolvedProductId = `prod_b2b_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`;
+            }
+
+            // Also register in local cache
+            addOrUpdateLocalCachedProduct(recipientOrg.id, {
+              id: resolvedProductId,
+              name: cleanName,
+              barcode: cleanBarcode || null,
+              sku: generatedSku,
+              category: "General",
+              unit: (it.unit || "PCS").toUpperCase(),
+              altUnit: it.altUnit,
+              altUnitConversion: it.altUnitConversion,
+              sellingPrice: sp,
+              purchasePrice: pp,
+              mrp: sp,
+              currentStock: 0,
+              stock: 0,
+              tags: tagsPayload,
+            });
+          }
+        } catch (itemErr) {
+          console.warn("Notice resolving/auto-creating item for recipient org:", itemErr);
+        }
+
+        if (!resolvedProductId) {
+          resolvedProductId = `prod_b2b_${Date.now()}_${idx}`;
+        }
+
+        mappedPurchaseItems.push({
+          id: `pi-item-${Date.now()}-${idx}`,
+          productId: resolvedProductId,
+          productName: it.productName,
+          barcode: it.barcode,
+          hsn: it.hsn,
+          batchNumber: it.batchNumber || "BATCH-01",
+          expiryDate: it.expiryDate,
+          quantity: it.quantity,
+          unit: it.unit || "PCS",
+          altUnit: it.altUnit,
+          altQty: it.altQty,
+          altUnitConversion: it.altUnitConversion,
+          rate: it.rate, // Seller's selling price becomes Buyer's purchase cost price
+          discountPercent: it.discountPercent || 0,
+          discountAmount: it.discountAmount || 0,
+          taxRate: it.taxRate || 0,
+          taxableAmount: it.taxableAmount || (it.rate * it.quantity),
+          cgstAmount: it.cgstAmount || 0,
+          sgstAmount: it.sgstAmount || 0,
+          igstAmount: it.igstAmount || 0,
+          lineTotal: it.lineTotal || (it.rate * it.quantity),
+        });
+      }
 
       // 5. Build the Purchase Invoice BusinessDocument
       const nowIso = new Date().toISOString();
@@ -683,6 +814,9 @@ export const networkInvoicingService = {
 
       // 6. Save the Purchase Invoice into Person B's store
       const savedPurchaseDoc = await documentsService.saveDocument(purchaseDoc, userId);
+
+      // Trigger stock update notification for recipient organization
+      notifyStockUpdated(recipientOrg.id);
 
       // 7. Update Network Invoice Status to 'approved'
       inv.status = "approved";
