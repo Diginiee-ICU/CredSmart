@@ -148,12 +148,12 @@ export default function EwayBillDashboard() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-950 p-3 pb-6 sm:p-6 space-y-4 sm:space-y-5">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-          <div className="flex items-start sm:items-center gap-3 min-w-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div className="flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto">
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
             <Truck className="w-6 h-6" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <h1 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
                 GST E-Way Bill Hub
@@ -162,18 +162,18 @@ export default function EwayBillDashboard() {
                 Rule 138 Compliant
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-relaxed max-w-2xl">
               Consignment transit slips, vehicle updates (Part-B), and Government NIC portal bulk exports.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportGovernmentJson}
-            className="h-10 sm:h-9 gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20"
+            className="h-10 sm:h-9 w-full sm:w-auto gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20"
           >
             <Download className="w-4 h-4" />
             <span>NIC JSON (v1.0.0421)</span>
@@ -197,7 +197,7 @@ export default function EwayBillDashboard() {
               setSelectedRecord(null);
               setIsGenerateOpen(true);
             }}
-            className="h-10 sm:h-9 gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm col-span-2 sm:col-span-1 flex-1 sm:flex-initial"
+            className="h-10 sm:h-9 w-full sm:w-auto gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex-1 sm:flex-initial"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Generate E-Way Bill</span>
