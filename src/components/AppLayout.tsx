@@ -358,7 +358,7 @@ export default function AppLayout() {
                 <img
                   src="/logo-static.jpeg"
                   alt="CredSmart"
-                  className="h-11 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[170px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-11 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[120px] xs:max-w-[140px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -490,8 +490,9 @@ export default function AppLayout() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Bell */}
+              {/* Bell (Desktop & Tablet) */}
               <button
+                type="button"
                 onClick={() => setNotifOpen(true)}
                 className={cn(
                   "w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer shrink-0 shadow-2xs hover-3d-glow",
@@ -500,10 +501,38 @@ export default function AppLayout() {
                     : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
                 )}
                 title="Notifications"
+                aria-label="Notifications"
               >
                 <Bell className="w-4 h-4" />
                 {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
                 {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+              </button>
+
+              {/* Bell (Dedicated Mobile View - Sleek Touch-Optimized Layout & Structure) */}
+              <button
+                type="button"
+                onClick={() => setNotifOpen(true)}
+                className={cn(
+                  "w-8 h-8 rounded-lg transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
+                  pendingCount > 0
+                    ? "border-amber-400/80 bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-orange-500/10 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                    : unreadCount > 0
+                    ? "border-indigo-400/70 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                    : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/90 dark:bg-slate-800/90"
+                )}
+                title="Notifications & Alerts"
+                aria-label={`Notifications${pendingCount > 0 ? ` (${pendingCount} actions required)` : unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+              >
+                <Bell className="w-3.5 h-3.5 stroke-[2.2]" />
+                {pendingCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[9px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                ) : unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-indigo-600 text-[9px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-2 ring-white dark:ring-slate-900">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
               </button>
 
               {/* Profile dropdown */}
