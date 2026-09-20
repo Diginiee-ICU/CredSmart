@@ -1105,7 +1105,7 @@ export function SalesReturnModal({
             <div className="text-sm">
               <span className="text-muted-foreground">Total Refund:</span>{" "}
               <strong className="font-mono font-black text-amber-600 dark:text-amber-400 text-base">
-                ₹ {breakdown.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                ₹ {Number(breakdown.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </strong>
             </div>
           </div>

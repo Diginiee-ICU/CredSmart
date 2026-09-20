@@ -2853,7 +2853,7 @@ export function SalesInvoiceModal({
                       Total Amount:
                     </span>
                     <span className="text-xl font-black font-mono text-primary">
-                      ₹ {totals.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      ₹ {Number(totals.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
 
@@ -2934,7 +2934,7 @@ export function SalesInvoiceModal({
               <div className="flex flex-col">
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grand Total</span>
                 <span className="text-sm font-black font-mono text-slate-900 dark:text-white">
-                  ₹ {totals.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  ₹ {Number(totals.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <Button
