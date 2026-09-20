@@ -553,6 +553,43 @@ export function CreateItemModal({
                   </div>
                 )}
               </div>
+
+              {/* Online Digital Storefront & Catalog Settings */}
+              <div className="rounded-xl border border-border p-4 bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-primary" />
+                      Show in Online Digital Storefront
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Display this product in your public catalogue for WhatsApp ordering
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isInCatalogue}
+                    onCheckedChange={setIsInCatalogue}
+                  />
+                </div>
+
+                {isInCatalogue && (
+                  <div className="pt-2 border-t border-border/60 space-y-1.5">
+                    <Label htmlFor="item-image-url" className="text-xs font-semibold">
+                      Product Photo URL
+                    </Label>
+                    <Input
+                      id="item-image-url"
+                      placeholder="https://... or paste image link"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="text-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      You can also upload high-resolution photos directly inside the Storefront manager.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
