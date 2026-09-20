@@ -417,9 +417,10 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
         <div className="flex flex-col">
           <button type="button" onClick={() => handleSave(true)} className="flex flex-col text-left">
             <span className="text-[15px] font-bold text-indigo-700">Save & New</span>
-           <span className="text-xs font-medium text-slate-500 mt-0.5">Create New Item</span>
+            <span className="text-xs font-medium text-slate-500 mt-0.5">Create New Item</span>
           </button>
-          <button type="button" onClick={() => handleSave(false)} className="bg-indigo-600 text-white px-14 py-3.5 rounded-xl font-bold text-[15px] shadow-[0_8px_16px_-4px_rgba(79,70,229,0.3)]">
+        </div>
+        <button type="button" onClick={() => handleSave(false)} className="bg-indigo-600 text-white px-14 py-3.5 rounded-xl font-bold text-[15px] shadow-[0_8px_16px_-4px_rgba(79,70,229,0.3)]">
           Save
         </button>
       </div>
