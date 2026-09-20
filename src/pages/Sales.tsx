@@ -570,7 +570,7 @@ export default function Sales() {
               Volume
             </div>
             <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN")}
             </div>
           </div>
 
@@ -587,7 +587,7 @@ export default function Sales() {
               Settled
             </div>
             <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN")}
             </div>
           </div>
 
@@ -604,7 +604,7 @@ export default function Sales() {
               Dues
             </div>
             <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN")}
             </div>
           </div>
 
@@ -621,7 +621,7 @@ export default function Sales() {
               Void
             </div>
             <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              {metrics.cancelledAmount > 0 ? `₹${metrics.cancelledAmount.toLocaleString("en-IN")}` : "—"}
+              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN")}` : "—"}
             </div>
           </div>
         </div>
@@ -644,7 +644,7 @@ export default function Sales() {
               <span>Total Volume</span>
             </div>
             <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN")}
             </div>
             <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">All outward documents</p>
           </div>
@@ -665,7 +665,7 @@ export default function Sales() {
               <span>Settled</span>
             </div>
             <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN")}
             </div>
             <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cash / UPI / Bank cleared</p>
           </div>
@@ -686,7 +686,7 @@ export default function Sales() {
               <span>Receivables</span>
             </div>
             <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+              ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN")}
             </div>
             <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending customer credit</p>
           </div>
@@ -707,7 +707,7 @@ export default function Sales() {
               <span>Voided</span>
             </div>
             <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              {metrics.cancelledAmount > 0 ? `₹ ${metrics.cancelledAmount.toLocaleString("en-IN")}` : "—"}
+              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹ ${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN")}` : "—"}
             </div>
             <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cancelled vouchers</p>
           </div>
@@ -873,7 +873,7 @@ export default function Sales() {
 
                       <div className="text-right shrink-0">
                         <span className="text-sm font-black font-mono text-foreground">
-                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     </div>
@@ -1208,7 +1208,7 @@ export default function Sales() {
                           )}
                         </td>
                         <td className="py-3 px-3 font-mono font-bold text-foreground">
-                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </td>
                         <td className="py-3 px-3">
                           <button

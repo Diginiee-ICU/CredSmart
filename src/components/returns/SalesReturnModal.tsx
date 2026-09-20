@@ -693,7 +693,7 @@ export function SalesReturnModal({
                           </div>
                           <div className="text-right">
                             <span className="font-mono font-bold text-foreground">
-                              ₹ {inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                              ₹ {Number(inv.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </span>
                             <div className="text-[10px] text-muted-foreground">
                               {inv.items?.length || 0} items

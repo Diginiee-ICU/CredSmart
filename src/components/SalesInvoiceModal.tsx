@@ -2220,7 +2220,7 @@ export function SalesInvoiceModal({
                       <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium">
                         <Truck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                         <span>
-                          <strong>GST Rule 138 Requirement:</strong> Total invoice value exceeds ₹50,000 threshold (₹{totals.grandTotal.toLocaleString("en-IN")}). E-Way Bill is required for consignment transit.
+                          <strong>GST Rule 138 Requirement:</strong> Total invoice value exceeds ₹50,000 threshold (₹{Number(totals.grandTotal ?? 0).toLocaleString("en-IN")}). E-Way Bill is required for consignment transit.
                         </span>
                       </div>
                       <button
