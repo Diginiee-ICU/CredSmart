@@ -3,7 +3,7 @@ import { networkInvoicingService, normalizePhoneNumber } from "@/services/networ
 import { BusinessDocument } from "@/types/documents";
 import { OrgData } from "@/hooks/useOrganization";
 import { documentsService } from "@/services/documentsService";
-import { getLocalCachedProducts } from "@/services/stockService";
+import { getLocalCachedProducts, addOrUpdateLocalCachedProduct } from "@/services/stockService";
 
 describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
   const sellerOrg: OrgData = {
@@ -500,5 +500,130 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       const savedDoc = buyerPurchases.find((d) => d.documentNumber === purchaseDoc.documentNumber);
       expect(savedDoc?.items.length).toBe(2);
     }, 15000);
+  });
+
+  describe("Real-Time Business Alerts & Store Radar Engine", () => {
+    it("dynamically generates low stock alerts for inventory items below safety limit", () => {
+      addOrUpdateLocalCachedProduct(buyerOrg.id, {
+        id: "prod_low_stock_1",
+        name: "Amul Butter 500g",
+        barcode: "8901262010053",
+        unit: "PCS",
+        sellingPrice: 275,
+        purchasePrice: 250,
+        mrp: 285,
+        currentStock: 2, // Less than safety limit of 5
+        stock: 2,
+        tags: { min_stock_alert: 5 },
+      });
+
+      const alerts = networkInvoicingService.getRealtimeBusinessAlerts(buyerOrg.id);
+      expect(alerts.length).toBeGreaterThan(0);
+      const lowStockAlert = alerts.find((a) => a.type === "low_stock_alert");
+      expect(lowStockAlert).toBeDefined();
+      expect(lowStockAlert?.category).toBe("inventory");
+      expect(lowStockAlert?.title).toContain("Amul Butter 500g");
+      expect(lowStockAlert?.actionUrl).toBe("/items");
+    });
+
+    it("dynamically generates payment overdue alerts for unpaid customer invoices past due date", async () => {
+      const overdueInvoice: BusinessDocument = {
+        id: "sale_overdue_1",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-OVERDUE-01",
+        partyName: "Rahul Sharma Retail Store",
+        partyPhone: "9876500000",
+        docDate: "2026-08-01",
+        dueDate: "2026-08-10", // Past due
+        paymentMethod: "Credit",
+        items: [
+          {
+            id: "it-ov1",
+            productName: "Wheat Flour",
+            quantity: 10,
+            unit: "PCS",
+            rate: 400,
+            taxRate: 0,
+            taxableAmount: 4000,
+            cgstAmount: 0,
+            sgstAmount: 0,
+            igstAmount: 0,
+            lineTotal: 4000,
+          },
+        ],
+        subtotal: 4000,
+        discountTotal: 0,
+        taxableTotal: 4000,
+        cgstTotal: 0,
+        sgstTotal: 0,
+        igstTotal: 0,
+        taxTotal: 0,
+        grandTotal: 4000,
+        paidAmount: 1000,
+        balanceDue: 3000,
+        status: "partial",
+        created_at: "2026-08-01T10:00:00.000Z",
+      };
+
+      await documentsService.saveDocument(overdueInvoice);
+
+      const alerts = networkInvoicingService.getRealtimeBusinessAlerts(sellerOrg.id);
+      const paymentAlert = alerts.find((a) => a.type === "payment_due_alert");
+      expect(paymentAlert).toBeDefined();
+      expect(paymentAlert?.category).toBe("payments");
+      expect(paymentAlert?.title).toContain("Rahul Sharma Retail Store");
+      expect(paymentAlert?.message).toContain("INV-OVERDUE-01");
+      expect(paymentAlert?.actionUrl).toBe("/parties");
+    });
+
+    it("dynamically generates compliance alerts for high-value invoices without E-Way details", async () => {
+      const highValueInvoice: BusinessDocument = {
+        id: "sale_high_val_1",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-HIGH-VAL-99",
+        partyName: "Big Mart Mega Store",
+        partyPhone: "9876511111",
+        docDate: "2026-08-27",
+        paymentMethod: "Credit",
+        items: [
+          {
+            id: "it-hv1",
+            productName: "Bulk Grain Consignment",
+            quantity: 100,
+            unit: "PCS",
+            rate: 600,
+            taxRate: 5,
+            taxableAmount: 60000,
+            cgstAmount: 1500,
+            sgstAmount: 1500,
+            igstAmount: 0,
+            lineTotal: 63000,
+          },
+        ],
+        subtotal: 60000,
+        discountTotal: 0,
+        taxableTotal: 60000,
+        cgstTotal: 1500,
+        sgstTotal: 1500,
+        igstTotal: 0,
+        taxTotal: 3000,
+        grandTotal: 63000,
+        paidAmount: 0,
+        balanceDue: 63000,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      await documentsService.saveDocument(highValueInvoice);
+
+      const alerts = networkInvoicingService.getRealtimeBusinessAlerts(sellerOrg.id);
+      const complianceAlert = alerts.find((a) => a.type === "compliance_alert");
+      expect(complianceAlert).toBeDefined();
+      expect(complianceAlert?.category).toBe("compliance");
+      expect(complianceAlert?.title).toContain("INV-HIGH-VAL-99");
+      expect(complianceAlert?.actionUrl).toBe("/e-invoicing");
+    });
   });
 });
