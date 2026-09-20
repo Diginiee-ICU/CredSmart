@@ -37,39 +37,113 @@ const ADD_ON_CREATE_TYPES = new Set([
 const NON_INVENTORY_TYPES = new Set([
   "quotation",
   "proforma_invoice",
-  "purchase_order",
-  "estimate",
-]);
+// Local Storage Cached Products Helpers for offline & cross-tenant resolution
+export interface LocalCachedProduct {
+  id: string;
+  name: string;
+  barcode?: string | null;
+  sku?: string;
+  category?: string;
+  brand?: string | null;
+  unit?: string;
+  altUnit?: string;
+  altUnitConversion?: number;
+  sellingPrice?: number;
+  purchasePrice?: number;
+  mrp?: number;
+  stock?: number;
+  currentStock?: number;
+  tags?: Record<string, unknown>;
+  product_batches?: Array<{
+    id: string;
+    batch_number: string;
+    cost_price?: number;
+    mrp: number;
+    stock: number;
+    expiry_date: string | null;
+  }>;
+}
+
+export function getLocalCachedProducts(orgId: string): LocalCachedProduct[] {
+  if (typeof window === "undefined" || !orgId) return [];
+  try {
+    const raw = localStorage.getItem(`credsmart_cached_products_${orgId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalCachedProducts(orgId: string, products: LocalCachedProduct[]): void {
+  if (typeof window === "undefined" || !orgId) return;
+  try {
+    localStorage.setItem(`credsmart_cached_products_${orgId}`, JSON.stringify(products));
+  } catch { /* empty */ }
+}
+
+export function addOrUpdateLocalCachedProduct(orgId: string, product: Partial<LocalCachedProduct> & { id: string; name: string }): void {
+  const list = getLocalCachedProducts(orgId);
+  const idx = list.findIndex((p) => p.id === product.id || (product.barcode && p.barcode === product.barcode));
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...product };
+  } else {
+    list.unshift(product as LocalCachedProduct);
+  }
+  saveLocalCachedProducts(orgId, list);
+}
 
 /**
- * Resolves or finds a product in Supabase by productId, productName or barcode
+ * Resolves or finds a product in Supabase (or local cache) by productId, productName or barcode.
+ * CRITICAL: If productId is passed, it validates that the product actually belongs to orgId.
+ * This prevents cross-tenant product ID pollution from B2B network invoices.
  */
 async function resolveProductId(
   orgId: string,
   item: StockItemPayload
 ): Promise<string | null> {
+  // 1. If productId is provided, verify it belongs to this specific orgId
   if (item.productId && item.productId.trim().length > 0) {
-    return item.productId.trim();
+    const cleanId = item.productId.trim();
+    try {
+      const { data: matched } = await supabase
+        .from("products")
+        .select("id")
+        .eq("organization_id", orgId)
+        .eq("id", cleanId)
+        .limit(1)
+        .maybeSingle();
+
+      if (matched?.id) return matched.id;
+    } catch {
+      // ignore network errors
+    }
+
+    // Check local cache for org products
+    const localCached = getLocalCachedProducts(orgId);
+    if (localCached.some((p) => p.id === cleanId)) {
+      return cleanId;
+    }
   }
 
   const cleanName = (item.productName || "").trim();
-  if (!cleanName && !item.barcode) return null;
+  const cleanBarcode = (item.barcode || "").trim();
+  if (!cleanName && !cleanBarcode) return null;
 
   try {
-    // 1. Try matching by barcode if available
-    if (item.barcode && item.barcode.trim().length > 0) {
+    // 2. Try matching by barcode in Supabase
+    if (cleanBarcode) {
       const { data: byBarcode } = await supabase
         .from("products")
         .select("id")
         .eq("organization_id", orgId)
-        .eq("barcode", item.barcode.trim())
+        .eq("barcode", cleanBarcode)
         .limit(1)
         .maybeSingle();
 
       if (byBarcode?.id) return byBarcode.id;
     }
 
-    // 2. Try matching by product name (case-insensitive)
+    // 3. Try matching by product name (case-insensitive) in Supabase
     if (cleanName) {
       const { data: byName } = await supabase
         .from("products")
@@ -83,6 +157,17 @@ async function resolveProductId(
     }
   } catch (err) {
     console.warn("Error resolving product for stock adjustment:", err);
+  }
+
+  // 4. Fallback to local storage cache if Supabase is offline / unreachable
+  const localList = getLocalCachedProducts(orgId);
+  if (cleanBarcode) {
+    const f = localList.find((p) => p.barcode === cleanBarcode);
+    if (f?.id) return f.id;
+  }
+  if (cleanName) {
+    const f = localList.find((p) => (p.name || "").trim().toLowerCase() === cleanName.toLowerCase());
+    if (f?.id) return f.id;
   }
 
   return null;
@@ -168,6 +253,47 @@ export const stockService = {
             })
             .throwOnError();
         }
+
+        // Sync total stock in products.tags and local cache
+        try {
+          const { data: allBatches } = await supabase
+            .from("product_batches")
+            .select("stock")
+            .eq("product_id", productId);
+
+          const totalStock = (allBatches || []).reduce(
+            (sum, b) => sum + (Number(b.stock) || 0),
+            0
+          );
+
+          const { data: prodRecord } = await supabase
+            .from("products")
+            .select("name, barcode, category, sku, tags")
+            .eq("id", productId)
+            .maybeSingle();
+
+          if (prodRecord) {
+            const currentTags = (prodRecord.tags && typeof prodRecord.tags === "object" ? prodRecord.tags : {}) as Record<string, unknown>;
+            await supabase
+              .from("products")
+              .update({
+                tags: { ...currentTags, stock: totalStock },
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", productId);
+
+            addOrUpdateLocalCachedProduct(orgId, {
+              id: productId,
+              name: prodRecord.name,
+              barcode: prodRecord.barcode,
+              sku: prodRecord.sku || undefined,
+              category: prodRecord.category || undefined,
+              tags: { ...currentTags, stock: totalStock },
+              currentStock: totalStock,
+              stock: totalStock,
+            });
+          }
+        } catch { /* empty */ }
       } catch (err) {
         console.warn(`Deduct stock exception for product ${productId} (${reason}):`, err);
       }
@@ -193,27 +319,69 @@ export const stockService = {
       // If product doesn't exist yet in inventory (e.g. newly purchased item), create it
       if (!productId && item.productName && item.productName.trim().length > 0) {
         try {
+          const cleanName = item.productName.trim();
+          const cleanBarcode = item.barcode?.trim() || null;
+          const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+          const sp = Number(item.mrp || item.rate || 0);
+          const pp = Number(item.costPrice || item.rate || 0);
+          const tagsPayload = {
+            unit: (item.unit || "PCS").toUpperCase(),
+            alt_unit: item.altUnit,
+            alt_unit_conversion: item.altUnitConversion,
+            selling_price: sp,
+            purchase_price: pp,
+            mrp: sp,
+            stock: qtyToAdd,
+            min_stock_alert: 5,
+          };
+
           const { data: newProd, error: prodCreateErr } = await supabase
             .from("products")
             .insert({
               organization_id: orgId,
-              name: item.productName.trim(),
-              barcode: item.barcode || null,
+              name: cleanName,
+              barcode: cleanBarcode,
               category: "General",
-              tags: {
-                unit: item.unit || "PCS",
-                selling_price: Number(item.mrp || item.rate || 0),
-                purchase_price: Number(item.costPrice || item.rate || 0),
-                mrp: Number(item.mrp || item.rate || 0),
-                stock: qtyToAdd,
-              },
+              sku: generatedSku,
+              tags: tagsPayload,
             })
-            .select("id")
-            .single();
+            .select("id, name, barcode, sku, category, tags")
+            .maybeSingle();
 
           if (!prodCreateErr && newProd?.id) {
             productId = newProd.id;
+          } else {
+            // Local fallback ID for offline / demo mode
+            productId = `prod_auto_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
           }
+
+          // Store newly created product into local cache immediately
+          addOrUpdateLocalCachedProduct(orgId, {
+            id: productId,
+            name: cleanName,
+            barcode: cleanBarcode,
+            sku: generatedSku,
+            category: "General",
+            unit: (item.unit || "PCS").toUpperCase(),
+            altUnit: item.altUnit,
+            altUnitConversion: item.altUnitConversion,
+            sellingPrice: sp,
+            purchasePrice: pp,
+            mrp: sp,
+            stock: qtyToAdd,
+            currentStock: qtyToAdd,
+            tags: tagsPayload,
+            product_batches: [
+              {
+                id: `batch_${Date.now()}`,
+                batch_number: item.batchNumber?.trim() || "BATCH-01",
+                cost_price: pp,
+                mrp: sp,
+                stock: qtyToAdd,
+                expiry_date: item.expiryDate || null,
+              },
+            ],
+          });
         } catch (createErr) {
           console.warn("Failed to auto-create product during purchase stock add:", createErr);
         }
@@ -226,7 +394,7 @@ export const stockService = {
         const costVal = Number(item.costPrice || item.rate || 0);
         const mrpVal = Number(item.mrp || item.rate || 0);
 
-        // Check if batch already exists
+        // Check if batch already exists in Supabase
         const { data: existingBatches } = await supabase
           .from("product_batches")
           .select("id, batch_number, stock, cost_price, mrp, expiry_date")
@@ -236,14 +404,15 @@ export const stockService = {
           (b) => b.batch_number.toLowerCase().trim() === batchNum.toLowerCase().trim()
         );
 
+        let finalBatchStock = qtyToAdd;
         if (matchedBatch) {
           const currentStock = Number(matchedBatch.stock) || 0;
-          const newStock = currentStock + qtyToAdd;
+          finalBatchStock = currentStock + qtyToAdd;
 
           await supabase
             .from("product_batches")
             .update({
-              stock: newStock,
+              stock: finalBatchStock,
               cost_price: costVal > 0 ? costVal : matchedBatch.cost_price,
               mrp: mrpVal > 0 ? mrpVal : matchedBatch.mrp,
               expiry_date: item.expiryDate || matchedBatch.expiry_date,
@@ -265,8 +434,73 @@ export const stockService = {
             })
             .throwOnError();
         }
+
+        // Sync total stock into products.tags and local cache
+        try {
+          const { data: allBatches } = await supabase
+            .from("product_batches")
+            .select("stock, batch_number, mrp, cost_price, expiry_date, id")
+            .eq("product_id", productId);
+
+          const totalStock = (allBatches || []).reduce(
+            (sum, b) => sum + (Number(b.stock) || 0),
+            0
+          );
+
+          const { data: prodRec } = await supabase
+            .from("products")
+            .select("name, barcode, sku, category, tags")
+            .eq("id", productId)
+            .maybeSingle();
+
+          if (prodRec) {
+            const currentTags = (prodRec.tags && typeof prodRec.tags === "object" ? prodRec.tags : {}) as Record<string, unknown>;
+            await supabase
+              .from("products")
+              .update({
+                tags: {
+                  ...currentTags,
+                  stock: totalStock,
+                },
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", productId);
+
+            addOrUpdateLocalCachedProduct(orgId, {
+              id: productId,
+              name: prodRec.name,
+              barcode: prodRec.barcode,
+              sku: prodRec.sku || undefined,
+              category: prodRec.category || undefined,
+              stock: totalStock,
+              currentStock: totalStock,
+              tags: { ...currentTags, stock: totalStock },
+              product_batches: allBatches?.map((b) => ({
+                id: b.id,
+                batch_number: b.batch_number,
+                cost_price: Number(b.cost_price) || costVal,
+                mrp: Number(b.mrp) || mrpVal,
+                stock: Number(b.stock) || 0,
+                expiry_date: b.expiry_date,
+              })),
+            });
+          }
+        } catch (tagErr) {
+          console.warn(`Tags stock sync notice for product ${productId}:`, tagErr);
+        }
       } catch (err) {
         console.warn(`Add stock exception for product ${productId} (${reason}):`, err);
+        // Fallback for local cache stock increment
+        const localList = getLocalCachedProducts(orgId);
+        const target = localList.find((p) => p.id === productId);
+        if (target) {
+          const newStock = (target.stock || 0) + qtyToAdd;
+          addOrUpdateLocalCachedProduct(orgId, {
+            ...target,
+            stock: newStock,
+            currentStock: newStock,
+          });
+        }
       }
     }
 
