@@ -329,7 +329,7 @@ export default function TallyImport() {
     let itemsCount = 0;
     let partiesCount = 0;
     let banksCount = 0;
-    let vouchersCount = 0;
+    const vouchersCount = 0;
 
     try {
       // 1. Items Import
