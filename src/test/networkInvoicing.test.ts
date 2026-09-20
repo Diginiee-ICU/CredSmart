@@ -338,4 +338,167 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(pending[0].id).toBe(simInvoice.id);
     });
   });
+
+  describe("Sales Invoice Cancellation & Sync Engine", () => {
+    it("synchronizes sales invoice cancellation to network invoice and removes it from buyer pending list", async () => {
+      const salesDoc: BusinessDocument = {
+        id: "sale_cancel_test_1",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-2026-CANCEL",
+        partyName: buyerOrg.name,
+        partyPhone: buyerOrg.phone,
+        partyGstin: buyerOrg.gstin,
+        docDate: "2026-08-27",
+        paymentMethod: "Credit",
+        items: [
+          {
+            id: "item-c1",
+            productName: "Organic Basmati Rice 5kg",
+            quantity: 4,
+            unit: "PCS",
+            rate: 600,
+            discountPercent: 0,
+            discountAmount: 0,
+            taxRate: 5,
+            taxableAmount: 2400,
+            cgstAmount: 60,
+            sgstAmount: 60,
+            igstAmount: 0,
+            lineTotal: 2520,
+          },
+        ],
+        subtotal: 2400,
+        discountTotal: 0,
+        taxableTotal: 2400,
+        cgstTotal: 60,
+        sgstTotal: 60,
+        igstTotal: 0,
+        taxTotal: 120,
+        grandTotal: 2520,
+        paidAmount: 0,
+        balanceDue: 2520,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      // 1. Dispatch to network
+      const netInv = await networkInvoicingService.sendSalesInvoiceToNetwork(salesDoc, sellerOrg, "user_seller_1");
+      expect(netInv).toBeDefined();
+
+      // Buyer should have 1 pending invoice
+      let pending = await networkInvoicingService.getPendingInvoicesForOrg(buyerOrg.id, buyerOrg.phone, buyerOrg.gstin);
+      expect(pending.length).toBe(1);
+
+      // 2. Seller cancels/deletes the sales invoice
+      const cancelOk = await networkInvoicingService.cancelNetworkInvoice("INV-2026-CANCEL", sellerOrg.id);
+      expect(cancelOk).toBe(true);
+
+      // 3. Buyer's pending invoices should now be 0
+      pending = await networkInvoicingService.getPendingInvoicesForOrg(buyerOrg.id, buyerOrg.phone, buyerOrg.gstin);
+      expect(pending.length).toBe(0);
+
+      // Network invoice status should be "cancelled"
+      const allInvs = networkInvoicingService.getLocalInvoices();
+      const cancelledInv = allInvs.find((i) => i.invoiceNumber === "INV-2026-CANCEL");
+      expect(cancelledInv?.status).toBe("cancelled");
+    }, 15000);
+
+    it("verifies full item breakdown preservation from sales invoice into buyer purchase bill", async () => {
+      const salesDoc: BusinessDocument = {
+        id: "sale_sync_breakdown_1",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-SYNC-007",
+        partyName: buyerOrg.name,
+        partyPhone: buyerOrg.phone,
+        partyGstin: buyerOrg.gstin,
+        docDate: "2026-08-27",
+        paymentMethod: "Credit",
+        items: [
+          {
+            id: "it-1",
+            productName: "Refined Sunflower Oil 1L",
+            barcode: "8901234567890",
+            hsn: "1512",
+            quantity: 12,
+            unit: "PCS",
+            rate: 140,
+            discountPercent: 0,
+            discountAmount: 0,
+            taxRate: 5,
+            taxableAmount: 1680,
+            cgstAmount: 42,
+            sgstAmount: 42,
+            igstAmount: 0,
+            lineTotal: 1764,
+          },
+          {
+            id: "it-2",
+            productName: "Organic Jaggery Powder 1kg",
+            barcode: "8909876543210",
+            hsn: "1701",
+            quantity: 20,
+            unit: "PCS",
+            rate: 75,
+            discountPercent: 10,
+            discountAmount: 150,
+            taxRate: 5,
+            taxableAmount: 1350,
+            cgstAmount: 33.75,
+            sgstAmount: 33.75,
+            igstAmount: 0,
+            lineTotal: 1417.5,
+          },
+        ],
+        subtotal: 3180,
+        discountTotal: 150,
+        taxableTotal: 3030,
+        cgstTotal: 75.75,
+        sgstTotal: 75.75,
+        igstTotal: 0,
+        taxTotal: 151.5,
+        grandTotal: 3181.5,
+        paidAmount: 0,
+        balanceDue: 3181.5,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      // 1. Send sales invoice to network
+      const netInv = await networkInvoicingService.sendSalesInvoiceToNetwork(salesDoc, sellerOrg, "user_seller_1");
+      expect(netInv).toBeDefined();
+      expect(netInv!.items.length).toBe(2);
+
+      // 2. Buyer approves invoice
+      const approveResult = await networkInvoicingService.approveNetworkInvoice(
+        netInv!.id,
+        buyerOrg,
+        "user_buyer_1"
+      );
+
+      expect(approveResult.success).toBe(true);
+      expect(approveResult.purchaseDoc).toBeDefined();
+
+      const purchaseDoc = approveResult.purchaseDoc!;
+      // Verify line items are fully intact
+      expect(purchaseDoc.items.length).toBe(2);
+      expect(purchaseDoc.items[0].productName).toBe("Refined Sunflower Oil 1L");
+      expect(purchaseDoc.items[0].quantity).toBe(12);
+      expect(purchaseDoc.items[0].rate).toBe(140);
+      expect(purchaseDoc.items[1].productName).toBe("Organic Jaggery Powder 1kg");
+      expect(purchaseDoc.items[1].quantity).toBe(20);
+      expect(purchaseDoc.items[1].rate).toBe(75);
+      expect(purchaseDoc.grandTotal).toBe(3181.5);
+
+      // Verify reference to seller's sales invoice
+      expect(purchaseDoc.referenceNumber).toBe("INV-SYNC-007");
+
+      // Verify buyer's local purchase documents list has the document with items
+      const buyerPurchases = documentsService.getLocalDocuments(buyerOrg.id, "purchase_invoice");
+      expect(buyerPurchases.length).toBeGreaterThan(0);
+      const savedDoc = buyerPurchases.find((d) => d.documentNumber === purchaseDoc.documentNumber);
+      expect(savedDoc?.items.length).toBe(2);
+    }, 15000);
+  });
 });

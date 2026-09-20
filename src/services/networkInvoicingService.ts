@@ -1100,6 +1100,83 @@ export const networkInvoicingService = {
   },
 
   // ─────────────────────────────────────────────────────────────
+  // 7b. CANCEL INVOICE (SENDER CANCELS/DELETES SALES INVOICE)
+  // ─────────────────────────────────────────────────────────────
+  async cancelNetworkInvoice(
+    invoiceNumber: string,
+    senderOrgId: string
+  ): Promise<boolean> {
+    if (!invoiceNumber || !senderOrgId) return false;
+
+    try {
+      const nowIso = new Date().toISOString();
+      const allInvoices = this.getLocalInvoices();
+      let updated = false;
+
+      for (const inv of allInvoices) {
+        if (
+          inv.senderOrgId === senderOrgId &&
+          (inv.invoiceNumber === invoiceNumber || inv.invoiceNumber.toLowerCase() === invoiceNumber.toLowerCase())
+        ) {
+          inv.status = "cancelled";
+          inv.updated_at = nowIso;
+          updated = true;
+        }
+      }
+      if (updated) {
+        this.saveLocalInvoices(allInvoices);
+      }
+
+      // Update local notifications
+      const allNotifs = this.getLocalNotifications();
+      const updatedNotifs = allNotifs.map((notif) => {
+        if (
+          notif.data?.senderOrgId === senderOrgId &&
+          (notif.data?.invoiceNumber === invoiceNumber ||
+            (typeof notif.data?.invoiceNumber === "string" &&
+              notif.data.invoiceNumber.toLowerCase() === invoiceNumber.toLowerCase()))
+        ) {
+          return {
+            ...notif,
+            actionStatus: "cancelled" as const,
+            message: `Cancelled: Sales Invoice #${invoiceNumber} was cancelled or deleted by sender.`,
+          };
+        }
+        return notif;
+      });
+      this.saveLocalNotifications(updatedNotifs);
+
+      // Update Supabase network_invoices table
+      await safeDbCall(() => {
+        return supabase
+          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .update({
+            status: "cancelled",
+            updated_at: nowIso,
+          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .eq("sender_org_id", senderOrgId)
+          .eq("invoice_number", invoiceNumber);
+      }, 600);
+
+      // Update Supabase network_notifications table
+      await safeDbCall(() => {
+        return supabase
+          .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .update({
+            action_status: "cancelled",
+          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .eq("data->>invoiceNumber", invoiceNumber);
+      }, 600);
+
+      dispatchNetworkEvents("INVOICE_CANCELLED", { invoiceNumber, senderOrgId });
+      return true;
+    } catch (e) {
+      console.warn("Notice cancelling network invoice:", e);
+      return false;
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────
   // 8. NOTIFICATION READ & CLEAR HELPERS
   // ─────────────────────────────────────────────────────────────
   markNotificationAsRead(notificationId: string) {

@@ -70,6 +70,7 @@ import { MobileScanModal } from "@/components/MobileScanModal";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
+import { UniversalDocType } from "@/components/invoices/UnifiedInvoiceRenderer";
 
 const PURCHASE_TABS: { id: PurchaseDocumentType; label: string; icon: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
   { id: "purchase_invoice", label: "Purchase Invoices", icon: Truck },
@@ -188,8 +189,10 @@ export default function Purchases() {
       loadDocuments();
     };
     window.addEventListener("credsmart_network_update", handleReload);
+    window.addEventListener("credsmart_documents_updated", handleReload);
     return () => {
       window.removeEventListener("credsmart_network_update", handleReload);
+      window.removeEventListener("credsmart_documents_updated", handleReload);
     };
   }, [loadDocuments]);
 
@@ -777,7 +780,7 @@ export default function Purchases() {
                           onClick={() => {
                             downloadExactInvoicePdf({
                               invoiceNumber: doc.documentNumber,
-                              docType: doc.docType as any,
+                              docType: doc.docType as UniversalDocType,
                               customerName: doc.partyName,
                               customerPhone: doc.partyPhone,
                               storeName: org?.name || "CredSmart Store",

@@ -208,6 +208,17 @@ export default function Sales() {
   useEffect(() => {
     loadDocuments();
     setSelectedDocIds(new Set());
+
+    const handleReload = () => {
+      loadDocuments();
+    };
+
+    window.addEventListener("credsmart_documents_updated", handleReload);
+    window.addEventListener("credsmart_network_update", handleReload);
+    return () => {
+      window.removeEventListener("credsmart_documents_updated", handleReload);
+      window.removeEventListener("credsmart_network_update", handleReload);
+    };
   }, [loadDocuments]);
 
   // Global Keyboard Shortcuts (Alt+N, F4, etc.)

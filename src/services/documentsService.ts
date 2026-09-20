@@ -23,6 +23,19 @@ type CustomerSummary = {
   name?: string | null;
   phone?: string | null;
   gstin?: string | null;
+  email?: string | null;
+  address?: string | null;
+};
+
+type SaleItemRow = {
+  id: string;
+  product_id?: string | null;
+  product_name: string;
+  batch_id?: string | null;
+  batch_number?: string | null;
+  mrp?: number | string | null;
+  quantity?: number | null;
+  line_total?: number | string | null;
 };
 
 type SalesRow = {
@@ -30,12 +43,29 @@ type SalesRow = {
   invoice_number?: string | null;
   subtotal?: number | string | null;
   discount_amount?: number | string | null;
+  discount_label?: string | null;
   payment_method?: string | null;
   created_at?: string | null;
   customer_id?: string | null;
   customers?: CustomerSummary | null;
   tax?: number | string | null;
   total?: number | string | null;
+  sale_items?: SaleItemRow[] | null;
+};
+
+type PurchaseInvoiceItemRow = {
+  id: string;
+  product_id?: string | null;
+  batch_number?: string | null;
+  quantity?: number | null;
+  cost_price?: number | string | null;
+  mrp?: number | string | null;
+  expiry_date?: string | null;
+  products?: {
+    name?: string | null;
+    barcode?: string | null;
+    sku?: string | null;
+  } | null;
 };
 
 type PurchaseInvoiceRow = {
@@ -48,6 +78,18 @@ type PurchaseInvoiceRow = {
   notes?: string | null;
   supplier_id?: string | null;
   suppliers?: CustomerSummary | null;
+  purchase_invoice_items?: PurchaseInvoiceItemRow[] | null;
+};
+
+type PurchaseReturnItemRow = {
+  id: string;
+  product_id?: string | null;
+  batch_number?: string | null;
+  quantity?: number | null;
+  cost_price?: number | string | null;
+  products?: {
+    name?: string | null;
+  } | null;
 };
 
 type PurchaseReturnRow = {
@@ -59,10 +101,31 @@ type PurchaseReturnRow = {
   created_at?: string | null;
   supplier_id?: string | null;
   suppliers?: CustomerSummary | null;
+  purchase_return_items?: PurchaseReturnItemRow[] | null;
 };
 
 function getStorageKey(orgId: string, docType: string): string {
   return `${STORAGE_KEY_PREFIX}${orgId}_${docType}`;
+}
+
+export function notifyDocumentChange(
+  orgId: string,
+  docType: string,
+  action: "save" | "delete",
+  doc?: BusinessDocument
+) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("credsmart_documents_updated", {
+        detail: { orgId, docType, action, doc, timestamp: Date.now() },
+      })
+    );
+    window.dispatchEvent(
+      new CustomEvent("credsmart_network_update", {
+        detail: { type: "DOCUMENT_CHANGED", orgId, docType, action, doc, timestamp: Date.now() },
+      })
+    );
+  }
 }
 
 export const documentsService = {
@@ -117,7 +180,8 @@ export const documentsService = {
             payment_method,
             created_at,
             customer_id,
-            customers ( name, phone )
+            customers ( name, phone, gstin, email, address ),
+            sale_items (*)
           `)
           .eq("organization_id", orgId)
           .order("created_at", { ascending: false });
@@ -126,6 +190,31 @@ export const documentsService = {
           const supabaseDocs: BusinessDocument[] = (sales as SalesRow[]).map((s) => {
             const customer = s.customers;
             const isEstimate = s.payment_method?.toLowerCase() === "estimate";
+            const mappedItems: DocumentLineItem[] = (s.sale_items && s.sale_items.length > 0)
+              ? s.sale_items.map((it, idx) => {
+                  const qty = Number(it.quantity || 1);
+                  const rate = Number(it.mrp || 0);
+                  const lineTot = Number(it.line_total || (qty * rate));
+                  return {
+                    id: it.id || `sale_item_${idx}`,
+                    productId: it.product_id || undefined,
+                    productName: it.product_name || "Product Item",
+                    batchNumber: it.batch_number || it.batch_id || undefined,
+                    quantity: qty,
+                    unit: "PCS",
+                    rate: rate,
+                    discountPercent: 0,
+                    discountAmount: 0,
+                    taxRate: 0,
+                    taxableAmount: lineTot,
+                    cgstAmount: 0,
+                    sgstAmount: 0,
+                    igstAmount: 0,
+                    lineTotal: lineTot,
+                  };
+                })
+              : [];
+
             return {
               id: s.id,
               organizationId: orgId,
@@ -135,9 +224,11 @@ export const documentsService = {
               partyName: customer?.name || "Cash Customer",
               partyPhone: customer?.phone || "",
               partyGstin: customer?.gstin || "",
+              partyEmail: customer?.email || undefined,
+              partyAddress: customer?.address || undefined,
               docDate: s.created_at ? s.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
               dueDate: s.created_at ? s.created_at.split("T")[0] : undefined,
-              items: [],
+              items: mappedItems,
               subtotal: Number(s.subtotal || 0),
               discountTotal: Number(s.discount_amount || 0),
               taxableTotal: Number((s.subtotal || 0) - (s.discount_amount || 0)),
@@ -155,11 +246,22 @@ export const documentsService = {
             };
           });
 
-          // Merge supabaseDocs with localDocs (avoiding duplicate IDs)
+          // Merge supabaseDocs with localDocs (avoiding duplicate IDs and preserving full item lists)
           const merged = [...localDocs];
           for (const sDoc of supabaseDocs) {
-            if (!merged.some((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber)) {
+            const existingIndex = merged.findIndex((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber);
+            if (existingIndex === -1) {
               merged.push(sDoc);
+            } else {
+              // If existing local doc has empty items but Supabase has items, update items
+              if (merged[existingIndex].items.length === 0 && sDoc.items.length > 0) {
+                merged[existingIndex] = {
+                  ...merged[existingIndex],
+                  items: sDoc.items,
+                  subtotal: sDoc.subtotal || merged[existingIndex].subtotal,
+                  grandTotal: sDoc.grandTotal || merged[existingIndex].grandTotal,
+                };
+              }
             }
           }
           // Sort descending by date
@@ -330,7 +432,17 @@ export const documentsService = {
             created_at,
             notes,
             supplier_id,
-            suppliers ( name, phone, gstin )
+            suppliers ( name, phone, gstin, email, address ),
+            purchase_invoice_items (
+              id,
+              product_id,
+              batch_number,
+              quantity,
+              cost_price,
+              mrp,
+              expiry_date,
+              products ( name, barcode, sku )
+            )
           `)
           .eq("organization_id", orgId)
           .order("created_at", { ascending: false });
@@ -339,6 +451,34 @@ export const documentsService = {
           const supabaseDocs: BusinessDocument[] = (data as PurchaseInvoiceRow[]).map((inv) => {
             const supplier = inv.suppliers;
             const total = Number(inv.total_amount || 0);
+            const mappedItems: DocumentLineItem[] = (inv.purchase_invoice_items && inv.purchase_invoice_items.length > 0)
+              ? inv.purchase_invoice_items.map((piItem, idx) => {
+                  const qty = Number(piItem.quantity || 1);
+                  const rate = Number(piItem.cost_price ?? piItem.mrp ?? 0);
+                  const lineTot = qty * rate;
+                  const prodName = piItem.products?.name || "Purchase Item";
+                  return {
+                    id: piItem.id || `pi_item_${idx}`,
+                    productId: piItem.product_id || undefined,
+                    productName: prodName,
+                    barcode: piItem.products?.barcode || undefined,
+                    batchNumber: piItem.batch_number || "BATCH-01",
+                    expiryDate: piItem.expiry_date || undefined,
+                    quantity: qty,
+                    unit: "PCS",
+                    rate: rate,
+                    discountPercent: 0,
+                    discountAmount: 0,
+                    taxRate: 0,
+                    taxableAmount: lineTot,
+                    cgstAmount: 0,
+                    sgstAmount: 0,
+                    igstAmount: 0,
+                    lineTotal: lineTot,
+                  };
+                })
+              : [];
+
             return {
               id: inv.id,
               organizationId: orgId,
@@ -348,9 +488,11 @@ export const documentsService = {
               partyName: supplier?.name || "Unknown Supplier",
               partyPhone: supplier?.phone || "",
               partyGstin: supplier?.gstin || "",
+              partyEmail: supplier?.email || undefined,
+              partyAddress: supplier?.address || undefined,
               docDate: inv.created_at ? inv.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
               dueDate: undefined,
-              items: [],
+              items: mappedItems,
               subtotal: total,
               discountTotal: 0,
               taxableTotal: total,
@@ -370,8 +512,18 @@ export const documentsService = {
 
           const merged = [...localDocs];
           for (const sDoc of supabaseDocs) {
-            if (!merged.some((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber)) {
+            const existingIndex = merged.findIndex((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber);
+            if (existingIndex === -1) {
               merged.push(sDoc);
+            } else {
+              if (merged[existingIndex].items.length === 0 && sDoc.items.length > 0) {
+                merged[existingIndex] = {
+                  ...merged[existingIndex],
+                  items: sDoc.items,
+                  subtotal: sDoc.subtotal || merged[existingIndex].subtotal,
+                  grandTotal: sDoc.grandTotal || merged[existingIndex].grandTotal,
+                };
+              }
             }
           }
           return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -393,43 +545,91 @@ export const documentsService = {
             reason,
             created_at,
             supplier_id,
-            suppliers ( name, phone, gstin )
+            suppliers ( name, phone, gstin, email, address ),
+            purchase_return_items (
+              id,
+              product_id,
+              batch_number,
+              quantity,
+              cost_price,
+              products ( name )
+            )
           `)
           .eq("organization_id", orgId)
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          const supabaseDocs: BusinessDocument[] = (data as PurchaseReturnRow[]).map((ret) => ({
-            id: ret.id,
-            organizationId: orgId,
-            docType: docType,
-            documentNumber: ret.return_number || `DN-${ret.id.slice(0, 6)}`,
-            partyId: ret.supplier_id,
-            partyName: ret.suppliers?.name || "Unknown Supplier",
-            partyPhone: ret.suppliers?.phone || "",
-            partyGstin: ret.suppliers?.gstin || "",
-            docDate: ret.created_at ? ret.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
-            items: [],
-            subtotal: Number(ret.total_amount || 0),
-            discountTotal: 0,
-            taxableTotal: Number(ret.total_amount || 0),
-            cgstTotal: 0,
-            sgstTotal: 0,
-            igstTotal: 0,
-            taxTotal: 0,
-            roundOff: 0,
-            grandTotal: Number(ret.total_amount || 0),
-            paidAmount: Number(ret.total_amount || 0),
-            balanceDue: 0,
-            status: ret.status === "completed" ? "paid" : "draft",
-            notes: ret.reason || "",
-            created_at: ret.created_at,
-          }));
+          const supabaseDocs: BusinessDocument[] = (data as PurchaseReturnRow[]).map((ret) => {
+            const mappedItems: DocumentLineItem[] = (ret.purchase_return_items && ret.purchase_return_items.length > 0)
+              ? ret.purchase_return_items.map((pri, idx) => {
+                  const qty = Number(pri.quantity || 1);
+                  const rate = Number(pri.cost_price || 0);
+                  const lineTot = qty * rate;
+                  const pName = pri.products?.name || "Return Item";
+                  return {
+                    id: pri.id || `pri_item_${idx}`,
+                    productId: pri.product_id || undefined,
+                    productName: pName,
+                    batchNumber: pri.batch_number || "BATCH-01",
+                    quantity: qty,
+                    unit: "PCS",
+                    rate: rate,
+                    discountPercent: 0,
+                    discountAmount: 0,
+                    taxRate: 0,
+                    taxableAmount: lineTot,
+                    cgstAmount: 0,
+                    sgstAmount: 0,
+                    igstAmount: 0,
+                    lineTotal: lineTot,
+                  };
+                })
+              : [];
+
+            return {
+              id: ret.id,
+              organizationId: orgId,
+              docType: docType,
+              documentNumber: ret.return_number || `DN-${ret.id.slice(0, 6)}`,
+              partyId: ret.supplier_id,
+              partyName: ret.suppliers?.name || "Unknown Supplier",
+              partyPhone: ret.suppliers?.phone || "",
+              partyGstin: ret.suppliers?.gstin || "",
+              partyEmail: ret.suppliers?.email || undefined,
+              partyAddress: ret.suppliers?.address || undefined,
+              docDate: ret.created_at ? ret.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              items: mappedItems,
+              subtotal: Number(ret.total_amount || 0),
+              discountTotal: 0,
+              taxableTotal: Number(ret.total_amount || 0),
+              cgstTotal: 0,
+              sgstTotal: 0,
+              igstTotal: 0,
+              taxTotal: 0,
+              roundOff: 0,
+              grandTotal: Number(ret.total_amount || 0),
+              paidAmount: Number(ret.total_amount || 0),
+              balanceDue: 0,
+              status: ret.status === "completed" ? "paid" : "draft",
+              notes: ret.reason || "",
+              created_at: ret.created_at,
+            };
+          });
 
           const merged = [...localDocs];
           for (const sDoc of supabaseDocs) {
-            if (!merged.some((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber)) {
+            const existingIndex = merged.findIndex((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber);
+            if (existingIndex === -1) {
               merged.push(sDoc);
+            } else {
+              if (merged[existingIndex].items.length === 0 && sDoc.items.length > 0) {
+                merged[existingIndex] = {
+                  ...merged[existingIndex],
+                  items: sDoc.items,
+                  subtotal: sDoc.subtotal || merged[existingIndex].subtotal,
+                  grandTotal: sDoc.grandTotal || merged[existingIndex].grandTotal,
+                };
+              }
             }
           }
           return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -493,11 +693,9 @@ export const documentsService = {
     }
 
     // 2. If purchase invoice, attempt saving to Supabase purchase_invoices
-    // Note: partyId may be a customer UUID (unified party list) or supplier UUID
-    // We try to resolve it against suppliers table; if it fails (customer ID), save without supplier_id FK
     if (docType === "purchase_invoice" && userId) {
       try {
-        // Check if partyId exists in suppliers table
+        // Resolve or create supplier in suppliers table to satisfy NOT NULL foreign key constraint
         let resolvedSupplierId: string | null = null;
         if (doc.partyId) {
           const { data: suppCheck } = await supabase
@@ -508,37 +706,207 @@ export const documentsService = {
           if (suppCheck) resolvedSupplierId = doc.partyId;
         }
 
-        const { data: piData, error: piErr } = await supabase
-          .from("purchase_invoices")
-          .insert({
-            organization_id: orgId,
-            supplier_id: resolvedSupplierId, // null if party is a customer, not a supplier
-            invoice_number: doc.documentNumber,
-            total_amount: doc.grandTotal,
-            status: doc.status === "paid" ? "received" : "sent",
-            notes: doc.notes || null,
-            created_by: userId,
-          })
-          .select()
-          .single();
+        if (!resolvedSupplierId && doc.partyPhone) {
+          const cleanDigits = doc.partyPhone.replace(/[^0-9]/g, "").slice(-10);
+          if (cleanDigits) {
+            const { data: phoneSupp } = await supabase
+              .from("suppliers")
+              .select("id")
+              .eq("organization_id", orgId)
+              .ilike("phone", `%${cleanDigits}%`)
+              .maybeSingle();
+            if (phoneSupp) resolvedSupplierId = phoneSupp.id;
+          }
+        }
 
-        if (!piErr && piData) {
-          doc.id = piData.id;
-          if (doc.items.length > 0) {
-            const piItems = doc.items.map((it) => ({
-              purchase_invoice_id: piData.id,
-              product_id: it.productId || null,
-              quantity: it.quantity,
-              cost_price: it.rate,
-              mrp: it.rate,
-              batch_number: it.batchNumber || "BATCH-01",
-              expiry_date: it.expiryDate || null,
-            }));
-            await supabase.from("purchase_invoice_items").insert(piItems);
+        if (!resolvedSupplierId && doc.partyName) {
+          const { data: nameSupp } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("organization_id", orgId)
+            .ilike("name", doc.partyName.trim())
+            .maybeSingle();
+          if (nameSupp) resolvedSupplierId = nameSupp.id;
+        }
+
+        // If supplier doesn't exist in Supabase suppliers table, auto-create it
+        if (!resolvedSupplierId) {
+          const { data: newSupp } = await supabase
+            .from("suppliers")
+            .insert({
+              organization_id: orgId,
+              name: doc.partyName || "Supplier",
+              phone: doc.partyPhone || "",
+              email: doc.partyEmail || "",
+              gstin: doc.partyGstin || "",
+              address: doc.partyAddress || "",
+            })
+            .select("id")
+            .maybeSingle();
+          if (newSupp) resolvedSupplierId = newSupp.id;
+        }
+
+        if (resolvedSupplierId) {
+          const { data: piData, error: piErr } = await supabase
+            .from("purchase_invoices")
+            .insert({
+              organization_id: orgId,
+              supplier_id: resolvedSupplierId,
+              invoice_number: doc.documentNumber,
+              total_amount: doc.grandTotal,
+              status: doc.status === "paid" ? "received" : "sent",
+              notes: doc.notes || null,
+              created_by: userId,
+            })
+            .select()
+            .single();
+
+          if (!piErr && piData) {
+            doc.id = piData.id;
+            if (doc.items.length > 0) {
+              const piItems = [];
+              for (const it of doc.items) {
+                let pId = it.productId;
+                if (pId) {
+                  const { data: prodCheck } = await supabase
+                    .from("products")
+                    .select("id")
+                    .eq("id", pId)
+                    .maybeSingle();
+                  if (!prodCheck) pId = undefined;
+                }
+                if (!pId) {
+                  const { data: prodMatch } = await supabase
+                    .from("products")
+                    .select("id")
+                    .eq("organization_id", orgId)
+                    .ilike("name", it.productName.trim())
+                    .maybeSingle();
+                  pId = prodMatch?.id;
+                }
+                if (!pId) {
+                  const { data: newProd } = await supabase
+                    .from("products")
+                    .insert({
+                      organization_id: orgId,
+                      name: it.productName.trim(),
+                      category: "General",
+                      sku: `SKU-${Date.now().toString(36).toUpperCase()}`,
+                    })
+                    .select("id")
+                    .maybeSingle();
+                  pId = newProd?.id;
+                }
+
+                if (pId) {
+                  piItems.push({
+                    purchase_invoice_id: piData.id,
+                    product_id: pId,
+                    quantity: it.quantity,
+                    cost_price: it.rate,
+                    mrp: it.rate,
+                    batch_number: it.batchNumber || "BATCH-01",
+                    expiry_date: it.expiryDate || null,
+                  });
+                }
+              }
+              if (piItems.length > 0) {
+                await supabase.from("purchase_invoice_items").insert(piItems);
+              }
+            }
           }
         }
       } catch (err) {
         console.warn("Supabase purchase invoice save fallback to local storage:", err);
+      }
+    }
+
+    // 2b. If purchase return or debit note, attempt saving to Supabase purchase_returns
+    if ((docType === "purchase_return" || docType === "debit_note") && userId) {
+      try {
+        let resolvedSupplierId: string | null = null;
+        if (doc.partyId) {
+          const { data: suppCheck } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("id", doc.partyId)
+            .maybeSingle();
+          if (suppCheck) resolvedSupplierId = doc.partyId;
+        }
+        if (!resolvedSupplierId && doc.partyName) {
+          const { data: nameSupp } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("organization_id", orgId)
+            .ilike("name", doc.partyName.trim())
+            .maybeSingle();
+          if (nameSupp) resolvedSupplierId = nameSupp.id;
+        }
+        if (!resolvedSupplierId) {
+          const { data: newSupp } = await supabase
+            .from("suppliers")
+            .insert({
+              organization_id: orgId,
+              name: doc.partyName || "Supplier",
+              phone: doc.partyPhone || "",
+              email: doc.partyEmail || "",
+              gstin: doc.partyGstin || "",
+              address: doc.partyAddress || "",
+            })
+            .select("id")
+            .maybeSingle();
+          if (newSupp) resolvedSupplierId = newSupp.id;
+        }
+
+        if (resolvedSupplierId) {
+          const { data: prData, error: prErr } = await supabase
+            .from("purchase_returns")
+            .insert({
+              organization_id: orgId,
+              supplier_id: resolvedSupplierId,
+              purchase_invoice_id: doc.convertedFromId || null,
+              return_number: doc.documentNumber,
+              reason: doc.returnReason || doc.notes || "Purchase Return",
+              total_amount: doc.grandTotal,
+              status: doc.status === "paid" || doc.status === "completed" ? "completed" : "draft",
+              created_by: userId,
+            })
+            .select()
+            .single();
+
+          if (!prErr && prData) {
+            doc.id = prData.id;
+            if (doc.items.length > 0) {
+              const prItems = [];
+              for (const it of doc.items) {
+                let pId = it.productId;
+                if (!pId) {
+                  const { data: pMatch } = await supabase
+                    .from("products")
+                    .select("id")
+                    .eq("organization_id", orgId)
+                    .ilike("name", it.productName.trim())
+                    .maybeSingle();
+                  pId = pMatch?.id;
+                }
+                if (pId) {
+                  prItems.push({
+                    purchase_return_id: prData.id,
+                    product_id: pId,
+                    batch_number: it.batchNumber || "BATCH-01",
+                    quantity: it.quantity,
+                    cost_price: it.rate,
+                  });
+                }
+              }
+              if (prItems.length > 0) {
+                await supabase.from("purchase_return_items").insert(prItems);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase purchase return save fallback to local storage:", err);
       }
     }
 
@@ -625,9 +993,19 @@ export const documentsService = {
       }
     }
 
+    // If sales invoice was cancelled, propagate cancellation to network invoice
+    if (docType === "sales_invoice" && doc.status === "cancelled") {
+      try {
+        const { networkInvoicingService } = await import("@/services/networkInvoicingService");
+        await networkInvoicingService.cancelNetworkInvoice(doc.documentNumber, orgId);
+      } catch { /* empty */ }
+    }
+
     // 4. Save / Update in Local Storage cache
     const existingList = this.getLocalDocuments(orgId, docType);
-    const index = existingList.findIndex((d) => d.id === doc.id);
+    const index = existingList.findIndex(
+      (d) => d.id === doc.id || (doc.documentNumber && d.documentNumber === doc.documentNumber)
+    );
     const previousDoc = index >= 0 ? existingList[index] : undefined;
 
     if (index >= 0) {
@@ -652,6 +1030,7 @@ export const documentsService = {
       }
     }
 
+    notifyDocumentChange(orgId, docType, "save", doc);
     return doc;
   },
 
@@ -668,6 +1047,12 @@ export const documentsService = {
         await supabase.from("sales").delete().eq("id", docId);
       } catch (error) {
         console.warn("Failed to delete sales document from Supabase:", error);
+      }
+      if (targetDoc) {
+        try {
+          const { networkInvoicingService } = await import("@/services/networkInvoicingService");
+          await networkInvoicingService.cancelNetworkInvoice(targetDoc.documentNumber, orgId);
+        } catch { /* empty */ }
       }
     }
 
@@ -691,6 +1076,15 @@ export const documentsService = {
       }
     }
 
+    // If purchase return or debit note
+    if (docType === "purchase_return" || docType === "debit_note") {
+      try {
+        await supabase.from("purchase_returns").delete().eq("id", docId);
+      } catch (error) {
+        console.warn("Failed to delete purchase return document from Supabase:", error);
+      }
+    }
+
     // Revert inventory stock effect on document deletion
     if (targetDoc && targetDoc.returnAction !== "scrap_damaged") {
       try {
@@ -700,6 +1094,7 @@ export const documentsService = {
       }
     }
 
+    notifyDocumentChange(orgId, docType, "delete", targetDoc);
     return true;
   },
 
