@@ -11,6 +11,7 @@ export type UniversalDocType =
   | "pos_invoice"
   | "quotation"
   | "delivery_challan"
+  | "sales_return"
   | "credit_note"
   | "debit_note"
   | "proforma_invoice"
@@ -120,6 +121,10 @@ export interface UnifiedInvoiceProps {
   upiId?: string;
   layout?: "a4" | "a4_detailed" | "80mm" | "58mm";
   showHsnSummary?: boolean;
+  originalInvoiceNumber?: string;
+  originalInvoiceDate?: string;
+  returnReason?: string;
+  settlementMode?: string;
   className?: string;
 }
 
@@ -129,7 +134,8 @@ const DOC_TITLE_MAP: Record<UniversalDocType, string> = {
   purchase_invoice: "PURCHASE INVOICE / BILL",
   quotation: "ESTIMATE / QUOTATION",
   delivery_challan: "DELIVERY CHALLAN",
-  credit_note: "CREDIT NOTE",
+  sales_return: "CREDIT NOTE / SALES RETURN",
+  credit_note: "CREDIT NOTE (SEC 34 CGST ACT)",
   debit_note: "DEBIT NOTE",
   proforma_invoice: "PROFORMA INVOICE",
   payment_in: "RECEIPT VOUCHER",
@@ -210,6 +216,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       upiId: propUpiId,
       layout = "a4",
       showHsnSummary: propShowHsnSummary,
+      originalInvoiceNumber,
+      originalInvoiceDate,
+      returnReason,
+      settlementMode,
       className,
     } = props;
 
@@ -222,10 +232,11 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     }, [propShowHsnSummary, layout]);
 
     // Resolve aliases for backward compatibility
-    const resolvedRawDate = date || (props as any).invoiceDate || Date.now();
-    const resolvedPartyInfo = partyInfo || (props as any).party;
-    const resolvedBankDetails = propBankDetails || (props as any).bankDetails;
-    const resolvedUpiId = propUpiId || (props as any).upiId;
+    const legacyProps = props as Record<string, unknown>;
+    const resolvedRawDate = date || (legacyProps.invoiceDate as string | number | Date | undefined) || Date.now();
+    const resolvedPartyInfo = partyInfo || (legacyProps.party as PartyDetails | undefined);
+    const resolvedBankDetails = propBankDetails || (legacyProps.bankDetails as UnifiedInvoiceProps["bankDetails"]);
+    const resolvedUpiId = propUpiId || (legacyProps.upiId as string | undefined);
 
     const activeSettings = propSettings || loadInvoiceSettings();
     const swatch = getThemeColorSwatch(activeSettings.primaryColor);
@@ -692,11 +703,40 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                 </div>
               </div>
 
+              {(originalInvoiceNumber?.trim() || originalInvoiceDate || returnReason?.trim() || settlementMode) && (
+                <div className="pt-1 border-t border-slate-200 flex flex-col gap-0.5 text-[9px]">
+                  {originalInvoiceNumber && originalInvoiceNumber.trim() !== "" && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Orig Inv No:</span>
+                      <strong className="font-mono text-slate-900">{originalInvoiceNumber}</strong>
+                    </div>
+                  )}
+                  {originalInvoiceDate && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Orig Inv Date:</span>
+                      <strong className="text-slate-800">{originalInvoiceDate}</strong>
+                    </div>
+                  )}
+                  {returnReason && returnReason.trim() !== "" && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Return Reason:</span>
+                      <strong className="text-rose-600 truncate max-w-[130px]">{returnReason}</strong>
+                    </div>
+                  )}
+                  {settlementMode && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Settlement:</span>
+                      <strong className="capitalize text-indigo-700">{settlementMode.replace(/_/g, ' ')}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {(referenceNumber?.trim() || vehicleNumber?.trim() || poReference?.trim()) && (
                 <div className="pt-1 border-t border-slate-200 flex flex-col gap-0.5 text-[9px]">
-                  {referenceNumber && referenceNumber.trim() !== "" && (
+                  {referenceNumber && referenceNumber.trim() !== "" && referenceNumber !== originalInvoiceNumber && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">E-Way Bill:</span>
+                      <span className="text-slate-500">E-Way Bill / Ref:</span>
                       <strong className="font-mono text-slate-800">{referenceNumber}</strong>
                     </div>
                   )}

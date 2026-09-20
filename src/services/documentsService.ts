@@ -170,6 +170,145 @@ export const documentsService = {
       }
     }
 
+    // If fetching sales return or credit note, also query Supabase `sales_returns` and merge
+    if (docType === "sales_return" || docType === "credit_note") {
+      try {
+        const { data: returns, error } = await supabase
+          .from("sales_returns")
+          .select(`
+            *,
+            sales_return_items (*)
+          `)
+          .eq("organization_id", orgId)
+          .order("created_at", { ascending: false });
+
+        if (!error && returns) {
+          interface RawReturnItem {
+            id: string;
+            product_id?: string | null;
+            product_name?: string | null;
+            batch_number?: string | null;
+            quantity?: number | null;
+            unit?: string | null;
+            alt_unit?: string | null;
+            alt_qty?: number | null;
+            alt_unit_conversion?: number | null;
+            rate?: number | null;
+            tax_rate?: number | null;
+            discount_percent?: number | null;
+            discount_amount?: number | null;
+            taxable_amount?: number | null;
+            cgst_amount?: number | null;
+            sgst_amount?: number | null;
+            igst_amount?: number | null;
+            line_total?: number | null;
+            return_reason?: string | null;
+          }
+
+          interface RawSalesReturn {
+            id: string;
+            return_number?: string | null;
+            original_invoice_number?: string | null;
+            original_invoice_date?: string | null;
+            reason?: string | null;
+            return_action?: BusinessDocument["returnAction"];
+            settlement_mode?: BusinessDocument["settlementMode"];
+            customer_id?: string | null;
+            customer_name?: string | null;
+            customer_phone?: string | null;
+            customer_gstin?: string | null;
+            customer_address?: string | null;
+            place_of_supply?: string | null;
+            return_date?: string | null;
+            created_at: string;
+            subtotal?: number | null;
+            discount_amount?: number | null;
+            taxable_amount?: number | null;
+            cgst_amount?: number | null;
+            sgst_amount?: number | null;
+            igst_amount?: number | null;
+            tax_amount?: number | null;
+            round_off?: number | null;
+            total_amount?: number | null;
+            status?: string | null;
+            notes?: string | null;
+            sales_return_items?: RawReturnItem[];
+          }
+
+          const supabaseDocs: BusinessDocument[] = (returns as unknown as RawSalesReturn[]).map((r) => {
+            const items = (r.sales_return_items || []).map((it) => ({
+              id: it.id,
+              productId: it.product_id || undefined,
+              productName: it.product_name || "Returned Item",
+              batchNumber: it.batch_number || "BATCH-01",
+              quantity: Number(it.quantity || 1),
+              unit: it.unit || "PCS",
+              altUnit: it.alt_unit || undefined,
+              altQty: it.alt_qty != null ? Number(it.alt_qty) : undefined,
+              altUnitConversion: it.alt_unit_conversion != null ? Number(it.alt_unit_conversion) : undefined,
+              rate: Number(it.rate || 0),
+              taxRate: Number(it.tax_rate || 0),
+              discountPercent: Number(it.discount_percent || 0),
+              discountAmount: Number(it.discount_amount || 0),
+              taxableAmount: Number(it.taxable_amount || 0),
+              cgstAmount: Number(it.cgst_amount || 0),
+              sgstAmount: Number(it.sgst_amount || 0),
+              igstAmount: Number(it.igst_amount || 0),
+              lineTotal: Number(it.line_total || 0),
+              returnReason: it.return_reason || undefined,
+            }));
+
+            const total = Number(r.total_amount || 0);
+            return {
+              id: r.id,
+              organizationId: orgId,
+              docType: docType,
+              documentNumber: r.return_number || `SR-${r.id.slice(0, 6)}`,
+              referenceNumber: r.original_invoice_number || undefined,
+              originalInvoiceNumber: r.original_invoice_number || undefined,
+              originalInvoiceDate: r.original_invoice_date || undefined,
+              returnReason: r.reason || undefined,
+              returnAction: r.return_action || "return_to_stock",
+              settlementMode: r.settlement_mode || "store_credit",
+              partyId: r.customer_id || undefined,
+              partyName: r.customer_name || "Walk-in Customer",
+              partyPhone: r.customer_phone || "",
+              partyGstin: r.customer_gstin || "",
+              partyAddress: r.customer_address || "",
+              placeOfSupply: r.place_of_supply || "27-Maharashtra",
+              docDate: r.return_date || (r.created_at ? r.created_at.split("T")[0] : new Date().toISOString().split("T")[0]),
+              items,
+              subtotal: Number(r.subtotal || 0),
+              discountTotal: Number(r.discount_amount || 0),
+              taxableTotal: Number(r.taxable_amount || 0),
+              cgstTotal: Number(r.cgst_amount || 0),
+              sgstTotal: Number(r.sgst_amount || 0),
+              igstTotal: Number(r.igst_amount || 0),
+              taxTotal: Number(r.tax_amount || 0),
+              roundOff: Number(r.round_off || 0),
+              grandTotal: total,
+              paidAmount: total,
+              balanceDue: 0,
+              status: (r.status === "completed" ? "paid" : r.status === "cancelled" ? "cancelled" : "draft") as DocumentStatus,
+              notes: r.notes || "",
+              created_at: r.created_at,
+              updated_at: r.updated_at,
+            };
+          });
+
+          const merged = [...localDocs];
+          for (const sDoc of supabaseDocs) {
+            if (!merged.some((d) => d.id === sDoc.id || d.documentNumber === sDoc.documentNumber)) {
+              merged.push(sDoc);
+            }
+          }
+          return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      } catch (err) {
+        console.warn("Supabase sales return fetch error:", err);
+      }
+    }
+
     return localDocs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
 
@@ -403,7 +542,90 @@ export const documentsService = {
       }
     }
 
-    // 3. Save / Update in Local Storage cache
+    // 3. If sales return or credit note, attempt saving to Supabase sales_returns
+    if ((docType === "sales_return" || docType === "credit_note") && userId) {
+      try {
+        const { data: srData, error: srErr } = await supabase
+          .from("sales_returns")
+          .insert({
+            organization_id: orgId,
+            sale_id: doc.convertedFromId || null,
+            customer_id: doc.partyId || null,
+            customer_name: doc.partyName || "Walk-in Customer",
+            customer_phone: doc.partyPhone || "",
+            customer_gstin: doc.partyGstin || "",
+            customer_address: doc.partyAddress || "",
+            place_of_supply: doc.placeOfSupply || "27-Maharashtra",
+            return_number: doc.documentNumber,
+            original_invoice_number: doc.originalInvoiceNumber || doc.referenceNumber || "",
+            original_invoice_date: doc.originalInvoiceDate || null,
+            return_date: doc.docDate || new Date().toISOString().split("T")[0],
+            reason: doc.returnReason || doc.notes || "Sales Return",
+            return_action: doc.returnAction || "return_to_stock",
+            settlement_mode: doc.settlementMode || "store_credit",
+            subtotal: doc.subtotal,
+            discount_amount: doc.discountTotal,
+            taxable_amount: doc.taxableTotal,
+            cgst_amount: doc.cgstTotal,
+            sgst_amount: doc.sgstTotal,
+            igst_amount: doc.igstTotal,
+            tax_amount: doc.taxTotal,
+            round_off: doc.roundOff || 0,
+            total_amount: doc.grandTotal,
+            status: doc.status === "cancelled" ? "cancelled" : "completed",
+            notes: doc.notes || "",
+            created_by: userId,
+          })
+          .select()
+          .single();
+
+        if (!srErr && srData) {
+          doc.id = srData.id;
+          if (doc.items.length > 0) {
+            const srItems = doc.items.map((it) => ({
+              sales_return_id: srData.id,
+              product_id: it.productId || null,
+              product_name: it.productName,
+              batch_number: it.batchNumber || "BATCH-01",
+              quantity: it.quantity,
+              unit: it.unit || "PCS",
+              alt_unit: it.altUnit || null,
+              alt_qty: it.altQty != null ? it.altQty : null,
+              alt_unit_conversion: it.altUnitConversion != null ? it.altUnitConversion : null,
+              rate: it.rate,
+              tax_rate: it.taxRate || 0,
+              discount_percent: it.discountPercent || 0,
+              discount_amount: it.discountAmount || 0,
+              taxable_amount: it.taxableAmount || 0,
+              cgst_amount: it.cgstAmount || 0,
+              sgst_amount: it.sgstAmount || 0,
+              igst_amount: it.igstAmount || 0,
+              line_total: it.lineTotal,
+              return_reason: it.returnReason || null,
+            }));
+            await supabase.from("sales_return_items").insert(srItems);
+          }
+
+          // If store credit / ledger settlement and customer is linked, record in credit_transactions
+          if (doc.settlementMode === "store_credit" && doc.partyId && doc.grandTotal > 0) {
+            await supabase.from("credit_transactions").insert({
+              organization_id: orgId,
+              party_type: "customer",
+              party_id: doc.partyId,
+              amount: doc.grandTotal,
+              type: "payment", // Reduces customer's udhar khata (credit balance)
+              reference_id: srData.id,
+              description: `Credit Note #${doc.documentNumber} - ${doc.returnReason || "Sales Return"}`,
+              created_by: userId,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase sales return save fallback to local storage:", err);
+      }
+    }
+
+    // 4. Save / Update in Local Storage cache
     const existingList = this.getLocalDocuments(orgId, docType);
     const index = existingList.findIndex((d) => d.id === doc.id);
     const previousDoc = index >= 0 ? existingList[index] : undefined;
@@ -416,15 +638,18 @@ export const documentsService = {
 
     this.saveLocalDocuments(orgId, docType, existingList);
 
-    // 4. Update Inventory Stock (Deduct on sales/challan, Add on purchases/credit returns)
-    try {
-      if (previousDoc) {
-        await stockService.handleDocumentStock(doc, "update", previousDoc);
-      } else {
-        await stockService.handleDocumentStock(doc, "create");
+    // 5. Update Inventory Stock (Deduct on sales/challan, Add on purchases/credit returns)
+    // If returnAction is scrap_damaged, skip adding to stock so damaged/expired goods are not resold
+    if (doc.returnAction !== "scrap_damaged") {
+      try {
+        if (previousDoc) {
+          await stockService.handleDocumentStock(doc, "update", previousDoc);
+        } else {
+          await stockService.handleDocumentStock(doc, "create");
+        }
+      } catch (stockErr) {
+        console.warn("Stock handling notice in saveDocument:", stockErr);
       }
-    } catch (stockErr) {
-      console.warn("Stock handling notice in saveDocument:", stockErr);
     }
 
     return doc;
@@ -455,8 +680,19 @@ export const documentsService = {
       }
     }
 
+    // If sales return or credit note
+    if (docType === "sales_return" || docType === "credit_note") {
+      try {
+        await supabase.from("sales_returns").delete().eq("id", docId);
+        // Also remove associated credit_transactions entry
+        await supabase.from("credit_transactions").delete().eq("reference_id", docId);
+      } catch (error) {
+        console.warn("Failed to delete sales return document from Supabase:", error);
+      }
+    }
+
     // Revert inventory stock effect on document deletion
-    if (targetDoc) {
+    if (targetDoc && targetDoc.returnAction !== "scrap_damaged") {
       try {
         await stockService.handleDocumentStock(targetDoc, "delete");
       } catch (stockErr) {

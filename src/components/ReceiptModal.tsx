@@ -46,6 +46,10 @@ export interface ReceiptData {
   date: Date | string;
   dueDate?: string;
   isEstimate?: boolean;
+  originalInvoiceNumber?: string;
+  originalInvoiceDate?: string;
+  returnReason?: string;
+  settlementMode?: string;
   notes?: string;
   terms?: string;
 }
@@ -516,6 +520,10 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
               docType={data.docType || (data.isEstimate ? "quotation" : "sales_invoice")}
               invoiceNumber={data.invoiceNumber}
               referenceNumber={data.referenceNumber}
+              originalInvoiceNumber={data.originalInvoiceNumber}
+              originalInvoiceDate={data.originalInvoiceDate}
+              returnReason={data.returnReason}
+              settlementMode={data.settlementMode}
               date={data.date}
               dueDate={data.dueDate}
               storeInfo={{

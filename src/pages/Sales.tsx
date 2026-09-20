@@ -76,8 +76,10 @@ import { GenerateEwayBillModal } from "@/components/eway/GenerateEwayBillModal";
 import { EwayBillPrintSlip } from "@/components/eway/EwayBillPrintSlip";
 import { ewayBillService } from "@/services/ewayBillService";
 import { EwayBillRecord } from "@/types/ewayBill";
+import { SalesReturnModal } from "@/components/returns/SalesReturnModal";
+import { UniversalDocType } from "@/components/invoices/UnifiedInvoiceRenderer";
 
-const TABS: { id: SalesDocumentType; label: string; icon: any }[] = [
+const TABS: { id: SalesDocumentType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "sales_invoice", label: "Sales Invoices", icon: Receipt },
   { id: "quotation", label: "Quotation / Estimate", icon: FileText },
   { id: "payment_in", label: "Payment In", icon: Wallet },
@@ -151,6 +153,20 @@ export default function Sales() {
   const [ewaySlipOpen, setEwaySlipOpen] = useState(false);
   const [selectedEwayDoc, setSelectedEwayDoc] = useState<BusinessDocument | null>(null);
   const [selectedEwayRecord, setSelectedEwayRecord] = useState<EwayBillRecord | null>(null);
+
+  // Sales Return Modals
+  const [salesReturnModalOpen, setSalesReturnModalOpen] = useState(false);
+  const [selectedReturnInvoice, setSelectedReturnInvoice] = useState<BusinessDocument | null>(null);
+  const [editingReturnDoc, setEditingReturnDoc] = useState<BusinessDocument | null>(null);
+
+  // Auto-open return modal if navigated with new=1 on sales_return or credit_note
+  useEffect(() => {
+    if (searchParams.get("new") === "1" && (activeTab === "sales_return" || activeTab === "credit_note")) {
+      setSelectedReturnInvoice(null);
+      setEditingReturnDoc(null);
+      setSalesReturnModalOpen(true);
+    }
+  }, [searchParams, activeTab]);
 
   const handleOpenEway = (doc: BusinessDocument) => {
     setSelectedEwayDoc(doc);
@@ -396,10 +412,25 @@ export default function Sales() {
       date: doc.docDate,
       dueDate: doc.dueDate,
       isEstimate: doc.docType === "quotation",
+      originalInvoiceNumber: doc.originalInvoiceNumber || doc.referenceNumber,
+      originalInvoiceDate: doc.originalInvoiceDate,
+      returnReason: doc.returnReason,
+      settlementMode: doc.settlementMode,
       notes: doc.notes,
       terms: doc.terms,
     };
     setReceiptData(receipt);
+  };
+
+  const handleOpenCreateDoc = () => {
+    if (activeTab === "sales_return" || activeTab === "credit_note") {
+      setSelectedReturnInvoice(null);
+      setEditingReturnDoc(null);
+      setSalesReturnModalOpen(true);
+    } else {
+      setEditingDoc(null);
+      setCreateModalOpen(true);
+    }
   };
 
   const activeTabMeta = TABS.find((t) => t.id === activeTab) || TABS[0];
@@ -762,10 +793,7 @@ export default function Sales() {
 
             {/* Glowing Create Sales Invoice Button */}
             <button
-              onClick={() => {
-                setEditingDoc(null);
-                setCreateModalOpen(true);
-              }}
+              onClick={handleOpenCreateDoc}
               className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -788,10 +816,7 @@ export default function Sales() {
                   No records match current filter. Tap below to create your first {activeTabMeta.label.replace(/s$/, "")}.
                 </p>
                 <Button
-                  onClick={() => {
-                    setEditingDoc(null);
-                    setCreateModalOpen(true);
-                  }}
+                  onClick={handleOpenCreateDoc}
                   size="sm"
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 mt-1 gap-1.5 shadow-xs"
                 >
@@ -868,7 +893,7 @@ export default function Sales() {
                           onClick={() => {
                             downloadExactInvoicePdf({
                               invoiceNumber: doc.documentNumber,
-                              docType: doc.docType as any,
+                              docType: doc.docType as UniversalDocType,
                               customerName: doc.partyName,
                               customerPhone: doc.partyPhone,
                               storeName: org?.name || "CredSmart Store",
@@ -957,16 +982,43 @@ export default function Sales() {
                               <Truck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                               <span>Generate / View E-Way Bill</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingDoc(doc);
-                                setCreateModalOpen(true);
-                              }}
-                              className="gap-2"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Edit Invoice</span>
-                            </DropdownMenuItem>
+                            {doc.docType === "sales_invoice" && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedReturnInvoice(doc);
+                                  setEditingReturnDoc(null);
+                                  setSalesReturnModalOpen(true);
+                                }}
+                                className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Create Sales Return</span>
+                              </DropdownMenuItem>
+                            )}
+                            {doc.docType === "sales_return" || doc.docType === "credit_note" ? (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingReturnDoc(doc);
+                                  setSelectedReturnInvoice(null);
+                                  setSalesReturnModalOpen(true);
+                                }}
+                                className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Edit Return</span>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingDoc(doc);
+                                  setCreateModalOpen(true);
+                                }}
+                                className="gap-2"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Edit Invoice</span>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => handleDuplicate(doc)}
                               className="gap-2"
@@ -1054,9 +1106,13 @@ export default function Sales() {
                       <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
                     </div>
                   </th>
-                  <th className="py-3 px-3">Invoice Number</th>
+                  <th className="py-3 px-3">
+                    {activeTab === "sales_return" || activeTab === "credit_note" ? "Return Number" : "Invoice Number"}
+                  </th>
                   <th className="py-3 px-3">Party Name</th>
-                  <th className="py-3 px-3">Due In</th>
+                  <th className="py-3 px-3">
+                    {activeTab === "sales_return" || activeTab === "credit_note" ? "Return Details" : "Due In"}
+                  </th>
                   <th
                     onClick={() => {
                       setSortField("grandTotal");
@@ -1113,18 +1169,32 @@ export default function Sales() {
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          <span
-                            className={cn(
-                              "text-[11px] font-medium",
-                              doc.status === "paid"
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : calculateDueInText(doc).includes("Overdue")
-                                ? "text-rose-600 font-semibold"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {calculateDueInText(doc)}
-                          </span>
+                          {activeTab === "sales_return" || activeTab === "credit_note" ? (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                <RotateCcw className="w-2.5 h-2.5 shrink-0" />
+                                <span className="truncate max-w-[140px]">{doc.returnReason || "Sales Return"}</span>
+                              </span>
+                              {doc.originalInvoiceNumber && (
+                                <p className="text-[10px] text-muted-foreground font-mono">
+                                  Ref: {doc.originalInvoiceNumber}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span
+                              className={cn(
+                                "text-[11px] font-medium",
+                                doc.status === "paid"
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : calculateDueInText(doc).includes("Overdue")
+                                  ? "text-rose-600 font-semibold"
+                                  : "text-muted-foreground"
+                              )}
+                            >
+                              {calculateDueInText(doc)}
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-3 font-mono font-bold text-foreground">
                           ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -1165,7 +1235,7 @@ export default function Sales() {
                               onClick={() => {
                                 downloadExactInvoicePdf({
                                   invoiceNumber: doc.documentNumber,
-                                  docType: doc.docType as any,
+                                  docType: doc.docType as UniversalDocType,
                                   customerName: doc.partyName,
                                   customerPhone: doc.partyPhone,
                                   storeName: org?.name || "CredSmart Store",
@@ -1260,7 +1330,7 @@ export default function Sales() {
                                   onClick={() => {
                                     downloadExactInvoicePdf({
                                       invoiceNumber: doc.documentNumber,
-                                      docType: doc.docType as any,
+                                      docType: doc.docType as UniversalDocType,
                                       customerName: doc.partyName,
                                       customerPhone: doc.partyPhone,
                                       storeName: org?.name || "CredSmart Store",
@@ -1342,16 +1412,43 @@ export default function Sales() {
                                     <span>Mark as Unpaid</span>
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setEditingDoc(doc);
-                                    setCreateModalOpen(true);
-                                  }}
-                                  className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span>Edit Document</span>
-                                </DropdownMenuItem>
+                                {doc.docType === "sales_invoice" && (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedReturnInvoice(doc);
+                                      setEditingReturnDoc(null);
+                                      setSalesReturnModalOpen(true);
+                                    }}
+                                    className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Create Sales Return</span>
+                                  </DropdownMenuItem>
+                                )}
+                                {doc.docType === "sales_return" || doc.docType === "credit_note" ? (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingReturnDoc(doc);
+                                      setSelectedReturnInvoice(null);
+                                      setSalesReturnModalOpen(true);
+                                    }}
+                                    className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Edit Return</span>
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingDoc(doc);
+                                      setCreateModalOpen(true);
+                                    }}
+                                    className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Edit Document</span>
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteDocument(doc)}
                                   className="gap-2 text-rose-600 cursor-pointer"
@@ -1392,15 +1489,12 @@ export default function Sales() {
                           No Transactions Matching the current filter
                         </p>
                         <Button
-                          onClick={() => {
-                            setEditingDoc(null);
-                            setCreateModalOpen(true);
-                          }}
+                          onClick={handleOpenCreateDoc}
                           size="sm"
                           className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs gap-1 mt-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          Create Sales Invoice
+                          <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
                         </Button>
                       </div>
                     </td>
@@ -1447,6 +1541,18 @@ export default function Sales() {
         editingDoc={editingDoc}
         onSaved={() => loadDocuments()}
         onPrintRequest={(doc) => handleOpenReceipt(doc)}
+      />
+
+      {/* Sales Return & Credit Note Modal */}
+      <SalesReturnModal
+        open={salesReturnModalOpen}
+        onOpenChange={setSalesReturnModalOpen}
+        orgId={orgId || ""}
+        initialDocType={activeTab === "credit_note" ? "credit_note" : "sales_return"}
+        initialInvoice={selectedReturnInvoice}
+        editingReturn={editingReturnDoc}
+        onSaved={() => loadDocuments()}
+        onPrintRequest={(data) => setReceiptData(data)}
       />
 
       {/* Sales Settings Modal */}

@@ -51,6 +51,8 @@ export interface DocumentLineItem {
   cgstAmount: number;
   sgstAmount: number;
   igstAmount: number;
+  returnReason?: string;
+  maxReturnQty?: number;
   lineTotal: number;
 }
 
@@ -62,6 +64,11 @@ export interface BusinessDocument {
   defaultTaxType?: "exclusive" | "inclusive";
   documentNumber: string;
   referenceNumber?: string;
+  originalInvoiceNumber?: string;
+  originalInvoiceDate?: string;
+  returnReason?: string;
+  returnAction?: "return_to_stock" | "scrap_damaged";
+  settlementMode?: "store_credit" | "cash_refund" | "upi_refund" | "bank_refund" | "unsettled";
   partyId?: string;
   partyName: string;
   partyPhone?: string;
@@ -99,7 +106,7 @@ export interface BusinessDocument {
     lrNumber?: string;
     dispatchDate?: string;
   };
-  custom_fields?: Record<string, any>;
+  custom_fields?: Record<string, unknown>;
   created_at: string;
   updated_at?: string;
 }

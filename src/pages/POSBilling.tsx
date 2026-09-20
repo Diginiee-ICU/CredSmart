@@ -63,6 +63,7 @@ import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
 import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { SalesReturnModal } from "@/components/returns/SalesReturnModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -401,6 +402,7 @@ export default function POSBilling() {
   const [showQuickAddCustomerModal, setShowQuickAddCustomerModal] = useState(false);
   const [showUPIQRModal, setShowUPIQRModal] = useState(false);
   const [showCameraScannerModal, setShowCameraScannerModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [isProcessingSave, setIsProcessingSave] = useState(false);
 
@@ -2268,6 +2270,16 @@ export default function POSBilling() {
 
         {/* Right: Quick Hotkeys & Help */}
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => setShowReturnModal(true)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer shrink-0"
+            title="Process Customer Return or Credit Note"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden sm:inline">Return / Credit</span>
+            <span className="sm:hidden">Return</span>
+          </button>
+
           <button
             onClick={() => setShowTutorialModal(true)}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer hover-3d-glow shrink-0"
@@ -4603,6 +4615,18 @@ export default function POSBilling() {
           onNewSale={() => setReceiptData(null)}
         />
       )}
+
+      {/* Sales Return / Credit Note Modal */}
+      <SalesReturnModal
+        open={showReturnModal}
+        onOpenChange={setShowReturnModal}
+        orgId={orgId || ""}
+        initialDocType="sales_return"
+        onSaved={() => {
+          if (orgId) notifyStockUpdated(orgId);
+        }}
+        onPrintRequest={(data) => setReceiptData(data)}
+      />
     </div>
   );
 }
