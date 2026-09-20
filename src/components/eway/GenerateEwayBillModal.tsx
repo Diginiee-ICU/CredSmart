@@ -393,21 +393,21 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 max-h-[92vh] flex flex-col overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+      <DialogContent className="w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] rounded-none sm:rounded-2xl p-0 flex flex-col overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/90 border border-indigo-400/30 flex items-center justify-center text-white shadow-md">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-600/90 border border-indigo-400/30 flex items-center justify-center text-white shadow-md shrink-0">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <DialogTitle className="text-sm sm:text-base font-bold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 Generate GST E-Way Bill
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                   Form GST EWB-01
                 </span>
               </DialogTitle>
-              <p className="text-xs text-slate-300">
+              <p className="hidden sm:block text-xs text-slate-300">
                 Official Indian GST compliant consignment transit documentation
               </p>
             </div>
@@ -424,33 +424,33 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
         </div>
 
         {/* Tab Selector */}
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 px-6 shrink-0">
+        <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 px-3 sm:px-6 shrink-0 overflow-x-auto">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-            <TabsList className="h-11 bg-transparent p-0 gap-6 border-b-0">
+            <TabsList className="h-14 sm:h-11 bg-transparent p-0 gap-4 sm:gap-6 border-b-0 w-max min-w-full justify-start">
               <TabsTrigger
                 value="parties"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-xs font-bold gap-2"
+                className="min-h-11 data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-[11px] sm:text-xs font-bold gap-1.5 sm:gap-2 whitespace-nowrap"
               >
                 <Building2 className="w-3.5 h-3.5" />
                 1. Part-A: Parties & Document
               </TabsTrigger>
               <TabsTrigger
                 value="items"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-xs font-bold gap-2"
+                className="min-h-11 data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-[11px] sm:text-xs font-bold gap-1.5 sm:gap-2 whitespace-nowrap"
               >
                 <Package className="w-3.5 h-3.5" />
                 2. Consignment Items ({items.length})
               </TabsTrigger>
               <TabsTrigger
                 value="transport"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-xs font-bold gap-2"
+                className="min-h-11 data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-[11px] sm:text-xs font-bold gap-1.5 sm:gap-2 whitespace-nowrap"
               >
                 <Truck className="w-3.5 h-3.5" />
                 3. Part-B: Transport & Vehicle
               </TabsTrigger>
               <TabsTrigger
                 value="review"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-xs font-bold gap-2"
+                className="min-h-11 data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none bg-transparent px-1 pb-3 pt-2 text-[11px] sm:text-xs font-bold gap-1.5 sm:gap-2 whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 4. Compliance & Generation
@@ -460,7 +460,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
         </div>
 
         {/* Tab Body */}
-        <div className="flex-1 overflow-y-auto p-6 text-xs">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 text-xs overscroll-contain">
           {/* TAB 1: PARTIES & DOCUMENT */}
           {activeTab === "parties" && (
             <div className="space-y-6">
@@ -572,7 +572,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         className="h-7 text-xs mt-0.5"
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600">Place / City</Label>
                         <Input
@@ -652,7 +652,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         className="h-7 text-xs mt-0.5"
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600">Place / City</Label>
                         <Input
@@ -720,7 +720,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                 </Button>
               </div>
 
-              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xs">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-100 dark:bg-slate-800/60 font-bold text-slate-700 dark:text-slate-300 text-[11px]">
                     <tr>
@@ -1118,12 +1118,13 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
         </div>
 
         {/* Footer Navigation */}
-        <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <div className="px-3 sm:px-6 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
+            className="min-h-11"
           >
             Cancel
           </Button>
@@ -1139,6 +1140,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   else if (activeTab === "transport") setActiveTab("items");
                   else if (activeTab === "items") setActiveTab("parties");
                 }}
+                className="min-h-11"
               >
                 Back
               </Button>
@@ -1153,7 +1155,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   else if (activeTab === "items") setActiveTab("transport");
                   else if (activeTab === "transport") setActiveTab("review");
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5"
+                className="min-h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1164,7 +1166,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                 size="sm"
                 disabled={isGenerating}
                 onClick={() => handleGenerate(false)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow-md"
+                className="min-h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow-md"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>{isGenerating ? "Generating..." : "Generate E-Way Bill Now"}</span>

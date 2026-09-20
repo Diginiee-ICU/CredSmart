@@ -113,8 +113,8 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <DialogContent className="w-full max-w-md max-h-[100dvh] sm:max-h-[92vh] rounded-none sm:rounded-2xl p-0 overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <div className="px-4 sm:px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
               <Truck className="w-4 h-4" />
@@ -130,7 +130,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl flex items-start gap-2 text-indigo-900 dark:text-indigo-200 text-[11px]">
             <AlertCircle className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div>
@@ -141,7 +141,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Transport Mode
@@ -176,7 +176,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 From Place (Transit Point) <span className="text-rose-500">*</span>
@@ -209,7 +209,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Trans Doc / LR Number
@@ -276,6 +276,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
+              className="min-h-11"
             >
               Cancel
             </Button>
@@ -283,7 +284,7 @@ export const UpdatePartBModal: React.FC<UpdatePartBModalProps> = ({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5"
+              className="min-h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>{isSubmitting ? "Updating..." : "Update Part-B"}</span>

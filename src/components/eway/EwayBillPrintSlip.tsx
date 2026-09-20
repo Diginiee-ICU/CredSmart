@@ -119,15 +119,15 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 max-h-[92vh] flex flex-col overflow-hidden bg-slate-100 dark:bg-slate-950 border-slate-300 dark:border-slate-800">
+      <DialogContent className="w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] rounded-none sm:rounded-2xl p-0 flex flex-col overflow-hidden bg-slate-100 dark:bg-slate-950 border-slate-300 dark:border-slate-800">
         {/* Modal Toolbar Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <div className="hidden sm:flex w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Printer className="w-4 h-4" />
             </div>
             <div>
-              <DialogTitle className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <DialogTitle className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 Official Form GST EWB-01 Slip
                 {isCancelled ? (
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-300">
@@ -143,18 +143,18 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                   </span>
                 )}
               </DialogTitle>
-              <p className="text-[11px] text-slate-500 font-mono">
+              <p className="hidden sm:block text-[11px] text-slate-500 font-mono">
                 EWB: {ewayBill.ewayBillNo} • Valid Upto: {formatDateTime(ewayBill.validUpto)}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={handleShare}
-              className="h-8 gap-1.5 text-xs font-semibold"
+              className="h-10 sm:h-8 gap-1.5 text-xs font-semibold"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Share</span>
@@ -163,7 +163,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
               variant="outline"
               size="sm"
               onClick={handleDownloadPdf}
-              className="h-8 gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
+              className="h-10 sm:h-8 gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Download PDF</span>
@@ -171,7 +171,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
             <Button
               size="sm"
               onClick={handlePrint}
-              className="h-8 gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="h-10 sm:h-8 gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Slip</span>
@@ -180,10 +180,10 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
         </div>
 
         {/* Printable Canvas Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 dark:bg-slate-950 flex justify-center">
+        <div className="flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-slate-100 dark:bg-slate-950 flex justify-start sm:justify-center overscroll-contain">
           <div
             ref={printRef}
-            className="w-full max-w-[780px] bg-white text-slate-900 shadow-md border border-slate-300 p-6 rounded-sm font-sans text-xs print:p-0 print:border-none print:shadow-none print:w-full"
+            className="w-[720px] sm:w-full max-w-[780px] shrink-0 bg-white text-slate-900 shadow-md border border-slate-300 p-4 sm:p-6 rounded-sm font-sans text-xs print:p-0 print:border-none print:shadow-none print:w-full"
             style={{ minHeight: "1000px" }}
           >
             {/* Government Title Header */}

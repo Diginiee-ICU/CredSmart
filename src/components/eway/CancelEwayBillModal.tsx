@@ -74,8 +74,8 @@ export const CancelEwayBillModal: React.FC<CancelEwayBillModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-        <div className="px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
+      <DialogContent className="w-full max-w-md max-h-[100dvh] sm:max-h-[92vh] rounded-none sm:rounded-2xl p-0 overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <div className="px-4 sm:px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-rose-700 flex items-center justify-center text-white">
               <Ban className="w-4 h-4" />
@@ -91,7 +91,7 @@ export const CancelEwayBillModal: React.FC<CancelEwayBillModalProps> = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {isPast24Hours ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2 text-amber-900 dark:text-amber-200 text-[11px]">
               <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -149,6 +149,7 @@ export const CancelEwayBillModal: React.FC<CancelEwayBillModalProps> = ({
               type="button"
               variant="outline"
               size="sm"
+              className="min-h-11"
               onClick={() => onOpenChange(false)}
             >
               Close
@@ -157,7 +158,7 @@ export const CancelEwayBillModal: React.FC<CancelEwayBillModalProps> = ({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+              className="min-h-11 bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
             >
               <Ban className="w-3.5 h-3.5" />
               <span>{isSubmitting ? "Cancelling..." : "Confirm Cancellation"}</span>
