@@ -323,6 +323,7 @@ export default function EwayBillDashboard() {
             </Button>
           </div>
         ) : (
+          <>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/60 font-bold text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
@@ -589,6 +590,7 @@ export default function EwayBillDashboard() {
               );
             })}
           </div>
+          </>
         )}
       </div>
 
