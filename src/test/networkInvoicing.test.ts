@@ -3,6 +3,7 @@ import { networkInvoicingService, normalizePhoneNumber } from "@/services/networ
 import { BusinessDocument } from "@/types/documents";
 import { OrgData } from "@/hooks/useOrganization";
 import { documentsService } from "@/services/documentsService";
+import { getLocalCachedProducts } from "@/services/stockService";
 
 describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
   const sellerOrg: OrgData = {
@@ -237,6 +238,16 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(buyerPurchases.length).toBe(1);
       expect(buyerPurchases[0].partyName).toBe("Person A Wholesale Supplies");
       expect(buyerPurchases[0].grandTotal).toBe(5880);
+
+      // Verify that the item was auto-created in Person B's catalog and stock was incremented to 20
+      expect(purchaseBill.items[0].productId).toBeDefined();
+      expect(purchaseBill.items[0].productId).not.toBe("it-1"); // Should NOT be Person A's item ID
+
+      const buyerCached = getLocalCachedProducts(buyerOrg.id);
+      const autoCreatedItem = buyerCached.find((p) => p.name === "Tata Tea Gold 500g");
+      expect(autoCreatedItem).toBeDefined();
+      expect(autoCreatedItem?.stock).toBe(20);
+      expect(autoCreatedItem?.id).toBe(purchaseBill.items[0].productId);
     }, 15000);
   });
 
