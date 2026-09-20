@@ -22,12 +22,14 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ItemImageUpload } from "./ItemImageUpload";
 
 export interface CreatedProductResult {
   id: string;
   name: string;
   barcode?: string;
   sku: string;
+  imageUrl?: string;
   unit: string;
   altUnit?: string;
   altUnitConversion?: number;
@@ -106,6 +108,7 @@ export function QuickCreateItemModal({
   const [hsn, setHsn] = useState("");
   const [openingStock, setOpeningStock] = useState<number | "">(10);
   const [barcode, setBarcode] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -126,6 +129,7 @@ export function QuickCreateItemModal({
       setHsn("");
       setOpeningStock(10);
       setBarcode("");
+      setImageUrl("");
       setTimeout(() => {
         nameInputRef.current?.focus();
       }, 120);

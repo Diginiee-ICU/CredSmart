@@ -20,6 +20,7 @@ import { InventoryItem, ItemUnit, GSTRate, ItemBatch } from "@/types/inventory";
 import { searchHSNCodes, HSNRecord, COMMON_HSN_CODES } from "@/utils/hsnLookup";
 import { STANDARD_GST_UNITS, STANDARD_HSN_CODES } from "@/utils/suggestionData";
 import { Button } from "@/components/ui/button";
+import { ItemImageUpload } from "./ItemImageUpload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -491,6 +492,15 @@ export function CreateItemModal({
                 </div>
               </div>
 
+              {/* Product / Item Image Upload */}
+              <div className="p-3.5 rounded-xl border border-border bg-card shadow-2xs">
+                <ItemImageUpload
+                  value={imageUrl}
+                  onChange={(url) => setImageUrl(url)}
+                  label="Product / Item Image"
+                />
+              </div>
+
               {/* Alternate Unit Configuration */}
               <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-3">
                 <div className="flex items-center justify-between">
@@ -573,19 +583,11 @@ export function CreateItemModal({
                 </div>
 
                 {isInCatalogue && (
-                  <div className="pt-2 border-t border-border/60 space-y-1.5">
-                    <Label htmlFor="item-image-url" className="text-xs font-semibold">
-                      Product Photo URL
-                    </Label>
-                    <Input
-                      id="item-image-url"
-                      placeholder="https://... or paste image link"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="text-xs"
-                    />
-                    <p className="text-[10px] text-muted-foreground">
-                      You can also upload high-resolution photos directly inside the Storefront manager.
+                  <div className="pt-2 border-t border-border/60">
+                    <p className="text-[11px] text-muted-foreground">
+                      {imageUrl
+                        ? "✓ Product image is attached and will be showcased on your digital storefront."
+                        : "Tip: Attach a product image above so customers can view it on your online storefront."}
                     </p>
                   </div>
                 )}

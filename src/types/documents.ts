@@ -33,6 +33,7 @@ export interface DocumentLineItem {
   hsn?: string;
   batchNumber?: string;
   expiryDate?: string;
+  imageUrl?: string;
   quantity: number;       // ALWAYS in primary units (e.g. PCS) — used for all calculations
   unit: string;           // primary unit label (e.g. "PCS")
   /** Alternate unit label used during billing, e.g. "PKT" */

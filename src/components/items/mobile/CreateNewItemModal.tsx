@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ArrowLeft, Settings, Search, Calendar, ScanBarcode, Barcode, Camera, FileText, ChevronDown, Layers } from "lucide-react";
 import { DocumentLineItem } from "@/types/documents";
 import { toast } from "@/hooks/use-toast";
+import { ItemImageUpload } from "../ItemImageUpload";
 
 interface CreateNewItemModalProps {
   onClose: () => void;
@@ -28,6 +29,7 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
   const [enableAltUnit, setEnableAltUnit] = useState(false);
   const [altUnit, setAltUnit] = useState("BOX");
   const [altUnitConversion, setAltUnitConversion] = useState("10");
+  const [imageUrl, setImageUrl] = useState("");
 
   const handleSave = (saveAndNew: boolean) => {
     const name = itemName.trim();
@@ -46,6 +48,7 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
       discountAmount: 0,
       unit,
       hsn: hsn.trim() || undefined,
+      imageUrl: imageUrl.trim() || undefined,
       taxableAmount: Number(salesPrice) || 0,
       cgstAmount: 0,
       sgstAmount: 0,
@@ -59,6 +62,7 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
       setSalesPrice("");
       setPurchasePrice("");
       setGstRate("0");
+      setImageUrl("");
     }
   };
 
@@ -356,10 +360,11 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
 
         {activeTab === 'other' && (
           <div className="p-4 flex flex-col gap-5">
-            <button className="w-full bg-slate-100 rounded-2xl h-28 flex flex-col items-center justify-center gap-2 text-slate-500 font-semibold hover:bg-slate-200 transition-colors">
-              <Camera className="w-6 h-6" />
-              <span className="text-[13px]">Add Image</span>
-            </button>
+            <ItemImageUpload
+              value={imageUrl}
+              onChange={setImageUrl}
+              label="Item Image / Photo"
+            />
 
             <div>
               <label className="text-xs font-bold text-slate-600 mb-1.5 block">Item Category</label>

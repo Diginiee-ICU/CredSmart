@@ -24,6 +24,8 @@ export interface ProductCatalogOption {
   gstRate?: number;
   hsnCode?: string;
   minStockAlert?: number;
+  imageUrl?: string | null;
+  image_url?: string | null;
   tags?: Record<string, unknown>;
   product_batches?: {
     id: string;
@@ -67,6 +69,12 @@ export function normalizeProduct(p: unknown): ProductCatalogOption {
   const gstRateVal = Number(tags.gst_rate) || Number(pRecord.tax_rate) || 18;
   const hsnVal = (tags.hsn_code as string) || (tags.hsn as string) || (pRecord.hsn as string) || (pRecord.hsn_code as string) || "";
   const minAlert = Number(tags.min_stock_alert) || 5;
+  const imgVal =
+    (pRecord.image_url as string) ||
+    (pRecord.imageUrl as string) ||
+    (tags.image_url as string) ||
+    (tags.imageUrl as string) ||
+    null;
 
   return {
     ...pRecord,
@@ -76,6 +84,8 @@ export function normalizeProduct(p: unknown): ProductCatalogOption {
     brand: pRecord.brand ? String(pRecord.brand) : null,
     barcode: pRecord.barcode ? String(pRecord.barcode) : null,
     sku: String(pRecord.sku || ""),
+    imageUrl: imgVal,
+    image_url: imgVal,
     unit: unitVal,
     altUnit: altUnitVal,
     altUnitConversion: altConvVal,
@@ -123,7 +133,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, barcode, sku, category, brand, tags, product_batches(id, batch_number, mrp, cost_price, stock, expiry_date)"
+          "id, name, barcode, sku, category, brand, image_url, tags, product_batches(id, batch_number, mrp, cost_price, stock, expiry_date)"
         )
         .eq("organization_id", effectiveOrg)
         .order("name");

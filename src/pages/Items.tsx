@@ -163,6 +163,7 @@ export default function Items() {
         const minAlert = p.minStockAlert ?? 5;
         const altUnitVal = p.altUnit || p.tags?.alt_unit || null;
         const altConvVal = p.altUnitConversion ?? p.tags?.alt_unit_conversion ?? null;
+        const imgUrl = p.imageUrl || p.image_url || p.tags?.image_url || p.tags?.imageUrl || null;
         return {
           id: p.id,
           name: p.name || "Item",
@@ -173,6 +174,7 @@ export default function Items() {
           unit: p.unit || "PCS",
           altUnit: altUnitVal,
           altUnitConversion: altConvVal ? Number(altConvVal) : null,
+          imageUrl: imgUrl,
           tags: p.tags || null,
           sellingPrice: sPrice,
           purchasePrice: pPrice,
@@ -268,6 +270,8 @@ export default function Items() {
         purchase_price: itemData.purchasePrice,
         mrp: itemData.mrp || itemData.sellingPrice,
         min_stock_alert: itemData.minStockAlert,
+        image_url: itemData.imageUrl || undefined,
+        imageUrl: itemData.imageUrl || undefined,
       };
 
       if (editingItem) {
@@ -279,6 +283,7 @@ export default function Items() {
             barcode: itemData.barcode,
             category: itemData.category,
             brand: itemData.brand,
+            image_url: itemData.imageUrl || null,
             tags: tagsPayload,
           })
           .eq("id", editingItem.id);
@@ -326,6 +331,7 @@ export default function Items() {
             barcode: itemData.barcode,
             category: itemData.category,
             brand: itemData.brand,
+            image_url: itemData.imageUrl || null,
             tags: tagsPayload,
           })
           .select()
@@ -972,31 +978,55 @@ return (
                     isSelected ? "border-primary ring-1.5 ring-primary/30 bg-primary/5" : "border-border/80 hover:border-border"
                   )}
                 >
-                  {/* Line 1: Item Name + Stock Badge + Selling Price */}
+                  {/* Line 1: Item Thumbnail + Name + Stock Badge + Selling Price */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <h4
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
                         onClick={() => {
                           setEditingItem(item);
                           setShowCreateModal(true);
                         }}
-                        className="font-bold text-xs text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                        className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground border border-border/80 shrink-0 overflow-hidden cursor-pointer"
                       >
-                        {item.name}
-                      </h4>
-                      {isZero ? (
-                        <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-rose-500/15 text-rose-600 border border-rose-500/30 shrink-0">
-                          0 Stock
-                        </span>
-                      ) : isLow ? (
-                        <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0">
-                          {item.currentStock} {item.unit}
-                        </span>
-                      ) : (
-                        <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                          {item.currentStock} {item.unit}
-                        </span>
-                      )}
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <Package className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4
+                            onClick={() => {
+                              setEditingItem(item);
+                              setShowCreateModal(true);
+                            }}
+                            className="font-bold text-xs text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                          >
+                            {item.name}
+                          </h4>
+                          {isZero ? (
+                            <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-rose-500/15 text-rose-600 border border-rose-500/30 shrink-0">
+                              0 Stock
+                            </span>
+                          ) : isLow ? (
+                            <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0">
+                              {item.currentStock} {item.unit}
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-bold uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                              {item.currentStock} {item.unit}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="text-right shrink-0">
@@ -1184,8 +1214,25 @@ return (
                       {/* Item Name */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                            <Package className="w-4 h-4" />
+                          <div
+                            onClick={() => {
+                              setEditingItem(item);
+                              setShowCreateModal(true);
+                            }}
+                            className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground border border-border shrink-0 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                          >
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <Package className="w-4 h-4" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <span
