@@ -12,6 +12,7 @@ import {
   getLocalCachedProducts,
   addOrUpdateLocalCachedProduct,
   notifyStockUpdated,
+  generateSafeUuid,
 } from "@/services/stockService";
 
 const STORAGE_INVOICES_KEY = "credsmart_network_invoices_v1";
@@ -720,8 +721,8 @@ export const networkInvoicingService = {
             if (createRes?.data?.id) {
               resolvedProductId = createRes.data.id;
             } else {
-              // Local fallback ID for offline / demo mode
-              resolvedProductId = `prod_b2b_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`;
+              // Local fallback UUID for offline / demo mode
+              resolvedProductId = generateSafeUuid();
             }
 
             // Also register in local cache
@@ -747,7 +748,7 @@ export const networkInvoicingService = {
         }
 
         if (!resolvedProductId) {
-          resolvedProductId = `prod_b2b_${Date.now()}_${idx}`;
+          resolvedProductId = generateSafeUuid();
         }
 
         mappedPurchaseItems.push({

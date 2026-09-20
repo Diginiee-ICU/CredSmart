@@ -37,6 +37,10 @@ const ADD_ON_CREATE_TYPES = new Set([
 const NON_INVENTORY_TYPES = new Set([
   "quotation",
   "proforma_invoice",
+  "purchase_order",
+  "estimate",
+]);
+
 // Local Storage Cached Products Helpers for offline & cross-tenant resolution
 export interface LocalCachedProduct {
   id: string;
@@ -90,6 +94,22 @@ export function addOrUpdateLocalCachedProduct(orgId: string, product: Partial<Lo
     list.unshift(product as LocalCachedProduct);
   }
   saveLocalCachedProducts(orgId, list);
+}
+
+/**
+ * Generates a valid RFC4122 v4 UUID for fallback IDs to prevent Postgres 22P02 UUID syntax errors
+ */
+export function generateSafeUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try {
+      return crypto.randomUUID();
+    } catch { /* empty */ }
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 /**
@@ -351,8 +371,8 @@ export const stockService = {
           if (!prodCreateErr && newProd?.id) {
             productId = newProd.id;
           } else {
-            // Local fallback ID for offline / demo mode
-            productId = `prod_auto_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            // Local fallback UUID for offline / demo mode
+            productId = generateSafeUuid();
           }
 
           // Store newly created product into local cache immediately
