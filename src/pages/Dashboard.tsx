@@ -45,6 +45,7 @@ import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModa
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import { ReceiptModal } from "@/components/ReceiptModal";
 import { ReceiptData } from "@/pages/Sales";
+import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
 import {
@@ -54,6 +55,7 @@ import {
   CredsmartLogo,
 } from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
+import { notifyStockUpdated } from "@/services/stockService";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {
@@ -91,12 +93,12 @@ export default function Dashboard() {
   const [showSalesInvoiceModal, setShowSalesInvoiceModal] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  const handleOpenReceipt = (doc: any) => {
+  const handleOpenReceipt = (doc: BusinessDocument) => {
     const receipt: ReceiptData = {
       docType: doc.docType,
       invoiceNumber: doc.documentNumber,
       referenceNumber: doc.referenceNumber,
-      items: doc.items.map((it: any) => ({
+      items: doc.items.map((it: DocumentLineItem) => ({
         product: {
           id: it.productId || it.id,
           name: it.productName,
@@ -1201,6 +1203,7 @@ export default function Dashboard() {
                   gst_rate: Number(itemData.gstRate) || 18,
                   hsn_code: itemData.hsnCode?.trim() || null,
                   min_stock_alert: itemData.minStockAlert || 5,
+                  ...(itemData.tags || {}),
                 },
               })
               .select()
@@ -1215,6 +1218,9 @@ export default function Dashboard() {
                 stock: itemData.currentStock,
               });
             }
+
+            // Broadcast real-time stock sync
+            notifyStockUpdated(orgId);
           }
           toast({ title: "Item Added", description: `Item "${itemData.name}" added to catalog.` });
           setShowCreateItemModal(false);
@@ -1259,6 +1265,12 @@ export default function Dashboard() {
                 description: "Opening balance",
                 created_by: "admin",
               });
+            }
+
+            // Broadcast real-time parties sync
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("credsmart:parties_updated", { detail: { orgId } }));
+              window.dispatchEvent(new CustomEvent("credsmart_network_update"));
             }
           }
           toast({ title: "Party Added", description: `Party "${partyData.name}" created.` });

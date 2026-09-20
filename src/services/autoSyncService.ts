@@ -3,6 +3,7 @@ import { SupportedSoftware } from "@/utils/universalDataImporter";
 import { parseTallyXml, TallyParseResult } from "@/utils/tallyXmlParser";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
+import { notifyStockUpdated } from "@/services/stockService";
 
 // ─── Interfaces & Types ──────────────────────────────────────────────────────
 
@@ -244,45 +245,73 @@ export async function executeDirectSyncIngestion(
         const stock = Number(item.openingStock ?? item.currentStock ?? 0);
         const skuVal = item.sku || `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-        const tagsPayload = [
-          `auto_sync_${software}`,
-          `synced_${new Date().toISOString().split("T")[0]}`,
-          `unit_${item.unit || "PCS"}`,
-          `gst_${item.gstRate ?? 18}`,
-          `hsn_${item.hsnCode || "NONE"}`,
-          `mrp_${item.mrp || sPrice}`,
-          `min_${item.minStockAlert || 5}`,
-        ];
+        const tagsPayload: Record<string, unknown> = {
+          selling_price: sPrice,
+          purchase_price: pPrice,
+          mrp: item.mrp || sPrice,
+          unit: item.unit || "PCS",
+          gst_rate: Number(item.gstRate ?? 18),
+          hsn_code: item.hsnCode ? String(item.hsnCode).trim() : null,
+          opening_stock: stock,
+          stock: stock,
+          min_stock_alert: Number(item.minStockAlert ?? 5),
+          imported_from: software,
+          imported_at: new Date().toISOString(),
+          auto_synced: true,
+        };
 
         // Upsert product by name/sku in this organization
         const { data: existingProd } = await supabase
           .from("products")
-          .select("id")
+          .select("id, tags")
           .eq("organization_id", orgId)
           .eq("name", item.name)
           .maybeSingle();
 
         if (existingProd) {
+          const mergedTags = {
+            ...((existingProd.tags && typeof existingProd.tags === "object" ? existingProd.tags : {}) as Record<string, unknown>),
+            ...tagsPayload,
+          };
+
           // Update product
           await supabase
             .from("products")
             .update({
-              price: sPrice,
-              description: `Auto-synced from ${software.toUpperCase()} on ${new Date().toLocaleDateString()}`,
               category: item.category || "General",
-              tags: tagsPayload,
+              brand: item.brand || null,
+              barcode: item.barcode || null,
+              tags: mergedTags,
+              updated_at: new Date().toISOString(),
             })
             .eq("id", existingProd.id);
 
           // Update batch stock
-          await supabase
+          const { data: existingBatch } = await supabase
             .from("product_batches")
-            .update({
+            .select("id")
+            .eq("product_id", existingProd.id)
+            .maybeSingle();
+
+          if (existingBatch) {
+            await supabase
+              .from("product_batches")
+              .update({
+                cost_price: pPrice,
+                mrp: item.mrp || sPrice,
+                stock: stock,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingBatch.id);
+          } else {
+            await supabase.from("product_batches").insert({
+              product_id: existingProd.id,
+              batch_number: "SYNC-BATCH-1",
               cost_price: pPrice,
               mrp: item.mrp || sPrice,
               stock: stock,
-            })
-            .eq("product_id", existingProd.id);
+            });
+          }
 
           itemsCount++;
         } else {
@@ -292,9 +321,9 @@ export async function executeDirectSyncIngestion(
             .insert({
               organization_id: orgId,
               name: item.name,
-              price: sPrice,
-              description: `Auto-synced from ${software.toUpperCase()}`,
               category: item.category || "General",
+              brand: item.brand || null,
+              barcode: item.barcode || null,
               sku: skuVal,
               tags: tagsPayload,
             })
@@ -397,6 +426,17 @@ export async function executeDirectSyncIngestion(
           }
         }
       }
+    }
+
+    // Broadcast stock updates if items were ingested
+    if (itemsCount > 0) {
+      notifyStockUpdated(orgId);
+    }
+
+    // Broadcast parties updates if parties were ingested
+    if (partiesCount > 0 && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("credsmart:parties_updated", { detail: { orgId } }));
+      window.dispatchEvent(new CustomEvent("credsmart_network_update"));
     }
 
     const durationMs = Math.round(performance.now() - startTime);

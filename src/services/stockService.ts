@@ -520,6 +520,21 @@ export const stockService = {
             stock: newStock,
             currentStock: newStock,
           });
+        } else {
+          addOrUpdateLocalCachedProduct(orgId, {
+            id: productId,
+            name: item.productName || "Product",
+            barcode: item.barcode || undefined,
+            stock: qtyToAdd,
+            currentStock: qtyToAdd,
+            tags: {
+              stock: qtyToAdd,
+              mrp: mrpVal,
+              selling_price: mrpVal,
+              purchase_price: costVal,
+              unit: item.unit || "PCS",
+            },
+          });
         }
       }
     }

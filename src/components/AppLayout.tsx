@@ -35,6 +35,7 @@ import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModa
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import { ReceiptModal } from "@/components/ReceiptModal";
 import { ReceiptData } from "@/pages/Sales";
+import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { CreateBusinessModal } from "@/components/CreateBusinessModal";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
@@ -67,6 +68,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyStockUpdated } from "@/services/stockService";
+import { OfflineSyncBanner } from "@/components/OfflineSyncBanner";
 
 interface PageMeta {
   title: string;
@@ -228,12 +231,12 @@ export default function AppLayout() {
   const [salesInvoiceModalOpen, setSalesInvoiceModalOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  const handleOpenReceipt = (doc: any) => {
+  const handleOpenReceipt = (doc: BusinessDocument) => {
     const receipt: ReceiptData = {
       docType: doc.docType,
       invoiceNumber: doc.documentNumber,
       referenceNumber: doc.referenceNumber,
-      items: doc.items.map((it: any) => ({
+      items: doc.items.map((it: DocumentLineItem) => ({
         product: {
           id: it.productId || it.id,
           name: it.productName,
@@ -344,6 +347,9 @@ export default function AppLayout() {
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
+      {/* Offline Status & Cloud Sync Banner */}
+      <OfflineSyncBanner />
+
       {/* Global Top Header */}
       {!isPosRoute && (
         <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
@@ -797,6 +803,7 @@ export default function AppLayout() {
                   gst_rate: Number(itemData.gstRate) || 18,
                   hsn_code: itemData.hsnCode?.trim() || null,
                   min_stock_alert: itemData.minStockAlert || 5,
+                  ...(itemData.tags || {}),
                 },
               })
               .select()
@@ -811,6 +818,9 @@ export default function AppLayout() {
                 stock: itemData.currentStock,
               });
             }
+
+            // Broadcast real-time stock sync
+            notifyStockUpdated(orgId);
           }
           toast.success(`Item "${itemData.name}" created!`);
           setCreateItemModalOpen(false);
@@ -854,6 +864,12 @@ export default function AppLayout() {
                 description: "Opening balance",
                 created_by: "admin",
               });
+            }
+
+            // Broadcast real-time parties sync
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("credsmart:parties_updated", { detail: { orgId } }));
+              window.dispatchEvent(new CustomEvent("credsmart_network_update"));
             }
           }
           toast.success(`Party "${partyData.name}" created!`);
