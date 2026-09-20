@@ -174,6 +174,8 @@ export function QuickCreateItemModal({
         purchase_tax_type: purchaseTaxType,
         mrp: itemMrp,
         min_stock_alert: 5,
+        image_url: imageUrl.trim() || undefined,
+        imageUrl: imageUrl.trim() || undefined,
       };
 
       // 1. Insert product record (pricing will be stored in tags and batches)
@@ -186,6 +188,7 @@ export function QuickCreateItemModal({
           category: category.trim() || "General",
           barcode: barcode.trim() || null,
           sku: generatedSku,
+          image_url: imageUrl.trim() || null,
           tags: tagsPayload,
         })
         .select()
@@ -219,6 +222,7 @@ export function QuickCreateItemModal({
         name: newProd.name,
         barcode: newProd.barcode || undefined,
         sku: newProd.sku,
+        imageUrl: imageUrl.trim() || undefined,
         unit: unit.toUpperCase(),
         altUnit: resolvedAltUnit,
         altUnitConversion: finalAltConv,
@@ -245,6 +249,7 @@ export function QuickCreateItemModal({
           name: name.trim(),
           barcode: barcode.trim() || undefined,
           sku: generatedSku,
+          imageUrl: imageUrl.trim() || undefined,
           unit: unit.toUpperCase(),
           altUnit: resolvedAltUnit,
           altUnitConversion: finalAltConv,
@@ -304,6 +309,14 @@ export function QuickCreateItemModal({
                 required
               />
             </div>
+
+            {/* Item Image Upload */}
+            <ItemImageUpload
+              compact
+              value={imageUrl}
+              onChange={setImageUrl}
+              label="Item Photo (Optional)"
+            />
 
             {/* Category & Unit */}
             <div className="grid grid-cols-2 gap-3">
