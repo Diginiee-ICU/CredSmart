@@ -18,8 +18,12 @@ Allow: /faq
 Allow: /privacy-policy
 Allow: /terms-of-service
 Allow: /auth
+Allow: /store/
+Allow: /catalogue/
+Allow: /c/
 
 # Disallow internal authenticated ERP/POS routes from search engine indexing
+Disallow: /storefront
 Disallow: /dashboard
 Disallow: /checkout
 Disallow: /pos

@@ -109,6 +109,8 @@ export function CreateItemModal({
   const [enableAltUnit, setEnableAltUnit] = useState(false);
   const [altUnit, setAltUnit] = useState<string>("PKT");
   const [altUnitConversion, setAltUnitConversion] = useState<string>("4");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [isInCatalogue, setIsInCatalogue] = useState<boolean>(true);
 
   // Pricing & Tax
   const [sellingPrice, setSellingPrice] = useState("");
@@ -184,6 +186,11 @@ export function CreateItemModal({
         setExpiryDate("");
         setManufacturingDate("");
       }
+
+      const initImageUrl = (initialData as any)?.imageUrl || (initialData as any)?.tags?.image_url || (initialData as any)?.tags?.imageUrl || "";
+      const initInCatalogue = (initialData as any)?.tags?.is_in_catalogue !== false && (initialData as any)?.tags?.show_in_catalogue !== false;
+      setImageUrl(initImageUrl);
+      setIsInCatalogue(initInCatalogue);
     } else {
       setName("");
       setSku(`SKU-${Math.floor(100000 + Math.random() * 900000)}`);
@@ -194,6 +201,8 @@ export function CreateItemModal({
       setEnableAltUnit(false);
       setAltUnit("PKT");
       setAltUnitConversion("4");
+      setImageUrl("");
+      setIsInCatalogue(true);
       setSellingPrice("");
       setPurchasePrice("");
       setPurchaseTaxType("exclusive");
@@ -294,12 +303,16 @@ export function CreateItemModal({
       minStockAlert: minStock,
       godownId,
       godownName: godowns.find((g) => g.id === godownId)?.name,
+      imageUrl: imageUrl.trim() || null,
       batches,
       // Also store in tags for backward-compat with existing DB queries
       tags: {
         alt_unit: enableAltUnit && altUnit && altUnit !== unit ? altUnit : undefined,
         alt_unit_conversion: enableAltUnit && convFactor && convFactor > 1 ? convFactor : undefined,
         purchase_tax_type: purchaseTaxType,
+        image_url: imageUrl.trim() || undefined,
+        is_in_catalogue: isInCatalogue,
+        show_in_catalogue: isInCatalogue,
       },
     };
 

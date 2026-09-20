@@ -61,6 +61,8 @@ import About from "@/pages/public/About";
 import Contact from "@/pages/public/Contact";
 import Security from "@/pages/public/Security";
 import FaqPage from "@/pages/public/FaqPage";
+import StorefrontManager from "@/pages/StorefrontManager";
+import PublicStorefront from "@/pages/public/PublicStorefront";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -207,6 +209,9 @@ const App = () => (
                 <Route path={ROUTE_PATHS.faq} element={<PublicMarketingRoute element={<FaqPage />} />} />
                 <Route path={ROUTE_PATHS.privacyPolicy} element={<PrivacyPolicy />} />
                 <Route path={ROUTE_PATHS.termsOfService} element={<TermsOfService />} />
+                <Route path={ROUTE_PATHS.publicStorefront} element={<PublicStorefront />} />
+                <Route path={ROUTE_PATHS.publicCatalogue} element={<PublicStorefront />} />
+                <Route path={ROUTE_PATHS.publicCatalogueShort} element={<PublicStorefront />} />
 
                 {/* Protected Shell */}
                 <Route element={<ProtectedRoutes />}>
@@ -214,6 +219,7 @@ const App = () => (
                     {/* Available to all authenticated roles (including cashiers) */}
                     <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
                     <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
+                    <Route path={ROUTE_PATHS.storefront} element={<StorefrontManager />} />
                     <Route path={ROUTE_PATHS.parties} element={<Parties />} />
                     <Route path={ROUTE_PATHS.items} element={<Items />} />
                     <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />

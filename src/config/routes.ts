@@ -22,6 +22,7 @@ import {
   Users,
   Activity,
   FileText,
+  Store,
 } from "lucide-react";
 
 export const ROUTE_PATHS = {
@@ -41,6 +42,9 @@ export const ROUTE_PATHS = {
   contact: "/contact",
   security: "/security",
   faq: "/faq",
+  publicStorefront: "/store/:slug",
+  publicCatalogue: "/catalogue/:slug",
+  publicCatalogueShort: "/c/:slug",
   
   // GENERAL
   dashboard: "/dashboard",
@@ -49,6 +53,7 @@ export const ROUTE_PATHS = {
   customerLedger: "/customers/:id/ledger",
   suppliers: "/suppliers",
   
+  storefront: "/storefront",
   items: "/items",
   inventory: "/inventory",
   godown: "/godown",
@@ -153,7 +158,7 @@ export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
   pos: [ROUTE_PATHS.pos, ROUTE_PATHS.checkout],
   sales: [ROUTE_PATHS.sales, ROUTE_PATHS.salesHistory],
   purchases: [ROUTE_PATHS.purchases, ROUTE_PATHS.purchaseReturns, ROUTE_PATHS.discovery],
-  items: [ROUTE_PATHS.items, ROUTE_PATHS.inventory, ROUTE_PATHS.godown, ROUTE_PATHS.barcode],
+  items: [ROUTE_PATHS.items, ROUTE_PATHS.storefront, ROUTE_PATHS.inventory, ROUTE_PATHS.godown, ROUTE_PATHS.barcode],
   parties: [ROUTE_PATHS.parties, ROUTE_PATHS.customers, ROUTE_PATHS.suppliers],
   cashBank: [ROUTE_PATHS.cashBank],
   eInvoicing: [ROUTE_PATHS.eInvoicing, ROUTE_PATHS.ewayBill],
@@ -199,10 +204,11 @@ export function isRouteAllowedForRole(
     return true;
   }
 
-  // Stock Manager (Inventory, Godowns, Batches, Purchases, Barcode)
+  // Stock Manager (Inventory, Godowns, Batches, Purchases, Barcode, Storefront)
   if (role === "stock_manager") {
     const stockAllowed: ReadonlySet<string> = new Set([
       ROUTE_PATHS.items,
+      ROUTE_PATHS.storefront,
       ROUTE_PATHS.inventory,
       ROUTE_PATHS.godown,
       ROUTE_PATHS.barcode,
@@ -214,7 +220,7 @@ export function isRouteAllowedForRole(
     return stockAllowed.has(url);
   }
 
-  // Salesman (Sales Invoices, Quotations, POS, Customers, Item Catalog)
+  // Salesman (Sales Invoices, Quotations, POS, Customers, Item Catalog, Storefront)
   if (role === "salesman") {
     const salesAllowed: ReadonlySet<string> = new Set([
       ROUTE_PATHS.sales,
@@ -224,6 +230,7 @@ export function isRouteAllowedForRole(
       ROUTE_PATHS.parties,
       ROUTE_PATHS.customers,
       ROUTE_PATHS.items,
+      ROUTE_PATHS.storefront,
     ]);
     return salesAllowed.has(url);
   }
@@ -330,6 +337,7 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         shortcut: "Alt+I",
         children: [
           { title: "All Items", url: ROUTE_PATHS.items },
+          { title: "Digital Storefront", url: ROUTE_PATHS.storefront },
           { title: "Stock Summary", url: ROUTE_PATHS.inventory },
           { title: "Godowns", url: ROUTE_PATHS.godown },
           { title: "Barcode Generator", url: ROUTE_PATHS.barcode },
@@ -418,6 +426,13 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
   {
     label: "BUSINESS TOOLS",
     items: [
+      {
+        title: "Digital Storefront",
+        url: ROUTE_PATHS.storefront,
+        icon: Store,
+        badge: "NEW",
+        mobilePrimary: true,
+      },
       {
         title: "Staff Permissions",
         url: ROUTE_PATHS.staff,
