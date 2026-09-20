@@ -89,6 +89,7 @@ interface OnboardingProductSeed {
   barcode: string;
   brand: string;
   category: string;
+  imageUrl?: string;
   costPrice: number;
   mrp: number;
   stock: number;
