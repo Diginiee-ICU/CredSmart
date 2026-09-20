@@ -1245,6 +1245,7 @@ export const networkInvoicingService = {
         id: `notif_rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         recipientOrgId: inv.senderOrgId,
         type: "sale_invoice_rejected",
+        category: "inward",
         title: `${recipientOrg.name} Rejected Invoice #${inv.invoiceNumber}`,
         message: `${recipientOrg.name} has rejected your Sales Invoice #${inv.invoiceNumber} (₹${inv.grandTotal.toLocaleString(
           "en-IN"
@@ -1252,6 +1253,8 @@ export const networkInvoicingService = {
         status: "unread",
         actionStatus: "rejected",
         networkInvoiceId: inv.id,
+        actionUrl: "/sales?tab=sales_invoice",
+        actionLabel: "View Sales",
         data: {
           senderOrgId: recipientOrg.id,
           senderOrgName: recipientOrg.name,
@@ -1333,6 +1336,7 @@ export const networkInvoicingService = {
         ) {
           return {
             ...notif,
+            category: "inward" as const,
             actionStatus: "cancelled" as const,
             message: `Cancelled: Sales Invoice #${invoiceNumber} was cancelled or deleted by sender.`,
           };
@@ -1504,6 +1508,7 @@ export const networkInvoicingService = {
       id: `notif_sim_${Date.now()}`,
       recipientOrgId: recipientOrg.id,
       type: "sale_invoice_received",
+      category: "inward",
       title: `Sale was Created by ${mockSenderOrg.name} on your name`,
       message: `${mockSenderOrg.name} created Sales Invoice #${invoiceNumber} for ₹${simInvoice.grandTotal.toLocaleString(
         "en-IN",
@@ -1512,6 +1517,8 @@ export const networkInvoicingService = {
       status: "unread",
       actionStatus: "pending",
       networkInvoiceId: simInvoice.id,
+      actionUrl: "/purchases?tab=purchase_invoice",
+      actionLabel: "Review & Inward",
       data: {
         senderOrgId: mockSenderOrg.id,
         senderOrgName: mockSenderOrg.name,
