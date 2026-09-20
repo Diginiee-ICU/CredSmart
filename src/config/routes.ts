@@ -70,6 +70,7 @@ export const ROUTE_PATHS = {
   // ACCOUNTING SOLUTIONS
   cashBank: "/cash-bank",
   eInvoicing: "/e-invoicing",
+  ewayBill: "/eway-bill",
   automatedBills: "/automated-bills",
   expenses: "/expenses",
 
@@ -155,7 +156,7 @@ export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
   items: [ROUTE_PATHS.items, ROUTE_PATHS.inventory, ROUTE_PATHS.godown, ROUTE_PATHS.barcode],
   parties: [ROUTE_PATHS.parties, ROUTE_PATHS.customers, ROUTE_PATHS.suppliers],
   cashBank: [ROUTE_PATHS.cashBank],
-  eInvoicing: [ROUTE_PATHS.eInvoicing],
+  eInvoicing: [ROUTE_PATHS.eInvoicing, ROUTE_PATHS.ewayBill],
   automatedBills: [ROUTE_PATHS.automatedBills],
   expenses: [ROUTE_PATHS.expenses],
   reports: [ROUTE_PATHS.reports],
@@ -248,6 +249,7 @@ export function isRouteAllowedForRole(
       ROUTE_PATHS.cashBank,
       ROUTE_PATHS.expenses,
       ROUTE_PATHS.eInvoicing,
+      ROUTE_PATHS.ewayBill,
       ROUTE_PATHS.automatedBills,
       ROUTE_PATHS.sales,
       ROUTE_PATHS.purchases,
@@ -341,9 +343,22 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         mobilePrimary: true,
         shortcut: "Alt+S",
         children: [
-          { title: "Invoices & Estimates", url: ROUTE_PATHS.sales },
-          { title: "Sales History", url: ROUTE_PATHS.salesHistory },
-          { title: "POS Terminal", url: ROUTE_PATHS.checkout },
+      {
+        title: "Invoices & Estimates",
+        url: ROUTE_PATHS.sales,
+      },
+      {
+        title: "Sales History",
+        url: ROUTE_PATHS.salesHistory,
+      },
+      {
+        title: "E-Way Bills",
+        url: ROUTE_PATHS.ewayBill,
+      },
+      {
+        title: "POS Terminal",
+        url: ROUTE_PATHS.checkout,
+      },
         ],
       },
       {
@@ -378,9 +393,15 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         icon: Landmark,
       },
       {
-        title: "E-Invoicing & E-Way",
+        title: "E-Invoicing",
         url: ROUTE_PATHS.eInvoicing,
         icon: FileCheck,
+      },
+      {
+        title: "E-Way Billing",
+        url: ROUTE_PATHS.ewayBill,
+        icon: Truck,
+        badge: "GST",
       },
       {
         title: "Automated Invoices",

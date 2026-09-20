@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { cn } from "@/lib/utils";
 import { WebsiteProductImport } from "@/components/WebsiteProductImport";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface BatchInput {
   id?: string;
@@ -133,8 +134,14 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file is too large. Maximum size is 5MB.");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -152,10 +159,13 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
 
       updateField("imageUrl", publicUrl);
       setImagePreview(publicUrl);
+      toast.success("Product image uploaded successfully!");
     } catch (err) {
       console.error("Upload error:", err);
+      toast.error("Failed to upload image. Please try again.");
     } finally {
       setUploading(false);
+      if (e.target) e.target.value = "";
     }
   };
 

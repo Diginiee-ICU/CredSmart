@@ -50,6 +50,8 @@ export function PartyExcelUploadModal({
   // Software migration state
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
   const [softwareParsedParties, setSoftwareParsedParties] = useState<Partial<Party>[]>([]);
+  const [isDraggingExcel, setIsDraggingExcel] = useState(false);
+  const [isDraggingSoftware, setIsDraggingSoftware] = useState(false);
   const softwareFileRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -60,22 +62,61 @@ export function PartyExcelUploadModal({
     toast.success("Sample Excel/CSV template downloaded!");
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-
+  const processExcelFile = async (file: File) => {
+    setIsProcessing(true);
     try {
       const res = await parseUniversalFile(file, "custom");
       if (res.parties.all.length === 0) {
-        toast.error("No valid party records found in the uploaded file.");
+        toast.error("No valid party records found in the uploaded file. Please verify column headers.");
       } else {
         setParsedParties(res.parties.all);
         toast.success(`Successfully parsed ${res.parties.all.length} parties from ${file.name}!`);
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to parse file.");
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processExcelFile(file);
+  };
+
+  const handleExcelDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingExcel(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processExcelFile(file);
+  };
+
+  const processSoftwareFile = async (file: File) => {
+    setIsProcessing(true);
+    try {
+      const result = await parseUniversalFile(file, selectedSoftware);
+      if (result.parties.all.length === 0) {
+        toast.error(`No ledger/party records found in this ${selectedSoftware.toUpperCase()} file. Please export Ledger Master and try again.`);
+        return;
+      }
+      setSoftwareParsedParties(result.parties.all);
+      toast.success(`Detected ${result.parties.all.length} parties from ${selectedSoftware.toUpperCase()} (${file.name}). Ready to import!`);
+      if (result.warnings.length > 0) result.warnings.forEach((w) => toast.warning(w));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : `Failed to parse ${selectedSoftware.toUpperCase()} file.`);
+    } finally {
+      setIsProcessing(false);
+      if (softwareFileRef.current) softwareFileRef.current.value = "";
+    }
+  };
+
+  const handleSoftwareDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingSoftware(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processSoftwareFile(file);
   };
 
   const handleParsePastedText = () => {
@@ -200,7 +241,18 @@ export function PartyExcelUploadModal({
         {activeTab === "excel" && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs scrollbar-thin">
             {/* Upload Box */}
-            <div className="p-6 sm:p-8 rounded-3xl border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner">
+            <div
+              onDrop={handleExcelDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingExcel(true); }}
+              onDragLeave={() => setIsDraggingExcel(false)}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "p-6 sm:p-8 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
+                isDraggingExcel
+                  ? "border-emerald-500 bg-emerald-500/15 scale-[1.01]"
+                  : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent"
+              )}
+            >
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
                 <Upload className="w-7 h-7 stroke-[2.2]" />
               </div>
@@ -406,8 +458,18 @@ export function PartyExcelUploadModal({
             </div>
 
             {/* Universal Dropzone for Software Export File */}
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/5 space-y-3">
+              <div
+                onDrop={handleSoftwareDrop}
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingSoftware(true); }}
+                onDragLeave={() => setIsDraggingSoftware(false)}
+                onClick={() => softwareFileRef.current?.click()}
+                className={cn(
+                  "p-4 rounded-xl border-2 border-dashed space-y-3 cursor-pointer transition-all",
+                  isDraggingSoftware
+                    ? "border-emerald-500 bg-emerald-500/15 scale-[1.01]"
+                    : "border-emerald-500/40 hover:border-emerald-500/70 bg-emerald-500/5"
+                )}
+              >
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-600">
                     <Zap className="w-3.5 h-3.5" />
@@ -488,7 +550,6 @@ export function PartyExcelUploadModal({
                   </div>
                 </div>
               )}
-            </div>
           </div>
         )}
 

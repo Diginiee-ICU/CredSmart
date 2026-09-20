@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import * as XLSX from "xlsx";
 import {
   X,
   Upload,
@@ -8,6 +9,7 @@ import {
   RefreshCw,
   Trash2,
   Info,
+  AlertCircle,
 } from "lucide-react";
 import { PartyCustomItem } from "@/types/parties";
 import {
@@ -45,6 +47,7 @@ export function PartyCustomItemsImportModal({
   const [importMode, setImportMode] = useState<"merge" | "replace">("merge");
   const [isProcessing, setIsProcessing] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -77,21 +80,51 @@ export function PartyCustomItemsImportModal({
       toast.success(`Successfully parsed ${res.items.length} items (${res.matchedCount} matched in master catalogue)!`);
     } catch (err: unknown) {
       console.error("Failed to parse party custom items CSV:", err);
-      toast.error(err?.message || "Failed to parse CSV file. Download the sample template to check formatting.");
+      toast.error(err instanceof Error ? err.message : "Failed to parse CSV file. Download the sample template to check formatting.");
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processUploadedFile = async (file: File) => {
+    try {
+      const filename = file.name.toLowerCase();
+      let text = "";
+      if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
+        const buffer = await file.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: "array" });
+        const firstSheetName = wb.SheetNames[0];
+        if (!firstSheetName) throw new Error("No sheet found in Excel workbook.");
+        const ws = wb.Sheets[firstSheetName];
+        text = XLSX.utils.sheet_to_csv(ws);
+      } else {
+        text = await file.text();
+      }
+      processCSVText(text);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to read file.");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      processCSVText(text);
-    };
-    reader.readAsText(file);
+    await processUploadedFile(file);
   };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processUploadedFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
 
   const handleParsePastedText = () => {
     if (!pastedText.trim()) {
@@ -228,25 +261,46 @@ export function PartyCustomItemsImportModal({
 
             {activeInputMode === "file" ? (
               <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
-                className="p-6 border-2 border-dashed border-border hover:border-primary/60 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer bg-muted/10 hover:bg-muted/30 transition-all group"
+                className={cn(
+                  "p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group gap-2",
+                  isDragging
+                    ? "border-primary bg-primary/15 scale-[1.01]"
+                    : "border-border hover:border-primary/60 bg-muted/10 hover:bg-muted/30"
+                )}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.txt"
+                  accept=".csv,.xlsx,.xls,.txt"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:scale-105 transition-transform mb-2">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                   <Upload className="w-6 h-6" />
                 </div>
-                <p className="font-bold text-foreground text-xs">
-                  Click to browse or drag & drop CSV file
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Supports standard comma-delimited .csv and .txt files
-                </p>
+                <div>
+                  <p className="font-bold text-foreground text-xs">
+                    Click to browse or drag &amp; drop Excel/CSV file
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Supports <span className="font-semibold text-foreground">.xlsx, .xls, .csv, .txt</span> formats
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="mt-1 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs px-5 py-2 rounded-xl cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload File</span>
+                </Button>
               </div>
             ) : (
               <div className="space-y-2">

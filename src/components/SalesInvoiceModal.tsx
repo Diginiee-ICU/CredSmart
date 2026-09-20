@@ -41,7 +41,9 @@ import {
   Eye,
   Package,
   Sparkles,
+  Truck,
 } from "lucide-react";
+import { GenerateEwayBillModal } from "@/components/eway/GenerateEwayBillModal";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -219,6 +221,7 @@ export function SalesInvoiceModal({
   const [paymentTerms, setPaymentTerms] = useState("Due on Receipt");
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
+  const [isEwayModalOpen, setIsEwayModalOpen] = useState(false);
   
   // Toggle visibility states
   const [showEwayBill, setShowEwayBill] = useState(false);
@@ -671,6 +674,48 @@ export function SalesInvoiceModal({
       isInterState,
     });
   }, [items, overallDiscountType, overallDiscountValue, showAdditionalCharges, additionalChargesAmount, autoRoundOff, manualRoundOff, isInterState]);
+
+  // Current Invoice document object for E-Way Bill generation
+  const currentInvoiceAsDoc: BusinessDocument = useMemo(() => {
+    return {
+      id: editingDoc?.id || `draft-${Date.now()}`,
+      organizationId: orgId || "org",
+      docType,
+      documentNumber: fullDocumentNumber,
+      partyId: selectedCustomerId || undefined,
+      partyName: partyName.trim() || "Cash Customer",
+      partyPhone: partyPhone.trim() || undefined,
+      partyGstin: partyGstin.trim() || undefined,
+      partyAddress: partyAddress.trim() || undefined,
+      billingAddress: sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || partyAddress.trim() || undefined),
+      billingPincode: sameAsParty ? undefined : (billingPincode.trim() || undefined),
+      billingPlaceOfSupply: sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply || placeOfSupply || "27-Maharashtra"),
+      placeOfSupply,
+      docDate,
+      dueDate: showDueDate ? dueDate : docDate,
+      items: recalculatedItems,
+      subtotal: totals.rawSubtotal,
+      discountTotal: totals.totalDiscount,
+      taxableTotal: totals.taxableTotal,
+      cgstTotal: totals.cgstTotal,
+      sgstTotal: totals.sgstTotal,
+      igstTotal: totals.igstTotal,
+      taxTotal: totals.taxTotal,
+      roundOff: totals.roundOff,
+      grandTotal: totals.grandTotal,
+      paidAmount: amountReceived,
+      balanceDue: Math.max(0, totals.grandTotal - amountReceived),
+      status: "unpaid",
+      paymentMethod,
+      transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
+      created_at: editingDoc?.created_at || new Date().toISOString(),
+    };
+  }, [
+    editingDoc, orgId, docType, fullDocumentNumber, selectedCustomerId, partyName, partyPhone,
+    partyGstin, partyAddress, sameAsParty, billingAddress, billingPincode, billingPlaceOfSupply,
+    placeOfSupply, docDate, showDueDate, dueDate, recalculatedItems, totals, amountReceived,
+    paymentMethod, vehicleNumber
+  ]);
 
   // Mark as fully paid sync
   useEffect(() => {
@@ -1410,7 +1455,7 @@ export function SalesInvoiceModal({
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
                 }}
-                onGenerateEwayBill={() => {}}
+                onGenerateEwayBill={() => setIsEwayModalOpen(true)}
                 storeInfo={{
                   name: org?.name || "CredSmart Store",
                   phone: org?.phone,
@@ -1435,9 +1480,22 @@ export function SalesInvoiceModal({
               items={items}
               recalculatedItems={recalculatedItems}
               totals={totals}
-              onSetSelectedCustomerId={(id) => {
+              onSetSelectedCustomerId={(id, newCust) => {
                 setSelectedCustomerId(id);
-                const cust = customers.find(c => c.id === id);
+                if (newCust) {
+                  setCustomers((prev) => [...prev.filter((c) => c.id !== id), newCust]);
+                  setPartyName(newCust.name);
+                  setPartyPhone(newCust.phone || "");
+                  setPartyGstin(newCust.gstin || "");
+                  setPartyAddress(newCust.address || "");
+                  if (newCust.gstin && newCust.gstin.length >= 2) {
+                    const statePrefix = newCust.gstin.slice(0, 2);
+                    const match = INDIAN_STATES_AND_CODES.find((s) => s.startsWith(statePrefix));
+                    if (match) setPlaceOfSupply(match);
+                  }
+                  return;
+                }
+                const cust = customers.find((c) => c.id === id);
                 if (cust) {
                   setPartyName(cust.name);
                   setPartyPhone(cust.phone || "");
@@ -1445,11 +1503,49 @@ export function SalesInvoiceModal({
                   setPartyAddress(cust.address || "");
                 }
               }}
+              onCustomerCreated={(newCust) => {
+                setCustomers((prev) => [...prev.filter((c) => c.id !== newCust.id), newCust]);
+                setSelectedCustomerId(newCust.id);
+                setPartyName(newCust.name);
+                setPartyPhone(newCust.phone || "");
+                setPartyGstin(newCust.gstin || "");
+                setPartyAddress(newCust.address || "");
+                if (newCust.gstin && newCust.gstin.length >= 2) {
+                  const statePrefix = newCust.gstin.slice(0, 2);
+                  const match = INDIAN_STATES_AND_CODES.find((s) => s.startsWith(statePrefix));
+                  if (match) setPlaceOfSupply(match);
+                }
+              }}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveRow}
               onSave={handleSave}
               catalog={billItemOptions}
               onAddSelectedItems={handleBatchAddItemsAtTarget}
+              partyPhone={partyPhone}
+              partyGstin={partyGstin}
+              partyAddress={partyAddress}
+              placeOfSupply={placeOfSupply}
+              amountReceived={amountReceived}
+              paymentMethod={paymentMethod}
+              notes={notes}
+              terms={terms}
+              ewayBillNo={ewayBillNo}
+              vehicleNumber={vehicleNumber}
+              poReference={poReference}
+              storeInfo={{
+                name: org?.name || "CredSmart Store",
+                phone: org?.phone,
+                email: org?.email,
+                address: org?.address,
+                gstin: org?.gstin,
+                pan: org?.pan,
+                bank_name: bankAccount.bankName,
+                account_number: bankAccount.accountNumber,
+                ifsc: bankAccount.ifsc,
+                account_holder: bankAccount.accountHolder,
+                branch: bankAccount.branch,
+                upi_id: upiId,
+              }}
             />
           )}
 
@@ -2065,9 +2161,18 @@ export function SalesInvoiceModal({
                       <div className="mt-2 space-y-2">
                         {showEwayBill && (
                           <div>
-                            <Label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                              E-Way Bill No. <HelpCircle className="w-3 h-3 text-slate-400" />
-                            </Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                E-Way Bill No. <HelpCircle className="w-3 h-3 text-slate-400" />
+                              </Label>
+                              <button
+                                type="button"
+                                onClick={() => setIsEwayModalOpen(true)}
+                                className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold cursor-pointer"
+                              >
+                                {ewayBillNo ? "Update E-Way" : "+ Auto-Generate"}
+                              </button>
+                            </div>
                             <Input
                               value={ewayBillNo}
                               onChange={(e) => setEwayBillNo(e.target.value)}
@@ -2109,6 +2214,25 @@ export function SalesInvoiceModal({
               {/* ───────────────────────────────────────────────────────────── */}
               <div className={cn("flex-1 min-w-0 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", mobileTab === 'items' ? "flex" : "hidden lg:flex")}>
                 <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-0 space-y-2">
+                  {/* GST Rule 138 E-Way Bill Warning Banner when Total > ₹50,000 */}
+                  {totals.grandTotal > 50000 && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-center justify-between gap-3 text-xs mb-2">
+                      <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium">
+                        <Truck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>
+                          <strong>GST Rule 138 Requirement:</strong> Total invoice value exceeds ₹50,000 threshold (₹{totals.grandTotal.toLocaleString("en-IN")}). E-Way Bill is required for consignment transit.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsEwayModalOpen(true)}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs shrink-0 shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Truck className="w-3.5 h-3.5" />
+                        <span>{ewayBillNo ? `EWB: ${ewayBillNo.slice(0, 8)}...` : "Generate E-Way Bill"}</span>
+                      </button>
+                    </div>
+                  )}
               {activeCustomer && (activeCustomer.keepSamePrice === false || activeCustomer.keepSameInventory === false) && (
                 <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs mb-2">
                   <div className="flex items-center gap-2 text-primary font-medium">
@@ -2931,6 +3055,24 @@ export function SalesInvoiceModal({
         initialName={initialNewItemName}
         priceMode="sales"
         onItemCreated={handleItemCreated}
+      />
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* GST E-WAY BILL GENERATION MODAL */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <GenerateEwayBillModal
+        open={isEwayModalOpen}
+        onOpenChange={setIsEwayModalOpen}
+        initialInvoice={mobileSuccessInvoice || currentInvoiceAsDoc}
+        onSuccess={(saved) => {
+          setEwayBillNo(saved.ewayBillNo);
+          setShowEwayBill(true);
+          if (saved.vehicleNo) {
+            setVehicleNumber(saved.vehicleNo);
+            setShowVehicleNo(true);
+          }
+          toast.success(`E-Way Bill ${saved.ewayBillNo} attached to this invoice!`);
+        }}
       />
     </>
   );

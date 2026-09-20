@@ -475,6 +475,123 @@ export default function TallyImport() {
     }
   };
 
+  const handleDirectSaveItems = async (items: Partial<InventoryItem>[]) => {
+    if (!orgId || items.length === 0) return;
+    setIsImporting(true);
+    let count = 0;
+    try {
+      for (const item of items) {
+        const sPrice = item.sellingPrice || 100;
+        const pPrice = item.purchasePrice || Math.round(sPrice * 0.8);
+        const stock = item.openingStock ?? item.currentStock ?? 0;
+        const skuVal = item.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+        const tagsPayload = {
+          selling_price: sPrice,
+          purchase_price: pPrice,
+          mrp: item.mrp ?? sPrice,
+          unit: item.unit ?? "PCS",
+          gst_rate: Number(item.gstRate ?? 18),
+          hsn_code: item.hsnCode ? String(item.hsnCode).trim() : null,
+          opening_stock: stock,
+          min_stock_alert: Number(item.minStockAlert ?? 5),
+          imported_from: selectedSoftware,
+          imported_at: new Date().toISOString(),
+        };
+
+        const { data: newProd, error: pErr } = await supabase
+          .from("products")
+          .insert({
+            organization_id: orgId,
+            name: item.name || "Imported Item",
+            brand: item.brand ?? null,
+            category: item.category ?? "General",
+            barcode: item.barcode ?? null,
+            sku: skuVal,
+            tags: tagsPayload,
+          })
+          .select()
+          .single();
+
+        if (!pErr && newProd) {
+          await supabase.from("product_batches").insert({
+            product_id: newProd.id,
+            batch_number: "INIT-BATCH",
+            cost_price: pPrice,
+            mrp: item.mrp || sPrice,
+            stock: stock,
+          });
+          count++;
+        }
+      }
+      setImportedStats((prev) => ({ ...prev, items: prev.items + count }));
+      setImportCompleted(true);
+      toast.success(`Successfully uploaded and saved ${count} items to cloud inventory!`);
+    } catch (err) {
+      toast.error(`Items import error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleDirectSaveParties = async (parties: Partial<Party>[]) => {
+    if (!orgId || parties.length === 0) return;
+    setIsImporting(true);
+    let count = 0;
+    try {
+      for (const party of parties) {
+        const isSupplier = party.partyType === "supplier";
+        const targetTable = isSupplier ? "suppliers" : "customers";
+
+        const { data: newParty, error: pErr } = await supabase
+          .from(targetTable)
+          .insert({
+            organization_id: orgId,
+            name: party.name || "Unnamed Party",
+            phone: party.phone || undefined,
+            email: party.email || undefined,
+            address: party.address || undefined,
+            gstin: party.gstin || undefined,
+            trade_name: party.tradeName || undefined,
+            pan: party.pan || undefined,
+            pincode: party.pincode || undefined,
+            category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
+            credit_limit: party.creditLimit || 50000,
+            credit_period_days: party.creditPeriodDays || 30,
+            custom_fields: {
+              imported_from: selectedSoftware,
+              imported_at: new Date().toISOString(),
+            },
+          })
+          .select()
+          .single();
+
+        if (!pErr && newParty) {
+          count++;
+          const opBal = Number(party.balance ?? party.openingBalance ?? 0);
+          if (opBal !== 0) {
+            await supabase.from("credit_transactions").insert({
+              organization_id: orgId,
+              party_id: newParty.id,
+              party_type: isSupplier ? "supplier" : "customer",
+              amount: Math.abs(opBal),
+              type: opBal >= 0 ? "credit" : "payment",
+              description: `${selectedSoftware.toUpperCase()} Opening Balance`,
+              created_by: user?.id || "admin",
+            });
+          }
+        }
+      }
+      setImportedStats((prev) => ({ ...prev, parties: prev.parties + count }));
+      setImportCompleted(true);
+      toast.success(`Successfully uploaded and saved ${count} parties to cloud khata!`);
+    } catch (err) {
+      toast.error(`Parties import error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // ── Filtered Previews ─────────────────────────────────────────────────────
 
   const filteredItems = (parsedData?.items || []).filter((item) => {
@@ -1206,11 +1323,11 @@ export default function TallyImport() {
             <Button
               type="button"
               disabled={isParsing}
-              className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 cursor-pointer"
+              className="gap-2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs px-7 py-3 rounded-2xl shadow-lg shadow-amber-500/30 cursor-pointer active:scale-95 transition-all"
               onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Choose File(s)</span>
+              <Upload className="w-4 h-4" />
+              <span>Upload File(s)</span>
             </Button>
 
             <input
@@ -1521,13 +1638,10 @@ export default function TallyImport() {
         onClose={() => setModalOpen(false)}
         initialSoftware={selectedSoftware}
         onImportItems={async (items) => {
-          // Re-use page import handler
-          setParsedData((prev) => prev ? { ...prev, items } : null);
-          await handleExecuteImport();
+          await handleDirectSaveItems(items);
         }}
         onImportParties={async (parties) => {
-          setParsedData((prev) => prev ? { ...prev, parties: { ...prev.parties, all: parties } } : null);
-          await handleExecuteImport();
+          await handleDirectSaveParties(parties);
         }}
       />
     </div>

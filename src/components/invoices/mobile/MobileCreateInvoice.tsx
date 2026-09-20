@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { ArrowLeft, FileText, ScanBarcode, ChevronDown, User, X, ChevronUp, Plus } from "lucide-react";
+import { ArrowLeft, FileText, ScanBarcode, ChevronDown, User, X, ChevronUp, Plus, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { SelectPartyModal } from "./SelectPartyModal";
 import { AddItemModal } from "./AddItemModal";
 import { EditItemModal } from "./EditItemModal";
+import { MobileBillPreviewModal } from "./MobileBillPreviewModal";
 import { DocumentLineItem } from "@/types/documents";
 
 export interface MobileCreateInvoiceProps {
@@ -21,7 +22,7 @@ export interface MobileCreateInvoiceProps {
   recalculatedItems: DocumentLineItem[];
   totals: any;
   catalog: any[];
-  onSetSelectedCustomerId: (id: string) => void;
+  onSetSelectedCustomerId: (id: string, partyData?: any) => void;
   onUpdateItem: (index: number, field: keyof DocumentLineItem, value: any) => void;
   onRemoveItem: (index: number) => void;
   onSave: (andPrint: boolean, saveAndNew: boolean) => void;
@@ -33,6 +34,18 @@ export interface MobileCreateInvoiceProps {
   amountReceived?: number;
   markAsFullyPaid?: boolean;
   onUpdatePayment?: (amountReceived: number, markAsFullyPaid: boolean) => void;
+  onCustomerCreated?: (customer: any) => void;
+  storeInfo?: any;
+  partyPhone?: string;
+  partyGstin?: string;
+  partyAddress?: string;
+  placeOfSupply?: string;
+  paymentMethod?: string;
+  notes?: string;
+  terms?: string;
+  ewayBillNo?: string;
+  vehicleNumber?: string;
+  poReference?: string;
 }
 
 export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
@@ -55,6 +68,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
   
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
   
   const handleSaveAndNew = () => {
     props.onSave(false, true);
@@ -91,9 +105,16 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
           </button>
           <h1 className="text-[17px] font-semibold text-slate-900">Create Bill / Invoice</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <svg className="w-5 h-5 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          <svg className="w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="8" x2="7" y2="16"></line><line x1="10" y1="8" x2="10" y2="16"></line><line x1="14" y1="8" x2="14" y2="16"></line><line x1="17" y1="8" x2="17" y2="16"></line></svg>
+        <div className="flex items-center gap-2">
+          <button 
+            type="button" 
+            onClick={() => setIsBillPreviewOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 active:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs transition-colors cursor-pointer"
+            title="Preview Bill"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Preview</span>
+          </button>
         </div>
       </div>
 
@@ -238,26 +259,38 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
       </div>
 
       {/* 3.8 Sticky Footer Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 pb-[max(0px,env(safe-area-inset-bottom))]">
-        <div className="flex justify-between items-center px-4 py-4 bg-white">
-          <span className="text-[15px] font-bold text-slate-900">Total Amount</span>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="flex justify-between items-center px-4 py-3 bg-white">
+          <span className="text-[14px] font-bold text-slate-900">Total Amount</span>
           <div className="flex flex-col items-end">
-            <span className="text-[17px] font-bold text-slate-900 mt-1 border-t border-slate-300 min-w-[120px] text-right pt-1">₹ {Number(props.totals?.grandTotal || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+            <span className="text-[16px] font-bold text-slate-900 font-mono">
+              ₹ {Number(props.totals?.grandTotal || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}
+            </span>
           </div>
         </div>
         
-        <div className="flex w-full">
+        <div className="grid grid-cols-12 gap-2 px-3 pb-3 bg-white">
           <button 
+            type="button"
             onClick={handleSaveAndNew}
-            className="flex-1 bg-indigo-50 text-indigo-700 py-4 font-bold text-[15px] text-center"
+            className="col-span-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 py-3.5 rounded-xl font-bold text-[13px] text-center transition-colors cursor-pointer"
           >
             Save & New
           </button>
           <button 
-            onClick={handleGenerateBill}
-            className="flex-1 bg-indigo-600 text-white py-4 font-bold text-[15px] text-center"
+            type="button"
+            onClick={() => setIsBillPreviewOpen(true)}
+            className="col-span-4 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 text-indigo-700 border border-indigo-200 py-3.5 rounded-xl font-bold text-[13px] text-center flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            Generate Bill
+            <Eye className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span>Preview Bill</span>
+          </button>
+          <button 
+            type="button"
+            onClick={handleGenerateBill}
+            className="col-span-5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white py-3.5 rounded-xl font-bold text-[13px] text-center flex items-center justify-center gap-1 shadow-md transition-colors cursor-pointer"
+          >
+            <span>Generate Bill</span>
           </button>
         </div>
       </div>
@@ -267,8 +300,14 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
         <SelectPartyModal 
           onClose={() => setIsPartyModalOpen(false)}
           customers={props.customers}
-          onSelect={(id) => {
-            props.onSetSelectedCustomerId(id);
+          partyType="customer"
+          onPartyCreated={(newParty) => {
+            if (props.onCustomerCreated) {
+              props.onCustomerCreated(newParty);
+            }
+          }}
+          onSelect={(id, partyData) => {
+            props.onSetSelectedCustomerId(id, partyData);
             setIsPartyModalOpen(false);
           }}
         />
@@ -407,6 +446,35 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
           </div>
         </div>
       )}
+
+      {/* Full Screen Mobile Bill Preview Modal */}
+      <MobileBillPreviewModal
+        open={isBillPreviewOpen}
+        onClose={() => setIsBillPreviewOpen(false)}
+        onGenerateBill={() => {
+          setIsBillPreviewOpen(false);
+          handleGenerateBill();
+        }}
+        docType={props.docType}
+        invoiceNumber={invoiceNumber}
+        docDate={props.docDate}
+        dueDate={props.dueDate}
+        partyName={props.partyName}
+        partyPhone={props.partyPhone}
+        partyGstin={props.partyGstin}
+        partyAddress={props.partyAddress}
+        placeOfSupply={props.placeOfSupply}
+        items={props.recalculatedItems}
+        totals={props.totals}
+        storeInfo={props.storeInfo}
+        amountReceived={props.amountReceived}
+        paymentMethod={props.paymentMethod}
+        notes={notes || props.notes}
+        terms={props.terms}
+        ewayBillNo={props.ewayBillNo}
+        vehicleNumber={props.vehicleNumber}
+        poReference={props.poReference}
+      />
 
     </div>
   );

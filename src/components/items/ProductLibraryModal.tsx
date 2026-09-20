@@ -277,6 +277,8 @@ export function ProductLibraryModal({
   // Excel / CSV state
   const [parsedItems, setParsedItems] = useState<Partial<InventoryItem>[]>([]);
   const [pastedCSV, setPastedCSV] = useState("");
+  const [isDraggingExcel, setIsDraggingExcel] = useState(false);
+  const [isDraggingSoftware, setIsDraggingSoftware] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Software migration state
@@ -286,10 +288,7 @@ export function ProductLibraryModal({
 
   if (!isOpen) return null;
 
-  const handleSoftwareFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
+  const processSoftwareFile = async (file: File) => {
     try {
       const result = await parseUniversalFile(file, selectedSoftware);
       if (result.items.length === 0) {
@@ -303,6 +302,20 @@ export function ProductLibraryModal({
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : `Failed to parse ${selectedSoftware.toUpperCase()} file.`);
     }
+  };
+
+  const handleSoftwareFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    await processSoftwareFile(file);
+  };
+
+  const handleSoftwareDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingSoftware(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processSoftwareFile(file);
   };
 
   const handleConfirmSoftwareImport = async () => {
@@ -417,11 +430,7 @@ export function ProductLibraryModal({
     return results;
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-
+  const processExcelFile = async (file: File) => {
     try {
       const res = await parseUniversalFile(file, "custom");
       if (res.items.length === 0) {
@@ -433,6 +442,20 @@ export function ProductLibraryModal({
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to parse spreadsheet file.");
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    await processExcelFile(file);
+  };
+
+  const handleExcelDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingExcel(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processExcelFile(file);
   };
 
   const handleDownloadTemplate = () => {
@@ -617,8 +640,19 @@ export function ProductLibraryModal({
 
         {/* Tab 2: Bulk Upload via Excel / CSV */}
         {activeTab === "excel" && (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs scrollbar-thin">
-            <div className="p-6 sm:p-8 rounded-3xl border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs scrollbar-thin">
+            <div
+              onDrop={handleExcelDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingExcel(true); }}
+              onDragLeave={() => setIsDraggingExcel(false)}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "p-6 sm:p-8 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
+                isDraggingExcel
+                  ? "border-emerald-500 bg-emerald-500/15 scale-[1.01]"
+                  : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent"
+              )}
+            >
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
                 <Upload className="w-7 h-7 stroke-[2.2]" />
               </div>
@@ -791,8 +825,18 @@ export function ProductLibraryModal({
             </div>
 
             {/* Universal Dropzone for Software Export File */}
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 space-y-3">
+              <div
+                onDrop={handleSoftwareDrop}
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingSoftware(true); }}
+                onDragLeave={() => setIsDraggingSoftware(false)}
+                onClick={() => softwareFileRef.current?.click()}
+                className={cn(
+                  "p-4 rounded-xl border-2 border-dashed space-y-3 cursor-pointer transition-all",
+                  isDraggingSoftware
+                    ? "border-primary bg-primary/15 scale-[1.01]"
+                    : "border-primary/40 hover:border-primary/70 bg-primary/5"
+                )}
+              >
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-primary/15 text-primary">
                     <Zap className="w-3.5 h-3.5" />
@@ -873,7 +917,6 @@ export function ProductLibraryModal({
                   </div>
                 </div>
               )}
-            </div>
           </div>
         )}
 

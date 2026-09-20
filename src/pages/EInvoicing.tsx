@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ROUTE_PATHS } from "@/config/routes";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -230,6 +232,15 @@ export default function EInvoicing() {
             <Play className="w-3 h-3 fill-current" />
             <span>What is e-Invoicing</span>
           </button>
+
+          {/* Direct link to dedicated E-Way Bill Hub */}
+          <Link
+            to={ROUTE_PATHS.ewayBill}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/50 hover:border-indigo-600 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold shadow-xs hover:bg-indigo-500/20 transition-all cursor-pointer"
+          >
+            <Truck className="w-3 h-3" />
+            <span>Open E-Way Bill Hub</span>
+          </Link>
         </div>
       </header>
 
@@ -273,7 +284,10 @@ export default function EInvoicing() {
           </div>
 
           {/* CARD 2: Hassle e-way bill generation using IRN */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+          <Link
+            to={ROUTE_PATHS.ewayBill}
+            className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none cursor-pointer hover:border-amber-400/60 transition-all"
+          >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with Truck */}
@@ -297,12 +311,15 @@ export default function EInvoicing() {
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-200/80 rounded" />
               </div>
             </div>
-            <div className="pt-5">
+            <div className="pt-5 flex flex-col items-center gap-1">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Hassle e-way bill generation using IRN
               </h3>
+              <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                Click to Open E-Way Bill Hub ➔
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* CARD 3: Easy GSTR1 reconciliation */}
           <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">

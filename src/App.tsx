@@ -42,6 +42,7 @@ import NotFound from "@/pages/NotFound";
 import Expenses from "@/pages/Expenses";
 import CashAndBank from "@/pages/CashAndBank";
 import EInvoicing from "@/pages/EInvoicing";
+import EwayBillDashboard from "@/pages/EwayBillDashboard";
 import AutomatedBills from "@/pages/AutomatedBills";
 import BarcodeGenerator from "@/pages/BarcodeGenerator";
 import Landing from "@/pages/Landing";
@@ -222,6 +223,7 @@ const App = () => (
                     <Route path={ROUTE_PATHS.tallyImport} element={<TallyImport />} />
                     <Route path={ROUTE_PATHS.sales} element={<Sales />} />
                     <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
+                    <Route path={ROUTE_PATHS.ewayBill} element={<EwayBillDashboard />} />
 
                     {/* Restricted to Managers & Owners & Super Admin */}
                     <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>

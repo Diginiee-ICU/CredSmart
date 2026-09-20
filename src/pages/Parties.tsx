@@ -1711,13 +1711,6 @@ setSortDirection("asc");
         onClose={() => setShowSettingsModal(false)}
       />
 
-      {/* 5. Excel Upload Modal */}
-      <PartyExcelUploadModal
-        isOpen={showExcelUploadModal}
-        onClose={() => setShowExcelUploadModal(false)}
-        onImport={handleBulkImportParties}
-      />
-
       {/* 6. Keyboard Shortcuts Modal */}
       <Dialog open={showKeyboardModal} onOpenChange={setShowKeyboardModal}>
         <DialogContent className="max-w-lg sm:max-w-xl">

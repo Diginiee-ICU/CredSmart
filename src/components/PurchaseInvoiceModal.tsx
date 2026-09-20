@@ -1505,7 +1505,85 @@ export function PurchaseInvoiceModal({
               />
             </div>
           ) : (
-            <MobileCreatePurchaseInvoice onClose={() => onOpenChange(false)} docType={docType} docDate={docDate} dueDate={dueDate} showDueDate={showDueDate} invoicePrefix={billPrefix} invoiceNumberSeq={billNumberSeq} selectedSupplierId={selectedSupplierId} partyName={partyName} suppliers={suppliers} items={items} recalculatedItems={recalculatedItems} totals={totals} defaultTaxType={defaultTaxType} onToggleDefaultTaxType={(newType) => { setDefaultTaxType(newType); setItems((prev) => prev.map((it) => ({ ...it, taxType: newType }))); }} onSetSelectedSupplierId={(id) => { setSelectedSupplierId(id); const supp = suppliers.find(s => s.id === id); if (supp) { setPartyName(supp.name); setSupplierSearch(supp.name); setPartyPhone(supp.phone || ""); setPartyGstin(supp.gstin || ""); setPartyAddress(supp.address || ""); } }} onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveRow} onSave={handleSave} catalog={billItemOptions} onAddSelectedItems={handleBatchAddItemsAtTarget} />
+            <MobileCreatePurchaseInvoice
+              onClose={() => onOpenChange(false)}
+              docType={docType}
+              docDate={docDate}
+              dueDate={dueDate}
+              showDueDate={showDueDate}
+              invoicePrefix={billPrefix}
+              invoiceNumberSeq={billNumberSeq}
+              selectedSupplierId={selectedSupplierId}
+              partyName={partyName}
+              suppliers={suppliers}
+              items={items}
+              recalculatedItems={recalculatedItems}
+              totals={totals}
+              defaultTaxType={defaultTaxType}
+              onToggleDefaultTaxType={(newType) => {
+                setDefaultTaxType(newType);
+                setItems((prev) => prev.map((it) => ({ ...it, taxType: newType })));
+              }}
+              onSetSelectedSupplierId={(id, newSupp) => {
+                setSelectedSupplierId(id);
+                if (newSupp) {
+                  setSuppliers((prev) => [...prev.filter((s) => s.id !== id), newSupp]);
+                  setPartyName(newSupp.name);
+                  setSupplierSearch(newSupp.name);
+                  setPartyPhone(newSupp.phone || "");
+                  setPartyGstin(newSupp.gstin || "");
+                  setPartyAddress(newSupp.address || "");
+                  return;
+                }
+                const supp = suppliers.find((s) => s.id === id);
+                if (supp) {
+                  setPartyName(supp.name);
+                  setSupplierSearch(supp.name);
+                  setPartyPhone(supp.phone || "");
+                  setPartyGstin(supp.gstin || "");
+                  setPartyAddress(supp.address || "");
+                }
+              }}
+              onSupplierCreated={(newSupp) => {
+                setSuppliers((prev) => [...prev.filter((s) => s.id !== newSupp.id), newSupp]);
+                setSelectedSupplierId(newSupp.id);
+                setPartyName(newSupp.name);
+                setSupplierSearch(newSupp.name);
+                setPartyPhone(newSupp.phone || "");
+                setPartyGstin(newSupp.gstin || "");
+                setPartyAddress(newSupp.address || "");
+              }}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveRow}
+              onSave={handleSave}
+              catalog={billItemOptions}
+              onAddSelectedItems={handleBatchAddItemsAtTarget}
+              partyPhone={partyPhone}
+              partyGstin={partyGstin}
+              partyAddress={partyAddress}
+              placeOfSupply={placeOfSupply}
+              amountReceived={amountPaid}
+              paymentMethod={paymentMethod}
+              notes={notes}
+              terms={terms}
+              ewayBillNo={ewayBillNo}
+              vehicleNumber={vehicleNumber}
+              poReference={poReference}
+              storeInfo={{
+                name: org?.name || "CredSmart Store",
+                phone: org?.phone,
+                email: org?.email,
+                address: org?.address,
+                gstin: org?.gstin,
+                pan: org?.pan,
+                bank_name: bankAccount.bankName,
+                account_number: bankAccount.accountNumber,
+                ifsc: bankAccount.ifsc,
+                account_holder: bankAccount.accountHolder,
+                branch: bankAccount.branch,
+                upi_id: upiId,
+              }}
+            />
           )}
 
             <div className="hidden lg:flex flex-col h-full w-full">

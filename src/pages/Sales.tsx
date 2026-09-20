@@ -72,6 +72,10 @@ import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import { SalesSettingsModal } from "@/components/SalesSettingsModal";
 import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
+import { GenerateEwayBillModal } from "@/components/eway/GenerateEwayBillModal";
+import { EwayBillPrintSlip } from "@/components/eway/EwayBillPrintSlip";
+import { ewayBillService } from "@/services/ewayBillService";
+import { EwayBillRecord } from "@/types/ewayBill";
 
 const TABS: { id: SalesDocumentType; label: string; icon: any }[] = [
   { id: "sales_invoice", label: "Sales Invoices", icon: Receipt },
@@ -141,6 +145,30 @@ export default function Sales() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+  // E-Way Bill Modals
+  const [ewayModalOpen, setEwayModalOpen] = useState(false);
+  const [ewaySlipOpen, setEwaySlipOpen] = useState(false);
+  const [selectedEwayDoc, setSelectedEwayDoc] = useState<BusinessDocument | null>(null);
+  const [selectedEwayRecord, setSelectedEwayRecord] = useState<EwayBillRecord | null>(null);
+
+  const handleOpenEway = (doc: BusinessDocument) => {
+    setSelectedEwayDoc(doc);
+    if (orgId) {
+      const existing = ewayBillService.getEwayBills(orgId).find(
+        (b) =>
+          b.docNo === doc.documentNumber ||
+          b.invoiceId === doc.id ||
+          (doc.referenceNumber && b.ewayBillNo === doc.referenceNumber)
+      );
+      if (existing) {
+        setSelectedEwayRecord(existing);
+        setEwaySlipOpen(true);
+        return;
+      }
+    }
+    setEwayModalOpen(true);
+  };
 
   // Fetch Documents
   const loadDocuments = useCallback(async () => {
@@ -923,6 +951,13 @@ export default function Sales() {
                               <span>View / Print Receipt</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              onClick={() => handleOpenEway(doc)}
+                              className="gap-2 font-semibold text-indigo-600 dark:text-indigo-400"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                              <span>Generate / View E-Way Bill</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => {
                                 setEditingDoc(doc);
                                 setCreateModalOpen(true);
@@ -1217,6 +1252,10 @@ export default function Sales() {
                                   <Printer className="w-3.5 h-3.5 text-indigo-600" />
                                   <span>View / Print Receipt</span>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenEway(doc)} className="gap-2 font-semibold text-indigo-600 dark:text-indigo-400">
+                                  <Truck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                                  <span>Generate / View E-Way Bill</span>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
                                     downloadExactInvoicePdf({
@@ -1435,6 +1474,24 @@ export default function Sales() {
           }}
         />
       )}
+
+      {/* E-Way Bill Generation & Slip Modals */}
+      <GenerateEwayBillModal
+        open={ewayModalOpen}
+        onOpenChange={setEwayModalOpen}
+        initialInvoice={selectedEwayDoc}
+        onSuccess={(saved) => {
+          setSelectedEwayRecord(saved);
+          setEwaySlipOpen(true);
+          loadDocuments();
+        }}
+      />
+
+      <EwayBillPrintSlip
+        open={ewaySlipOpen}
+        onOpenChange={setEwaySlipOpen}
+        ewayBill={selectedEwayRecord}
+      />
     </div>
   );
 }

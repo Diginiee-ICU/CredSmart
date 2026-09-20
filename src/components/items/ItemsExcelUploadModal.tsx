@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Trash2,
+  RotateCw,
 } from "lucide-react";
 import { InventoryItem } from "@/types/inventory";
 import {
@@ -13,9 +14,11 @@ import {
   parseItemsCSV,
   downloadCSV,
 } from "@/utils/excelImportExport";
+import { parseUniversalFile } from "@/utils/universalDataImporter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
@@ -34,6 +37,8 @@ export function ItemsExcelUploadModal({
   const [parsedItems, setParsedItems] = useState<Partial<InventoryItem>[]>([]);
   const [pastedText, setPastedText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -44,29 +49,46 @@ export function ItemsExcelUploadModal({
     toast.success("Sample Excel/CSV Items template downloaded!");
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     setIsProcessing(true);
+    setUploadedFileName(file.name);
     try {
-      const text = await file.text();
-      if (!text) throw new Error("Empty file uploaded.");
-      const parsed = parseItemsCSV(text);
-      if (parsed.length === 0) {
-        toast.error("No valid items found in the uploaded file. Please download the template and ensure headers match.");
+      // Use universal parser to support native .xlsx, .xls, .csv and .txt
+      const res = await parseUniversalFile(file, "custom");
+      if (res.items.length === 0) {
+        toast.error("No valid items found in the uploaded file. Please verify column headers.");
       } else {
-        setParsedItems(parsed);
-        toast.success(`Successfully parsed ${parsed.length} items from file!`);
+        setParsedItems(res.items);
+        toast.success(`Successfully parsed ${res.items.length} items from ${file.name}!`);
       }
     } catch (err: unknown) {
-      console.error("Failed to parse uploaded CSV:", err);
-      toast.error(getErrorMessage(err, "Failed to parse uploaded CSV. Ensure it is a valid text/CSV format matching the template."));
+      console.error("Failed to parse file:", err);
+      toast.error(getErrorMessage(err, "Failed to parse uploaded file. Ensure it is a valid Excel (.xlsx, .xls) or CSV file."));
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
 
   const handleParsePastedText = () => {
     if (!pastedText.trim()) {
@@ -150,14 +172,53 @@ export function ItemsExcelUploadModal({
             <p className="font-bold text-slate-900 dark:text-white">Step 2: Upload Your Excel / CSV File</p>
 
             <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-teal-500/40 hover:border-teal-500/80 rounded-3xl p-5 sm:p-8 text-center cursor-pointer bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent hover:from-teal-500/15 transition-all duration-200 shadow-inner group"
+              className={cn(
+                "border-2 border-dashed rounded-3xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-200 shadow-inner group flex flex-col items-center justify-center gap-2",
+                isDragging
+                  ? "border-teal-500 bg-teal-500/15 scale-[1.01]"
+                  : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent hover:from-teal-500/15"
+              )}
             >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-teal-500/30 group-hover:scale-110 transition-transform">
-                <Upload className="w-6 h-6 stroke-[2.2]" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-md shadow-teal-500/30 group-hover:scale-110 transition-transform">
+                {isProcessing ? (
+                  <RotateCw className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Upload className="w-6 h-6 stroke-[2.2]" />
+                )}
               </div>
-              <p className="font-black text-slate-900 dark:text-white text-sm">Click to browse or drop CSV/Excel file</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Supports .csv, .xlsx, .txt files with automatic column detection</p>
+              <p className="font-black text-slate-900 dark:text-white text-sm">
+                {isProcessing
+                  ? "Parsing Excel / CSV File..."
+                  : "Click to browse or drop CSV/Excel file"}
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Supports <span className="font-semibold text-foreground">.xlsx, .xls, .csv, .txt</span> files with automatic column detection
+              </p>
+
+              {uploadedFileName && (
+                <div className="mt-1 px-3 py-1 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-700 dark:text-teal-300 font-mono text-[11px] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                  <span>{uploadedFileName}</span>
+                </div>
+              )}
+
+              <Button
+                type="button"
+                disabled={isProcessing}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="mt-2 gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs px-6 py-2 rounded-xl shadow-md cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload File</span>
+              </Button>
+
               <input
                 ref={fileInputRef}
                 type="file"
