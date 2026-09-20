@@ -618,8 +618,8 @@ export default function TallyImport() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top Header Bar */}
-      <div className="border-b border-border bg-card px-4 sm:px-8 py-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="border-b border-border bg-card px-3 sm:px-8 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button
             variant="ghost"
             size="sm"
@@ -650,13 +650,13 @@ export default function TallyImport() {
         </div>
 
         {/* Mode Selector Pill & Wizard Launcher */}
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="flex items-center p-1 rounded-xl bg-muted/80 border border-border">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap w-full sm:w-auto sm:justify-end">
+          <div className="flex min-w-0 flex-1 sm:flex-none items-center p-1 rounded-xl bg-muted/80 border border-border overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveMode("auto_sync")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
                 activeMode === "auto_sync"
                   ? "bg-card text-foreground shadow-xs border border-border text-primary font-black"
                   : "text-muted-foreground hover:text-foreground"
@@ -673,7 +673,7 @@ export default function TallyImport() {
               type="button"
               onClick={() => setActiveMode("file_upload")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
                 activeMode === "file_upload"
                   ? "bg-card text-foreground shadow-xs border border-border text-primary font-black"
                   : "text-muted-foreground hover:text-foreground"
@@ -688,7 +688,7 @@ export default function TallyImport() {
             variant="outline"
             size="sm"
             onClick={() => setModalOpen(true)}
-            className="gap-2 text-xs font-bold cursor-pointer hover-3d-glow"
+            className="gap-2 text-xs font-bold cursor-pointer hover-3d-glow shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Launch Wizard</span>
@@ -697,12 +697,12 @@ export default function TallyImport() {
       </div>
 
       {/* Main Content Body */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex-1 max-w-7xl w-full min-w-0 mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
         {/* ── AUTO-SYNC (NO FILES NEEDED) VIEW ────────────────────────────── */}
         {activeMode === "auto_sync" && (
           <div className="space-y-6 animate-in fade-in-50 duration-200">
             {/* 1. Hero Live Status & Quick Action Card */}
-            <div className="p-6 sm:p-8 rounded-3xl border border-border bg-gradient-to-br from-card via-card to-amber-500/5 shadow-xl relative overflow-hidden">
+            <div className="p-4 sm:p-8 rounded-3xl border border-border bg-gradient-to-br from-card via-card to-amber-500/5 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
@@ -726,11 +726,11 @@ export default function TallyImport() {
                 </div>
 
                 {/* Primary Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => handleLiveTallySync(false)}
                     disabled={isLiveSyncing}
-                    className="relative px-6 py-6 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-sm shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.55)] border border-amber-400/40 active:scale-95 transition-all cursor-pointer overflow-hidden group"
+                    className="relative w-full sm:w-auto px-6 py-6 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-sm shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:shadow-[0_6px_25px_rgba(245,158,11,0.55)] border border-amber-400/40 active:scale-95 transition-all cursor-pointer overflow-hidden group"
                   >
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
                     {isLiveSyncing ? (
@@ -745,7 +745,7 @@ export default function TallyImport() {
                     variant="outline"
                     onClick={() => handleLiveTallySync(true)}
                     disabled={isLiveSyncing}
-                    className="px-5 py-6 rounded-2xl border-border hover:bg-muted/80 font-bold text-xs cursor-pointer shadow-xs active:scale-95 transition-all"
+                    className="w-full sm:w-auto px-5 py-6 rounded-2xl border-border hover:bg-muted/80 font-bold text-xs cursor-pointer shadow-xs active:scale-95 transition-all"
                   >
                     <Play className="w-4 h-4 mr-2 text-amber-500" />
                     <span>Run Simulated Demo</span>
