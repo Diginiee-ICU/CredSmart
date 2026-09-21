@@ -52,10 +52,10 @@ type WizardStep = "upload" | "preview" | "options" | "importing" | "done";
 export interface TallyImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImportItems?: (items: Partial<InventoryItem>[]) => Promise<void>;
-  onImportParties?: (parties: Partial<Party>[]) => Promise<void>;
+  onImportItems?: (items: Partial<InventoryItem>[], conflictMode?: ConflictMode) => Promise<void>;
+  onImportParties?: (parties: Partial<Party>[], conflictMode?: ConflictMode) => Promise<void>;
   onImportBankAccounts?: (banks: TallyBankAccount[], cashInHand: number) => Promise<void>;
-  onImportVouchers?: (vouchers: TallyVoucher[]) => Promise<void>;
+  onImportVouchers?: (vouchers: TallyVoucher[], conflictMode?: ConflictMode) => Promise<void>;
   defaultTab?: "items" | "parties" | "all";
   initialSoftware?: SupportedSoftware;
 }
@@ -143,6 +143,14 @@ export function TallyImportModal({
   const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
   const [showGuide, setShowGuide] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const totalVouchersCount = parseResult
+    ? (parseResult.paymentVouchers?.length || 0) +
+      (parseResult.receiptVouchers?.length || 0) +
+      (parseResult.salesVouchers?.length || 0) +
+      (parseResult.purchaseVouchers?.length || 0) +
+      (parseResult.journalVouchers?.length || 0)
+    : 0;
 
   if (!isOpen) return null;
 
@@ -253,7 +261,7 @@ export function TallyImportModal({
     try {
       if (importItems && parseResult.items.length > 0 && onImportItems) {
         try {
-          await onImportItems(parseResult.items);
+          await onImportItems(parseResult.items, conflictMode);
           stats.itemsImported = parseResult.items.length;
         } catch (e: unknown) {
           stats.itemsFailed = parseResult.items.length;
@@ -263,7 +271,7 @@ export function TallyImportModal({
 
       if (importParties && parseResult.parties.length > 0 && onImportParties) {
         try {
-          await onImportParties(parseResult.parties);
+          await onImportParties(parseResult.parties, conflictMode);
           stats.partiesImported = parseResult.parties.length;
         } catch (e: unknown) {
           stats.partiesFailed = parseResult.parties.length;
@@ -290,7 +298,7 @@ export function TallyImportModal({
       ];
       if (importVouchers && allVouchers.length > 0 && onImportVouchers) {
         try {
-          await onImportVouchers(allVouchers);
+          await onImportVouchers(allVouchers, conflictMode);
           stats.vouchersImported = allVouchers.length;
         } catch (e: unknown) {
           stats.vouchersFailed = allVouchers.length;
@@ -561,10 +569,10 @@ export function TallyImportModal({
                       {parseResult.bankAccounts?.length || 0} Banks {parseResult.cashInHand > 0 ? "+ Cash" : ""}
                     </Badge>
                   )}
-                  {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0) > 0 && (
+                  {totalVouchersCount > 0 && (
                     <Badge className="gap-1.5 bg-indigo-500/15 text-indigo-700 border-indigo-500/20 text-xs font-bold">
                       <FileText className="w-3 h-3" />
-                      {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)} Vouchers
+                      {totalVouchersCount} Vouchers
                     </Badge>
                   )}
                   {parseResult.companyName && (
@@ -629,7 +637,7 @@ export function TallyImportModal({
                     Bank & Cash ({parseResult.bankAccounts?.length || 0})
                   </button>
                 )}
-                {((parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)) > 0 && (
+                {totalVouchersCount > 0 && (
                   <button
                     type="button"
                     onClick={() => setPreviewTab("vouchers")}
@@ -638,7 +646,7 @@ export function TallyImportModal({
                       previewTab === "vouchers" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Ledger Vouchers ({(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)})
+                    Ledger Vouchers ({totalVouchersCount})
                   </button>
                 )}
               </div>
@@ -766,7 +774,7 @@ export function TallyImportModal({
                     <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                       <p className="text-xs text-blue-700 dark:text-blue-400">
-                        <strong>Complete Ledger Statement Import:</strong> All vouchers (Receipts, Payments, Sales, Purchases) are parsed with original dates, amounts, and voucher references. Importing them updates your Customer and Supplier Ledgers with full statement history!
+                        <strong>Complete Ledger Statement Import:</strong> All vouchers (Sales, Purchases, Receipts, Payments, Journals) are parsed with original dates, amounts, item line details, and voucher references.
                       </p>
                     </div>
                     <table className="w-full text-xs">
@@ -774,33 +782,41 @@ export function TallyImportModal({
                         <tr>
                           <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Voucher #</th>
                           <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Type</th>
-                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Party</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Party / Details</th>
                           <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Amount</th>
                           <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Date</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
                         {[
-                          ...(parseResult.receiptVouchers || []),
-                          ...(parseResult.paymentVouchers || []),
                           ...(parseResult.salesVouchers || []),
                           ...(parseResult.purchaseVouchers || []),
+                          ...(parseResult.receiptVouchers || []),
+                          ...(parseResult.paymentVouchers || []),
                           ...(parseResult.journalVouchers || []),
                         ].slice(0, 100).map((v, i) => (
                           <tr key={i} className="hover:bg-muted/30">
-                            <td className="px-3 py-2 font-mono text-xs">{v.voucherNumber}</td>
+                            <td className="px-3 py-2 font-mono text-xs font-medium">{v.voucherNumber}</td>
                             <td className="px-3 py-2">
                               <Badge variant="outline" className={cn(
                                 "text-[10px]",
-                                v.voucherType === "Receipt" ? "text-emerald-600 border-emerald-300 bg-emerald-50" :
-                                v.voucherType === "Payment" ? "text-blue-600 border-blue-300 bg-blue-50" :
-                                v.voucherType === "Sales" ? "text-amber-600 border-amber-300 bg-amber-50" :
-                                "text-purple-600 border-purple-300 bg-purple-50"
+                                v.voucherType === "Receipt" ? "text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20" :
+                                v.voucherType === "Payment" ? "text-blue-600 border-blue-300 bg-blue-50 dark:bg-blue-950/20" :
+                                v.voucherType === "Sales" ? "text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/20" :
+                                v.voucherType === "Purchase" ? "text-purple-600 border-purple-300 bg-purple-50 dark:bg-purple-950/20" :
+                                "text-slate-600 border-slate-300 bg-slate-50 dark:bg-slate-900/20"
                               )}>
                                 {v.voucherType}
                               </Badge>
                             </td>
-                            <td className="px-3 py-2 truncate max-w-[150px]">{v.partyName}</td>
+                            <td className="px-3 py-2">
+                              <div className="font-medium text-foreground truncate max-w-[160px]">{v.partyName || "—"}</div>
+                              {v.items && v.items.length > 0 && (
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                  ({v.items.length} line item{v.items.length > 1 ? "s" : ""})
+                                </span>
+                              )}
+                            </td>
                             <td className="px-3 py-2 text-right font-mono font-bold">₹{v.amount.toLocaleString("en-IN")}</td>
                             <td className="px-3 py-2 font-mono text-muted-foreground">{v.date}</td>
                           </tr>
@@ -911,7 +927,7 @@ export function TallyImportModal({
                     </button>
                   )}
 
-                  {((parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)) > 0 && (
+                  {totalVouchersCount > 0 && (
                     <button
                       type="button"
                       onClick={() => setImportVouchers(!importVouchers)}
@@ -935,7 +951,7 @@ export function TallyImportModal({
                         </div>
                       </div>
                       <p className="text-[11px] text-muted-foreground">
-                        {(parseResult.paymentVouchers?.length || 0) + (parseResult.receiptVouchers?.length || 0) + (parseResult.salesVouchers?.length || 0) + (parseResult.purchaseVouchers?.length || 0)} Receipt/Payment/Invoice Vouchers
+                        {totalVouchersCount} Receipt/Payment/Invoice Vouchers
                       </p>
                     </button>
                   )}
@@ -985,6 +1001,18 @@ export function TallyImportModal({
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><Users2 className="w-3.5 h-3.5 text-blue-500" /> Parties to import</span>
                       <span className="font-bold text-foreground">{parseResult.parties.length}</span>
+                    </div>
+                  )}
+                  {importBanks && (parseResult.bankAccounts?.length > 0 || parseResult.cashInHand > 0) && (
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Landmark className="w-3.5 h-3.5 text-emerald-500" /> Bank & Cash Accounts</span>
+                      <span className="font-bold text-foreground">{(parseResult.bankAccounts?.length || 0) + (parseResult.cashInHand > 0 ? 1 : 0)}</span>
+                    </div>
+                  )}
+                  {importVouchers && totalVouchersCount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-indigo-500" /> Vouchers to import</span>
+                      <span className="font-bold text-foreground">{totalVouchersCount}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between pt-1 border-t border-border">
@@ -1078,6 +1106,18 @@ export function TallyImportModal({
                     <p className="text-[11px] text-muted-foreground">Parties Failed</p>
                   </div>
                 )}
+                {importStats.banksFailed > 0 && (
+                  <div className="p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-center">
+                    <p className="text-2xl font-black text-rose-700">{importStats.banksFailed}</p>
+                    <p className="text-[11px] text-muted-foreground">Banks Failed</p>
+                  </div>
+                )}
+                {importStats.vouchersFailed > 0 && (
+                  <div className="p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-center">
+                    <p className="text-2xl font-black text-rose-700">{importStats.vouchersFailed}</p>
+                    <p className="text-[11px] text-muted-foreground">Vouchers Failed</p>
+                  </div>
+                )}
               </div>
 
               {/* Errors */}
@@ -1140,12 +1180,12 @@ export function TallyImportModal({
               {step === "options" && (
                 <Button
                   onClick={handleImport}
-                  disabled={!importItems && !importParties}
+                  disabled={!importItems && !importParties && !importBanks && !importVouchers}
                   className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-600/30"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Start Import
-                  {parseResult && ` (${(importItems ? parseResult.items.length : 0) + (importParties ? parseResult.parties.length : 0)} Records)`}
+                  {parseResult && ` (${(importItems ? parseResult.items.length : 0) + (importParties ? parseResult.parties.length : 0) + (importBanks ? (parseResult.bankAccounts?.length || 0) + (parseResult.cashInHand > 0 ? 1 : 0) : 0) + (importVouchers ? totalVouchersCount : 0)} Records)`}
                 </Button>
               )}
             </div>

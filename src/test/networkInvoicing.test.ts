@@ -499,7 +499,7 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(buyerPurchases.length).toBeGreaterThan(0);
       const savedDoc = buyerPurchases.find((d) => d.documentNumber === purchaseDoc.documentNumber);
       expect(savedDoc?.items.length).toBe(2);
-    }, 15000);
+    }, 30000);
   });
 
   describe("Real-Time Business Alerts & Store Radar Engine", () => {

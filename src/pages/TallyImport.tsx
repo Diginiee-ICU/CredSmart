@@ -73,6 +73,7 @@ import {
 import { toast } from "sonner";
 import { ROUTE_PATHS } from "@/config/routes";
 import { cn } from "@/lib/utils";
+import { notifyStockUpdated } from "@/services/stockService";
 
 export default function TallyImport() {
   const navigate = useNavigate();
@@ -329,13 +330,15 @@ export default function TallyImport() {
     let itemsCount = 0;
     let partiesCount = 0;
     let banksCount = 0;
-    const vouchersCount = 0;
+    let vouchersCount = 0;
 
     try {
-      // 1. Items Import
+      // 1. Items Import (with Conflict Resolution: skip vs overwrite)
       if (importItems && parsedData.items.length > 0) {
         setImportProgress(25);
         for (const item of parsedData.items) {
+          if (!item.name) continue;
+
           const sPrice = item.sellingPrice || 100;
           const pPrice = item.purchasePrice || Math.round(sPrice * 0.8);
           const stock = item.openingStock ?? item.currentStock ?? 0;
@@ -354,77 +357,163 @@ export default function TallyImport() {
             imported_at: new Date().toISOString(),
           };
 
-          const { data: newProd, error: pErr } = await supabase
+          // Check if product exists
+          const { data: existingProd } = await supabase
             .from("products")
-            .insert({
-              organization_id: orgId,
-              name: item.name || "Imported Item",
-              brand: item.brand ?? null,
-              category: item.category ?? "General",
-              barcode: item.barcode ?? null,
-              sku: skuVal,
-              tags: tagsPayload,
-            })
-            .select()
-            .single();
+            .select("id, tags")
+            .eq("organization_id", orgId)
+            .eq("name", item.name)
+            .maybeSingle();
 
-          if (!pErr && newProd) {
-            await supabase.from("product_batches").insert({
-              product_id: newProd.id,
-              batch_number: "INIT-BATCH",
-              cost_price: pPrice,
-              mrp: item.mrp || sPrice,
-              stock: stock,
-            });
-            itemsCount++;
+          if (existingProd) {
+            if (conflictMode === "overwrite") {
+              const mergedTags = {
+                ...((existingProd.tags && typeof existingProd.tags === "object" ? existingProd.tags : {}) as Record<string, unknown>),
+                ...tagsPayload,
+              };
+
+              await supabase
+                .from("products")
+                .update({
+                  category: item.category || "General",
+                  brand: item.brand || null,
+                  barcode: item.barcode || null,
+                  tags: mergedTags,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", existingProd.id);
+
+              const { data: existingBatch } = await supabase
+                .from("product_batches")
+                .select("id")
+                .eq("product_id", existingProd.id)
+                .maybeSingle();
+
+              if (existingBatch) {
+                await supabase
+                  .from("product_batches")
+                  .update({
+                    cost_price: pPrice,
+                    mrp: item.mrp || sPrice,
+                    stock: stock,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", existingBatch.id);
+              } else {
+                await supabase.from("product_batches").insert({
+                  product_id: existingProd.id,
+                  batch_number: "INIT-BATCH",
+                  cost_price: pPrice,
+                  mrp: item.mrp || sPrice,
+                  stock: stock,
+                });
+              }
+              itemsCount++;
+            }
+            // If conflictMode === "skip", do nothing
+          } else {
+            const { data: newProd, error: pErr } = await supabase
+              .from("products")
+              .insert({
+                organization_id: orgId,
+                name: item.name,
+                brand: item.brand ?? null,
+                category: item.category ?? "General",
+                barcode: item.barcode ?? null,
+                sku: skuVal,
+                tags: tagsPayload,
+              })
+              .select()
+              .single();
+
+            if (!pErr && newProd) {
+              await supabase.from("product_batches").insert({
+                product_id: newProd.id,
+                batch_number: "INIT-BATCH",
+                cost_price: pPrice,
+                mrp: item.mrp || sPrice,
+                stock: stock,
+              });
+              itemsCount++;
+            }
           }
         }
       }
 
-      // 2. Parties Import (Customers & Suppliers)
+      // 2. Parties Import (Customers & Suppliers with Conflict Resolution)
       if (importParties && parsedData.parties.all.length > 0) {
-        setImportProgress(60);
+        setImportProgress(55);
         for (const party of parsedData.parties.all) {
+          if (!party.name) continue;
+
           const isSupplier = party.partyType === "supplier";
           const targetTable = isSupplier ? "suppliers" : "customers";
 
-          const { data: newParty, error: pErr } = await supabase
-            .from(targetTable)
-            .insert({
-              organization_id: orgId,
-              name: party.name || "Unnamed Party",
-              phone: party.phone || undefined,
-              email: party.email || undefined,
-              address: party.address || undefined,
-              gstin: party.gstin || undefined,
-              trade_name: party.tradeName || undefined,
-              pan: party.pan || undefined,
-              pincode: party.pincode || undefined,
-              category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
-              credit_limit: party.creditLimit || 50000,
-              credit_period_days: party.creditPeriodDays || 30,
-              custom_fields: {
-                imported_from: parsedData.detectedSoftware,
-                imported_at: new Date().toISOString(),
-              },
-            })
-            .select()
-            .single();
+          // Deduplicate check
+          let query = supabase.from(targetTable).select("id").eq("organization_id", orgId);
+          if (party.phone && party.phone.trim().length > 5) {
+            query = query.eq("phone", party.phone.trim());
+          } else {
+            query = query.eq("name", party.name.trim());
+          }
+          const { data: existingParty } = await query.maybeSingle();
 
-          if (!pErr && newParty) {
-            partiesCount++;
-
-            const opBal = Number(party.balance ?? party.openingBalance ?? 0);
-            if (opBal !== 0) {
-              await supabase.from("credit_transactions").insert({
+          if (existingParty) {
+            if (conflictMode === "overwrite") {
+              await supabase
+                .from(targetTable)
+                .update({
+                  address: party.address || undefined,
+                  email: party.email || undefined,
+                  trade_name: party.tradeName || undefined,
+                  gstin: party.gstin || undefined,
+                  pan: party.pan || undefined,
+                  pincode: party.pincode || undefined,
+                  credit_limit: party.creditLimit || undefined,
+                  credit_period_days: party.creditPeriodDays || undefined,
+                })
+                .eq("id", existingParty.id);
+              partiesCount++;
+            }
+          } else {
+            const { data: newParty, error: pErr } = await supabase
+              .from(targetTable)
+              .insert({
                 organization_id: orgId,
-                party_id: newParty.id,
-                party_type: isSupplier ? "supplier" : "customer",
-                amount: Math.abs(opBal),
-                type: opBal >= 0 ? "credit" : "payment",
-                description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
-                created_by: user?.id || "admin",
-              });
+                name: party.name,
+                phone: party.phone || undefined,
+                email: party.email || undefined,
+                address: party.address || undefined,
+                gstin: party.gstin || undefined,
+                trade_name: party.tradeName || undefined,
+                pan: party.pan || undefined,
+                pincode: party.pincode || undefined,
+                category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
+                credit_limit: party.creditLimit || 50000,
+                credit_period_days: party.creditPeriodDays || 30,
+                custom_fields: {
+                  imported_from: parsedData.detectedSoftware,
+                  imported_at: new Date().toISOString(),
+                },
+              })
+              .select()
+              .single();
+
+            if (!pErr && newParty) {
+              partiesCount++;
+
+              const opBal = Number(party.balance ?? party.openingBalance ?? 0);
+              if (opBal !== 0) {
+                await supabase.from("credit_transactions").insert({
+                  organization_id: orgId,
+                  party_id: newParty.id,
+                  party_type: isSupplier ? "supplier" : "customer",
+                  amount: Math.abs(opBal),
+                  type: opBal >= 0 ? "credit" : "payment",
+                  description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
+                  created_by: user?.id || "admin",
+                });
+              }
             }
           }
         }
@@ -432,7 +521,7 @@ export default function TallyImport() {
 
       // 3. Bank & Cash Accounts Import
       if (importBanks && parsedData.bankAccounts.length > 0) {
-        setImportProgress(85);
+        setImportProgress(75);
         const storageKeyAccounts = `credsmart_bank_accounts_${orgId}`;
         const existingRaw = localStorage.getItem(storageKeyAccounts);
         let existingAccounts: unknown[] = [];
@@ -458,6 +547,164 @@ export default function TallyImport() {
         banksCount = newAccounts.length;
       }
 
+      // 4. Daybook Vouchers Import (Sales Invoices, Purchase Bills, Receipts, Payments)
+      if (importVouchers && parsedData.vouchers && parsedData.vouchers.length > 0) {
+        setImportProgress(88);
+        for (const vch of parsedData.vouchers) {
+          if (!vch.voucherNumber) continue;
+
+          if (vch.voucherType === "Sales") {
+            const { data: existingSale } = await supabase
+              .from("sales")
+              .select("id")
+              .eq("organization_id", orgId)
+              .eq("invoice_number", vch.voucherNumber)
+              .maybeSingle();
+
+            if (!existingSale) {
+              let customerId: string | null = null;
+              if (vch.partyName) {
+                const { data: matchedCust } = await supabase
+                  .from("customers")
+                  .select("id")
+                  .eq("organization_id", orgId)
+                  .ilike("name", vch.partyName.trim())
+                  .maybeSingle();
+                customerId = matchedCust?.id || null;
+              }
+
+              const { data: newSale, error: sErr } = await supabase
+                .from("sales")
+                .insert({
+                  organization_id: orgId,
+                  invoice_number: vch.voucherNumber,
+                  subtotal: vch.amount,
+                  total: vch.amount,
+                  tax: 0,
+                  payment_method: "Credit",
+                  customer_id: customerId,
+                  created_by: user?.id || "admin",
+                  created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+                })
+                .select("id")
+                .maybeSingle();
+
+              if (!sErr && newSale) {
+                vouchersCount++;
+                if (vch.items && vch.items.length > 0) {
+                  const saleItems = vch.items.map((it) => ({
+                    sale_id: newSale.id,
+                    product_name: it.itemName,
+                    mrp: it.rate,
+                    quantity: it.quantity,
+                    line_total: it.amount,
+                  }));
+                  await supabase.from("sale_items").insert(saleItems);
+                }
+              }
+            } else if (conflictMode === "overwrite") {
+              await supabase
+                .from("sales")
+                .update({
+                  subtotal: vch.amount,
+                  total: vch.amount,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", existingSale.id);
+              vouchersCount++;
+            }
+          } else if (vch.voucherType === "Purchase") {
+            const { data: existingPI } = await supabase
+              .from("purchase_invoices")
+              .select("id")
+              .eq("organization_id", orgId)
+              .eq("invoice_number", vch.voucherNumber)
+              .maybeSingle();
+
+            if (!existingPI) {
+              let supplierId: string | null = null;
+              if (vch.partyName) {
+                const { data: matchedSupp } = await supabase
+                  .from("suppliers")
+                  .select("id")
+                  .eq("organization_id", orgId)
+                  .ilike("name", vch.partyName.trim())
+                  .maybeSingle();
+                supplierId = matchedSupp?.id || null;
+              }
+
+              if (!supplierId) {
+                const { data: autoSupp } = await supabase
+                  .from("suppliers")
+                  .insert({
+                    organization_id: orgId,
+                    name: vch.partyName || "Imported Vendor",
+                    category: "Wholesaler",
+                  })
+                  .select("id")
+                  .maybeSingle();
+                supplierId = autoSupp?.id || null;
+              }
+
+              if (supplierId) {
+                const { data: newPI, error: piErr } = await supabase
+                  .from("purchase_invoices")
+                  .insert({
+                    organization_id: orgId,
+                    supplier_id: supplierId,
+                    invoice_number: vch.voucherNumber,
+                    total_amount: vch.amount,
+                    status: "received",
+                    notes: vch.narration || `Imported from ${parsedData.detectedSoftware.toUpperCase()}`,
+                    created_by: user?.id || "admin",
+                    created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+                  })
+                  .select("id")
+                  .maybeSingle();
+
+                if (!piErr && newPI) {
+                  vouchersCount++;
+                  if (vch.items && vch.items.length > 0) {
+                    const piItems = vch.items.map((it) => ({
+                      purchase_invoice_id: newPI.id,
+                      quantity: it.quantity,
+                      cost_price: it.rate,
+                      mrp: it.rate,
+                      batch_number: it.batchNumber || "BATCH-01",
+                      expiry_date: it.expiryDate || null,
+                    }));
+                    await supabase.from("purchase_invoice_items").insert(piItems);
+                  }
+                }
+              }
+            } else if (conflictMode === "overwrite") {
+              await supabase
+                .from("purchase_invoices")
+                .update({
+                  total_amount: vch.amount,
+                  notes: vch.narration || undefined,
+                })
+                .eq("id", existingPI.id);
+              vouchersCount++;
+            }
+          }
+        }
+      }
+
+      // Broadcast updates
+      if (itemsCount > 0) {
+        notifyStockUpdated(orgId);
+      }
+      if (typeof window !== "undefined") {
+        if (partiesCount > 0) {
+          window.dispatchEvent(new CustomEvent("credsmart:parties_updated", { detail: { orgId } }));
+        }
+        if (vouchersCount > 0) {
+          window.dispatchEvent(new CustomEvent("credsmart_documents_updated", { detail: { orgId } }));
+        }
+        window.dispatchEvent(new CustomEvent("credsmart_network_update"));
+      }
+
       setImportProgress(100);
       setImportedStats({
         items: itemsCount,
@@ -467,7 +714,7 @@ export default function TallyImport() {
       });
       setImportCompleted(true);
       toast.success(
-        `🎉 1-Click Import Complete! Successfully imported ${itemsCount} items and ${partiesCount} parties.`
+        `🎉 1-Click Import Complete! Imported ${itemsCount} items, ${partiesCount} parties, ${banksCount} banks, and ${vouchersCount} vouchers.`
       );
     } catch (err) {
       toast.error(`Import error: ${err instanceof Error ? err.message : String(err)}`);
@@ -476,12 +723,27 @@ export default function TallyImport() {
     }
   };
 
-  const handleDirectSaveItems = async (items: Partial<InventoryItem>[]) => {
+  const handleDirectSaveItems = async (
+    items: Partial<InventoryItem>[],
+    strategy: "skip" | "overwrite" | "merge" = "skip"
+  ) => {
     if (!orgId || items.length === 0) return;
     setIsImporting(true);
     let count = 0;
     try {
       for (const item of items) {
+        const itemName = (item.name || "Imported Item").trim();
+        const { data: existingProd } = await supabase
+          .from("products")
+          .select("id")
+          .eq("organization_id", orgId)
+          .ilike("name", itemName)
+          .maybeSingle();
+
+        if (existingProd && strategy === "skip") {
+          continue;
+        }
+
         const sPrice = item.sellingPrice || 100;
         const pPrice = item.purchasePrice || Math.round(sPrice * 0.8);
         const stock = item.openingStock ?? item.currentStock ?? 0;
@@ -500,11 +762,23 @@ export default function TallyImport() {
           imported_at: new Date().toISOString(),
         };
 
+        if (existingProd && (strategy === "overwrite" || strategy === "merge")) {
+          await supabase
+            .from("products")
+            .update({
+              category: item.category ?? "General",
+              tags: tagsPayload,
+            })
+            .eq("id", existingProd.id);
+          count++;
+          continue;
+        }
+
         const { data: newProd, error: pErr } = await supabase
           .from("products")
           .insert({
             organization_id: orgId,
-            name: item.name || "Imported Item",
+            name: itemName,
             brand: item.brand ?? null,
             category: item.category ?? "General",
             barcode: item.barcode ?? null,
@@ -535,20 +809,50 @@ export default function TallyImport() {
     }
   };
 
-  const handleDirectSaveParties = async (parties: Partial<Party>[]) => {
+  const handleDirectSaveParties = async (
+    parties: Partial<Party>[],
+    strategy: "skip" | "overwrite" | "merge" = "skip"
+  ) => {
     if (!orgId || parties.length === 0) return;
     setIsImporting(true);
     let count = 0;
     try {
       for (const party of parties) {
+        const partyName = (party.name || "Unnamed Party").trim();
         const isSupplier = party.partyType === "supplier";
         const targetTable = isSupplier ? "suppliers" : "customers";
+
+        const { data: existingParty } = await supabase
+          .from(targetTable)
+          .select("id")
+          .eq("organization_id", orgId)
+          .ilike("name", partyName)
+          .maybeSingle();
+
+        if (existingParty && strategy === "skip") {
+          continue;
+        }
+
+        if (existingParty && (strategy === "overwrite" || strategy === "merge")) {
+          await supabase
+            .from(targetTable)
+            .update({
+              phone: party.phone || undefined,
+              email: party.email || undefined,
+              address: party.address || undefined,
+              gstin: party.gstin || undefined,
+              pan: party.pan || undefined,
+            })
+            .eq("id", existingParty.id);
+          count++;
+          continue;
+        }
 
         const { data: newParty, error: pErr } = await supabase
           .from(targetTable)
           .insert({
             organization_id: orgId,
-            name: party.name || "Unnamed Party",
+            name: partyName,
             phone: party.phone || undefined,
             email: party.email || undefined,
             address: party.address || undefined,
@@ -593,6 +897,144 @@ export default function TallyImport() {
     }
   };
 
+  const handleDirectSaveVouchers = async (
+    vouchers: TallyVoucher[],
+    strategy: "skip" | "overwrite" | "merge" = "skip"
+  ) => {
+    if (!orgId || vouchers.length === 0) return;
+    setIsImporting(true);
+    let count = 0;
+    try {
+      for (const vch of vouchers) {
+        if (!vch.voucherNumber) continue;
+        if (vch.voucherType === "Sales") {
+          const { data: existingSale } = await supabase
+            .from("sales")
+            .select("id")
+            .eq("organization_id", orgId)
+            .eq("invoice_number", vch.voucherNumber)
+            .maybeSingle();
+
+          if (!existingSale) {
+            let customerId: string | null = null;
+            if (vch.partyName) {
+              const { data: matchedCust } = await supabase
+                .from("customers")
+                .select("id")
+                .eq("organization_id", orgId)
+                .ilike("name", vch.partyName.trim())
+                .maybeSingle();
+              customerId = matchedCust?.id || null;
+            }
+
+            const { data: newSale } = await supabase
+              .from("sales")
+              .insert({
+                organization_id: orgId,
+                invoice_number: vch.voucherNumber,
+                subtotal: vch.amount,
+                total: vch.amount,
+                payment_method: "Credit",
+                customer_id: customerId,
+                created_by: user?.id || "admin",
+                created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+              })
+              .select("id")
+              .maybeSingle();
+
+            if (newSale) {
+              count++;
+              if (vch.items && vch.items.length > 0) {
+                const saleItems = vch.items.map((it) => ({
+                  sale_id: newSale.id,
+                  product_name: it.itemName,
+                  mrp: it.rate,
+                  quantity: it.quantity,
+                  line_total: it.amount,
+                }));
+                await supabase.from("sale_items").insert(saleItems);
+              }
+            }
+          } else if (strategy === "overwrite") {
+            await supabase
+              .from("sales")
+              .update({
+                subtotal: vch.amount,
+                total: vch.amount,
+              })
+              .eq("id", existingSale.id);
+            count++;
+          }
+        } else if (vch.voucherType === "Purchase") {
+          const { data: existingPI } = await supabase
+            .from("purchase_invoices")
+            .select("id")
+            .eq("organization_id", orgId)
+            .eq("invoice_number", vch.voucherNumber)
+            .maybeSingle();
+
+          if (!existingPI) {
+            let supplierId: string | null = null;
+            if (vch.partyName) {
+              const { data: matchedSupp } = await supabase
+                .from("suppliers")
+                .select("id")
+                .eq("organization_id", orgId)
+                .ilike("name", vch.partyName.trim())
+                .maybeSingle();
+              supplierId = matchedSupp?.id || null;
+            }
+
+            const { data: newPI, error: piErr } = await supabase
+              .from("purchase_invoices")
+              .insert({
+                organization_id: orgId,
+                invoice_number: vch.voucherNumber,
+                supplier_id: supplierId,
+                total_amount: vch.amount,
+                notes: vch.narration || undefined,
+                payment_status: "paid",
+                created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+              })
+              .select("id")
+              .maybeSingle();
+
+            if (!piErr && newPI) {
+              count++;
+              if (vch.items && vch.items.length > 0) {
+                const piItems = vch.items.map((it) => ({
+                  purchase_invoice_id: newPI.id,
+                  quantity: it.quantity,
+                  cost_price: it.rate,
+                  mrp: it.rate,
+                  batch_number: it.batchNumber || "BATCH-01",
+                  expiry_date: it.expiryDate || null,
+                }));
+                await supabase.from("purchase_invoice_items").insert(piItems);
+              }
+            }
+          } else if (strategy === "overwrite") {
+            await supabase
+              .from("purchase_invoices")
+              .update({
+                total_amount: vch.amount,
+                notes: vch.narration || undefined,
+              })
+              .eq("id", existingPI.id);
+            count++;
+          }
+        }
+      }
+      setImportedStats((prev) => ({ ...prev, vouchers: prev.vouchers + count }));
+      setImportCompleted(true);
+      toast.success(`Successfully saved ${count} vouchers to cloud database!`);
+    } catch (err) {
+      toast.error(`Vouchers import error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // ── Filtered Previews ─────────────────────────────────────────────────────
 
   const filteredItems = (parsedData?.items || []).filter((item) => {
@@ -612,6 +1054,17 @@ export default function TallyImport() {
       (party.name || "").toLowerCase().includes(q) ||
       (party.phone || "").toLowerCase().includes(q) ||
       (party.gstin || "").toLowerCase().includes(q)
+    );
+  });
+
+  const filteredVouchers = (parsedData?.vouchers || []).filter((vch) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (vch.voucherNumber || "").toLowerCase().includes(q) ||
+      (vch.partyName || "").toLowerCase().includes(q) ||
+      (vch.voucherType || "").toLowerCase().includes(q) ||
+      (vch.narration || "").toLowerCase().includes(q)
     );
   });
 
@@ -1351,7 +1804,7 @@ export default function TallyImport() {
         {parsedData && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
             {/* Stats Overview Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1">
                   <Package className="w-4 h-4 text-amber-500" />
@@ -1374,6 +1827,15 @@ export default function TallyImport() {
 
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1">
+                  <FileSpreadsheet className="w-4 h-4 text-indigo-500" />
+                  <span>Daybook Vouchers</span>
+                </div>
+                <p className="text-2xl font-black text-foreground">{parsedData.vouchers.length}</p>
+                <p className="text-[10px] text-muted-foreground">Invoices, Bills &amp; Vouchers</p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1">
                   <Wallet className="w-4 h-4 text-emerald-500" />
                   <span>Opening Receivables</span>
                 </div>
@@ -1383,7 +1845,7 @@ export default function TallyImport() {
                 <p className="text-[10px] text-muted-foreground">Customer Udhar Khata</p>
               </div>
 
-              <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
+              <div className="p-4 rounded-2xl border border-border bg-card shadow-xs col-span-2 sm:col-span-4 lg:col-span-1">
                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1">
                   <Building2 className="w-4 h-4 text-rose-500" />
                   <span>Opening Payables</span>
@@ -1423,6 +1885,20 @@ export default function TallyImport() {
                 >
                   Parties ({parsedData.parties.all.length})
                 </button>
+                {parsedData.vouchers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab("vouchers")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      previewTab === "vouchers"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    Vouchers ({parsedData.vouchers.length})
+                  </button>
+                )}
                 {parsedData.bankAccounts.length > 0 && (
                   <button
                     type="button"
@@ -1548,25 +2024,161 @@ export default function TallyImport() {
               </div>
             )}
 
-            {/* Execution Control Action Box */}
-            <div className="p-6 rounded-3xl border border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-card to-amber-500/5 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 text-center md:text-left">
-                <div className="flex items-center gap-2 justify-center md:justify-start">
-                  <ShieldCheck className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-base font-black text-foreground">
-                    Ready to Migrate into CredSmart
-                  </h3>
+            {/* Preview Table: Vouchers / Daybook */}
+            {previewTab === "vouchers" && (
+              <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+                <div className="max-h-96 overflow-y-auto scrollbar-thin">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="sticky top-0 bg-muted/90 backdrop-blur-md text-[11px] font-mono text-muted-foreground uppercase border-b border-border">
+                      <tr>
+                        <th className="py-2.5 px-4">Date</th>
+                        <th className="py-2.5 px-3">Voucher No</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-3">Party / Ledger</th>
+                        <th className="py-2.5 px-3">Items / Lines</th>
+                        <th className="py-2.5 px-3 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredVouchers.slice(0, 100).map((vch, idx) => (
+                        <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-2.5 px-4 font-mono text-muted-foreground">{vch.date}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-foreground">{vch.voucherNumber}</td>
+                          <td className="py-2.5 px-3">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[10px] font-bold uppercase",
+                                vch.voucherType === "Sales"
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                                  : vch.voucherType === "Purchase"
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30"
+                                  : vch.voucherType === "Receipt"
+                                  ? "bg-purple-500/10 text-purple-600 border-purple-500/30"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                              )}
+                            >
+                              {vch.voucherType}
+                            </Badge>
+                          </td>
+                          <td className="py-2.5 px-3 font-bold text-foreground truncate max-w-xs">{vch.partyName}</td>
+                          <td className="py-2.5 px-3 text-muted-foreground">
+                            {vch.items && vch.items.length > 0 ? (
+                              <span>{vch.items.length} item{vch.items.length > 1 ? "s" : ""}</span>
+                            ) : (
+                              <span>{vch.ledgerEntries.length} ledger{vch.ledgerEntries.length > 1 ? "s" : ""}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-black text-foreground">
+                            ₹{vch.amount.toLocaleString("en-IN")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Deduplication protects against existing items and parties. All data saved securely to your cloud account.
-                </p>
+                {filteredVouchers.length > 100 && (
+                  <div className="p-2 text-center text-xs text-muted-foreground border-t border-border bg-muted/20">
+                    Showing first 100 of {filteredVouchers.length} vouchers. All records will be imported.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Execution Control Action Box */}
+            <div className="p-6 rounded-3xl border border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-card to-amber-500/5 shadow-md flex flex-col gap-5">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-base font-black text-foreground">
+                      Migration Configuration &amp; Execution
+                    </h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Choose conflict strategy and which entities to persist into your cloud business database.
+                  </p>
+                </div>
+
+                {/* Conflict Resolution Selector */}
+                <div className="flex items-center gap-2 bg-background/80 p-1.5 rounded-xl border border-border text-xs">
+                  <span className="text-[11px] font-bold text-muted-foreground pl-1">Duplicates:</span>
+                  <button
+                    type="button"
+                    onClick={() => setConflictMode("skip")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      conflictMode === "skip"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Skip Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConflictMode("overwrite")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      conflictMode === "overwrite"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Overwrite
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* Entity Checkboxes & Trigger Button */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pt-3 border-t border-border/60">
+                <div className="flex items-center gap-4 flex-wrap text-xs font-semibold">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={importItems}
+                      onChange={(e) => setImportItems(e.target.checked)}
+                      className="rounded border-border text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span>Items ({parsedData.items.length})</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={importParties}
+                      onChange={(e) => setImportParties(e.target.checked)}
+                      className="rounded border-border text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span>Parties ({parsedData.parties.all.length})</span>
+                  </label>
+                  {parsedData.bankAccounts.length > 0 && (
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={importBanks}
+                        onChange={(e) => setImportBanks(e.target.checked)}
+                        className="rounded border-border text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span>Banks ({parsedData.bankAccounts.length})</span>
+                    </label>
+                  )}
+                  {parsedData.vouchers.length > 0 && (
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={importVouchers}
+                        onChange={(e) => setImportVouchers(e.target.checked)}
+                        className="rounded border-border text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span>Vouchers ({parsedData.vouchers.length})</span>
+                    </label>
+                  )}
+                </div>
+
                 <Button
                   onClick={handleExecuteImport}
                   disabled={isImporting}
-                  className="gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-amber-500/30 cursor-pointer hover-3d-glow"
+                  className="gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-amber-500/30 cursor-pointer hover-3d-glow shrink-0"
                 >
                   {isImporting ? (
                     <>
@@ -1576,7 +2188,13 @@ export default function TallyImport() {
                   ) : (
                     <>
                       <Zap className="w-4 h-4 fill-white" />
-                      <span>Start 1-Click Import ({parsedData.items.length + parsedData.parties.all.length} Records)</span>
+                      <span>
+                        Start 1-Click Import (
+                        {(importItems ? parsedData.items.length : 0) +
+                          (importParties ? parsedData.parties.all.length : 0) +
+                          (importVouchers ? parsedData.vouchers.length : 0)}{" "}
+                        Records)
+                      </span>
                     </>
                   )}
                 </Button>
@@ -1597,7 +2215,7 @@ export default function TallyImport() {
                       Migration Successfully Completed!
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Imported {importedStats.items} Items and {importedStats.parties} Parties. Your business is live and ready for billing.
+                      Imported {importedStats.items} Items, {importedStats.parties} Parties, and {importedStats.vouchers} Vouchers. Your business is live and ready for billing.
                     </p>
                   </div>
                 </div>
@@ -1626,6 +2244,14 @@ export default function TallyImport() {
                     <Users2 className="w-4 h-4 text-blue-500" />
                     View Party Ledgers
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(ROUTE_PATHS.invoices)}
+                    className="gap-2 text-xs font-bold"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-indigo-500" />
+                    View Sales Invoices
+                  </Button>
                 </div>
               </div>
             )}
@@ -1638,11 +2264,14 @@ export default function TallyImport() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         initialSoftware={selectedSoftware}
-        onImportItems={async (items) => {
-          await handleDirectSaveItems(items);
+        onImportItems={async (items, mode) => {
+          await handleDirectSaveItems(items, mode);
         }}
-        onImportParties={async (parties) => {
-          await handleDirectSaveParties(parties);
+        onImportParties={async (parties, mode) => {
+          await handleDirectSaveParties(parties, mode);
+        }}
+        onImportVouchers={async (vouchers, mode) => {
+          await handleDirectSaveVouchers(vouchers, mode);
         }}
       />
     </div>

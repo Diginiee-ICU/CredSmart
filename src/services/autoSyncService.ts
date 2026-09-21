@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SupportedSoftware } from "@/utils/universalDataImporter";
-import { parseTallyXml, TallyParseResult } from "@/utils/tallyXmlParser";
+import { parseTallyXml, TallyParseResult, TallyVoucher } from "@/utils/tallyXmlParser";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
 import { notifyStockUpdated } from "@/services/stockService";
@@ -224,7 +224,7 @@ export async function executeDirectSyncIngestion(
   parsedData: {
     items: Partial<InventoryItem>[];
     parties: Partial<Party>[];
-    vouchers?: unknown[];
+    vouchers?: TallyVoucher[];
   },
   source: SyncAuditLog["source"] = "direct_browser",
   software: SupportedSoftware = "tally"
@@ -232,7 +232,7 @@ export async function executeDirectSyncIngestion(
   const startTime = performance.now();
   let itemsCount = 0;
   let partiesCount = 0;
-  const vouchersCount = parsedData.vouchers?.length || 0;
+  let vouchersCount = 0;
 
   try {
     // 1. Sync Stock Items into Supabase products & batches
@@ -422,6 +422,130 @@ export async function executeDirectSyncIngestion(
                 description: `${software.toUpperCase()} Live Auto-Sync Balance`,
                 created_by: userId || "sync_daemon",
               });
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Sync Vouchers (Sales Invoices & Purchase Bills)
+    if (parsedData.vouchers && parsedData.vouchers.length > 0) {
+      for (const vch of parsedData.vouchers) {
+        if (!vch.voucherNumber) continue;
+
+        if (vch.voucherType === "Sales") {
+          const { data: existingSale } = await supabase
+            .from("sales")
+            .select("id")
+            .eq("organization_id", orgId)
+            .eq("invoice_number", vch.voucherNumber)
+            .maybeSingle();
+
+          if (!existingSale) {
+            let customerId: string | null = null;
+            if (vch.partyName) {
+              const { data: matchedCust } = await supabase
+                .from("customers")
+                .select("id")
+                .eq("organization_id", orgId)
+                .ilike("name", vch.partyName.trim())
+                .maybeSingle();
+              customerId = matchedCust?.id || null;
+            }
+
+            const { data: newSale, error: sErr } = await supabase
+              .from("sales")
+              .insert({
+                organization_id: orgId,
+                invoice_number: vch.voucherNumber,
+                subtotal: vch.amount,
+                total: vch.amount,
+                tax: 0,
+                payment_method: "Credit",
+                customer_id: customerId,
+                created_by: userId || "sync_daemon",
+                created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+              })
+              .select("id")
+              .maybeSingle();
+
+            if (!sErr && newSale) {
+              vouchersCount++;
+              if (vch.items && vch.items.length > 0) {
+                const saleItems = vch.items.map((it) => ({
+                  sale_id: newSale.id,
+                  product_name: it.itemName,
+                  mrp: it.rate,
+                  quantity: it.quantity,
+                  line_total: it.amount,
+                }));
+                await supabase.from("sale_items").insert(saleItems);
+              }
+            }
+          }
+        } else if (vch.voucherType === "Purchase") {
+          const { data: existingPI } = await supabase
+            .from("purchase_invoices")
+            .select("id")
+            .eq("organization_id", orgId)
+            .eq("invoice_number", vch.voucherNumber)
+            .maybeSingle();
+
+          if (!existingPI) {
+            let supplierId: string | null = null;
+            if (vch.partyName) {
+              const { data: matchedSupp } = await supabase
+                .from("suppliers")
+                .select("id")
+                .eq("organization_id", orgId)
+                .ilike("name", vch.partyName.trim())
+                .maybeSingle();
+              supplierId = matchedSupp?.id || null;
+            }
+
+            if (!supplierId) {
+              const { data: autoSupp } = await supabase
+                .from("suppliers")
+                .insert({
+                  organization_id: orgId,
+                  name: vch.partyName || "Imported Vendor",
+                  category: "Wholesaler",
+                })
+                .select("id")
+                .maybeSingle();
+              supplierId = autoSupp?.id || null;
+            }
+
+            if (supplierId) {
+              const { data: newPI, error: piErr } = await supabase
+                .from("purchase_invoices")
+                .insert({
+                  organization_id: orgId,
+                  supplier_id: supplierId,
+                  invoice_number: vch.voucherNumber,
+                  total_amount: vch.amount,
+                  status: "received",
+                  notes: vch.narration || "Auto-synced from Tally",
+                  created_by: userId || "sync_daemon",
+                  created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
+                })
+                .select("id")
+                .maybeSingle();
+
+              if (!piErr && newPI) {
+                vouchersCount++;
+                if (vch.items && vch.items.length > 0) {
+                  const piItems = vch.items.map((it) => ({
+                    purchase_invoice_id: newPI.id,
+                    quantity: it.quantity,
+                    cost_price: it.rate,
+                    mrp: it.rate,
+                    batch_number: it.batchNumber || "BATCH-01",
+                    expiry_date: it.expiryDate || null,
+                  }));
+                  await supabase.from("purchase_invoice_items").insert(piItems);
+                }
+              }
             }
           }
         }

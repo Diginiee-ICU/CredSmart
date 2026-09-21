@@ -245,6 +245,7 @@ export interface UniversalImportData {
     totalOpeningReceivable: number;
     totalOpeningPayable: number;
     totalBankAccounts: number;
+    totalVouchers: number;
   };
   warnings: string[];
   fileNames: string[];
@@ -307,18 +308,42 @@ export interface ParsedSheet {
   rows: (string | number | null | undefined)[][];
 }
 
+async function readFileText(file: File): Promise<string> {
+  if (typeof file.text === "function") {
+    return await file.text();
+  }
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string) || "");
+    reader.onerror = () => reject(reader.error || new Error("Failed to read file"));
+    reader.readAsText(file);
+  });
+}
+
+async function readFileArrayBuffer(file: File): Promise<ArrayBuffer> {
+  if (typeof file.arrayBuffer === "function") {
+    return await file.arrayBuffer();
+  }
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () => reject(reader.error || new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 export async function parseFileToSheets(file: File): Promise<ParsedSheet[]> {
   const filename = file.name.toLowerCase();
 
   // 1. If XML file, return raw text in a synthetic sheet
   if (filename.endsWith(".xml")) {
-    const text = await file.text();
+    const text = await readFileText(file);
     return [{ sheetName: "XML_DATA", rows: [[text]] }];
   }
 
   // 2. If CSV or TXT, parse lines
   if (filename.endsWith(".csv") || filename.endsWith(".txt")) {
-    const text = await file.text();
+    const text = await readFileText(file);
     const workbook = XLSX.read(text, { type: "string" });
     const sheets: ParsedSheet[] = [];
     workbook.SheetNames.forEach((name) => {
@@ -334,7 +359,7 @@ export async function parseFileToSheets(file: File): Promise<ParsedSheet[]> {
   }
 
   // 3. If Excel (.xlsx, .xls)
-  const buffer = await file.arrayBuffer();
+  const buffer = await readFileArrayBuffer(file);
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheets: ParsedSheet[] = [];
 
@@ -753,16 +778,31 @@ export async function parseUniversalFile(
 
   // 3. If Tally XML: execute dedicated high-fidelity XML parser
   if (filename.toLowerCase().endsWith(".xml") || (sheets[0]?.rows?.[0]?.[0] && String(sheets[0].rows[0][0]).includes("<ENVELOPE>"))) {
-    const rawXml = await file.text();
+    const rawXml = (sheets[0]?.rows?.[0]?.[0] ? String(sheets[0].rows[0][0]) : "") || (await readFileText(file));
     const tallyResult = parseTallyXml(rawXml);
 
     const customers = tallyResult.parties.filter((p) => p.partyType === "customer" || p.partyType === "both");
     const suppliers = tallyResult.parties.filter((p) => p.partyType === "supplier");
 
-    const allVouchers = [...tallyResult.salesVouchers, ...tallyResult.purchaseVouchers];
+    const allVouchers = [
+      ...tallyResult.salesVouchers,
+      ...tallyResult.purchaseVouchers,
+      ...tallyResult.paymentVouchers,
+      ...tallyResult.receiptVouchers,
+      ...tallyResult.journalVouchers,
+      ...(tallyResult.creditNoteVouchers || []),
+      ...(tallyResult.debitNoteVouchers || []),
+    ];
 
     const totalReceivable = customers.reduce((sum, c) => sum + Math.max(0, c.balance || 0), 0);
     const totalPayable = suppliers.reduce((sum, s) => sum + Math.abs(Math.min(0, s.balance || 0)), 0);
+
+    const mappedBankAccounts = tallyResult.bankAccounts.map((b) => ({
+      accountName: b.name || b.bankName,
+      accountNumber: b.accountNumber || "—",
+      ifsc: b.ifscCode || "—",
+      balance: b.balance,
+    }));
 
     return {
       sourceSoftware: chosenSoftware,
@@ -770,6 +810,7 @@ export async function parseUniversalFile(
       detectedEntityTypes: [
         ...(tallyResult.items.length > 0 ? ["items" as const] : []),
         ...(tallyResult.parties.length > 0 ? ["parties" as const] : []),
+        ...(mappedBankAccounts.length > 0 ? ["bank" as const] : []),
         ...(allVouchers.length > 0 ? ["vouchers" as const] : []),
       ],
       companyName: tallyResult.companyName,
@@ -780,8 +821,8 @@ export async function parseUniversalFile(
         suppliers,
         all: tallyResult.parties,
       },
-      bankAccounts: [],
-      cashInHand: 0,
+      bankAccounts: mappedBankAccounts,
+      cashInHand: tallyResult.cashInHand || 0,
       vouchers: allVouchers,
       summary: {
         totalItems: tallyResult.items.length,
@@ -790,7 +831,8 @@ export async function parseUniversalFile(
         totalParties: tallyResult.parties.length,
         totalOpeningReceivable: totalReceivable,
         totalOpeningPayable: totalPayable,
-        totalBankAccounts: 0,
+        totalBankAccounts: mappedBankAccounts.length,
+        totalVouchers: allVouchers.length,
       },
       warnings: tallyResult.warnings,
       fileNames: [filename],
@@ -800,8 +842,75 @@ export async function parseUniversalFile(
   // 4. Multi-sheet / Excel / CSV table processing
   const allItems: Partial<InventoryItem>[] = [];
   const allParties: Partial<Party>[] = [];
+  const allVouchers: TallyVoucher[] = [];
 
   sheets.forEach((sheet) => {
+    // Check if sheet contains Tally Daybook vouchers
+    const isDaybook = sheet.rows.length >= 2 && sheet.rows.slice(0, 5).some((r) => {
+      const line = Array.isArray(r) ? r.map(cleanHeader).join(" ") : "";
+      return (line.includes("vchtype") || line.includes("vouchertype")) && (line.includes("particulars") || line.includes("vchno"));
+    });
+
+    if (isDaybook) {
+      const headerIdx = sheet.rows.findIndex((r) => {
+        const line = Array.isArray(r) ? r.map(cleanHeader).join(" ") : "";
+        return (line.includes("vchtype") || line.includes("vouchertype")) && line.includes("particulars");
+      });
+
+      if (headerIdx >= 0) {
+        const header = sheet.rows[headerIdx];
+        const colDate = findColIndex(header, ["date", "voucherdate"]);
+        const colPart = findColIndex(header, ["particulars", "party", "account", "name", "ledger"]);
+        const colType = findColIndex(header, ["vchtype", "vouchertype", "type"]);
+        const colNo = findColIndex(header, ["vchno", "voucherno", "invoiceno", "billno"]);
+        const colDebit = findColIndex(header, ["debit", "debitamount", "dr"]);
+        const colCredit = findColIndex(header, ["credit", "creditamount", "cr"]);
+
+        if (colPart !== -1 && colType !== -1) {
+          sheet.rows.slice(headerIdx + 1).forEach((row, rIdx) => {
+            if (!Array.isArray(row)) return;
+            const partyName = String(row[colPart] || "").trim();
+            const typeStr = String(row[colType] || "").trim();
+            if (!partyName || !typeStr || partyName.toLowerCase() === "total") return;
+
+            const rawDate = colDate !== -1 ? String(row[colDate] || "") : "";
+            let date = new Date().toISOString().split("T")[0];
+            const dmyMatch = rawDate.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$/);
+            if (dmyMatch) {
+              const year = dmyMatch[3].length === 2 ? `20${dmyMatch[3]}` : dmyMatch[3];
+              date = `${year}-${dmyMatch[2].padStart(2, "0")}-${dmyMatch[1].padStart(2, "0")}`;
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+              date = rawDate;
+            }
+
+            const vchNo = (colNo !== -1 ? String(row[colNo] || "").trim() : "") || `DAY-${rIdx + 1}`;
+            const debit = colDebit !== -1 ? parseNum(row[colDebit], 0) : 0;
+            const credit = colCredit !== -1 ? parseNum(row[colCredit], 0) : 0;
+            const amount = Math.max(debit, credit);
+
+            let vchType: TallyVoucher["voucherType"] = "Sales";
+            const lowerType = typeStr.toLowerCase();
+            if (lowerType.includes("sale")) vchType = "Sales";
+            else if (lowerType.includes("purchase")) vchType = "Purchase";
+            else if (lowerType.includes("receipt")) vchType = "Receipt";
+            else if (lowerType.includes("payment")) vchType = "Payment";
+            else if (lowerType.includes("credit note")) vchType = "Credit Note";
+            else if (lowerType.includes("debit note")) vchType = "Debit Note";
+            else vchType = "Journal";
+
+            allVouchers.push({
+              voucherNumber: vchNo,
+              date,
+              voucherType: vchType,
+              partyName,
+              amount,
+              ledgerEntries: [{ ledgerName: partyName, amount, isDr: debit > 0 }],
+            });
+          });
+        }
+      }
+    }
+
     const contentType = detectSheetContentType(sheet.rows);
 
     if (contentType === "items") {
@@ -810,7 +919,7 @@ export async function parseUniversalFile(
     } else if (contentType === "parties") {
       const extracted = parseUniversalPartiesFromRows(sheet.rows, detectedSoftware);
       allParties.push(...extracted);
-    } else {
+    } else if (!isDaybook) {
       const testItems = parseUniversalItemsFromRows(sheet.rows, detectedSoftware);
       const testParties = parseUniversalPartiesFromRows(sheet.rows, detectedSoftware);
 
@@ -848,9 +957,9 @@ export async function parseUniversalFile(
   const totalReceivable = customers.reduce((sum, c) => sum + Math.max(0, c.balance || 0), 0);
   const totalPayable = suppliers.reduce((sum, s) => sum + Math.abs(Math.min(0, s.balance || 0)), 0);
 
-  if (uniqueItems.length === 0 && uniqueParties.length === 0) {
+  if (uniqueItems.length === 0 && uniqueParties.length === 0 && allVouchers.length === 0) {
     warnings.push(
-      `No valid inventory items or parties could be recognized in ${filename}. Check if your file has standard column headers (e.g. Item Name, Sale Price, Party Name, Mobile).`
+      `No valid inventory items, parties or daybook vouchers could be recognized in ${filename}. Check if your file has standard column headers (e.g. Item Name, Sale Price, Party Name, Mobile).`
     );
   }
 
@@ -860,6 +969,7 @@ export async function parseUniversalFile(
     detectedEntityTypes: [
       ...(uniqueItems.length > 0 ? ["items" as const] : []),
       ...(uniqueParties.length > 0 ? ["parties" as const] : []),
+      ...(allVouchers.length > 0 ? ["vouchers" as const] : []),
     ],
     items: uniqueItems,
     parties: {
@@ -869,7 +979,7 @@ export async function parseUniversalFile(
     },
     bankAccounts: [],
     cashInHand: 0,
-    vouchers: [],
+    vouchers: allVouchers,
     summary: {
       totalItems: uniqueItems.length,
       totalCustomers: customers.length,
@@ -878,6 +988,7 @@ export async function parseUniversalFile(
       totalOpeningReceivable: totalReceivable,
       totalOpeningPayable: totalPayable,
       totalBankAccounts: 0,
+      totalVouchers: allVouchers.length,
     },
     warnings,
     fileNames: [filename],
@@ -941,6 +1052,7 @@ export async function parseMultipleUniversalFiles(
 
   const allWarnings = fileResults.flatMap((r) => r.warnings);
   const allVouchers = fileResults.flatMap((r) => r.vouchers);
+  const allBanks = fileResults.flatMap((r) => r.bankAccounts);
 
   return {
     sourceSoftware: chosenSoftware,
@@ -948,6 +1060,7 @@ export async function parseMultipleUniversalFiles(
     detectedEntityTypes: [
       ...(mergedItems.length > 0 ? ["items" as const] : []),
       ...(mergedParties.length > 0 ? ["parties" as const] : []),
+      ...(allBanks.length > 0 ? ["bank" as const] : []),
       ...(allVouchers.length > 0 ? ["vouchers" as const] : []),
     ],
     items: mergedItems,
@@ -967,6 +1080,7 @@ export async function parseMultipleUniversalFiles(
       totalOpeningReceivable: totalReceivable,
       totalOpeningPayable: totalPayable,
       totalBankAccounts: fileResults.flatMap((r) => r.bankAccounts).length,
+      totalVouchers: allVouchers.length,
     },
     warnings: Array.from(new Set(allWarnings)),
     fileNames: files.map((f) => f.name),
