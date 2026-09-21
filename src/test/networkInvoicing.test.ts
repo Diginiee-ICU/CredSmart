@@ -625,5 +625,172 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(complianceAlert?.title).toContain("INV-HIGH-VAL-99");
       expect(complianceAlert?.actionUrl).toBe("/e-invoicing");
     });
+
+    it("delivers notification and inward invoice to Party B when invoice is created solely on Party B's name without phone or GSTIN", async () => {
+      // Create fresh third-party organization "Ramesh Traders"
+      const rameshOrg: OrgData = {
+        id: "org_ramesh_uuid_777",
+        name: "Ramesh Traders",
+        phone: "",
+        gstin: "",
+        email: "",
+        address: "Shop 12, Station Road",
+        invoice_prefix: "INV",
+        logo_url: "",
+        tax_rate: 18,
+        business_type: "Retailer",
+      };
+
+      // Seller creates invoice typing solely partyName: "Ramesh Traders" (no phone, no GSTIN)
+      const salesDoc: BusinessDocument = {
+        id: "doc_sale_to_ramesh",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-RAMESH-001",
+        partyName: "Ramesh Traders",
+        partyPhone: undefined,
+        partyGstin: undefined,
+        docDate: "2026-09-22",
+        items: [
+          {
+            id: "it-1",
+            productName: "Premium Sugar 1kg",
+            quantity: 50,
+            rate: 42,
+            unit: "KG",
+            taxRate: 5,
+            lineTotal: 2205,
+          },
+        ],
+        subtotal: 2100,
+        discountTotal: 0,
+        taxableTotal: 2100,
+        taxTotal: 105,
+        grandTotal: 2205,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      const netInv = await networkInvoicingService.sendSalesInvoiceToNetwork(salesDoc, sellerOrg, "user_seller_1");
+      expect(netInv).not.toBeNull();
+      expect(netInv?.recipientOrgName).toBe("Ramesh Traders");
+
+      // Verify Ramesh Traders receives the notification and pending invoice using their org.name
+      const notifs = await networkInvoicingService.getNotificationsForOrg(
+        rameshOrg.id,
+        rameshOrg.phone,
+        rameshOrg.gstin,
+        rameshOrg.name
+      );
+
+      const receivedNotif = notifs.find((n) => n.type === "sale_invoice_received" && n.data?.invoiceNumber === "INV-RAMESH-001");
+      expect(receivedNotif).toBeDefined();
+      expect(receivedNotif?.title).toContain(sellerOrg.name);
+      expect(receivedNotif?.message).toContain("INV-RAMESH-001");
+
+      const pendingInvoices = await networkInvoicingService.getPendingInvoicesForOrg(
+        rameshOrg.id,
+        rameshOrg.phone,
+        rameshOrg.gstin,
+        rameshOrg.name
+      );
+      expect(pendingInvoices.some((inv) => inv.invoiceNumber === "INV-RAMESH-001")).toBe(true);
+    });
+
+    it("supports substring and case-insensitive matching for store name variations", async () => {
+      const ganeshOrg: OrgData = {
+        id: "org_ganesh_uuid_888",
+        name: "Shree Ganesh Enterprises Pvt Ltd",
+        phone: "",
+        gstin: "",
+        invoice_prefix: "INV",
+        logo_url: "",
+        tax_rate: 18,
+        business_type: "Retailer",
+      };
+
+      // Seller creates invoice typing "Shree Ganesh Enterprises"
+      const salesDoc: BusinessDocument = {
+        id: "doc_sale_to_ganesh",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-GANESH-002",
+        partyName: "Shree Ganesh Enterprises",
+        docDate: "2026-09-22",
+        items: [
+          {
+            id: "it-g1",
+            productName: "Cooking Oil 15L Tin",
+            quantity: 5,
+            rate: 2100,
+            unit: "TIN",
+            taxRate: 5,
+            lineTotal: 11025,
+          },
+        ],
+        subtotal: 10500,
+        discountTotal: 0,
+        taxableTotal: 10500,
+        taxTotal: 525,
+        grandTotal: 11025,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      await networkInvoicingService.sendSalesInvoiceToNetwork(salesDoc, sellerOrg, "user_seller_1");
+
+      // Verify Ganesh Org matches via substring matching
+      const notifs = await networkInvoicingService.getNotificationsForOrg(
+        ganeshOrg.id,
+        ganeshOrg.phone,
+        ganeshOrg.gstin,
+        ganeshOrg.name
+      );
+      expect(notifs.some((n) => n.data?.invoiceNumber === "INV-GANESH-002")).toBe(true);
+    });
+
+    it("ingests incoming real-time network invoice and notification correctly", async () => {
+      const targetOrgId = "org_realtime_ingest_test";
+      const sampleNetInv = {
+        id: "net_inv_ingest_1",
+        senderOrgId: "org_seller_remote",
+        senderOrgName: "Remote Wholesale Hub",
+        recipientOrgName: "My Local Store",
+        invoiceNumber: "INV-REMOTE-999",
+        docDate: "2026-09-22",
+        items: [],
+        subtotal: 5000,
+        discountTotal: 0,
+        taxableTotal: 5000,
+        cgstTotal: 450,
+        sgstTotal: 450,
+        igstTotal: 0,
+        taxTotal: 900,
+        grandTotal: 5900,
+        status: "pending" as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const sampleNotif = {
+        id: "notif_ingest_1",
+        recipientOrgId: targetOrgId,
+        type: "sale_invoice_received" as const,
+        category: "inward" as const,
+        title: "Sale was Created by Remote Wholesale Hub on your name",
+        message: "Review items and click Approve",
+        status: "unread" as const,
+        actionStatus: "pending" as const,
+        networkInvoiceId: sampleNetInv.id,
+        created_at: new Date().toISOString(),
+      };
+
+      networkInvoicingService.ingestIncomingNetworkInvoice(sampleNetInv, sampleNotif, targetOrgId);
+
+      const all = await networkInvoicingService.getInvoicesForOrg(targetOrgId);
+      expect(all.some((i) => i.id === "net_inv_ingest_1")).toBe(true);
+
+      const notifs = await networkInvoicingService.getNotificationsForOrg(targetOrgId);
+      expect(notifs.some((n) => n.id === "notif_ingest_1")).toBe(true);
+    });
   });
 });

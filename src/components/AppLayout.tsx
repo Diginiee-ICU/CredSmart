@@ -321,6 +321,13 @@ export default function AppLayout() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  // Global listener to open Notification Center from toasts or quick actions
+  useEffect(() => {
+    const handleOpenNotifs = () => setNotifOpen(true);
+    window.addEventListener("credsmart_open_notifications", handleOpenNotifs);
+    return () => window.removeEventListener("credsmart_open_notifications", handleOpenNotifs);
+  }, []);
+
   const handleCommandSelect = (url: string) => {
     setOpenCommand(false);
     navigate(url);

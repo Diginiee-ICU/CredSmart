@@ -18,14 +18,33 @@ import {
 const STORAGE_INVOICES_KEY = "credsmart_network_invoices_v1";
 const STORAGE_NOTIFICATIONS_KEY = "credsmart_network_notifications_v1";
 
+const IS_TEST_ENV =
+  (typeof process !== "undefined" && (process.env?.NODE_ENV === "test" || process.env?.VITEST === "true" || !!process.env?.VITEST)) ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.MODE === "test");
+
 // BroadcastChannel for instant multi-tab sync
 let networkChannel: BroadcastChannel | null = null;
 try {
-  if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+  if (typeof window !== "undefined" && "BroadcastChannel" in window && !IS_TEST_ENV) {
     networkChannel = new BroadcastChannel("credsmart_network_channel");
   }
 } catch {
   // Ignore environments without BroadcastChannel
+}
+
+// Supabase Realtime Broadcast Channel across all devices and browsers globally
+let supabaseRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+try {
+  if (typeof window !== "undefined" && !IS_TEST_ENV) {
+    supabaseRealtimeChannel = supabase.channel("credsmart_b2b_network_realtime", {
+      config: {
+        broadcast: { ack: false },
+      },
+    });
+    supabaseRealtimeChannel.subscribe();
+  }
+} catch {
+  // Ignore environments without Supabase Realtime
 }
 
 function dispatchNetworkEvents(type: string, payload?: unknown) {
@@ -44,6 +63,17 @@ function dispatchNetworkEvents(type: string, payload?: unknown) {
       // Ignore channel errors
     }
   }
+  if (supabaseRealtimeChannel) {
+    try {
+      supabaseRealtimeChannel.send({
+        type: "broadcast",
+        event: type,
+        payload,
+      });
+    } catch {
+      // Ignore channel send errors
+    }
+  }
 }
 
 // Clean phone digits for comparison (e.g. +91 98765 43210 -> 9876543210)
@@ -53,8 +83,87 @@ export function normalizePhoneNumber(phone?: string | null): string {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
+// Check if a business name matches another business name (exact or normalized substring)
+export function isBusinessNameMatch(nameA?: string | null, nameB?: string | null): boolean {
+  if (!nameA || !nameB) return false;
+  const cleanA = nameA.trim().toLowerCase().replace(/[^\w\s]/g, "");
+  const cleanB = nameB.trim().toLowerCase().replace(/[^\w\s]/g, "");
+  if (!cleanA || !cleanB) return false;
+  if (cleanA === cleanB) return true;
+  // If one name contains the other (for names with length >= 3)
+  if (cleanA.length >= 3 && cleanB.length >= 3) {
+    if (cleanA.includes(cleanB) || cleanB.includes(cleanA)) return true;
+  }
+  return false;
+}
+
+export function isInvoiceForOrg(
+  inv: NetworkInvoice,
+  orgId: string,
+  orgPhone?: string,
+  orgGstin?: string,
+  orgName?: string
+): boolean {
+  if (!orgId) return false;
+  if (inv.recipientOrgId === orgId) return true;
+
+  const cleanPhone = normalizePhoneNumber(orgPhone);
+  if (cleanPhone && inv.recipientPhone && normalizePhoneNumber(inv.recipientPhone) === cleanPhone) {
+    return true;
+  }
+
+  const cleanGstin = (orgGstin || "").toUpperCase().trim();
+  if (cleanGstin && inv.recipientGstin && inv.recipientGstin.toUpperCase().trim() === cleanGstin) {
+    return true;
+  }
+
+  if (isBusinessNameMatch(inv.recipientOrgName, orgName)) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isNotificationForOrg(
+  n: NetworkNotification,
+  orgId: string,
+  orgPhone?: string,
+  orgGstin?: string,
+  orgName?: string
+): boolean {
+  if (!orgId) return false;
+  if (n.recipientOrgId === orgId) return true;
+
+  const cleanPhone = normalizePhoneNumber(orgPhone);
+  if (cleanPhone) {
+    if (n.recipientPhone && normalizePhoneNumber(n.recipientPhone) === cleanPhone) return true;
+    if (n.recipientOrgId.includes(cleanPhone)) return true;
+    if (n.data?.recipientPhone && normalizePhoneNumber(n.data.recipientPhone as string) === cleanPhone) return true;
+  }
+
+  const cleanGstin = (orgGstin || "").toUpperCase().trim();
+  if (cleanGstin) {
+    if (n.recipientGstin && n.recipientGstin.toUpperCase().trim() === cleanGstin) return true;
+    if (n.recipientOrgId.includes(cleanGstin)) return true;
+    if (n.data?.recipientGstin && (n.data.recipientGstin as string).toUpperCase().trim() === cleanGstin) return true;
+  }
+
+  // Name matching
+  if (isBusinessNameMatch(n.recipientOrgName, orgName)) return true;
+  if (n.data?.recipientPartyName && isBusinessNameMatch(n.data.recipientPartyName as string, orgName)) return true;
+  if (n.recipientOrgId.startsWith("party_match_")) {
+    const matchedKey = n.recipientOrgId.replace("party_match_", "");
+    if (isBusinessNameMatch(matchedKey, orgName)) return true;
+  }
+
+  return false;
+}
+
 // Fast timeout wrapper to prevent hanging on network/offline Supabase calls
 async function safeDbCall<T>(promiseOrFn: Promise<T> | (() => Promise<T>), timeoutMs = 800): Promise<T | null> {
+  if (IS_TEST_ENV) {
+    return null;
+  }
   try {
     const promise = typeof promiseOrFn === "function" ? promiseOrFn() : promiseOrFn;
     const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
@@ -479,6 +588,9 @@ export const networkInvoicingService = {
     const notification: NetworkNotification = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       recipientOrgId: targetRecipientOrgId,
+      recipientOrgName: recipientOrgName,
+      recipientPhone: salesDoc.partyPhone || connectedRecipient?.phone || undefined,
+      recipientGstin: salesDoc.partyGstin || connectedRecipient?.gstin || undefined,
       type: "sale_invoice_received",
       category: "inward",
       title: `Sale was Created by ${senderOrg.name} on your name`,
@@ -496,6 +608,9 @@ export const networkInvoicingService = {
         senderOrgName: senderOrg.name,
         senderOrgGstin: senderOrg.gstin,
         senderOrgPhone: senderOrg.phone,
+        recipientPartyName: salesDoc.partyName,
+        recipientPhone: salesDoc.partyPhone,
+        recipientGstin: salesDoc.partyGstin,
         invoiceNumber: salesDoc.documentNumber,
         grandTotal: salesDoc.grandTotal,
         itemsCount: salesDoc.items.length,
@@ -524,7 +639,7 @@ export const networkInvoicingService = {
     existingNotifs.unshift(notification);
     this.saveLocalNotifications(existingNotifs);
 
-    // 4. Trigger Broadcast and Custom DOM events for real-time reactivity
+    // 4. Trigger Broadcast and Custom DOM events for real-time reactivity across tabs and devices
     dispatchNetworkEvents("INVOICE_CREATED", { networkInvoice, notification });
 
     return networkInvoice;
@@ -533,7 +648,12 @@ export const networkInvoicingService = {
   // ─────────────────────────────────────────────────────────────
   // 4. QUERY INVOICES FOR AN ORGANIZATION
   // ─────────────────────────────────────────────────────────────
-  async getInvoicesForOrg(orgId: string, orgPhone?: string, orgGstin?: string): Promise<NetworkInvoice[]> {
+  async getInvoicesForOrg(
+    orgId: string,
+    orgPhone?: string,
+    orgGstin?: string,
+    orgName?: string
+  ): Promise<NetworkInvoice[]> {
     if (!orgId) return [];
 
     const localInvoices = this.getLocalInvoices();
@@ -542,19 +662,41 @@ export const networkInvoicingService = {
 
     // Filter local invoices: where org is recipient OR sender
     const matchedLocal = localInvoices.filter((inv) => {
-      if (inv.recipientOrgId === orgId || inv.senderOrgId === orgId) return true;
-      if (cleanPhone && inv.recipientPhone && normalizePhoneNumber(inv.recipientPhone) === cleanPhone) return true;
-      if (cleanGstin && inv.recipientGstin && inv.recipientGstin.toUpperCase().trim() === cleanGstin) return true;
-      return false;
+      if (inv.senderOrgId === orgId) return true;
+      return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
     });
+
+    // Auto-heal matched local invoices that had placeholder recipientOrgId
+    let needsLocalSave = false;
+    matchedLocal.forEach((inv) => {
+      if (inv.senderOrgId !== orgId && (!inv.recipientOrgId || inv.recipientOrgId !== orgId)) {
+        inv.recipientOrgId = orgId;
+        needsLocalSave = true;
+      }
+    });
+    if (needsLocalSave) {
+      this.saveLocalInvoices(localInvoices);
+    }
 
     // Merge with Supabase network_invoices
     try {
-      const { data: dbInvoices, error } = await supabase
-        .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-        .select("*")
-        .or(`recipient_org_id.eq.${orgId},sender_org_id.eq.${orgId}`)
-        .order("created_at", { ascending: false });
+      const orClauses = [`recipient_org_id.eq.${orgId}`, `sender_org_id.eq.${orgId}`];
+      if (cleanPhone) orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
+      if (orgName && orgName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
+      }
+
+      const dbRes = await safeDbCall(async () => {
+        return supabase
+          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .select("*")
+          .or(orClauses.join(","))
+          .order("created_at", { ascending: false });
+      }, 500);
+
+      const dbInvoices = dbRes?.data;
+      const error = dbRes?.error;
 
       if (!error && dbInvoices && Array.isArray(dbInvoices)) {
         for (const row of dbInvoices as any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -599,7 +741,10 @@ export const networkInvoicingService = {
             rejected_at: row.rejected_at,
           };
 
-          if (!matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)) {
+          if (
+            (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName)) &&
+            !matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)
+          ) {
             matchedLocal.push(mapped);
           }
         }
@@ -611,17 +756,16 @@ export const networkInvoicingService = {
     return matchedLocal.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
 
-  async getPendingInvoicesForOrg(orgId: string, orgPhone?: string, orgGstin?: string): Promise<NetworkInvoice[]> {
-    const all = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin);
-    const cleanPhone = normalizePhoneNumber(orgPhone);
-    const cleanGstin = (orgGstin || "").toUpperCase().trim();
-
+  async getPendingInvoicesForOrg(
+    orgId: string,
+    orgPhone?: string,
+    orgGstin?: string,
+    orgName?: string
+  ): Promise<NetworkInvoice[]> {
+    const all = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName);
     return all.filter((inv) => {
-      const isRecipient =
-        inv.recipientOrgId === orgId ||
-        (cleanPhone && inv.recipientPhone && normalizePhoneNumber(inv.recipientPhone) === cleanPhone) ||
-        (cleanGstin && inv.recipientGstin && inv.recipientGstin.toUpperCase().trim() === cleanGstin);
-
+      if (inv.senderOrgId === orgId) return false;
+      const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
       return isRecipient && inv.status === "pending";
     });
   },
@@ -729,34 +873,63 @@ export const networkInvoicingService = {
     return alerts;
   },
 
-  async getNotificationsForOrg(orgId: string, orgPhone?: string, orgGstin?: string): Promise<NetworkNotification[]> {
+  async getNotificationsForOrg(
+    orgId: string,
+    orgPhone?: string,
+    orgGstin?: string,
+    orgName?: string
+  ): Promise<NetworkNotification[]> {
     if (!orgId) return [];
 
-    const cleanPhone = normalizePhoneNumber(orgPhone);
-    const cleanGstin = (orgGstin || "").toUpperCase().trim();
     const localNotifs = this.getLocalNotifications();
 
-    // Match notifications for this org
+    // Match notifications for this org using robust isNotificationForOrg
     const matched = localNotifs.filter((n) => {
-      if (n.recipientOrgId === orgId) return true;
-      if (cleanPhone && n.recipientOrgId.includes(cleanPhone)) return true;
-      if (cleanGstin && n.recipientOrgId.includes(cleanGstin)) return true;
-      return false;
+      return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName);
     });
 
+    // Auto-heal matched local notifications
+    let needsNotifSave = false;
+    matched.forEach((n) => {
+      if (n.recipientOrgId !== orgId && n.recipientOrgId.startsWith("party_match_")) {
+        n.recipientOrgId = orgId;
+        needsNotifSave = true;
+      }
+    });
+    if (needsNotifSave) {
+      this.saveLocalNotifications(localNotifs);
+    }
+
     try {
-      const { data: dbNotifications, error } = await supabase
-        .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
-        .select("*")
-        .eq("recipient_org_id", orgId)
-        .order("created_at", { ascending: false });
+      const cleanPhone = normalizePhoneNumber(orgPhone);
+      const cleanGstin = (orgGstin || "").toUpperCase().trim();
+      const orClauses = [`recipient_org_id.eq.${orgId}`];
+      if (cleanPhone) orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
+      if (orgName && orgName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
+      }
+
+      const dbRes = await safeDbCall(async () => {
+        return supabase
+          .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+          .select("*")
+          .or(orClauses.join(","))
+          .order("created_at", { ascending: false });
+      }, 500);
+
+      const dbNotifications = dbRes?.data;
+      const error = dbRes?.error;
 
       if (!error && dbNotifications) {
         for (const row of dbNotifications as any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
           if (!matched.some((notification) => notification.id === row.id)) {
-            matched.push({
+            const mappedNotif: NetworkNotification = {
               id: row.id,
-              recipientOrgId: row.recipient_org_id,
+              recipientOrgId: row.recipient_org_id || orgId,
+              recipientOrgName: row.recipient_org_name || orgName,
+              recipientPhone: row.recipient_phone,
+              recipientGstin: row.recipient_gstin,
               recipientUserId: row.recipient_user_id,
               type: row.type,
               category: row.type?.startsWith("sale_invoice_") ? "inward" : "system",
@@ -767,7 +940,10 @@ export const networkInvoicingService = {
               networkInvoiceId: row.network_invoice_id,
               data: row.data || undefined,
               created_at: row.created_at,
-            });
+            };
+            if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName)) {
+              matched.push(mappedNotif);
+            }
           }
         }
       }
@@ -1540,5 +1716,87 @@ export const networkInvoicingService = {
     dispatchNetworkEvents("INVOICE_CREATED", { networkInvoice: simInvoice, notification: simNotif });
 
     return simInvoice;
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // 10. RECIPIENT MATCHING & REAL-TIME INGESTION
+  // ─────────────────────────────────────────────────────────────
+  isInvoiceForOrg(
+    inv: NetworkInvoice,
+    orgId: string,
+    orgPhone?: string,
+    orgGstin?: string,
+    orgName?: string
+  ): boolean {
+    return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
+  },
+
+  isNotificationForOrg(
+    n: NetworkNotification,
+    orgId: string,
+    orgPhone?: string,
+    orgGstin?: string,
+    orgName?: string
+  ): boolean {
+    return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName);
+  },
+
+  ingestIncomingNetworkInvoice(
+    networkInvoice: NetworkInvoice,
+    notification?: NetworkNotification,
+    orgId?: string
+  ) {
+    if (!networkInvoice) return;
+
+    // 1. Update or insert in local network invoices
+    const localInvoices = this.getLocalInvoices();
+    const existingIndex = localInvoices.findIndex(
+      (inv) => inv.id === networkInvoice.id || inv.invoiceNumber === networkInvoice.invoiceNumber
+    );
+
+    const mergedInvoice: NetworkInvoice = {
+      ...networkInvoice,
+      recipientOrgId: orgId || networkInvoice.recipientOrgId,
+    };
+
+    if (existingIndex >= 0) {
+      localInvoices[existingIndex] = {
+        ...localInvoices[existingIndex],
+        ...mergedInvoice,
+        updated_at: new Date().toISOString(),
+      };
+    } else {
+      localInvoices.unshift(mergedInvoice);
+    }
+    this.saveLocalInvoices(localInvoices);
+
+    // 2. Update or insert notification if provided
+    if (notification) {
+      const localNotifs = this.getLocalNotifications();
+      const notifIndex = localNotifs.findIndex(
+        (n) => n.id === notification.id || (n.networkInvoiceId && n.networkInvoiceId === networkInvoice.id)
+      );
+      const mergedNotif: NetworkNotification = {
+        ...notification,
+        recipientOrgId: orgId || notification.recipientOrgId,
+      };
+
+      if (notifIndex >= 0) {
+        localNotifs[notifIndex] = { ...localNotifs[notifIndex], ...mergedNotif };
+      } else {
+        localNotifs.unshift(mergedNotif);
+      }
+      this.saveLocalNotifications(localNotifs);
+    }
+
+    // 3. Dispatch internal DOM events to immediately refresh UI components
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("credsmart_network_update", { detail: { type: "INVOICE_INGESTED", payload: mergedInvoice } })
+      );
+      window.dispatchEvent(
+        new CustomEvent("credsmart_notification_update", { detail: { type: "INVOICE_INGESTED", payload: mergedInvoice } })
+      );
+    }
   },
 };

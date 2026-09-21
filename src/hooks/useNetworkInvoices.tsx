@@ -61,9 +61,9 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
 
     try {
       const [pending, all, notifs] = await Promise.all([
-        networkInvoicingService.getPendingInvoicesForOrg(orgId, org.phone, org.gstin),
-        networkInvoicingService.getInvoicesForOrg(orgId, org.phone, org.gstin),
-        networkInvoicingService.getNotificationsForOrg(orgId, org.phone, org.gstin),
+        networkInvoicingService.getPendingInvoicesForOrg(orgId, org.phone, org.gstin, org.name),
+        networkInvoicingService.getInvoicesForOrg(orgId, org.phone, org.gstin, org.name),
+        networkInvoicingService.getNotificationsForOrg(orgId, org.phone, org.gstin, org.name),
       ]);
 
       setPendingInvoices(pending);
@@ -98,6 +98,70 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       }
     } catch { /* empty */ }
 
+    // Listen to Supabase Realtime Broadcast across all devices & browsers globally
+    let realtimeSub: ReturnType<typeof supabase.channel> | null = null;
+    const isTestEnv = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+    if (!isTestEnv) {
+      try {
+        realtimeSub = supabase.channel("credsmart_b2b_network_realtime");
+        realtimeSub
+          .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
+            const payload = eventPayload?.payload;
+            const networkInvoice: NetworkInvoice = payload?.networkInvoice;
+            const notification: NetworkNotification = payload?.notification;
+
+            if (!networkInvoice || !org) return;
+
+            // Check if invoice is addressed to this organization
+            const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
+              networkInvoice,
+              org.id,
+              org.phone,
+              org.gstin,
+              org.name
+            );
+
+            if (isTargetRecipient && networkInvoice.senderOrgId !== org.id) {
+              // Ingest immediately into local storage
+              networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, org.id);
+
+              // Play alert sound & haptic vibration
+              try {
+                const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+                audio.volume = 0.6;
+                audio.play().catch(() => {});
+              } catch { /* empty */ }
+
+              // Show real-time prominent toast notification
+              toast.info(`⚡ New Sales Invoice on your name!`, {
+                description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+                duration: 8000,
+                action: {
+                  label: "Review & Inward",
+                  onClick: () => {
+                    window.dispatchEvent(
+                      new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
+                    );
+                  },
+                },
+              });
+
+              loadData();
+            }
+          })
+          .on("broadcast", { event: "INVOICE_APPROVED" }, () => {
+            loadData();
+          })
+          .on("broadcast", { event: "INVOICE_REJECTED" }, () => {
+            loadData();
+          })
+          .on("broadcast", { event: "INVOICE_CANCELLED" }, () => {
+            loadData();
+          })
+          .subscribe();
+      } catch { /* empty */ }
+    }
+
     // Listen to Supabase Realtime for network_invoices (if connected)
     let sub: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null; // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
@@ -119,13 +183,18 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("credsmart_org_changed", handleNetworkUpdate);
       window.removeEventListener("storage", handleNetworkUpdate);
       channel?.close();
+      if (realtimeSub) {
+        try {
+          supabase.removeChannel(realtimeSub);
+        } catch { /* empty */ }
+      }
       if (sub) {
         try {
           supabase.removeChannel(sub);
         } catch { /* empty */ }
       }
     };
-  }, [loadData]);
+  }, [loadData, org]);
 
   const approveInvoice = async (invoiceId: string): Promise<boolean> => {
     if (!org) {

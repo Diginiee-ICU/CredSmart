@@ -73,6 +73,9 @@ export type AlertCategory =
 export interface NetworkNotification {
   id: string;
   recipientOrgId: string;
+  recipientOrgName?: string;
+  recipientPhone?: string;
+  recipientGstin?: string;
   recipientUserId?: string;
   type: NetworkNotificationType;
   category?: AlertCategory;
@@ -88,6 +91,9 @@ export interface NetworkNotification {
     senderOrgName?: string;
     senderOrgGstin?: string;
     senderOrgPhone?: string;
+    recipientPartyName?: string;
+    recipientPhone?: string;
+    recipientGstin?: string;
     invoiceNumber?: string;
     grandTotal?: number;
     itemsCount?: number;
