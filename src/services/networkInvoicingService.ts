@@ -39,6 +39,77 @@ export function normalizePhoneNumber(phone?: string | null): string {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
+// Managed Singleton Realtime Channel for B2B Network
+let b2bRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+
+export function getOrCreateB2BRealtimeChannel() {
+  if (typeof window === "undefined" || IS_TEST_ENV) return null;
+  if (!b2bRealtimeChannel) {
+    try {
+      b2bRealtimeChannel = supabase.channel("credsmart_b2b_network_realtime", {
+        config: { broadcast: { self: true, ack: false } },
+      });
+      b2bRealtimeChannel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[CredSmart B2B Realtime] Channel connected and ready");
+        }
+      });
+    } catch (e) {
+      console.warn("[CredSmart B2B Realtime] Init error:", e);
+    }
+  }
+  return b2bRealtimeChannel;
+}
+
+async function broadcastViaSupabase(event: string, payload: unknown) {
+  if (typeof window === "undefined" || IS_TEST_ENV) return;
+
+  try {
+    const channel = getOrCreateB2BRealtimeChannel();
+    if (!channel) return;
+
+    const doSend = async () => {
+      try {
+        await channel.send({
+          type: "broadcast",
+          event,
+          payload,
+        });
+        console.log(`[CredSmart B2B Realtime] Broadcast event '${event}' sent successfully`);
+      } catch (sendErr) {
+        console.warn(`[CredSmart B2B Realtime] Send warning:`, sendErr);
+      }
+    };
+
+    if (channel.state === "joined") {
+      await doSend();
+      return;
+    }
+
+    // If channel is closed or errored, initiate subscribe
+    if (channel.state === "closed" || channel.state === "errored") {
+      channel.subscribe();
+    }
+
+    // Wait up to 3 seconds for channel to join
+    const start = Date.now();
+    while (channel.state !== "joined" && Date.now() - start < 3000) {
+      await new Promise((r) => setTimeout(r, 60));
+    }
+
+    if (channel.state === "joined") {
+      await doSend();
+    } else {
+      console.warn(`[CredSmart B2B Realtime] Channel in state '${channel.state}', attempting best-effort send`);
+      try {
+        await channel.send({ type: "broadcast", event, payload });
+      } catch { /* empty */ }
+    }
+  } catch (err) {
+    console.warn("[CredSmart B2B Realtime] Broadcast catch error:", err);
+  }
+}
+
 function dispatchNetworkEvents(type: string, payload?: unknown) {
   if (typeof window !== "undefined") {
     window.dispatchEvent(
@@ -56,44 +127,14 @@ function dispatchNetworkEvents(type: string, payload?: unknown) {
     }
   }
 
-  // Handle Supabase Realtime Broadcast dynamically with self: true
+  // Handle Supabase Realtime Broadcast dynamically across all devices & browsers
   if (typeof window !== "undefined" && !IS_TEST_ENV) {
-    try {
-      const channel = supabase.channel("credsmart_b2b_network_realtime", {
-        config: { broadcast: { self: true, ack: false } },
-      });
-
-      const doSend = () => {
-        try {
-          channel.send({
-            type: "broadcast",
-            event: type,
-            payload,
-          }).catch((err) => {
-            console.warn("B2B Realtime send warning:", err);
-          });
-        } catch (e) {
-          console.warn("B2B Realtime send sync error:", e);
-        }
-      };
-
-      if (channel.state === "joined") {
-        doSend();
-      } else {
-        channel.subscribe((status) => {
-          if (status === "SUBSCRIBED") {
-            doSend();
-          }
-        });
-      }
-    } catch (err) {
-      console.warn("B2B Realtime dispatch error:", err);
-    }
+    broadcastViaSupabase(type, payload);
   }
 }
 
 
-// Check if a business name matches another business name (exact or normalized substring)
+// Check if a business name matches another business name (exact or normalized substring or word match)
 export function isBusinessNameMatch(nameA?: string | null, nameB?: string | null): boolean {
   if (!nameA || !nameB) return false;
   const cleanA = nameA.trim().toLowerCase().replace(/[^\w\s]/g, "");
@@ -103,6 +144,14 @@ export function isBusinessNameMatch(nameA?: string | null, nameB?: string | null
   // If one name contains the other (for names with length >= 3)
   if (cleanA.length >= 3 && cleanB.length >= 3) {
     if (cleanA.includes(cleanB) || cleanB.includes(cleanA)) return true;
+  }
+  // Check individual words with length >= 3 (e.g. "Rudra Sharma" vs "Rudra")
+  const wordsA = cleanA.split(/\s+/).filter((w) => w.length >= 3);
+  const wordsB = cleanB.split(/\s+/).filter((w) => w.length >= 3);
+  for (const wa of wordsA) {
+    for (const wb of wordsB) {
+      if (wa === wb) return true;
+    }
   }
   return false;
 }
@@ -138,8 +187,25 @@ export function isInvoiceForOrg(
     return true;
   }
 
-  if (userEmail && inv.recipientEmail && inv.recipientEmail.trim().toLowerCase() === userEmail.trim().toLowerCase()) {
-    return true;
+  if (userEmail) {
+    const cleanUserEmail = userEmail.trim().toLowerCase();
+    if (inv.recipientEmail && inv.recipientEmail.trim().toLowerCase() === cleanUserEmail) {
+      return true;
+    }
+    if (isBusinessNameMatch(inv.recipientOrgName, cleanUserEmail)) {
+      return true;
+    }
+    const emailPrefix = cleanUserEmail.split("@")[0];
+    if (emailPrefix && emailPrefix.length >= 3 && isBusinessNameMatch(inv.recipientOrgName, emailPrefix)) {
+      return true;
+    }
+  }
+
+  if (cleanPhone && inv.recipientOrgName) {
+    const orgNamePhone = normalizePhoneNumber(inv.recipientOrgName);
+    if (orgNamePhone && orgNamePhone === cleanPhone) {
+      return true;
+    }
   }
 
   return false;
@@ -155,20 +221,22 @@ export function isNotificationForOrg(
   userEmail?: string,
   userPhone?: string
 ): boolean {
-  if (!orgId) return false;
+  if (!orgId || !n) return false;
   if (n.recipientOrgId === orgId) return true;
+
+  const hasRecipientOrgId = typeof n.recipientOrgId === "string" && n.recipientOrgId.length > 0;
 
   const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
   if (cleanPhone) {
     if (n.recipientPhone && normalizePhoneNumber(n.recipientPhone) === cleanPhone) return true;
-    if (n.recipientOrgId.includes(cleanPhone)) return true;
+    if (hasRecipientOrgId && n.recipientOrgId.includes(cleanPhone)) return true;
     if (n.data?.recipientPhone && normalizePhoneNumber(n.data.recipientPhone as string) === cleanPhone) return true;
   }
 
   const cleanGstin = (orgGstin || "").toUpperCase().trim();
   if (cleanGstin) {
     if (n.recipientGstin && n.recipientGstin.toUpperCase().trim() === cleanGstin) return true;
-    if (n.recipientOrgId.includes(cleanGstin)) return true;
+    if (hasRecipientOrgId && n.recipientOrgId.includes(cleanGstin)) return true;
     if (n.data?.recipientGstin && (n.data.recipientGstin as string).toUpperCase().trim() === cleanGstin) return true;
   }
 
@@ -177,17 +245,27 @@ export function isNotificationForOrg(
   if (userName && isBusinessNameMatch(n.recipientOrgName, userName)) return true;
   if (n.data?.recipientPartyName && isBusinessNameMatch(n.data.recipientPartyName as string, orgName)) return true;
   if (userName && n.data?.recipientPartyName && isBusinessNameMatch(n.data.recipientPartyName as string, userName)) return true;
-  if (n.recipientOrgId.startsWith("party_match_")) {
+
+  if (hasRecipientOrgId && n.recipientOrgId.startsWith("party_match_")) {
     const matchedKey = n.recipientOrgId.replace("party_match_", "");
     if (isBusinessNameMatch(matchedKey, orgName)) return true;
     if (userName && isBusinessNameMatch(matchedKey, userName)) return true;
   }
 
+  if (userEmail) {
+    const cleanUserEmail = userEmail.trim().toLowerCase();
+    if (isBusinessNameMatch(n.recipientOrgName, cleanUserEmail)) return true;
+    const emailPrefix = cleanUserEmail.split("@")[0];
+    if (emailPrefix && emailPrefix.length >= 3 && isBusinessNameMatch(n.recipientOrgName, emailPrefix)) {
+      return true;
+    }
+  }
+
   return false;
 }
 
-// Fast timeout wrapper to prevent hanging on network/offline Supabase calls
-async function safeDbCall<T>(promiseOrFn: Promise<T> | (() => Promise<T>), timeoutMs = 800): Promise<T | null> {
+// Fast timeout wrapper to prevent hanging on network/offline Supabase calls (4000ms default for reliable remote DB roundtrips)
+async function safeDbCall<T>(promiseOrFn: Promise<T> | (() => Promise<T>), timeoutMs = 4000): Promise<T | null> {
   if (IS_TEST_ENV) {
     return null;
   }
@@ -377,6 +455,15 @@ export const networkInvoicingService = {
     // 2. Query storefront_settings (public platform directory of all registered stores)
     try {
       const sfResult = await safeDbCall(async () => {
+        if (cleanPhone) {
+          const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
+          const { data } = await supabase
+            .from("storefront_settings")
+            .select("organization_id, store_name, contact_phone, address")
+            .ilike("contact_phone", `%${digits10}%`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+        }
         if (cleanName && cleanName.length >= 3) {
           const { data } = await supabase
             .from("storefront_settings")
@@ -384,17 +471,20 @@ export const networkInvoicingService = {
             .ilike("store_name", `%${cleanName}%`)
             .limit(1);
           if (data && data.length > 0) return data[0];
-        }
-        if (cleanPhone) {
-          const { data } = await supabase
-            .from("storefront_settings")
-            .select("organization_id, store_name, contact_phone, address")
-            .ilike("contact_phone", `%${cleanPhone}%`)
-            .limit(1);
-          if (data && data.length > 0) return data[0];
+
+          // Try matching individual words from the name (length >= 3)
+          const words = cleanName.split(/\s+/).filter((w) => w.length >= 3);
+          for (const word of words) {
+            const { data: wordData } = await supabase
+              .from("storefront_settings")
+              .select("organization_id, store_name, contact_phone, address")
+              .ilike("store_name", `%${word}%`)
+              .limit(1);
+            if (wordData && wordData.length > 0) return wordData[0];
+          }
         }
         return null;
-      }, 700);
+      });
 
       if (sfResult && sfResult.organization_id) {
         return {
@@ -409,7 +499,7 @@ export const networkInvoicingService = {
       console.warn("Storefront directory lookup notice:", err);
     }
 
-    // 3. Query Supabase organizations table (with fast timeout safe call)
+    // 3. Query Supabase organizations table (with safe timeout)
     try {
       const dbResult = await safeDbCall(async () => {
         const query = supabase.from("organizations").select("*");
@@ -422,7 +512,8 @@ export const networkInvoicingService = {
           if (data) return data;
         }
         if (cleanPhone) {
-          const { data } = await supabase.from("organizations").select("*").ilike("phone", `%${cleanPhone}%`).maybeSingle();
+          const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
+          const { data } = await supabase.from("organizations").select("*").ilike("phone", `%${digits10}%`).maybeSingle();
           if (data) return data;
         }
         if (cleanEmail) {
@@ -434,7 +525,7 @@ export const networkInvoicingService = {
           if (data) return data;
         }
         return null;
-      }, 700);
+      });
 
       if (dbResult) {
         return {
@@ -607,7 +698,7 @@ export const networkInvoicingService = {
       updated_at: nowIso,
     };
 
-    // 1. Save to Supabase network_invoices table (if available with safe timeout)
+    // 1. Save to Supabase network_invoices table (with safe timeout)
     await safeDbCall(async () => {
       return supabase.from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({ // eslint-disable-line @typescript-eslint/no-explicit-any
         id: networkInvoiceId,
@@ -638,7 +729,7 @@ export const networkInvoicingService = {
         terms: networkInvoice.terms || "",
         status: "pending",
       } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */); // eslint-disable-line @typescript-eslint/no-explicit-any
-    }, 600);
+    });
 
     // 2. Save into Local Storage
     const existingInvoices = this.getLocalInvoices();
@@ -685,6 +776,9 @@ export const networkInvoicingService = {
       supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
         id: generateSafeUuid(),
         recipient_org_id: targetRecipientOrgId.startsWith("party_match_") ? null : targetRecipientOrgId,
+        recipient_phone: notification.recipientPhone || "",
+        recipient_gstin: notification.recipientGstin || "",
+        recipient_org_name: notification.recipientOrgName || "",
         type: notification.type,
         title: notification.title,
         message: notification.message,
@@ -693,8 +787,7 @@ export const networkInvoicingService = {
         network_invoice_id: notification.networkInvoiceId,
         data: notification.data,
         created_at: notification.created_at,
-      } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
-      600
+      } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
     );
 
     const existingNotifs = this.getLocalNotifications();
@@ -761,7 +854,7 @@ export const networkInvoicingService = {
           .select("*")
           .or(orClauses.join(","))
           .order("created_at", { ascending: false });
-      }, 500);
+      });
 
       const dbInvoices = dbRes?.data;
       const error = dbRes?.error;
@@ -849,12 +942,13 @@ export const networkInvoicingService = {
     if (!orgId) return [];
     const alerts: NetworkNotification[] = [];
     const nowIso = new Date().toISOString();
+    const todayTimestamp = new Date(new Date().toISOString().split("T")[0]).getTime();
 
     // 1. Check for Low Stock items
     try {
       const localProducts = getLocalCachedProducts(orgId);
       for (const p of localProducts) {
-        const minAlert = Number(p.tags?.min_stock_alert ?? p.minStockAlert ?? 5);
+        const minAlert = Number(p.tags?.min_stock_alert ?? p.minStockAlert ?? p.minStock ?? 5);
         const currentStock = Number(p.stock ?? p.currentStock ?? 0);
         if (currentStock <= minAlert) {
           alerts.push({
@@ -880,10 +974,9 @@ export const networkInvoicingService = {
       }
     } catch { /* empty */ }
 
-    // 2. Check for Overdue Customer Invoices / Outstanding Udhar
+    // 2. Check for Overdue Customer Sales Invoices in this Organization
     try {
       const salesDocs = documentsService.getLocalDocuments(orgId, "sales_invoice");
-      const todayTimestamp = new Date().setHours(0, 0, 0, 0);
 
       for (const doc of salesDocs) {
         if (doc.status !== "paid" && Number(doc.balanceDue || 0) > 0 && doc.dueDate) {
@@ -966,7 +1059,7 @@ export const networkInvoicingService = {
     // Auto-heal matched local notifications
     let needsNotifSave = false;
     matched.forEach((n) => {
-      if (n.recipientOrgId !== orgId && n.recipientOrgId.startsWith("party_match_")) {
+      if (n.recipientOrgId !== orgId && n.recipientOrgId?.startsWith("party_match_")) {
         n.recipientOrgId = orgId;
         needsNotifSave = true;
       }
@@ -976,30 +1069,17 @@ export const networkInvoicingService = {
     }
 
     try {
-      const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
-      const cleanGstin = (orgGstin || "").toUpperCase().trim();
-      const orClauses = [`recipient_org_id.eq.${orgId}`];
-      if (cleanPhone) orClauses.push(`recipient_phone.eq.${cleanPhone}`);
-      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
-      if (orgName && orgName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
-      }
-      if (userName && userName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
-      }
-
+      // 1. Primary safe DB fetch by recipient_org_id
       const dbRes = await safeDbCall(async () => {
         return supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .select("*")
-          .or(orClauses.join(","))
+          .eq("recipient_org_id", orgId)
           .order("created_at", { ascending: false });
-      }, 500);
+      });
 
       const dbNotifications = dbRes?.data;
-      const error = dbRes?.error;
-
-      if (!error && dbNotifications) {
+      if (dbNotifications && Array.isArray(dbNotifications)) {
         for (const row of dbNotifications as any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
           if (!matched.some((notification) => notification.id === row.id)) {
             const mappedNotif: NetworkNotification = {
@@ -1029,7 +1109,55 @@ export const networkInvoicingService = {
       console.warn("Supabase network_notifications fetch notice:", err);
     }
 
-    // Merge dynamic real-time store alerts (Low stock, Payment dues, Compliance)
+    // 2. Synthesize inward notifications for any inward network invoices matching this org
+    try {
+      const allInvoices = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
+      for (const inv of allInvoices) {
+        const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
+        if (isRecipient && inv.senderOrgId !== orgId) {
+          const alreadyHasNotif = matched.some(
+            (n) => n.networkInvoiceId === inv.id || n.id === `notif_inv_${inv.id}`
+          );
+          if (!alreadyHasNotif) {
+            const synthesizedNotif: NetworkNotification = {
+              id: `notif_inv_${inv.id}`,
+              recipientOrgId: orgId,
+              recipientOrgName: inv.recipientOrgName || orgName,
+              recipientPhone: inv.recipientPhone,
+              recipientGstin: inv.recipientGstin,
+              type: "sale_invoice_received",
+              category: "inward",
+              title: `Sale was Created by ${inv.senderOrgName} on your name`,
+              message: `${inv.senderOrgName} has created Sales Invoice #${inv.invoiceNumber} for ₹${Number(inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })} on your name. Review items, taxes and click Approve to add directly into your Purchases.`,
+              status: inv.status === "pending" ? "unread" : "read",
+              actionStatus: inv.status,
+              networkInvoiceId: inv.id,
+              actionUrl: "/purchases?tab=purchase_invoice",
+              actionLabel: "Review & Inward",
+              data: {
+                senderOrgId: inv.senderOrgId,
+                senderOrgName: inv.senderOrgName,
+                senderOrgGstin: inv.senderOrgGstin,
+                senderOrgPhone: inv.senderOrgPhone,
+                recipientPartyName: inv.recipientOrgName,
+                recipientPhone: inv.recipientPhone,
+                recipientGstin: inv.recipientGstin,
+                invoiceNumber: inv.invoiceNumber,
+                grandTotal: inv.grandTotal,
+                itemsCount: inv.items?.length || 0,
+                docDate: inv.docDate,
+              },
+              created_at: inv.created_at,
+            };
+            matched.push(synthesizedNotif);
+          }
+        }
+      }
+    } catch (synthErr) {
+      console.warn("Notice synthesizing inward invoice notifications:", synthErr);
+    }
+
+    // 3. Merge dynamic real-time store alerts (Low stock, Payment dues, Compliance)
     const dynamicAlerts = this.getRealtimeBusinessAlerts(orgId);
     for (const da of dynamicAlerts) {
       if (!matched.some((n) => n.id === da.id)) {
@@ -1341,7 +1469,7 @@ export const networkInvoicingService = {
             updated_at: nowIso,
           } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
           .eq("id", networkInvoiceId);
-      }, 600);
+      });
 
       // 8. Update Recipient Notification actionStatus to 'approved'
       const allNotifs = this.getLocalNotifications();
@@ -1361,8 +1489,7 @@ export const networkInvoicingService = {
         supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({ status: "read", action_status: "approved" })
-          .eq("network_invoice_id", networkInvoiceId),
-        600
+          .eq("network_invoice_id", networkInvoiceId)
       );
 
       // 9. Add Confirmation Notification for Person A (Sender)
@@ -1403,8 +1530,7 @@ export const networkInvoicingService = {
           network_invoice_id: inv.id,
           data: senderConfirmationNotif.data,
           created_at: nowIso,
-        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
-        600
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
       );
 
       // 10. Broadcast events across tabs & windows
@@ -1490,8 +1616,7 @@ export const networkInvoicingService = {
         supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({ status: "read", action_status: "rejected" })
-          .eq("network_invoice_id", networkInvoiceId),
-        600
+          .eq("network_invoice_id", networkInvoiceId)
       );
 
       // Notify Person A (Sender) about the rejection
@@ -1531,8 +1656,7 @@ export const networkInvoicingService = {
           network_invoice_id: inv.id,
           data: senderRejectNotif.data,
           created_at: nowIso,
-        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */),
-        600
+        } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
       );
 
       // Broadcast events
@@ -1609,7 +1733,7 @@ export const networkInvoicingService = {
           } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
           .eq("sender_org_id", senderOrgId)
           .eq("invoice_number", invoiceNumber);
-      }, 600);
+      });
 
       // Update Supabase network_notifications table
       await safeDbCall(() => {
@@ -1619,7 +1743,7 @@ export const networkInvoicingService = {
             action_status: "cancelled",
           } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
           .eq("data->>invoiceNumber", invoiceNumber);
-      }, 600);
+      });
 
       dispatchNetworkEvents("INVOICE_CANCELLED", { invoiceNumber, senderOrgId });
       return true;

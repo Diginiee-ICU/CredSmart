@@ -1,10 +1,59 @@
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from "react";
 import { NetworkInvoice, NetworkNotification } from "@/types/networkInvoicing";
-import { networkInvoicingService } from "@/services/networkInvoicingService";
-import { useOrganization } from "@/hooks/useOrganization";
+import { networkInvoicingService, getOrCreateB2BRealtimeChannel } from "@/services/networkInvoicingService";
+import { useOrganization, OrgData } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+function playChimeAndVibrate() {
+  // 1. Web Audio API synthesized pleasant 2-tone chime (Instant, offline, zero network latency)
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext; // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Tone 1: 587.33 Hz (D5)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0.18, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.28);
+
+      // Tone 2: 880.00 Hz (A5)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(880, now + 0.1);
+      gain2.gain.setValueAtTime(0.22, now + 0.1);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.1);
+      osc2.stop(now + 0.45);
+    }
+  } catch { /* empty */ }
+
+  // 2. Audio file fallback
+  try {
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  } catch { /* empty */ }
+
+  // 3. Mobile Haptic feedback
+  try {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate([100, 50, 100]);
+    }
+  } catch { /* empty */ }
+}
 
 interface NetworkInvoicesContextType {
   pendingInvoices: NetworkInvoice[];
@@ -55,8 +104,16 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   const userEmail = user?.email || undefined;
   const userPhone = user?.phone || (user?.user_metadata?.phone as string) || undefined;
 
+  // Keep live references so realtime handlers always have access without tearing down the WebSocket
+  const orgRef = useRef<OrgData | null>(org);
+  orgRef.current = org;
+
+  const userRef = useRef({ userName, userEmail, userPhone });
+  userRef.current = { userName, userEmail, userPhone };
+
   const loadData = useCallback(async () => {
-    if (!orgId || !org) {
+    const currentOrg = orgRef.current;
+    if (!orgId || !currentOrg) {
       setPendingInvoices([]);
       setAllInvoices([]);
       setNotifications([]);
@@ -64,10 +121,11 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      const u = userRef.current;
       const [pending, all, notifs] = await Promise.all([
-        networkInvoicingService.getPendingInvoicesForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
-        networkInvoicingService.getInvoicesForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
-        networkInvoicingService.getNotificationsForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
+        networkInvoicingService.getPendingInvoicesForOrg(orgId, currentOrg.phone, currentOrg.gstin, currentOrg.name, u.userName, u.userEmail, u.userPhone),
+        networkInvoicingService.getInvoicesForOrg(orgId, currentOrg.phone, currentOrg.gstin, currentOrg.name, u.userName, u.userEmail, u.userPhone),
+        networkInvoicingService.getNotificationsForOrg(orgId, currentOrg.phone, currentOrg.gstin, currentOrg.name, u.userName, u.userEmail, u.userPhone),
       ]);
 
       setPendingInvoices(pending);
@@ -76,7 +134,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn("Failed to load network invoice notifications:", e);
     }
-  }, [orgId, org, userName, userEmail, userPhone]);
+  }, [orgId]);
 
   useEffect(() => {
     loadData();
@@ -103,77 +161,74 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     } catch { /* empty */ }
 
     // Listen to Supabase Realtime Broadcast across all devices & browsers globally
-    let realtimeSub: ReturnType<typeof supabase.channel> | null = null;
     const isTestEnv = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+    let b2bChannel: ReturnType<typeof supabase.channel> | null = null;
     if (!isTestEnv) {
       try {
-        realtimeSub = supabase.channel("credsmart_b2b_network_realtime", {
-          config: {
-            broadcast: { self: true },
-          },
-        });
-        realtimeSub
-          .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
-            const payload = eventPayload?.payload;
-            const networkInvoice: NetworkInvoice = payload?.networkInvoice;
-            const notification: NetworkNotification = payload?.notification;
+        b2bChannel = getOrCreateB2BRealtimeChannel();
+        if (b2bChannel) {
+          b2bChannel
+            .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
+              const payload = eventPayload?.payload;
+              const networkInvoice: NetworkInvoice = payload?.networkInvoice;
+              const notification: NetworkNotification = payload?.notification;
+              const currentOrg = orgRef.current;
 
-            if (!networkInvoice || !org) return;
+              if (!networkInvoice || !currentOrg) return;
 
-            // Check if invoice is addressed to this organization or user
-            const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
-              networkInvoice,
-              org.id,
-              org.phone,
-              org.gstin,
-              org.name,
-              userName,
-              userEmail,
-              userPhone
-            );
+              const u = userRef.current;
+              // Check if invoice is addressed to this organization or user
+              const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
+                networkInvoice,
+                currentOrg.id,
+                currentOrg.phone,
+                currentOrg.gstin,
+                currentOrg.name,
+                u.userName,
+                u.userEmail,
+                u.userPhone
+              );
 
-            if (isTargetRecipient) {
-              // Ingest immediately into local storage
-              networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, org.id);
+              if (isTargetRecipient) {
+                // Ingest immediately into local storage
+                networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
 
-              // Play alert sound & haptic vibration
-              try {
-                const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-                audio.volume = 0.6;
-                audio.play().catch(() => {});
-              } catch { /* empty */ }
+                // Play pleasant sound chime & haptic feedback
+                playChimeAndVibrate();
 
-              // Show real-time prominent toast notification
-              toast.info(`⚡ New Sales Invoice on your name!`, {
-                description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
-                duration: 8000,
-                action: {
-                  label: "Review & Inward",
-                  onClick: () => {
-                    window.dispatchEvent(
-                      new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
-                    );
+                // Show real-time actionable toast notification
+                toast.info(`⚡ New Sales Invoice on your name!`, {
+                  description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+                  duration: 9000,
+                  action: {
+                    label: "Review & Inward",
+                    onClick: () => {
+                      window.dispatchEvent(
+                        new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
+                      );
+                    },
                   },
-                },
-              });
+                });
 
+                loadData();
+              }
+            })
+            .on("broadcast", { event: "INVOICE_APPROVED" }, () => {
               loadData();
-            }
-          })
-          .on("broadcast", { event: "INVOICE_APPROVED" }, () => {
-            loadData();
-          })
-          .on("broadcast", { event: "INVOICE_REJECTED" }, () => {
-            loadData();
-          })
-          .on("broadcast", { event: "INVOICE_CANCELLED" }, () => {
-            loadData();
-          })
-          .subscribe();
-      } catch { /* empty */ }
+            })
+            .on("broadcast", { event: "INVOICE_REJECTED" }, () => {
+              loadData();
+            })
+            .on("broadcast", { event: "INVOICE_CANCELLED" }, () => {
+              loadData();
+            });
+        }
+      } catch (err) {
+        console.warn("B2B Realtime listener init error:", err);
+      }
     }
 
-    // Listen to Supabase Realtime for network_invoices (if connected)
+    // Listen to Supabase Realtime for network_invoices table changes (if connected)
     let sub: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null; // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       sub = supabase
@@ -194,18 +249,13 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("credsmart_org_changed", handleNetworkUpdate);
       window.removeEventListener("storage", handleNetworkUpdate);
       channel?.close();
-      if (realtimeSub) {
-        try {
-          supabase.removeChannel(realtimeSub);
-        } catch { /* empty */ }
-      }
       if (sub) {
         try {
           supabase.removeChannel(sub);
         } catch { /* empty */ }
       }
     };
-  }, [loadData, org]);
+  }, [loadData, orgId]);
 
   const approveInvoice = async (invoiceId: string): Promise<boolean> => {
     if (!org) {

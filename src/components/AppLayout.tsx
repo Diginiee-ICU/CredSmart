@@ -895,14 +895,6 @@ export default function AppLayout() {
         />
       )}
 
-      {/* Real-time Notifications & Inward B2B Alerts Center */}
-      <NotificationCenter
-        open={notifOpen}
-        onOpenChange={setNotifOpen}
-      />
-
-      {/* CredAlert Live Feature Intelligence Bubble */}
-      <FeatureBubbleNotification />
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-RIGHT ON DESKTOP) */}
