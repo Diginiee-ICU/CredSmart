@@ -22,6 +22,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Send,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ROUTE_PATHS } from "@/config/routes";
