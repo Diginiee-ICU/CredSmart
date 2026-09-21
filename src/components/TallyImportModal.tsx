@@ -152,8 +152,6 @@ export function TallyImportModal({
       (parseResult.journalVouchers?.length || 0)
     : 0;
 
-  if (!isOpen) return null;
-
   // ── File Handling ────────────────────────────────────────────────────────
 
   const handleFiles = async (fileList: FileList | File[]) => {
@@ -323,6 +321,8 @@ export function TallyImportModal({
   // ── Render ───────────────────────────────────────────────────────────────
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
