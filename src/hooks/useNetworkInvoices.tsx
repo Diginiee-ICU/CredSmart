@@ -139,8 +139,62 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadData();
 
+    // Centralized incoming invoice handler across all realtime transports
+    const handleIncomingInvoiceEvent = (
+      networkInvoice?: NetworkInvoice,
+      notification?: NetworkNotification
+    ) => {
+      const currentOrg = orgRef.current;
+      if (!networkInvoice || !currentOrg) return;
+
+      const u = userRef.current;
+      // Check if invoice is addressed to this organization or user
+      const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
+        networkInvoice,
+        currentOrg.id,
+        currentOrg.phone,
+        currentOrg.gstin,
+        currentOrg.name,
+        u.userName,
+        u.userEmail,
+        u.userPhone
+      );
+
+      // Only alert if we are the recipient and NOT the sender
+      if (isTargetRecipient && networkInvoice.senderOrgId !== currentOrg.id) {
+        // Ingest immediately into local storage
+        networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
+
+        // Play pleasant sound chime & haptic feedback
+        playChimeAndVibrate();
+
+        // Show real-time actionable toast notification
+        toast.info(`⚡ New Sales Invoice on your name!`, {
+          description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+          duration: 9000,
+          action: {
+            label: "Review & Inward",
+            onClick: () => {
+              window.dispatchEvent(
+                new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
+              );
+            },
+          },
+        });
+
+        loadData();
+      }
+    };
+
     // Listen to custom DOM events (cross-component sync)
-    const handleNetworkUpdate = () => {
+    const handleNetworkUpdate = (e?: Event) => {
+      const customEvent = e as CustomEvent<{ type?: string; payload?: any }>;
+      if (customEvent?.detail?.type === "INVOICE_CREATED") {
+        handleIncomingInvoiceEvent(
+          customEvent.detail.payload?.networkInvoice,
+          customEvent.detail.payload?.notification
+        );
+      }
       loadData();
     };
 
@@ -154,7 +208,13 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     try {
       if ("BroadcastChannel" in window) {
         channel = new BroadcastChannel("credsmart_network_channel");
-        channel.onmessage = () => {
+        channel.onmessage = (msg) => {
+          if (msg?.data?.type === "INVOICE_CREATED") {
+            handleIncomingInvoiceEvent(
+              msg.data.payload?.networkInvoice,
+              msg.data.payload?.notification
+            );
+          }
           loadData();
         };
       }
@@ -170,48 +230,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
           b2bChannel
             .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
               const payload = eventPayload?.payload;
-              const networkInvoice: NetworkInvoice = payload?.networkInvoice;
-              const notification: NetworkNotification = payload?.notification;
-              const currentOrg = orgRef.current;
-
-              if (!networkInvoice || !currentOrg) return;
-
-              const u = userRef.current;
-              // Check if invoice is addressed to this organization or user
-              const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
-                networkInvoice,
-                currentOrg.id,
-                currentOrg.phone,
-                currentOrg.gstin,
-                currentOrg.name,
-                u.userName,
-                u.userEmail,
-                u.userPhone
-              );
-
-              if (isTargetRecipient) {
-                // Ingest immediately into local storage
-                networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
-
-                // Play pleasant sound chime & haptic feedback
-                playChimeAndVibrate();
-
-                // Show real-time actionable toast notification
-                toast.info(`⚡ New Sales Invoice on your name!`, {
-                  description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
-                  duration: 9000,
-                  action: {
-                    label: "Review & Inward",
-                    onClick: () => {
-                      window.dispatchEvent(
-                        new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
-                      );
-                    },
-                  },
-                });
-
-                loadData();
-              }
+              handleIncomingInvoiceEvent(payload?.networkInvoice, payload?.notification);
             })
             .on("broadcast", { event: "INVOICE_APPROVED" }, () => {
               loadData();
@@ -222,21 +241,117 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
             .on("broadcast", { event: "INVOICE_CANCELLED" }, () => {
               loadData();
             });
+
+          if (b2bChannel.state !== "joined" && b2bChannel.state !== "joining") {
+            b2bChannel.subscribe();
+          }
         }
       } catch (err) {
         console.warn("B2B Realtime listener init error:", err);
       }
     }
 
-    // Listen to Supabase Realtime for network_invoices table changes (if connected)
-    let sub: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+    // Listen to Supabase Realtime for network_invoices and network_notifications table changes
+    let subInvoices: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null;
+    let subNotifs: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null;
     try {
-      sub = supabase
+      subInvoices = supabase
         .channel("public:network_invoices")
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "network_invoices" },
-          () => {
+          (changePayload) => {
+            if (changePayload.eventType === "INSERT" && changePayload.new) {
+              const row = changePayload.new as any;
+              const mapped: NetworkInvoice = {
+                id: row.id,
+                senderOrgId: row.sender_org_id,
+                senderOrgName: row.sender_org_name,
+                senderOrgPhone: row.sender_org_phone,
+                senderOrgEmail: row.sender_org_email,
+                senderOrgGstin: row.sender_org_gstin,
+                senderOrgAddress: row.sender_org_address,
+                senderUserId: row.sender_user_id,
+                recipientOrgId: row.recipient_org_id,
+                recipientOrgName: row.recipient_org_name,
+                recipientPhone: row.recipient_phone,
+                recipientEmail: row.recipient_email,
+                recipientGstin: row.recipient_gstin,
+                recipientAddress: row.recipient_address,
+                invoiceNumber: row.invoice_number,
+                docDate: row.doc_date,
+                dueDate: row.due_date,
+                paymentTerms: row.payment_terms,
+                paymentMethod: row.payment_method,
+                items: row.items || [],
+                subtotal: Number(row.subtotal || 0),
+                discountTotal: Number(row.discount_total || 0),
+                taxableTotal: Number(row.subtotal || 0) - Number(row.discount_total || 0),
+                cgstTotal: Number(row.tax_total || 0) / 2,
+                sgstTotal: Number(row.tax_total || 0) / 2,
+                igstTotal: 0,
+                taxTotal: Number(row.tax_total || 0),
+                grandTotal: Number(row.grand_total || 0),
+                notes: row.notes,
+                terms: row.terms,
+                status: row.status,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+              };
+              handleIncomingInvoiceEvent(mapped);
+            }
+            loadData();
+          }
+        )
+        .subscribe();
+
+      subNotifs = supabase
+        .channel("public:network_notifications")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "network_notifications" },
+          (changePayload) => {
+            if (changePayload.eventType === "INSERT" && changePayload.new) {
+              const row = changePayload.new as any;
+              const currentOrg = orgRef.current;
+              const u = userRef.current;
+              if (currentOrg) {
+                const mappedNotif: NetworkNotification = {
+                  id: row.id,
+                  recipientOrgId: row.recipient_org_id,
+                  recipientOrgName: row.recipient_org_name,
+                  recipientPhone: row.recipient_phone,
+                  recipientGstin: row.recipient_gstin,
+                  type: row.type,
+                  category: row.type?.startsWith("sale_invoice_") ? "inward" : "system",
+                  title: row.title,
+                  message: row.message,
+                  status: row.status,
+                  actionStatus: row.action_status,
+                  networkInvoiceId: row.network_invoice_id,
+                  data: row.data,
+                  created_at: row.created_at,
+                };
+                if (
+                  networkInvoicingService.isNotificationForOrg(
+                    mappedNotif,
+                    currentOrg.id,
+                    currentOrg.phone,
+                    currentOrg.gstin,
+                    currentOrg.name,
+                    u.userName,
+                    u.userEmail,
+                    u.userPhone
+                  )
+                ) {
+                  playChimeAndVibrate();
+                  toast.info(mappedNotif.title, {
+                    description: mappedNotif.message,
+                    duration: 9000,
+                  });
+                }
+              }
+            }
             loadData();
           }
         )
@@ -249,9 +364,14 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("credsmart_org_changed", handleNetworkUpdate);
       window.removeEventListener("storage", handleNetworkUpdate);
       channel?.close();
-      if (sub) {
+      if (subInvoices) {
         try {
-          supabase.removeChannel(sub);
+          supabase.removeChannel(subInvoices);
+        } catch { /* empty */ }
+      }
+      if (subNotifs) {
+        try {
+          supabase.removeChannel(subNotifs);
         } catch { /* empty */ }
       }
     };

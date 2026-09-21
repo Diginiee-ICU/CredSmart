@@ -88,7 +88,7 @@ export default function CustomerLedger() {
       // Inverted so newest is first in the UI table
       setTransactions([...reconResult.transactions].reverse());
     } catch (err: unknown) {
-      toast({ title: "Error fetching ledger", description: err.message, variant: "destructive" });
+      toast({ title: "Error fetching ledger", description: (err as any)?.message || "An error occurred", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,50 @@ export default function CustomerLedger() {
 
   useEffect(() => {
     fetchLedger();
-  }, [fetchLedger]);
+
+    // Real-time synchronization for ledger updates
+    const handleLedgerUpdate = () => {
+      fetchLedger();
+    };
+
+    window.addEventListener("credsmart_documents_updated", handleLedgerUpdate);
+    window.addEventListener("credsmart:parties_updated", handleLedgerUpdate);
+    window.addEventListener("credsmart_network_update", handleLedgerUpdate);
+
+    // Supabase Realtime channel for instant multi-user sync
+    let channel: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = null;
+    try {
+      channel = supabase
+        .channel(`ledger_realtime_${id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "credit_transactions", filter: `party_id=eq.${id}` },
+          () => fetchLedger()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "sales", filter: `customer_id=eq.${id}` },
+          () => fetchLedger()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "customers", filter: `id=eq.${id}` },
+          () => fetchLedger()
+        )
+        .subscribe();
+    } catch { /* empty */ }
+
+    return () => {
+      window.removeEventListener("credsmart_documents_updated", handleLedgerUpdate);
+      window.removeEventListener("credsmart:parties_updated", handleLedgerUpdate);
+      window.removeEventListener("credsmart_network_update", handleLedgerUpdate);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch { /* empty */ }
+      }
+    };
+  }, [fetchLedger, id]);
 
   const currentBalance = reconciliation ? reconciliation.calculatedBalance : 0;
 
@@ -242,15 +285,6 @@ export default function CustomerLedger() {
             className="rounded-xl font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs h-9 cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" /> WhatsApp Statement
-          </Button>
-
-          <Button
-            onClick={handleDownloadCSV}
-            variant="outline"
-            size="sm"
-            className="rounded-xl font-semibold gap-1.5 shadow-xs border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-xs h-9"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-600" /> Export CSV
           </Button>
 
           {/* Print Button */}

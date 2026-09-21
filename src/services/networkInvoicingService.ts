@@ -49,11 +49,6 @@ export function getOrCreateB2BRealtimeChannel() {
       b2bRealtimeChannel = supabase.channel("credsmart_b2b_network_realtime", {
         config: { broadcast: { self: true, ack: false } },
       });
-      b2bRealtimeChannel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          console.log("[CredSmart B2B Realtime] Channel connected and ready");
-        }
-      });
     } catch (e) {
       console.warn("[CredSmart B2B Realtime] Init error:", e);
     }
@@ -839,7 +834,10 @@ export const networkInvoicingService = {
     // Merge with Supabase network_invoices
     try {
       const orClauses = [`recipient_org_id.eq.${orgId}`, `sender_org_id.eq.${orgId}`];
-      if (cleanPhone) orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+      if (cleanPhone) {
+        orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+        orClauses.push(`recipient_phone.ilike.%${cleanPhone}%`);
+      }
       if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
       if (orgName && orgName.trim().length >= 3) {
         orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
@@ -907,6 +905,14 @@ export const networkInvoicingService = {
             !matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)
           ) {
             matchedLocal.push(mapped);
+            if (mapped.senderOrgId !== orgId && (!row.recipient_org_id || row.recipient_org_id !== orgId)) {
+              safeDbCall(() =>
+                supabase
+                  .from("network_invoices" as any)
+                  .update({ recipient_org_id: orgId } as any)
+                  .eq("id", row.id)
+              );
+            }
           }
         }
       }
@@ -1069,12 +1075,27 @@ export const networkInvoicingService = {
     }
 
     try {
-      // 1. Primary safe DB fetch by recipient_org_id
+      // 1. Primary safe DB fetch by recipient_org_id, phone, gstin, or name
+      const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
+      const cleanGstin = (orgGstin || "").toUpperCase().trim();
+      const orClauses = [`recipient_org_id.eq.${orgId}`];
+      if (cleanPhone) {
+        orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+        orClauses.push(`recipient_phone.ilike.%${cleanPhone}%`);
+      }
+      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
+      if (orgName && orgName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
+      }
+      if (userName && userName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
+      }
+
       const dbRes = await safeDbCall(async () => {
         return supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .select("*")
-          .eq("recipient_org_id", orgId)
+          .or(orClauses.join(","))
           .order("created_at", { ascending: false });
       });
 
@@ -1101,6 +1122,15 @@ export const networkInvoicingService = {
             };
             if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) {
               matched.push(mappedNotif);
+              // Auto-heal DB row recipient_org_id if it was null or placeholder
+              if (!row.recipient_org_id || row.recipient_org_id !== orgId) {
+                safeDbCall(() =>
+                  supabase
+                    .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+                    .update({ recipient_org_id: orgId } as any)
+                    .eq("id", row.id)
+                );
+              }
             }
           }
         }
@@ -1928,9 +1958,12 @@ export const networkInvoicingService = {
     orgId: string,
     orgPhone?: string,
     orgGstin?: string,
-    orgName?: string
+    orgName?: string,
+    userName?: string,
+    userEmail?: string,
+    userPhone?: string
   ): boolean {
-    return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
+    return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
   },
 
   isNotificationForOrg(
@@ -1938,9 +1971,12 @@ export const networkInvoicingService = {
     orgId: string,
     orgPhone?: string,
     orgGstin?: string,
-    orgName?: string
+    orgName?: string,
+    userName?: string,
+    userEmail?: string,
+    userPhone?: string
   ): boolean {
-    return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName);
+    return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
   },
 
   ingestIncomingNetworkInvoice(
