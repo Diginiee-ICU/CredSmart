@@ -183,11 +183,14 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promis
   } catch (err: unknown) {
     const latencyMs = Math.round(performance.now() - start);
     const msg = err instanceof Error ? err.message : String(err);
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
     return {
       online: false,
       latencyMs,
       error: msg.includes("abort")
         ? "Connection timed out. Ensure Tally Prime is running and ODBC/HTTP Server is enabled on port 9000."
+        : isHttps
+        ? "Browser Security Restriction: Your browser blocks HTTPS web pages from directly calling local HTTP port 9000 (Chrome CORS/Private Network Access policy). Use 1-Click File Upload, Desktop Sync Daemon, or TDL Add-on."
         : "Cannot reach local Tally server directly from browser (due to CORS/Private Network restrictions or Tally is closed). Use the Desktop Sync Daemon or TDL Add-on.",
     };
   }

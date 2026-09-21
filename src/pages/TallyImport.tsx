@@ -80,8 +80,8 @@ export default function TallyImport() {
   const { orgId } = useOrganization();
   const { user } = useAuth();
 
-  // Top-Level Mode: Automated Background Sync vs 1-Click File Upload
-  const [activeMode, setActiveMode] = useState<"auto_sync" | "file_upload">("auto_sync");
+  // Top-Level Mode: 1-Click File Upload (Instant) vs Automated Background Sync
+  const [activeMode, setActiveMode] = useState<"auto_sync" | "file_upload">("file_upload");
 
   // ── Auto-Sync State ────────────────────────────────────────────────────────
   const [syncConfig, setSyncConfig] = useState<SyncConfig>(() => getSyncConfig(orgId || "default"));
@@ -1107,6 +1107,23 @@ export default function TallyImport() {
           <div className="flex min-w-0 flex-1 sm:flex-none items-center p-1 rounded-xl bg-muted/80 border border-border overflow-x-auto">
             <button
               type="button"
+              onClick={() => setActiveMode("file_upload")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                activeMode === "file_upload"
+                  ? "bg-card text-foreground shadow-xs border border-border text-primary font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Upload className="w-3.5 h-3.5 text-primary" />
+              <span>1-Click File Upload</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 font-black">
+                INSTANT
+              </span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setActiveMode("auto_sync")}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
@@ -1116,24 +1133,7 @@ export default function TallyImport() {
               )}
             >
               <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" />
-              <span>Auto-Sync (No Files)</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 font-black">
-                LIVE
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMode("file_upload")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
-                activeMode === "file_upload"
-                  ? "bg-card text-foreground shadow-xs border border-border text-primary font-black"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>1-Click File Upload</span>
+              <span>Automated Sync (TDL / Daemon)</span>
             </button>
           </div>
 
@@ -1225,40 +1225,107 @@ export default function TallyImport() {
               {probeResult && !isLiveSyncing && (
                 <div
                   className={cn(
-                    "mt-6 p-4 rounded-2xl border flex items-center justify-between gap-4 text-xs",
+                    "mt-6 p-5 rounded-2xl border flex flex-col gap-4 text-xs shadow-xs",
                     probeResult.online
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
-                      : "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200"
+                      : "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100"
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    {probeResult.online ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-bold">
-                        {probeResult.online
-                          ? `Local Tally Active: ${probeResult.companyName || "Connected"} (${probeResult.latencyMs}ms latency)`
-                          : "Direct Browser Probe Notice"}
-                      </p>
-                      <p className="text-[11px] opacity-90 mt-0.5">
-                        {probeResult.online
-                          ? "Direct HTTP link verified on port 9000. Ready for automated extraction."
-                          : probeResult.error}
-                      </p>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      {probeResult.online ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      )}
+                      <div className="space-y-1">
+                        <p className="font-bold text-sm">
+                          {probeResult.online
+                            ? `Local Tally Active: ${probeResult.companyName || "Connected"} (${probeResult.latencyMs}ms latency)`
+                            : "Browser Security Notice (HTTPS → Localhost)"}
+                        </p>
+                        <p className="text-xs text-muted-foreground opacity-90 leading-relaxed">
+                          {probeResult.online
+                            ? "Direct HTTP link verified on port 9000. Ready for automated extraction."
+                            : probeResult.error}
+                        </p>
+                      </div>
                     </div>
+
+                    {!probeResult.online && (
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+                        <Button
+                          size="sm"
+                          onClick={() => setActiveMode("file_upload")}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer shadow-xs gap-1.5"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Switch to 1-Click File Upload (Fastest)</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleLiveTallySync(true)}
+                          className="font-bold text-xs cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                          Simulate Demo
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
+                  {/* Clear Actionable Resolution Guide for Non-Online Probes */}
                   {!probeResult.online && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleLiveTallySync(true)}
-                      className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer"
-                    >
-                      Try Simulated Demo
-                    </Button>
+                    <div className="pt-3 border-t border-amber-500/20 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold text-foreground">
+                          <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center text-[10px]">1</span>
+                          <span>1-Click File Upload (Recommended)</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          In Tally: <strong>Alt + E &rarr; Masters (XML format)</strong>. Click the button above and drop the file. Works 100% in any browser with zero setup.
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
+                        <div className="flex items-center justify-between gap-1.5 font-bold text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 flex items-center justify-center text-[10px]">2</span>
+                            <span>Tally TDL Add-on</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleDownloadTdl}
+                            className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                          >
+                            Download .tdl
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          Load <code>CredSmartSync.tdl</code> inside Tally Prime (<strong>F1 &gt; TDLs &amp; Add-ons</strong>). Tally pushes data to cloud directly without browser blocks.
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
+                        <div className="flex items-center justify-between gap-1.5 font-bold text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 flex items-center justify-center text-[10px]">3</span>
+                            <span>Desktop Sync Daemon</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleCopyCli}
+                            className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                          >
+                            Copy CLI
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          Run <code>npx credsmart-sync-daemon</code> in PowerShell. It bridges Tally&apos;s localhost port directly to CredSmart Cloud.
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
