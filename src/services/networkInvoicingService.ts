@@ -56,39 +56,38 @@ function dispatchNetworkEvents(type: string, payload?: unknown) {
     }
   }
 
-  // Handle Supabase Realtime Broadcast dynamically to avoid stale dead channel references
+  // Handle Supabase Realtime Broadcast dynamically with self: true
   if (typeof window !== "undefined" && !IS_TEST_ENV) {
     try {
-      const channels = supabase.getChannels();
-      // Look for the channel created by useNetworkInvoices
-      const activeChannel = channels.find(
-        (c) => c.topic === "realtime:credsmart_b2b_network_realtime" || c.topic === "credsmart_b2b_network_realtime"
-      );
+      const channel = supabase.channel("credsmart_b2b_network_realtime", {
+        config: { broadcast: { self: true, ack: false } },
+      });
 
-      if (activeChannel) {
-        activeChannel.send({
-          type: "broadcast",
-          event: type,
-          payload,
-        });
+      const doSend = () => {
+        try {
+          channel.send({
+            type: "broadcast",
+            event: type,
+            payload,
+          }).catch((err) => {
+            console.warn("B2B Realtime send warning:", err);
+          });
+        } catch (e) {
+          console.warn("B2B Realtime send sync error:", e);
+        }
+      };
+
+      if (channel.state === "joined") {
+        doSend();
       } else {
-        // If not actively listening, create a temporary channel just for sending
-        const tempChannel = supabase.channel("credsmart_b2b_network_realtime", {
-          config: { broadcast: { ack: false } },
-        });
-        tempChannel.subscribe((status) => {
+        channel.subscribe((status) => {
           if (status === "SUBSCRIBED") {
-            tempChannel.send({
-              type: "broadcast",
-              event: type,
-              payload,
-            });
-            setTimeout(() => supabase.removeChannel(tempChannel), 1000);
+            doSend();
           }
         });
       }
-    } catch {
-      // Ignore channel send errors
+    } catch (err) {
+      console.warn("B2B Realtime dispatch error:", err);
     }
   }
 }
@@ -113,12 +112,15 @@ export function isInvoiceForOrg(
   orgId: string,
   orgPhone?: string,
   orgGstin?: string,
-  orgName?: string
+  orgName?: string,
+  userName?: string,
+  userEmail?: string,
+  userPhone?: string
 ): boolean {
   if (!orgId) return false;
   if (inv.recipientOrgId === orgId) return true;
 
-  const cleanPhone = normalizePhoneNumber(orgPhone);
+  const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
   if (cleanPhone && inv.recipientPhone && normalizePhoneNumber(inv.recipientPhone) === cleanPhone) {
     return true;
   }
@@ -132,6 +134,14 @@ export function isInvoiceForOrg(
     return true;
   }
 
+  if (userName && isBusinessNameMatch(inv.recipientOrgName, userName)) {
+    return true;
+  }
+
+  if (userEmail && inv.recipientEmail && inv.recipientEmail.trim().toLowerCase() === userEmail.trim().toLowerCase()) {
+    return true;
+  }
+
   return false;
 }
 
@@ -140,12 +150,15 @@ export function isNotificationForOrg(
   orgId: string,
   orgPhone?: string,
   orgGstin?: string,
-  orgName?: string
+  orgName?: string,
+  userName?: string,
+  userEmail?: string,
+  userPhone?: string
 ): boolean {
   if (!orgId) return false;
   if (n.recipientOrgId === orgId) return true;
 
-  const cleanPhone = normalizePhoneNumber(orgPhone);
+  const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
   if (cleanPhone) {
     if (n.recipientPhone && normalizePhoneNumber(n.recipientPhone) === cleanPhone) return true;
     if (n.recipientOrgId.includes(cleanPhone)) return true;
@@ -161,10 +174,13 @@ export function isNotificationForOrg(
 
   // Name matching
   if (isBusinessNameMatch(n.recipientOrgName, orgName)) return true;
+  if (userName && isBusinessNameMatch(n.recipientOrgName, userName)) return true;
   if (n.data?.recipientPartyName && isBusinessNameMatch(n.data.recipientPartyName as string, orgName)) return true;
+  if (userName && n.data?.recipientPartyName && isBusinessNameMatch(n.data.recipientPartyName as string, userName)) return true;
   if (n.recipientOrgId.startsWith("party_match_")) {
     const matchedKey = n.recipientOrgId.replace("party_match_", "");
     if (isBusinessNameMatch(matchedKey, orgName)) return true;
+    if (userName && isBusinessNameMatch(matchedKey, userName)) return true;
   }
 
   return false;
@@ -358,7 +374,42 @@ export const networkInvoicingService = {
       }
     }
 
-    // 2. Query Supabase organizations table (with fast timeout safe call)
+    // 2. Query storefront_settings (public platform directory of all registered stores)
+    try {
+      const sfResult = await safeDbCall(async () => {
+        if (cleanName && cleanName.length >= 3) {
+          const { data } = await supabase
+            .from("storefront_settings")
+            .select("organization_id, store_name, contact_phone, address")
+            .ilike("store_name", `%${cleanName}%`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+        }
+        if (cleanPhone) {
+          const { data } = await supabase
+            .from("storefront_settings")
+            .select("organization_id, store_name, contact_phone, address")
+            .ilike("contact_phone", `%${cleanPhone}%`)
+            .limit(1);
+          if (data && data.length > 0) return data[0];
+        }
+        return null;
+      }, 700);
+
+      if (sfResult && sfResult.organization_id) {
+        return {
+          id: sfResult.organization_id,
+          name: sfResult.store_name,
+          phone: sfResult.contact_phone || undefined,
+          address: sfResult.address || undefined,
+          isRegisteredOnPlatform: true,
+        };
+      }
+    } catch (err) {
+      console.warn("Storefront directory lookup notice:", err);
+    }
+
+    // 3. Query Supabase organizations table (with fast timeout safe call)
     try {
       const dbResult = await safeDbCall(async () => {
         const query = supabase.from("organizations").select("*");
@@ -663,18 +714,21 @@ export const networkInvoicingService = {
     orgId: string,
     orgPhone?: string,
     orgGstin?: string,
-    orgName?: string
+    orgName?: string,
+    userName?: string,
+    userEmail?: string,
+    userPhone?: string
   ): Promise<NetworkInvoice[]> {
     if (!orgId) return [];
 
     const localInvoices = this.getLocalInvoices();
-    const cleanPhone = normalizePhoneNumber(orgPhone);
+    const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
     const cleanGstin = (orgGstin || "").toUpperCase().trim();
 
     // Filter local invoices: where org is recipient OR sender
     const matchedLocal = localInvoices.filter((inv) => {
       if (inv.senderOrgId === orgId) return true;
-      return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
+      return isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
     });
 
     // Auto-heal matched local invoices that had placeholder recipientOrgId
@@ -696,6 +750,9 @@ export const networkInvoicingService = {
       if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
       if (orgName && orgName.trim().length >= 3) {
         orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
+      }
+      if (userName && userName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
       }
 
       const dbRes = await safeDbCall(async () => {
@@ -753,7 +810,7 @@ export const networkInvoicingService = {
           };
 
           if (
-            (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName)) &&
+            (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) &&
             !matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)
           ) {
             matchedLocal.push(mapped);
@@ -771,12 +828,16 @@ export const networkInvoicingService = {
     orgId: string,
     orgPhone?: string,
     orgGstin?: string,
-    orgName?: string
+    orgName?: string,
+    userName?: string,
+    userEmail?: string,
+    userPhone?: string
   ): Promise<NetworkInvoice[]> {
-    const all = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName);
+    const all = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
     return all.filter((inv) => {
-      if (inv.senderOrgId === orgId) return false;
-      const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName);
+      const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
+      // Allow inward review if explicitly addressed to this recipient even if created within same org
+      if (inv.senderOrgId === orgId && !isRecipient) return false;
       return isRecipient && inv.status === "pending";
     });
   },
@@ -888,7 +949,10 @@ export const networkInvoicingService = {
     orgId: string,
     orgPhone?: string,
     orgGstin?: string,
-    orgName?: string
+    orgName?: string,
+    userName?: string,
+    userEmail?: string,
+    userPhone?: string
   ): Promise<NetworkNotification[]> {
     if (!orgId) return [];
 
@@ -896,7 +960,7 @@ export const networkInvoicingService = {
 
     // Match notifications for this org using robust isNotificationForOrg
     const matched = localNotifs.filter((n) => {
-      return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName);
+      return isNotificationForOrg(n, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
     });
 
     // Auto-heal matched local notifications
@@ -912,13 +976,16 @@ export const networkInvoicingService = {
     }
 
     try {
-      const cleanPhone = normalizePhoneNumber(orgPhone);
+      const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
       const cleanGstin = (orgGstin || "").toUpperCase().trim();
       const orClauses = [`recipient_org_id.eq.${orgId}`];
       if (cleanPhone) orClauses.push(`recipient_phone.eq.${cleanPhone}`);
       if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
       if (orgName && orgName.trim().length >= 3) {
         orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
+      }
+      if (userName && userName.trim().length >= 3) {
+        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
       }
 
       const dbRes = await safeDbCall(async () => {
@@ -952,7 +1019,7 @@ export const networkInvoicingService = {
               data: row.data || undefined,
               created_at: row.created_at,
             };
-            if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName)) {
+            if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) {
               matched.push(mappedNotif);
             }
           }

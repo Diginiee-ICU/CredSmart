@@ -732,6 +732,27 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       const activeOrgData = allOrgs.find((o) => o.id === currentActiveOrgId) || allOrgs[0] || null;
       setOrg(activeOrgData);
+
+      if (activeOrgData?.id && activeOrgData.name) {
+        // Auto-register in public storefront directory for B2B invoice name discovery
+        try {
+          const defaultSlug = (activeOrgData.name || "store")
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .slice(0, 30) + "-" + activeOrgData.id.slice(0, 4);
+
+          supabase.from("storefront_settings" as any).upsert({
+            organization_id: activeOrgData.id,
+            store_name: activeOrgData.name,
+            contact_phone: activeOrgData.phone || "",
+            address: activeOrgData.address || "",
+            slug: defaultSlug,
+            is_enabled: true,
+          }, { onConflict: "organization_id" }).then(() => {}).catch(() => {});
+        } catch { /* empty */ }
+      }
     } catch (error) {
       console.error("Failed to initialize organization context:", error);
       setOrg(null);

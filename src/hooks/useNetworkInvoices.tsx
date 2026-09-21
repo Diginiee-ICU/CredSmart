@@ -51,6 +51,10 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
+  const userName = (user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || undefined;
+  const userEmail = user?.email || undefined;
+  const userPhone = user?.phone || (user?.user_metadata?.phone as string) || undefined;
+
   const loadData = useCallback(async () => {
     if (!orgId || !org) {
       setPendingInvoices([]);
@@ -61,9 +65,9 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
 
     try {
       const [pending, all, notifs] = await Promise.all([
-        networkInvoicingService.getPendingInvoicesForOrg(orgId, org.phone, org.gstin, org.name),
-        networkInvoicingService.getInvoicesForOrg(orgId, org.phone, org.gstin, org.name),
-        networkInvoicingService.getNotificationsForOrg(orgId, org.phone, org.gstin, org.name),
+        networkInvoicingService.getPendingInvoicesForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
+        networkInvoicingService.getInvoicesForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
+        networkInvoicingService.getNotificationsForOrg(orgId, org.phone, org.gstin, org.name, userName, userEmail, userPhone),
       ]);
 
       setPendingInvoices(pending);
@@ -72,7 +76,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn("Failed to load network invoice notifications:", e);
     }
-  }, [orgId, org]);
+  }, [orgId, org, userName, userEmail, userPhone]);
 
   useEffect(() => {
     loadData();
@@ -103,7 +107,11 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     const isTestEnv = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
     if (!isTestEnv) {
       try {
-        realtimeSub = supabase.channel("credsmart_b2b_network_realtime");
+        realtimeSub = supabase.channel("credsmart_b2b_network_realtime", {
+          config: {
+            broadcast: { self: true },
+          },
+        });
         realtimeSub
           .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
             const payload = eventPayload?.payload;
@@ -112,16 +120,19 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
 
             if (!networkInvoice || !org) return;
 
-            // Check if invoice is addressed to this organization
+            // Check if invoice is addressed to this organization or user
             const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
               networkInvoice,
               org.id,
               org.phone,
               org.gstin,
-              org.name
+              org.name,
+              userName,
+              userEmail,
+              userPhone
             );
 
-            if (isTargetRecipient && networkInvoice.senderOrgId !== org.id) {
+            if (isTargetRecipient) {
               // Ingest immediately into local storage
               networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, org.id);
 
