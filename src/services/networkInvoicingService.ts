@@ -32,19 +32,11 @@ try {
   // Ignore environments without BroadcastChannel
 }
 
-// Supabase Realtime Broadcast Channel across all devices and browsers globally
-let supabaseRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
-try {
-  if (typeof window !== "undefined" && !IS_TEST_ENV) {
-    supabaseRealtimeChannel = supabase.channel("credsmart_b2b_network_realtime", {
-      config: {
-        broadcast: { ack: false },
-      },
-    });
-    supabaseRealtimeChannel.subscribe();
-  }
-} catch {
-  // Ignore environments without Supabase Realtime
+// Clean phone digits for comparison (e.g. +91 98765 43210 -> 9876543210)
+export function normalizePhoneNumber(phone?: string | null): string {
+  if (!phone) return "";
+  const digits = phone.replace(/[^0-9]/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
 function dispatchNetworkEvents(type: string, payload?: unknown) {
@@ -63,25 +55,44 @@ function dispatchNetworkEvents(type: string, payload?: unknown) {
       // Ignore channel errors
     }
   }
-  if (supabaseRealtimeChannel) {
+
+  // Handle Supabase Realtime Broadcast dynamically to avoid stale dead channel references
+  if (typeof window !== "undefined" && !IS_TEST_ENV) {
     try {
-      supabaseRealtimeChannel.send({
-        type: "broadcast",
-        event: type,
-        payload,
-      });
+      const channels = supabase.getChannels();
+      // Look for the channel created by useNetworkInvoices
+      const activeChannel = channels.find(
+        (c) => c.topic === "realtime:credsmart_b2b_network_realtime" || c.topic === "credsmart_b2b_network_realtime"
+      );
+
+      if (activeChannel) {
+        activeChannel.send({
+          type: "broadcast",
+          event: type,
+          payload,
+        });
+      } else {
+        // If not actively listening, create a temporary channel just for sending
+        const tempChannel = supabase.channel("credsmart_b2b_network_realtime", {
+          config: { broadcast: { ack: false } },
+        });
+        tempChannel.subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            tempChannel.send({
+              type: "broadcast",
+              event: type,
+              payload,
+            });
+            setTimeout(() => supabase.removeChannel(tempChannel), 1000);
+          }
+        });
+      }
     } catch {
       // Ignore channel send errors
     }
   }
 }
 
-// Clean phone digits for comparison (e.g. +91 98765 43210 -> 9876543210)
-export function normalizePhoneNumber(phone?: string | null): string {
-  if (!phone) return "";
-  const digits = phone.replace(/[^0-9]/g, "");
-  return digits.length > 10 ? digits.slice(-10) : digits;
-}
 
 // Check if a business name matches another business name (exact or normalized substring)
 export function isBusinessNameMatch(nameA?: string | null, nameB?: string | null): boolean {
