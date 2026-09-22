@@ -289,6 +289,87 @@ export default function TallyImport() {
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<UniversalImportData | null>(null);
 
+  // Import options
+  const [importItems, setImportItems] = useState(true);
+  const [importParties, setImportParties] = useState(true);
+  const [importBanks, setImportBanks] = useState(true);
+  const [importVouchers, setImportVouchers] = useState(true);
+  const [conflictMode, setConflictMode] = useState<"skip" | "overwrite">("skip");
+
+  // Execution state
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importCompleted, setImportCompleted] = useState(false);
+  const [importedStats, setImportedStats] = useState({
+    items: 0,
+    parties: 0,
+    banks: 0,
+    vouchers: 0,
+  });
+
+  // Table preview filter
+  const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
+  const [searchQuery, setSearchQuery] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSelectFiles = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (typeof window !== "undefined" && window.credsmartDesktop?.openFiles) {
+      try {
+        const desktopFiles = await window.credsmartDesktop.openFiles();
+        if (desktopFiles && desktopFiles.length > 0) {
+          const files = desktopFiles.map((df) => new File([df.data], df.name));
+          handleFiles(files);
+          return;
+        }
+      } catch (err) {
+        console.warn("Desktop openFiles failed, using fallback:", err);
+      }
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleSelectFolder = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (typeof window !== "undefined" && window.credsmartDesktop?.openFolder) {
+      try {
+        const res = await window.credsmartDesktop.openFolder();
+        if (res && res.files.length > 0) {
+          const files = res.files.map((df) => new File([df.data], df.name));
+          handleFiles(files);
+          return;
+        }
+      } catch (err) {
+        console.warn("Desktop openFolder failed, using fallback:", err);
+      }
+    }
+    folderInputRef.current?.click();
+  };
+
+  // ── Universal File Handling ────────────────────────────────────────────────
+
+  const handleFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+
+    for (const f of files) {
+      if (f.size > 50 * 1024 * 1024) {
+        toast.error(`File "${f.name}" is too large. Maximum size is 50MB.`);
+        return;
+      }
+    }
+
+    setIsParsing(true);
+    try {
+      const data = await parseMultipleUniversalFiles(files, selectedSoftware);
+      setParsedData(data);
+      setImportCompleted(false);
+
+      if (data.detectedSoftware !== selectedSoftware && selectedSoftware === "auto") {
+        setSelectedSoftware(data.detectedSoftware);
+      }
+
       if (data.warnings.length > 0) {
         data.warnings.forEach((w) => toast.warning(w));
       }
