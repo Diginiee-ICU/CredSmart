@@ -2581,6 +2581,7 @@ export default function TallyImport() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         initialSoftware={selectedSoftware}
+        onAutoSearch={handleAutoSearchTally}
         onImportItems={async (items, mode) => {
           await handleDirectSaveItems(items, mode);
         }}
