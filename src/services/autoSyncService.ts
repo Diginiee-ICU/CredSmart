@@ -846,7 +846,7 @@ Version: 2.3.0
 Organization ID: ${safeOrgId}
 Generated: ${new Date().toISOString()}
 
-This is a plain-text guide, not a TDL add-on.
+This is a plain-text guide, not a TDL add-on. This file intentionally contains comments only.
 Do not load this file in Tally's Manage Local TDL screen.
 
 Live-import setup:
