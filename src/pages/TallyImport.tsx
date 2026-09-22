@@ -233,6 +233,21 @@ export default function TallyImport() {
     toast.success("CredSmart-Sync.bat downloaded! Double-click to run on Windows without Node.js.");
   };
 
+  const handleDownloadTallyBridge = () => {
+    const downloadUrl =
+      import.meta.env.VITE_TALLY_BRIDGE_DOWNLOAD_URL ||
+      "https://github.com/zirewood-ship-it/CREDSMART/releases/latest/download/CredSmartTallyBridge.exe";
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = "CredSmartTallyBridge.exe";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success("CredSmartTallyBridge.exe download started.");
+  };
+
   const handleCopyToken = () => {
     navigator.clipboard.writeText(syncConfig.pairingToken);
     setCopiedToken(true);
@@ -1539,6 +1554,15 @@ export default function TallyImport() {
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download CredSmart-Sync.bat</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDownloadTallyBridge}
+                    className="w-full gap-2 text-xs font-bold border-primary/40 text-primary hover:bg-primary/10 cursor-pointer"
+                  >
+                    <Laptop className="w-3.5 h-3.5" />
+                    <span>Download Windows .exe</span>
                   </Button>
                   <div className="pt-2 border-t border-border/60">
                     <span className="text-[10px] text-muted-foreground font-semibold">Or if you have Node.js installed:</span>

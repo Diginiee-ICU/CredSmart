@@ -7,8 +7,18 @@ import {
 } from "../utils/tallyXmlParser";
 import { parseUniversalFile, parseMultipleUniversalFiles } from "../utils/universalDataImporter";
 import { inspectUploadedFolder } from "../utils/folderReader";
+import { generateTallyTdlContent } from "../services/autoSyncService";
 
 describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
+  it("generates TDL using supported action syntax", () => {
+    const tdl = generateTallyTdlContent("org-123", "token-456");
+
+    expect(tdl).toContain('Add : Item : Before : @@locQuit');
+    expect(tdl).toContain('Msg Box : "CredSmart Status"');
+    expect(tdl).toContain('Set : SVExportFormat : $$SysName:XML');
+    expect(tdl).not.toContain("MsgBox:");
+  });
+
   it("aggregates every supported voucher category for live and file imports", () => {
     const voucherTypes = ["Sales", "Purchase", "Payment", "Receipt", "Journal", "Credit Note", "Debit Note"] as const;
     const result = {

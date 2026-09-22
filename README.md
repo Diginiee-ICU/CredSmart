@@ -78,6 +78,7 @@
    ```env
    VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_TALLY_BRIDGE_DOWNLOAD_URL=https://github.com/zirewood-ship-it/CREDSMART/releases/latest/download/CredSmartTallyBridge.exe
    ```
 
 4. **Start the development server:**
@@ -132,6 +133,10 @@ Run `dist\CredSmartTallyBridge.exe` with runtime environment variables such as
 never be committed or embedded in the executable. If Tally or the bridge is
 unavailable, the existing XML/CSV file import remains available on
 `/tally-import`.
+
+The Tally import page includes a **Download Windows .exe** button. Set
+`VITE_TALLY_BRIDGE_DOWNLOAD_URL` to the location where your deployment hosts
+the packaged executable; otherwise it uses the latest GitHub release URL.
 
 ---
 

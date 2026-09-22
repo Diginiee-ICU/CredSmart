@@ -801,40 +801,42 @@ export async function executeDirectSyncIngestion(
  * the manual export handoff explicit.
  */
 export function generateTallyTdlContent(orgId: string, pairingToken: string): string {
+  const safeOrgId = orgId.replace(/"/g, "");
+  const safePairingToken = pairingToken.replace(/"/g, "");
   return `;; =========================================================================
 ;; CredSmart Auto-Sync Connector for Tally Prime & Tally.ERP 9
 ;; Version: 2.1.0
-;; Organization ID: ${orgId}
+;; Organization ID: ${safeOrgId}
 ;; Auto-Generated: ${new Date().toISOString()}
 ;; =========================================================================
 
 [#Menu: Gateway of Tally]
-  Add: Item: Before: @@locQuit: "CredSmart Cloud Sync": Menu: CredSmartSyncMenu
+  Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Menu : CredSmartSyncMenu
 
 [Menu: CredSmartSyncMenu]
   Title: "CredSmart Live Auto-Sync"
-  Item: "Test Connection": Call: CredSmartTestPing
-  Item: "Export Masters XML for CredSmart": Call: CredSmartDoLiveSync
+  Item : "Test Connection" : Call : CredSmartTestPing
+  Item : "Export Masters XML for CredSmart" : Call : CredSmartDoLiveSync
 
 [System: Formulae]
-  CredSmartToken:  "${pairingToken}"
-  CredSmartOrgId:  "${orgId}"
+  CredSmartToken : "${safePairingToken}"
+  CredSmartOrgId : "${safeOrgId}"
 
 [Function: CredSmartTestPing]
-  00: MsgBox: "CredSmart Status": "CredSmart Auto-Sync Connector is ACTIVE for Organization: ${orgId}.\\nTally HTTP/ODBC Server: Port 9000."
-  10: Return
+  00 : Msg Box : "CredSmart Status" : "CredSmart Auto-Sync Connector is ACTIVE for Organization: ${safeOrgId}. Tally HTTP/ODBC Server: Port 9000."
+  10 : Return
 
 [Function: CredSmartDoLiveSync]
-  00: Set: SVExportFormat: $$SysName:XML
-  10: MsgBox: "CredSmart Sync": "Export All Masters as XML, then upload the file to https://pos.credalert.business/tally-import. The pairing token is used by the CredSmart sync bridge."
-  20: Return
+  00 : Set : SVExportFormat : $$SysName:XML
+  10 : Msg Box : "CredSmart Sync" : "Export All Masters as XML, then upload the file to https://pos.credalert.business/tally-import. The pairing token is used by the CredSmart sync bridge."
+  20 : Return
 `;
 }
 
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
 export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://reutxqmxiuqrmgmgrlai.supabase.co/functions/v1/sync-tally"): string {
-  return `node scripts/credsmart-sync-agent/index.js --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
+  return `node scripts/credsmart-sync-agent/index.cjs --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
 }
 
 /**
