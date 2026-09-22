@@ -95,6 +95,46 @@ function queryLocalTally() {
   });
 }
 
+function uploadToCredSmart(xml) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(API_URL);
+    const transport = target.protocol === "https:" ? https : http;
+    const req = transport.request(
+      target,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          "X-CredSmart-Organization": ORG_ID,
+          "X-CredSmart-Sync-Token": TOKEN,
+          "Content-Type": "application/xml; charset=utf-8",
+          Accept: "application/json",
+          "Content-Length": Buffer.byteLength(xml),
+        },
+        timeout: 30000,
+      },
+      (res) => {
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ statusCode: res.statusCode, body });
+          } else {
+            reject(new Error(`CredSmart API returned HTTP ${res.statusCode}: ${body.slice(0, 240)}`));
+          }
+        });
+      }
+    );
+
+    req.on("error", reject);
+    req.on("timeout", () => {
+      req.destroy(new Error("Timeout uploading sync data to CredSmart"));
+    });
+    req.end(xml);
+  });
+}
+
 let syncCount = 0;
 
 async function performSync() {
@@ -109,8 +149,7 @@ async function performSync() {
 
     console.log(`[${timestamp}] 📦 Extracted from Tally: ${itemMatches} Stock Items, ${ledgerMatches} Ledgers.`);
     console.log(`[${timestamp}] 🚀 Transmitting payload to CredSmart Cloud...`);
-
-    // In production, this POSTs to the CredSmart Ingestion Endpoint with Authorization: Bearer TOKEN
+    await uploadToCredSmart(xml);
     console.log(`[${timestamp}] ✅ Sync #${syncCount} completed successfully!`);
   } catch (err) {
     console.warn(`[${timestamp}] ⚠️ Tally connection paused: ${err.message}`);

@@ -708,8 +708,9 @@ export async function executeDirectSyncIngestion(
 // ─── Tally TDL Add-on Script Generator ────────────────────────────────────────
 
 /**
- * Generates an authorized Tally TDL script with the organization's unique pairing key embedded.
- * The user loads this .tdl file into Tally Prime once, and Tally will sync directly to CredSmart!
+ * Generates a Tally helper that adds a guided export action. TDL cannot safely
+ * perform the browser/cloud authentication flow, so the generated action makes
+ * the manual export handoff explicit.
  */
 export function generateTallyTdlContent(orgId: string, pairingToken: string): string {
   return `;; =========================================================================
@@ -737,7 +738,7 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 
 [Function: CredSmartDoLiveSync]
   00: Set: SVExportFormat: $$SysName:XML
-  10: MsgBox: "CredSmart Sync": "To complete sync, export All Masters (Alt+E > Masters > XML) and upload to CredSmart at https://pos.credalert.business/tally-import."
+  10: MsgBox: "CredSmart Sync": "Export All Masters as XML, then upload the file to https://pos.credalert.business/tally-import. The pairing token is used by the CredSmart sync bridge."
   20: Return
 `;
 }
@@ -882,7 +883,7 @@ function Export-TallyMasters {
 }
 
 function Start-AutoSyncBridge {
-    param([int]$Port, [string]$TallyUrl)
+  param([int]$Port, [string]$TallyUrl, [string]$PairingToken)
     Write-Host ""
     Write-Host "=========================================================================" -ForegroundColor Cyan
     Write-Host "  STARTING LOCAL AUTO-SYNC BRIDGE ON http://127.0.0.1:$Port" -ForegroundColor Cyan
@@ -895,6 +896,7 @@ function Start-AutoSyncBridge {
     $listener = New-Object System.Net.HttpListener
     $prefix = "http://127.0.0.1:$Port/"
     $listener.Prefixes.Add($prefix)
+    $allowedOrigin = "https://pos.credalert.business"
 
     try {
         $listener.Start()
@@ -907,10 +909,13 @@ function Start-AutoSyncBridge {
             $request = $context.Request
             $response = $context.Response
 
-            # Essential CORS & Private Network Access headers
-            $response.Headers.Add("Access-Control-Allow-Origin", "*")
+            $requestOrigin = $request.Headers["Origin"]
+            if ($requestOrigin -eq $allowedOrigin) {
+              $response.Headers.Add("Access-Control-Allow-Origin", $allowedOrigin)
+              $response.Headers.Add("Vary", "Origin")
+            }
             $response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            $response.Headers.Add("Access-Control-Allow-Headers", "*")
+            $response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, X-CredSmart-Sync-Token")
             $response.Headers.Add("Access-Control-Allow-Private-Network", "true")
             $response.Headers.Add("Access-Control-Max-Age", "86400")
 
@@ -921,6 +926,11 @@ function Start-AutoSyncBridge {
             }
 
             if ($request.HttpMethod -eq "GET") {
+              if ($request.Headers["X-CredSmart-Sync-Token"] -ne $PairingToken) {
+                $response.StatusCode = 401
+                $response.Close()
+                continue
+              }
                 $json = '{"status":"ok","bridge":"CredSmart Tally Bridge","port":' + $Port + ',"tallyHost":"' + $TallyUrl + '"}'
                 $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
                 $response.ContentType = "application/json; charset=utf-8"
@@ -931,6 +941,11 @@ function Start-AutoSyncBridge {
             }
 
             if ($request.HttpMethod -eq "POST") {
+              if ($request.Headers["X-CredSmart-Sync-Token"] -ne $PairingToken) {
+                $response.StatusCode = 401
+                $response.Close()
+                continue
+              }
                 $reader = New-Object System.IO.StreamReader($request.InputStream, $request.ContentEncoding)
                 $postBody = $reader.ReadToEnd()
                 $reader.Close()
@@ -996,20 +1011,20 @@ while ($running) {
                 Write-Host ""
                 $startB = Read-Host "Would you also like to start the Live Auto-Sync Bridge on port 9005? (Y/N) [Default: Y]"
                 if ([string]::IsNullOrWhiteSpace($startB) -or $startB.Trim().ToUpper() -eq "Y") {
-                    Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+                    Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost -PairingToken $PairingToken
                 }
             }
             Write-Host ""
             Read-Host "Press ENTER to return to menu..."
         }
         "2" {
-            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost -PairingToken $PairingToken
             Write-Host ""
             Read-Host "Press ENTER to return to menu..."
         }
         "3" {
             Export-TallyMasters -Url $TallyHost -TargetWebUrl $AppUrl
-            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost -PairingToken $PairingToken
             Write-Host ""
             Read-Host "Press ENTER to return to menu..."
         }
