@@ -852,7 +852,7 @@ function Export-TallyMasters {
             Start-Process $TargetWebUrl
 
             Write-Host "Highlighting exported file in Windows Explorer..." -ForegroundColor Gray
-            Start-Process explorer.exe -ArgumentList "/select,`"$desktopFile`""
+            Start-Process explorer.exe -ArgumentList "/select,\`"$desktopFile\`""
 
             Write-Host ""
             Write-Host "Tip: In CredSmart, click 'Upload File(s)' or simply drag & drop" -ForegroundColor Yellow
