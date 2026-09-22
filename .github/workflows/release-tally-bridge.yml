@@ -1,0 +1,44 @@
+name: Release Tally Bridge
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-bridge:
+    name: Build Windows Tally bridge
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build executable
+        run: npm run tally:bridge:exe
+
+      - name: Create or update GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "dist/CredSmartTallyBridge.exe" --generate-notes --title "CredSmart ${{ github.ref_name }}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CredSmartTallyBridge-windows-x64
+          path: dist/CredSmartTallyBridge.exe
+          if-no-files-found: error

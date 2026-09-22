@@ -138,6 +138,13 @@ The Tally import page includes a **Download Windows .exe** button. Set
 `VITE_TALLY_BRIDGE_DOWNLOAD_URL` to the location where your deployment hosts
 the packaged executable; otherwise it uses the latest GitHub release URL.
 
+The repository includes a release workflow at
+`.github/workflows/release-tally-bridge.yml`. Push a version tag such as
+`v1.1.5` to build the executable on Windows and publish the exact release asset
+`CredSmartTallyBridge.exe`, which is the default URL used by the download
+button. A manually dispatched workflow also produces a downloadable Actions
+artifact.
+
 ---
 
 ## 📱 Mobile App (Capacitor)
