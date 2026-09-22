@@ -814,13 +814,21 @@ Live-import setup:
 2. Keep Tally Prime HTTP Server enabled on http://127.0.0.1:9000.
 3. Open CredSmart and click "Sync Live Tally Now".
 
-If Tally displays a message mentioning "ActType Body", disable the unrelated
+If Tally displays a message mentioning "AccType Body", disable the unrelated
 local TDL add-on that defines it before retrying. CredSmart does not modify
 Tally menus, reports, parts, lines, or buttons.
 
 XML/CSV file import remains available when the bridge is offline.
 `;
 }
+
+/**
+ * Alias of {@link generateTallySetupGuideContent}.
+ * Kept for backwards-compatibility with tests that import this name.
+ * NOTE: The generated content is intentionally comments-only (no TDL definitions)
+ * so it is safe to load in Tally without causing Part/Line/Button errors.
+ */
+export const generateTallyTdlContent = generateTallySetupGuideContent;
 
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
