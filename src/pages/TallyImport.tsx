@@ -289,19 +289,6 @@ export default function TallyImport() {
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<UniversalImportData | null>(null);
 
-  // Import options
-  const [importItems, setImportItems] = useState(true);
-  const [importParties, setImportParties] = useState(true);
-  const [importBanks, setImportBanks] = useState(true);
-  const [importVouchers, setImportVouchers] = useState(true);
-  const [conflictMode, setConflictMode] = useState<"skip" | "overwrite">("skip");
-      setParsedData(data);
-      setImportCompleted(false);
-
-      if (data.detectedSoftware !== selectedSoftware && selectedSoftware === "auto") {
-        setSelectedSoftware(data.detectedSoftware);
-      }
-
       if (data.warnings.length > 0) {
         data.warnings.forEach((w) => toast.warning(w));
       }
