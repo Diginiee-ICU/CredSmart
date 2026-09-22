@@ -369,7 +369,7 @@ export default function AppLayout() {
                 className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
               >
                 <img
-                  src="/logo-static.jpeg"
+                  src="./logo-static.jpeg"
                   alt="CredSmart"
                   className="h-11 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[120px] xs:max-w-[140px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
@@ -905,7 +905,7 @@ export default function AppLayout() {
       >
         <div className="flex items-center justify-center p-2.5 md:p-3 lg:p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xl">
           <img
-            src="/logo-static.jpeg"
+            src="./logo-static.jpeg"
             alt="CredSmart"
             className="h-10 md:h-14 lg:h-18 xl:h-20 w-auto max-w-[240px] md:max-w-[320px] lg:max-w-[400px] object-contain rounded-xl drop-shadow-md mix-blend-multiply dark:mix-blend-normal"
           />

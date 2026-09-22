@@ -1143,7 +1143,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         {/* Invoice Footer Compliance Branding */}
         <div className="mt-2 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[7.5px] text-slate-400 font-sans">
           <div className="flex items-center gap-1 text-slate-500 font-medium">
-            <img src="/logo-static.jpeg" alt="CredSmart" className="h-3 w-auto object-contain mix-blend-multiply opacity-80" />
+            <img src="./logo-static.jpeg" alt="CredSmart" className="h-3 w-auto object-contain mix-blend-multiply opacity-80" />
             <span>Powered by <strong className="font-bold text-slate-700">CredSmart POS &amp; Billing</strong></span>
           </div>
           <div className="font-mono text-slate-400">

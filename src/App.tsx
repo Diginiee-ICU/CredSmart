@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -78,7 +78,7 @@ export function SleekRouteLoader() {
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="relative flex flex-col items-center justify-center max-w-sm w-full">
         <img
-          src="/IMG_9301.GIF"
+          src="./IMG_9301.GIF"
           alt="CredSmart"
           className="w-72 sm:w-80 max-w-[85vw] h-auto object-contain select-none"
           loading="eager"
@@ -178,6 +178,12 @@ function PublicMarketingRoute({ element }: { element: React.ReactElement }) {
   return element;
 }
 
+const isDesktopApp = typeof window !== "undefined" && (
+  Boolean((window as any).credsmartDesktop?.isDesktop) ||
+  window.location.protocol === "file:"
+);
+const AppRouter = isDesktopApp ? HashRouter : BrowserRouter;
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -189,7 +195,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <NativePlatformBridge />
-                <BrowserRouter>
+                <AppRouter>
                   <ScrollToTop />
                   <Routes>
                 {/* Public & Mobile App Routes */}
@@ -263,7 +269,7 @@ const App = () => (
                 {/* Global 404 Catch-All */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
+            </AppRouter>
               </ProductsProvider>
             </NetworkInvoicesProvider>
           </OrgProvider>
