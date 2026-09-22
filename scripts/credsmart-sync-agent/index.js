@@ -2,7 +2,7 @@
 
 /**
  * CredSmart Desktop Sync Daemon (Tray & Headless Agent)
- * Connects to local Tally Prime / Busy / Marg / Vyapar and pushes updates to CredSmart Cloud.
+ * Connects to a local Tally Prime HTTP server and pushes its XML export to CredSmart Cloud.
  *
  * Usage:
  *   node index.js --org="<ORG_ID>" --token="<SYNC_PAIRING_TOKEN>" --port=9000 --interval=15
@@ -33,6 +33,7 @@ console.log("=================================================================="
 console.log(`  • Organization ID  : ${ORG_ID}`);
 console.log(`  • Pairing Token    : ${TOKEN.substring(0, 14)}...`);
 console.log(`  • Target Tally     : http://${TALLY_HOST}:${TALLY_PORT}`);
+console.log(`  • Cloud API        : ${API_URL}`);
 console.log(`  • Sync Interval    : Every ${INTERVAL_MINUTES} minutes`);
 console.log("==================================================================\n");
 

@@ -745,8 +745,8 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
-export function getDaemonCliCommand(orgId: string, token: string): string {
-  return `npx credsmart-sync-daemon --org="${orgId}" --token="${token}" --port=9000 --interval=15`;
+export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://api.credsmart.in/sync/tally"): string {
+  return `npx credsmart-sync-daemon --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
 }
 
 /**
