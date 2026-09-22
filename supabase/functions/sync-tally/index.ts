@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
     const unsupported: string[] = [];
 
     if (exportType === "masters") {
+      const productsToUpsert = [];
       for (const item of Array.from(document.querySelectorAll("STOCKITEM"))) {
         const name = item.getAttribute("NAME")?.trim() || text(item, "NAME");
         if (!name) continue;
@@ -82,27 +83,52 @@ Deno.serve(async (req) => {
         const stock = amount(text(item, "OPENINGBALANCE"));
         const sellingPrice = amount(text(item, "STANDARDPRICELIST RATE"));
         const purchasePrice = amount(text(item, "STANDARDCOSTLIST RATE")) || amount(text(item, "OPENINGRATE"));
-        const { error } = await updateOrInsert("products", { organization_id: organizationId, name }, {
+        productsToUpsert.push({
           organization_id: organizationId,
           name,
           sku,
           category: text(item, "PARENT") || "General",
           tags: { stock, opening_stock: stock, selling_price: sellingPrice, purchase_price: purchasePrice, imported_from: "tally", auto_synced: true },
-        }, supabase);
-        if (!error) items++;
+        });
+      }
+      if (productsToUpsert.length > 0) {
+        for (let i = 0; i < productsToUpsert.length; i += 1000) {
+          const chunk = productsToUpsert.slice(i, i + 1000);
+          const { error } = await supabase.from("products").upsert(chunk);
+          if (!error) items += chunk.length;
+        }
       }
 
+      const customersToUpsert = [];
+      const suppliersToUpsert = [];
       for (const ledger of Array.from(document.querySelectorAll("LEDGER"))) {
         const name = ledger.getAttribute("NAME")?.trim() || text(ledger, "NAME");
         const parent = text(ledger, "PARENT").toLowerCase();
         if (!name || parent.includes("bank") || parent.includes("cash")) continue;
         const isSupplier = parent.includes("creditor") || parent.includes("supplier") || parent.includes("vendor");
-        const table = isSupplier ? "suppliers" : "customers";
         const payload = { organization_id: organizationId, name, gstin: text(ledger, "PARTYGSTIN") || null, pan: text(ledger, "INCOMETAXNUMBER") || null, address: text(ledger, "ADDRESS") || null };
-        const { error } = await updateOrInsert(table, { organization_id: organizationId, name }, payload, supabase);
-        if (!error) parties++;
+        if (isSupplier) suppliersToUpsert.push(payload);
+        else customersToUpsert.push(payload);
+      }
+      if (customersToUpsert.length > 0) {
+        for (let i = 0; i < customersToUpsert.length; i += 1000) {
+          const chunk = customersToUpsert.slice(i, i + 1000);
+          const { error } = await supabase.from("customers").upsert(chunk);
+          if (!error) parties += chunk.length;
+        }
+      }
+      if (suppliersToUpsert.length > 0) {
+        for (let i = 0; i < suppliersToUpsert.length; i += 1000) {
+          const chunk = suppliersToUpsert.slice(i, i + 1000);
+          const { error } = await supabase.from("suppliers").upsert(chunk);
+          if (!error) parties += chunk.length;
+        }
       }
     } else if (exportType === "daybook") {
+      const salesToUpsert = [];
+      const purchasesToUpsert = [];
+      // To properly link supplier IDs, we can't easily bulk upsert purchases without pre-fetching suppliers
+      // But for simplicity in this script, we'll keep the loop for daybook or just use the same logic
       for (const voucher of Array.from(document.querySelectorAll("VOUCHER"))) {
         const type = (voucher.getAttribute("VCHTYPE") || text(voucher, "VOUCHERTYPENAME")).trim();
         const number = text(voucher, "VOUCHERNUMBER") || voucher.getAttribute("REMOTEID") || "";
@@ -110,6 +136,7 @@ Deno.serve(async (req) => {
         const date = dateValue(text(voucher, "DATE"));
         const partyName = text(voucher, "PARTYLEDGERNAME");
         if (!number || !value) continue;
+        
         if (type.toLowerCase().includes("sales") || type.toLowerCase().includes("credit note")) {
           const { error } = await updateOrInsert("sales", { organization_id: organizationId, invoice_number: number }, { organization_id: organizationId, invoice_number: number, subtotal: value, total: value, tax: 0, payment_method: "Credit", created_by: credential.user_id, created_at: date }, supabase);
           if (!error) vouchers++;
@@ -123,6 +150,10 @@ Deno.serve(async (req) => {
         } else if (["receipt", "payment", "journal"].some((name) => type.toLowerCase().includes(name))) {
           unsupported.push(type || "Unknown");
         } else {
+          unsupported.push(type || "Unknown");
+        }
+      }
+    } else {
           unsupported.push(type || "Unknown");
         }
       }
