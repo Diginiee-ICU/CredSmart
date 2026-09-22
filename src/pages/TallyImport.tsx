@@ -40,6 +40,8 @@ import {
   ArrowDownToLine,
   Sliders,
   Activity,
+  Folder,
+  FolderUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
 import { TallyBankAccount, TallyVoucher } from "@/utils/tallyXmlParser";
+import { extractFilesFromDataTransfer } from "@/utils/folderReader";
 import {
   SOFTWARE_PROFILES,
   SupportedSoftware,
@@ -276,6 +279,7 @@ export default function TallyImport() {
   const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   // ── Universal File Handling ────────────────────────────────────────────────
 
@@ -309,6 +313,10 @@ export default function TallyImport() {
         toast.success(
           `Successfully parsed ${data.items.length} items and ${data.parties.all.length} parties from ${SOFTWARE_PROFILES[data.detectedSoftware]?.name}!`
         );
+      } else if (data.isRawTallyFolder) {
+        toast.info(
+          `Detected Tally Company: ${data.companyName || data.folderName || "Company"}. See instructions below.`
+        );
       } else {
         toast.error("No inventory items or parties recognized in the uploaded file(s).");
       }
@@ -319,11 +327,20 @@ export default function TallyImport() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
+    try {
+      const files = await extractFilesFromDataTransfer(e.dataTransfer);
+      if (files.length > 0) {
+        handleFiles(files);
+      } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    } catch {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
     }
   };
 
@@ -1859,23 +1876,36 @@ export default function TallyImport() {
             <div>
               <p className="font-black text-base text-foreground">
                 {isParsing
-                  ? "Parsing your accounting file..."
-                  : `Drop your ${SOFTWARE_PROFILES[selectedSoftware]?.name} files here`}
+                  ? "Parsing your accounting files or folder..."
+                  : `Drop your ${SOFTWARE_PROFILES[selectedSoftware]?.name} files or complete Tally folder here`}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Supports <span className="font-semibold text-foreground">{SOFTWARE_PROFILES[selectedSoftware]?.supportedFormats.join(", ")}</span> (Drop single file or items &amp; parties together)
+                Supports <span className="font-semibold text-foreground">{SOFTWARE_PROFILES[selectedSoftware]?.supportedFormats.join(", ")}</span> or complete Tally company directory (e.g. <span className="font-mono text-foreground font-semibold">10000</span>)
               </p>
             </div>
 
-            <Button
-              type="button"
-              disabled={isParsing}
-              className="gap-2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs px-7 py-3 rounded-2xl shadow-lg shadow-amber-500/30 cursor-pointer active:scale-95 transition-all"
-              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-            >
-              <Upload className="w-4 h-4" />
-              <span>Upload File(s)</span>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button
+                type="button"
+                disabled={isParsing}
+                className="gap-2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs px-6 py-3 rounded-2xl shadow-lg shadow-amber-500/30 cursor-pointer active:scale-95 transition-all"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload File(s)</span>
+              </Button>
+
+              <Button
+                type="button"
+                disabled={isParsing}
+                variant="outline"
+                className="gap-2 border-amber-500/40 hover:bg-amber-500/10 font-black text-xs px-6 py-3 rounded-2xl text-foreground cursor-pointer active:scale-95 transition-all shadow-xs"
+                onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}
+              >
+                <FolderUp className="w-4 h-4 text-amber-500" />
+                <span>Upload Complete Folder</span>
+              </Button>
+            </div>
 
             <input
               ref={fileInputRef}
@@ -1890,12 +1920,58 @@ export default function TallyImport() {
                 e.target.value = "";
               }}
             />
+
+            <input
+              ref={folderInputRef}
+              type="file"
+              {...({ webkitdirectory: "", directory: "" } as any)}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleFiles(e.target.files);
+                }
+                e.target.value = "";
+              }}
+            />
           </div>
         </div>
 
         {/* Step 3: Interactive Data Preview & One-Click Import */}
         {parsedData && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+            {/* Scanned Folder & Company Metadata Card */}
+            {(parsedData.folderName || parsedData.companyName) && (
+              <div className="p-4 rounded-2xl border border-border bg-gradient-to-r from-card to-amber-500/5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 shrink-0">
+                    <Folder className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-black text-sm text-foreground">
+                        {parsedData.folderName ? `Folder: ${parsedData.folderName}` : "Scanned Import Batch"}
+                      </span>
+                      {parsedData.companyName && (
+                        <Badge variant="outline" className="text-[10px] font-bold border-amber-500/30 text-amber-600 bg-amber-500/10">
+                          {parsedData.companyName}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {parsedData.fileNames.length} file(s) analyzed across this directory.
+                    </p>
+                  </div>
+                </div>
+
+                {parsedData.isRawTallyFolder && parsedData.items.length === 0 && (
+                  <div className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 max-w-md">
+                    💡 <strong>Identified Tally Company Directory:</strong> To import every item, GST tax rate, and bill with 100% precision, open Tally Prime &rarr; press <kbd className="px-1 bg-muted rounded font-mono">Alt + E</kbd> &rarr; Masters (XML) &rarr; drop the file here.
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Stats Overview Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">

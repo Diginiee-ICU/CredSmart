@@ -24,6 +24,8 @@ import {
   Download,
   Landmark,
   Wallet,
+  Folder,
+  FolderUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,7 @@ import {
 } from "@/utils/universalDataImporter";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
+import { extractFilesFromDataTransfer } from "@/utils/folderReader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +146,7 @@ export function TallyImportModal({
   const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
   const [showGuide, setShowGuide] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   const totalVouchersCount = parseResult
     ? (parseResult.paymentVouchers?.length || 0) +
@@ -152,40 +156,36 @@ export function TallyImportModal({
       (parseResult.journalVouchers?.length || 0)
     : 0;
 
-  // ── File Handling ────────────────────────────────────────────────────────
+  // ── File Handlers ─────────────────────────────────────────────────────────
 
   const handleFiles = async (fileList: FileList | File[]) => {
     const files = Array.from(fileList);
     if (files.length === 0) return;
 
-    for (const file of files) {
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`File "${file.name}" exceeds 50MB limit.`);
-        return;
-      }
-    }
+    setUploadedFilename(files.length === 1 ? files[0].name : `${files.length} files`);
 
     try {
       const data = await parseMultipleUniversalFiles(files, selectedSoftware);
       setUniversalData(data);
-      setUploadedFilename(files.map((f) => f.name).join(", "));
 
       const syntheticResult: TallyParseResult = {
         items: data.items,
         parties: data.parties.all,
+        bankAccounts: data.bankAccounts.map((b) => ({
+          name: b.accountName,
+          bankName: b.accountName,
+          accountNumber: b.accountNumber,
+          ifscCode: b.ifsc,
+          balance: b.balance,
+          isDr: b.balance >= 0,
+        })),
+        cashInHand: data.cashInHand,
+        expenseCategories: [],
         salesVouchers: data.vouchers.filter((v) => v.voucherType === "Sales"),
         purchaseVouchers: data.vouchers.filter((v) => v.voucherType === "Purchase"),
         paymentVouchers: data.vouchers.filter((v) => v.voucherType === "Payment"),
         receiptVouchers: data.vouchers.filter((v) => v.voucherType === "Receipt"),
         journalVouchers: data.vouchers.filter((v) => v.voucherType === "Journal"),
-        bankAccounts: data.bankAccounts.map((b) => ({
-          accountName: b.accountName,
-          accountNumber: b.accountNumber,
-          ifsc: b.ifsc,
-          balance: b.balance,
-          isDr: b.balance >= 0,
-        })),
-        cashInHand: data.cashInHand,
         companyName: data.companyName,
         companyGstin: data.companyGstin,
         totalEntities: data.items.length + data.parties.all.length + data.bankAccounts.length + data.vouchers.length,
@@ -205,6 +205,9 @@ export function TallyImportModal({
           `Detected ${data.items.length} items, ${data.parties.all.length} parties from ${softName}!`
         );
         setStep("preview");
+      } else if (data.isRawTallyFolder) {
+        toast.info(`Detected Tally Company Folder: ${data.companyName || data.folderName}`);
+        setStep("preview");
       } else {
         toast.error("No recognizable items or parties found. Please verify column headers.");
       }
@@ -221,11 +224,20 @@ export function TallyImportModal({
     e.target.value = "";
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
+    try {
+      const files = await extractFilesFromDataTransfer(e.dataTransfer);
+      if (files.length > 0) {
+        handleFiles(files);
+      } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    } catch {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSoftware]);
@@ -466,19 +478,39 @@ export function TallyImportModal({
                     Drop a single file or multiple sheets (e.g. items + parties together)
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Choose File(s)
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 cursor-pointer shadow-xs"
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>Choose File(s)</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 border-amber-500/40 hover:bg-amber-500/10 font-bold px-5 text-foreground cursor-pointer shadow-xs"
+                    onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}
+                  >
+                    <FolderUp className="w-4 h-4 text-amber-600" />
+                    <span>Upload Folder</span>
+                  </Button>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   multiple
                   accept=".xml,.csv,.xlsx,.xls,.txt"
+                  className="hidden"
+                  onChange={handleFileInput}
+                />
+                <input
+                  ref={folderInputRef}
+                  type="file"
+                  {...({ webkitdirectory: "", directory: "" } as any)}
+                  multiple
                   className="hidden"
                   onChange={handleFileInput}
                 />

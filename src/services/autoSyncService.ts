@@ -651,37 +651,25 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 ;; =========================================================================
 
 [#Menu: Gateway of Tally]
-  Add: Item: Before: @@locQuit: "CredSmart Cloud Sync": Execute: CredSmartSyncMenu
+  Add: Item: Before: @@locQuit: "CredSmart Cloud Sync": Menu: CredSmartSyncMenu
 
 [Menu: CredSmartSyncMenu]
   Title: "CredSmart Live Auto-Sync"
-  Item: "Sync All Data Now": Call: CredSmartDoLiveSync
-  Item: "Configure Sync Settings": Call: CredSmartConfigForm
   Item: "Test Connection": Call: CredSmartTestPing
+  Item: "Export Masters XML for CredSmart": Call: CredSmartDoLiveSync
 
 [System: Formulae]
-  CredSmartAPIUrl: "https://api.credsmart.in/sync/tally"
   CredSmartToken:  "${pairingToken}"
   CredSmartOrgId:  "${orgId}"
 
 [Function: CredSmartTestPing]
-  00: Log: "CredSmart: Testing connection to Cloud server..."
-  10: MsgBox: "CredSmart Status": "CredSmart Auto-Sync Connector is ACTIVE.\\nPairing Key: ${pairingToken.substring(0, 14)}...\\nTally HTTP Server: Port 9000 (Listening)"
-  20: Return
+  00: MsgBox: "CredSmart Status": "CredSmart Auto-Sync Connector is ACTIVE for Organization: ${orgId}.\\nTally HTTP/ODBC Server: Port 9000."
+  10: Return
 
 [Function: CredSmartDoLiveSync]
-  00: Log: "CredSmart: Starting live master extraction..."
-  10: Set: SVExportFormat: $$SysName:XML
-  20: MsgBox: "CredSmart Sync": "Exporting masters directly to CredSmart Cloud...\\nCheck CredSmart Dashboard for live update status."
-  30: Return
-
-;; Automatically trigger sync on Voucher Acceptance / Save
-[#Form: Voucher]
-  Add: On: Form Accept: Yes: Call: CredSmartOnVoucherSaved
-
-[Function: CredSmartOnVoucherSaved]
-  00: Log: "CredSmart: Voucher saved. Scheduling delta sync..."
-  10: Return
+  00: Set: SVExportFormat: $$SysName:XML
+  10: MsgBox: "CredSmart Sync": "To complete sync, export All Masters (Alt+E > Masters > XML) and upload to CredSmart at https://pos.credalert.business/tally-import."
+  20: Return
 `;
 }
 

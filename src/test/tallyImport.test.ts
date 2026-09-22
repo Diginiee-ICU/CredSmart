@@ -4,7 +4,8 @@ import {
   autoDetectAndParseTally,
   parseTallyDaybookCsv,
 } from "../utils/tallyXmlParser";
-import { parseUniversalFile } from "../utils/universalDataImporter";
+import { parseUniversalFile, parseMultipleUniversalFiles } from "../utils/universalDataImporter";
+import { inspectUploadedFolder } from "../utils/folderReader";
 
 describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
   describe("Stock Items Parsing", () => {
@@ -438,6 +439,89 @@ describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
       expect(data.vouchers.length).toBe(1);
       expect(data.vouchers[0].voucherNumber).toBe("INV-001");
       expect(data.summary.totalVouchers).toBe(1);
+    });
+  });
+
+  describe("Complete Tally Folder & Multi-File Aggregator Engine", () => {
+    it("aggregates multiple files from a Tally folder (Master.xml + DayBook.xml)", async () => {
+      const masterXml = `
+        <ENVELOPE>
+          <BODY>
+            <IMPORTDATA>
+              <REQUESTDATA>
+                <TALLYMESSAGE>
+                  <STOCKITEM NAME="Fortune Sunflower Oil 1L">
+                    <BASEUNITS>LTR</BASEUNITS>
+                    <OPENINGBALANCE>50 LTR</OPENINGBALANCE>
+                    <OPENINGRATE>135/LTR</OPENINGRATE>
+                    <STANDARDPRICELIST.LIST><RATE>155.00/LTR</RATE></STANDARDPRICELIST.LIST>
+                  </STOCKITEM>
+                </TALLYMESSAGE>
+                <TALLYMESSAGE>
+                  <LEDGER NAME="Apex General Stores">
+                    <PARENT>Sundry Debtors</PARENT>
+                    <OPENINGBALANCE>12500</OPENINGBALANCE>
+                    <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+                  </LEDGER>
+                </TALLYMESSAGE>
+              </REQUESTDATA>
+            </IMPORTDATA>
+          </BODY>
+        </ENVELOPE>
+      `;
+
+      const daybookXml = `
+        <ENVELOPE>
+          <BODY>
+            <IMPORTDATA>
+              <REQUESTDATA>
+                <TALLYMESSAGE>
+                  <VOUCHER VCHTYPE="Sales">
+                    <DATE>20260915</DATE>
+                    <VOUCHERNUMBER>INV-2026-999</VOUCHERNUMBER>
+                    <PARTYLEDGERNAME>Apex General Stores</PARTYLEDGERNAME>
+                    <ALLLEDGERENTRIES.LIST>
+                      <AMOUNT>7750</AMOUNT>
+                    </ALLLEDGERENTRIES.LIST>
+                  </VOUCHER>
+                </TALLYMESSAGE>
+              </REQUESTDATA>
+            </IMPORTDATA>
+          </BODY>
+        </ENVELOPE>
+      `;
+
+      const file1 = new File([masterXml], "Master.xml", { type: "text/xml" });
+      Object.defineProperty(file1, "webkitRelativePath", { value: "10000/Master.xml" });
+
+      const file2 = new File([daybookXml], "DayBook.xml", { type: "text/xml" });
+      Object.defineProperty(file2, "webkitRelativePath", { value: "10000/DayBook.xml" });
+
+      const result = await parseMultipleUniversalFiles([file1, file2], "tally");
+
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].name).toBe("Fortune Sunflower Oil 1L");
+      expect(result.parties.all.length).toBe(1);
+      expect(result.parties.all[0].name).toBe("Apex General Stores");
+      expect(result.vouchers.length).toBe(1);
+      expect(result.vouchers[0].voucherNumber).toBe("INV-2026-999");
+      expect(result.folderName).toBe("10000");
+    });
+
+    it("detects raw Tally company directory structures (e.g. Company.900)", async () => {
+      const dummyCompanyContent = "   TallyPrime Enterprise Solutions Pvt Ltd   10000   Maharashtra   ";
+      const file = new File([dummyCompanyContent], "Company.900", { type: "application/octet-stream" });
+      Object.defineProperty(file, "webkitRelativePath", { value: "10000/Company.900" });
+
+      const inspected = await inspectUploadedFolder([file]);
+      expect(inspected.isRawTallyCompanyDir).toBe(true);
+      expect(inspected.folderName).toBe("10000");
+      expect(inspected.tallyCompanyInfo?.companyName).toContain("TallyPrime Enterprise Solutions Pvt Ltd");
+
+      const result = await parseMultipleUniversalFiles([file], "tally");
+      expect(result.isRawTallyFolder).toBe(true);
+      expect(result.companyName).toContain("TallyPrime Enterprise Solutions Pvt Ltd");
+      expect(result.warnings.length).toBeGreaterThan(0);
     });
   });
 });

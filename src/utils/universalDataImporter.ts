@@ -5,6 +5,7 @@ import {
   parseTallyXml,
   TallyVoucher,
 } from "./tallyXmlParser";
+import { inspectUploadedFolder } from "./folderReader";
 
 // ─── Supported Software Definitions ──────────────────────────────────────────
 
@@ -223,6 +224,8 @@ export interface UniversalImportData {
   detectedEntityTypes: ("items" | "parties" | "bank" | "vouchers")[];
   companyName?: string;
   companyGstin?: string;
+  folderName?: string;
+  isRawTallyFolder?: boolean;
   items: Partial<InventoryItem>[] ;
   parties: {
     customers: Partial<Party>[];
@@ -1005,12 +1008,62 @@ export async function parseMultipleUniversalFiles(
     throw new Error("No files selected for import.");
   }
 
-  if (files.length === 1) {
-    return parseUniversalFile(files[0], chosenSoftware);
+  // Inspect folder structure if multiple files are provided
+  const scanned = await inspectUploadedFolder(files);
+
+  // Filter for parseable files: .xml, .xlsx, .xls, .csv, .txt
+  const parsableFiles = files.filter((f) => {
+    const ext = f.name.toLowerCase();
+    return (
+      ext.endsWith(".xml") ||
+      ext.endsWith(".xlsx") ||
+      ext.endsWith(".xls") ||
+      ext.endsWith(".csv") ||
+      ext.endsWith(".txt")
+    );
+  });
+
+  if (parsableFiles.length === 0) {
+    if (scanned.isRawTallyCompanyDir) {
+      // Raw Tally directory with no XML/Excel exports yet
+      const cName = scanned.tallyCompanyInfo?.companyName || `Tally Company (${scanned.folderName})`;
+      return {
+        sourceSoftware: "tally",
+        detectedSoftware: "tally",
+        detectedEntityTypes: [],
+        companyName: cName,
+        folderName: scanned.folderName,
+        isRawTallyFolder: true,
+        items: [],
+        parties: { customers: [], suppliers: [], all: [] },
+        bankAccounts: [],
+        cashInHand: 0,
+        vouchers: [],
+        summary: {
+          totalItems: 0,
+          totalCustomers: 0,
+          totalSuppliers: 0,
+          totalParties: 0,
+          totalOpeningReceivable: 0,
+          totalOpeningPayable: 0,
+          totalBankAccounts: 0,
+          totalVouchers: 0,
+        },
+        warnings: [
+          `Detected raw Tally company directory "${scanned.folderName}" for "${cName}". To import all stock and ledgers with 100% tax and transaction accuracy, open this company in Tally Prime, press Alt+E > Masters (XML format), and drop the XML file here.`,
+        ],
+        fileNames: files.map((f) => f.name),
+      };
+    }
+    throw new Error("No supported accounting files (.xml, .xlsx, .csv) found in the selected folder.");
+  }
+
+  if (parsableFiles.length === 1 && !scanned.isRawTallyCompanyDir) {
+    return parseUniversalFile(parsableFiles[0], chosenSoftware);
   }
 
   const fileResults: UniversalImportData[] = [];
-  for (const f of files) {
+  for (const f of parsableFiles) {
     try {
       const res = await parseUniversalFile(f, chosenSoftware);
       fileResults.push(res);
@@ -1020,7 +1073,7 @@ export async function parseMultipleUniversalFiles(
   }
 
   if (fileResults.length === 0) {
-    throw new Error("Could not parse any of the selected files.");
+    throw new Error("Could not parse any of the files in the selected folder.");
   }
 
   // Merge items
@@ -1054,15 +1107,23 @@ export async function parseMultipleUniversalFiles(
   const allVouchers = fileResults.flatMap((r) => r.vouchers);
   const allBanks = fileResults.flatMap((r) => r.bankAccounts);
 
+  const finalCompanyName =
+    scanned.tallyCompanyInfo?.companyName ||
+    fileResults.find((r) => r.companyName)?.companyName ||
+    undefined;
+
   return {
     sourceSoftware: chosenSoftware,
-    detectedSoftware: fileResults[0]?.detectedSoftware || "custom",
+    detectedSoftware: fileResults[0]?.detectedSoftware || (scanned.isRawTallyCompanyDir ? "tally" : "custom"),
     detectedEntityTypes: [
       ...(mergedItems.length > 0 ? ["items" as const] : []),
       ...(mergedParties.length > 0 ? ["parties" as const] : []),
       ...(allBanks.length > 0 ? ["bank" as const] : []),
       ...(allVouchers.length > 0 ? ["vouchers" as const] : []),
     ],
+    companyName: finalCompanyName,
+    folderName: scanned.folderName,
+    isRawTallyFolder: scanned.isRawTallyCompanyDir,
     items: mergedItems,
     parties: {
       customers,
