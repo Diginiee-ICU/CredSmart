@@ -53,7 +53,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
-import { TallyBankAccount, TallyVoucher } from "@/utils/tallyXmlParser";
+import { getAllTallyVouchers, TallyBankAccount, TallyVoucher } from "@/utils/tallyXmlParser";
 import { extractFilesFromDataTransfer } from "@/utils/folderReader";
 import {
   SOFTWARE_PROFILES,
@@ -146,7 +146,7 @@ export default function TallyImport() {
         toast.success(`🎉 Auto-Sync Completed! Ingested ${result.itemsCount} items and ${result.partiesCount} parties directly.`);
       } else {
         setLiveSyncStatusText(`Probing local Tally on ${syncConfig.tallyHost}...`);
-        const probe = await probeLocalTally(syncConfig.tallyHost);
+        const probe = await probeLocalTally(syncConfig.tallyHost, syncConfig.pairingToken);
         setProbeResult(probe);
 
         if (!probe.online) {
@@ -156,13 +156,13 @@ export default function TallyImport() {
         }
 
         setLiveSyncStatusText(`Connected to "${probe.companyName || "Tally"}" (${probe.latencyMs}ms). Exporting masters...`);
-        const tallyData = await fetchLiveTallyData(syncConfig.tallyHost);
+        const tallyData = await fetchLiveTallyData(syncConfig.tallyHost, syncConfig.pairingToken);
 
         setLiveSyncStatusText(`Parsed ${tallyData.items.length} items & ${tallyData.parties.length} parties. Ingesting into Supabase...`);
         const result = await executeDirectSyncIngestion(
           orgId,
           user?.id || "sync-user",
-          { items: tallyData.items, parties: tallyData.parties, vouchers: tallyData.salesVouchers },
+          { items: tallyData.items, parties: tallyData.parties, vouchers: getAllTallyVouchers(tallyData) },
           "direct_browser",
           "tally"
         );

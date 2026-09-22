@@ -144,7 +144,7 @@ export const CREDSMART_BRIDGE_HOST = "http://127.0.0.1:9005";
 /**
  * Probes the local Tally Prime / ERP 9 HTTP server or CredSmart Local Bridge
  */
-export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promise<{
+export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000", pairingToken?: string): Promise<{
   online: boolean;
   latencyMs: number;
   companyName?: string;
@@ -161,7 +161,10 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promis
 
       const bridgeRes = await fetch(CREDSMART_BRIDGE_HOST, {
         method: "POST",
-        headers: { "Content-Type": "text/xml" },
+        headers: {
+          "Content-Type": "text/xml",
+          ...(pairingToken ? { "X-CredSmart-Sync-Token": pairingToken } : {}),
+        },
         body: TALLY_EXPORT_MASTERS_XML,
         signal: bridgeController.signal,
       });
@@ -239,7 +242,7 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promis
 /**
  * Fetches live data directly from local Tally HTTP Server or CredSmart Bridge and parses it
  */
-export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000"): Promise<TallyParseResult> {
+export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000", pairingToken?: string): Promise<TallyParseResult> {
   let targetUrl = hostUrl;
 
   // Check if bridge is active if using port 9000
@@ -247,7 +250,11 @@ export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000"): Pro
     try {
       const ctrl = new AbortController();
       const tm = setTimeout(() => ctrl.abort(), 1200);
-      const testBridge = await fetch(CREDSMART_BRIDGE_HOST, { method: "GET", signal: ctrl.signal });
+      const testBridge = await fetch(CREDSMART_BRIDGE_HOST, {
+        method: "GET",
+        headers: pairingToken ? { "X-CredSmart-Sync-Token": pairingToken } : undefined,
+        signal: ctrl.signal,
+      });
       clearTimeout(tm);
       if (testBridge.ok) {
         targetUrl = CREDSMART_BRIDGE_HOST;
@@ -262,7 +269,12 @@ export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000"): Pro
 
   const res = await fetch(targetUrl, {
     method: "POST",
-    headers: { "Content-Type": "text/xml" },
+    headers: {
+      "Content-Type": "text/xml",
+      ...(targetUrl === CREDSMART_BRIDGE_HOST && pairingToken
+        ? { "X-CredSmart-Sync-Token": pairingToken }
+        : {}),
+    },
     body: TALLY_EXPORT_MASTERS_XML,
     signal: controller.signal,
   });

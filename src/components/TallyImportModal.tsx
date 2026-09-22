@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   autoDetectAndParseTally,
+  getAllTallyVouchers,
   TallyParseResult,
   TallyBankAccount,
   TallyVoucher,
@@ -148,13 +149,7 @@ export function TallyImportModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const totalVouchersCount = parseResult
-    ? (parseResult.paymentVouchers?.length || 0) +
-      (parseResult.receiptVouchers?.length || 0) +
-      (parseResult.salesVouchers?.length || 0) +
-      (parseResult.purchaseVouchers?.length || 0) +
-      (parseResult.journalVouchers?.length || 0)
-    : 0;
+  const totalVouchersCount = parseResult ? getAllTallyVouchers(parseResult).length : 0;
 
   // ── File Handlers ─────────────────────────────────────────────────────────
 
@@ -186,6 +181,8 @@ export function TallyImportModal({
         paymentVouchers: data.vouchers.filter((v) => v.voucherType === "Payment"),
         receiptVouchers: data.vouchers.filter((v) => v.voucherType === "Receipt"),
         journalVouchers: data.vouchers.filter((v) => v.voucherType === "Journal"),
+        creditNoteVouchers: data.vouchers.filter((v) => v.voucherType === "Credit Note"),
+        debitNoteVouchers: data.vouchers.filter((v) => v.voucherType === "Debit Note"),
         companyName: data.companyName,
         companyGstin: data.companyGstin,
         totalEntities: data.items.length + data.parties.all.length + data.bankAccounts.length + data.vouchers.length,
@@ -299,13 +296,7 @@ export function TallyImportModal({
         }
       }
 
-      const allVouchers = [
-        ...parseResult.salesVouchers,
-        ...parseResult.purchaseVouchers,
-        ...parseResult.paymentVouchers,
-        ...parseResult.receiptVouchers,
-        ...parseResult.journalVouchers,
-      ];
+      const allVouchers = getAllTallyVouchers(parseResult);
       if (importVouchers && allVouchers.length > 0 && onImportVouchers) {
         try {
           await onImportVouchers(allVouchers, conflictMode);
@@ -820,13 +811,7 @@ export function TallyImportModal({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {[
-                          ...(parseResult.salesVouchers || []),
-                          ...(parseResult.purchaseVouchers || []),
-                          ...(parseResult.receiptVouchers || []),
-                          ...(parseResult.paymentVouchers || []),
-                          ...(parseResult.journalVouchers || []),
-                        ].slice(0, 100).map((v, i) => (
+                        {getAllTallyVouchers(parseResult).slice(0, 100).map((v, i) => (
                           <tr key={i} className="hover:bg-muted/30">
                             <td className="px-3 py-2 font-mono text-xs font-medium">{v.voucherNumber}</td>
                             <td className="px-3 py-2">

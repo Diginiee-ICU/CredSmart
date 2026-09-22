@@ -75,6 +75,18 @@ export interface TallyParseResult {
   source: "xml" | "csv";
 }
 
+export function getAllTallyVouchers(result: TallyParseResult): TallyVoucher[] {
+  return [
+    ...result.salesVouchers,
+    ...result.purchaseVouchers,
+    ...result.paymentVouchers,
+    ...result.receiptVouchers,
+    ...result.journalVouchers,
+    ...(result.creditNoteVouchers || []),
+    ...(result.debitNoteVouchers || []),
+  ];
+}
+
 // ─── XML & Numeric Extraction Helpers ─────────────────────────────────────────
 
 function getText(el: Element | null, tag: string): string {
