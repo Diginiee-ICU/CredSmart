@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld("credsmartDesktop", {
   probeTally: () => ipcRenderer.invoke("tally:probe"),
   openFiles: (options) => ipcRenderer.invoke("dialog:openFiles", options),
   openFolder: () => ipcRenderer.invoke("dialog:openFolder"),
+  autoSearchTallyFolder: () => ipcRenderer.invoke("tally:autoSearchFolder"),
 });

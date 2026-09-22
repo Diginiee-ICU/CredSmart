@@ -307,6 +307,80 @@ function registerIpcHandlers() {
       files,
     };
   });
+
+  // Direct native directory picker for Tally auto search
+  ipcMain.handle("tally:autoSearchFolder", async () => {
+    const { app } = require("electron");
+    const searchDirs = [
+      "C:\\TallyPrime",
+      "C:\\TallyPrime\\Data",
+      "C:\\Program Files\\TallyPrime",
+      "C:\\Tally",
+      "D:\\TallyPrime",
+      path.join(app.getPath("desktop"), "Tally Data"),
+      path.join(app.getPath("downloads"), "Tally Data"),
+      path.join(app.getPath("documents"), "Tally Data")
+    ];
+
+    let foundFiles = [];
+    let foundDir = "";
+
+    async function scanDir(currentDir, depth = 0) {
+      if (depth > 5) return;
+      try {
+        const entries = await fs.readdir(currentDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(currentDir, entry.name);
+          if (entry.isDirectory()) {
+            await scanDir(fullPath, depth + 1);
+          } else if (entry.isFile()) {
+            const lowerName = entry.name.toLowerCase();
+            if (lowerName.endsWith(".xml") || lowerName.endsWith(".csv") || lowerName.endsWith(".1800") || lowerName.endsWith(".900") || lowerName === "company.900") {
+              try {
+                const buffer = await fs.readFile(fullPath);
+                foundFiles.push({
+                  name: entry.name,
+                  path: fullPath,
+                  relativePath: fullPath.substring(currentDir.length + 1).replace(/\\/g, "/"),
+                  size: buffer.length,
+                  dataBase64: buffer.toString("base64"),
+                });
+              } catch (readErr) {
+                console.warn(`Could not read file ${fullPath}:`, readErr.message);
+              }
+            }
+          }
+        }
+      } catch (dirErr) {
+        // ignore
+      }
+    }
+
+    for (const dir of searchDirs) {
+      try {
+        const stats = await fs.stat(dir);
+        if (stats.isDirectory()) {
+           await scanDir(dir, 0);
+           if (foundFiles.length > 0) {
+             foundDir = dir;
+             break;
+           }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (foundFiles.length > 0) {
+      return {
+        folderPath: foundDir,
+        folderName: path.basename(foundDir),
+        files: foundFiles,
+      };
+    }
+
+    return null;
+  });
 }
 
 // ─── Electron Window ─────────────────────────────────────────────────────────
