@@ -208,7 +208,7 @@ function mergeTallyParseResults(masters: TallyParseResult, daybook: TallyParseRe
 export const CREDSMART_BRIDGE_HOST = "http://127.0.0.1:9005";
 
 /**
- * Probes the local Tally Prime / ERP 9 HTTP server or CredSmart Local Bridge
+ * Probes the local Tally Prime / ERP 9 HTTP server, CredSmart Desktop IPC, or CredSmart Local Bridge
  */
 export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000", pairingToken?: string): Promise<{
   online: boolean;
@@ -218,18 +218,45 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000", pairing
   usedBridge?: boolean;
   resolvedUrl?: string;
 }> {
-  // If host is port 9000 or default, first check if the CredSmart Bridge is active on port 9005
+  // 1. If running inside CredSmart Desktop App, use native Node.js IPC (Zero CORS, zero port conflicts)
+  if (typeof window !== "undefined" && window.credsmartDesktop?.probeTally) {
+    try {
+      const probeStart = performance.now();
+      const res = await window.credsmartDesktop.probeTally();
+      const latencyMs = Math.round(performance.now() - probeStart);
+      if (res.online) {
+        return {
+          online: true,
+          latencyMs: res.latencyMs ?? latencyMs,
+          companyName: `${res.companyName || "Tally Prime"} (Desktop Native)`,
+          usedBridge: true,
+          resolvedUrl: "electron://ipc-direct",
+        };
+      }
+      return {
+        online: false,
+        latencyMs,
+        error: res.error || "Cannot connect to local Tally on port 9000. Ensure Tally Prime is running with HTTP Server enabled.",
+      };
+    } catch (err: unknown) {
+      console.warn("Desktop native probe failed, falling back to network probe:", err);
+    }
+  }
+
+  // 2. If host is port 9000 or default, check if the CredSmart Bridge is active on port 9005
   if (hostUrl.includes(":9000") || hostUrl === "http://127.0.0.1:9000") {
     try {
       const bridgeStart = performance.now();
       const bridgeController = new AbortController();
       const bridgeTimeout = setTimeout(() => bridgeController.abort(), 1500);
 
+      const effectiveToken = pairingToken || (typeof window !== "undefined" ? window.credsmartDesktop?.pairingToken : undefined);
+
       const bridgeRes = await fetch(CREDSMART_BRIDGE_HOST, {
         method: "POST",
         headers: {
           "Content-Type": "text/xml",
-          ...(pairingToken ? { "X-CredSmart-Sync-Token": pairingToken } : {}),
+          ...(effectiveToken ? { "X-CredSmart-Sync-Token": effectiveToken } : {}),
         },
         body: TALLY_EXPORT_MASTERS_XML,
         signal: bridgeController.signal,
@@ -257,6 +284,7 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000", pairing
     }
   }
 
+  // 3. Fallback direct HTTP probe
   const start = performance.now();
   try {
     const controller = new AbortController();
@@ -299,26 +327,38 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000", pairing
       error: msg.includes("abort")
         ? "Connection timed out. Ensure Tally Prime is running and ODBC/HTTP Server is enabled on port 9000."
         : isHttps
-        ? "Browser Security Restriction: Chrome blocks HTTPS web pages from directly calling local HTTP port 9000 without CORS headers. Double-click 'CredSmart-Sync.bat' to start the local sync bridge or export your data."
-        : "Cannot reach local Tally server directly from browser. Run 'CredSmart-Sync.bat' to start the local sync bridge or export your data.",
+        ? "Browser Security Restriction: Chrome blocks HTTPS web pages from directly calling local HTTP port 9000 without CORS headers. Run CredSmart Desktop Software or double-click 'CredSmart-Sync.bat' to start the local sync bridge."
+        : "Cannot reach local Tally server directly from browser. Run CredSmart Desktop Software or 'CredSmart-Sync.bat' to connect.",
     };
   }
 }
 
 /**
- * Fetches live data directly from local Tally HTTP Server or CredSmart Bridge and parses it
+ * Fetches live data directly from local Tally HTTP Server, CredSmart Desktop IPC, or CredSmart Bridge and parses it
  */
 export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000", pairingToken?: string): Promise<TallyParseResult> {
-  let targetUrl = hostUrl;
+  // 1. If running inside CredSmart Desktop App, use native Node.js IPC directly
+  if (typeof window !== "undefined" && window.credsmartDesktop?.requestTally) {
+    const desktopRequest = async (body: string): Promise<TallyParseResult> => {
+      const xml = await window.credsmartDesktop!.requestTally!(body);
+      return parseTallyXml(xml);
+    };
+    const masters = await desktopRequest(TALLY_EXPORT_MASTERS_XML);
+    const daybook = await desktopRequest(TALLY_EXPORT_DAYBOOK_XML);
+    return mergeTallyParseResults(masters, daybook);
+  }
 
-  // Check if bridge is active if using port 9000
+  // 2. If browser, check if bridge is active on port 9005
+  let targetUrl = hostUrl;
+  const effectiveToken = pairingToken || (typeof window !== "undefined" ? window.credsmartDesktop?.pairingToken : undefined);
+
   if (hostUrl.includes(":9000")) {
     try {
       const ctrl = new AbortController();
       const tm = setTimeout(() => ctrl.abort(), 1200);
       const testBridge = await fetch(CREDSMART_BRIDGE_HOST, {
         method: "GET",
-        headers: pairingToken ? { "X-CredSmart-Sync-Token": pairingToken } : undefined,
+        headers: effectiveToken ? { "X-CredSmart-Sync-Token": effectiveToken } : undefined,
         signal: ctrl.signal,
       });
       clearTimeout(tm);
@@ -338,8 +378,8 @@ export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000", pair
         method: "POST",
         headers: {
           "Content-Type": "text/xml",
-          ...(targetUrl === CREDSMART_BRIDGE_HOST && pairingToken
-            ? { "X-CredSmart-Sync-Token": pairingToken }
+          ...(targetUrl === CREDSMART_BRIDGE_HOST && effectiveToken
+            ? { "X-CredSmart-Sync-Token": effectiveToken }
             : {}),
         },
         body,
