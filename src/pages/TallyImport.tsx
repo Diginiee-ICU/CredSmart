@@ -387,8 +387,36 @@ export default function TallyImport() {
             const relPath = df.relativePath || `${res.folderName}/${df.name}`;
             return createBrowserFileFromDesktop({ ...df, relativePath: relPath });
           });
-          toast.success(`Found Tally Data folder at ${res.folderPath}`);
-          handleFiles(files);
+          toast.success(`Found Tally Data folder at ${res.folderPath}. Auto-adding complete data...`);
+          
+          setIsParsing(true);
+          try {
+            const data = await parseMultipleUniversalFiles(files, "tally");
+            let imported = 0;
+            
+            if (data.items.length > 0) {
+              await handleDirectSaveItems(data.items, "skip");
+              imported += data.items.length;
+            }
+            if (data.parties.all.length > 0) {
+              await handleDirectSaveParties(data.parties.all, "skip");
+              imported += data.parties.all.length;
+            }
+            if (data.vouchers && data.vouchers.length > 0) {
+              await handleDirectSaveVouchers(data.vouchers, "skip");
+              imported += data.vouchers.length;
+            }
+            
+            if (imported > 0) {
+              toast.success(`Successfully added ${imported} complete records from Tally automatically!`);
+            } else {
+              toast.error("No valid Tally items or parties found in the detected folder.");
+            }
+          } catch (parseErr: unknown) {
+            toast.error(parseErr instanceof Error ? parseErr.message : "Failed to parse Tally files");
+          } finally {
+            setIsParsing(false);
+          }
           return;
         } else {
           toast.error("Could not auto-find any Tally Data on common paths.");
