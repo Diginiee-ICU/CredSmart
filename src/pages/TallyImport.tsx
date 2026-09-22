@@ -1187,9 +1187,15 @@ export default function TallyImport() {
               <h1 className="text-base sm:text-lg font-black text-foreground tracking-tight truncate">
                 1-Click Data Migration Hub
               </h1>
-              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold hidden sm:inline-flex">
-                ALL TOOLS SUPPORTED
-              </Badge>
+              {typeof window !== "undefined" && window.credsmartDesktop?.isDesktop ? (
+                <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold hidden sm:inline-flex">
+                  DESKTOP SOFTWARE • DIRECT SYNC READY
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold hidden sm:inline-flex">
+                  ALL TOOLS SUPPORTED
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground truncate">
               Seamlessly migrate complete items, customer/supplier ledgers & balances in 1 click
