@@ -70,7 +70,7 @@ import {
   probeLocalTally,
   fetchLiveTallyData,
   executeDirectSyncIngestion,
-  generateTallyTdlContent,
+  generateTallySetupGuideContent,
   generateWindowsSyncBatContent,
   getDaemonCliCommand,
   registerPairingToken,
@@ -211,15 +211,15 @@ export default function TallyImport() {
     toast.success("New Store Pairing Token generated!");
   };
 
-  const handleDownloadTdl = () => {
-    const tdlCode = generateTallyTdlContent(orgId || "demo-org", syncConfig.pairingToken);
-    const blob = new Blob([tdlCode], { type: "text/plain;charset=utf-8" });
+  const handleDownloadSetupGuide = () => {
+    const guideContent = generateTallySetupGuideContent(orgId || "demo-org", syncConfig.pairingToken);
+    const blob = new Blob([guideContent], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "CredSmart-Tally-Setup-Guide.tdl";
+    a.download = "CredSmart-Tally-Setup-Guide.txt";
     a.click();
-    toast.success("Tally setup guide downloaded. Use CredSmartTallyBridge.exe for live import.");
+    toast.success("Setup guide downloaded. Do not load it as a TDL add-on; use CredSmartTallyBridge.exe for live import.");
   };
 
   const handleDownloadWindowsBat = () => {
@@ -1194,7 +1194,7 @@ export default function TallyImport() {
               )}
             >
               <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" />
-              <span>Automated Sync (TDL / Daemon)</span>
+              <span>Automated Sync (Local Bridge)</span>
             </button>
           </div>
 
@@ -1357,14 +1357,14 @@ export default function TallyImport() {
                           </div>
                           <button
                             type="button"
-                            onClick={handleDownloadTdl}
+                            onClick={handleDownloadSetupGuide}
                             className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
                           >
-                            Download .tdl
+                            Download guide
                           </button>
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-snug">
-                          The TDL download is a compatibility-safe setup guide. Use CredSmartTallyBridge.exe for live import without browser blocks.
+                          This plain-text guide is not a TDL add-on. Use CredSmartTallyBridge.exe for live import without browser blocks.
                         </p>
                       </div>
 
@@ -1598,11 +1598,11 @@ export default function TallyImport() {
 
                 <Button
                   size="sm"
-                  onClick={handleDownloadTdl}
+                  onClick={handleDownloadSetupGuide}
                   className="w-full gap-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download Tally Setup Guide.tdl</span>
+                  <span>Download Tally Setup Guide.txt</span>
                 </Button>
               </div>
 

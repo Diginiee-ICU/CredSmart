@@ -797,38 +797,36 @@ export async function executeDirectSyncIngestion(
 
 // ─── Tally TDL Add-on Script Generator ────────────────────────────────────────
 
-/**
- * Generates a Tally helper that adds a guided export action. TDL cannot safely
- * perform the browser/cloud authentication flow, so the generated action makes
- * the manual export handoff explicit.
- */
-export function generateTallyTdlContent(orgId: string, pairingToken: string): string {
+/** Generates a plain-text setup guide for the local Tally bridge. */
+export function generateTallySetupGuideContent(orgId: string, pairingToken: string): string {
   const safeOrgId = orgId.replace(/"/g, "");
   void pairingToken;
-  return `;; =========================================================================
-;; CredSmart Tally Import Setup Guide
-;; Version: 2.3.0
-;; Organization ID: ${safeOrgId}
-;; Auto-Generated: ${new Date().toISOString()}
-;;
-;; This file intentionally contains comments only. CredSmart does not modify
-;; Tally menus, reports, parts, lines, or buttons through TDL because those
-;; definitions vary between Tally Prime and Tally.ERP 9 builds.
-;;
-;; Supported live-import setup:
-;; 1. Start CredSmartTallyBridge.exe on this Windows computer.
-;; 2. Keep Tally Prime HTTP Server enabled on http://127.0.0.1:9000.
-;; 3. Open CredSmart and click "Sync Live Tally Now".
-;;
-;; XML/CSV file import is available in CredSmart when the bridge is offline.
-;; =========================================================================
+  return `CredSmart Tally Import Setup Guide
+Version: 2.3.0
+Organization ID: ${safeOrgId}
+Generated: ${new Date().toISOString()}
+
+This is a plain-text guide, not a TDL add-on.
+Do not load this file in Tally's Manage Local TDL screen.
+
+Live-import setup:
+1. Start CredSmartTallyBridge.exe on this Windows computer.
+2. Keep Tally Prime HTTP Server enabled on http://127.0.0.1:9000.
+3. Open CredSmart and click "Sync Live Tally Now".
+
+If Tally displays a message mentioning "ActType Body", disable the unrelated
+local TDL add-on that defines it before retrying. CredSmart does not modify
+Tally menus, reports, parts, lines, or buttons.
+
+XML/CSV file import remains available when the bridge is offline.
 `;
 }
 
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
-export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://reutxqmxiuqrmgmgrlai.supabase.co/functions/v1/sync-tally"): string {
-  return `node scripts/credsmart-sync-agent/index.cjs --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
+export function getDaemonCliCommand(_orgId: string, token: string): string {
+  const quotedToken = JSON.stringify(token);
+  return `node scripts/credsmart-sync-agent/index.cjs --token=${quotedToken} --bridgePort=9005 --tallyUrl="http://127.0.0.1:9000"`;
 }
 
 /**
