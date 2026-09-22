@@ -139,15 +139,55 @@ export const TALLY_EXPORT_MASTERS_XML = `
 </ENVELOPE>
 `.trim();
 
+export const CREDSMART_BRIDGE_HOST = "http://127.0.0.1:9005";
+
 /**
- * Probes the local Tally Prime / ERP 9 HTTP server
+ * Probes the local Tally Prime / ERP 9 HTTP server or CredSmart Local Bridge
  */
 export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promise<{
   online: boolean;
   latencyMs: number;
   companyName?: string;
   error?: string;
+  usedBridge?: boolean;
+  resolvedUrl?: string;
 }> {
+  // If host is port 9000 or default, first check if the CredSmart Bridge is active on port 9005
+  if (hostUrl.includes(":9000") || hostUrl === "http://127.0.0.1:9000") {
+    try {
+      const bridgeStart = performance.now();
+      const bridgeController = new AbortController();
+      const bridgeTimeout = setTimeout(() => bridgeController.abort(), 1500);
+
+      const bridgeRes = await fetch(CREDSMART_BRIDGE_HOST, {
+        method: "POST",
+        headers: { "Content-Type": "text/xml" },
+        body: TALLY_EXPORT_MASTERS_XML,
+        signal: bridgeController.signal,
+      });
+      clearTimeout(bridgeTimeout);
+
+      if (bridgeRes.ok) {
+        const text = await bridgeRes.text();
+        let company = "Tally Prime (via Local Bridge)";
+        const match = text.match(/<COMPANY[^>]*NAME="([^"]+)"/i) || text.match(/<COMPANY[^>]*>([^<]+)<\/COMPANY>/i);
+        if (match && match[1]) {
+          company = `${match[1].trim()} (Local Bridge)`;
+        }
+        const latencyMs = Math.round(performance.now() - bridgeStart);
+        return {
+          online: true,
+          latencyMs,
+          companyName: company,
+          usedBridge: true,
+          resolvedUrl: CREDSMART_BRIDGE_HOST,
+        };
+      }
+    } catch {
+      // Bridge not active, continue with direct probe
+    }
+  }
+
   const start = performance.now();
   try {
     const controller = new AbortController();
@@ -172,7 +212,7 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promis
       if (match && match[1]) {
         company = match[1].trim();
       }
-      return { online: true, latencyMs, companyName: company };
+      return { online: true, latencyMs, companyName: company, resolvedUrl: hostUrl };
     }
 
     return {
@@ -190,20 +230,37 @@ export async function probeLocalTally(hostUrl = "http://127.0.0.1:9000"): Promis
       error: msg.includes("abort")
         ? "Connection timed out. Ensure Tally Prime is running and ODBC/HTTP Server is enabled on port 9000."
         : isHttps
-        ? "Browser Security Restriction: Your browser blocks HTTPS web pages from directly calling local HTTP port 9000 (Chrome CORS/Private Network Access policy). Use 1-Click File Upload, Desktop Sync Daemon, or TDL Add-on."
-        : "Cannot reach local Tally server directly from browser (due to CORS/Private Network restrictions or Tally is closed). Use the Desktop Sync Daemon or TDL Add-on.",
+        ? "Browser Security Restriction: Chrome blocks HTTPS web pages from directly calling local HTTP port 9000 without CORS headers. Double-click 'CredSmart-Sync.bat' to start the local sync bridge or export your data."
+        : "Cannot reach local Tally server directly from browser. Run 'CredSmart-Sync.bat' to start the local sync bridge or export your data.",
     };
   }
 }
 
 /**
- * Fetches live data directly from local Tally HTTP Server and parses it
+ * Fetches live data directly from local Tally HTTP Server or CredSmart Bridge and parses it
  */
 export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000"): Promise<TallyParseResult> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  let targetUrl = hostUrl;
 
-  const res = await fetch(hostUrl, {
+  // Check if bridge is active if using port 9000
+  if (hostUrl.includes(":9000")) {
+    try {
+      const ctrl = new AbortController();
+      const tm = setTimeout(() => ctrl.abort(), 1200);
+      const testBridge = await fetch(CREDSMART_BRIDGE_HOST, { method: "GET", signal: ctrl.signal });
+      clearTimeout(tm);
+      if (testBridge.ok) {
+        targetUrl = CREDSMART_BRIDGE_HOST;
+      }
+    } catch {
+      // Keep default targetUrl
+    }
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "text/xml" },
     body: TALLY_EXPORT_MASTERS_XML,
