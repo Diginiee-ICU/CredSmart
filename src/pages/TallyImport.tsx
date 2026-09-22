@@ -100,8 +100,8 @@ export default function TallyImport() {
     if (orgId) {
       const config = getSyncConfig(orgId);
       setSyncConfig(config);
-      void registerPairingToken(orgId, config.pairingToken).catch(() => {
-        // Registration is retried by the explicit token regeneration action.
+      void registerPairingToken(orgId, config.pairingToken).catch((error: unknown) => {
+        toast.error(error instanceof Error ? error.message : "Could not register the Tally pairing token.");
       });
     }
   }, [orgId]);
@@ -178,7 +178,11 @@ export default function TallyImport() {
 
         setSyncConfig(getSyncConfig(orgId));
         const syncMessage = `Tally sync ${result.success ? "completed" : "completed with warnings"}. Ingested ${result.itemsCount} items, ${result.partiesCount} parties, and ${result.vouchersCount} vouchers.`;
-        result.success ? toast.success(syncMessage) : toast.warning(`${syncMessage} ${result.error || "Some records were not imported."}`);
+        if (result.success) {
+          toast.success(syncMessage);
+        } else {
+          toast.warning(`${syncMessage} ${result.error || "Some records were not imported."}`);
+        }
       }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Direct sync failed");

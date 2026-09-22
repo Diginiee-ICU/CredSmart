@@ -14,7 +14,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "tally:bridge": "node scripts/credsmart-sync-agent/index.cjs",
+    "tally:bridge:exe": "pkg scripts/credsmart-sync-agent/index.cjs --targets node18-win-x64 --output dist/CredSmartTallyBridge.exe"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
@@ -103,6 +105,7 @@
     "globals": "^15.15.0",
     "jsdom": "^20.0.3",
     "lovable-tagger": "^1.1.13",
+    "pkg": "^5.8.1",
     "postcss": "^8.5.6",
     "supabase": "^2.76.8",
     "tailwindcss": "^3.4.17",

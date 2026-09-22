@@ -61,6 +61,15 @@ function getStorageKey(orgId: string): string {
   return `credsmart_auto_sync_config_${orgId || "default"}`;
 }
 
+function getStableTallySku(name: string): string {
+  let hash = 2166136261;
+  for (const character of name.trim().toLowerCase()) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `TALLY-${(hash >>> 0).toString(16).toUpperCase().padStart(8, "0")}`;
+}
+
 // ─── Default Configuration ───────────────────────────────────────────────────
 
 export function getDefaultSyncConfig(orgId: string): SyncConfig {
@@ -376,7 +385,7 @@ export async function executeDirectSyncIngestion(
         const sPrice = Number(item.sellingPrice) || 0;
         const pPrice = Number(item.purchasePrice) || 0;
         const stock = Number(item.openingStock ?? item.currentStock ?? 0);
-        const skuVal = item.sku || `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const skuVal = item.sku || getStableTallySku(item.name);
 
         const tagsPayload: Record<string, unknown> = {
           selling_price: sPrice,

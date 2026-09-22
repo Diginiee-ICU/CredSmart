@@ -97,6 +97,41 @@
 - `npm run test` — Run unit and integration tests with Vitest
 - `npm run test:watch` — Run tests in watch mode
 - `npm run preview` — Preview the production build locally
+- `npm run tally:bridge` — Start the authenticated Windows/local Tally bridge on port 9005
+- `npm run tally:bridge:exe` — Build `dist/CredSmartTallyBridge.exe` for Windows x64
+
+## Direct Tally Import (Windows)
+
+CredSmart supports a one-click live import from Tally Prime or Tally.ERP 9 when
+Tally's HTTP server is enabled on `127.0.0.1:9000`.
+
+1. Open the authenticated **Import from Tally / Excel** page.
+2. Generate or register the pairing token shown in the live-sync panel.
+3. Start the CredSmart Tally Bridge with the generated token:
+
+   ```powershell
+   $env:CREDSMART_SYNC_TOKEN = "<pairing-token>"
+   npm run tally:bridge
+   ```
+
+   The bridge binds only to `127.0.0.1:9005`, proxies XML requests to Tally,
+   and rejects requests without the pairing token. The browser origin must be
+   listed in `CREDSMART_ALLOWED_ORIGINS` when using a non-default deployment.
+4. Click **Sync Live Tally Now**. CredSmart requests masters and daybook data,
+   parses them, and imports products, parties, and enabled voucher scopes.
+
+For a customer machine, build the Windows companion executable:
+
+```powershell
+npm run tally:bridge:exe
+```
+
+Run `dist\CredSmartTallyBridge.exe` with runtime environment variables such as
+`CREDSMART_SYNC_TOKEN`, `CREDSMART_TALLY_URL`, and
+`CREDSMART_BRIDGE_PORT`. Pairing tokens are runtime configuration and must
+never be committed or embedded in the executable. If Tally or the bridge is
+unavailable, the existing XML/CSV file import remains available on
+`/tally-import`.
 
 ---
 
