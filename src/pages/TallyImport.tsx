@@ -377,6 +377,31 @@ export default function TallyImport() {
     folderInputRef.current?.click();
   };
 
+  const handleAutoSearchTally = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (typeof window !== "undefined" && window.credsmartDesktop?.autoSearchTallyFolder) {
+      try {
+        const res = await window.credsmartDesktop.autoSearchTallyFolder();
+        if (res && res.files.length > 0) {
+          const files = res.files.map((df) => {
+            const relPath = df.relativePath || `${res.folderName}/${df.name}`;
+            return createBrowserFileFromDesktop({ ...df, relativePath: relPath });
+          });
+          toast.success(`Found Tally Data folder at ${res.folderPath}`);
+          handleFiles(files);
+          return;
+        } else {
+          toast.error("Could not auto-find any Tally Data on common paths.");
+        }
+      } catch (err) {
+        console.warn("Desktop autoSearchTallyFolder failed:", err);
+        toast.error("Auto search is only supported in the Desktop app.");
+      }
+    } else {
+      toast.error("Auto search is only supported in the Desktop app. Please use manual upload or live sync.");
+    }
+  };
+
   // ── Universal File Handling ────────────────────────────────────────────────
 
   const handleFiles = async (fileList: FileList | File[]) => {
