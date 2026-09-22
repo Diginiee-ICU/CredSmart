@@ -438,15 +438,16 @@ export default function AppLayout() {
                 <Search className="w-3.5 h-3.5" />
               </button>
 
-              {/* Import Data button (desktop & tablet) */}
+              {/* Auto Import Tally button (Desktop & Tablet) */}
               <button
                 type="button"
                 onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-                className="hidden lg:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 text-xs font-bold transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
-                title="Import Data from Tally or Excel"
+                className="flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
+                title="Auto Search Tally Folder & Import All Data"
               >
-                <FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
-                <span>Import Data</span>
+                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline">Auto Import Tally</span>
+                <span className="sm:hidden text-[11px]">Tally</span>
               </button>
 
               {/* New Invoice split button */}

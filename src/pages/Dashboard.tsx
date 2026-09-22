@@ -603,6 +603,34 @@ export default function Dashboard() {
           </p>
         </div>
 
+        {/* TALLY 1-CLICK AUTO IMPORT HERO ACTION */}
+        <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-transparent flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                Auto Search Tally Folder &amp; Import Data
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 uppercase">
+                  1-Click Auto Add
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                Automatically scan Windows drives for your Tally company data and import items, customers, and vouchers instantly.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+            className="w-full sm:w-auto shrink-0 gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all border border-emerald-400/40"
+          >
+            <Search className="w-4 h-4 stroke-[2.5]" />
+            <span>Open Auto Import</span>
+          </Button>
+        </div>
+
         {/* FINANCIAL LEDGER SUMMARY Section Header */}
         <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-mono font-bold tracking-wider uppercase pt-1">
           <span>FINANCIAL LEDGER SUMMARY</span>
