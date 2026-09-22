@@ -26,3 +26,6 @@ android/keystore/
 *.sln
 *.sw?
 /release
+/dist-desktop
+release/
+dist-desktop/
