@@ -37,7 +37,7 @@ console.log(`  • Cloud API        : ${API_URL}`);
 console.log(`  • Sync Interval    : Every ${INTERVAL_MINUTES} minutes`);
 console.log("==================================================================\n");
 
-const TALLY_XML_REQUEST = `
+const TALLY_MASTERS_XML_REQUEST = `
 <ENVELOPE>
   <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
   <BODY>
@@ -54,9 +54,26 @@ const TALLY_XML_REQUEST = `
 </ENVELOPE>
 `.trim();
 
-function queryLocalTally() {
+const TALLY_DAYBOOK_XML_REQUEST = `
+<ENVELOPE>
+  <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
+  <BODY>
+    <EXPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>Day Book</REPORTNAME>
+        <STATICVARIABLES>
+          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+          <EXPLODEFLAG>Yes</EXPLODEFLAG>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+    </EXPORTDATA>
+  </BODY>
+</ENVELOPE>
+`.trim();
+
+function queryLocalTally(xmlRequest) {
   return new Promise((resolve, reject) => {
-    const postData = Buffer.from(TALLY_XML_REQUEST);
+    const postData = Buffer.from(xmlRequest);
     const req = http.request(
       {
         hostname: TALLY_HOST,
@@ -96,7 +113,7 @@ function queryLocalTally() {
   });
 }
 
-function uploadToCredSmart(xml) {
+function uploadToCredSmart(xml, exportType) {
   return new Promise((resolve, reject) => {
     const target = new URL(API_URL);
     const transport = target.protocol === "https:" ? https : http;
@@ -108,6 +125,7 @@ function uploadToCredSmart(xml) {
           Authorization: `Bearer ${TOKEN}`,
           "X-CredSmart-Organization": ORG_ID,
           "X-CredSmart-Sync-Token": TOKEN,
+          "X-CredSmart-Export-Type": exportType,
           "Content-Type": "application/xml; charset=utf-8",
           Accept: "application/json",
           "Content-Length": Buffer.byteLength(xml),
@@ -144,13 +162,15 @@ async function performSync() {
   console.log(`[${timestamp}] 🔄 Sync #${syncCount} initiated...`);
 
   try {
-    const xml = await queryLocalTally();
-    const itemMatches = (xml.match(/<STOCKITEM/gi) || []).length;
-    const ledgerMatches = (xml.match(/<LEDGER/gi) || []).length;
+    const mastersXml = await queryLocalTally(TALLY_MASTERS_XML_REQUEST);
+    const daybookXml = await queryLocalTally(TALLY_DAYBOOK_XML_REQUEST);
+    const itemMatches = (mastersXml.match(/<STOCKITEM/gi) || []).length;
+    const ledgerMatches = (mastersXml.match(/<LEDGER/gi) || []).length;
 
     console.log(`[${timestamp}] 📦 Extracted from Tally: ${itemMatches} Stock Items, ${ledgerMatches} Ledgers.`);
     console.log(`[${timestamp}] 🚀 Transmitting payload to CredSmart Cloud...`);
-    await uploadToCredSmart(xml);
+    await uploadToCredSmart(mastersXml, "masters");
+    await uploadToCredSmart(daybookXml, "daybook");
     console.log(`[${timestamp}] ✅ Sync #${syncCount} completed successfully!`);
   } catch (err) {
     console.warn(`[${timestamp}] ⚠️ Tally connection paused: ${err.message}`);

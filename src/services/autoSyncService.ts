@@ -139,6 +139,40 @@ export const TALLY_EXPORT_MASTERS_XML = `
 </ENVELOPE>
 `.trim();
 
+export const TALLY_EXPORT_DAYBOOK_XML = `
+<ENVELOPE>
+  <HEADER>
+    <TALLYREQUEST>Export Data</TALLYREQUEST>
+  </HEADER>
+  <BODY>
+    <EXPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>Day Book</REPORTNAME>
+        <STATICVARIABLES>
+          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+          <EXPLODEFLAG>Yes</EXPLODEFLAG>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+    </EXPORTDATA>
+  </BODY>
+</ENVELOPE>
+`.trim();
+
+function mergeTallyParseResults(masters: TallyParseResult, daybook: TallyParseResult): TallyParseResult {
+  return {
+    ...masters,
+    salesVouchers: daybook.salesVouchers,
+    purchaseVouchers: daybook.purchaseVouchers,
+    paymentVouchers: daybook.paymentVouchers,
+    receiptVouchers: daybook.receiptVouchers,
+    journalVouchers: daybook.journalVouchers,
+    creditNoteVouchers: daybook.creditNoteVouchers || [],
+    debitNoteVouchers: daybook.debitNoteVouchers || [],
+    totalEntities: masters.totalEntities + daybook.totalEntities,
+    warnings: [...masters.warnings, ...daybook.warnings],
+  };
+}
+
 export const CREDSMART_BRIDGE_HOST = "http://127.0.0.1:9005";
 
 /**
@@ -264,28 +298,33 @@ export async function fetchLiveTallyData(hostUrl = "http://127.0.0.1:9000", pair
     }
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const request = async (body: string): Promise<TallyParseResult> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch(targetUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/xml",
+          ...(targetUrl === CREDSMART_BRIDGE_HOST && pairingToken
+            ? { "X-CredSmart-Sync-Token": pairingToken }
+            : {}),
+        },
+        body,
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        throw new Error(`Tally HTTP server returned HTTP ${res.status} ${res.statusText}`);
+      }
+      return parseTallyXml(await res.text());
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
 
-  const res = await fetch(targetUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/xml",
-      ...(targetUrl === CREDSMART_BRIDGE_HOST && pairingToken
-        ? { "X-CredSmart-Sync-Token": pairingToken }
-        : {}),
-    },
-    body: TALLY_EXPORT_MASTERS_XML,
-    signal: controller.signal,
-  });
-  clearTimeout(timeoutId);
-
-  if (!res.ok) {
-    throw new Error(`Tally HTTP server returned HTTP ${res.status} ${res.statusText}`);
-  }
-
-  const xmlText = await res.text();
-  return parseTallyXml(xmlText);
+  const masters = await request(TALLY_EXPORT_MASTERS_XML);
+  const daybook = await request(TALLY_EXPORT_DAYBOOK_XML);
+  return mergeTallyParseResults(masters, daybook);
 }
 
 // ─── Ingestion Engine: Persist to Supabase ───────────────────────────────────
@@ -305,6 +344,7 @@ export async function executeDirectSyncIngestion(
   let itemsCount = 0;
   let partiesCount = 0;
   let vouchersCount = 0;
+  const unsupportedVoucherTypes = new Set<TallyVoucher["voucherType"]>();
 
   try {
     // 1. Sync Stock Items into Supabase products & batches
@@ -551,7 +591,8 @@ export async function executeDirectSyncIngestion(
                   quantity: it.quantity,
                   line_total: it.amount,
                 }));
-                await supabase.from("sale_items").insert(saleItems);
+                const { error: saleItemsError } = await supabase.from("sale_items").insert(saleItems);
+                if (saleItemsError) throw new Error(`Sale ${vch.voucherNumber} items failed: ${saleItemsError.message}`);
               }
             }
           }
@@ -607,19 +648,33 @@ export async function executeDirectSyncIngestion(
               if (!piErr && newPI) {
                 vouchersCount++;
                 if (vch.items && vch.items.length > 0) {
-                  const piItems = vch.items.map((it) => ({
-                    purchase_invoice_id: newPI.id,
-                    quantity: it.quantity,
-                    cost_price: it.rate,
-                    mrp: it.rate,
-                    batch_number: it.batchNumber || "BATCH-01",
-                    expiry_date: it.expiryDate || null,
-                  }));
-                  await supabase.from("purchase_invoice_items").insert(piItems);
+                  const piItems = [];
+                  for (const it of vch.items) {
+                    const { data: product } = await supabase
+                      .from("products")
+                      .select("id")
+                      .eq("organization_id", orgId)
+                      .ilike("name", it.itemName.trim())
+                      .maybeSingle();
+                    if (!product) throw new Error(`Purchase ${vch.voucherNumber} item not found: ${it.itemName}`);
+                    piItems.push({
+                      product_id: product.id,
+                      purchase_invoice_id: newPI.id,
+                      quantity: it.quantity,
+                      cost_price: it.rate,
+                      mrp: it.rate,
+                      batch_number: it.batchNumber || "BATCH-01",
+                      expiry_date: it.expiryDate || null,
+                    });
+                  }
+                  const { error: purchaseItemsError } = await supabase.from("purchase_invoice_items").insert(piItems);
+                  if (purchaseItemsError) throw new Error(`Purchase ${vch.voucherNumber} items failed: ${purchaseItemsError.message}`);
                 }
               }
             }
           }
+        } else {
+          unsupportedVoucherTypes.add(vch.voucherType);
         }
       }
     }
@@ -641,19 +696,21 @@ export async function executeDirectSyncIngestion(
       id: `sync-log-${Date.now()}`,
       timestamp: new Date().toISOString(),
       software,
-      status: "success",
+      status: unsupportedVoucherTypes.size > 0 ? "partial" : "success",
       itemsSynced: itemsCount,
       partiesSynced: partiesCount,
       vouchersSynced: vouchersCount,
       durationMs,
-      message: `Successfully synchronized ${itemsCount} items and ${partiesCount} parties from ${software.toUpperCase()}.`,
+      message: unsupportedVoucherTypes.size > 0
+        ? `Synchronized ${itemsCount} items, ${partiesCount} parties, and ${vouchersCount} supported vouchers. Unsupported voucher types: ${Array.from(unsupportedVoucherTypes).join(", ")}.`
+        : `Successfully synchronized ${itemsCount} items and ${partiesCount} parties from ${software.toUpperCase()}.`,
       source,
     };
 
     // Update config history
     const config = getSyncConfig(orgId);
     config.lastSyncAt = new Date().toISOString();
-    config.lastSyncStatus = "success";
+    config.lastSyncStatus = unsupportedVoucherTypes.size > 0 ? "partial" : "success";
     config.lastSyncStats = {
       items: itemsCount,
       parties: partiesCount,
@@ -663,12 +720,13 @@ export async function executeDirectSyncIngestion(
     saveSyncConfig(config);
 
     return {
-      success: true,
+      success: unsupportedVoucherTypes.size === 0,
       itemsCount,
       partiesCount,
       vouchersCount,
       durationMs,
       log,
+      ...(unsupportedVoucherTypes.size > 0 ? { error: `Unsupported voucher types: ${Array.from(unsupportedVoucherTypes).join(", ")}` } : {}),
     };
   } catch (err: unknown) {
     const durationMs = Math.round(performance.now() - startTime);
@@ -746,7 +804,7 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
 export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://api.credsmart.in/sync/tally"): string {
-  return `npx credsmart-sync-daemon --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
+  return `node scripts/credsmart-sync-agent/index.js --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
 }
 
 /**

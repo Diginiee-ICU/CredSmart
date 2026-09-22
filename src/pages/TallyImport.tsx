@@ -162,13 +162,18 @@ export default function TallyImport() {
         const result = await executeDirectSyncIngestion(
           orgId,
           user?.id || "sync-user",
-          { items: tallyData.items, parties: tallyData.parties, vouchers: getAllTallyVouchers(tallyData) },
+          {
+            items: syncConfig.syncScope.items ? tallyData.items : [],
+            parties: syncConfig.syncScope.parties ? tallyData.parties : [],
+            vouchers: syncConfig.syncScope.vouchers ? getAllTallyVouchers(tallyData) : [],
+          },
           "direct_browser",
           "tally"
         );
 
         setSyncConfig(getSyncConfig(orgId));
-        toast.success(`🎉 Tally Auto-Sync Completed! Ingested ${result.itemsCount} items and ${result.partiesCount} parties.`);
+        const syncMessage = `Tally sync ${result.success ? "completed" : "completed with warnings"}. Ingested ${result.itemsCount} items, ${result.partiesCount} parties, and ${result.vouchersCount} vouchers.`;
+        result.success ? toast.success(syncMessage) : toast.warning(`${syncMessage} ${result.error || "Some records were not imported."}`);
       }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Direct sync failed");
