@@ -1938,7 +1938,7 @@ export default function TallyImport() {
             onDrop={handleDrop}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => handleSelectFiles()}
             className={cn(
               "p-8 sm:p-12 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-4 text-center transition-all duration-200 cursor-pointer select-none",
               isDragging
@@ -1970,7 +1970,7 @@ export default function TallyImport() {
                 type="button"
                 disabled={isParsing}
                 className="gap-2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs px-6 py-3 rounded-2xl shadow-lg shadow-amber-500/30 cursor-pointer active:scale-95 transition-all"
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                onClick={handleSelectFiles}
               >
                 <Upload className="w-4 h-4" />
                 <span>Upload File(s)</span>
@@ -1981,7 +1981,7 @@ export default function TallyImport() {
                 disabled={isParsing}
                 variant="outline"
                 className="gap-2 border-amber-500/40 hover:bg-amber-500/10 font-black text-xs px-6 py-3 rounded-2xl text-foreground cursor-pointer active:scale-95 transition-all shadow-xs"
-                onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}
+                onClick={handleSelectFolder}
               >
                 <FolderUp className="w-4 h-4 text-amber-500" />
                 <span>Upload Complete Folder</span>
