@@ -217,9 +217,9 @@ export default function TallyImport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "CredSmartSync.tdl";
+    a.download = "CredSmart-Tally-Setup-Guide.tdl";
     a.click();
-    toast.success("CredSmartSync.tdl downloaded! Add it to Tally Prime under F1 > TDLs & Add-ons.");
+    toast.success("Tally setup guide downloaded. Use CredSmartTallyBridge.exe for live import.");
   };
 
   const handleDownloadWindowsBat = () => {
@@ -1353,7 +1353,7 @@ export default function TallyImport() {
                         <div className="flex items-center justify-between gap-1.5 font-bold text-foreground">
                           <div className="flex items-center gap-1.5">
                             <span className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 flex items-center justify-center text-[10px]">2</span>
-                            <span>Tally TDL Add-on</span>
+                            <span>Tally Setup Guide (Optional)</span>
                           </div>
                           <button
                             type="button"
@@ -1364,7 +1364,7 @@ export default function TallyImport() {
                           </button>
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-snug">
-                          Load <code>CredSmartSync.tdl</code> inside Tally Prime (<strong>F1 &gt; TDLs &amp; Add-ons</strong>). Tally pushes data to cloud directly without browser blocks.
+                          The TDL download is a compatibility-safe setup guide. Use CredSmartTallyBridge.exe for live import without browser blocks.
                         </p>
                       </div>
 
@@ -1459,9 +1459,9 @@ export default function TallyImport() {
                   {
                     id: "tally",
                     name: "Tally Prime / ERP 9",
-                    method: "Native Port 9000 & TDL",
+                    method: "Native Port 9000 & Windows Bridge",
                     status: "Ready",
-                    tagline: "Direct XML server or TDL webhook",
+                    tagline: "Direct XML server through the Windows bridge",
                     badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
                   },
                   {
@@ -1530,7 +1530,7 @@ export default function TallyImport() {
               </div>
             </div>
 
-            {/* 3. Deployment Methods (Daemon CLI, TDL Add-on, Pairing Key) */}
+            {/* 3. Deployment Methods (Windows bridge, setup guide, pairing key) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Method A: Windows Native Script or Node Daemon */}
               <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col justify-between gap-4">
@@ -1581,15 +1581,15 @@ export default function TallyImport() {
                 </div>
               </div>
 
-              {/* Method B: Native TDL Script for Tally */}
+              {/* Method B: Compatibility-safe Tally setup guide */}
               <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col justify-between gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-amber-600">
                     <ArrowDownToLine className="w-4 h-4" />
-                    <h4 className="font-bold text-xs text-foreground">Option 2: Native Tally TDL Add-on</h4>
+                    <h4 className="font-bold text-xs text-foreground">Option 2: Tally Setup Guide</h4>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Zero external software. Place this script in Tally Prime (`F1 &gt; TDLs &amp; Add-ons`). Tally pushes updates directly to CredSmart Cloud on voucher save.
+                    This compatibility-safe file contains setup instructions only. Use the Windows bridge for live import; it does not modify Tally menus or reports.
                   </p>
                   <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300">
                     Pre-configured for Organization: <strong>{orgId || "Default"}</strong>
@@ -1602,7 +1602,7 @@ export default function TallyImport() {
                   className="w-full gap-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download CredSmartSync.tdl</span>
+                  <span>Download Tally Setup Guide.tdl</span>
                 </Button>
               </div>
 

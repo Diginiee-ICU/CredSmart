@@ -10,15 +10,14 @@ import { inspectUploadedFolder } from "../utils/folderReader";
 import { generateTallyTdlContent } from "../services/autoSyncService";
 
 describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
-  it("generates TDL using supported action syntax", () => {
+  it("generates a compatibility-safe TDL guidance file", () => {
     const tdl = generateTallyTdlContent("org-123", "token-456");
 
-    expect(tdl).toContain('Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Call : CredSmartShowStatus');
-    expect(tdl).toContain('Msg Box : "CredSmart Status"');
-    expect(tdl).toContain('[Function: CredSmartShowStatus]');
-    expect(tdl).not.toContain('[System: Formulae]');
-    expect(tdl).not.toContain('Set : SVExportFormat');
-    expect(tdl).not.toContain("MsgBox:");
+    expect(tdl).toContain("This file intentionally contains comments only");
+    expect(tdl).toContain("Start CredSmartTallyBridge.exe");
+    expect(tdl).not.toContain("[#Menu:");
+    expect(tdl).not.toContain("[Function:");
+    expect(tdl).not.toContain("[System:");
   });
 
   it("aggregates every supported voucher category for live and file imports", () => {

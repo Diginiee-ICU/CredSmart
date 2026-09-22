@@ -806,20 +806,22 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
   const safeOrgId = orgId.replace(/"/g, "");
   void pairingToken;
   return `;; =========================================================================
-;; CredSmart Auto-Sync Connector for Tally Prime & Tally.ERP 9
-;; Version: 2.2.0
+;; CredSmart Tally Import Setup Guide
+;; Version: 2.3.0
 ;; Organization ID: ${safeOrgId}
 ;; Auto-Generated: ${new Date().toISOString()}
-;; This add-on provides safe in-Tally setup guidance. Live import is handled
-;; by the CredSmart Windows Bridge, not by unsupported TDL export mutation.
+;;
+;; This file intentionally contains comments only. CredSmart does not modify
+;; Tally menus, reports, parts, lines, or buttons through TDL because those
+;; definitions vary between Tally Prime and Tally.ERP 9 builds.
+;;
+;; Supported live-import setup:
+;; 1. Start CredSmartTallyBridge.exe on this Windows computer.
+;; 2. Keep Tally Prime HTTP Server enabled on http://127.0.0.1:9000.
+;; 3. Open CredSmart and click "Sync Live Tally Now".
+;;
+;; XML/CSV file import is available in CredSmart when the bridge is offline.
 ;; =========================================================================
-
-[#Menu: Gateway of Tally]
-  Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Call : CredSmartShowStatus
-
-[Function: CredSmartShowStatus]
-  00 : Msg Box : "CredSmart Status" : "CredSmart is connected for Organization: ${safeOrgId}. Start CredSmartTallyBridge.exe, then click Sync Live Tally Now in CredSmart."
-  10 : Return
 `;
 }
 
