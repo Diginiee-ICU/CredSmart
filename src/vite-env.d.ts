@@ -26,5 +26,6 @@ interface Window {
     probeTally?: () => Promise<{ online: boolean; companyName?: string; latencyMs?: number; error?: string }>;
     openFiles?: (options?: Record<string, unknown>) => Promise<DesktopNativeFile[] | null>;
     openFolder?: () => Promise<DesktopNativeFolder | null>;
+    autoSearchTallyFolder?: () => Promise<DesktopNativeFolder | null>;
   };
 }
