@@ -804,34 +804,22 @@ export async function executeDirectSyncIngestion(
  */
 export function generateTallyTdlContent(orgId: string, pairingToken: string): string {
   const safeOrgId = orgId.replace(/"/g, "");
-  const safePairingToken = pairingToken.replace(/"/g, "");
+  void pairingToken;
   return `;; =========================================================================
 ;; CredSmart Auto-Sync Connector for Tally Prime & Tally.ERP 9
-;; Version: 2.1.0
+;; Version: 2.2.0
 ;; Organization ID: ${safeOrgId}
 ;; Auto-Generated: ${new Date().toISOString()}
+;; This add-on provides safe in-Tally setup guidance. Live import is handled
+;; by the CredSmart Windows Bridge, not by unsupported TDL export mutation.
 ;; =========================================================================
 
 [#Menu: Gateway of Tally]
-  Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Menu : CredSmartSyncMenu
+  Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Call : CredSmartShowStatus
 
-[Menu: CredSmartSyncMenu]
-  Title: "CredSmart Live Auto-Sync"
-  Item : "Test Connection" : Call : CredSmartTestPing
-  Item : "Export Masters XML for CredSmart" : Call : CredSmartDoLiveSync
-
-[System: Formulae]
-  CredSmartToken : "${safePairingToken}"
-  CredSmartOrgId : "${safeOrgId}"
-
-[Function: CredSmartTestPing]
-  00 : Msg Box : "CredSmart Status" : "CredSmart Auto-Sync Connector is ACTIVE for Organization: ${safeOrgId}. Tally HTTP/ODBC Server: Port 9000."
+[Function: CredSmartShowStatus]
+  00 : Msg Box : "CredSmart Status" : "CredSmart is connected for Organization: ${safeOrgId}. Start CredSmartTallyBridge.exe, then click Sync Live Tally Now in CredSmart."
   10 : Return
-
-[Function: CredSmartDoLiveSync]
-  00 : Set : SVExportFormat : $$SysName:XML
-  10 : Msg Box : "CredSmart Sync" : "Export All Masters as XML, then upload the file to https://pos.credalert.business/tally-import. The pairing token is used by the CredSmart sync bridge."
-  20 : Return
 `;
 }
 

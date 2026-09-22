@@ -13,9 +13,11 @@ describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
   it("generates TDL using supported action syntax", () => {
     const tdl = generateTallyTdlContent("org-123", "token-456");
 
-    expect(tdl).toContain('Add : Item : Before : @@locQuit');
+    expect(tdl).toContain('Add : Item : Before : @@locQuit : "CredSmart Cloud Sync" : Call : CredSmartShowStatus');
     expect(tdl).toContain('Msg Box : "CredSmart Status"');
-    expect(tdl).toContain('Set : SVExportFormat : $$SysName:XML');
+    expect(tdl).toContain('[Function: CredSmartShowStatus]');
+    expect(tdl).not.toContain('[System: Formulae]');
+    expect(tdl).not.toContain('Set : SVExportFormat');
     expect(tdl).not.toContain("MsgBox:");
   });
 
