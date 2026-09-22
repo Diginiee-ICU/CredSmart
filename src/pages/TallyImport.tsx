@@ -313,13 +313,40 @@ export default function TallyImport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
+  const createBrowserFileFromDesktop = (df: { name: string; relativePath?: string; dataBase64?: string; data?: string }): File => {
+    let blob: Blob;
+    if (df.dataBase64) {
+      const binary = atob(df.dataBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      blob = new Blob([bytes]);
+    } else {
+      blob = new Blob([df.data || ""]);
+    }
+
+    const file = new File([blob], df.name, {
+      type: df.name.toLowerCase().endsWith(".xml") ? "text/xml" : "application/octet-stream",
+    });
+
+    if (df.relativePath) {
+      Object.defineProperty(file, "webkitRelativePath", {
+        value: df.relativePath,
+        writable: true,
+        configurable: true,
+      });
+    }
+    return file;
+  };
+
   const handleSelectFiles = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (typeof window !== "undefined" && window.credsmartDesktop?.openFiles) {
       try {
         const desktopFiles = await window.credsmartDesktop.openFiles();
         if (desktopFiles && desktopFiles.length > 0) {
-          const files = desktopFiles.map((df) => new File([df.data], df.name));
+          const files = desktopFiles.map(createBrowserFileFromDesktop);
           handleFiles(files);
           return;
         }
@@ -336,7 +363,10 @@ export default function TallyImport() {
       try {
         const res = await window.credsmartDesktop.openFolder();
         if (res && res.files.length > 0) {
-          const files = res.files.map((df) => new File([df.data], df.name));
+          const files = res.files.map((df) => {
+            const relPath = df.relativePath || `${res.folderName}/${df.name}`;
+            return createBrowserFileFromDesktop({ ...df, relativePath: relPath });
+          });
           handleFiles(files);
           return;
         }
@@ -2046,8 +2076,20 @@ export default function TallyImport() {
                 </div>
 
                 {parsedData.isRawTallyFolder && parsedData.items.length === 0 && (
-                  <div className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 max-w-md">
-                    💡 <strong>Identified Tally Company Directory:</strong> To import every item, GST tax rate, and bill with 100% precision, open Tally Prime &rarr; press <kbd className="px-1 bg-muted rounded font-mono">Alt + E</kbd> &rarr; Masters (XML) &rarr; drop the file here.
+                  <div className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 max-w-lg space-y-2">
+                    <p>
+                      💡 <strong>Identified Tally Company Directory:</strong> To import every item, GST tax rate, and bill with 100% precision, click below to sync directly from Tally, or press <kbd className="px-1 bg-muted rounded font-mono">Alt + E</kbd> in Tally &rarr; Masters (XML) &rarr; drop the file here.
+                    </p>
+                    <Button
+                      size="sm"
+                      type="button"
+                      onClick={() => handleLiveTallySync(false)}
+                      disabled={isLiveSyncing}
+                      className="gap-2 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs px-4 py-2 rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>{isLiveSyncing ? "Syncing..." : "⚡ 1-Click Sync Data Directly From Tally"}</span>
+                    </Button>
                   </div>
                 )}
               </div>

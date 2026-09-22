@@ -3,8 +3,10 @@
 export interface DesktopNativeFile {
   name: string;
   path: string;
+  relativePath?: string;
   size: number;
-  data: string;
+  dataBase64?: string;
+  data?: string;
 }
 
 export interface DesktopNativeFolder {

@@ -243,42 +243,63 @@ function registerIpcHandlers() {
 
     const files = [];
     for (const filePath of result.filePaths) {
-      const buffer = await fs.readFile(filePath);
-      files.push({
-        name: path.basename(filePath),
-        path: filePath,
-        size: buffer.length,
-        data: buffer.toString("utf8"),
-      });
+      try {
+        const buffer = await fs.readFile(filePath);
+        files.push({
+          name: path.basename(filePath),
+          path: filePath,
+          relativePath: path.basename(filePath),
+          size: buffer.length,
+          dataBase64: buffer.toString("base64"),
+        });
+      } catch (err) {
+        console.warn(`Could not read file ${filePath}:`, err.message);
+      }
     }
     return files;
   });
 
-  // Direct native directory picker
+  // Direct native directory picker (recursive traversal up to 8 levels)
   ipcMain.handle("dialog:openFolder", async () => {
     const result = await dialog.showOpenDialog({
-      title: "Select Complete Tally Company Directory",
+      title: "Select Accounting Folder or Tally Company Directory",
       properties: ["openDirectory"],
     });
 
     if (result.canceled || !result.filePaths.length) return null;
 
     const folderPath = result.filePaths[0];
-    const entries = await fs.readdir(folderPath, { withFileTypes: true });
     const files = [];
 
-    for (const entry of entries) {
-      if (entry.isFile()) {
-        const fullPath = path.join(folderPath, entry.name);
-        const buffer = await fs.readFile(fullPath);
-        files.push({
-          name: entry.name,
-          path: fullPath,
-          size: buffer.length,
-          data: buffer.toString("utf8"),
-        });
+    async function scanDir(currentDir, depth = 0) {
+      if (depth > 8) return;
+      try {
+        const entries = await fs.readdir(currentDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(currentDir, entry.name);
+          if (entry.isDirectory()) {
+            await scanDir(fullPath, depth + 1);
+          } else if (entry.isFile()) {
+            try {
+              const buffer = await fs.readFile(fullPath);
+              files.push({
+                name: entry.name,
+                path: fullPath,
+                relativePath: path.relative(folderPath, fullPath).replace(/\\/g, "/"),
+                size: buffer.length,
+                dataBase64: buffer.toString("base64"),
+              });
+            } catch (readErr) {
+              console.warn(`Could not read file ${fullPath}:`, readErr.message);
+            }
+          }
+        }
+      } catch (dirErr) {
+        console.warn(`Could not read directory ${currentDir}:`, dirErr.message);
       }
     }
+
+    await scanDir(folderPath);
 
     return {
       folderPath,

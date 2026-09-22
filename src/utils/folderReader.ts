@@ -139,13 +139,26 @@ export async function inspectUploadedFolder(files: File[]): Promise<ScannedFolde
     return n.endsWith(".csv") || n.endsWith(".txt");
   });
 
-  // Check if this is a raw Tally company directory (e.g. contains Company.900 or *.900 / *.tsf)
-  const company900File = files.find((f) => f.name.toLowerCase() === "company.900" || f.name.toLowerCase().endsWith(".900"));
-  const isRawTallyCompanyDir = !!company900File || files.some((f) => f.name.toLowerCase().endsWith(".tsf"));
+  // Check if this is a raw Tally company directory (e.g. contains Company.900, Company.1800, *.1800, *.900, *.tsf)
+  const companyFile = files.find((f) => {
+    const n = f.name.toLowerCase();
+    return (
+      n === "company.900" ||
+      n.endsWith(".900") ||
+      n === "company.1800" ||
+      n.endsWith(".1800")
+    );
+  });
+  const isRawTallyCompanyDir =
+    !!companyFile ||
+    files.some((f) => {
+      const n = f.name.toLowerCase();
+      return n.endsWith(".tsf") || n.endsWith(".1800") || n.endsWith(".900");
+    });
 
   let tallyCompanyInfo: ScannedFolderResult["tallyCompanyInfo"] = undefined;
-  if (company900File) {
-    tallyCompanyInfo = await parseCompany900File(company900File, folderName);
+  if (companyFile) {
+    tallyCompanyInfo = await parseCompany900File(companyFile, folderName);
   }
 
   return {
@@ -160,7 +173,7 @@ export async function inspectUploadedFolder(files: File[]): Promise<ScannedFolde
 }
 
 /**
- * Parses raw Company.900 file to extract company name, directory ID, and metadata.
+ * Parses raw Company.900 or Company.1800 file to extract company name, directory ID, and metadata.
  */
 export async function parseCompany900File(
   file: File,
@@ -168,20 +181,50 @@ export async function parseCompany900File(
 ): Promise<{ companyName?: string; companyNumber?: string; financialYear?: string; address?: string }> {
   try {
     let text = "";
+
     if (typeof (file as any).text === "function") {
-      text = await (file as any).text();
-    } else if (typeof (file as any).arrayBuffer === "function") {
-      const buffer = await (file as any).arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.length; i++) {
-        const b = bytes[i];
-        if ((b >= 32 && b <= 126) || b === 10 || b === 13) {
-          text += String.fromCharCode(b);
-        } else {
-          text += " ";
+      try {
+        text = await (file as any).text();
+      } catch {
+        text = "";
+      }
+    }
+
+    if (!text || text.includes("\0")) {
+      if (typeof (file as any).arrayBuffer === "function") {
+        try {
+          const buffer = await (file as any).arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          // Try UTF-16LE decoding (for binary TallyPrime .1800 files)
+          try {
+            const decoder = new TextDecoder("utf-16le");
+            const decoded = decoder.decode(bytes).replace(/[^\x20-\x7E\r\n]/g, " ");
+            if (decoded.trim().length > 10) {
+              text = decoded;
+            }
+          } catch {
+            // ignore
+          }
+
+          if (!text) {
+            let asciiText = "";
+            for (let i = 0; i < bytes.length; i++) {
+              const b = bytes[i];
+              if ((b >= 32 && b <= 126) || b === 10 || b === 13) {
+                asciiText += String.fromCharCode(b);
+              } else {
+                asciiText += " ";
+              }
+            }
+            text = asciiText;
+          }
+        } catch {
+          // ignore
         }
       }
-    } else if (typeof FileReader !== "undefined") {
+    }
+
+    if (!text && typeof FileReader !== "undefined") {
       text = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve((reader.result as string) || "");
@@ -190,15 +233,15 @@ export async function parseCompany900File(
       });
     }
 
-    // Tally company names in Company.900 typically appear near the start
+    // Tally company names in Company.900 / Company.1800 typically appear near the start
     let companyName: string | undefined;
     const words = text.split(/\s{2,}/).map((w) => w.trim()).filter((w) => w.length > 2);
-    
+
     // Look for recognizable company strings
     for (const w of words) {
       if (
         /company/i.test(w) ||
-        /pvt|ltd|limited|enterprises|traders|agency|stores|industries|corp/i.test(w)
+        /pvt|ltd|limited|enterprises|traders|agency|stores|industries|corp|user/i.test(w)
       ) {
         companyName = w;
         break;
@@ -218,7 +261,7 @@ export async function parseCompany900File(
       financialYear: "Current FY",
     };
   } catch (err) {
-    console.warn("Error parsing Company.900:", err);
+    console.warn("Error parsing Tally company file:", err);
     return {
       companyName: `Tally Company (${folderName})`,
       companyNumber: folderName,
