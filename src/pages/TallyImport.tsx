@@ -295,27 +295,6 @@ export default function TallyImport() {
   const [importBanks, setImportBanks] = useState(true);
   const [importVouchers, setImportVouchers] = useState(true);
   const [conflictMode, setConflictMode] = useState<"skip" | "overwrite">("skip");
-
-  // Execution state
-  const [isImporting, setIsImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
-  const [importCompleted, setImportCompleted] = useState(false);
-  const [importedStats, setImportedStats] = useState({
-    items: 0,
-    parties: 0,
-    banks: 0,
-    vouchers: 0,
-
-    for (const f of files) {
-      if (f.size > 50 * 1024 * 1024) {
-        toast.error(`File "${f.name}" is too large. Maximum size is 50MB.`);
-        return;
-      }
-    }
-
-    setIsParsing(true);
-    try {
-      const data = await parseMultipleUniversalFiles(files, selectedSoftware);
       setParsedData(data);
       setImportCompleted(false);
 
