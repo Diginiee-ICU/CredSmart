@@ -112,7 +112,28 @@ export function generateNewPairingToken(orgId: string): string {
   const newToken = `crds_live_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 12)}`;
   config.pairingToken = newToken;
   saveSyncConfig(config);
+  void registerPairingToken(orgId, newToken);
   return newToken;
+}
+
+async function hashPairingToken(token: string): Promise<string> {
+  const bytes = new TextEncoder().encode(token);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function registerPairingToken(orgId: string, token: string): Promise<void> {
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) throw new Error("You must be signed in to register a sync token");
+  const tokenHash = await hashPairingToken(token);
+  const syncTokens = (supabase as unknown as { from: (table: string) => any }).from("sync_pairing_tokens");
+  const { error } = await syncTokens.upsert({
+    organization_id: orgId,
+    user_id: authData.user.id,
+    token_hash: tokenHash,
+    active: true,
+  }, { onConflict: "token_hash" });
+  if (error) throw error;
 }
 
 // ─── Direct In-Browser Tally Probe & Query ───────────────────────────────────
@@ -803,7 +824,7 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 
 // ─── Desktop Sync Daemon Package Info ─────────────────────────────────────────
 
-export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://api.credsmart.in/sync/tally"): string {
+export function getDaemonCliCommand(orgId: string, token: string, apiUrl = "https://reutxqmxiuqrmgmgrlai.supabase.co/functions/v1/sync-tally"): string {
   return `node scripts/credsmart-sync-agent/index.js --org="${orgId}" --token="${token}" --api="${apiUrl}" --port=9000 --interval=15`;
 }
 

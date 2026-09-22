@@ -73,6 +73,7 @@ import {
   generateTallyTdlContent,
   generateWindowsSyncBatContent,
   getDaemonCliCommand,
+  registerPairingToken,
 } from "@/services/autoSyncService";
 import { toast } from "sonner";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -97,7 +98,11 @@ export default function TallyImport() {
 
   useEffect(() => {
     if (orgId) {
-      setSyncConfig(getSyncConfig(orgId));
+      const config = getSyncConfig(orgId);
+      setSyncConfig(config);
+      void registerPairingToken(orgId, config.pairingToken).catch(() => {
+        // Registration is retried by the explicit token regeneration action.
+      });
     }
   }, [orgId]);
 
@@ -196,6 +201,9 @@ export default function TallyImport() {
     if (!orgId) return;
     generateNewPairingToken(orgId);
     setSyncConfig(getSyncConfig(orgId));
+    void registerPairingToken(orgId, getSyncConfig(orgId).pairingToken).catch((error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "Could not register the new pairing token");
+    });
     toast.success("New Store Pairing Token generated!");
   };
 

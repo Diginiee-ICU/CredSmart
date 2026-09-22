@@ -31,6 +31,16 @@ function dateValue(value: string) {
   return new Date().toISOString();
 }
 
+async function updateOrInsert(table: string, match: Record<string, string>, payload: Record<string, unknown>, client: ReturnType<typeof createClient>) {
+  const database = client as any;
+  const query = database.from(table).select("id");
+  for (const [column, value] of Object.entries(match)) query.eq(column, value);
+  const { data: existing, error: lookupError } = await query.maybeSingle();
+  if (lookupError) return { data: null, error: lookupError };
+  if (existing?.id) return database.from(table).update(payload).eq("id", existing.id).select("id").single();
+  return database.from(table).insert(payload).select("id").single();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Only POST is supported" }, 405);
@@ -72,13 +82,13 @@ Deno.serve(async (req) => {
         const stock = amount(text(item, "OPENINGBALANCE"));
         const sellingPrice = amount(text(item, "STANDARDPRICELIST RATE"));
         const purchasePrice = amount(text(item, "STANDARDCOSTLIST RATE")) || amount(text(item, "OPENINGRATE"));
-        const { error } = await supabase.from("products").upsert({
+        const { error } = await updateOrInsert("products", { organization_id: organizationId, name }, {
           organization_id: organizationId,
           name,
           sku,
           category: text(item, "PARENT") || "General",
           tags: { stock, opening_stock: stock, selling_price: sellingPrice, purchase_price: purchasePrice, imported_from: "tally", auto_synced: true },
-        }, { onConflict: "organization_id,sku" });
+        }, supabase);
         if (!error) items++;
       }
 
@@ -89,7 +99,7 @@ Deno.serve(async (req) => {
         const isSupplier = parent.includes("creditor") || parent.includes("supplier") || parent.includes("vendor");
         const table = isSupplier ? "suppliers" : "customers";
         const payload = { organization_id: organizationId, name, gstin: text(ledger, "PARTYGSTIN") || null, pan: text(ledger, "INCOMETAXNUMBER") || null, address: text(ledger, "ADDRESS") || null };
-        const { error } = await supabase.from(table).upsert(payload, { onConflict: "organization_id,name" });
+        const { error } = await updateOrInsert(table, { organization_id: organizationId, name }, payload, supabase);
         if (!error) parties++;
       }
     } else if (exportType === "daybook") {
@@ -101,12 +111,13 @@ Deno.serve(async (req) => {
         const partyName = text(voucher, "PARTYLEDGERNAME");
         if (!number || !value) continue;
         if (type.toLowerCase().includes("sales") || type.toLowerCase().includes("credit note")) {
-          const { error } = await supabase.from("sales").upsert({ organization_id: organizationId, invoice_number: number, subtotal: value, total: value, tax: 0, payment_method: "Credit", created_by: credential.user_id, created_at: date }, { onConflict: "organization_id,invoice_number" });
+          const { error } = await updateOrInsert("sales", { organization_id: organizationId, invoice_number: number }, { organization_id: organizationId, invoice_number: number, subtotal: value, total: value, tax: 0, payment_method: "Credit", created_by: credential.user_id, created_at: date }, supabase);
           if (!error) vouchers++;
         } else if (type.toLowerCase().includes("purchase") || type.toLowerCase().includes("debit note")) {
-          const { data: supplier } = await supabase.from("suppliers").upsert({ organization_id: organizationId, name: partyName || "Imported Vendor", category: "Wholesaler" }, { onConflict: "organization_id,name" }).select("id").single();
+          const supplierResult = await updateOrInsert("suppliers", { organization_id: organizationId, name: partyName || "Imported Vendor" }, { organization_id: organizationId, name: partyName || "Imported Vendor", category: "Wholesaler" }, supabase);
+          const supplier = supplierResult.data;
           if (supplier) {
-            const { error } = await supabase.from("purchase_invoices").upsert({ organization_id: organizationId, supplier_id: supplier.id, invoice_number: number, total_amount: value, status: "received", notes: `Tally ${type}`, created_by: credential.user_id, created_at: date }, { onConflict: "organization_id,invoice_number" });
+            const { error } = await updateOrInsert("purchase_invoices", { organization_id: organizationId, invoice_number: number }, { organization_id: organizationId, supplier_id: supplier.id, invoice_number: number, total_amount: value, status: "received", notes: `Tally ${type}`, created_by: credential.user_id, created_at: date }, supabase);
             if (!error) vouchers++;
           }
         } else if (["receipt", "payment", "journal"].some((name) => type.toLowerCase().includes(name))) {

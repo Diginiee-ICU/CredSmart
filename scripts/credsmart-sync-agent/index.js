@@ -25,7 +25,7 @@ const TOKEN = args.token || process.env.CREDSMART_SYNC_TOKEN || "crds_live_demo"
 const TALLY_HOST = args.host || "127.0.0.1";
 const TALLY_PORT = parseInt(args.port || "9000", 10);
 const INTERVAL_MINUTES = parseInt(args.interval || "15", 10);
-const API_URL = args.api || "https://api.credsmart.in/sync/tally";
+const API_URL = args.api || process.env.CREDSMART_SYNC_API || "https://reutxqmxiuqrmgmgrlai.supabase.co/functions/v1/sync-tally";
 
 console.log("==================================================================");
 console.log("  ⚡ CredSmart Desktop Auto-Sync Daemon v2.1.0");

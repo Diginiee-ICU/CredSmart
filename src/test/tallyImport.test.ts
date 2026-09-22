@@ -3,11 +3,27 @@ import {
   parseTallyXml,
   autoDetectAndParseTally,
   parseTallyDaybookCsv,
+  getAllTallyVouchers,
 } from "../utils/tallyXmlParser";
 import { parseUniversalFile, parseMultipleUniversalFiles } from "../utils/universalDataImporter";
 import { inspectUploadedFolder } from "../utils/folderReader";
 
 describe("Tally Import - Deep XML & Daybook Extraction Engine", () => {
+  it("aggregates every supported voucher category for live and file imports", () => {
+    const voucherTypes = ["Sales", "Purchase", "Payment", "Receipt", "Journal", "Credit Note", "Debit Note"] as const;
+    const result = {
+      salesVouchers: [{ voucherType: "Sales" }],
+      purchaseVouchers: [{ voucherType: "Purchase" }],
+      receiptVouchers: [{ voucherType: "Receipt" }],
+      paymentVouchers: [{ voucherType: "Payment" }],
+      journalVouchers: [{ voucherType: "Journal" }],
+      creditNoteVouchers: [{ voucherType: "Credit Note" }],
+      debitNoteVouchers: [{ voucherType: "Debit Note" }],
+    } as never;
+
+    expect(getAllTallyVouchers(result).map((voucher) => voucher.voucherType)).toEqual(voucherTypes);
+  });
+
   describe("Stock Items Parsing", () => {
     it("parses stock items with standard prices, opening stock, GST rates, and HSN codes", () => {
       const xml = `
