@@ -78,7 +78,7 @@
    ```env
    VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-   VITE_TALLY_BRIDGE_DOWNLOAD_URL=https://github.com/zirewood-ship-it/CREDSMART/releases/latest/download/CredSmartTallyBridge.exe
+   VITE_TALLY_BRIDGE_DOWNLOAD_URL=https://drive.usercontent.google.com/download?id=1PXu0RCLer_qV3q6_TsgMCnTS7Qu36FF8&export=download&authuser=0&confirm=t&uuid=5edb6d0f-5a27-4b24-b70d-51bed2dace50&at=AMrWOn1xih-Ws0qFm-rsl0Q2eG7g:1790076540261
    ```
 
 4. **Start the development server:**
@@ -141,9 +141,10 @@ the packaged executable; otherwise it uses the latest GitHub release URL.
 The repository includes a release workflow at
 `.github/workflows/release-tally-bridge.yml`. Push a version tag such as
 `v1.1.5` to build the executable on Windows and publish the exact release asset
-`CredSmartTallyBridge.exe`, which is the default URL used by the download
-button. A manually dispatched workflow also produces a downloadable Actions
-artifact.
+`CredSmartTallyBridge.exe`. A manually dispatched workflow also produces a
+downloadable Actions artifact. The current default button URL is the supplied
+Google Drive executable link; replace `VITE_TALLY_BRIDGE_DOWNLOAD_URL` when the
+file is moved or a new build is published.
 
 ---
 

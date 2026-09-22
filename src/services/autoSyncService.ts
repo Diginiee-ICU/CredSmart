@@ -73,10 +73,12 @@ function getStableTallySku(name: string): string {
 // ─── Default Configuration ───────────────────────────────────────────────────
 
 export function getDefaultSyncConfig(orgId: string): SyncConfig {
+  const desktopToken =
+    typeof window !== "undefined" ? window.credsmartDesktop?.pairingToken : undefined;
   return {
     organizationId: orgId,
     enabled: false,
-    pairingToken: `crds_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`,
+    pairingToken: desktopToken || `crds_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`,
     selectedSoftware: "tally",
     tallyHost: "http://127.0.0.1:9000",
     syncIntervalMinutes: 15,

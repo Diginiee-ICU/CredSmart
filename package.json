@@ -3,6 +3,48 @@
   "private": true,
   "version": "1.1.4",
   "type": "module",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.credsmart.pos.desktop",
+    "productName": "CredSmart",
+    "executableName": "CredSmart",
+    "asar": true,
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/CredSmartTallyBridge.exe",
+        "to": "CredSmartTallyBridge.exe"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "CredSmart-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CredSmart"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -16,7 +58,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tally:bridge": "node scripts/credsmart-sync-agent/index.cjs",
-    "tally:bridge:exe": "pkg scripts/credsmart-sync-agent/index.cjs --targets node18-win-x64 --output dist/CredSmartTallyBridge.exe"
+    "tally:bridge:exe": "pkg scripts/credsmart-sync-agent/index.cjs --targets node18-win-x64 --output dist/CredSmartTallyBridge.exe",
+    "desktop:build": "npm run build && npm run tally:bridge:exe && electron-builder --win nsis",
+    "desktop:dir": "npm run build && npm run tally:bridge:exe && electron-builder --win dir"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
@@ -99,6 +143,8 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "electron": "^36.9.5",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

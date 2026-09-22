@@ -236,7 +236,7 @@ export default function TallyImport() {
   const handleDownloadTallyBridge = () => {
     const downloadUrl =
       import.meta.env.VITE_TALLY_BRIDGE_DOWNLOAD_URL ||
-      "https://github.com/zirewood-ship-it/CREDSMART/releases/latest/download/CredSmartTallyBridge.exe";
+      "https://drive.usercontent.google.com/download?id=1PXu0RCLer_qV3q6_TsgMCnTS7Qu36FF8&export=download&authuser=0&confirm=t&uuid=5edb6d0f-5a27-4b24-b70d-51bed2dace50&at=AMrWOn1xih-Ws0qFm-rsl0Q2eG7g:1790076540261";
     const a = document.createElement("a");
     a.href = downloadUrl;
     a.download = "CredSmartTallyBridge.exe";
