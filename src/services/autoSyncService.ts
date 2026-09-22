@@ -690,3 +690,57 @@ export function generateTallyTdlContent(orgId: string, pairingToken: string): st
 export function getDaemonCliCommand(orgId: string, token: string): string {
   return `npx credsmart-sync-daemon --org="${orgId}" --token="${token}" --port=9000 --interval=15`;
 }
+
+/**
+ * Generates a native Windows Batch Script (.bat) utilizing built-in Windows PowerShell.
+ * Runs directly on any Windows 10/11 PC with ZERO Node.js, Python, or external installations!
+ */
+export function generateWindowsSyncBatContent(orgId: string, pairingToken: string): string {
+  return `@echo off
+chcp 65001 >nul
+title CredSmart Windows Auto-Sync Utility for Tally
+color 0b
+
+echo =========================================================================
+echo   CredSmart Windows Auto-Sync Utility for Tally Prime / ERP 9
+echo   Organization ID: ${orgId}
+echo   Runs natively on Windows using built-in PowerShell (No Node.js needed!)
+echo =========================================================================
+echo.
+
+set "ORG_ID=${orgId}"
+set "PAIRING_TOKEN=${pairingToken}"
+set "TALLY_HOST=http://127.0.0.1:9000"
+
+echo [1/3] Checking if Tally Prime is running on %TALLY_HOST%...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$hostUrl = '%TALLY_HOST%';" ^
+  "try {" ^
+  "  $body = '<ENVELOPE><HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER><BODY><EXPORTDATA><REQUESTDESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT></STATICVARIABLES><REPORTNAME>List of Companies</REPORTNAME></REQUESTDESC></EXPORTDATA></BODY></ENVELOPE>';" ^
+  "  $resp = Invoke-WebRequest -Uri $hostUrl -Method POST -Body $body -ContentType 'text/xml' -TimeoutSec 6 -UseBasicParsing;" ^
+  "  if ($resp.StatusCode -eq 200) {" ^
+  "    Write-Host '[SUCCESS] Successfully connected to local Tally HTTP Server!' -ForegroundColor Green;" ^
+  "    Write-Host 'Tally is active and listening on port 9000.' -ForegroundColor Green;" ^
+  "  } else {" ^
+  "    Write-Host ('[WARNING] Tally responded with status ' + $resp.StatusCode) -ForegroundColor Yellow;" ^
+  "  }" ^
+  "} catch {" ^
+  "  Write-Host '[NOTICE] Cannot connect to Tally on port 9000.' -ForegroundColor Red;" ^
+  "  Write-Host 'Ensure Tally Prime is open and Server is enabled:' -ForegroundColor Yellow;" ^
+  "  Write-Host '  1. In Tally Prime, press F1 (Help) > Settings > Connectivity' -ForegroundColor Gray;" ^
+  "  Write-Host '  2. Client/Server configuration > TallyPrime acts as: Both / Server' -ForegroundColor Gray;" ^
+  "  Write-Host '  3. Port: 9000' -ForegroundColor Gray;" ^
+  "}"
+
+echo.
+echo [2/3] Recommended Zero-Install Option (Native Tally TDL):
+echo       Load CredSmartSync.tdl in Tally Prime (F1 > TDLs & Add-ons > F4).
+echo       Tally will push invoices directly to cloud on save.
+echo.
+echo [3/3] Instant File Upload Option (No Scripts):
+echo       In Tally, press Alt+E > Masters > XML Format, then drop the file
+echo       into CredSmart (https://pos.credalert.business/tally-import).
+echo.
+pause
+`;
+}

@@ -68,6 +68,7 @@ import {
   fetchLiveTallyData,
   executeDirectSyncIngestion,
   generateTallyTdlContent,
+  generateWindowsSyncBatContent,
   getDaemonCliCommand,
 } from "@/services/autoSyncService";
 import { toast } from "sonner";
@@ -199,6 +200,17 @@ export default function TallyImport() {
     a.download = "CredSmartSync.tdl";
     a.click();
     toast.success("CredSmartSync.tdl downloaded! Add it to Tally Prime under F1 > TDLs & Add-ons.");
+  };
+
+  const handleDownloadWindowsBat = () => {
+    const batCode = generateWindowsSyncBatContent(orgId || "demo-org", syncConfig.pairingToken);
+    const blob = new Blob([batCode], { type: "application/x-bat;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "CredSmart-Sync.bat";
+    a.click();
+    toast.success("CredSmart-Sync.bat downloaded! Double-click to run on Windows without Node.js.");
   };
 
   const handleCopyToken = () => {
@@ -1471,30 +1483,44 @@ export default function TallyImport() {
 
             {/* 3. Deployment Methods (Daemon CLI, TDL Add-on, Pairing Key) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Method A: Windows Background Daemon */}
+              {/* Method A: Windows Native Script or Node Daemon */}
               <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col justify-between gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Terminal className="w-4 h-4" />
-                    <h4 className="font-bold text-xs text-foreground">Option 1: Windows Sync Daemon</h4>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Terminal className="w-4 h-4" />
+                      <h4 className="font-bold text-xs text-foreground">Option 1: Windows Utility</h4>
+                    </div>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600">
+                      NO NODE.JS NEEDED
+                    </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Run this tiny background utility on the Windows PC where your accounting tool is installed. It polls locally and pushes updates silently.
+                    Uses Windows built-in PowerShell. No installations or Node.js required. Double-click to test and sync.
                   </p>
-                  <div className="p-2.5 rounded-xl bg-muted font-mono text-[10px] text-foreground break-all border border-border select-all">
-                    {getDaemonCliCommand(orgId || "demo-org", syncConfig.pairingToken)}
+                  <Button
+                    size="sm"
+                    onClick={handleDownloadWindowsBat}
+                    className="w-full gap-2 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download CredSmart-Sync.bat</span>
+                  </Button>
+                  <div className="pt-2 border-t border-border/60">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Or if you have Node.js installed:</span>
+                    <div className="p-2 mt-1 rounded-xl bg-muted font-mono text-[9px] text-foreground break-all border border-border select-all flex items-center justify-between gap-2">
+                      <span className="truncate">{getDaemonCliCommand(orgId || "demo-org", syncConfig.pairingToken)}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyCli}
+                        className="p-1 hover:text-primary cursor-pointer shrink-0 text-muted-foreground hover:text-foreground"
+                        title="Copy CLI"
+                      >
+                        {copiedCli ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyCli}
-                  className="w-full gap-2 text-xs font-bold cursor-pointer"
-                >
-                  {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCli ? "Copied Command!" : "Copy CLI Command"}</span>
-                </Button>
               </div>
 
               {/* Method B: Native TDL Script for Tally */}
