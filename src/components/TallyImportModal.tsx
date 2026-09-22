@@ -62,6 +62,7 @@ export interface TallyImportModalProps {
   onImportVouchers?: (vouchers: TallyVoucher[], conflictMode?: ConflictMode) => Promise<void>;
   defaultTab?: "items" | "parties" | "all";
   initialSoftware?: SupportedSoftware;
+  onAutoSearch?: () => void;
 }
 
 interface ImportStats {
@@ -130,6 +131,7 @@ export function TallyImportModal({
   onImportVouchers,
   defaultTab = "all",
   initialSoftware = "auto",
+  onAutoSearch,
 }: TallyImportModalProps) {
   const [step, setStep] = useState<WizardStep>("upload");
   const [isDragging, setIsDragging] = useState(false);
@@ -488,6 +490,18 @@ export function TallyImportModal({
                     <FolderUp className="w-4 h-4 text-amber-600" />
                     <span>Upload Folder</span>
                   </Button>
+
+                  {onAutoSearch && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold px-5 cursor-pointer shadow-xs"
+                      onClick={(e) => { e.stopPropagation(); onAutoSearch(); }}
+                    >
+                      <Search className="w-4 h-4" />
+                      <span>Auto Search Tally Folder</span>
+                    </Button>
+                  )}
                 </div>
                 <input
                   ref={fileInputRef}
