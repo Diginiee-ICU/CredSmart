@@ -741,51 +741,282 @@ export function getDaemonCliCommand(orgId: string, token: string): string {
  * Runs directly on any Windows 10/11 PC with ZERO Node.js, Python, or external installations!
  */
 export function generateWindowsSyncBatContent(orgId: string, pairingToken: string): string {
-  return `@echo off
+  return `<# :
+@echo off
 chcp 65001 >nul
 title CredSmart Windows Auto-Sync Utility for Tally
 color 0b
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression ([System.IO.File]::ReadAllText('%~f0'))"
+if %errorlevel% neq 0 (
+    echo.
+    echo Script ended with code %errorlevel%.
+    pause
+)
+exit /b %errorlevel%
+#>
 
-echo =========================================================================
-echo   CredSmart Windows Auto-Sync Utility for Tally Prime / ERP 9
-echo   Organization ID: ${orgId}
-echo   Runs natively on Windows using built-in PowerShell (No Node.js needed!)
-echo =========================================================================
-echo.
+# =========================================================================
+# CredSmart Windows Auto-Sync Utility for Tally Prime / ERP 9
+# Organization ID: ${orgId}
+# Runs natively on Windows using built-in PowerShell (No Node.js needed!)
+# =========================================================================
 
-set "ORG_ID=${orgId}"
-set "PAIRING_TOKEN=${pairingToken}"
-set "TALLY_HOST=http://127.0.0.1:9000"
+$OrgId = "${orgId}"
+$PairingToken = "${pairingToken}"
+$TallyHost = "http://127.0.0.1:9000"
+$BridgePort = 9005
+$AppUrl = "https://pos.credalert.business/tally-import"
 
-echo [1/3] Checking if Tally Prime is running on %TALLY_HOST%...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$hostUrl = '%TALLY_HOST%';" ^
-  "try {" ^
-  "  $body = '<ENVELOPE><HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER><BODY><EXPORTDATA><REQUESTDESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT></STATICVARIABLES><REPORTNAME>List of Companies</REPORTNAME></REQUESTDESC></EXPORTDATA></BODY></ENVELOPE>';" ^
-  "  $resp = Invoke-WebRequest -Uri $hostUrl -Method POST -Body $body -ContentType 'text/xml' -TimeoutSec 6 -UseBasicParsing;" ^
-  "  if ($resp.StatusCode -eq 200) {" ^
-  "    Write-Host '[SUCCESS] Successfully connected to local Tally HTTP Server!' -ForegroundColor Green;" ^
-  "    Write-Host 'Tally is active and listening on port 9000.' -ForegroundColor Green;" ^
-  "  } else {" ^
-  "    Write-Host ('[WARNING] Tally responded with status ' + $resp.StatusCode) -ForegroundColor Yellow;" ^
-  "  }" ^
-  "} catch {" ^
-  "  Write-Host '[NOTICE] Cannot connect to Tally on port 9000.' -ForegroundColor Red;" ^
-  "  Write-Host 'Ensure Tally Prime is open and Server is enabled:' -ForegroundColor Yellow;" ^
-  "  Write-Host '  1. In Tally Prime, press F1 (Help) > Settings > Connectivity' -ForegroundColor Gray;" ^
-  "  Write-Host '  2. Client/Server configuration > TallyPrime acts as: Both / Server' -ForegroundColor Gray;" ^
-  "  Write-Host '  3. Port: 9000' -ForegroundColor Gray;" ^
-  "}"
+function Show-Banner {
+    Clear-Host
+    Write-Host "=========================================================================" -ForegroundColor Cyan
+    Write-Host "  CredSmart Windows Auto-Sync Utility for Tally Prime / ERP 9" -ForegroundColor Cyan
+    Write-Host "  Organization ID: $OrgId" -ForegroundColor Yellow
+    Write-Host "  Native Windows PowerShell (Zero Node.js or Extra Software Needed)" -ForegroundColor Gray
+    Write-Host "=========================================================================" -ForegroundColor Cyan
+    Write-Host ""
+}
 
-echo.
-echo [2/3] Recommended Zero-Install Option (Native Tally TDL):
-echo       Load CredSmartSync.tdl in Tally Prime (F1 > TDLs & Add-ons > F4).
-echo       Tally will push invoices directly to cloud on save.
-echo.
-echo [3/3] Instant File Upload Option (No Scripts):
-echo       In Tally, press Alt+E > Masters > XML Format, then drop the file
-echo       into CredSmart (https://pos.credalert.business/tally-import).
-echo.
-pause
+function Check-TallyConnection {
+    param([string]$Url)
+    Write-Host "[1/3] Testing connection to Tally Prime on $Url..." -ForegroundColor Cyan
+    $testXml = "<ENVELOPE><HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER><BODY><EXPORTDATA><REQUESTDESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT></STATICVARIABLES><REPORTNAME>List of Companies</REPORTNAME></REQUESTDESC></EXPORTDATA></BODY></ENVELOPE>"
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -Method POST -Body $testXml -ContentType "text/xml" -TimeoutSec 5 -UseBasicParsing
+        if ($resp.StatusCode -eq 200) {
+            $compName = "Active Tally Company"
+            if ($resp.Content -match '<COMPANY[^>]*NAME="([^"]+)"' -or $resp.Content -match '<COMPANY[^>]*>([^<]+)</COMPANY>') {
+                $compName = $matches[1].Trim()
+            }
+            Write-Host "[SUCCESS] Successfully connected to Tally Prime!" -ForegroundColor Green
+            Write-Host "Active Company: $compName" -ForegroundColor Green
+            return @{ Online = $true; Company = $compName }
+        }
+    } catch {
+        # Offline
+    }
+    Write-Host "[NOTICE] Could not connect to Tally on $Url" -ForegroundColor Yellow
+    Write-Host "Ensure Tally Prime is open and Server Mode is enabled:" -ForegroundColor Gray
+    Write-Host "  1. In Tally Prime, press F1 (Help) > Settings > Connectivity" -ForegroundColor Gray
+    Write-Host "  2. Client/Server configuration > TallyPrime acts as: Both / Server" -ForegroundColor Gray
+    Write-Host "  3. Port: 9000" -ForegroundColor Gray
+    Write-Host "  4. Restart Tally and re-run this script" -ForegroundColor Gray
+    return @{ Online = $false; Company = $null }
+}
+
+function Export-TallyMasters {
+    param([string]$Url, [string]$TargetWebUrl)
+    Write-Host ""
+    Write-Host "--> Requesting All Masters (Stock Items & Ledgers) from Tally..." -ForegroundColor Cyan
+    $reqXml = @"
+<ENVELOPE>
+  <HEADER>
+    <TALLYREQUEST>Export Data</TALLYREQUEST>
+  </HEADER>
+  <BODY>
+    <EXPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>List of Accounts</REPORTNAME>
+        <STATICVARIABLES>
+          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+          <ACCOUNTTYPE>All Masters</ACCOUNTTYPE>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+    </EXPORTDATA>
+  </BODY>
+</ENVELOPE>
+"@
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -Method POST -Body $reqXml -ContentType "text/xml" -TimeoutSec 45 -UseBasicParsing
+        if ($resp.StatusCode -eq 200 -and $resp.Content.Length -gt 50) {
+            $desktop = [System.Environment]::GetFolderPath('Desktop')
+            $desktopFile = Join-Path $desktop "CredSmart_Tally_Export.xml"
+            $localFile = Join-Path (Get-Location) "CredSmart_Tally_Export.xml"
+
+            [System.IO.File]::WriteAllText($desktopFile, $resp.Content, [System.Text.Encoding]::UTF8)
+            [System.IO.File]::WriteAllText($localFile, $resp.Content, [System.Text.Encoding]::UTF8)
+
+            $itemsCount = [regex]::Matches($resp.Content, "<STOCKITEM\b").Count
+            $ledgerCount = [regex]::Matches($resp.Content, "<LEDGER\b").Count
+
+            Write-Host ""
+            Write-Host "=========================================================================" -ForegroundColor Green
+            Write-Host "  [EXPORT COMPLETED SUCCESSFULLY!]" -ForegroundColor Green
+            Write-Host "  * Stock Items Found:   $itemsCount" -ForegroundColor White
+            Write-Host "  * Ledgers / Parties:   $ledgerCount" -ForegroundColor White
+            Write-Host "  * Saved to Desktop:    $desktopFile" -ForegroundColor Yellow
+            Write-Host "=========================================================================" -ForegroundColor Green
+            Write-Host ""
+
+            Write-Host "Opening CredSmart Import in browser..." -ForegroundColor Cyan
+            Start-Process $TargetWebUrl
+
+            Write-Host "Highlighting exported file in Windows Explorer..." -ForegroundColor Gray
+            Start-Process explorer.exe -ArgumentList "/select,`"$desktopFile`""
+
+            Write-Host ""
+            Write-Host "Tip: In CredSmart, click 'Upload File(s)' or simply drag & drop" -ForegroundColor Yellow
+            Write-Host "     CredSmart_Tally_Export.xml into the browser window!" -ForegroundColor Yellow
+            Write-Host ""
+            return $true
+        } else {
+            Write-Host "[ERROR] Tally returned an empty response or HTTP code $($resp.StatusCode)" -ForegroundColor Red
+            return $false
+        }
+    } catch {
+        Write-Host "[ERROR] Export failed: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Start-AutoSyncBridge {
+    param([int]$Port, [string]$TallyUrl)
+    Write-Host ""
+    Write-Host "=========================================================================" -ForegroundColor Cyan
+    Write-Host "  STARTING LOCAL AUTO-SYNC BRIDGE ON http://127.0.0.1:$Port" -ForegroundColor Cyan
+    Write-Host "=========================================================================" -ForegroundColor Cyan
+    Write-Host "This bridge bypasses browser CORS restrictions and enables in-browser sync." -ForegroundColor Gray
+    Write-Host "Keep this window OPEN while working with CredSmart." -ForegroundColor Yellow
+    Write-Host "Press Ctrl+C at any time to stop the bridge." -ForegroundColor Gray
+    Write-Host ""
+
+    $listener = New-Object System.Net.HttpListener
+    $prefix = "http://127.0.0.1:$Port/"
+    $listener.Prefixes.Add($prefix)
+
+    try {
+        $listener.Start()
+        Write-Host "[BRIDGE READY] Listening on $prefix" -ForegroundColor Green
+        Write-Host "Now go to CredSmart ($AppUrl) and click 'Sync Now'!" -ForegroundColor Green
+        Write-Host ""
+
+        while ($listener.IsListening) {
+            $context = $listener.GetContext()
+            $request = $context.Request
+            $response = $context.Response
+
+            # Essential CORS & Private Network Access headers
+            $response.Headers.Add("Access-Control-Allow-Origin", "*")
+            $response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            $response.Headers.Add("Access-Control-Allow-Headers", "*")
+            $response.Headers.Add("Access-Control-Allow-Private-Network", "true")
+            $response.Headers.Add("Access-Control-Max-Age", "86400")
+
+            if ($request.HttpMethod -eq "OPTIONS") {
+                $response.StatusCode = 200
+                $response.Close()
+                continue
+            }
+
+            if ($request.HttpMethod -eq "GET") {
+                $json = '{"status":"ok","bridge":"CredSmart Tally Bridge","port":' + $Port + ',"tallyHost":"' + $TallyUrl + '"}'
+                $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $bytes.Length
+                $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                $response.Close()
+                continue
+            }
+
+            if ($request.HttpMethod -eq "POST") {
+                $reader = New-Object System.IO.StreamReader($request.InputStream, $request.ContentEncoding)
+                $postBody = $reader.ReadToEnd()
+                $reader.Close()
+
+                $timeStr = Get-Date -Format "HH:mm:ss"
+                Write-Host "[$timeStr] [REQUEST] Forwarding sync query to Tally Prime on $TallyUrl..." -ForegroundColor Cyan
+
+                try {
+                    $tallyResp = Invoke-WebRequest -Uri $TallyUrl -Method POST -Body $postBody -ContentType "text/xml" -TimeoutSec 60 -UseBasicParsing
+                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($tallyResp.Content)
+                    $response.ContentType = "text/xml; charset=utf-8"
+                    $response.StatusCode = $tallyResp.StatusCode
+                    $response.ContentLength64 = $respBytes.Length
+                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                    $response.Close()
+                    $kbSize = [math]::Round($respBytes.Length / 1024, 1)
+                    Write-Host "[$timeStr] [SUCCESS] Transferred $kbSize KB from Tally Prime to CredSmart!" -ForegroundColor Green
+                } catch {
+                    $errXml = "<ERROR><MESSAGE>$($_.Exception.Message)</MESSAGE></ERROR>"
+                    $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errXml)
+                    $response.StatusCode = 502
+                    $response.ContentType = "text/xml; charset=utf-8"
+                    $response.ContentLength64 = $errBytes.Length
+                    $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                    $response.Close()
+                    Write-Host "[$timeStr] [ERROR] Forwarding failed: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
+        }
+    } catch {
+        Write-Host "[BRIDGE EXCEPTION] $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        if ($listener.IsListening) {
+            $listener.Stop()
+            $listener.Close()
+        }
+        Write-Host "Bridge stopped." -ForegroundColor Gray
+    }
+}
+
+$running = $true
+while ($running) {
+    Show-Banner
+    $status = Check-TallyConnection -Url $TallyHost
+    Write-Host ""
+    Write-Host "-------------------------------------------------------------------------" -ForegroundColor Cyan
+    Write-Host "CHOOSE AN ACTION:" -ForegroundColor White
+    Write-Host "  [1] Instant Export to Desktop (Extracts Masters XML & Opens CredSmart)" -ForegroundColor Green
+    Write-Host "  [2] Start Live Auto-Sync Bridge (Port 9005 - Enables In-Browser Sync)" -ForegroundColor Cyan
+    Write-Host "  [3] Full Sync (Export to Desktop + Start Live Bridge)" -ForegroundColor Yellow
+    Write-Host "  [4] Re-check Tally Connection on Port 9000" -ForegroundColor Gray
+    Write-Host "  [5] Open CredSmart Web Portal" -ForegroundColor Gray
+    Write-Host "  [6] Exit" -ForegroundColor Gray
+    Write-Host "-------------------------------------------------------------------------" -ForegroundColor Cyan
+    Write-Host ""
+    $choice = Read-Host "Select option [1-6] (Press ENTER for Option 1)"
+    if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
+
+    switch ($choice.Trim()) {
+        "1" {
+            $exported = Export-TallyMasters -Url $TallyHost -TargetWebUrl $AppUrl
+            if ($exported) {
+                Write-Host ""
+                $startB = Read-Host "Would you also like to start the Live Auto-Sync Bridge on port 9005? (Y/N) [Default: Y]"
+                if ([string]::IsNullOrWhiteSpace($startB) -or $startB.Trim().ToUpper() -eq "Y") {
+                    Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+                }
+            }
+            Write-Host ""
+            Read-Host "Press ENTER to return to menu..."
+        }
+        "2" {
+            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+            Write-Host ""
+            Read-Host "Press ENTER to return to menu..."
+        }
+        "3" {
+            Export-TallyMasters -Url $TallyHost -TargetWebUrl $AppUrl
+            Start-AutoSyncBridge -Port $BridgePort -TallyUrl $TallyHost
+            Write-Host ""
+            Read-Host "Press ENTER to return to menu..."
+        }
+        "4" {
+            # Loop re-tests
+        }
+        "5" {
+            Start-Process $AppUrl
+            Read-Host "Opening CredSmart... Press ENTER to return to menu."
+        }
+        "6" {
+            $running = $false
+            Write-Host "Exiting CredSmart Auto-Sync. Goodbye!" -ForegroundColor Gray
+        }
+        default {
+            Write-Host "Invalid option. Please choose between 1 and 6." -ForegroundColor Red
+            Start-Sleep -Seconds 1
+        }
+    }
+}
 `;
 }
