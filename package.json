@@ -20,12 +20,6 @@
       "electron/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "dist/CredSmartTallyBridge.exe",
-        "to": "CredSmartTallyBridge.exe"
-      }
-    ],
     "win": {
       "target": [
         {
@@ -52,15 +46,16 @@
     "cap:sync": "npx cap sync android",
     "android:assemble": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleRelease",
     "android:bundle": "npm run build && npx cap sync android && cd android && .\\gradlew.bat bundleRelease",
-    "android:release": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleRelease bundleRelease",
+    "android:release": "npm run build && npx cap sync android && cd android && .\\gradlew.bat bundleRelease",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tally:bridge": "node scripts/credsmart-sync-agent/index.cjs",
-    "tally:bridge:exe": "pkg scripts/credsmart-sync-agent/index.cjs --targets node18-win-x64 --output dist/CredSmartTallyBridge.exe",
-    "desktop:build": "npm run build && npm run tally:bridge:exe && electron-builder --win nsis",
-    "desktop:dir": "npm run build && npm run tally:bridge:exe && electron-builder --win dir"
+    "electron": "electron .",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:build": "npm run build && electron-builder --win nsis",
+    "desktop:dir": "npm run build && electron-builder --win dir",
+    "tally:bridge": "node scripts/credsmart-sync-agent/index.cjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
