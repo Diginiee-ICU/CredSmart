@@ -305,19 +305,6 @@ export default function TallyImport() {
     parties: 0,
     banks: 0,
     vouchers: 0,
-  });
-
-  // Table preview filter
-  const [previewTab, setPreviewTab] = useState<"items" | "parties" | "banks" | "vouchers">("items");
-  const [searchQuery, setSearchQuery] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-
-  // ── Universal File Handling ────────────────────────────────────────────────
-
-  const handleFiles = async (fileList: FileList | File[]) => {
-    const files = Array.from(fileList);
-    if (files.length === 0) return;
 
     for (const f of files) {
       if (f.size > 50 * 1024 * 1024) {
