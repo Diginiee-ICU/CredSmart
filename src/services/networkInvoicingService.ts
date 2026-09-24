@@ -795,6 +795,49 @@ export const networkInvoicingService = {
     return networkInvoice;
   },
 
+  mapDbRowToNetworkInvoice(row: any): NetworkInvoice {
+    return {
+      id: row.id,
+      senderOrgId: row.sender_org_id,
+      senderOrgName: row.sender_org_name,
+      senderOrgPhone: row.sender_org_phone,
+      senderOrgEmail: row.sender_org_email,
+      senderOrgGstin: row.sender_org_gstin,
+      senderOrgAddress: row.sender_org_address,
+      senderUserId: row.sender_user_id,
+      recipientOrgId: row.recipient_org_id,
+      recipientOrgName: row.recipient_org_name,
+      recipientPhone: row.recipient_phone,
+      recipientEmail: row.recipient_email,
+      recipientGstin: row.recipient_gstin,
+      recipientAddress: row.recipient_address,
+      invoiceNumber: row.invoice_number,
+      docDate: row.doc_date,
+      dueDate: row.due_date,
+      paymentTerms: row.payment_terms,
+      paymentMethod: row.payment_method,
+      items: row.items || [],
+      subtotal: Number(row.subtotal || 0),
+      discountTotal: Number(row.discount_total || 0),
+      taxableTotal: Number(row.subtotal || 0) - Number(row.discount_total || 0),
+      cgstTotal: Number(row.tax_total || 0) / 2,
+      sgstTotal: Number(row.tax_total || 0) / 2,
+      igstTotal: 0,
+      taxTotal: Number(row.tax_total || 0),
+      grandTotal: Number(row.grand_total || 0),
+      notes: row.notes,
+      terms: row.terms,
+      status: row.status as NetworkInvoiceStatus,
+      purchaseInvoiceId: row.purchase_invoice_id,
+      purchaseInvoiceNumber: row.purchase_invoice_number,
+      rejectionReason: row.rejection_reason,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      approved_at: row.approved_at,
+      rejected_at: row.rejected_at,
+    };
+  },
+
   // ─────────────────────────────────────────────────────────────
   // 4. QUERY INVOICES FOR AN ORGANIZATION
   // ─────────────────────────────────────────────────────────────
@@ -859,46 +902,7 @@ export const networkInvoicingService = {
 
       if (!error && dbInvoices && Array.isArray(dbInvoices)) {
         for (const row of dbInvoices as any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-          const mapped: NetworkInvoice = {
-            id: row.id,
-            senderOrgId: row.sender_org_id,
-            senderOrgName: row.sender_org_name,
-            senderOrgPhone: row.sender_org_phone,
-            senderOrgEmail: row.sender_org_email,
-            senderOrgGstin: row.sender_org_gstin,
-            senderOrgAddress: row.sender_org_address,
-            senderUserId: row.sender_user_id,
-            recipientOrgId: row.recipient_org_id,
-            recipientOrgName: row.recipient_org_name,
-            recipientPhone: row.recipient_phone,
-            recipientEmail: row.recipient_email,
-            recipientGstin: row.recipient_gstin,
-            recipientAddress: row.recipient_address,
-            invoiceNumber: row.invoice_number,
-            docDate: row.doc_date,
-            dueDate: row.due_date,
-            paymentTerms: row.payment_terms,
-            paymentMethod: row.payment_method,
-            items: row.items || [],
-            subtotal: Number(row.subtotal || 0),
-            discountTotal: Number(row.discount_total || 0),
-            taxableTotal: Number(row.subtotal || 0) - Number(row.discount_total || 0),
-            cgstTotal: Number(row.tax_total || 0) / 2,
-            sgstTotal: Number(row.tax_total || 0) / 2,
-            igstTotal: 0,
-            taxTotal: Number(row.tax_total || 0),
-            grandTotal: Number(row.grand_total || 0),
-            notes: row.notes,
-            terms: row.terms,
-            status: row.status as NetworkInvoiceStatus,
-            purchaseInvoiceId: row.purchase_invoice_id,
-            purchaseInvoiceNumber: row.purchase_invoice_number,
-            rejectionReason: row.rejection_reason,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            approved_at: row.approved_at,
-            rejected_at: row.rejected_at,
-          };
+          const mapped = this.mapDbRowToNetworkInvoice(row);
 
           if (
             (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) &&
@@ -1209,14 +1213,37 @@ export const networkInvoicingService = {
     try {
       // 1. Fetch the network invoice
       const allInvoices = this.getLocalInvoices();
-      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId || inv.invoiceNumber === networkInvoiceId);
 
       if (invoiceIndex === -1) {
-        const remoteInvoices = await this.getInvoicesForOrg(recipientOrg.id, recipientOrg.phone, recipientOrg.gstin);
-        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId);
+        const remoteInvoices = await this.getInvoicesForOrg(
+          recipientOrg.id,
+          recipientOrg.phone,
+          recipientOrg.gstin,
+          recipientOrg.name
+        );
+        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId || inv.invoiceNumber === networkInvoiceId);
         if (remoteInvoice) {
           allInvoices.push(remoteInvoice);
           invoiceIndex = allInvoices.length - 1;
+        }
+      }
+
+      // Direct DB lookup fallback
+      if (invoiceIndex === -1) {
+        const directRes = await safeDbCall(async () => {
+          return supabase
+            .from("network_invoices" as any)
+            .select("*")
+            .or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`)
+            .maybeSingle();
+        });
+
+        if (directRes?.data) {
+          const directMapped = this.mapDbRowToNetworkInvoice(directRes.data);
+          allInvoices.push(directMapped);
+          invoiceIndex = allInvoices.length - 1;
+          this.saveLocalInvoices(allInvoices);
         }
       }
 
@@ -1590,14 +1617,37 @@ export const networkInvoicingService = {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const allInvoices = this.getLocalInvoices();
-      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId);
+      let invoiceIndex = allInvoices.findIndex((inv) => inv.id === networkInvoiceId || inv.invoiceNumber === networkInvoiceId);
 
       if (invoiceIndex === -1) {
-        const remoteInvoices = await this.getInvoicesForOrg(recipientOrg.id, recipientOrg.phone, recipientOrg.gstin);
-        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId);
+        const remoteInvoices = await this.getInvoicesForOrg(
+          recipientOrg.id,
+          recipientOrg.phone,
+          recipientOrg.gstin,
+          recipientOrg.name
+        );
+        const remoteInvoice = remoteInvoices.find((inv) => inv.id === networkInvoiceId || inv.invoiceNumber === networkInvoiceId);
         if (remoteInvoice) {
           allInvoices.push(remoteInvoice);
           invoiceIndex = allInvoices.length - 1;
+        }
+      }
+
+      // Direct DB lookup fallback
+      if (invoiceIndex === -1) {
+        const directRes = await safeDbCall(async () => {
+          return supabase
+            .from("network_invoices" as any)
+            .select("*")
+            .or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`)
+            .maybeSingle();
+        });
+
+        if (directRes?.data) {
+          const directMapped = this.mapDbRowToNetworkInvoice(directRes.data);
+          allInvoices.push(directMapped);
+          invoiceIndex = allInvoices.length - 1;
+          this.saveLocalInvoices(allInvoices);
         }
       }
 
