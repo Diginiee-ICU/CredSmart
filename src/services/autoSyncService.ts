@@ -738,7 +738,7 @@ export async function executeDirectSyncIngestion(
 
     const durationMs = Math.round(performance.now() - startTime);
     const log: SyncAuditLog = {
-      id: \`sync-log-\${Date.now()}\`,
+      id: `sync-log-${Date.now()}`,
       timestamp: new Date().toISOString(),
       software,
       status: unsupportedVoucherTypes.size > 0 ? "partial" : "success",
