@@ -202,9 +202,32 @@ const TALLY_TEST_XML = `
 </ENVELOPE>`.trim();
 
 function registerIpcHandlers() {
-  // Direct IPC request to Tally
+  // Direct IPC request to Tally with auto-port recovery
   ipcMain.handle("tally:request", async (_event, xml) => {
-    return await requestTally(xml);
+    try {
+      return await requestTally(xml, TALLY_URL, 15000);
+    } catch (err) {
+      // If primary TALLY_URL failed, quickly auto-scan other common ports
+      const commonPorts = [9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009, 9010];
+      const originalHost = new URL(TALLY_URL).hostname;
+
+      for (const port of commonPorts) {
+        const testUrl = `http://${originalHost}:${port}`;
+        if (testUrl === TALLY_URL) continue;
+        try {
+          const res = await requestTally(xml, testUrl, 3000);
+          TALLY_URL = testUrl; // Save new discovered port
+          console.log(`[CredSmart Bridge] Auto-switched to active Tally port: ${testUrl}`);
+          return res;
+        } catch {
+          // continue scanning
+        }
+      }
+
+      throw new Error(
+        `Cannot connect to Tally. If Tally Prime is open, please press Esc until you are at the main "Gateway of Tally" screen (close any open dialogs or configuration pop-ups) and verify ODBC port 9000 is enabled in F1 > Settings > Connectivity.`
+      );
+    }
   });
 
   // Direct IPC probe
