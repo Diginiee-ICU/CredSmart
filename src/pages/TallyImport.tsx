@@ -447,6 +447,15 @@ export default function TallyImport() {
     try {
       const data = await parseMultipleUniversalFiles(files, selectedSoftware);
       setParsedData(data);
+      if (data.items.length > 0) {
+        setPreviewTab("items");
+      } else if (data.parties.all.length > 0) {
+        setPreviewTab("parties");
+      } else if (data.vouchers.length > 0) {
+        setPreviewTab("vouchers");
+      } else if (data.bankAccounts.length > 0) {
+        setPreviewTab("banks");
+      }
       setImportCompleted(false);
 
       if (data.detectedSoftware !== selectedSoftware && selectedSoftware === "auto") {
@@ -649,24 +658,17 @@ export default function TallyImport() {
           const lookupKey = party.phone?.trim().length > 5 ? party.phone.trim() : party.name.toLowerCase().trim();
           const existing = map.get(lookupKey);
 
-          const payload = {
+          const basePayload = {
             organization_id: orgId,
             name: party.name,
             phone: party.phone || undefined,
             email: party.email || undefined,
             address: party.address || undefined,
-            trade_name: party.tradeName || undefined,
-            gstin: party.gstin || undefined,
-            pan: party.pan || undefined,
-            pincode: party.pincode || undefined,
-            category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
-            credit_limit: party.creditLimit || 50000,
-            credit_period_days: party.creditPeriodDays || 30,
-            custom_fields: {
-              imported_from: parsedData.detectedSoftware,
-              imported_at: new Date().toISOString(),
-            },
           };
+
+          const payload = isSupplier 
+            ? { ...basePayload, gstin: party.gstin || undefined } 
+            : basePayload;
 
           if (existing) {
             if (conflictMode === "overwrite") {
@@ -1159,24 +1161,16 @@ export default function TallyImport() {
           continue;
         }
 
-        const payload = {
+        const basePayload = {
             organization_id: orgId,
             name: partyName,
             phone: party.phone || undefined,
             email: party.email || undefined,
             address: party.address || undefined,
-            gstin: party.gstin || undefined,
-            trade_name: party.tradeName || undefined,
-            pan: party.pan || undefined,
-            pincode: party.pincode || undefined,
-            category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
-            credit_limit: party.creditLimit || 50000,
-            credit_period_days: party.creditPeriodDays || 30,
-            custom_fields: {
-              imported_from: selectedSoftware,
-              imported_at: new Date().toISOString(),
-            },
         };
+        const payload = isSupplier 
+            ? { ...basePayload, gstin: party.gstin || undefined } 
+            : basePayload;
 
         if (existingParty && (strategy === "overwrite" || strategy === "merge")) {
            (isSupplier ? suppliersToUpsert : customersToUpsert).push({ id: existingParty.id, ...payload, updated_at: new Date().toISOString() });
