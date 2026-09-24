@@ -709,6 +709,12 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
 
   let doc: Document;
   try {
+    // Sanitize control characters that are invalid in XML (common in Tally exports)
+    xmlText = xmlText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    
+    // Fix unescaped ampersands (Tally often exports "A & B" instead of "A &amp; B", breaking the parser)
+    xmlText = xmlText.replace(/&(?!(?:apos|quot|[lg]t|amp);|#)/g, '&amp;');
+    
     const parser = new DOMParser();
     doc = parser.parseFromString(xmlText, "text/xml");
     const parseError = doc.querySelector("parsererror");
