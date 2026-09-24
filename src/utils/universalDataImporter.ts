@@ -591,7 +591,7 @@ function parseUniversalItemsFromRows(
     const hsnCode = hsnRaw ? String(hsnRaw).trim() : null;
     const openingStock = colStock !== -1 ? parseNum(row[colStock], 0) : 0;
     const minStockAlert = colMinStock !== -1 ? Math.max(1, parseNum(row[colMinStock], 5)) : 5;
-    const batchNumber = colBatch !== -1 && row[colBatch] ? String(row[colBatch]).trim() : "BATCH-01";
+    const batchNumber = colBatch !== -1 && row[colBatch] ? String(row[colBatch]).trim() : `BATCH-SYNC-${String(i).padStart(4, "0")}`;
     const expiryDate = colExpiry !== -1 && row[colExpiry] ? String(row[colExpiry]).trim() : null;
 
     items.push({

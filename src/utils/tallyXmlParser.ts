@@ -89,6 +89,24 @@ export function getAllTallyVouchers(result: TallyParseResult): TallyVoucher[] {
 
 // ─── XML & Numeric Extraction Helpers ─────────────────────────────────────────
 
+function queryNodes(el: Element | null, tags: string[]): Element[] {
+  if (!el) return [];
+  const results: Element[] = [];
+  tags.forEach(tag => {
+    const nodes = el.getElementsByTagName(tag);
+    for (let i = 0; i < nodes.length; i++) {
+      results.push(nodes[i]);
+    }
+  });
+  return results;
+}
+
+function queryNode(el: Element | null, tags: string[]): Element | null {
+  const nodes = queryNodes(el, tags);
+  return nodes.length > 0 ? nodes[0] : null;
+}
+
+
 function getText(el: Element | null, tag: string): string {
   if (!el) return "";
   const child = el.querySelector(tag);
@@ -268,7 +286,7 @@ function mapPartyCategory(parentGroup: string, hierarchy: Map<string, string>): 
 // ─── XML Parsers ──────────────────────────────────────────────────────────────
 
 function extractGstRateFromStockItem(el: Element): GSTRate {
-  const gstEls = el.querySelectorAll("GSTDETAILS\\.LIST, GSTDETAILS, RATEDETAILS\\.LIST, RATEDETAILS");
+  const gstEls = queryNodes(el, ["GSTDETAILS.LIST", "GSTDETAILS", "RATEDETAILS.LIST", "RATEDETAILS"]);
   for (const g of Array.from(gstEls)) {
     const rateText = getText(g, "GSTRATE") || getText(g, "TAXRATE") || getText(g, "RATE");
     if (rateText) {
@@ -301,7 +319,7 @@ function extractGstRateFromStockItem(el: Element): GSTRate {
 
 function extractStockRates(el: Element): { purchasePrice: number; sellingPrice: number; mrp: number } {
   let purchasePrice = 0;
-  const costEl = el.querySelector("STANDARDCOSTLIST\\.LIST, STANDARDCOSTLIST");
+  const costEl = queryNode(el, ["STANDARDCOSTLIST.LIST", "STANDARDCOSTLIST"]);
   if (costEl) {
     purchasePrice = Math.abs(extractNumericValue(getText(costEl, "RATE")));
   }
@@ -311,7 +329,7 @@ function extractStockRates(el: Element): { purchasePrice: number; sellingPrice: 
   }
 
   let sellingPrice = 0;
-  const priceEl = el.querySelector("STANDARDPRICELIST\\.LIST, STANDARDPRICELIST");
+  const priceEl = queryNode(el, ["STANDARDPRICELIST.LIST", "STANDARDPRICELIST"]);
   if (priceEl) {
     sellingPrice = Math.abs(extractNumericValue(getText(priceEl, "RATE")));
   }
@@ -342,7 +360,7 @@ function parseStockItems(doc: Document): Partial<InventoryItem>[] {
     const { purchasePrice, sellingPrice, mrp } = extractStockRates(el);
 
     // HSN from HSNDETAILS.LIST or direct
-    const hsnEl = el.querySelector("HSNDETAILS\\.LIST, HSNDETAILS");
+    const hsnEl = queryNode(el, ["HSNDETAILS.LIST", "HSNDETAILS"]);
     const hsnCode = hsnEl ? (getText(hsnEl, "HSNCODE") || getText(hsnEl, "HSN") || "") : getText(el, "HSNCODE") || "";
 
     // GST Rate
@@ -353,7 +371,7 @@ function parseStockItems(doc: Document): Partial<InventoryItem>[] {
 
     // Barcode / SKU / Part No
     const partNo = getText(el, "PARTNO");
-    const mailingName = getText(el.querySelector("MAILINGNAME\\.LIST, MAILINGNAME"), "MAILINGNAME") || getText(el, "MAILINGNAME");
+    const mailingName = getText(queryNode(el, ["MAILINGNAME.LIST", "MAILINGNAME"]), "MAILINGNAME") || getText(el, "MAILINGNAME");
     const barcode = getText(el, "BARCODE") || (partNo && /^[0-9]{8,14}$/.test(partNo) ? partNo : null);
     const sku = partNo || `TLY-${name.substring(0, 6).replace(/[^A-Za-z0-9]/g, "").toUpperCase()}-${String(idx + 1).padStart(4, "0")}`;
 
@@ -418,7 +436,7 @@ function parseLedgers(doc: Document, hierarchy: Map<string, string>): Partial<Pa
       }
     });
     if (addressParts.length === 0) {
-      const listEl = el.querySelector("ADDRESS\\.LIST, ADDRESSLIST");
+      const listEl = queryNode(el, ["ADDRESS.LIST", "ADDRESSLIST"]);
       if (listEl) {
         const lines = (listEl.textContent || "")
           .split(/\r?\n/)
@@ -513,19 +531,19 @@ function parseAllVouchers(doc: Document): {
 
     // Parse Inventory Line Items
     const items: TallyVoucherItem[] = [];
-    const invEls = el.querySelectorAll("ALLINVENTORYENTRIES\\.LIST, INVENTORYENTRIES\\.LIST, ALLINVENTORYENTRIES");
+    const invEls = queryNodes(el, ["ALLINVENTORYENTRIES.LIST", "INVENTORYENTRIES.LIST", "ALLINVENTORYENTRIES"]);
     invEls.forEach((inv) => {
       const itemName = getText(inv, "STOCKITEMNAME");
       if (!itemName) return;
 
       const qtyRaw = getText(inv, "ACTUALQTY") || getText(inv, "BILLEDQTY");
       const quantity = Math.abs(extractNumericValue(qtyRaw)) || 1;
-      const unit = mapTallyUnit(qtyRaw);
+      const unit = mapTallyUnit(getText(inv, "BASEUNITS") || getText(inv, "UNIT") || qtyRaw);
       const rate = Math.abs(extractNumericValue(getText(inv, "RATE")));
       const amount = Math.abs(extractNumericValue(getText(inv, "AMOUNT"))) || (quantity * rate);
       const discount = Math.abs(extractNumericValue(getText(inv, "DISCOUNT")));
 
-      const batchEl = inv.querySelector("BATCHALLOCATIONS\\.LIST, BATCHALLOCATIONS");
+      const batchEl = queryNode(inv, ["BATCHALLOCATIONS.LIST", "BATCHALLOCATIONS"]);
       const batchNumber = batchEl ? getText(batchEl, "BATCHNAME") : undefined;
       const rawExp = batchEl ? (getText(batchEl, "EXPIRYDATE") || getText(batchEl, "EXPIRYPERIOD")) : "";
       const expiryDate = rawExp ? parseTallyDate(rawExp) : undefined;
@@ -547,7 +565,7 @@ function parseAllVouchers(doc: Document): {
     // Parse Ledger Entries
     const ledgerEntries: TallyLedgerEntry[] = [];
     let totalAmount = 0;
-    const ledgerEls = el.querySelectorAll("ALLLEDGERENTRIES\\.LIST, LEDGERENTRIES\\.LIST, ALLLEDGERENTRIES");
+    const ledgerEls = queryNodes(el, ["ALLLEDGERENTRIES.LIST", "LEDGERENTRIES.LIST", "ALLLEDGERENTRIES"]);
     ledgerEls.forEach((entry) => {
       const ledgerName = getText(entry, "LEDGERNAME");
       const amountRaw = getText(entry, "AMOUNT");
@@ -645,7 +663,7 @@ function parseBankAndCashAccounts(
     const bal = parseAmount(openingRaw);
 
     if (rootType === "bank") {
-      const bankDetails = el.querySelector("BANKDETAILS, BANKDETAILS\\.LIST");
+      const bankDetails = queryNode(el, ["BANKDETAILS", "BANKDETAILS.LIST"]);
       const accNum = bankDetails
         ? (getText(bankDetails, "ACCOUNTNUMBER") || getText(bankDetails, "ACCNO"))
         : (getText(el, "BANKACCOUNTNUMBER") || getText(el, "ACCOUNTNUMBER") || "");

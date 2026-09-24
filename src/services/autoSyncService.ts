@@ -508,13 +508,15 @@ export async function executeDirectSyncIngestion(
       // Bulk Execute Products
       const chunkSize = 1000;
       for (let i = 0; i < productsToUpdate.length; i += chunkSize) {
-        await supabase.from("products").upsert(productsToUpdate.slice(i, i + chunkSize));
+        const { error } = await supabase.from("products").upsert(productsToUpdate.slice(i, i + chunkSize));
+        if (error) throw new Error(`Failed to update products: ${error.message}`);
         itemsCount += productsToUpdate.slice(i, i + chunkSize).length;
       }
       
       let newProducts: any[] = [];
       for (let i = 0; i < productsToInsert.length; i += chunkSize) {
-        const { data } = await supabase.from("products").insert(productsToInsert.slice(i, i + chunkSize)).select("id, name");
+        const { data, error } = await supabase.from("products").insert(productsToInsert.slice(i, i + chunkSize)).select("id, name");
+        if (error) throw new Error(`Failed to insert products: ${error.message}`);
         if (data) {
           newProducts = newProducts.concat(data);
           itemsCount += data.length;
@@ -525,23 +527,23 @@ export async function executeDirectSyncIngestion(
       const productIdsToUpdate = productsToUpdate.map(p => p.id);
       let existingBatchesMap = new Map();
       if (productIdsToUpdate.length > 0) {
-          const { data: batches } = await supabase.from("product_batches").select("id, product_id").in("product_id", productIdsToUpdate);
-          existingBatchesMap = new Map((batches || []).map(b => [b.product_id, b.id]));
+          const { data: batches } = await supabase.from("product_batches").select("id, product_id, batch_number").in("product_id", productIdsToUpdate);
+          existingBatchesMap = new Map((batches || []).map(b => [b.product_id, { id: b.id, batch_number: b.batch_number }]));
       }
       
       const batchesToUpsert: any[] = [];
       for (const p of productsToUpdate) {
          const item = parsedData.items.find(i => i.name?.toLowerCase().trim() === p.name.toLowerCase().trim());
          if (!item) continue;
-         const batchId = existingBatchesMap.get(p.id);
+         const existingBatch = existingBatchesMap.get(p.id);
          const payload = {
             product_id: p.id,
-            batch_number: "SYNC-BATCH-1",
+            batch_number: existingBatch ? existingBatch.batch_number : "SYNC-BATCH-1",
             cost_price: Number(item.purchasePrice) || 0,
             mrp: item.mrp || item.sellingPrice || 0,
             stock: Number(item.openingStock ?? item.currentStock ?? 0),
          };
-         batchesToUpsert.push(batchId ? { id: batchId, ...payload, updated_at: new Date().toISOString() } : payload);
+         batchesToUpsert.push(existingBatch ? { id: existingBatch.id, ...payload, updated_at: new Date().toISOString() } : payload);
       }
       for (const p of newProducts) {
          const item = parsedData.items.find(i => i.name?.toLowerCase().trim() === p.name.toLowerCase().trim());
@@ -555,11 +557,13 @@ export async function executeDirectSyncIngestion(
          });
       }
       for (let i = 0; i < batchesToUpsert.length; i += chunkSize) {
-        await supabase.from("product_batches").upsert(batchesToUpsert.slice(i, i + chunkSize));
+        const { error } = await supabase.from("product_batches").upsert(batchesToUpsert.slice(i, i + chunkSize));
+        if (error) throw new Error(`Failed to upsert batches: ${error.message}`);
       }
     }
 
     // --- Process Parties ---
+    const transactionsToInsert: any[] = [];
     if (parsedData.parties.length > 0) {
       const customersToUpsert: any[] = [];
       const suppliersToUpsert: any[] = [];
@@ -568,7 +572,7 @@ export async function executeDirectSyncIngestion(
         if (!party.name) continue;
         const isSupplier = party.partyType === "supplier";
         const map = isSupplier ? supplierMap : customerMap;
-        const lookupKey = party.phone?.trim().length! > 5 ? party.phone!.trim() : party.name.toLowerCase().trim();
+        const lookupKey = party.phone && party.phone.trim().length > 5 ? party.phone.trim() : party.name.toLowerCase().trim();
         const existing = map.get(lookupKey);
 
         const payload = {
@@ -591,17 +595,68 @@ export async function executeDirectSyncIngestion(
           if (strategy === "credsmart_master") { partiesCount++; continue; }
           (isSupplier ? suppliersToUpsert : customersToUpsert).push({ id: existing.id, ...payload });
         } else {
-          (isSupplier ? suppliersToUpsert : customersToUpsert).push(payload);
+          // Temporarily hold random UUID for credit transaction mapping
+          const tempId = crypto.randomUUID();
+          (isSupplier ? suppliersToUpsert : customersToUpsert).push({ id: tempId, ...payload });
         }
       }
       
       for (let i = 0; i < customersToUpsert.length; i += 1000) {
-         await supabase.from("customers").upsert(customersToUpsert.slice(i, i + 1000));
+         const { data, error } = await supabase.from("customers").upsert(customersToUpsert.slice(i, i + 1000)).select("id, name");
+         if (error) throw new Error(`Failed to upsert customers: ${error.message}`);
          partiesCount += customersToUpsert.slice(i, i + 1000).length;
+         
+         // Record opening balances
+         if (data) {
+           data.forEach(cust => {
+             const origParty = parsedData.parties.find(p => p.name === cust.name && p.partyType !== "supplier");
+             if (origParty && origParty.openingBalance && origParty.openingBalance > 0) {
+               transactionsToInsert.push({
+                 organization_id: orgId,
+                 customer_id: cust.id,
+                 type: "opening_balance",
+                 amount: origParty.openingBalance,
+                 payment_mode: "adjustment",
+                 reference_id: "SYNC-OPENING",
+                 status: "completed",
+                 transaction_date: new Date().toISOString()
+               });
+             }
+             customerMap.set(cust.name.toLowerCase().trim(), cust);
+           });
+         }
       }
       for (let i = 0; i < suppliersToUpsert.length; i += 1000) {
-         await supabase.from("suppliers").upsert(suppliersToUpsert.slice(i, i + 1000));
+         const { data, error } = await supabase.from("suppliers").upsert(suppliersToUpsert.slice(i, i + 1000)).select("id, name");
+         if (error) throw new Error(`Failed to upsert suppliers: ${error.message}`);
          partiesCount += suppliersToUpsert.slice(i, i + 1000).length;
+         
+         // Record opening balances
+         if (data) {
+           data.forEach(supp => {
+             const origParty = parsedData.parties.find(p => p.name === supp.name && p.partyType === "supplier");
+             if (origParty && origParty.openingBalance && origParty.openingBalance > 0) {
+               transactionsToInsert.push({
+                 organization_id: orgId,
+                 supplier_id: supp.id,
+                 type: "opening_balance",
+                 amount: origParty.openingBalance,
+                 payment_mode: "adjustment",
+                 reference_id: "SYNC-OPENING",
+                 status: "completed",
+                 transaction_date: new Date().toISOString()
+               });
+             }
+             supplierMap.set(supp.name.toLowerCase().trim(), supp);
+           });
+         }
+      }
+      
+      if (transactionsToInsert.length > 0) {
+        for (let i = 0; i < transactionsToInsert.length; i += 1000) {
+          const { error } = await supabase.from("credit_transactions").insert(transactionsToInsert.slice(i, i + 1000));
+          if (error) console.error("Failed to insert credit_transactions:", error.message);
+        }
       }
     }
 
@@ -619,7 +674,7 @@ export async function executeDirectSyncIngestion(
              let customerId = null;
              if (vch.partyName) {
                const cust = customerMap.get(vch.partyName.toLowerCase().trim());
-               if(cust) customerId = cust.id;
+               if (cust) customerId = cust.id;
              }
              salesToUpsert.push({
                 organization_id: orgId,
@@ -639,7 +694,11 @@ export async function executeDirectSyncIngestion(
              let supplierId = null;
              if (vch.partyName) {
                const supp = supplierMap.get(vch.partyName.toLowerCase().trim());
-               if(supp) supplierId = supp.id;
+               if (supp) supplierId = supp.id;
+               else {
+                 unsupportedVoucherTypes.add(`Unmapped Supplier: ${vch.partyName}`);
+                 continue; // Silently skip but add to unsupported types
+               }
              }
              if (supplierId) {
                 purchasesToUpsert.push({
@@ -660,11 +719,13 @@ export async function executeDirectSyncIngestion(
       }
 
       for (let i = 0; i < salesToUpsert.length; i += 1000) {
-         await supabase.from("sales").insert(salesToUpsert.slice(i, i + 1000));
+         const { error } = await supabase.from("sales").insert(salesToUpsert.slice(i, i + 1000));
+         if (error) throw new Error(`Failed to insert sales: ${error.message}`);
          vouchersCount += salesToUpsert.slice(i, i + 1000).length;
       }
       for (let i = 0; i < purchasesToUpsert.length; i += 1000) {
-         await supabase.from("purchase_invoices").insert(purchasesToUpsert.slice(i, i + 1000));
+         const { error } = await supabase.from("purchase_invoices").insert(purchasesToUpsert.slice(i, i + 1000));
+         if (error) throw new Error(`Failed to insert purchases: ${error.message}`);
          vouchersCount += purchasesToUpsert.slice(i, i + 1000).length;
       }
     }
@@ -677,7 +738,7 @@ export async function executeDirectSyncIngestion(
 
     const durationMs = Math.round(performance.now() - startTime);
     const log: SyncAuditLog = {
-      id: `sync-log-${Date.now()}`,
+      id: \`sync-log-\${Date.now()}\`,
       timestamp: new Date().toISOString(),
       software,
       status: unsupportedVoucherTypes.size > 0 ? "partial" : "success",
