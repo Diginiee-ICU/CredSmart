@@ -712,6 +712,16 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
     // Sanitize control characters that are invalid in XML (common in Tally exports)
     xmlText = xmlText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
     
+    // Tally also explicitly writes invalid XML entities as strings (e.g., "&#4;") which crashes DOMParser with "xmlParseCharRef: invalid xml"
+    xmlText = xmlText.replace(/&#\d+;/g, (match) => {
+      const code = parseInt(match.slice(2, -1), 10);
+      // Remove if it is a control character (0-31), except tab(9), LF(10), CR(13)
+      if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+        return "";
+      }
+      return match;
+    });
+
     // Fix unescaped ampersands (Tally often exports "A & B" instead of "A &amp; B", breaking the parser)
     xmlText = xmlText.replace(/&(?!(?:apos|quot|[lg]t|amp);|#)/g, '&amp;');
     
