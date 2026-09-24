@@ -715,8 +715,8 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
     if (parseError) {
       throw new Error("Invalid XML: " + parseError.textContent?.substring(0, 100));
     }
-  } catch {
-    throw new Error("Failed to parse Tally XML file. Please ensure you exported a valid XML from Tally Prime or ERP 9.");
+  } catch (err: any) {
+    throw new Error("XML Parse Error: " + (err.message || "Unknown"));
   }
 
   // 1. Build Group Hierarchy
