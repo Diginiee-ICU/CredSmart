@@ -312,15 +312,19 @@ export interface ParsedSheet {
 }
 
 async function readFileText(file: File): Promise<string> {
-  if (typeof file.text === "function") {
-    return await file.text();
+  const buffer = await readFileArrayBuffer(file);
+  const uint8 = new Uint8Array(buffer);
+  
+  // Check for UTF-16LE BOM or null bytes in the first few characters (typical of Tally UTF-16 exports)
+  let isUTF16LE = false;
+  if (uint8.length >= 2 && uint8[0] === 0xFF && uint8[1] === 0xFE) {
+    isUTF16LE = true;
+  } else if (uint8.length >= 4 && uint8[1] === 0x00 && uint8[3] === 0x00) {
+    isUTF16LE = true; // Heuristic: < E N V E L O P E > in UTF-16LE has null bytes at odd indices
   }
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string) || "");
-    reader.onerror = () => reject(reader.error || new Error("Failed to read file"));
-    reader.readAsText(file);
-  });
+
+  const decoder = new TextDecoder(isUTF16LE ? "utf-16le" : "utf-8");
+  return decoder.decode(buffer);
 }
 
 async function readFileArrayBuffer(file: File): Promise<ArrayBuffer> {

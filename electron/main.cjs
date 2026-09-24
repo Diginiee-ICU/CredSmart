@@ -7,7 +7,7 @@ const path = require("node:path");
 // ─── Configuration ───────────────────────────────────────────────────────────
 
 const BRIDGE_PORT = Number(process.env.CREDSMART_BRIDGE_PORT || 9005);
-const TALLY_URL = process.env.CREDSMART_TALLY_URL || "http://127.0.0.1:9000";
+let TALLY_URL = process.env.CREDSMART_TALLY_URL || "http://127.0.0.1:9000";
 const MAX_BODY_BYTES = 50 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 60_000;
 
@@ -28,10 +28,10 @@ let bridgeServer;
 
 // ─── Direct Tally Request Helper (Node-native, 0 CORS) ───────────────────────
 
-function requestTally(xml) {
+function requestTally(xml, customUrl = TALLY_URL, customTimeout = REQUEST_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const payload = Buffer.from(xml, "utf8");
-    const target = new URL(TALLY_URL);
+    const target = new URL(customUrl);
     const req = http.request(
       {
         hostname: target.hostname,
@@ -42,7 +42,7 @@ function requestTally(xml) {
           "Content-Type": "text/xml; charset=utf-8",
           "Content-Length": payload.length,
         },
-        timeout: REQUEST_TIMEOUT_MS,
+        timeout: customTimeout,
       },
       (res) => {
         let body = "";
@@ -61,9 +61,9 @@ function requestTally(xml) {
         });
       }
     );
-    req.on("timeout", () => req.destroy(new Error("Tally request timed out after 60s")));
+    req.on("timeout", () => req.destroy(new Error(`Tally request timed out after ${customTimeout}ms`)));
     req.on("error", (err) => {
-      reject(new Error(`Cannot connect to Tally on ${TALLY_URL}: ${err.message}`));
+      reject(new Error(`Cannot connect to Tally on ${customUrl}: ${err.message}`));
     });
     req.end(payload);
   });
@@ -209,22 +209,35 @@ function registerIpcHandlers() {
 
   // Direct IPC probe
   ipcMain.handle("tally:probe", async () => {
-    try {
-      const start = Date.now();
-      const xml = await requestTally(TALLY_TEST_XML);
-      const latencyMs = Date.now() - start;
-      let company = "Tally Active Company";
-      const match = xml.match(/<COMPANY[^>]*NAME="([^"]+)"/i) || xml.match(/<COMPANY[^>]*>([^<]+)<\/COMPANY>/i);
-      if (match && match[1]) {
-        company = match[1].trim();
+    const commonPorts = [9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009, 9010, 8080, 9090, 80, 443];
+    const originalHost = new URL(TALLY_URL).hostname;
+
+    let lastError = null;
+    const scanTimeoutMs = 1500; // Fast fail for non-listening ports
+
+    for (const port of commonPorts) {
+      const testUrl = `http://${originalHost}:${port}`;
+      try {
+        const start = Date.now();
+        const xml = await requestTally(TALLY_TEST_XML, testUrl, scanTimeoutMs);
+        const latencyMs = Date.now() - start;
+        let company = "Tally Active Company";
+        const match = xml.match(/<COMPANY[^>]*NAME="([^"]+)"/i) || xml.match(/<COMPANY[^>]*>([^<]+)<\/COMPANY>/i);
+        if (match && match[1]) {
+          company = match[1].trim();
+        }
+        TALLY_URL = testUrl; // Save successful URL
+        console.log(`[CredSmart Bridge] Auto-discovered Tally on ${testUrl}`);
+        return { online: true, companyName: company, latencyMs, resolvedUrl: testUrl };
+      } catch (err) {
+        lastError = err;
       }
-      return { online: true, companyName: company, latencyMs };
-    } catch (err) {
-      return {
-        online: false,
-        error: err instanceof Error ? err.message : String(err),
-      };
     }
+
+    return {
+      online: false,
+      error: `Auto-search scanned ports (9000-9010) but Tally was not found. Please ensure Tally is running and ODBC is enabled.`,
+    };
   });
 
   // Direct native file picker
