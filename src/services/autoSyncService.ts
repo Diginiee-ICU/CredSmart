@@ -575,21 +575,17 @@ export async function executeDirectSyncIngestion(
         const lookupKey = party.phone && party.phone.trim().length > 5 ? party.phone.trim() : party.name.toLowerCase().trim();
         const existing = map.get(lookupKey);
 
-        const payload = {
+        const basePayload = {
           organization_id: orgId,
           name: party.name,
           phone: party.phone || undefined,
           email: party.email || undefined,
           address: party.address || undefined,
-          trade_name: party.tradeName || undefined,
-          gstin: party.gstin || undefined,
-          pan: party.pan || undefined,
-          pincode: party.pincode || undefined,
-          category: party.category || (isSupplier ? "Wholesaler" : "Retailer"),
-          credit_limit: party.creditLimit || 50000,
-          credit_period_days: party.creditPeriodDays || 30,
-          custom_fields: { auto_synced: true, source_software: software, synced_at: new Date().toISOString() },
         };
+
+        const payload = isSupplier
+          ? { ...basePayload, gstin: party.gstin || undefined }
+          : basePayload;
 
         if (existing) {
           if (strategy === "credsmart_master") { partiesCount++; continue; }
