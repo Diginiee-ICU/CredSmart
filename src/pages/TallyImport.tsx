@@ -457,17 +457,21 @@ export default function TallyImport() {
         data.warnings.forEach((w) => toast.warning(w));
       }
 
-      const totalFound = data.items.length + data.parties.all.length;
+      const totalFound = data.items.length + data.parties.all.length + data.vouchers.length;
       if (totalFound > 0) {
+        const parts: string[] = [];
+        if (data.items.length > 0) parts.push(`${data.items.length} items`);
+        if (data.parties.all.length > 0) parts.push(`${data.parties.all.length} parties`);
+        if (data.vouchers.length > 0) parts.push(`${data.vouchers.length} vouchers`);
         toast.success(
-          `Successfully parsed ${data.items.length} items and ${data.parties.all.length} parties from ${SOFTWARE_PROFILES[data.detectedSoftware]?.name}!`
+          `Successfully parsed ${parts.join(", ")} from ${SOFTWARE_PROFILES[data.detectedSoftware]?.name}!`
         );
       } else if (data.isRawTallyFolder) {
         toast.info(
           `Detected Tally Company: ${data.companyName || data.folderName || "Company"}. See instructions below.`
         );
       } else {
-        toast.error("No inventory items or parties recognized in the uploaded file(s).");
+        toast.error("No inventory items, parties, or vouchers recognized in the uploaded file(s).");
       }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Failed to parse files");
@@ -980,6 +984,9 @@ export default function TallyImport() {
       setImportedStats((prev) => ({ ...prev, items: prev.items + count }));
       setImportCompleted(true);
       toast.success(`Successfully uploaded and saved ${count} items to cloud inventory!`);
+      if (count > 0) {
+        notifyStockUpdated(orgId);
+      }
     } catch (err) {
       toast.error(`Items import error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -1068,6 +1075,10 @@ export default function TallyImport() {
       setImportedStats((prev) => ({ ...prev, parties: prev.parties + count }));
       setImportCompleted(true);
       toast.success(`Successfully uploaded and saved ${count} parties to cloud khata!`);
+      if (count > 0 && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("credsmart:parties_updated", { detail: { orgId } }));
+        window.dispatchEvent(new CustomEvent("credsmart_network_update"));
+      }
     } catch (err) {
       toast.error(`Parties import error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -1171,7 +1182,7 @@ export default function TallyImport() {
                 supplier_id: supplierId,
                 total_amount: vch.amount,
                 notes: vch.narration || undefined,
-                payment_status: "paid",
+                status: "received",
                 created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
               })
               .select("id")
@@ -1206,6 +1217,10 @@ export default function TallyImport() {
       setImportedStats((prev) => ({ ...prev, vouchers: prev.vouchers + count }));
       setImportCompleted(true);
       toast.success(`Successfully saved ${count} vouchers to cloud database!`);
+      if (count > 0 && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("credsmart_documents_updated", { detail: { orgId } }));
+        window.dispatchEvent(new CustomEvent("credsmart_network_update"));
+      }
     } catch (err) {
       toast.error(`Vouchers import error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {

@@ -200,15 +200,17 @@ export function TallyImportModal({
 
       if (syntheticResult.totalEntities > 0) {
         const softName = SOFTWARE_PROFILES[data.detectedSoftware]?.name || "Accounting File";
-        toast.success(
-          `Detected ${data.items.length} items, ${data.parties.all.length} parties from ${softName}!`
-        );
+        const parts: string[] = [];
+        if (data.items.length > 0) parts.push(`${data.items.length} items`);
+        if (data.parties.all.length > 0) parts.push(`${data.parties.all.length} parties`);
+        if (data.vouchers.length > 0) parts.push(`${data.vouchers.length} vouchers`);
+        toast.success(`Detected ${parts.join(", ")} from ${softName}!`);
         setStep("preview");
       } else if (data.isRawTallyFolder) {
         toast.info(`Detected Tally Company Folder: ${data.companyName || data.folderName}`);
         setStep("preview");
       } else {
-        toast.error("No recognizable items or parties found. Please verify column headers.");
+        toast.error("No recognizable items, parties, or vouchers found. Please verify column headers.");
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to parse file";
