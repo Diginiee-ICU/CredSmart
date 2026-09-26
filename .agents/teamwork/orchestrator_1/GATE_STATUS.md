@@ -76,3 +76,24 @@ All verification criteria met:
 5. Tax ledger matching formula correctly classifies true taxes and ignores revenue accounts.
 6. Reviewers: APPROVE. Challengers: APPROVE. Forensic Auditor: CLEAN.
 Milestone 3 is marked DONE.
+
+## Gate — Iteration 5 (Milestone 4: UI Controls & Auto-Sync Dashboard Updates)
+| Agent | Role | Verdict | Source |
+|-------|------|---------|--------|
+| worker_m4 | teamwork_preview_worker | DONE | handoff.md |
+| reviewer_m4_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
+| reviewer_m4_2 | teamwork_preview_reviewer | APPROVE | handoff.md |
+| challenger_m4_1 | teamwork_preview_challenger | APPROVE | handoff.md |
+| challenger_m4_2 | teamwork_preview_challenger | APPROVE | handoff.md |
+| auditor_m4 | teamwork_preview_auditor | CLEAN | handoff.md |
+
+Gate Result: **PASS**
+All verification criteria met:
+1. `importedStats` state includes `balances: number` initialized to 0.
+2. `handleExecuteImport` and `handleDirectSaveParties` accurately track and increment `balances` in `importedStats` when opening balance records are inserted.
+3. The Migration Successfully Completed banner displays all 5 entity types (items, parties, balances, vouchers, and banks).
+4. The Auto-Sync Host & Status Stats Grid renders in 7 columns (`lg:grid-cols-7`) and contains stat cards for all 5 entity types (Items, Parties, Balances, Vouchers, and Banks & Cash).
+5. All 5 scope checkboxes (`items`, `parties`, `balances`, `vouchers`, `banks`) are rendered and bound to `syncConfig.syncScope` in Entities to Synchronize.
+6. `onImportBankAccounts` in `<TallyImportModal>` is properly wired to `handleDirectSaveBankAccounts`.
+7. Reviewers: APPROVE. Challengers: APPROVE. Forensic Auditor: CLEAN.
+Milestone 4 is marked DONE.
