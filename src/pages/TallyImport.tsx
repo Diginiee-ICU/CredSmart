@@ -712,25 +712,23 @@ export default function TallyImport() {
                  }
              }
           }
-
-        // We should really handle existing batches instead of just blindly inserting.
-        // For simplicity, let's just insert missing ones or update existing if we had them.
-        // I will just use upsert with a unique constraint on product_id + batch_number if it exists, 
-        // else we might get duplicates. 
-        // Actually, let's fetch batches for our products and update them.
-        const { data: existingBatches, error: bErr } = await supabase.from("product_batches").select("id, product_id").in("product_id", Array.from(productMap.values()).map(p => p.id));
-        if (bErr) {
-             toast.error(`Failed to fetch batches: ${bErr.message}`);
-             throw bErr;
         }
-        const batchMap = new Map((existingBatches || []).map(b => [b.product_id, b.id]));
-        const finalBatches = batchesToUpsert.map(b => batchMap.has(b.product_id) ? { id: batchMap.get(b.product_id), ...b, updated_at: new Date().toISOString() } : b);
-        
-        for (let i = 0; i < finalBatches.length; i += 1000) {
-          const { error } = await supabase.from("product_batches").upsert(finalBatches.slice(i, i + 1000));
-          if (error) {
-              toast.error(`Failed to upsert batches: ${error.message}`);
-              throw error;
+
+        if (batchesToUpsert.length > 0) {
+          const { data: existingBatches, error: bErr } = await supabase.from("product_batches").select("id, product_id").in("product_id", Array.from(productMap.values()).map(p => p.id));
+          if (bErr) {
+               toast.error(`Failed to fetch batches: ${bErr.message}`);
+               throw bErr;
+          }
+          const batchMap = new Map((existingBatches || []).map(b => [b.product_id, b.id]));
+          const finalBatches = batchesToUpsert.map(b => batchMap.has(b.product_id) ? { id: batchMap.get(b.product_id), ...b, updated_at: new Date().toISOString() } : b);
+          
+          for (let i = 0; i < finalBatches.length; i += 1000) {
+            const { error } = await supabase.from("product_batches").upsert(finalBatches.slice(i, i + 1000));
+            if (error) {
+                toast.error(`Failed to upsert batches: ${error.message}`);
+                throw error;
+            }
           }
         }
       }
