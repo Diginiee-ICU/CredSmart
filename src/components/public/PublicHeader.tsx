@@ -6,6 +6,7 @@ import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
+import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
 
 interface PublicHeaderProps {
@@ -193,30 +194,26 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                 Download Native Apps
               </span>
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    if (onOpenDownloadModal) onOpenDownloadModal("android");
-                    else handleNavClick("/#download");
-                  }}
-                  className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5"
+                <a
+                  href={APP_DOWNLOAD_LINKS.androidApk}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4 text-emerald-600" />
                   <span>Android APK</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    if (onOpenDownloadModal) onOpenDownloadModal("desktop");
-                    else handleNavClick("/#download");
-                  }}
-                  className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center gap-1.5"
+                </a>
+                <a
+                  href={APP_DOWNLOAD_LINKS.windowsExe}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
                 >
                   <Monitor className="w-4 h-4 text-blue-600" />
                   <span>Windows PC</span>
-                </button>
+                </a>
               </div>
             </div>
 

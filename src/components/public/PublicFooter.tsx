@@ -6,6 +6,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { ROUTE_PATHS } from "@/config/routes";
+import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
 
 export function PublicFooter() {
@@ -71,6 +72,26 @@ export function PublicFooter() {
                 <Link to="/#intelligence" className="hover:text-amber-400 transition-colors">
                   CredAlert Intelligence
                 </Link>
+              </li>
+              <li>
+                <a
+                  href={APP_DOWNLOAD_LINKS.androidApk}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 font-semibold text-emerald-400"
+                >
+                  Download Android APK
+                </a>
+              </li>
+              <li>
+                <a
+                  href={APP_DOWNLOAD_LINKS.windowsExe}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400 transition-colors inline-flex items-center gap-1 font-semibold text-blue-400"
+                >
+                  Download Windows PC (.exe)
+                </a>
               </li>
             </ul>
           </div>

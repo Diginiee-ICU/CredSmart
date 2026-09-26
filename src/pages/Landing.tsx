@@ -51,6 +51,7 @@ import { SEOHead } from "@/components/public/SEOHead";
 import { HeroDashboardCard } from "@/components/public/HeroDashboardCard";
 import { AppDownloadButtons } from "@/components/public/AppDownloadButtons";
 import { DownloadAppModal } from "@/components/public/DownloadAppModal";
+import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import {
   Dialog,
   DialogContent,
@@ -857,7 +858,7 @@ export default function Landing() {
                       ANDROID MOBILE &amp; TABLET
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-400">
-                      v1.1.4 (APK)
+                      v{APP_DOWNLOAD_LINKS.version} (APK)
                     </span>
                   </div>
 
@@ -893,16 +894,18 @@ export default function Landing() {
                 <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Android 8.0+ &bull; 28 MB &bull; Free</span>
+                    <span>Android 8.0+ &bull; {APP_DOWNLOAD_LINKS.apkSize} &bull; Free</span>
                   </div>
 
-                  <Button
-                    onClick={() => handleOpenDownload("android")}
-                    className="w-full sm:w-auto h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2"
+                  <a
+                    href={APP_DOWNLOAD_LINKS.androidApk}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 no-underline cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     <span>Download for Android (.apk)</span>
-                  </Button>
+                  </a>
                 </div>
               </div>
 
@@ -914,7 +917,7 @@ export default function Landing() {
                       WINDOWS PC DESKTOP
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-400">
-                      v1.1.4 (x64)
+                      v{APP_DOWNLOAD_LINKS.version} (x64)
                     </span>
                   </div>
 
@@ -950,16 +953,18 @@ export default function Landing() {
                 <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     <ShieldCheck className="w-4 h-4 text-blue-600" />
-                    <span>Windows 10/11 &bull; 45 MB &bull; 64-bit</span>
+                    <span>Windows 10/11 &bull; {APP_DOWNLOAD_LINKS.exeSize} &bull; 64-bit</span>
                   </div>
 
-                  <Button
-                    onClick={() => handleOpenDownload("desktop")}
-                    className="w-full sm:w-auto h-12 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2"
+                  <a
+                    href={APP_DOWNLOAD_LINKS.windowsExe}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto h-12 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 no-underline cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     <span>Download for Windows (.exe)</span>
-                  </Button>
+                  </a>
                 </div>
               </div>
 

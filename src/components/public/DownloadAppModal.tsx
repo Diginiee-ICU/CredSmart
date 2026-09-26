@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { APP_DOWNLOAD_LINKS, triggerDirectDownload } from "@/config/downloadLinks";
 
 interface DownloadAppModalProps {
   open: boolean;
@@ -29,7 +31,7 @@ interface DownloadAppModalProps {
 }
 
 /**
- * QR Code graphic for Android App Direct Download
+ * High-precision scannable QR Code for Android APK Direct Download
  */
 function AndroidDownloadQrCode({ className }: { className?: string }) {
   return (
@@ -39,46 +41,14 @@ function AndroidDownloadQrCode({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="relative w-32 h-32 bg-slate-900 rounded-xl p-2 flex items-center justify-center overflow-hidden">
-        {/* Stylized QR Code Pattern SVG */}
-        <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-current">
-          {/* Top-left position marker */}
-          <rect x="5" y="5" width="26" height="26" rx="4" fill="white" />
-          <rect x="9" y="9" width="18" height="18" rx="2" fill="#0F172A" />
-          <rect x="13" y="13" width="10" height="10" rx="1" fill="#10B981" />
-
-          {/* Top-right position marker */}
-          <rect x="69" y="5" width="26" height="26" rx="4" fill="white" />
-          <rect x="73" y="9" width="18" height="18" rx="2" fill="#0F172A" />
-          <rect x="77" y="13" width="10" height="10" rx="1" fill="#10B981" />
-
-          {/* Bottom-left position marker */}
-          <rect x="5" y="69" width="26" height="26" rx="4" fill="white" />
-          <rect x="9" y="73" width="18" height="18" rx="2" fill="#0F172A" />
-          <rect x="13" y="77" width="10" height="10" rx="1" fill="#10B981" />
-
-          {/* Data Modules */}
-          <rect x="36" y="8" width="6" height="6" rx="1" fill="white" />
-          <rect x="46" y="8" width="8" height="6" rx="1" fill="white" />
-          <rect x="58" y="8" width="6" height="6" rx="1" fill="white" />
-          <rect x="36" y="18" width="10" height="6" rx="1" fill="white" />
-          <rect x="50" y="18" width="12" height="6" rx="1" fill="white" />
-
-          {/* Center Brand Accent */}
-          <rect x="40" y="40" width="20" height="20" rx="4" fill="#FF6A00" />
-          <circle cx="50" cy="50" r="5" fill="white" />
-
-          {/* Bottom Data Grid */}
-          <rect x="36" y="72" width="8" height="8" rx="1" fill="white" />
-          <rect x="48" y="72" width="6" height="6" rx="1" fill="white" />
-          <rect x="58" y="72" width="10" height="6" rx="1" fill="white" />
-          <rect x="72" y="42" width="6" height="12" rx="1" fill="white" />
-          <rect x="82" y="42" width="8" height="6" rx="1" fill="white" />
-          <rect x="72" y="58" width="18" height="6" rx="1" fill="white" />
-          <rect x="72" y="68" width="6" height="12" rx="1" fill="white" />
-          <rect x="82" y="68" width="8" height="6" rx="1" fill="white" />
-          <rect x="82" y="78" width="8" height="12" rx="1" fill="white" />
-        </svg>
+      <div className="relative w-32 h-32 bg-white rounded-xl p-1.5 flex items-center justify-center border border-slate-100">
+        <QRCodeSVG
+          value={APP_DOWNLOAD_LINKS.androidApk}
+          size={116}
+          level="M"
+          includeMargin={false}
+          className="w-full h-full"
+        />
       </div>
       <span className="text-[10px] font-bold text-slate-600 mt-2 text-center uppercase tracking-wider font-mono">
         Scan with Phone
@@ -100,21 +70,11 @@ export function DownloadAppModal({
   }, [defaultPlatform]);
 
   const handleDownloadAndroidApk = () => {
-    const link = document.createElement("a");
-    link.href = "./CredSmart-v1.1.4.apk";
-    link.download = "CredSmart-POS-v1.1.4.apk";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerDirectDownload(APP_DOWNLOAD_LINKS.androidApk, APP_DOWNLOAD_LINKS.apkFilename);
   };
 
   const handleDownloadDesktopExe = () => {
-    const link = document.createElement("a");
-    link.href = "./CredSmart-Setup-1.1.4-x64.exe";
-    link.download = "CredSmart-Setup-1.1.4-x64.exe";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerDirectDownload(APP_DOWNLOAD_LINKS.windowsExe, APP_DOWNLOAD_LINKS.exeFilename);
   };
 
   return (
@@ -192,7 +152,7 @@ export function DownloadAppModal({
                       Android Native App
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-xs font-bold font-mono">
-                      v1.1.4
+                      v{APP_DOWNLOAD_LINKS.version}
                     </span>
                   </div>
                   <h4 className="text-lg font-black text-slate-900">
@@ -203,13 +163,16 @@ export function DownloadAppModal({
                   </p>
 
                   <div className="mt-4 flex flex-col sm:flex-row items-center gap-2.5">
-                    <Button
+                    <a
+                      href={APP_DOWNLOAD_LINKS.androidApk}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={handleDownloadAndroidApk}
-                      className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 no-underline cursor-pointer"
                     >
                       <Download className="w-4 h-4" />
-                      <span>Download Android APK (28 MB)</span>
-                    </Button>
+                      <span>Download Android APK ({APP_DOWNLOAD_LINKS.apkSize})</span>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -253,7 +216,7 @@ export function DownloadAppModal({
                       Windows Desktop Edition
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 text-xs font-bold font-mono">
-                      v1.1.4 (x64)
+                      v{APP_DOWNLOAD_LINKS.version} (x64)
                     </span>
                   </div>
                   <h4 className="text-lg font-black text-slate-900">
@@ -264,13 +227,16 @@ export function DownloadAppModal({
                   </p>
 
                   <div className="mt-4 flex flex-col sm:flex-row items-center gap-2.5">
-                    <Button
+                    <a
+                      href={APP_DOWNLOAD_LINKS.windowsExe}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={handleDownloadDesktopExe}
-                      className="w-full sm:w-auto h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 no-underline cursor-pointer"
                     >
                       <Download className="w-4 h-4" />
-                      <span>Download for Windows (.exe 45 MB)</span>
-                    </Button>
+                      <span>Download for Windows (.exe {APP_DOWNLOAD_LINKS.exeSize})</span>
+                    </a>
                   </div>
                 </div>
               </div>
