@@ -68,8 +68,8 @@ Every feature discovered during the survey phase is enumerated below with its as
 | 1 | Query Protocols & Scope Config | Add `<SVFROMDATE>`/`<SVTODATE>` to DayBook XML queries; expand `SyncConfig` interface, scope, and defaults for all 5 entities | none | DONE |
 | 2 | Master Data, Balances, & Bank/Cash Pipeline | Ingest products, batches, parties; fix `credit_transactions` opening balance schema; ingest bank accounts & cash-in-hand | M1 | DONE |
 | 3 | Full Voucher & Transaction Ingestion | Ingest Sales + `sale_items`, Purchases + `purchase_invoice_items`, Receipts, Payments, and Expenses | M2 | DONE |
-| 4 | UI Controls & Auto-Sync Dashboard | Render all 5 scope checkboxes; render 5 sync stats cards; wire `onImportBankAccounts` into `<TallyImportModal>` | M2, M3 | IN_PROGRESS |
-| 5 | Final Milestone: 100% E2E Pass & Hardening | Execute full test suite via `TEST_READY.md` (Tiers 1-4), resolve any gaps, then execute Tier 5 adversarial hardening | M4, E2E | PLANNED |
+| 4 | UI Controls & Auto-Sync Dashboard | Render all 5 scope checkboxes; render 5 sync stats cards; wire `onImportBankAccounts` into `<TallyImportModal>` | M2, M3 | DONE |
+| 5 | Final Milestone: 100% E2E Pass & Hardening | Execute full test suite via `TEST_READY.md` (Tiers 1-4), resolve any gaps, then execute Tier 5 adversarial hardening | M4, E2E | IN_PROGRESS |
 
 ## Interface Contracts
 

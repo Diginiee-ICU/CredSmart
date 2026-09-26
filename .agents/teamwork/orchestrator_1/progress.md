@@ -10,13 +10,13 @@ Last visited: 2026-09-26T06:30:00Z
 - [x] Milestone 1: Query Protocols & Scope Config (GATE: PASS)
 - [x] Milestone 2: Master Data, Balances, & Bank/Cash Pipeline (GATE: PASS)
 - [x] Milestone 3: Full Voucher & Transaction Ingestion (GATE: PASS)
-- [ ] Milestone 4: UI Controls & Auto-Sync Dashboard Updates (Verification active: 2 Reviewers, 2 Challengers, 1 Auditor)
-- [ ] Milestone 5: Full E2E & Regressions Passing & Hardening
+- [x] Milestone 4: UI Controls & Auto-Sync Dashboard Updates (GATE: PASS)
+- [ ] Milestone 5: Full E2E & Regressions Passing & Hardening (Phase 1: Pass 100% E2E tests, Phase 2: Adversarial Coverage Hardening)
 - [ ] Final Verification, Review, and Human Reporting
 
 ## Iteration Status
-Current iteration: 5 / 32
-Milestone: Milestone 4 Verification (reviewer_m4_1, reviewer_m4_2, challenger_m4_1, challenger_m4_2, auditor_m4)
+Current iteration: 6 / 32
+Milestone: Milestone 5: Final Milestone (100% E2E Pass & Adversarial Coverage Hardening)
 
 ## Retrospective Notes
 - Phase 0 Survey completed and synthesized into PROJECT.md.
@@ -24,3 +24,4 @@ Milestone: Milestone 4 Verification (reviewer_m4_1, reviewer_m4_2, challenger_m4
 - Milestone 1 completed and verified (GATE: PASS across Reviews, Challenges, and Clean Forensic Audit).
 - Milestone 2 completed and verified (GATE: PASS across Reviews, Challenges, and Clean Forensic Audit).
 - Milestone 3 completed and verified (GATE: PASS across Reviews, Challenges, and Clean Forensic Audit after Iteration 4 remediation).
+- Milestone 4 completed and verified (GATE: PASS across Reviews, Challenges, and Clean Forensic Audit).
