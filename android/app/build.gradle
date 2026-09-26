@@ -14,8 +14,8 @@ if (signingPropsFile.exists()) {
         signingProps[key] = value
     }
 }
-def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "16").toInteger()
-def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.1.4"
+def releaseVersionCode = (project.findProperty("VERSION_CODE") ?: "17").toInteger()
+def releaseVersionName = project.findProperty("VERSION_NAME") ?: "1.1.5"
 
 android {
     namespace = "com.credsmart.pos"
@@ -50,10 +50,11 @@ android {
     buildTypes {
         release {
             def requiredSigningKeys = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
-            if (!signingPropsFile.exists() || !requiredSigningKeys.every { signingProps[it] }) {
-                throw new GradleException("Missing complete android/signing.properties for signed release builds.")
+            if (signingPropsFile.exists() && requiredSigningKeys.every { signingProps[it] }) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
             }
-            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

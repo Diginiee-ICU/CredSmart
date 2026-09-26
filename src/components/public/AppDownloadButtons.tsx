@@ -54,8 +54,8 @@ export function AppDownloadButtons({
     } else {
       // Direct trigger or fallback
       const link = document.createElement("a");
-      link.href = "./CredSmart-v1.1.4.apk";
-      link.download = "CredSmart-POS-v1.1.4.apk";
+      link.href = "./CredSmart-v1.1.5.apk";
+      link.download = "CredSmart-POS-v1.1.5.apk";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -69,8 +69,8 @@ export function AppDownloadButtons({
     } else {
       // Direct trigger or fallback
       const link = document.createElement("a");
-      link.href = "./CredSmart-Setup-1.1.4-x64.exe";
-      link.download = "CredSmart-Setup-1.1.4-x64.exe";
+      link.href = "./CredSmart-Setup-1.1.5-x64.exe";
+      link.download = "CredSmart-Setup-1.1.5-x64.exe";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -144,7 +144,7 @@ export function AppDownloadButtons({
               Get for Mobile
             </span>
             <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-              v1.1.4
+              v1.1.5
             </span>
           </div>
           <span className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">
