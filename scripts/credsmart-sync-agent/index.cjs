@@ -32,6 +32,24 @@ const ALLOWED_ORIGINS = new Set(
     .filter(Boolean),
 );
 
+const TALLY_EXPORT_DAYBOOK_XML = `
+<ENVELOPE>
+  <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
+  <BODY>
+    <EXPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>Day Book</REPORTNAME>
+        <STATICVARIABLES>
+          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+          <EXPLODEFLAG>Yes</EXPLODEFLAG>
+          <SVFROMDATE>20200401</SVFROMDATE>
+          <SVTODATE>20291231</SVTODATE>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+    </EXPORTDATA>
+  </BODY>
+</ENVELOPE>`.trim();
+
 const TALLY_REQUESTS = {
   masters: `
 <ENVELOPE>
@@ -48,21 +66,7 @@ const TALLY_REQUESTS = {
     </EXPORTDATA>
   </BODY>
 </ENVELOPE>`.trim(),
-  daybook: `
-<ENVELOPE>
-  <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
-  <BODY>
-    <EXPORTDATA>
-      <REQUESTDESC>
-        <REPORTNAME>Day Book</REPORTNAME>
-        <STATICVARIABLES>
-          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
-          <EXPLODEFLAG>Yes</EXPLODEFLAG>
-        </STATICVARIABLES>
-      </REQUESTDESC>
-    </EXPORTDATA>
-  </BODY>
-</ENVELOPE>`.trim(),
+  daybook: TALLY_EXPORT_DAYBOOK_XML,
 };
 
 function writeJson(response, statusCode, body) {
@@ -213,3 +217,10 @@ server.listen(PORT, "127.0.0.1", () => {
   console.log(`CredSmart Tally Bridge listening on http://127.0.0.1:${PORT}`);
   console.log(`Tally upstream: ${TALLY_URL}`);
 });
+
+module.exports = {
+  server,
+  TALLY_EXPORT_DAYBOOK_XML,
+  TALLY_REQUESTS,
+};
+

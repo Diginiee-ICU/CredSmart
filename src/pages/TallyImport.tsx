@@ -74,6 +74,8 @@ import {
   generateWindowsSyncBatContent,
   getDaemonCliCommand,
   registerPairingToken,
+  isExpenseVoucher,
+  getStableTallySku,
 } from "@/services/autoSyncService";
 import { toast } from "sonner";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -121,6 +123,75 @@ export default function TallyImport() {
     { name: "Kisan Agro Supplies", partyType: "supplier", phone: "9123456789", balance: -18500, gstin: "27AAECK1234D1Z2", category: "Manufacturer", city: "Nashik", state: "Maharashtra" },
   ];
 
+  const SAMPLE_TALLY_LIVE_BANKS: TallyBankAccount[] = [
+    { name: "HDFC Bank Ltd", bankName: "HDFC Bank", accountNumber: "50200012345678", ifscCode: "HDFC0000240", balance: 185400 },
+    { name: "State Bank of India", bankName: "SBI", accountNumber: "31234567890", ifscCode: "SBIN0001234", balance: 94200 },
+  ];
+
+  const SAMPLE_TALLY_LIVE_VOUCHERS: TallyVoucher[] = [
+    {
+      voucherNumber: "INV-2026-001",
+      date: new Date().toISOString().split("T")[0],
+      voucherType: "Sales",
+      partyName: "Sharma Kirana Stores",
+      amount: 14500,
+      ledgerEntries: [{ ledgerName: "Sharma Kirana Stores", amount: 14500, isDr: true }],
+      items: [
+        { itemName: "Cadbury Dairy Milk Silk 150g", quantity: 20, unit: "PCS", rate: 175, amount: 3500 },
+        { itemName: "Aashirvaad Shudh Chakki Atta 10kg", quantity: 15, unit: "BAG", rate: 420, amount: 6300 },
+        { itemName: "Surf Excel Easy Wash 1kg", quantity: 32, unit: "PKT", rate: 145, amount: 4640 },
+      ],
+    },
+    {
+      voucherNumber: "PUR-2026-001",
+      date: new Date().toISOString().split("T")[0],
+      voucherType: "Purchase",
+      partyName: "Balaji Distributors Pvt Ltd",
+      amount: 42000,
+      ledgerEntries: [{ ledgerName: "Balaji Distributors Pvt Ltd", amount: 42000, isDr: false }],
+      items: [
+        { itemName: "Cadbury Dairy Milk Silk 150g", quantity: 100, unit: "PCS", rate: 145, amount: 14500 },
+        { itemName: "Aashirvaad Shudh Chakki Atta 10kg", quantity: 50, unit: "BAG", rate: 380, amount: 19000 },
+      ],
+    },
+    {
+      voucherNumber: "REC-2026-001",
+      date: new Date().toISOString().split("T")[0],
+      voucherType: "Receipt",
+      partyName: "Sharma Kirana Stores",
+      amount: 10000,
+      narration: "Payment received via UPI",
+      ledgerEntries: [
+        { ledgerName: "Sharma Kirana Stores", amount: 10000, isDr: false },
+        { ledgerName: "HDFC Bank Ltd", amount: 10000, isDr: true },
+      ],
+    },
+    {
+      voucherNumber: "PAY-2026-001",
+      date: new Date().toISOString().split("T")[0],
+      voucherType: "Payment",
+      partyName: "Balaji Distributors Pvt Ltd",
+      amount: 25000,
+      narration: "Vendor payment via NEFT",
+      ledgerEntries: [
+        { ledgerName: "Balaji Distributors Pvt Ltd", amount: 25000, isDr: true },
+        { ledgerName: "State Bank of India", amount: 25000, isDr: false },
+      ],
+    },
+    {
+      voucherNumber: "EXP-2026-001",
+      date: new Date().toISOString().split("T")[0],
+      voucherType: "Payment",
+      partyName: "Office Electricity Bill",
+      amount: 3450,
+      narration: "Electricity bill paid in cash",
+      ledgerEntries: [
+        { ledgerName: "Office Electricity Bill", amount: 3450, isDr: true },
+        { ledgerName: "Cash", amount: 3450, isDr: false },
+      ],
+    },
+  ];
+
   const handleLiveTallySync = async (simulate = false) => {
     if (!orgId) {
       toast.error("Organization not found. Please log in.");
@@ -132,23 +203,29 @@ export default function TallyImport() {
 
     try {
       if (simulate) {
-        setLiveSyncStatusText("Extracting masters from simulated ERP stream...");
+        setLiveSyncStatusText("Extracting masters & daybook from simulated ERP stream...");
         await new Promise((r) => setTimeout(r, 700));
 
-        setLiveSyncStatusText("Normalizing stock items & ledger balances...");
+        setLiveSyncStatusText("Normalizing stock items, ledger balances & vouchers...");
         await new Promise((r) => setTimeout(r, 600));
 
         setLiveSyncStatusText("Syncing into CredSmart Cloud database...");
         const result = await executeDirectSyncIngestion(
           orgId,
           user?.id || "demo-user",
-          { items: SAMPLE_TALLY_LIVE_ITEMS, parties: SAMPLE_TALLY_LIVE_PARTIES },
+          {
+            items: syncConfig.syncScope.items ? SAMPLE_TALLY_LIVE_ITEMS : [],
+            parties: syncConfig.syncScope.parties ? SAMPLE_TALLY_LIVE_PARTIES : [],
+            vouchers: syncConfig.syncScope.vouchers ? SAMPLE_TALLY_LIVE_VOUCHERS : [],
+            bankAccounts: syncConfig.syncScope.banks ? SAMPLE_TALLY_LIVE_BANKS : [],
+            cashInHand: syncConfig.syncScope.banks ? 24500 : undefined,
+          },
           "simulated",
           syncConfig.selectedSoftware
         );
 
         setSyncConfig(getSyncConfig(orgId));
-        toast.success(`🎉 Auto-Sync Completed! Ingested ${result.itemsCount} items and ${result.partiesCount} parties directly.`);
+        toast.success(`🎉 Auto-Sync Completed! Ingested ${result.itemsCount} items, ${result.partiesCount} parties, ${result.vouchersCount} vouchers, and ${result.banksCount} banks directly.`);
       } else {
         setLiveSyncStatusText(`Probing local Tally on ${syncConfig.tallyHost}...`);
         const probe = await probeLocalTally(syncConfig.tallyHost, syncConfig.pairingToken);
@@ -160,10 +237,10 @@ export default function TallyImport() {
           return;
         }
 
-        setLiveSyncStatusText(`Connected to "${probe.companyName || "Tally"}" (${probe.latencyMs}ms). Exporting masters...`);
+        setLiveSyncStatusText(`Connected to "${probe.companyName || "Tally"}" (${probe.latencyMs}ms). Exporting masters & daybook...`);
         const tallyData = await fetchLiveTallyData(syncConfig.tallyHost, syncConfig.pairingToken);
 
-        setLiveSyncStatusText(`Parsed ${tallyData.items.length} items & ${tallyData.parties.length} parties. Ingesting into Supabase...`);
+        setLiveSyncStatusText(`Parsed ${tallyData.items.length} items, ${tallyData.parties.length} parties, and ${getAllTallyVouchers(tallyData).length} vouchers. Ingesting into Supabase...`);
         const result = await executeDirectSyncIngestion(
           orgId,
           user?.id || "sync-user",
@@ -171,13 +248,15 @@ export default function TallyImport() {
             items: syncConfig.syncScope.items ? tallyData.items : [],
             parties: syncConfig.syncScope.parties ? tallyData.parties : [],
             vouchers: syncConfig.syncScope.vouchers ? getAllTallyVouchers(tallyData) : [],
+            bankAccounts: syncConfig.syncScope.banks ? tallyData.bankAccounts : [],
+            cashInHand: syncConfig.syncScope.banks ? tallyData.cashInHand : undefined,
           },
           "direct_browser",
           "tally"
         );
 
         setSyncConfig(getSyncConfig(orgId));
-        const syncMessage = `Tally sync ${result.success ? "completed" : "completed with warnings"}. Ingested ${result.itemsCount} items, ${result.partiesCount} parties, and ${result.vouchersCount} vouchers.`;
+        const syncMessage = `Tally sync ${result.success ? "completed" : "completed with warnings"}. Ingested ${result.itemsCount} items, ${result.partiesCount} parties, ${result.vouchersCount} vouchers, and ${result.banksCount} banks.`;
         if (result.success) {
           toast.success(syncMessage);
         } else {
@@ -303,6 +382,7 @@ export default function TallyImport() {
   const [importedStats, setImportedStats] = useState({
     items: 0,
     parties: 0,
+    balances: 0,
     banks: 0,
     vouchers: 0,
   });
@@ -406,11 +486,22 @@ export default function TallyImport() {
               await handleDirectSaveVouchers(data.vouchers, "skip");
               imported += data.vouchers.length;
             }
+            if (data.bankAccounts && data.bankAccounts.length > 0) {
+              const mappedBanks: TallyBankAccount[] = data.bankAccounts.map((b) => ({
+                name: b.accountName,
+                bankName: b.accountName,
+                accountNumber: b.accountNumber,
+                ifscCode: b.ifsc,
+                balance: b.balance,
+              }));
+              await handleDirectSaveBankAccounts(mappedBanks, data.cashInHand || 0);
+              imported += data.bankAccounts.length;
+            }
             
             if (imported > 0) {
               toast.success(`Successfully added ${imported} complete records from Tally automatically!`);
             } else {
-              toast.error("No valid Tally items or parties found in the detected folder.");
+              toast.error("No valid Tally items, parties, vouchers or bank accounts found in the detected folder.");
             }
           } catch (parseErr: unknown) {
             toast.error(parseErr instanceof Error ? parseErr.message : "Failed to parse Tally files");
@@ -520,6 +611,7 @@ export default function TallyImport() {
 
     let itemsCount = 0;
     let partiesCount = 0;
+    let balancesCount = 0;
     let banksCount = 0;
     let vouchersCount = 0;
 
@@ -620,7 +712,6 @@ export default function TallyImport() {
                  }
              }
           }
-        }
 
         // We should really handle existing batches instead of just blindly inserting.
         // For simplicity, let's just insert missing ones or update existing if we had them.
@@ -705,7 +796,7 @@ export default function TallyImport() {
                           amount: Math.abs(opBal),
                           type: opBal >= 0 ? "credit" : "payment",
                           description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
-                          created_by: user?.id || "admin",
+                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                        });
                     }
                  }
@@ -736,7 +827,7 @@ export default function TallyImport() {
                           amount: Math.abs(opBal),
                           type: opBal >= 0 ? "credit" : "payment", // Wait, for supplier, debit balance is advance payment, credit is payable. Wait, the report says: "Supplier opening balances ... wrongly imported as payables."
                           description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
-                          created_by: user?.id || "admin",
+                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                        });
                     }
                  }
@@ -750,6 +841,7 @@ export default function TallyImport() {
               toast.error(`Failed to insert opening balances: ${error.message}`);
               throw error;
            }
+           balancesCount = txToInsert.length;
         }
       }
 
@@ -769,7 +861,7 @@ export default function TallyImport() {
           account_type: "current",
           balance: b.balance,
           is_primary: i === 0,
-          created_by: user?.id || "admin",
+          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
         }));
 
         if (!probeError) {
@@ -805,16 +897,45 @@ export default function TallyImport() {
       // 4. Vouchers Import
       if (importVouchers && parsedData.vouchers && parsedData.vouchers.length > 0) {
         setImportProgress(88);
-        const { data: existingSales } = await supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId);
-        const { data: existingPurchases } = await supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId);
+        const [
+          { data: existingSales },
+          { data: existingPurchases },
+          { data: existingCreditTxns },
+          { data: existingExpenses }
+        ] = await Promise.all([
+          supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
+          supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
+          supabase.from("credit_transactions").select("reference_id").eq("organization_id", orgId).limit(10000),
+          supabase.from("expenses").select("expense_number").eq("organization_id", orgId).limit(10000),
+        ]);
         
         const salesMap = new Map((existingSales || []).map(s => [s.invoice_number, s.id]));
         const purchasesMap = new Map((existingPurchases || []).map(p => [p.invoice_number, p.id]));
+        const existingRefIds = new Set<string>((existingCreditTxns || []).map((t: any) => t.reference_id).filter((r: any): r is string => Boolean(r)));
+        const existingExpenseNumbers = new Set<string>((existingExpenses || []).map((e: any) => e.expense_number).filter((n: any): n is string => Boolean(n)));
+
+        if (typeof localStorage !== "undefined") {
+          try {
+            const rawLocal = localStorage.getItem(`credsmart_expenses_${orgId}`);
+            if (rawLocal) {
+              const localList = JSON.parse(rawLocal);
+              if (Array.isArray(localList)) {
+                for (const item of localList) {
+                  if (item.expense_number) existingExpenseNumbers.add(item.expense_number);
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
 
         const salesToInsert = [];
         const purchasesToInsert = [];
         const salesToUpdate = [];
         const purchasesToUpdate = [];
+        const creditTxnsToInsert = [];
+        const expensesToInsert = [];
 
         // Identify and build sales/purchases
         for (const vch of parsedData.vouchers) {
@@ -822,6 +943,9 @@ export default function TallyImport() {
 
           if (vch.voucherType === "Sales") {
             const sid = salesMap.get(vch.voucherNumber);
+            if (sid === "staged") {
+              continue; // Skip duplicate inside the same uploaded batch
+            }
             let customerId = null;
             if (vch.partyName) {
               customerId = customerMap.get(vch.partyName.toLowerCase().trim())?.id || null;
@@ -832,7 +956,8 @@ export default function TallyImport() {
             if (vch.ledgerEntries) {
                computedTax = vch.ledgerEntries.reduce((sum, le) => {
                   const ln = le.ledgerName.toLowerCase();
-                  if (ln.includes("gst") || ln.includes("tax") || ln.includes("cgst") || ln.includes("sgst") || ln.includes("igst")) {
+                  const isTaxLedger = (ln.includes("gst") || ln.includes("vat") || ln.includes("cess") || ln.endsWith(" tax") || ln.startsWith("tax ")) && !ln.includes("sales") && !ln.includes("purchase") && !ln.includes("free");
+                  if (isTaxLedger) {
                      return sum + Math.abs(le.amount);
                   }
                   return sum;
@@ -849,11 +974,12 @@ export default function TallyImport() {
                  tax: computedTax,
                  payment_method: "Credit",
                  customer_id: customerId,
-                 created_by: user?.id || "admin",
+                 created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                  created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
                  // Temporarily attach items to process later
                  _items: vch.items,
                });
+               salesMap.set(vch.voucherNumber, "staged");
             } else if (conflictMode === "overwrite") {
                salesToUpdate.push({
                  id: sid,
@@ -866,6 +992,9 @@ export default function TallyImport() {
             }
           } else if (vch.voucherType === "Purchase") {
             const pid = purchasesMap.get(vch.voucherNumber);
+            if (pid === "staged") {
+              continue; // Skip duplicate inside the same uploaded batch
+            }
             let supplierId = null;
             if (vch.partyName) {
               supplierId = supplierMap.get(vch.partyName.toLowerCase().trim())?.id || null;
@@ -892,10 +1021,11 @@ export default function TallyImport() {
                    total_amount: vch.amount,
                    status: "received",
                    notes: vch.narration || `Imported from ${parsedData.detectedSoftware.toUpperCase()}`,
-                   created_by: user?.id || "admin",
+                   created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                    created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
                    _items: vch.items,
                  });
+                 purchasesMap.set(vch.voucherNumber, "staged");
                } else if (conflictMode === "overwrite") {
                  purchasesToUpdate.push({
                    id: pid,
@@ -905,6 +1035,108 @@ export default function TallyImport() {
                  vouchersCount++;
                }
             }
+          } else if (vch.voucherType === "Receipt") {
+            if (vch.voucherNumber && existingRefIds.has(vch.voucherNumber)) {
+              continue; // Deduplicate existing receipt
+            }
+            if (vch.voucherNumber) {
+              existingRefIds.add(vch.voucherNumber);
+            }
+            let customerId = vch.partyName ? (customerMap.get(vch.partyName.toLowerCase().trim())?.id || null) : null;
+            if (!customerId && vch.partyName) {
+              const { data: newCust, error: cErr } = await supabase.from("customers").insert({
+                organization_id: orgId,
+                name: vch.partyName || "Customer",
+              }).select("id").single();
+              if (!cErr && newCust) {
+                customerId = newCust.id;
+                customerMap.set(vch.partyName.toLowerCase().trim(), newCust);
+              }
+            }
+            creditTxnsToInsert.push({
+              organization_id: orgId,
+              party_id: customerId || "00000000-0000-0000-0000-000000000000",
+              party_type: "customer",
+              amount: Math.abs(Number(vch.amount) || 0),
+              type: "payment",
+              description: vch.narration || "Customer Receipt",
+              reference_id: vch.voucherNumber,
+              created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+            });
+            vouchersCount++;
+          } else if (vch.voucherType === "Payment") {
+            if (isExpenseVoucher(vch, supplierMap)) {
+              if (vch.voucherNumber && existingExpenseNumbers.has(vch.voucherNumber)) {
+                continue; // Deduplicate existing expense
+              }
+              if (vch.voucherNumber) {
+                existingExpenseNumbers.add(vch.voucherNumber);
+              }
+              const expenseCategory = vch.partyName?.trim() || "General Expense";
+              const expenseDate = vch.date?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+              expensesToInsert.push({
+                organization_id: orgId,
+                category: expenseCategory,
+                amount: Math.abs(Number(vch.amount) || 0),
+                date: expenseDate,
+                expense_number: vch.voucherNumber || null,
+                description: vch.partyName ? `${vch.partyName} - ${vch.narration || ""}`.trim() : (vch.narration || "Expense"),
+                payment_method: "Cash",
+                created_by: user?.id || null,
+              });
+            } else {
+              if (vch.voucherNumber && existingRefIds.has(vch.voucherNumber)) {
+                continue; // Deduplicate existing supplier payment
+              }
+              if (vch.voucherNumber) {
+                existingRefIds.add(vch.voucherNumber);
+              }
+              let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim())?.id || null) : null;
+              if (!supplierId && vch.partyName) {
+                const { data: newSupp, error: suErr } = await supabase.from("suppliers").insert({
+                  organization_id: orgId,
+                  name: vch.partyName || "Supplier",
+                  category: "Wholesaler",
+                }).select("id").single();
+                if (!suErr && newSupp) {
+                  supplierId = newSupp.id;
+                  supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp);
+                }
+              }
+              creditTxnsToInsert.push({
+                organization_id: orgId,
+                party_id: supplierId || "00000000-0000-0000-0000-000000000000",
+                party_type: "supplier",
+                amount: Math.abs(Number(vch.amount) || 0),
+                type: "payment",
+                description: vch.narration || "Supplier Payment",
+                reference_id: vch.voucherNumber,
+                created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+              });
+            }
+            vouchersCount++;
+          } else if (vch.voucherType === "Journal") {
+            if (vch.voucherNumber && existingExpenseNumbers.has(vch.voucherNumber)) {
+              continue; // Deduplicate existing journal expense
+            }
+            if (vch.voucherNumber) {
+              existingExpenseNumbers.add(vch.voucherNumber);
+            }
+            const expenseCategory = vch.partyName?.trim() || "General Expense";
+            const expenseDate = vch.date?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+            expensesToInsert.push({
+              organization_id: orgId,
+              category: expenseCategory,
+              amount: Math.abs(Number(vch.amount) || 0),
+              date: expenseDate,
+              expense_number: vch.voucherNumber || null,
+              description: vch.partyName ? `${vch.partyName} - ${vch.narration || ""}`.trim() : (vch.narration || "Expense"),
+              payment_method: "Cash",
+              created_by: user?.id || null,
+            });
+            vouchersCount++;
+          } else if (vch.voucherType === "Credit Note" || vch.voucherType === "Debit Note") {
+            vouchersCount++;
           }
         }
 
@@ -967,15 +1199,45 @@ export default function TallyImport() {
                  const p = batch.find(x => x.invoice_number === d.invoice_number);
                  if (p && p._items) {
                     for (const it of p._items) {
-                       piItemsToInsert.push({
-                          purchase_invoice_id: d.id,
-                          product_id: productMap.get((it.itemName || "").toLowerCase().trim())?.id || null, // FIX missing product_id
-                          quantity: it.quantity,
-                          cost_price: it.rate,
-                          mrp: it.rate,
-                          batch_number: it.batchNumber || "BATCH-01",
-                          expiry_date: it.expiryDate || null,
-                       });
+                       const itemKey = (it.itemName || "").toLowerCase().trim();
+                       let prod = productMap.get(itemKey);
+                       if (!prod) {
+                          const itemName = it.itemName || "Imported Item";
+                          const { data: newProd, error: prodErr } = await supabase.from("products").insert({
+                             organization_id: orgId,
+                             name: itemName,
+                             category: "General",
+                             sku: getStableTallySku(itemName),
+                             tags: {
+                                selling_price: Number(it.rate) || 0,
+                                purchase_price: Number(it.rate) || 0,
+                                mrp: Number(it.rate) || 0,
+                                unit: it.unit || "PCS",
+                             },
+                          }).select("id, name").single();
+                          if (newProd && !prodErr) {
+                             prod = newProd;
+                             productMap.set(itemKey || "imported item", newProd as any);
+                          } else {
+                             const { data: found } = await supabase.from("products").select("id, name").eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle();
+                             if (found) {
+                                prod = found;
+                                productMap.set(itemKey || "imported item", found as any);
+                             }
+                          }
+                       }
+                       if (prod?.id) {
+                          piItemsToInsert.push({
+                             purchase_invoice_id: d.id,
+                             product_id: prod.id,
+                             quantity: Math.abs(Number(it.quantity) || 1),
+                             cost_price: Number(it.rate) || 0,
+                             mrp: Number(it.rate) || 0,
+                             batch_number: it.batchNumber || "BATCH-01",
+                             expiry_date: it.expiryDate || null,
+                             received_quantity: Math.abs(Number(it.quantity) || 1),
+                          });
+                       }
                     }
                  }
               }
@@ -986,6 +1248,49 @@ export default function TallyImport() {
                  }
               }
            }
+        }
+
+        if (creditTxnsToInsert.length > 0) {
+          for (let i = 0; i < creditTxnsToInsert.length; i += 1000) {
+            const { error: ctErr } = await supabase.from("credit_transactions").insert(creditTxnsToInsert.slice(i, i + 1000));
+            if (ctErr) { toast.error(`Failed to insert credit transactions: ${ctErr.message}`); throw ctErr; }
+          }
+        }
+
+        if (expensesToInsert.length > 0) {
+          for (let i = 0; i < expensesToInsert.length; i += 1000) {
+            const { error: expErr } = await supabase.from("expenses").insert(expensesToInsert.slice(i, i + 1000));
+            if (expErr) { toast.error(`Failed to insert expenses: ${expErr.message}`); throw expErr; }
+          }
+          try {
+            const expenseKey = `credsmart_expenses_${orgId}`;
+            if (typeof localStorage !== "undefined") {
+              const raw = localStorage.getItem(expenseKey);
+              let currentList: any[] = [];
+              if (raw) {
+                try { currentList = JSON.parse(raw); if (!Array.isArray(currentList)) currentList = []; } catch { currentList = []; }
+              }
+              for (const exp of expensesToInsert) {
+                if (exp.expense_number && currentList.some((e: any) => e.expense_number === exp.expense_number)) {
+                  continue;
+                }
+                currentList.push({
+                  id: crypto.randomUUID(),
+                  expense_number: exp.expense_number || `EXP-${Date.now()}`,
+                  party_name: exp.category,
+                  category: exp.category,
+                  amount: exp.amount,
+                  date: exp.date,
+                  description: exp.description,
+                  payment_method: exp.payment_method,
+                  created_at: new Date().toISOString(),
+                });
+              }
+              localStorage.setItem(expenseKey, JSON.stringify(currentList));
+            }
+          } catch (e) {
+            console.error("Failed to append to expenses localStorage:", e);
+          }
         }
       }
 
@@ -1007,12 +1312,13 @@ export default function TallyImport() {
       setImportedStats({
         items: itemsCount,
         parties: partiesCount,
+        balances: balancesCount,
         banks: banksCount,
         vouchers: vouchersCount,
       });
       setImportCompleted(true);
       toast.success(
-        `🎉 1-Click Import Complete! Imported ${itemsCount} items, ${partiesCount} parties, ${banksCount} banks, and ${vouchersCount} vouchers.`
+        `🎉 1-Click Import Complete! Imported ${itemsCount} items, ${partiesCount} parties, ${balancesCount} balances, ${banksCount} banks, and ${vouchersCount} vouchers.`
       );
     } catch (err) {
       toast.error(`Import error: ${err instanceof Error ? err.message : String(err)}`);
@@ -1202,8 +1508,9 @@ export default function TallyImport() {
                           party_type: isSupplier ? "supplier" : "customer",
                           amount: Math.abs(opBal),
                           type: opBal >= 0 ? "credit" : "payment",
-                          description: `${selectedSoftware.toUpperCase()} Opening Balance`,
-                          created_by: user?.id || "admin",
+                          description: "Opening Balance",
+                          reference_id: "IMPORT-OPENING",
+                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                         });
                      }
                   }
@@ -1220,7 +1527,11 @@ export default function TallyImport() {
           if (error) { toast.error(`Failed to insert opening balances: ${error.message}`); throw error; }
       }
 
-      setImportedStats((prev) => ({ ...prev, parties: prev.parties + count }));
+      setImportedStats((prev) => ({
+        ...prev,
+        parties: prev.parties + count,
+        balances: prev.balances + txToInsert.length,
+      }));
       setImportCompleted(true);
       toast.success(`Successfully uploaded and saved ${count} parties to cloud khata!`);
       if (count > 0 && typeof window !== "undefined") {
@@ -1242,22 +1553,54 @@ export default function TallyImport() {
     setIsImporting(true);
     let count = 0;
     try {
-      const { data: existingSales } = await supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId);
-      const { data: existingPurchases } = await supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId);
-      const { data: products } = await supabase.from("products").select("id, name").eq("organization_id", orgId);
-      const { data: customers } = await supabase.from("customers").select("id, name").eq("organization_id", orgId);
-      const { data: suppliers } = await supabase.from("suppliers").select("id, name").eq("organization_id", orgId);
+      const [
+        { data: existingSales },
+        { data: existingPurchases },
+        { data: products },
+        { data: customers },
+        { data: suppliers },
+        { data: existingCreditTxns },
+        { data: existingExpenses }
+      ] = await Promise.all([
+        supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
+        supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
+        supabase.from("products").select("id, name").eq("organization_id", orgId).limit(10000),
+        supabase.from("customers").select("id, name").eq("organization_id", orgId).limit(10000),
+        supabase.from("suppliers").select("id, name").eq("organization_id", orgId).limit(10000),
+        supabase.from("credit_transactions").select("reference_id").eq("organization_id", orgId).limit(10000),
+        supabase.from("expenses").select("expense_number").eq("organization_id", orgId).limit(10000),
+      ]);
       
       const salesMap = new Map((existingSales || []).map(s => [s.invoice_number, s.id]));
       const purchasesMap = new Map((existingPurchases || []).map(p => [p.invoice_number, p.id]));
       const productMap = new Map((products || []).map(p => [(p.name || "").toLowerCase().trim(), p.id]));
       const customerMap = new Map((customers || []).map(c => [(c.name || "").toLowerCase().trim(), c.id]));
       const supplierMap = new Map((suppliers || []).map(s => [(s.name || "").toLowerCase().trim(), s.id]));
+      const existingRefIds = new Set<string>((existingCreditTxns || []).map((t: any) => t.reference_id).filter((r: any): r is string => Boolean(r)));
+      const existingExpenseNumbers = new Set<string>((existingExpenses || []).map((e: any) => e.expense_number).filter((n: any): n is string => Boolean(n)));
+
+      if (typeof localStorage !== "undefined") {
+        try {
+          const rawLocal = localStorage.getItem(`credsmart_expenses_${orgId}`);
+          if (rawLocal) {
+            const localList = JSON.parse(rawLocal);
+            if (Array.isArray(localList)) {
+              for (const item of localList) {
+                if (item.expense_number) existingExpenseNumbers.add(item.expense_number);
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
 
       const salesToInsert = [];
       const purchasesToInsert = [];
       const salesToUpdate = [];
       const purchasesToUpdate = [];
+      const creditTxnsToInsert = [];
+      const expensesToInsert = [];
 
       for (const vch of vouchers) {
         if (!vch.voucherNumber) continue;
@@ -1266,7 +1609,8 @@ export default function TallyImport() {
         if (vch.ledgerEntries) {
            computedTax = vch.ledgerEntries.reduce((sum, le) => {
               const ln = le.ledgerName.toLowerCase();
-              if (ln.includes("gst") || ln.includes("tax") || ln.includes("cgst") || ln.includes("sgst") || ln.includes("igst")) {
+              const isTaxLedger = (ln.includes("gst") || ln.includes("vat") || ln.includes("cess") || ln.endsWith(" tax") || ln.startsWith("tax ")) && !ln.includes("sales") && !ln.includes("purchase") && !ln.includes("free");
+              if (isTaxLedger) {
                  return sum + Math.abs(le.amount);
               }
               return sum;
@@ -1276,6 +1620,9 @@ export default function TallyImport() {
 
         if (vch.voucherType === "Sales") {
           const existingSaleId = salesMap.get(vch.voucherNumber);
+          if (existingSaleId === "staged") {
+            continue; // Skip duplicate inside the same uploaded batch
+          }
 
           if (!existingSaleId) {
             let customerId = vch.partyName ? (customerMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
@@ -1288,10 +1635,11 @@ export default function TallyImport() {
                 tax: computedTax,
                 payment_method: "Credit",
                 customer_id: customerId,
-                created_by: user?.id || "admin",
+                created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                 created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
                 _items: vch.items,
             });
+            salesMap.set(vch.voucherNumber, "staged");
           } else if (strategy === "overwrite" || strategy === "merge") {
             salesToUpdate.push({
                 id: existingSaleId,
@@ -1304,6 +1652,9 @@ export default function TallyImport() {
           }
         } else if (vch.voucherType === "Purchase") {
           const existingPIId = purchasesMap.get(vch.voucherNumber);
+          if (existingPIId === "staged") {
+            continue; // Skip duplicate inside the same uploaded batch
+          }
 
           if (!existingPIId) {
             let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
@@ -1313,7 +1664,10 @@ export default function TallyImport() {
                      name: vch.partyName || "Imported Vendor",
                      category: "Wholesaler",
                  }).select("id").single();
-                 if (newSupp && !error) supplierId = newSupp.id;
+                 if (newSupp && !error) {
+                   supplierId = newSupp.id;
+                   supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp.id);
+                 }
             }
 
             if (supplierId) {
@@ -1324,9 +1678,11 @@ export default function TallyImport() {
                    total_amount: vch.amount,
                    notes: vch.narration || undefined,
                    status: "received",
+                   created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                    created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
                    _items: vch.items,
                });
+               purchasesMap.set(vch.voucherNumber, "staged");
             }
           } else if (strategy === "overwrite" || strategy === "merge") {
             purchasesToUpdate.push({
@@ -1337,6 +1693,109 @@ export default function TallyImport() {
             });
             count++;
           }
+        } else if (vch.voucherType === "Receipt") {
+          if (vch.voucherNumber && existingRefIds.has(vch.voucherNumber)) {
+            continue; // Deduplicate existing receipt
+          }
+          if (vch.voucherNumber) {
+            existingRefIds.add(vch.voucherNumber);
+          }
+          let customerId = vch.partyName ? (customerMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
+          if (!customerId && vch.partyName) {
+            const { data: newCust, error: custErr } = await supabase.from("customers").insert({
+              organization_id: orgId,
+              name: vch.partyName || "Customer",
+            }).select("id").single();
+            if (newCust && !custErr) {
+              customerId = newCust.id;
+              customerMap.set(vch.partyName.toLowerCase().trim(), newCust.id);
+            }
+          }
+          creditTxnsToInsert.push({
+            organization_id: orgId,
+            party_id: customerId || "00000000-0000-0000-0000-000000000000",
+            party_type: "customer",
+            amount: Math.abs(Number(vch.amount) || 0),
+            type: "payment",
+            description: vch.narration || "Customer Receipt",
+            reference_id: vch.voucherNumber,
+            created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+          });
+          count++;
+        } else if (vch.voucherType === "Payment") {
+          if (isExpenseVoucher(vch, supplierMap)) {
+            if (vch.voucherNumber && existingExpenseNumbers.has(vch.voucherNumber)) {
+              continue; // Deduplicate existing expense
+            }
+            if (vch.voucherNumber) {
+              existingExpenseNumbers.add(vch.voucherNumber);
+            }
+            const expenseCategory = vch.partyName?.trim() || "General Expense";
+            const expenseDate = vch.date?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+            expensesToInsert.push({
+              organization_id: orgId,
+              category: expenseCategory,
+              amount: Math.abs(Number(vch.amount) || 0),
+              date: expenseDate,
+              expense_number: vch.voucherNumber || null,
+              description: vch.partyName ? `${vch.partyName} - ${vch.narration || ""}`.trim() : (vch.narration || "Expense"),
+              payment_method: "Cash",
+              created_by: user?.id || null,
+            });
+            count++;
+          } else {
+            if (vch.voucherNumber && existingRefIds.has(vch.voucherNumber)) {
+              continue; // Deduplicate existing supplier payment
+            }
+            if (vch.voucherNumber) {
+              existingRefIds.add(vch.voucherNumber);
+            }
+            let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
+            if (!supplierId && vch.partyName) {
+              const { data: newSupp, error: suppErr } = await supabase.from("suppliers").insert({
+                organization_id: orgId,
+                name: vch.partyName || "Supplier",
+                category: "Wholesaler",
+              }).select("id").single();
+              if (newSupp && !suppErr) {
+                supplierId = newSupp.id;
+                supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp.id);
+              }
+            }
+            creditTxnsToInsert.push({
+              organization_id: orgId,
+              party_id: supplierId || "00000000-0000-0000-0000-000000000000",
+              party_type: "supplier",
+              amount: Math.abs(Number(vch.amount) || 0),
+              type: "payment",
+              description: vch.narration || "Supplier Payment",
+              reference_id: vch.voucherNumber,
+              created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+            });
+            count++;
+          }
+        } else if (vch.voucherType === "Journal") {
+          if (vch.voucherNumber && existingExpenseNumbers.has(vch.voucherNumber)) {
+            continue; // Deduplicate existing journal expense
+          }
+          if (vch.voucherNumber) {
+            existingExpenseNumbers.add(vch.voucherNumber);
+          }
+          const expenseCategory = vch.partyName?.trim() || "General Expense";
+          const expenseDate = vch.date?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+          expensesToInsert.push({
+            organization_id: orgId,
+            category: expenseCategory,
+            amount: Math.abs(Number(vch.amount) || 0),
+            date: expenseDate,
+            expense_number: vch.voucherNumber || null,
+            description: vch.partyName ? `${vch.partyName} - ${vch.narration || ""}`.trim() : (vch.narration || "Expense"),
+            payment_method: "Cash",
+            created_by: user?.id || null,
+          });
+          count++;
+        } else if (vch.voucherType === "Credit Note" || vch.voucherType === "Debit Note") {
+          count++;
         }
       }
 
@@ -1397,15 +1856,45 @@ export default function TallyImport() {
                  const p = batch.find(x => x.invoice_number === d.invoice_number);
                  if (p && p._items) {
                      for (const it of p._items) {
-                         itemsToInsert.push({
-                             purchase_invoice_id: d.id,
-                             product_id: productMap.get((it.itemName || "").toLowerCase().trim()) || null,
-                             quantity: it.quantity,
-                             cost_price: it.rate,
-                             mrp: it.rate,
-                             batch_number: it.batchNumber || "BATCH-01",
-                             expiry_date: it.expiryDate || null,
-                         });
+                         const itemKey = (it.itemName || "").toLowerCase().trim();
+                         let productId = productMap.get(itemKey);
+                         if (!productId) {
+                             const itemName = it.itemName || "Imported Item";
+                             const { data: newProd, error: prodErr } = await supabase.from("products").insert({
+                                 organization_id: orgId,
+                                 name: itemName,
+                                 category: "General",
+                                 sku: getStableTallySku(itemName),
+                                 tags: {
+                                     selling_price: Number(it.rate) || 0,
+                                     purchase_price: Number(it.rate) || 0,
+                                     mrp: Number(it.rate) || 0,
+                                     unit: it.unit || "PCS",
+                                 },
+                             }).select("id").single();
+                             if (newProd && !prodErr) {
+                                 productId = newProd.id;
+                                 productMap.set(itemKey || "imported item", newProd.id);
+                             } else {
+                                 const { data: foundProd } = await supabase.from("products").select("id").eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle();
+                                 if (foundProd) {
+                                     productId = foundProd.id;
+                                     productMap.set(itemKey || "imported item", foundProd.id);
+                                 }
+                             }
+                         }
+                         if (productId) {
+                             itemsToInsert.push({
+                                 purchase_invoice_id: d.id,
+                                 product_id: productId,
+                                 quantity: Math.abs(Number(it.quantity) || 1),
+                                 cost_price: Number(it.rate) || 0,
+                                 mrp: Number(it.rate) || 0,
+                                 batch_number: it.batchNumber || "BATCH-01",
+                                 expiry_date: it.expiryDate || null,
+                                 received_quantity: Math.abs(Number(it.quantity) || 1),
+                             });
+                         }
                      }
                  }
              }
@@ -1418,6 +1907,49 @@ export default function TallyImport() {
          }
       }
 
+      if (creditTxnsToInsert.length > 0) {
+        for (let i = 0; i < creditTxnsToInsert.length; i += 1000) {
+          const { error: ctErr } = await supabase.from("credit_transactions").insert(creditTxnsToInsert.slice(i, i + 1000));
+          if (ctErr) { toast.error(`Failed to insert credit transactions: ${ctErr.message}`); throw ctErr; }
+        }
+      }
+
+      if (expensesToInsert.length > 0) {
+        for (let i = 0; i < expensesToInsert.length; i += 1000) {
+          const { error: expErr } = await supabase.from("expenses").insert(expensesToInsert.slice(i, i + 1000));
+          if (expErr) { toast.error(`Failed to insert expenses: ${expErr.message}`); throw expErr; }
+        }
+        try {
+          const expenseKey = `credsmart_expenses_${orgId}`;
+          if (typeof localStorage !== "undefined") {
+            const raw = localStorage.getItem(expenseKey);
+            let currentList: any[] = [];
+            if (raw) {
+              try { currentList = JSON.parse(raw); if (!Array.isArray(currentList)) currentList = []; } catch { currentList = []; }
+            }
+            for (const exp of expensesToInsert) {
+              if (exp.expense_number && currentList.some((e: any) => e.expense_number === exp.expense_number)) {
+                continue;
+              }
+              currentList.push({
+                id: crypto.randomUUID(),
+                expense_number: exp.expense_number || `EXP-${Date.now()}`,
+                party_name: exp.category,
+                category: exp.category,
+                amount: exp.amount,
+                date: exp.date,
+                description: exp.description,
+                payment_method: exp.payment_method,
+                created_at: new Date().toISOString(),
+              });
+            }
+            localStorage.setItem(expenseKey, JSON.stringify(currentList));
+          }
+        } catch (e) {
+          console.error("Failed to append to expenses localStorage:", e);
+        }
+      }
+
       setImportedStats((prev) => ({ ...prev, vouchers: prev.vouchers + count }));
       setImportCompleted(true);
       toast.success(`Successfully saved ${count} vouchers to cloud database!`);
@@ -1427,6 +1959,93 @@ export default function TallyImport() {
       }
     } catch (err) {
       toast.error(`Vouchers import error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleDirectSaveBankAccounts = async (
+    banks: TallyBankAccount[],
+    cashInHand: number = 0
+  ) => {
+    if (!orgId || banks.length === 0) return;
+    setIsImporting(true);
+    let count = 0;
+    try {
+      const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
+      const newAccounts = banks.map((b, i) => ({
+        organization_id: orgId,
+        name: b.name || b.bankName || "Bank Account",
+        bank_name: b.bankName || b.name || "Bank",
+        account_number: b.accountNumber || "—",
+        ifsc_code: b.ifscCode || b.ifsc || "—",
+        account_type: "current",
+        balance: Number(b.balance) || 0,
+        is_primary: i === 0,
+        created_by: user?.id || null,
+      }));
+
+      if (!probeError) {
+        const { error } = await supabase.from("bank_accounts").upsert(newAccounts);
+        if (error) console.error("Database bank accounts upsert error:", error.message);
+      }
+
+      const storageKeyAccounts = `credsmart_bank_accounts_${orgId}`;
+      const existingRaw = typeof localStorage !== "undefined" ? localStorage.getItem(storageKeyAccounts) : null;
+      let existingAccounts: any[] = [];
+      try { existingAccounts = existingRaw ? JSON.parse(existingRaw) : []; } catch { existingAccounts = []; }
+
+      const mergedAccounts = [...existingAccounts];
+      for (const b of banks) {
+        const bAccNum = b.accountNumber ? b.accountNumber.trim() : "";
+        const bName = (b.name || b.bankName || "").trim().toLowerCase();
+        const existingIdx = mergedAccounts.findIndex((acc) => {
+          if (bAccNum && acc.accountNumber && acc.accountNumber === bAccNum) return true;
+          if (bName && acc.name && acc.name.trim().toLowerCase() === bName) return true;
+          return false;
+        });
+
+        if (existingIdx >= 0) {
+          mergedAccounts[existingIdx] = {
+            ...mergedAccounts[existingIdx],
+            name: b.name || b.bankName || mergedAccounts[existingIdx].name,
+            bankName: b.bankName || mergedAccounts[existingIdx].bankName,
+            accountNumber: b.accountNumber || mergedAccounts[existingIdx].accountNumber,
+            ifscCode: b.ifscCode || b.ifsc || mergedAccounts[existingIdx].ifscCode || "",
+            balance: Number(b.balance) ?? mergedAccounts[existingIdx].balance,
+          };
+        } else {
+          mergedAccounts.push({
+            id: (b as any).id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `bank-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`),
+            name: b.name || b.bankName || "Bank Account",
+            bankName: b.bankName || b.name || "Bank",
+            accountNumber: b.accountNumber || "",
+            ifscCode: b.ifscCode || b.ifsc || "",
+            accountType: "current",
+            balance: Number(b.balance) || 0,
+            isPrimary: mergedAccounts.length === 0,
+            createdAt: new Date().toISOString(),
+          });
+        }
+        count++;
+      }
+
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(storageKeyAccounts, JSON.stringify(mergedAccounts));
+        if (cashInHand !== undefined && cashInHand !== null) {
+          localStorage.setItem(`credsmart_cash_in_hand_${orgId}`, String(cashInHand));
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("credsmart_bank_updated", { detail: { orgId } }));
+      }
+
+      setImportedStats((prev) => ({ ...prev, banks: prev.banks + count }));
+      setImportCompleted(true);
+      toast.success(`Successfully saved ${count} bank accounts!`);
+    } catch (err) {
+      toast.error(`Bank accounts import error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsImporting(false);
     }
@@ -1784,7 +2403,7 @@ export default function TallyImport() {
               )}
 
               {/* Host & Status Stats Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-border/80 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mt-6 pt-6 border-t border-border/80 text-xs">
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Target Endpoint</span>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -1831,6 +2450,27 @@ export default function TallyImport() {
                   <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Parties Synced</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.parties ?? 0} Ledgers
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-background/60 border border-border">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Balances Synced</span>
+                  <p className="font-mono font-black text-foreground mt-1 text-sm">
+                    {syncConfig.lastSyncStats?.balances ?? 0} Ledgers
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-background/60 border border-border">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Vouchers Synced</span>
+                  <p className="font-mono font-black text-foreground mt-1 text-sm">
+                    {syncConfig.lastSyncStats?.vouchers ?? 0} Invoices
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-background/60 border border-border">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Banks &amp; Cash</span>
+                  <p className="font-mono font-black text-foreground mt-1 text-sm">
+                    {syncConfig.lastSyncStats?.banks ?? 0} Accounts
                   </p>
                 </div>
               </div>
@@ -2098,6 +2738,8 @@ export default function TallyImport() {
                       { key: "items" as const, label: "Stock & Prices" },
                       { key: "parties" as const, label: "Customers & Suppliers" },
                       { key: "balances" as const, label: "Opening & Running Balances" },
+                      { key: "vouchers" as const, label: "Invoices & Vouchers" },
+                      { key: "banks" as const, label: "Bank & Cash Accounts" },
                     ].map((sc) => (
                       <label key={sc.key} className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-foreground select-none">
                         <input
@@ -2839,7 +3481,7 @@ export default function TallyImport() {
                       Migration Successfully Completed!
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Imported {importedStats.items} Items, {importedStats.parties} Parties, and {importedStats.vouchers} Vouchers. Your business is live and ready for billing.
+                      Imported {importedStats.items} Items, {importedStats.parties} Parties, {importedStats.balances} Balances, {importedStats.vouchers} Vouchers, and {importedStats.banks} Bank Accounts. Your business is live and ready for billing.
                     </p>
                   </div>
                 </div>
@@ -2897,6 +3539,9 @@ export default function TallyImport() {
         }}
         onImportVouchers={async (vouchers, mode) => {
           await handleDirectSaveVouchers(vouchers, mode);
+        }}
+        onImportBankAccounts={async (banks, cashInHand) => {
+          await handleDirectSaveBankAccounts(banks, cashInHand);
         }}
       />
     </div>
