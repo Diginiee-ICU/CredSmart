@@ -794,8 +794,9 @@ export default function TallyImport() {
                           party_id: c.id,
                           party_type: "customer",
                           amount: Math.abs(opBal),
-                          type: opBal >= 0 ? "credit" : "payment",
+                          type: "opening_balance",
                           description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
+                          reference_id: "IMPORT-OPENING",
                           created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                        });
                     }
@@ -825,8 +826,9 @@ export default function TallyImport() {
                           party_id: s.id,
                           party_type: "supplier",
                           amount: Math.abs(opBal),
-                          type: opBal >= 0 ? "credit" : "payment", // Wait, for supplier, debit balance is advance payment, credit is payable. Wait, the report says: "Supplier opening balances ... wrongly imported as payables."
+                          type: "opening_balance",
                           description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
+                          reference_id: "IMPORT-OPENING",
                           created_by: user?.id || "00000000-0000-0000-0000-000000000000",
                        });
                     }
@@ -846,52 +848,78 @@ export default function TallyImport() {
       }
 
       // 3. Bank & Cash Accounts Import
-      if (importBanks && parsedData.bankAccounts.length > 0) {
+      if (importBanks && ((parsedData.bankAccounts && parsedData.bankAccounts.length > 0) || (parsedData.cashInHand !== undefined && parsedData.cashInHand !== null))) {
         setImportProgress(75);
-        // Save to DB instead of localStorage if table exists (or just insert them!)
-        // Based on "Fix Bank Accounts: Check if bank_accounts table exists in Supabase. If so, save bank accounts there instead of just localStorage."
         const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
         
-        const newAccounts = parsedData.bankAccounts.map((b, i) => ({
+        const newAccounts = (parsedData.bankAccounts || []).map((b, i) => ({
           organization_id: orgId,
           name: b.accountName,
           bank_name: b.accountName,
           account_number: b.accountNumber || "—",
           ifsc_code: b.ifsc || "—",
           account_type: "current",
-          balance: b.balance,
+          balance: Number(b.balance) || 0,
           is_primary: i === 0,
           created_by: user?.id || "00000000-0000-0000-0000-000000000000",
         }));
 
-        if (!probeError) {
-           const { error } = await supabase.from("bank_accounts").insert(newAccounts);
-           if (error) {
-              toast.error(`Failed to insert bank accounts: ${error.message}`);
-              throw error;
-           }
-           banksCount = newAccounts.length;
-        } else {
-           // Fallback to local storage
-           const storageKeyAccounts = `credsmart_bank_accounts_${orgId}`;
-           const existingRaw = localStorage.getItem(storageKeyAccounts);
-           let existingAccounts = [];
-           try { existingAccounts = existingRaw ? JSON.parse(existingRaw) : []; } catch { existingAccounts = []; }
-           
-           const mappedAccounts = parsedData.bankAccounts.map((b, i) => ({
-             id: `bank-${Date.now()}-${i}`,
-             name: b.accountName,
-             bankName: b.accountName,
-             accountNumber: b.accountNumber || "—",
-             ifscCode: b.ifsc || "—",
-             accountType: "current",
-             balance: b.balance,
-             isPrimary: existingAccounts.length === 0 && i === 0,
-             createdAt: new Date().toISOString(),
-           }));
-           localStorage.setItem(storageKeyAccounts, JSON.stringify([...existingAccounts, ...mappedAccounts]));
-           banksCount = mappedAccounts.length;
+        if (!probeError && newAccounts.length > 0) {
+           const { error } = await supabase.from("bank_accounts").upsert(newAccounts);
+           if (error) console.error("Database bank accounts upsert error:", error.message);
         }
+
+        const storageKeyAccounts = `credsmart_bank_accounts_${orgId}`;
+        const existingRaw = typeof localStorage !== "undefined" ? localStorage.getItem(storageKeyAccounts) : null;
+        let existingAccounts: any[] = [];
+        try { existingAccounts = existingRaw ? JSON.parse(existingRaw) : []; } catch { existingAccounts = []; }
+        
+        const mergedAccounts = [...existingAccounts];
+        for (const b of (parsedData.bankAccounts || [])) {
+          const bAccNum = b.accountNumber ? b.accountNumber.trim() : "";
+          const bName = (b.accountName || "").trim().toLowerCase();
+          const existingIdx = mergedAccounts.findIndex((acc) => {
+            if (bAccNum && acc.accountNumber && acc.accountNumber === bAccNum) return true;
+            if (bName && acc.name && acc.name.trim().toLowerCase() === bName) return true;
+            return false;
+          });
+
+          if (existingIdx >= 0) {
+            mergedAccounts[existingIdx] = {
+              ...mergedAccounts[existingIdx],
+              name: b.accountName || mergedAccounts[existingIdx].name,
+              bankName: b.accountName || mergedAccounts[existingIdx].bankName,
+              accountNumber: b.accountNumber || mergedAccounts[existingIdx].accountNumber,
+              ifscCode: b.ifsc || mergedAccounts[existingIdx].ifscCode || "",
+              balance: Number(b.balance) ?? mergedAccounts[existingIdx].balance,
+            };
+          } else {
+            mergedAccounts.push({
+              id: (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `bank-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`),
+              name: b.accountName || "Bank Account",
+              bankName: b.accountName || "Bank",
+              accountNumber: b.accountNumber || "",
+              ifscCode: b.ifsc || "",
+              accountType: "current",
+              balance: Number(b.balance) || 0,
+              isPrimary: mergedAccounts.length === 0,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem(storageKeyAccounts, JSON.stringify(mergedAccounts));
+          if (parsedData.cashInHand !== undefined && parsedData.cashInHand !== null) {
+            localStorage.setItem(`credsmart_cash_in_hand_${orgId}`, String(parsedData.cashInHand));
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("credsmart_bank_updated", { detail: { orgId } }));
+        }
+
+        banksCount = (parsedData.bankAccounts || []).length;
       }
 
       // 4. Vouchers Import
@@ -1507,7 +1535,7 @@ export default function TallyImport() {
                           party_id: p.id,
                           party_type: isSupplier ? "supplier" : "customer",
                           amount: Math.abs(opBal),
-                          type: opBal >= 0 ? "credit" : "payment",
+                          type: "opening_balance",
                           description: "Opening Balance",
                           reference_id: "IMPORT-OPENING",
                           created_by: user?.id || "00000000-0000-0000-0000-000000000000",

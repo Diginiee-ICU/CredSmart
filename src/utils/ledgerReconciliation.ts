@@ -222,8 +222,8 @@ export function calculateChronologicalLedger(
       }
     } else {
       // Customer or general party
-      if (txType === "credit" || txType === "invoice" || txType === "debit") {
-        // Bill given to customer = Debit (Customer is Dr)
+      if (txType === "credit" || txType === "invoice" || txType === "debit" || txType === "opening_balance" || txType.includes("opening")) {
+        // Bill given to customer or opening receivable = Debit (Customer is Dr)
         debit = amount;
         currentBalance += amount;
       } else {
