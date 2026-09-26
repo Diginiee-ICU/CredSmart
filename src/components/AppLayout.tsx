@@ -359,7 +359,7 @@ export default function AppLayout() {
 
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
+        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
             {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
@@ -371,7 +371,7 @@ export default function AppLayout() {
                 <img
                   src="./logo-static.jpeg"
                   alt="CredSmart"
-                  className="h-11 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[120px] xs:max-w-[140px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-8 xs:h-9 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[95px] xs:max-w-[115px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -383,7 +383,7 @@ export default function AppLayout() {
                 aria-expanded={sidebarOpen}
                 title={sidebarOpen ? "Close Menu" : "Open Menu"}
                 className={cn(
-                  "flex items-center justify-center h-9 sm:h-10 md:h-10.5 px-2 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
+                  "flex items-center justify-center w-8 h-8 sm:w-auto sm:h-10 md:h-10.5 px-0 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
                   sidebarOpen
                     ? "bg-amber-500/15 border-amber-400/50 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
                     : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400/50 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
@@ -428,7 +428,7 @@ export default function AppLayout() {
             </div>
 
             {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-1 sm:ml-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
               {/* Mobile search */}
               <button
                 onClick={() => setOpenCommand(true)}
@@ -438,29 +438,28 @@ export default function AppLayout() {
                 <Search className="w-3.5 h-3.5" />
               </button>
 
-              {/* Auto Import Tally button (Desktop & Tablet) */}
+              {/* Auto Import Tally button (Desktop & Tablet only - hidden on mobile to prevent overflow) */}
               <button
                 type="button"
                 onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-                className="flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
+                className="hidden sm:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
                 title="Auto Search Tally Folder & Import All Data"
               >
                 <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline">Auto Import Tally</span>
-                <span className="sm:hidden text-[11px]">Tally</span>
+                <span>Auto Import Tally</span>
               </button>
 
               {/* New Invoice split button */}
               <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                <div className="flex items-center h-9 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
+                <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setSalesInvoiceModalOpen(true)}
-                    className="flex items-center gap-1.5 h-full px-2.5 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                    className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
                   >
                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                     <span className="hidden sm:inline">New Invoice</span>
-                    <span className="sm:hidden text-[11px] font-bold">Bill</span>
+                    <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Bill</span>
                   </button>
                   <DropdownMenuTrigger asChild>
                     <button

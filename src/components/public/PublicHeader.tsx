@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Download, Smartphone, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,11 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
 import { CredSmartLogo } from "./CredSmartLogo";
 
-export function PublicHeader() {
+interface PublicHeaderProps {
+  onOpenDownloadModal?: (platform: "android" | "desktop") => void;
+}
+
+export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
   const { user } = useAuth();
   const { userRole } = useOrganization();
   const location = useLocation();
@@ -34,8 +38,10 @@ export function PublicHeader() {
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "Features", href: "/features" },
-    { label: "Business Ecosystem", href: "/#ecosystem" },
-    { label: "CredAlert Intelligence", href: "/#intelligence" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Ecosystem", href: "/#ecosystem" },
+    { label: "CredAlert Intel", href: "/#intelligence" },
+    { label: "Download", href: "/#download" },
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];
@@ -103,7 +109,24 @@ export function PublicHeader() {
         </nav>
 
         {/* Right CTA Actions */}
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-2.5">
+          {/* Download App Quick Trigger */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenDownloadModal) {
+                onOpenDownloadModal("android");
+              } else {
+                handleNavClick("/#download");
+              }
+            }}
+            className="h-10 px-3.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-blue-600" />
+            <span className="hidden md:inline">Download App</span>
+            <span className="md:hidden">App</span>
+          </button>
+
           {user ? (
             <Link to={targetAppRoute}>
               <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all">
@@ -115,7 +138,7 @@ export function PublicHeader() {
               <Link to={`${ROUTE_PATHS.auth}?mode=login`}>
                 <button
                   type="button"
-                  className="h-10 px-5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
+                  className="h-10 px-4.5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
                 >
                   Login
                 </button>
@@ -163,6 +186,39 @@ export function PublicHeader() {
                 {link.label}
               </a>
             ))}
+
+            {/* Quick App Downloads in Mobile Drawer */}
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono px-3">
+                Download Native Apps
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (onOpenDownloadModal) onOpenDownloadModal("android");
+                    else handleNavClick("/#download");
+                  }}
+                  className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5"
+                >
+                  <Smartphone className="w-4 h-4 text-emerald-600" />
+                  <span>Android APK</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (onOpenDownloadModal) onOpenDownloadModal("desktop");
+                    else handleNavClick("/#download");
+                  }}
+                  className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center gap-1.5"
+                >
+                  <Monitor className="w-4 h-4 text-blue-600" />
+                  <span>Windows PC</span>
+                </button>
+              </div>
+            </div>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
               {user ? (
