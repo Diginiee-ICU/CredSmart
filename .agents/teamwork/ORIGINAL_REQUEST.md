@@ -54,3 +54,58 @@ The Auto-Sync dashboard and File Import modals must expose explicit controls and
 - [ ] `TALLY_EXPORT_DAYBOOK_XML` includes `<SVFROMDATE>` and `<SVTODATE>` parameters.
 - [ ] Auto-sync UI renders checkboxes for all entity types (Items, Parties, Balances, Vouchers, and Banks), and sync stats accurately display records ingested for each.
 - [ ] Vitest test suite passes with zero regressions.
+
+
+## 2026-10-13T20:00:31Z
+
+Redesign the master GST invoice layout in CredSmart to match the new enterprise visual specification in `Correction/New folder/New Invoice.jpeg`, replacing the legacy boxed format from `Correction/New folder/Old Invoice.jpeg` across web invoice previews and single-page PDF generation.
+
+Working directory: c:\Users\bishn\Documents\GitHub\CredSmart
+Integrity mode: development
+
+Reference Material:
+- Target design reference: `c:\Users\bishn\Documents\GitHub\CredSmart\Correction\New folder\New Invoice.jpeg`
+- Legacy layout reference: `c:\Users\bishn\Documents\GitHub\CredSmart\Correction\New folder\Old Invoice.jpeg`
+
+## Requirements
+
+### R1. Enterprise Invoice Visual Redesign
+Redesign the master invoice layout to achieve pixel-perfect fidelity with `New Invoice.jpeg`:
+1. Clean unboxed header with large bold `TAX INVOICE` on the left and stacked right-aligned metadata (`Invoice No.`, `Invoice Date`, `Due Date`).
+2. Full-width cyan/blue horizontal accent divider line beneath header.
+3. Dual equal-width side-by-side pods for `FROM` (Seller) and `BILL TO` (Buyer) with light-blue header ribbons and complete address/tax details.
+4. Uppercase `ITEM DETAILS` section heading above the table.
+5. Solid dark navy table header (`bg-[#0c324e]`) with white typography (`S.No.`, `Description`, `HSN`, `Qty`, `Rate`, `Amount`).
+6. Right-aligned financial summary breakdown with taxable value, GST (5%), soft blue rounded total highlight pill, and received/balance amount.
+7. Clean unboxed `Amount in words` line.
+8. Dual side-by-side bordered cards for `BANK ACCOUNT DETAILS` and `AUTHORISED SIGNATORY` with light-blue header ribbons.
+9. Minimalist footer note: `Thank you for your business.`
+
+### R2. PDF Export & Print Engine Parity
+Ensure the off-screen capture and PDF download pipeline in `downloadExactInvoice.ts` renders the redesigned invoice template with 100% fidelity, maintaining exact single-page A4 aspect ratio and sharp vector typography without clipping or distortion.
+
+### R3. Full System Compatibility & Zero Regressions
+Preserve complete backward compatibility for all document types (`sales_invoice`, `pos_invoice`, `purchase_invoice`, `quotation`, `proforma_invoice`, `credit_note`, `debit_note`), multi-unit calculations, and custom company settings without introducing regressions.
+
+## Acceptance Criteria
+
+### Visual & Structural Fidelity
+- [ ] Header renders large bold TAX INVOICE title with cleanly stacked metadata on the right and cyan accent line.
+- [ ] Dual FROM and BILL TO pods render side-by-side with light-blue ribbon headers and full contact/tax info.
+- [ ] Items table features ITEM DETAILS title and solid dark navy header row with white text.
+- [ ] Totals section displays right-aligned breakdown with soft blue rounded total pill and received amount.
+- [ ] Amount in words renders clearly below summary totals.
+- [ ] Bank Account Details and Authorised Signatory render as two side-by-side bordered cards with light-blue header ribbons.
+- [ ] Footer renders "Thank you for your business."
+
+### PDF & Print Rendering
+- [ ] Downloaded PDF from `downloadExactInvoicePdf` fits exactly onto a single A4 page with clean margins and zero visual clipping.
+
+### Code Quality & Production Standards
+- [ ] Zero TypeScript compiler errors across all modified components (`tsc --noEmit`).
+- [ ] Existing invoice calculations and test suites pass with 100% success rate.
+
+
+## 2026-10-13T21:57:56Z
+
+The system underwent a server restart. Please resume execution of the master GST invoice redesign project from your last checkpoint. Check current subagent/orchestrator state, verify Milestone 1 test status, and proceed with Milestone 2 implementation and verification as planned.

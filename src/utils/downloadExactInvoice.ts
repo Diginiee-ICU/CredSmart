@@ -41,6 +41,14 @@ export interface ExactInvoicePayload {
   terms?: string;
   layout?: "a4" | "a4_detailed" | "80mm" | "58mm";
   showHsnSummary?: boolean;
+  placeOfSupply?: string;
+  bankDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    accountHolder?: string;
+    branch?: string;
+  };
   items: Array<{
     name: string;
     description?: string;
@@ -163,6 +171,8 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           paymentMethod: payload.paymentMethod,
           notes: payload.notes,
           terms: payload.terms,
+          bankDetails: payload.bankDetails,
+          placeOfSupply: payload.placeOfSupply,
         } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
       );
 
@@ -189,8 +199,8 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           const imgAspect = canvas.height / canvas.width;
           const imgHeightMm = pageWidthMm * imgAspect;
 
-          // If content is taller than page, scale it down to fit the page height.
-          if (imgHeightMm > pageHeightMm) {
+          // If content is taller than page (with 0.5mm single-page tolerance), scale it down to fit the page height.
+          if (imgHeightMm > pageHeightMm + 0.5) {
             const scaleToFit = pageHeightMm / imgHeightMm;
             const scaledWidth = pageWidthMm * scaleToFit;
             const marginX = (pageWidthMm - scaledWidth) / 2;

@@ -183,6 +183,19 @@ export function formatItemQuantityDisplay(it: InvoiceItemData): {
   };
 }
 
+/**
+ * Standardizes amount in words for financial receipts:
+ * Formats compound numbers with hyphens ("Eighty-Eight") and removes extraneous "and"
+ */
+export function formatAmountInWords(num: number): string {
+  const raw = numberToWords(num);
+  return raw
+    .replace(/\band\b/gi, "")
+    .replace(/\s+/g, " ")
+    .replace(/\b(Twenty|Thirty|Forty|Fifty|Sixty|Seventy|Eighty|Ninety)\s+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine)\b/g, "$1-$2")
+    .trim();
+}
+
 export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceProps>(
   (
     props,
@@ -248,12 +261,21 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     // Format Dates
     const parsedDate = resolvedRawDate instanceof Date ? resolvedRawDate : new Date(resolvedRawDate);
     const formattedDate = !isNaN(parsedDate.getTime())
-      ? parsedDate.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" })
+      ? parsedDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/,/g, '')
       : String(resolvedRawDate);
 
     const formattedTime = time || (activeSettings.showTimestamp && !isNaN(parsedDate.getTime())
       ? parsedDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
       : "");
+
+    const resolvedDueDate = dueDate
+      ? (() => {
+          const d = new Date(dueDate);
+          return !isNaN(d.getTime())
+            ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/,/g, '')
+            : dueDate;
+        })()
+      : formattedDate;
 
     const docTitle = DOC_TITLE_MAP[docType] || "TAX INVOICE";
 
@@ -392,6 +414,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const grandTotalVal = totals?.grandTotal || 0;
     const paidAmountVal = totals?.paidAmount !== undefined ? totals.paidAmount : (paymentMethod === "Credit" ? 0 : grandTotalVal);
     const balanceDueVal = totals?.balanceDue !== undefined ? totals.balanceDue : (grandTotalVal - paidAmountVal);
+
+    const taxRatePercentage = safeItems.length > 0 && safeItems[0].taxRate !== undefined
+      ? safeItems[0].taxRate
+      : (totalTaxable > 0 ? Math.round((totalTax / totalTaxable) * 100) : 5);
 
     // Bank Details
     const rawBank = propBankDetails?.accountNumber
@@ -615,271 +641,185 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         id="unified-invoice-document"
         data-layout={layout === "a4_detailed" ? "a4" : layout}
         data-printable-area="true"
+        data-print-container="invoice"
         className={cn(
-          "bg-white text-slate-800 w-full max-w-[780px] mx-auto p-3 sm:p-4 relative border border-slate-300 box-border font-sans leading-tight shadow-md rounded-lg",
+          "bg-white text-slate-800 w-full max-w-[794px] mx-auto px-8 pt-8 pb-6 relative box-border font-sans leading-tight",
           className
         )}
       >
-        {/* Top Header Section */}
-        <div className="border border-slate-300 bg-white">
-          {/* Main Title Bar with Copy Type */}
-          <div
-            className="flex items-center justify-between px-3 py-1.5 border-b border-slate-300"
-            style={{ backgroundColor: bgLightHex }}
-          >
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900">
-                {docTitle}
-              </h1>
-              {copyType && (
-                <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-slate-400/80 bg-white text-slate-700 shadow-2xs">
-                  {copyType}
-                </span>
-              )}
-            </div>
-
-            <span className="text-[10px] font-semibold text-slate-600 hidden sm:inline-block">
-              {safeStore.name} • GST Registered
-            </span>
+        {/* Header Section: Unboxed bold document title (Left) & Stacked Metadata (Right) */}
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-2xl font-black uppercase tracking-tight text-[#0c324e]">
+              {docTitle}
+            </h1>
           </div>
 
-          {/* Seller Info (Left) & Document Metadata Grid (Right) */}
-          <div className="grid grid-cols-12 divide-x divide-slate-300 text-[10px]">
-            {/* Store Information Pod (7 Columns) */}
-            <div className="col-span-7 p-2.5 flex items-start gap-2.5">
-              {safeStore.logoUrl ? (
-                <img
-                  src={safeStore.logoUrl}
-                  alt="Store Logo"
-                  className="w-12 h-12 object-contain rounded border border-slate-200 p-0.5 shrink-0 bg-white"
-                />
-              ) : (
-                <div
-                  className="w-10 h-10 rounded flex items-center justify-center font-black text-sm shrink-0 shadow-2xs border border-slate-300"
-                  style={{ backgroundColor: bgLightHex, color: primaryHex }}
-                >
-                  {safeStore.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+          <div className="text-right flex flex-col items-end space-y-1.5">
+            <div>
+              <span className="text-[10px] font-bold text-slate-700 block">Invoice No.</span>
+              <span className="text-[10.5px] font-bold text-slate-900 font-mono block">{invoiceNumber}</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-700 block">Invoice Date</span>
+              <span className="text-[10.5px] font-semibold text-slate-900 block">{formattedDate}{formattedTime ? ` ${formattedTime}` : ""}</span>
+            </div>
+            {dueDate && (
+              <div>
+                <span className="text-[10px] font-bold text-slate-700 block">Due Date</span>
+                <span className="text-[10.5px] font-semibold text-slate-900 block">{resolvedDueDate}</span>
+              </div>
+            )}
+          </div>
+        </div>
 
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
+        {/* Cyan Accent Divider Line */}
+        <div className="w-full h-[2px] bg-[#0ea5e9] mt-3 mb-4" />
+
+        {/* Dual Equal-Width Party Pods (FROM & BILL TO) */}
+        <div className="grid grid-cols-2 border border-slate-200 divide-x divide-slate-200 text-[10px] mb-4">
+          {/* Left Pod: FROM (Seller) */}
+          <div className="flex flex-col justify-between">
+            <div>
+              <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
+                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">FROM</span>
+              </div>
+              <div className="p-3 space-y-1 text-[9.5px]">
+                <h2 className="text-[11.5px] font-black text-slate-900 uppercase tracking-tight">
                   {safeStore.name}
                 </h2>
                 {safeStore.address && (
-                  <p className="text-[9.5px] text-slate-600 leading-snug">{safeStore.address}</p>
+                  <p className="text-slate-600 leading-snug">{safeStore.address}</p>
                 )}
-                <div className="flex flex-wrap gap-x-2.5 text-[9px] text-slate-700 font-medium pt-0.5">
-                  {safeStore.phone && <span>Ph: <strong className="font-semibold text-slate-900">{safeStore.phone}</strong></span>}
+                <div className="text-slate-700 flex flex-wrap gap-x-3">
+                  {safeStore.phone && <span>Phone: <strong className="font-semibold text-slate-900">{safeStore.phone}</strong></span>}
                   {safeStore.email && <span>Email: <strong className="font-semibold text-slate-900">{safeStore.email}</strong></span>}
                 </div>
-                <div className="flex flex-wrap gap-x-2.5 text-[9px] text-slate-800 font-mono font-bold pt-0.5">
+                <div className="text-slate-800 font-mono flex flex-wrap gap-x-3">
                   {safeStore.gstin && <span>GSTIN: <strong className="text-slate-900">{safeStore.gstin}</strong></span>}
                   {safeStore.pan && <span>PAN: <strong className="text-slate-900">{safeStore.pan}</strong></span>}
                 </div>
               </div>
             </div>
-
-            {/* Metadata Box (5 Columns) */}
-            <div className="col-span-5 p-2 bg-slate-50/70 flex flex-col justify-between text-[9.5px] space-y-1">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Invoice No:</span>
-                  <span className="font-mono font-black text-slate-900 text-[11px] whitespace-nowrap">{invoiceNumber}</span>
-                </div>
-                <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Invoice Date:</span>
-                  <span className="font-bold text-slate-800 whitespace-nowrap">{formattedDate} {formattedTime}</span>
-                </div>
-                {dueDate && (
-                  <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-200/60">
-                    <span className="text-[8.5px] font-bold uppercase text-slate-500">Due Date:</span>
-                    <span className="font-semibold text-slate-800 whitespace-nowrap">{dueDate}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[8.5px] font-bold uppercase text-slate-500">Place of Supply:</span>
-                  <span className="font-semibold text-slate-800 truncate max-w-[110px] text-right">{resolvedPlaceOfSupply}</span>
-                </div>
-              </div>
-
-              {(originalInvoiceNumber?.trim() || originalInvoiceDate || returnReason?.trim() || settlementMode) && (
-                <div className="pt-1 border-t border-slate-200 flex flex-col gap-0.5 text-[9px]">
-                  {originalInvoiceNumber && originalInvoiceNumber.trim() !== "" && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-semibold">Orig Inv No:</span>
-                      <strong className="font-mono text-slate-900">{originalInvoiceNumber}</strong>
-                    </div>
-                  )}
-                  {originalInvoiceDate && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-semibold">Orig Inv Date:</span>
-                      <strong className="text-slate-800">{originalInvoiceDate}</strong>
-                    </div>
-                  )}
-                  {returnReason && returnReason.trim() !== "" && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-semibold">Return Reason:</span>
-                      <strong className="text-rose-600 truncate max-w-[130px]">{returnReason}</strong>
-                    </div>
-                  )}
-                  {settlementMode && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-semibold">Settlement:</span>
-                      <strong className="capitalize text-indigo-700">{settlementMode.replace(/_/g, ' ')}</strong>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {(referenceNumber?.trim() || vehicleNumber?.trim() || poReference?.trim()) && (
-                <div className="pt-1 border-t border-slate-200 flex flex-col gap-0.5 text-[9px]">
-                  {referenceNumber && referenceNumber.trim() !== "" && referenceNumber !== originalInvoiceNumber && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">E-Way Bill / Ref:</span>
-                      <strong className="font-mono text-slate-800">{referenceNumber}</strong>
-                    </div>
-                  )}
-                  {vehicleNumber && vehicleNumber.trim() !== "" && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Vehicle No:</span>
-                      <strong className="font-mono text-slate-800">{vehicleNumber}</strong>
-                    </div>
-                  )}
-                  {poReference && poReference.trim() !== "" && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">PO Ref:</span>
-                      <strong className="font-mono text-slate-800">{poReference}</strong>
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="border-t border-slate-200 px-3 py-1.5 text-[9.5px] text-slate-700 bg-white">
+              Place of Supply: <strong className="font-semibold text-slate-900">{resolvedPlaceOfSupply}</strong>
             </div>
           </div>
 
-          {/* Address Section: Full-Width BILL TO or Dual BILL/SHIP TO */}
-          {shippingInfo && shippingInfo.address && shippingInfo.address !== safeParty.address ? (
-            <div className="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300 text-[10px]">
-              {/* BILL TO / BILL FROM */}
-              <div className="p-2 space-y-0.5 bg-white">
-                <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
-                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                    {isPurchase ? "BILL FROM (SUPPLIER)" : "BILL TO (BUYER)"}
-                  </span>
-                  {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
-                    <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
-                      Bal: ₹{Number(safeParty.balance).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-                <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeParty.name}</p>
-                {safeParty.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeParty.address}</p>}
-                {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
-                  <div className="mt-1">
-                    <span className="text-[7.5px] font-bold uppercase text-slate-500 block">Bill To Address:</span>
-                    <span className="text-[8px] text-slate-700">{propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}</span>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
-                  {safeParty.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeParty.phone}</strong></span>}
-                  {safeParty.state && <span>State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
-                </div>
-                {safeParty.gstin && (
-                  <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeParty.gstin}</strong></p>
-                )}
-              </div>
-
-              {/* SHIP TO (CONSIGNEE / DELIVERY) */}
-              <div className="p-2 space-y-0.5 bg-white">
-                <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
-                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                    SHIP TO (CONSIGNEE)
-                  </span>
-                  <span className="text-[8px] text-slate-400 font-medium">Delivery Address</span>
-                </div>
-                <p className="font-bold text-slate-900 text-[11px] leading-tight">{safeShipping.name}</p>
-                {safeShipping.address && <p className="text-[9.5px] text-slate-600 leading-snug">{safeShipping.address}</p>}
-                <div className="flex flex-wrap gap-x-2 text-[9px] text-slate-700 pt-0.5">
-                  {safeShipping.phone && <span>Mob: <strong className="font-medium text-slate-900">{safeShipping.phone}</strong></span>}
-                  {safeShipping.state && <span>State: <strong className="text-slate-900">{safeShipping.state}</strong></span>}
-                </div>
-                {safeShipping.gstin && (
-                  <p className="text-[9px] font-mono text-slate-800">GSTIN: <strong className="text-slate-900">{safeShipping.gstin}</strong></p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="p-2 border-t border-slate-300 text-[10px] space-y-0.5 bg-white">
-              <div className="flex items-center justify-between pb-0.5 mb-0.5 border-b border-slate-200">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: primaryHex }}>
-                    {isPurchase ? "BILL FROM (SUPPLIER):" : "BILL TO:"}
-                  </span>
-                  <span className="font-black text-slate-900 text-[11px] uppercase">{safeParty.name}</span>
-                </div>
+          {/* Right Pod: BILL TO (Buyer) */}
+          <div className="flex flex-col justify-between">
+            <div>
+              <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200 flex items-center justify-between">
+                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">BILL TO</span>
                 {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
                   <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
                     Bal: ₹{Number(safeParty.balance).toFixed(2)}
                   </span>
                 )}
               </div>
-              <p className="text-[9.5px] text-slate-700 leading-snug">
-                {safeParty.address && <span>Address: {safeParty.address}</span>}
-                {safeParty.state && <span> | State: <strong className="text-slate-900">{safeParty.state}</strong></span>}
-                {safeParty.phone && <span> | Mob: <strong className="text-slate-900">{safeParty.phone}</strong></span>}
-                {safeParty.gstin && <span> | GSTIN: <strong className="font-mono text-slate-900">{safeParty.gstin}</strong></span>}
-              </p>
-              {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
-                <div className="mt-1">
-                  <span className="text-[7.5px] font-bold uppercase text-slate-500 block">Bill To Address:</span>
-                  <span className="text-[8px] text-slate-700">{propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}</span>
+              <div className="p-3 space-y-1 text-[9.5px]">
+                <p className="text-[11.5px] font-black text-slate-900 uppercase tracking-tight">
+                  {safeParty.name}
+                </p>
+                {safeParty.address && (
+                  <p className="text-slate-600 leading-snug">{safeParty.address}</p>
+                )}
+                {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
+                  <p className="text-[8px] text-slate-500">
+                    Billing: {propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}
+                  </p>
+                )}
+                <div className="text-slate-700 flex flex-wrap gap-x-3">
+                  {safeParty.phone && <span>Contact: <strong className="font-semibold text-slate-900">{safeParty.phone}</strong></span>}
+                  {safeParty.gstin && <span className="font-mono">GSTIN: <strong className="text-slate-900">{safeParty.gstin}</strong></span>}
                 </div>
+              </div>
+            </div>
+            <div className="border-t border-slate-200 px-3 py-1.5 text-[9.5px] text-slate-700 bg-white">
+              {safeParty.name === "Walk-in Customer" ? (
+                <span>Attn: <strong className="font-semibold text-slate-900">{notes && notes.trim() !== "" ? notes : "Counter Sale"}</strong></span>
+              ) : notes && notes.trim() !== "" ? (
+                <span>Customer: <strong className="font-semibold text-slate-900">{notes}</strong></span>
+              ) : (
+                <span>Customer: <strong className="font-semibold text-slate-900">{safeParty.name}</strong></span>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Line Items Table */}
-        <div className="mt-2 border border-slate-300 overflow-hidden text-[9.5px]">
+        {/* Original Reference / Return Note Details (if present) */}
+        {(originalInvoiceNumber?.trim() || originalInvoiceDate || returnReason?.trim() || settlementMode) && (
+          <div className="mb-3 p-2 bg-slate-50 border border-slate-200 rounded text-[9px] flex flex-wrap gap-x-4 gap-y-1">
+            {originalInvoiceNumber && (
+              <div>
+                <span className="text-slate-500 font-semibold">Orig Inv No: </span>
+                <strong className="font-mono text-slate-900">{originalInvoiceNumber}</strong>
+              </div>
+            )}
+            {originalInvoiceDate && (
+              <div>
+                <span className="text-slate-500 font-semibold">Orig Inv Date: </span>
+                <strong className="text-slate-800">{originalInvoiceDate}</strong>
+              </div>
+            )}
+            {returnReason && (
+              <div>
+                <span className="text-slate-500 font-semibold">Return Reason: </span>
+                <strong className="text-rose-600">{returnReason}</strong>
+              </div>
+            )}
+            {settlementMode && (
+              <div>
+                <span className="text-slate-500 font-semibold">Settlement: </span>
+                <strong className="capitalize text-indigo-700">{settlementMode.replace(/_/g, " ")}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Section Heading ITEM DETAILS */}
+        <div className="text-[10.5px] font-bold uppercase tracking-wider text-[#0284c7] mt-4 mb-1.5">
+          ITEM DETAILS
+        </div>
+
+        {/* Items Table */}
+        <div className="border border-slate-200 overflow-hidden text-[9.5px]">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr
-                className="font-black uppercase tracking-wider text-slate-800 border-b border-slate-300 text-[9px]"
-                style={{ backgroundColor: bgLightHex }}
-              >
-                <th className="py-1.5 px-2 text-center w-8 border-r border-slate-300">S.No</th>
-                <th className="py-1.5 px-2 border-r border-slate-300">ITEMS</th>
-                <th className="py-1.5 px-2 text-center border-r border-slate-300 w-24">HSN</th>
-                <th className="py-1.5 px-2 text-center border-r border-slate-300 w-20">QTY</th>
-                <th className="py-1.5 px-2 text-right border-r border-slate-300 w-24">RATE</th>
-                <th className="py-1.5 px-2 text-right w-28">AMOUNT</th>
+            <thead className="bg-[#0c324e] text-white">
+              <tr className="font-bold text-[9.5px] uppercase">
+                <th className="py-2 px-2.5 text-center w-[6%] border-r border-[#1a4a6e]">S.No.</th>
+                <th className="py-2 px-2.5 text-left w-[48%] border-r border-[#1a4a6e]">Description</th>
+                <th className="py-2 px-2.5 text-center w-[12%] border-r border-[#1a4a6e]">HSN</th>
+                <th className="py-2 px-2.5 text-center w-[10%] border-r border-[#1a4a6e]">Qty</th>
+                <th className="py-2 px-2.5 text-right w-[12%] border-r border-[#1a4a6e]">Rate</th>
+                <th className="py-2 px-2.5 text-right w-[12%]">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {safeItems.map((it, idx) => (
-                <tr key={it.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                  <td className="py-1 px-2 text-center font-mono text-slate-500 border-r border-slate-200">
-                    {idx + 1}
-                  </td>
-                  <td className="py-1 px-2 border-r border-slate-200">
-                    <p className="font-bold text-slate-900 leading-tight">{it.name}</p>
-                    {it.description && (
-                      <p className="text-[8.5px] text-slate-500 italic mt-0.5">{it.description}</p>
-                    )}
-                    {(it.batchNo || it.expDate) && (
-                      <p className="text-[8px] font-mono text-slate-500 mt-0.5">
-                        {it.batchNo ? `Batch: ${it.batchNo} ` : ""}
-                        {it.expDate ? `Exp: ${it.expDate}` : ""}
-                      </p>
-                    )}
-                  </td>
-                  <td className="py-1 px-2 text-center font-mono text-slate-700 border-r border-slate-200">
-                    {it.hsn || "-"}
-                  </td>
-                  <td className="py-1 px-2 text-center font-semibold border-r border-slate-200">
-                    {(() => {
-                      const q = formatItemQuantityDisplay(it);
-                      return q.isDual ? (
+              {safeItems.map((it, idx) => {
+                const q = formatItemQuantityDisplay(it);
+                return (
+                  <tr key={it.id || idx} className="bg-white hover:bg-slate-50/50">
+                    <td className="py-2 px-2.5 text-center font-mono text-slate-600 border-r border-slate-200">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2 px-2.5 border-r border-slate-200">
+                      <p className="font-semibold text-slate-900 leading-tight">{it.name}</p>
+                      {it.description && (
+                        <p className="text-[8.5px] text-slate-500 italic mt-0.5">{it.description}</p>
+                      )}
+                      {(it.batchNo || it.expDate) && (
+                        <p className="text-[8px] font-mono text-slate-500 mt-0.5">
+                          {it.batchNo ? `Batch: ${it.batchNo} ` : ""}
+                          {it.expDate ? `Exp: ${it.expDate}` : ""}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-2 px-2.5 text-center font-mono text-slate-700 border-r border-slate-200">
+                      {it.hsn || "-"}
+                    </td>
+                    <td className="py-2 px-2.5 text-center font-medium border-r border-slate-200">
+                      {q.isDual ? (
                         <div className="leading-tight">
                           <span className="font-bold text-slate-900 block">{q.primaryLine}</span>
                           <span className="block text-[8px] text-slate-600 font-mono mt-0.5 font-medium">
@@ -887,108 +827,48 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                           </span>
                         </div>
                       ) : (
-                        <span className="font-bold text-slate-900">{q.primaryLine}</span>
-                      );
-                    })()}
-                  </td>
-                  <td className="py-1 px-2 text-right font-mono text-slate-800 border-r border-slate-200">
-                    ₹{(it.rate || 0).toFixed(2)}
-                  </td>
-                  <td className="py-1 px-2 text-right font-mono font-bold text-slate-900">
-                    ₹{(it.total || (it.rate * it.qty) || 0).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-
-              {/* Delivery Charge row (if > 0) */}
-              {deliveryCharge > 0 && (
-                <tr className="bg-slate-50/60 font-semibold border-t border-slate-200">
-                  <td colSpan={5} className="py-1 px-2 text-left font-bold text-slate-700 border-r border-slate-200">
-                    DELIVERY CHARGE
-                  </td>
-                  <td className="py-1 px-2 text-right font-mono text-slate-900 font-bold">
-                    ₹{deliveryCharge.toFixed(2)}
-                  </td>
-                </tr>
-              )}
-
-              {/* Discount row (if > 0) */}
-              {totals?.discountTotal && totals.discountTotal > 0 ? (
-                <tr className="bg-emerald-50/40 font-semibold border-t border-slate-200 text-emerald-800">
-                  <td colSpan={5} className="py-1 px-2 text-left font-bold border-r border-slate-200">
-                    DISCOUNT
-                  </td>
-                  <td className="py-1 px-2 text-right font-mono font-bold text-emerald-700">
-                    -₹{totals.discountTotal.toFixed(2)}
-                  </td>
-                </tr>
-              ) : null}
-
-              {/* Total Summary Row */}
-              <tr className="font-bold bg-slate-100/90 text-slate-900 border-t-2 border-slate-300">
-                <td colSpan={3} className="py-1.5 px-2 text-left font-black tracking-wider text-[9.5px] border-r border-slate-300">
-                  TOTAL AMOUNT
-                </td>
-                <td className="py-1.5 px-2 text-center font-mono font-black border-r border-slate-300">
-                  {totalQty}
-                </td>
-                <td className="py-1.5 px-2 border-r border-slate-300" />
-                <td className="py-1.5 px-2 text-right font-mono font-black text-slate-900">
-                  ₹{grandTotalVal.toFixed(2)}
-                </td>
-              </tr>
-
-              {/* Received Amount Row */}
-              <tr className="bg-white border-t border-slate-200 text-[9px]">
-                <td colSpan={5} className="py-1 px-2 font-bold text-slate-700 border-r border-slate-200">
-                  RECEIVED AMOUNT ({paymentMethod})
-                </td>
-                <td className="py-1 px-2 text-right font-mono font-bold text-emerald-700">
-                  ₹{paidAmountVal.toFixed(2)}
-                </td>
-              </tr>
-
-              {/* Balance Due Row (if > 0) */}
-              {balanceDueVal > 0 && (
-                <tr className="bg-rose-50/40 border-t border-slate-200 text-[9px]">
-                  <td colSpan={5} className="py-1 px-2 font-bold text-rose-700 border-r border-slate-200">
-                    BALANCE AMOUNT DUE
-                  </td>
-                  <td className="py-1 px-2 text-right font-mono font-black text-rose-700">
-                    ₹{balanceDueVal.toFixed(2)}
-                  </td>
-                </tr>
-              )}
+                        <span className="text-slate-800 font-medium">{q.primaryLine}</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-2.5 text-right font-mono text-slate-800 border-r border-slate-200">
+                      ₹{(it.rate || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-2 px-2.5 text-right font-mono font-bold text-slate-900">
+                      ₹{(it.total !== undefined ? it.total : (it.rate || 0) * (it.qty || 0)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Statutory HSN/SAC Tax Summary Matrix (Render when enabled and tax exists) */}
+        {/* Statutory HSN/SAC Tax Breakdown Table (rendered in a4_detailed or when showHsnSummary is true) */}
         {shouldRenderHsnSummary && (totalTax > 0 || (hsnSummaryList.length > 0 && totalTaxable > 0 && hsnSummaryList.some(r => r.hsn !== "-"))) && (
-          <div className="mt-2 border border-slate-300 overflow-hidden text-[9px]">
-            <div className="px-2 py-0.5 bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[8px] text-slate-700 flex justify-between">
+          <div className="mt-3 border border-slate-200 overflow-hidden text-[9px]">
+            <div className="px-2.5 py-1 bg-[#e8f4fd] border-b border-slate-200 font-bold uppercase tracking-wider text-[8.5px] text-[#0284c7] flex justify-between">
               <span>HSN/SAC TAX BREAKDOWN ({isInterstate ? "INTERSTATE IGST" : "INTRASTATE CGST + SGST"})</span>
               <span className="font-mono">GST COMPLIANT</span>
             </div>
             <table className="w-full text-center border-collapse">
-              <thead className="bg-slate-50 font-bold border-b border-slate-300 text-[8.5px]">
+              <thead className="bg-[#0c324e] text-white font-bold border-b border-slate-200 text-[8.5px]">
                 <tr>
-                  <th className="py-1 px-1.5 border-r border-slate-300">HSN/SAC</th>
-                  <th className="py-1 px-1.5 border-r border-slate-300 text-right">Taxable Value</th>
+                  <th className="py-1 px-1.5 border-r border-[#1a4a6e]">HSN/SAC</th>
+                  <th className="py-1 px-1.5 border-r border-[#1a4a6e] text-right">Taxable Value</th>
                   {isInterstate ? (
                     <>
-                      <th className="py-1 px-1 border-r border-slate-300">IGST Rate</th>
-                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">IGST Amount</th>
+                      <th className="py-1 px-1 border-r border-[#1a4a6e]">IGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-[#1a4a6e] text-right">IGST Amount</th>
                     </>
                   ) : (
                     <>
-                      <th className="py-1 px-1 border-r border-slate-300">CGST Rate</th>
-                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">CGST Amount</th>
-                      <th className="py-1 px-1 border-r border-slate-300">SGST Rate</th>
-                      <th className="py-1 px-1.5 border-r border-slate-300 text-right">SGST Amount</th>
+                      <th className="py-1 px-1 border-r border-[#1a4a6e]">CGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-[#1a4a6e] text-right">CGST Amount</th>
+                      <th className="py-1 px-1.5 border-r border-[#1a4a6e]">SGST Rate</th>
+                      <th className="py-1 px-1.5 border-r border-[#1a4a6e] text-right">SGST Amount</th>
                     </>
                   )}
-                  <th className="py-1 px-1.5 border-r border-slate-300">Cess</th>
+                  <th className="py-1 px-1.5 border-r border-[#1a4a6e]">Cess</th>
                   <th className="py-1 px-1.5 text-right">Total Tax Amount</th>
                 </tr>
               </thead>
@@ -1028,127 +908,160 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                     </td>
                   </tr>
                 ))}
-                {/* HSN Total Summary row */}
-                <tr className="bg-slate-100 font-bold border-t border-slate-300 text-slate-900">
-                  <td className="py-1 px-1.5 border-r border-slate-300 font-black">Total</td>
-                  <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                    ₹{totalTaxable.toFixed(2)}
-                  </td>
-                  {isInterstate ? (
-                    <>
-                      <td className="py-1 px-1 border-r border-slate-300" />
-                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                        ₹{igstVal.toFixed(2)}
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="py-1 px-1 border-r border-slate-300" />
-                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                        ₹{cgstVal.toFixed(2)}
-                      </td>
-                      <td className="py-1 px-1 border-r border-slate-300" />
-                      <td className="py-1 px-1.5 border-r border-slate-300 text-right font-mono font-black">
-                        ₹{sgstVal.toFixed(2)}
-                      </td>
-                    </>
-                  )}
-                  <td className="py-1 px-1.5 border-r border-slate-300 font-mono font-black">
-                    {totalCess > 0 ? `₹${totalCess.toFixed(2)}` : "0"}
-                  </td>
-                  <td className="py-1 px-1.5 text-right font-mono font-black text-slate-900">
-                    ₹{totalTax.toFixed(2)}
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
         )}
 
-        {/* Full-width Amount in Words Banner */}
-        <div className="my-2 p-1.5 border border-slate-300 bg-slate-50/70 text-left text-[9.5px]">
-          <span className="font-bold uppercase tracking-wider text-slate-600 text-[8.5px] mr-1.5">
-            Invoice Amount (in words):
-          </span>
-          <span className="font-bold text-slate-900 capitalize">
-            INR Rupees {numberToWords(grandTotalVal)} Only
+        {/* Right-Aligned Financial Summary Breakdown */}
+        <div className="mt-3 flex justify-end">
+          <div className="w-[320px] text-[10px] space-y-1.5 text-right">
+            <div className="flex justify-between items-center text-slate-600">
+              <span>Taxable value</span>
+              <span className="font-mono text-slate-900 font-medium">
+                ₹{totalTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            {/* GST tax lines */}
+            {!isInterstate && (cgstVal > 0 || sgstVal > 0) ? (
+              <>
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>CGST {taxRatePercentage > 0 ? `(${taxRatePercentage / 2}%)` : ""}</span>
+                  <span className="font-mono text-slate-900 font-medium">
+                    ₹{cgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>SGST {taxRatePercentage > 0 ? `(${taxRatePercentage / 2}%)` : ""}</span>
+                  <span className="font-mono text-slate-900 font-medium">
+                    ₹{sgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </>
+            ) : totalTax > 0 ? (
+              <div className="flex justify-between items-center text-slate-600">
+                <span>GST ({taxRatePercentage || 5}%)</span>
+                <span className="font-mono text-slate-900 font-medium">
+                  ₹{(igstVal || totalTax).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            ) : null}
+
+            {deliveryCharge > 0 && (
+              <div className="flex justify-between items-center text-slate-600">
+                <span>Delivery Charge</span>
+                <span className="font-mono text-slate-900 font-medium">
+                  ₹{deliveryCharge.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {totals?.discountTotal && totals.discountTotal > 0 ? (
+              <div className="flex justify-between items-center text-emerald-700">
+                <span>Discount</span>
+                <span className="font-mono font-medium">
+                  -₹{totals.discountTotal.toFixed(2)}
+                </span>
+              </div>
+            ) : null}
+
+            {totals?.roundOff !== undefined && totals.roundOff !== 0 && (
+              <div className="flex justify-between items-center text-slate-500 text-[9px]">
+                <span>Round Off</span>
+                <span className="font-mono">
+                  {totals.roundOff > 0 ? `+₹${totals.roundOff.toFixed(2)}` : `-₹${Math.abs(totals.roundOff).toFixed(2)}`}
+                </span>
+              </div>
+            )}
+
+            {/* Signature Soft Blue Rounded Highlight Pill for Grand Total */}
+            <div className="bg-[#e0f2fe] rounded-md px-3 py-1.5 flex justify-between items-center w-full">
+              <span className="text-[10.5px] font-bold text-[#0c324e]">Invoice total (rounded)</span>
+              <span className="text-[11.5px] font-black text-[#0c324e] font-mono">
+                ₹{grandTotalVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            {/* Amount received */}
+            <div className="flex justify-between items-center text-slate-600 pt-0.5">
+              <span>Amount received ({paymentMethod || "Cash"})</span>
+              <span className="font-mono font-bold text-slate-900">
+                ₹{paidAmountVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            {balanceDueVal > 0 && (
+              <div className="flex justify-between items-center pt-0.5 font-bold text-rose-600">
+                <span>Balance amount</span>
+                <span className="font-mono">
+                  ₹{balanceDueVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Clean Unboxed Amount in Words */}
+        <div className="my-3 text-left text-[10px]">
+          <span className="font-medium text-slate-700 text-[9.5px]">
+            <strong className="font-bold text-slate-900 mr-2">Amount in words:</strong>
+            INR {formatAmountInWords(grandTotalVal)} Only
           </span>
         </div>
 
-        {/* 3-Pod Balanced Bottom Section */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 border border-slate-300 bg-white text-[9px]">
-          {/* Pod 1: Notes & Terms (4 Columns) */}
-          <div className="col-span-5 p-2 space-y-1.5 flex flex-col justify-between">
-            {notes && (
-              <div>
-                <p className="font-black uppercase tracking-wider text-slate-700 text-[8.5px]">Notes:</p>
-                <p className="text-slate-600 leading-tight">{notes}</p>
-              </div>
-            )}
+        {/* Dual Bottom Cards (Bank Details & Authorised Signatory) */}
+        <div className="grid grid-cols-2 border border-slate-200 divide-x divide-slate-200 text-[10px] mb-4">
+          {/* Left Card: BANK ACCOUNT DETAILS */}
+          <div className="flex flex-col justify-between">
             <div>
-              <p className="font-black uppercase tracking-wider text-slate-700 text-[8.5px]">Terms and Conditions:</p>
-              <p className="text-slate-600 whitespace-pre-line leading-snug">{currentTerms}</p>
+              <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
+                <span className="text-[10px] font-bold tracking-wider text-[#0284c7] uppercase">
+                  BANK ACCOUNT DETAILS
+                </span>
+              </div>
+              <div className="p-3 space-y-0.5 text-[9.5px] text-slate-700">
+                {selectedBank ? (
+                  <>
+                    <p>Bank: <strong className="text-slate-900 font-semibold">{selectedBank.bankName || "Federal Bank"}</strong></p>
+                    <p>A/C No.: <strong className="font-mono text-slate-900 font-semibold">{selectedBank.accountNumber}</strong></p>
+                    <p>IFSC: <strong className="font-mono text-slate-900 font-semibold">{selectedBank.ifsc}</strong></p>
+                    <p>Account Holder: <strong className="text-slate-900 font-semibold">{selectedBank.accountHolder || safeStore.name}</strong></p>
+                    {selectedBank.branch && <p>Branch: <strong className="text-slate-900 font-semibold">{selectedBank.branch}</strong></p>}
+                  </>
+                ) : (
+                  <p className="text-slate-400 italic">Direct bank payment available on request.</p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Pod 2: Bank Details (4 Columns) */}
-          <div className="col-span-4 p-2 space-y-1 bg-slate-50/40">
-            <p className="font-black uppercase tracking-wider text-slate-800 text-[8.5px]" style={{ color: primaryHex }}>
-              BANK ACCOUNT DETAILS
-            </p>
-            {selectedBank ? (
-              <div className="space-y-0.5 text-slate-700 leading-tight">
-                {selectedBank.bankName && <p>Bank: <strong className="text-slate-900">{selectedBank.bankName}</strong></p>}
-                {selectedBank.accountNumber && <p>A/C No: <strong className="font-mono text-slate-900 font-bold">{selectedBank.accountNumber}</strong></p>}
-                {selectedBank.ifsc && <p>IFSC: <strong className="font-mono text-slate-900 font-bold">{selectedBank.ifsc}</strong></p>}
-                {selectedBank.branch && <p>Branch: <strong className="text-slate-900">{selectedBank.branch}</strong></p>}
-                {selectedBank.accountHolder && <p>Holder: <strong className="text-slate-900">{selectedBank.accountHolder}</strong></p>}
+          {/* Right Card: AUTHORISED SIGNATORY */}
+          <div className="flex flex-col justify-between">
+            <div>
+              <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
+                <span className="text-[10px] font-bold tracking-wider text-[#0284c7] uppercase">
+                  AUTHORISED SIGNATORY
+                </span>
               </div>
-            ) : (
-              <p className="text-slate-400 italic text-[8.5px]">Direct bank payment available on request.</p>
-            )}
-          </div>
-
-          {/* Pod 3: Dynamic UPI QR Code & Authorized Signature (3 Columns) */}
-          <div className="col-span-3 p-2 flex flex-col items-center justify-between text-center bg-white space-y-1">
-            {activeUpiId && upiPayload ? (
-              <div className="flex flex-col items-center">
-                <p className="text-[8px] font-bold text-slate-700 mb-0.5">Scan QR Code with UPI</p>
-                <div className="p-1 bg-white border border-slate-300 rounded shadow-2xs">
-                  <QRCodeSVG value={upiPayload} size={44} level="M" />
-                </div>
-                <p className="text-[7.5px] font-mono text-slate-500 mt-0.5 truncate max-w-[120px]">{activeUpiId}</p>
-              </div>
-            ) : <div />}
-
-            <div className="w-full pt-1 flex flex-col items-center">
-              <div className="w-28 min-h-[30px] border-b border-slate-400 flex items-center justify-center p-0.5">
+              <div className="p-3 flex flex-col justify-end items-center min-h-[75px]">
                 {activeSettings.signatureDataUrl ? (
                   <img
                     src={activeSettings.signatureDataUrl}
                     alt="Authorized Signature"
-                    className="max-h-7 max-w-full object-contain filter contrast-125"
+                    className="max-h-8 max-w-full object-contain filter contrast-125 mb-1"
                   />
-                ) : (
-                  <span className="text-[8px] italic text-slate-400">For {safeStore.name}</span>
-                )}
+                ) : null}
+                <div className="w-36 border-b border-slate-300 mb-1" />
+                <p className="text-[9px] text-slate-500 font-medium">Signature</p>
               </div>
-              <p className="text-[8px] font-black uppercase text-slate-700 mt-0.5 tracking-tight">
-                {activeSettings.signatoryTitle || "Authorized Signatory"}
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Invoice Footer Compliance Branding */}
-        <div className="mt-2 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[7.5px] text-slate-400 font-sans">
-          <div className="flex items-center gap-1 text-slate-500 font-medium">
-            <img src="./logo-static.jpeg" alt="CredSmart" className="h-3 w-auto object-contain mix-blend-multiply opacity-80" />
-            <span>Powered by <strong className="font-bold text-slate-700">CredSmart POS &amp; Billing</strong></span>
-          </div>
-          <div className="font-mono text-slate-400">
-            <span>IT Act 2000 Ready • 100% Tax Compliant</span>
-          </div>
+        {/* Minimalist Footer Note */}
+        <div className="mt-6 text-center text-[9.5px] text-slate-500">
+          Thank you for your business.
         </div>
       </div>
     );
