@@ -1,5 +1,21 @@
 import React from "react";
-import { ArrowLeft, Edit2, Trash2, MoreVertical, X, Clock, CheckCircle, Printer, Download, Share2, FileText, ChevronRight } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Edit2, 
+  Trash2, 
+  MoreVertical, 
+  X, 
+  Clock, 
+  CheckCircle, 
+  Printer, 
+  Download, 
+  Share2, 
+  FileText, 
+  ChevronRight,
+  Copy,
+  MessageCircle,
+  Ban
+} from "lucide-react";
 import { BusinessDocument } from "@/types/documents";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 
@@ -8,6 +24,8 @@ interface MobileInvoiceSuccessViewProps {
   onClose: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
+  onVoid?: () => void;
   onGenerateEwayBill?: () => void;
   /** Store info for PDF generation */
   storeInfo?: {
@@ -24,10 +42,14 @@ export function MobileInvoiceSuccessView({
   onClose,
   onEdit,
   onDelete,
+  onDuplicate,
+  onVoid,
   onGenerateEwayBill,
   storeInfo,
 }: MobileInvoiceSuccessViewProps) {
   const [promoBannerVisible, setPromoBannerVisible] = React.useState(true);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = React.useState(false);
 
   const buildPdfPayload = () => ({
     invoiceNumber: invoice.documentNumber,
@@ -98,6 +120,31 @@ export function MobileInvoiceSuccessView({
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const store = storeInfo?.name || "CredSmart Store";
+    const customer = invoice.partyName || "Valued Customer";
+    const total = `₹${invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+
+    const message = 
+      `🧾 *${store.toUpperCase()} - TAX INVOICE*\n\n` +
+      `Hello *${customer}*,\n` +
+      `Here is your invoice summary:\n` +
+      `• *Invoice No:* #${invoice.documentNumber}\n` +
+      `• *Date:* ${invoice.docDate}\n` +
+      `• *Total Amount:* ${total}\n` +
+      `• *Status:* ${invoice.status.toUpperCase()}\n\n` +
+      `Thank you for your business!`;
+
+    const rawPhone = invoice.partyPhone ? invoice.partyPhone.replace(/\D/g, "") : "";
+    const phoneParam = rawPhone.length >= 10 ? (rawPhone.length === 10 ? `91${rawPhone}` : rawPhone) : "";
+
+    const url = phoneParam
+      ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    window.open(url, "_blank");
+  };
+
   const isSalesType = invoice.docType === "sales_invoice" || invoice.docType === "sales_order" || invoice.docType === "estimate" || invoice.docType === "delivery_challan" || invoice.docType === "proforma_invoice" || invoice.docType === "credit_note";
 
   return (
@@ -117,16 +164,26 @@ export function MobileInvoiceSuccessView({
         </div>
         <div className="flex items-center gap-1">
           {onEdit && (
-            <button onClick={onEdit} className="p-2 text-blue-600 active:opacity-60">
+            <button 
+              onClick={onEdit} 
+              className="p-2 text-blue-600 active:opacity-60 cursor-pointer"
+            >
               <Edit2 className="w-4 h-4" />
             </button>
           )}
           {onDelete && (
-            <button onClick={onDelete} className="p-2 text-rose-500 active:opacity-60">
+            <button 
+              onClick={() => setIsDeleteConfirmOpen(true)} 
+              className="p-2 text-rose-500 active:opacity-60 cursor-pointer"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
-          <button className="p-2 text-indigo-700 active:opacity-60">
+          <button 
+            onClick={() => setIsMoreMenuOpen((prev) => !prev)} 
+            className="p-2 text-indigo-700 active:opacity-60 cursor-pointer"
+            aria-label="More options"
+          >
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
@@ -256,6 +313,11 @@ export function MobileInvoiceSuccessView({
               <span className="text-[13px] font-medium text-rose-500">Unpaid</span>
             </div>
           )}
+          {invoice.status === "cancelled" && (
+            <div className="flex items-center gap-1">
+              <span className="text-[13px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Cancelled</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -316,6 +378,162 @@ export function MobileInvoiceSuccessView({
           Done
         </button>
       </div>
+
+      {/* ── 8. Delete Confirmation Bottom Sheet / Dialog (Requirement R3) ── */}
+      {isDeleteConfirmOpen && (
+        <div 
+          className="fixed inset-0 z-[600] bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setIsDeleteConfirmOpen(false)}
+        >
+          <div 
+            className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl border border-slate-200 animate-in slide-in-from-bottom duration-250 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
+            <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4 sm:hidden" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="delete-dialog-title" className="text-base font-bold text-slate-900">
+                  Delete Invoice
+                </h3>
+                <span className="text-xs text-slate-500 font-medium">#{invoice.documentNumber}</span>
+              </div>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-6">
+              Delete this invoice? This action cannot be undone.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDeleteConfirmOpen(false)}
+                className="w-full min-h-[48px] py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false);
+                  onDelete?.();
+                }}
+                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-sm shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 9. More Options Action Sheet (Requirement R4) ── */}
+      {isMoreMenuOpen && (
+        <div 
+          className="fixed inset-0 z-[600] bg-black/50 backdrop-blur-xs flex items-end justify-center p-0 animate-in fade-in duration-200"
+          onClick={() => setIsMoreMenuOpen(false)}
+        >
+          <div 
+            className="w-full max-w-lg bg-white rounded-t-2xl p-5 shadow-2xl border-t border-slate-200 animate-in slide-in-from-bottom duration-250 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="More options"
+          >
+            <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Invoice Actions</span>
+              <span className="text-xs text-slate-400 font-medium">#{invoice.documentNumber}</span>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMoreMenuOpen(false);
+                  onDuplicate?.();
+                }}
+                className="w-full min-h-[48px] px-4 py-3 rounded-xl flex items-center gap-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-100">
+                  <Copy className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-semibold text-slate-900">Duplicate / Copy Bill</span>
+                  <span className="text-xs text-slate-500">Create new bill with same items</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMoreMenuOpen(false);
+                  handleWhatsAppShare();
+                }}
+                className="w-full min-h-[48px] px-4 py-3 rounded-xl flex items-center gap-3.5 hover:bg-emerald-50/60 active:bg-emerald-100/60 transition-colors text-left cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-100">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-semibold text-slate-900">Share via WhatsApp</span>
+                  <span className="text-xs text-slate-500">Direct message with invoice summary</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMoreMenuOpen(false);
+                  handleDownload();
+                }}
+                className="w-full min-h-[48px] px-4 py-3 rounded-xl flex items-center gap-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100">
+                  <Download className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-semibold text-slate-900">Download Thermal Receipt / PDF</span>
+                  <span className="text-xs text-slate-500">Save clean PDF file to device</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMoreMenuOpen(false);
+                  onVoid?.();
+                }}
+                className="w-full min-h-[48px] px-4 py-3 rounded-xl flex items-center gap-3.5 hover:bg-rose-50/60 active:bg-rose-100/60 transition-colors text-left cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover:bg-rose-100">
+                  <Ban className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-semibold text-rose-700">Cancel / Void Invoice</span>
+                  <span className="text-xs text-rose-500">Mark invoice status as cancelled</span>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsMoreMenuOpen(false)}
+                className="w-full min-h-[48px] py-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-semibold text-sm text-center transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

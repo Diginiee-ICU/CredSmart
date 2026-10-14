@@ -1,16 +1,26 @@
-## 2026-09-25T22:31:00Z
-You are auditor_m2 (Role: Milestone 2 Auditor).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2/handoff.md
+## 2026-10-14T11:23:36Z
+You are Forensic Auditor conducting the integrity audit of Milestone 2 (Requirements R3, R4 & M1 Remediation).
 
-Your mission is forensic integrity auditing of Milestone 2 changes:
-1. Inspect git status and exact diffs in src/services/autoSyncService.ts and src/pages/TallyImport.tsx.
-2. Check for any integrity violations:
-   - Hardcoded test values or cheats
-   - Dummy facades or bypassed logic
-   - Fabrication of outputs or mock bypasses
-3. Confirm genuine implementation of bank accounts persistence, cash-in-hand storage, and credit_transactions schema fix.
-4. Write your audit report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m2/handoff.md with an explicit verdict: CLEAN or INTEGRITY VIOLATION.
-5. Message the orchestrator (caller id) with your verdict and report path.
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2
+
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M2's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+
+Tasks:
+Conduct a comprehensive forensic integrity audit of the code changes made in `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, and test files:
+1. Check for hardcoded test fixtures, dummy/facade implementations, or shortcut tricks.
+2. Verify that deletion in `SalesInvoiceModal.tsx` genuinely invokes `documentsService.deleteDocument` and properly resets state.
+3. Verify that the confirmation bottom sheet in `MobileInvoiceSuccessView.tsx` is genuinely rendered and requires user confirmation before invoking `onDelete`.
+4. Verify that WhatsApp sharing genuinely builds the URI string and calls `window.open` with `https://wa.me/...`.
+5. Verify that `placeOfSupply` reset in `saveAndNew` genuinely prevents interstate tax bleed.
+6. Verify tests in `MobileInvoiceSuccessView.test.tsx` and related test files genuinely assert real behavior without tautologies.
+7. Run `cmd.exe /c npx tsc --noEmit` and `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress`.
+
+Write your audit report to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2\handoff.md`
+State clearly your final verdict: CLEAN or INTEGRITY VIOLATION.
+Use send_message to report back to orchestrator.

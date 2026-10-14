@@ -1,63 +1,56 @@
-# BRIEFING — 2026-09-25T22:36:00Z
+# BRIEFING — 2026-10-14T11:32:00Z
 
 ## Mission
-Perform an objective, rigorous code review and adversarial evaluation of changes made for Milestone 2 (Master Data, Balances, & Bank/Cash Pipeline) in autoSyncService.ts and TallyImport.tsx.
+Review Milestone 2 (Safe Invoice Deletion with Confirmation R3) and M1 Remediation for correctness, quality, adversarial robustness, and integrity.
 
 ## 🔒 My Identity
-- Archetype: reviewer AND adversarial critic
+- Archetype: reviewer_critic
 - Roles: reviewer, critic
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m2_1
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 2
-- Instance: 1 of 2
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 2: Safe Invoice Deletion with Confirmation (Requirement R3) and M1 Remediation
+- Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Actively check for integrity violations: hardcoded test results, dummy facades, shortcuts, fabricated verification, self-certifying work.
-- If any integrity violation is found, verdict MUST be REQUEST_CHANGES with Critical finding.
-- Build and test commands must be executed and verified independently.
-- Strictly adhere to 5-component handoff report.
+- Evidence-based findings; verify claims independently
+- Check integrity violations (hardcoded test results, facade implementations, shortcuts)
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-25T22:30:35Z
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T11:23:33Z
 
 ## Review Scope
-- **Files to review**: `src/services/autoSyncService.ts`, `src/pages/TallyImport.tsx`
-- **Interface contracts**: `c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md`, `c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md`
-- **Worker report**: `c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2/handoff.md`
-- **Review criteria**: Correctness, integrity, schema conformity, error handling, localStorage persistence, bank event broadcasting, type safety.
+- **Files to review**: `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/test/MobileInvoiceSuccessView.test.tsx`, `src/test/challengerM1_2Stress.test.ts`, `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx`
+- **Interface contracts**: `.agents/teamwork/ORIGINAL_REQUEST.md`, `.agents/teamwork/worker_m2/handoff.md`
+- **Review criteria**: correctness, style, conformance, adversarial edge cases, integrity
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/services/autoSyncService.ts:423-435` (Function signature & parsedData extension)
-  - `src/services/autoSyncService.ts:107-128` (getSyncConfig deep merging)
-  - `src/services/autoSyncService.ts:633-685` (credit_transactions opening balances insertion)
-  - `src/services/autoSyncService.ts:757-856` (Bank accounts probe, merge, localStorage, cash-in-hand, event dispatch)
-  - `src/services/autoSyncService.ts:863-898` (banksSynced and balancesSynced in stats & audit log)
-  - `src/pages/TallyImport.tsx:174-176` (handleLiveTallySync bankAccounts and cashInHand forwarding)
-  - `src/pages/TallyImport.tsx:1201-1212` (handleDirectSaveParties opening balances schema)
-  - `src/test/tallyE2E.test.ts:539-795` (Milestone 2 unit & E2E tests 1.6, 1.7, 1.8)
+  - `MobileInvoiceSuccessView.tsx`: Trash2 header trigger, confirmation bottom sheet dialog (`role="dialog"`), Cancel dismissal, Delete trigger.
+  - `SalesInvoiceModal.tsx`: `onDelete` handler calling `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`, toast `Invoice #[number] deleted`, clearing `activeSavedDocId` and `mobileSuccessInvoice`, closing modal.
+  - `SalesInvoiceModal.tsx`: `if (saving) return;` guard in `handleSave`.
+  - `SalesInvoiceModal.tsx`: reset of `placeOfSupply`, `billingPlaceOfSupply`, `showDueDate`, and `manualRoundOff` in `saveAndNew` branch.
+  - `MobileCreateInvoice.tsx`: `disabled={props.saving}` on Save & New and Generate Bill buttons.
+  - Integrity check: Verified zero hardcoded outputs, zero facade implementations, and genuine test suites.
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All 7 verification points verified with exact file line numbers.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Bank account deduplication with empty accountNumber vs identical names.
-  - Cash-in-hand zero vs negative vs undefined values.
-  - Supabase table existence probing failure handling.
-  - Presence of legacy invalid columns in credit_transactions.
-  - Non-UUID fallbacks in created_by.
-- **Vulnerabilities found**:
-  - Minor: `handleExecuteImport` (lines 710, 741 in TallyImport.tsx) still has `created_by: user?.id || "admin"` and lacks `reference_id: "IMPORT-OPENING"`. Note: `handleDirectSaveParties` is fully fixed.
-- **Untested angles**: Live Supabase DB round-trip requires active cloud connection and user session.
+  - Unconfirmed deletion via rapid clicks: Passed (sheet opens, 0 accidental deletes).
+  - Dialog event propagation: Passed (backdrop dismisses, card stopPropagation preserves sheet).
+  - Database rejection during deletion: Passed (handled gracefully with error toast, state cleaned up).
+  - Rapid double-click concurrency on save: Passed (`saving` lock blocks duplicate triggers).
+  - State leakage across consecutive bills: Passed (`placeOfSupply` reset prevents IGST bleed).
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within M2 scope.
 
 ## Key Decisions Made
-- Confirmed full compliance with Milestone 2 acceptance criteria.
-- Verified absence of integrity violations.
-- Issuing APPROVE verdict with one minor recommendation for subsequent milestones.
+- Confirmed full compliance with Requirement R3 and Challenger 2 M1 Remediation.
+- Issued verdict: APPROVE.
 
 ## Artifact Index
-- `handoff.md` — Final review and challenge report
-- `progress.md` — Liveness heartbeat
-- `DISPATCH.md` — Inbound instructions log
+- handoff.md — Review & challenge report
+- progress.md — Liveness & task execution log
+- DISPATCH.md — Task dispatch record

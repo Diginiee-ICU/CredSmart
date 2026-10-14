@@ -156,13 +156,17 @@ describe("Adversarial Review: Event Bubbling & Child Target Propagation", () => 
     expect(onEditMock).toHaveBeenCalledTimes(1);
   });
 
-  it("triggers onDelete when clicking child <path> inside header Trash2 button", () => {
+  it("triggers onDelete when clicking child <path> inside header Trash2 button and confirming", () => {
     const { container } = renderComponent();
     const trashBtn = container.querySelector(".sticky.top-0 button.text-rose-500");
     const pathElem = trashBtn?.querySelector("path");
     expect(pathElem).not.toBeNull();
 
     fireEvent.click(pathElem!);
+    expect(screen.getByText(/Delete this invoice\? This action cannot be undone\./i)).toBeInTheDocument();
+
+    const confirmDeleteBtn = screen.getByRole("button", { name: /^Delete$/i });
+    fireEvent.click(confirmDeleteBtn);
     expect(onDeleteMock).toHaveBeenCalledTimes(1);
   });
 });

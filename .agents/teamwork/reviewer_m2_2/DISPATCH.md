@@ -1,18 +1,25 @@
-## 2026-09-25T22:30:36Z
-You are reviewer_m2_2 (Role: Milestone 2 Reviewer 2).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m2_2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2/handoff.md
+## 2026-10-14T11:23:34Z
+You are Reviewer 2 reviewing Milestone 2: Header More Menu & Direct WhatsApp Share (Requirement R4).
 
-Your mission is to perform an independent, rigorous code review of Milestone 2 changes in:
-- src/services/autoSyncService.ts
-- src/pages/TallyImport.tsx
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
 
-Verify:
-1. Exact conformance of credit_transactions insertion with src/integrations/supabase/types.ts.
-2. Robustness of localStorage fallbacks in Cash & Bank persistence (handling null/undefined/SSR/Node execution).
-3. Accuracy of return counts: banksCount, banksSynced, balancesCount, balancesSynced.
-4. Correctness of party type ("customer" vs "supplier") resolution.
-5. Write your structured review report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m2_2/handoff.md with an explicit verdict: APPROVE or REQUEST_CHANGES.
-6. Message the orchestrator (caller id) with your verdict and report path.
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M2's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+
+Tasks:
+1. Review changes in `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` and `src/components/SalesInvoiceModal.tsx`.
+2. Verify Requirement R4:
+   - Does tapping `MoreVertical` (3-dots) open the mobile action sheet?
+   - Does the action sheet render all 4 touch-friendly options: Duplicate / Copy Bill, Share via WhatsApp, Download Thermal Receipt / PDF, Cancel / Void Invoice, plus Cancel button?
+   - Does WhatsApp share construct a valid universal URL (`https://wa.me/...`) with formatted invoice text summary and trigger `window.open`?
+   - Does Duplicate Bill advance sequence number, reset payment amount, clear active doc ID, return to editor, and show toast?
+   - Does Cancel / Void Invoice update doc status to `cancelled`, persist in database, update view, and show toast?
+3. Run verification commands (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine`
+4. Report verdict: APPROVE or REQUEST_CHANGES in `handoff.md`.
+Use send_message to report back to orchestrator.

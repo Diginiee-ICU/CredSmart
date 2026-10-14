@@ -259,6 +259,7 @@ export function SalesInvoiceModal({
   // Quick Create Item State
   const [showQuickCreateItemModal, setShowQuickCreateItemModal] = useState(false);
   const [mobileSuccessInvoice, setMobileSuccessInvoice] = useState<BusinessDocument | null>(null);
+  const [activeSavedDocId, setActiveSavedDocId] = useState<string | null>(editingDoc?.id || null);
   const [targetRowIndexForNewItem, setTargetRowIndexForNewItem] = useState<number | null>(null);
   const [initialNewItemName, setInitialNewItemName] = useState("");
   // When AddItems modal is opened from a specific row, this remembers the row index so
@@ -491,6 +492,7 @@ export function SalesInvoiceModal({
       setViewMode("edit");
 
       if (editingDoc) {
+        setActiveSavedDocId(editingDoc.id);
         setDocType(editingDoc.docType as SalesDocumentType);
         const docNum = editingDoc.documentNumber || "";
         const lastSlash = docNum.lastIndexOf("/");
@@ -557,6 +559,7 @@ export function SalesInvoiceModal({
           setShowPoReference(true);
         }
       } else {
+        setActiveSavedDocId(null);
         const targetType = initialDocType || "sales_invoice";
         setDocType(targetType);
         const randSeq = Math.floor(100 + Math.random() * 900).toString();
@@ -1030,6 +1033,7 @@ export function SalesInvoiceModal({
   };
 
   const handleSave = async (andPrint = false, saveAndNew = false) => {
+    if (saving) return;
     if (!partyName.trim()) {
       toast.error("Please enter or select a customer name (Bill To)");
       return;
@@ -1046,7 +1050,11 @@ export function SalesInvoiceModal({
       const resolvedBillingAddress = sameAsParty ? (partyAddress.trim() || undefined) : (billingAddress.trim() || undefined);
       const resolvedBillingPlaceOfSupply = sameAsParty ? (placeOfSupply || "27-Maharashtra") : (billingPlaceOfSupply.trim() || placeOfSupply || "27-Maharashtra");
 
-      const finalDoc: Omit<BusinessDocument, "id"> = {
+      const currentDocId = activeSavedDocId || editingDoc?.id || undefined;
+      const isUpdate = Boolean(currentDocId);
+
+      const finalDoc: Omit<BusinessDocument, "id"> & { id?: string } = {
+        id: currentDocId,
         organizationId: orgId,
         docType,
         documentNumber: fullDocumentNumber,
@@ -1093,9 +1101,14 @@ export function SalesInvoiceModal({
       };
 
       const saved = await documentsService.saveDocument(finalDoc, user?.id);
+      setActiveSavedDocId(saved.id);
 
-      // Auto-share with CredSmart network buyer for approval & auto-purchase sync
-      if (docType === "sales_invoice") {
+      // Toast notification and auto-share with CredSmart network buyer
+      if (isUpdate) {
+        toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
+      } else if (saveAndNew) {
+        toast.success(`Invoice #${saved.documentNumber} created! Ready for next bill.`);
+      } else if (docType === "sales_invoice") {
         try {
           const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
           if (netInvoice) {
@@ -1160,10 +1173,11 @@ export function SalesInvoiceModal({
         }
       }
 
-        if (window.innerWidth < 1024) {
-          setMobileSuccessInvoice(saved);
-        } else if (saveAndNew) {
-        const nextSeq = (parseInt(invoiceNumberSeq, 10) + 1 || Math.floor(100 + Math.random() * 900)).toString();
+      if (saveAndNew) {
+        const parsed = parseInt(invoiceNumberSeq, 10);
+        const nextSeq = !isNaN(parsed)
+          ? String(parsed + 1).padStart(invoiceNumberSeq.length, "0")
+          : Math.floor(100 + Math.random() * 900).toString();
         setInvoiceNumberSeq(nextSeq);
         setPartyName("");
         setCustomerSearch("");
@@ -1174,10 +1188,30 @@ export function SalesInvoiceModal({
         setBillingAddress("");
         setBillingPincode("");
         setBillingPlaceOfSupply("27-Maharashtra");
+        setPlaceOfSupply("27-Maharashtra");
+        setShowDueDate(false);
+        setManualRoundOff(0);
         setSameAsParty(false);
+        setShowBillingAddress(false);
         setItems([createNewRow("row-1")]);
         setAmountReceived(0);
         setMarkAsFullyPaid(false);
+        setNotes("");
+        setShowNotes(false);
+        setEwayBillNo("");
+        setShowEwayBill(false);
+        setVehicleNumber("");
+        setShowVehicleNo(false);
+        setPoReference("");
+        setShowPoReference(false);
+        setAdditionalChargesAmount(0);
+        setShowAdditionalCharges(false);
+        setOverallDiscountValue(0);
+        setShowDiscount(false);
+        setActiveSavedDocId(null);
+        setMobileSuccessInvoice(null);
+      } else if (window.innerWidth < 1024) {
+        setMobileSuccessInvoice(saved);
       } else {
         onOpenChange(false);
       }
@@ -1473,13 +1507,57 @@ export function SalesInvoiceModal({
               <MobileInvoiceSuccessView
                 invoice={mobileSuccessInvoice}
                 onClose={() => {
+                  setActiveSavedDocId(null);
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
                 }}
-                onEdit={() => setMobileSuccessInvoice(null)}
-                onDelete={() => {
+                onEdit={() => {
+                  if (mobileSuccessInvoice) {
+                    setActiveSavedDocId(mobileSuccessInvoice.id);
+                  }
+                  setMobileSuccessInvoice(null);
+                }}
+                onDelete={async () => {
+                  if (mobileSuccessInvoice) {
+                    try {
+                      await documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id);
+                      toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} deleted`);
+                    } catch (err) {
+                      console.error("Delete failed:", err);
+                      toast.error("Failed to delete invoice");
+                    }
+                  }
+                  setActiveSavedDocId(null);
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
+                }}
+                onDuplicate={() => {
+                  if (!mobileSuccessInvoice) return;
+                  setActiveSavedDocId(null);
+                  const parsed = parseInt(invoiceNumberSeq, 10);
+                  const nextSeq = !isNaN(parsed)
+                    ? String(parsed + 1).padStart(invoiceNumberSeq.length, "0")
+                    : Math.floor(100 + Math.random() * 900).toString();
+                  setInvoiceNumberSeq(nextSeq);
+                  setAmountReceived(0);
+                  setMarkAsFullyPaid(false);
+                  setMobileSuccessInvoice(null);
+                  toast.success(`Bill duplicated! New bill sequence #${nextSeq}`);
+                }}
+                onVoid={async () => {
+                  if (!mobileSuccessInvoice) return;
+                  try {
+                    const voidedDoc: BusinessDocument = {
+                      ...mobileSuccessInvoice,
+                      status: "cancelled",
+                    };
+                    await documentsService.saveDocument(voidedDoc, user?.id);
+                    setMobileSuccessInvoice(voidedDoc);
+                    toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} marked as Cancelled`);
+                  } catch (err) {
+                    console.error("Void failed:", err);
+                    toast.error("Failed to cancel invoice");
+                  }
                 }}
                 onGenerateEwayBill={() => setIsEwayModalOpen(true)}
                 storeInfo={{
@@ -1494,6 +1572,7 @@ export function SalesInvoiceModal({
           ) : (
             <MobileCreateInvoice
               onClose={() => onOpenChange(false)}
+              saving={saving}
               docType={docType}
               docDate={docDate}
               dueDate={dueDate}

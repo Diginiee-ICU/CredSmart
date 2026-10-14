@@ -1,24 +1,27 @@
-# Task Assignment: Milestone 2 Reviewer 1
-Assigned to reviewer_m2_1.
+## 2026-10-14T11:23:33Z
+You are Reviewer 1 reviewing Milestone 2: Safe Invoice Deletion with Confirmation (Requirement R3) and M1 Remediation.
 
-## 2026-09-25T22:30:35Z
-You are reviewer_m2_1 (Role: Milestone 2 Reviewer 1).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m2_1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2/handoff.md
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
 
-Your mission is to perform an objective, rigorous code review of the changes made for Milestone 2 (Master Data, Balances, & Bank/Cash Pipeline) in:
-- src/services/autoSyncService.ts
-- src/pages/TallyImport.tsx
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
 
-Verify:
-1. Does executeDirectSyncIngestion accept bankAccounts and cashInHand in parsedData?
-2. Are bank accounts safely probed against Supabase bank_accounts and persisted to localStorage credsmart_bank_accounts_{orgId} with deduplication and correct BankAccount schema?
-3. Is cash in hand persisted to credsmart_cash_in_hand_{orgId} and does it trigger the credsmart_bank_updated CustomEvent?
-4. Are party opening balances in credit_transactions inserted with valid schema (party_id, party_type, amount, type, description: "Opening Balance", reference_id: "SYNC-OPENING", organization_id, created_by)?
-5. Did worker_m2 completely eliminate the invalid legacy columns (customer_id, supplier_id, payment_mode, status, transaction_date)?
-6. Does getSyncConfig perform deep merging on syncScope so banks defaults to true for legacy localStorage caches?
-7. Is handleDirectSaveParties in TallyImport.tsx updated with valid opening balance schema?
-8. Write your structured review report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m2_1/handoff.md with an explicit verdict: APPROVE or REQUEST_CHANGES.
-9. Message the orchestrator (caller id) with your verdict and report path.
+Read Worker M2's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+
+Tasks:
+1. Review changes in `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` and `src/components/SalesInvoiceModal.tsx`.
+2. Verify Requirement R3:
+   - Does tapping header `Trash2` button open a mobile confirmation bottom sheet / alert dialog ("Delete this invoice? This action cannot be undone.")?
+   - Does clicking "Cancel" close the confirmation sheet without deleting?
+   - Does clicking "Delete" invoke `onDelete`?
+   - In `SalesInvoiceModal.tsx`, does `onDelete` call `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`, display toast `Invoice #[number] deleted`, clear `activeSavedDocId` and `mobileSuccessInvoice`, and close modal?
+3. Verify Challenger 2 M1 Remediation:
+   - Does `handleSave` have `if (saving) return;`?
+   - Are `placeOfSupply`, `showDueDate`, and `manualRoundOff` reset on `saveAndNew`?
+4. Run verification commands (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/challengerM1_2Stress`
+5. Report verdict: APPROVE or REQUEST_CHANGES in `handoff.md`.
+Use send_message to report back to orchestrator.

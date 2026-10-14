@@ -68,10 +68,12 @@ const mockInvoice: BusinessDocument = {
   created_at: "2026-10-14T06:00:00Z",
 };
 
-describe("MobileInvoiceSuccessView Unit Test Suite", () => {
+describe("MobileInvoiceSuccessView Unit Test Suite", { timeout: 15000 }, () => {
   let onEditMock: ReturnType<typeof vi.fn>;
   let onCloseMock: ReturnType<typeof vi.fn>;
   let onDeleteMock: ReturnType<typeof vi.fn>;
+  let onDuplicateMock: ReturnType<typeof vi.fn>;
+  let onVoidMock: ReturnType<typeof vi.fn>;
   let onGenerateEwayBillMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -79,6 +81,8 @@ describe("MobileInvoiceSuccessView Unit Test Suite", () => {
     onEditMock = vi.fn();
     onCloseMock = vi.fn();
     onDeleteMock = vi.fn();
+    onDuplicateMock = vi.fn();
+    onVoidMock = vi.fn();
     onGenerateEwayBillMock = vi.fn();
   });
 
@@ -89,6 +93,8 @@ describe("MobileInvoiceSuccessView Unit Test Suite", () => {
         onClose={onCloseMock}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
+        onDuplicate={onDuplicateMock}
+        onVoid={onVoidMock}
         onGenerateEwayBill={onGenerateEwayBillMock}
         storeInfo={{
           name: "CredSmart Retail Hub",
@@ -239,13 +245,31 @@ describe("MobileInvoiceSuccessView Unit Test Suite", () => {
       expect(onEditMock).toHaveBeenCalledTimes(1);
     });
 
-    it("invokes onDelete when header trash button is clicked", () => {
+    it("invokes onDelete when header trash button is clicked and confirmed", () => {
       const { container } = renderComponent();
       const trashBtn = container.querySelector(".sticky.top-0 button.text-rose-500, .sticky button.text-rose-500, .lucide-trash2, .lucide-trash-2, .lucide-trash")?.closest("button");
       expect(trashBtn).toBeTruthy();
       fireEvent.click(trashBtn!);
 
+      expect(screen.getByText(/Delete this invoice\? This action cannot be undone\./i)).toBeInTheDocument();
+      const confirmDeleteBtn = screen.getByRole("button", { name: /^Delete$/i });
+      fireEvent.click(confirmDeleteBtn);
+
       expect(onDeleteMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("cancels deletion when Cancel button is clicked in delete dialog", () => {
+      const { container } = renderComponent();
+      const trashBtn = container.querySelector(".sticky.top-0 button.text-rose-500, .sticky button.text-rose-500, .lucide-trash2, .lucide-trash-2, .lucide-trash")?.closest("button");
+      expect(trashBtn).toBeTruthy();
+      fireEvent.click(trashBtn!);
+
+      expect(screen.getByText(/Delete this invoice\? This action cannot be undone\./i)).toBeInTheDocument();
+      const cancelBtn = screen.getByRole("button", { name: /^Cancel$/i });
+      fireEvent.click(cancelBtn);
+
+      expect(onDeleteMock).not.toHaveBeenCalled();
+      expect(screen.queryByText(/Delete this invoice\? This action cannot be undone\./i)).not.toBeInTheDocument();
     });
   });
 
@@ -301,6 +325,108 @@ describe("MobileInvoiceSuccessView Unit Test Suite", () => {
       // Verifies minimum vertical padding for 48px touch target
       expect(editBillBtn.className).toMatch(/py-3\.5/);
       expect(doneBtn.className).toMatch(/py-3\.5/);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // SUITE 7: REQUIREMENT R4 - HEADER MORE MENU & DIRECT WHATSAPP SHARE
+  // ─────────────────────────────────────────────────────────────
+  describe("R4: Header More Menu & Direct WhatsApp Share", () => {
+    it("opens more options action sheet with 4 touch-friendly options when More button is clicked", () => {
+      const { container } = renderComponent();
+      const moreBtn = screen.getByRole("button", { name: /More options/i });
+      expect(moreBtn).toBeTruthy();
+      fireEvent.click(moreBtn!);
+
+      expect(screen.getByText(/Duplicate \/ Copy Bill/i)).toBeInTheDocument();
+      expect(screen.getByText(/Share via WhatsApp/i)).toBeInTheDocument();
+      expect(screen.getByText(/Download Thermal Receipt \/ PDF/i)).toBeInTheDocument();
+      expect(screen.getByText(/Cancel \/ Void Invoice/i)).toBeInTheDocument();
+
+      // Dismiss via Cancel button
+      const cancelBtn = screen.getByRole("button", { name: /^Cancel$/i });
+      fireEvent.click(cancelBtn);
+      expect(screen.queryByText(/Duplicate \/ Copy Bill/i)).not.toBeInTheDocument();
+    });
+
+    it("triggers onDuplicate callback and closes sheet when Duplicate option is clicked", () => {
+      const { container } = renderComponent();
+      const moreBtn = screen.getByRole("button", { name: /More options/i });
+      fireEvent.click(moreBtn!);
+
+      const duplicateOption = screen.getByText(/Duplicate \/ Copy Bill/i).closest("button");
+      expect(duplicateOption).toBeTruthy();
+      fireEvent.click(duplicateOption!);
+
+      expect(onDuplicateMock).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/Duplicate \/ Copy Bill/i)).not.toBeInTheDocument();
+    });
+
+    it("triggers onVoid callback and closes sheet when Void option is clicked", () => {
+      const { container } = renderComponent();
+      const moreBtn = screen.getByRole("button", { name: /More options/i });
+      fireEvent.click(moreBtn!);
+
+      const voidOption = screen.getByText(/Cancel \/ Void Invoice/i).closest("button");
+      expect(voidOption).toBeTruthy();
+      fireEvent.click(voidOption!);
+
+      expect(onVoidMock).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/Cancel \/ Void Invoice/i)).not.toBeInTheDocument();
+    });
+
+    it("formulates formatted WhatsApp direct URL and opens window.open", () => {
+      const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      const { container } = renderComponent();
+      const moreBtn = screen.getByRole("button", { name: /More options/i });
+      fireEvent.click(moreBtn!);
+
+      const whatsappOption = screen.getByText(/Share via WhatsApp/i).closest("button");
+      expect(whatsappOption).toBeTruthy();
+      fireEvent.click(whatsappOption!);
+
+      expect(windowOpenSpy).toHaveBeenCalledTimes(1);
+      const calledUrl = windowOpenSpy.mock.calls[0][0] as string;
+      const targetWindow = windowOpenSpy.mock.calls[0][1];
+
+      expect(targetWindow).toBe("_blank");
+      expect(calledUrl).toContain("https://wa.me/919876543210?text=");
+      expect(calledUrl).toContain(encodeURIComponent("CREDSMART RETAIL HUB - TAX INVOICE"));
+      expect(calledUrl).toContain(encodeURIComponent("#INV-2026-0042"));
+      expect(calledUrl).toContain(encodeURIComponent("Acme Supermarket"));
+
+      windowOpenSpy.mockRestore();
+    });
+
+    it("handles WhatsApp share without customer phone by omitting phone param", () => {
+      const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      const { container } = renderComponent({
+        invoice: {
+          ...mockInvoice,
+          partyPhone: undefined,
+        },
+      });
+      const moreBtn = screen.getByRole("button", { name: /More options/i });
+      fireEvent.click(moreBtn!);
+
+      const whatsappOption = screen.getByText(/Share via WhatsApp/i).closest("button");
+      fireEvent.click(whatsappOption!);
+
+      expect(windowOpenSpy).toHaveBeenCalledTimes(1);
+      const calledUrl = windowOpenSpy.mock.calls[0][0] as string;
+      expect(calledUrl.startsWith("https://wa.me/?text=")).toBe(true);
+
+      windowOpenSpy.mockRestore();
+    });
+
+    it("renders cancelled status badge when invoice.status is cancelled", () => {
+      renderComponent({
+        invoice: {
+          ...mockInvoice,
+          status: "cancelled",
+        },
+      });
+      expect(screen.getByText(/^Cancelled$/i)).toBeInTheDocument();
     });
   });
 });

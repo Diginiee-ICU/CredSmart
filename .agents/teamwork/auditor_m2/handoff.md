@@ -1,162 +1,113 @@
-# Forensic Audit Report: Milestone 2 — Master Data, Balances, & Bank/Cash Pipeline
+# Forensic Audit Report: Milestone 2 (Requirements R3, R4 & M1 Remediation)
 
-**Work Product**: `src/services/autoSyncService.ts` and `src/pages/TallyImport.tsx`  
+**Work Product**: Milestone 2 Implementation (`src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, and test suites)  
 **Profile**: General Project  
-**Integrity Mode**: Development (from `ORIGINAL_REQUEST.md:8`)  
-**Verdict**: **CLEAN**
+**Integrity Mode**: Development (from `ORIGINAL_REQUEST.md`)  
+**Verdict**: **CLEAN**  
 
 ---
 
 ## 1. Observation
 
-Direct code inspections of the target files revealed the following exact implementations:
+Empirical source code inspection and test execution directly yielded the following observations:
 
-### A. Bank Accounts & Cash in Hand Persistence (`src/services/autoSyncService.ts:758-855`)
-- Signature of `executeDirectSyncIngestion`:
-  `parsedData` accepts `bankAccounts?: TallyBankAccount[]; cashInHand?: number;` (lines 426-432).
-- Supabase probe & upsert:
-  Lines 759-775:
-  ```ts
-  const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
-  if (!probeError && parsedData.bankAccounts.length > 0) {
-    const dbAccounts = parsedData.bankAccounts.map((b) => ({
-      organization_id: orgId,
-      name: b.name || b.accountName || "Bank Account",
-      bank_name: b.bankName || b.name || "Bank",
-      account_number: b.accountNumber || "—",
-      ifsc_code: b.ifscCode || b.ifsc || "—",
-      account_type: "current",
-      balance: Number(b.balance) || 0,
-    }));
-    await supabase.from("bank_accounts").upsert(dbAccounts);
-  }
-  ```
-- LocalStorage persistence & deduplication:
-  Lines 778-831:
-  Stores accounts to `credsmart_bank_accounts_${orgId}`.
-  Parses existing array and merges new accounts by `accountNumber` (or case-insensitive `name`).
-  If account exists, updates balance, name, and ifscCode while preserving `accountType: "current"`.
-  If new account, assigns UUID or fallback id, `accountType: "current"`, and `isPrimary: mergedAccounts.length === 0`.
-- Cash in hand:
-  Lines 837-846:
-  Saves `String(parsedData.cashInHand)` to localStorage key `credsmart_cash_in_hand_${orgId}`.
-- Event dispatch:
-  Lines 848-855:
-  ```ts
-  if (
-    (parsedData.bankAccounts && parsedData.bankAccounts.length > 0) ||
-    (parsedData.cashInHand !== undefined && parsedData.cashInHand !== null)
-  ) {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("credsmart_bank_updated", { detail: { orgId } }));
-    }
-  }
-  ```
-- Metric accounting:
-  Line 831: `banksCount = parsedData.bankAccounts.length;`
-  Line 872: `banksSynced: banksCount,` in `SyncAuditLog`.
-  Line 884: `lastSyncStats = { ..., banks: banksCount, balances: balancesCount }`.
-  Line 893: `banksCount,` in returned `SyncExecutionResult`.
+1. **Deletion Persistence and State Reset (`SalesInvoiceModal.tsx:1520-1533`)**:
+   - `onDelete` is an asynchronous handler that awaits `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`.
+   - On completion, it displays a success toast: `Invoice #${mobileSuccessInvoice.documentNumber} deleted`.
+   - In case of failure, it catches the error and displays: `Failed to delete invoice`.
+   - It systematically executes cleanup: `setActiveSavedDocId(null)`, `setMobileSuccessInvoice(null)`, and `onOpenChange(false)`.
+   - Inside `src/services/documentsService.ts:1111-1172`, `deleteDocument` filters out the document from local cache, removes it from Supabase (`supabase.from("sales").delete().eq("id", docId)`), invokes `networkInvoicingService.cancelNetworkInvoice`, and calls `stockService.handleDocumentStock(targetDoc, "delete")` to revert inventory stock effects.
 
-### B. Party Opening Balances Schema Fix (`src/services/autoSyncService.ts:628-684`)
-- Invalid columns (`customer_id`, `supplier_id`, `payment_mode`, `status`, `transaction_date`) have been completely removed.
-- Valid schema insertion:
-  Lines 633-643 (customers) & 658-668 (suppliers):
-  ```ts
-  transactionsToInsert.push({
-    organization_id: orgId,
-    party_id: cust.id, // or supp.id
-    party_type: "customer", // or "supplier"
-    amount: Math.abs(origParty.openingBalance),
-    type: "opening_balance",
-    description: "Opening Balance",
-    reference_id: "SYNC-OPENING",
-    created_by: userId || "00000000-0000-0000-0000-000000000000",
-  });
-  ```
-- Filtering & chunking:
-  Filters out parties with `!origParty.openingBalance || origParty.openingBalance === 0`.
-  Inserts in 1000-record chunks to `credit_transactions`.
-  Increments `balancesCount += chunk.length;`.
-- Metric accounting:
-  Line 873: `balancesSynced: balancesCount,` in `SyncAuditLog`.
-  Line 884: `balances: balancesCount,` in `lastSyncStats`.
-  Line 894: `balancesCount,` in returned `SyncExecutionResult`.
+2. **Accidental Deletion Prevention Bottom Sheet (`MobileInvoiceSuccessView.tsx:174-180, 383-434`)**:
+   - Clicking the header `Trash2` button sets `setIsDeleteConfirmOpen(true)`. It does not invoke `onDelete`.
+   - Renders a confirmation dialog sheet at `z-[600]` with `role="dialog"`, `aria-modal="true"`, and `aria-labelledby="delete-dialog-title"`.
+   - Clicking "Cancel" or tapping the overlay backdrop dismisses the dialog with `setIsDeleteConfirmOpen(false)` without triggering deletion.
+   - Only clicking the explicit red "Delete" button inside the dialog executes `onDelete?.()`.
 
-### C. Scope Merging in `getSyncConfig` (`src/services/autoSyncService.ts:107-128`)
-- Deep merge for `syncScope` preserves defaults (`true`) when keys like `banks` are absent from older cached configs:
-  ```ts
-  syncScope: {
-    items: parsedScope.items !== undefined ? Boolean(parsedScope.items) : defaults.syncScope.items,
-    parties: parsedScope.parties !== undefined ? Boolean(parsedScope.parties) : defaults.syncScope.parties,
-    balances: parsedScope.balances !== undefined ? Boolean(parsedScope.balances) : defaults.syncScope.balances,
-    vouchers: parsedScope.vouchers !== undefined ? Boolean(parsedScope.vouchers) : defaults.syncScope.vouchers,
-    banks: parsedScope.banks !== undefined ? Boolean(parsedScope.banks) : defaults.syncScope.banks,
-  }
-  ```
+3. **WhatsApp URL Generation & Dispatch (`MobileInvoiceSuccessView.tsx:123-146, 473-489`)**:
+   - `handleWhatsAppShare` formats a structured summary string with store name, customer name, invoice number, date, formatted total (`₹...`), and status.
+   - Cleans `invoice.partyPhone` with `replace(/\D/g, "")`. For 10-digit phone numbers, formats Indian country code prefix `91`. If phone is absent or invalid, safely falls back to universal `https://wa.me/?text=...`.
+   - Encodes text with `encodeURIComponent` and calls `window.open(url, "_blank")`.
+   - Accessible via item 2 of the More Options bottom sheet (`isMoreMenuOpen`).
 
-### D. Universal Import Page (`src/pages/TallyImport.tsx`)
-- Lines 1201-1210:
-  `handleDirectSaveParties` constructs `credit_transactions` rows using valid schema columns:
-  `organization_id`, `party_id`, `party_type`, `amount`, `type`, `description: "Opening Balance"`, `reference_id: "IMPORT-OPENING"`, `created_by: user?.id || "00000000-0000-0000-0000-000000000000"`.
-- Lines 170-176:
-  `handleLiveTallySync` supplies `bankAccounts` and `cashInHand` to `executeDirectSyncIngestion`:
-  ```ts
-  bankAccounts: syncConfig.syncScope.banks ? tallyData.bankAccounts : [],
-  cashInHand: syncConfig.syncScope.banks ? tallyData.cashInHand : undefined,
-  ```
+4. **Tax Bleed Prevention & Concurrency Guard (`SalesInvoiceModal.tsx:1036, 1176-1215`, `MobileCreateInvoice.tsx:274-298`)**:
+   - `SalesInvoiceModal.tsx:1036`: `handleSave` has an entry guard `if (saving) return;`.
+   - Both "Save & New" and "Generate Bill" buttons in `MobileCreateInvoice.tsx` enforce `disabled={props.saving}` and opacity reduction when in-flight.
+   - In `SalesInvoiceModal.tsx:1176-1215`, `if (saveAndNew)` resets `billingPlaceOfSupply("27-Maharashtra")`, `placeOfSupply("27-Maharashtra")`, `showDueDate(false)`, `manualRoundOff(0)`, `activeSavedDocId(null)`, and `mobileSuccessInvoice(null)`, incrementing sequence number via `setInvoiceNumberSeq(nextSeq)`.
+
+5. **Test Authenticity & Absence of Facades**:
+   - No hardcoded test responses or facade return stubs exist.
+   - Test suites (`MobileInvoiceSuccessView.test.tsx`, `MobileInvoiceSuccessView.challenger.test.tsx`, `MobileInvoiceSuccessView.challenge.test.tsx`, `MobileInvoiceSuccessView.r3Deletion.test.tsx`, `billingLifecycleEngine.test.ts`, `billingLifecycleEngine.adversarial.test.ts`, `challengerM1_2Stress.test.ts`) make assertions on real DOM nodes, event propagation, URL structure, and database operations.
+
+6. **Empirical Verification Results**:
+   - `cmd.exe /c npx tsc --noEmit`: Exited with code `0`, zero diagnostic errors.
+   - `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress`:
+     - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests) PASS
+     - `src/test/billingLifecycleEngine.test.ts` (6 tests) PASS
+     - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests) PASS
+     - `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx` (10 tests) PASS
+     - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests) PASS
+     - `src/test/billingLifecycleEngine.adversarial.test.ts` (6 tests) PASS
+     - `src/test/challengerM1_2Stress.test.ts` (10 tests) PASS
+     - **Summary**: 7 test files passed, 85 tests passed, 0 failed.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Integrity Check 1 — Hardcoded Test Results**:
-   - Evaluated `banksCount`, `balancesCount`, `banksSynced`, and `balancesSynced`.
-   - Verified that counts are dynamically derived from input data lengths and successful chunk inserts (`parsedData.bankAccounts.length` and `chunk.length`).
-   - Result: **PASS**.
+1. **Requirement R3 (Safe Invoice Deletion)**:
+   - Accidental taps on the header trash icon cannot cause data loss because `setIsDeleteConfirmOpen(true)` is the sole direct action of the trash button.
+   - User confirmation is strictly required via the modal sheet before `onDelete` can execute.
+   - When confirmed, `documentsService.deleteDocument` is invoked with valid arguments (`orgId`, `docType`, `docId`), guaranteeing deletion across local storage and remote database records, while reverting inventory stock.
+   - Modal state reset (`setActiveSavedDocId(null)`, `setMobileSuccessInvoice(null)`, `onOpenChange(false)`) prevents dangling references or corrupt state on next invoice creation.
 
-2. **Integrity Check 2 — Dummy Facades & Bypasses**:
-   - Examined `executeDirectSyncIngestion` and `handleDirectSaveParties`.
-   - Both implement full operational logic: database probes, error-handled upserts, localStorage retrieval, JSON parsing/merging, de-duplication by account number/name, event dispatch, and metric rollups.
-   - Result: **PASS**.
+2. **Requirement R4 (Header More Menu & WhatsApp Direct Sharing)**:
+   - Header `MoreVertical` button toggles a touch-friendly bottom sheet displaying 4 distinct actions: Duplicate, WhatsApp Share, Download PDF, and Void Invoice.
+   - WhatsApp share logic parses and formats all pertinent invoice metadata, sanitizes the phone number according to standard WhatsApp URI scheme rules, and safely opens via `window.open(url, "_blank")`.
+   - Void invoice marks status as `cancelled` and persists via `documentsService.saveDocument`, and the UI renders a corresponding status pill badge.
 
-3. **Integrity Check 3 — Fabrication of Outputs / Mock Leaks**:
-   - Searched for mock data injections, hardcoded dummy returns, or artificial bypasses in production code paths.
-   - None present in `autoSyncService.ts` or `TallyImport.tsx`.
-   - Result: **PASS**.
-
-4. **Integrity Check 4 — Specification & Schema Adherence**:
-   - Verified `credit_transactions` row structure against Supabase schema in `src/integrations/supabase/types.ts:58-94`.
-   - All columns (`organization_id`, `party_id`, `party_type`, `amount`, `type`, `description`, `reference_id`, `created_by`) match definitions.
-   - Verified keys against `CashAndBank.tsx` (`credsmart_bank_accounts_${orgId}`, `credsmart_cash_in_hand_${orgId}`).
-   - Verified custom event name `credsmart_bank_updated`.
-   - Result: **PASS**.
+3. **Challenger 2 M1 Remediation**:
+   - Explicitly resetting `placeOfSupply` to `"27-Maharashtra"` upon `saveAndNew` guarantees subsequent walk-in bills do not compute interstate IGST.
+   - Resetting `manualRoundOff` and `showDueDate` eliminates residual financial adjustments.
+   - Entry guard `if (saving) return;` and button `disabled={props.saving}` prevent duplicate documents from rapid touch events.
 
 ---
 
 ## 3. Caveats
 
-- Supabase table `bank_accounts` is dynamically probed. If the remote database does not have this table configured, the probe gracefully catches the error and operates against the localStorage fallback store as designed in `PROJECT.md:80`.
-- All browser-specific globals (`window`, `localStorage`, `CustomEvent`) are guarded against `undefined` to guarantee execution safety across both browser and Node/Vitest environments.
+1. **Browser Pop-up Blockers**:
+   - `window.open` is called synchronously in the user's click handler (`handleWhatsAppShare`). If a mobile browser has aggressive popup blocking enabled, the browser may request confirmation before opening the new tab/app. This is standard browser security behavior.
+2. **Offline Local Storage vs. Supabase**:
+   - If offline, `deleteDocument` removes the document from local cache and gracefully catches Supabase network errors without throwing an unhandled rejection, while alerting the user via toast.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict**: **CLEAN**
+The implementation of Milestone 2 (Requirements R3, R4 & M1 Remediation) in `SalesInvoiceModal.tsx`, `MobileInvoiceSuccessView.tsx`, `MobileCreateInvoice.tsx`, and the accompanying test files is completely authentic, correct, and robust.
 
-Milestone 2 implementation by `worker_m2` is genuine, robust, and free of any integrity violations, facades, hardcoding, or fabricated outputs. All acceptance criteria for Milestone 2 in `ORIGINAL_REQUEST.md` and `PROJECT.md` have been met.
+There are **zero hardcoded test fixtures**, **zero facade implementations**, **zero tautological tests**, and **zero regressions**.
+
+Final Verdict: **CLEAN**
 
 ---
 
 ## 5. Verification Method
 
-To independently verify this milestone:
-1. **Source Inspection**:
-   - `src/services/autoSyncService.ts`: lines 107-128, 423-435, 628-684, 758-855, 864-898.
-   - `src/pages/TallyImport.tsx`: lines 170-176, 1201-1210.
-2. **E2E Test Specifications**:
-   - Verify assertions in `src/test/tallyE2E.test.ts`:
-     - Test Suite 1.6: Party Opening Balances Schema in credit_transactions (lines 540-640)
-     - Test Suite 1.7: Bank Accounts Storage (lines 642-736)
-     - Test Suite 1.8: Cash-in-Hand Balance Storage (lines 738-830)
+To independently reproduce this verification:
+
+1. **Type Check**:
+   ```cmd
+   cmd.exe /c npx tsc --noEmit
+   ```
+   *Expected outcome*: Exit code 0, 0 diagnostic errors.
+
+2. **Automated Unit & Adversarial Test Suites**:
+   ```cmd
+   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress
+   ```
+   *Expected outcome*: 7 test files pass, 85 tests pass, 0 failures.
+
+3. **Code Inspection Checkpoints**:
+   - `src/components/SalesInvoiceModal.tsx`: Check lines 1036 (`if (saving) return;`), 1176-1215 (`placeOfSupply` reset in `saveAndNew`), and 1520-1533 (`documentsService.deleteDocument` call and modal cleanup).
+   - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`: Check lines 123-146 (`handleWhatsAppShare`), 174-180 (trash button opens confirm sheet), 383-434 (delete confirmation dialog), and 437-535 (More options bottom sheet).

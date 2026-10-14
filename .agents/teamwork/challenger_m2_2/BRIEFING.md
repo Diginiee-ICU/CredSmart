@@ -1,56 +1,50 @@
-# BRIEFING — 2026-09-25T22:38:00Z
+# BRIEFING — 2026-10-14T11:37:00Z
 
 ## Mission
-Independently challenge and stress-test Milestone 2 (Master Data, Balances, Bank/Cash Pipeline): bank accounts deduplication, cash-in-hand updates (0, negative, float), party opening balances (zero balance filtering), and created_by UUID format validation.
+Stress-test Milestone 2 (Header More Menu & WhatsApp Sharing, Requirement R4) with empirical verification and edge case analysis.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m2_2
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 2 (Challenger 2)
-- Instance: 2 of 2
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 2: Header More Menu & WhatsApp Sharing
+- Instance: 2 of 2 (Challenger 2)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Write only to your folder: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m2_2
-- .agents/teamwork/ must contain only metadata — never source, tests, or data
-- Never trust unverified claims: write and execute tests empirically
-- Output explicit verdict: APPROVE or FAIL
+- Run verification code yourself; do NOT trust worker's claims or logs
+- Report verdict: APPROVE or CHALLENGE_FAILED in handoff.md
+- Use send_message to report back to orchestrator
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-25T22:37:42Z
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T11:37:00Z
 
 ## Review Scope
-- **Files to review**: `src/services/autoSyncService.ts`, `src/pages/TallyImport.tsx`, `src/utils/tallyXmlParser.ts`, `src/integrations/supabase/types.ts`, `src/test/tallyE2E.test.ts`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md`, `src/integrations/supabase/types.ts`
-- **Review criteria**:
-  1. Bank accounts deduplication logic when importing duplicate bank accounts or updating balances.
-  2. Cash-in-hand updates with 0, negative values, and floating point numbers.
-  3. Party opening balances with zero balance (no spurious zero-value transactions).
-  4. created_by UUID format validation.
-
-## Attack Surface
-- **Hypotheses tested**:
-  - Bank accounts duplicate matching by accountNumber vs name, case sensitivity, whitespace. (PASS in autoSyncService.ts; handles both multi-account batches and cross-sync merges).
-  - Cash-in-hand handling when value is 0 (truthiness checks `if (cashInHand)` vs `if (cashInHand !== undefined)`), negative cash, float precision. (PASS in autoSyncService.ts: uses `!== undefined && !== null`, preserves negative numbers and decimals).
-  - Zero opening balance check: is 0 filtered out? Does it create zero-amount credit_transactions? (PASS: strictly checks `origParty.openingBalance !== 0`, prevents spurious transactions).
-  - created_by: is it a valid UUID in all branches (live sync, file import, missing user)? (VERIFIED: uses RFC 4122 Nil UUID fallback `"00000000-0000-0000-0000-000000000000"` when falsy; flagged non-UUID placeholder strings in unauthenticated demo sync).
-- **Vulnerabilities found**:
-  - `TallyImport.tsx` lines 710, 741, 774 in legacy `handleExecuteImport` still retain `created_by: user?.id || "admin"` ("admin" is not a UUID).
-  - Calling `executeDirectSyncIngestion` with `"demo-user"` or `"sync-user"` string bypasses the falsy check and would pass a non-UUID string if user is null.
-- **Untested angles**: Production database constraint enforcement on `credit_transactions.created_by`.
-
-## Loaded Skills
-- None specified for this challenge task.
+- **Files reviewed**: `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`
+- **Test files executed**: `src/test/MobileInvoiceSuccessView.m2Challenger.test.tsx`, `src/test/MobileInvoiceSuccessView.test.tsx`, `src/test/MobileInvoiceSuccessView.challenger.test.tsx`, `src/test/MobileInvoiceSuccessView.challenge.test.tsx`, `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx`, `src/test/billingLifecycleEngine.test.ts`, `src/test/billingLifecycleEngine.adversarial.test.ts`
+- **Review criteria**: WhatsApp URL encoding, Duplicate Bill sequence & payment reset & overwrite isolation, Void Invoice cancelled status & documentsService persistence.
 
 ## Key Decisions Made
-- Milestone 2 implementation in `src/services/autoSyncService.ts` and `src/pages/TallyImport.tsx` meets all core requirements and passes all challenge dimensions.
 - Verdict: APPROVE.
+- Validated that WhatsApp URLs are syntactically valid and properly percent-encoded across all special characters, emojis, and phone formatting inputs.
+- Validated that Duplicate Bill cleanly increments sequence numbers and resets payments.
+- Validated that Void Invoice updates status to "cancelled" and persists into documentsService.
+- Documented two edge cases for future worker cycles: `maximumFractionDigits: 2` in currency formatting, and `editingDoc?.id` fallback handling when duplicating an existing invoice.
 
 ## Artifact Index
-- DISPATCH.md — incoming dispatch instructions
-- BRIEFING.md — persistent state and identity
-- progress.md — liveness heartbeat
-- handoff.md — final handoff report
+- DISPATCH.md — Recorded instructions
+- BRIEFING.md — Working memory and scope
+- progress.md — Liveness heartbeat
+- handoff.md — Final handoff report
+
+## Attack Surface
+- **Hypotheses tested**: Special characters in WhatsApp URLs, decimal amount formatting, phone number variations, sequence advancement, duplicate isolation, void persistence.
+- **Vulnerabilities found**: 
+  1. `maximumFractionDigits: 2` missing in currency formatting (causes raw floating points with >2 decimals to display 3 digits).
+  2. `currentDocId = activeSavedDocId || editingDoc?.id` fallback in `SalesInvoiceModal.tsx:1053` when duplicating an existing invoice opened via `editingDoc`.
+- **Untested angles**: Hardware thermal printer rendering in mobile webview.
+
+## Loaded Skills
+- None

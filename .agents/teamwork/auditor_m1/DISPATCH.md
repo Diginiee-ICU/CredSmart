@@ -1,16 +1,24 @@
-## 2026-09-25T22:10:00Z
-You are auditor_m1 (Role: Milestone 1 Auditor).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1/handoff.md
+## 2026-10-14T10:50:10Z
+You are Forensic Auditor auditing Milestone 1: Core Billing Lifecycle Engine (Requirements R1 and R2).
 
-Your mission is forensic integrity auditing of Milestone 1 changes:
-1. Inspect git status and exact diffs in src/services/autoSyncService.ts and scripts/credsmart-sync-agent/index.cjs.
-2. Check for any integrity violations:
-   - Hardcoded fake results or test-specific cheats
-   - Dummy facades or bypassed logic
-   - Fabrication of outputs or mock bypasses
-3. Confirm genuine implementation of <SVFROMDATE>, <SVTODATE>, and SyncConfig expansions.
-4. Write your audit report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m1/handoff.md with an explicit verdict: CLEAN or INTEGRITY VIOLATION.
-5. Message the orchestrator (caller id) with your verdict and report path.
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
+
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M1's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+Tasks:
+Conduct a comprehensive forensic integrity audit of the code changes made in `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`, and `src/test/billingLifecycleEngine.test.ts`:
+1. Check for hardcoded test results, mock short-circuits, or dummy/facade implementations.
+2. Verify that `activeSavedDocId` is genuine React state that persists across `onEdit` and is legitimately passed into `documentsService.saveDocument`.
+3. Verify that `documentsService.saveDocument` genuinely executes in-place updates for Supabase `sales` and `sale_items`, as well as localStorage cache.
+4. Verify that the Save & New conditional hierarchy fix in line 1163 genuinely resets all state and increments the sequence number without circumventing the intended functionality.
+5. Verify that tests in `src/test/billingLifecycleEngine.test.ts` genuinely assert real behavior without tautological assertions (`expect(true).toBe(true)`).
+
+Write your audit report to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md`
+State clearly your final verdict: CLEAN or INTEGRITY VIOLATION.
+Use send_message to report back to orchestrator.

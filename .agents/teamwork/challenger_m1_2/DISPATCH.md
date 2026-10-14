@@ -1,13 +1,26 @@
-## 2026-09-25T22:09:51Z
-You are challenger_m1_2 (Role: Milestone 1 Challenger 2).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m1_2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1/handoff.md
+## 2026-10-14T10:50:07Z
+You are Challenger 2 stress-testing Milestone 1: Mobile "Save & New" Engine & Sequence Reset (Requirement R2).
 
-Your mission is to independently challenge and stress-test Milestone 1:
-1. Check date boundary strings for compatibility with Tally Prime / ERP 9 specifications (YYYYMMDD format).
-2. Verify backwards compatibility: does the addition of banks to syncScope or date tags to XML break existing consumers?
-3. Verify bridge agent index.cjs exports and consistency with autoSyncService.ts.
-4. Write your handoff report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m1_2/handoff.md with an explicit verdict: APPROVE or FAIL.
-5. Message the orchestrator (caller id) with your verdict and report path.
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
+
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M1's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+Tasks:
+1. Adversarially test and challenge the Save & New engine on mobile:
+   - What happens when `invoiceNumberSeq` has leading zeros (e.g., "001" → "002", "099" → "100")? Does padding hold?
+   - What happens when a user clicks Save & New multiple times in rapid succession?
+   - Do any stale customer attributes, discount percentages, or extra charges bleed into the subsequent bill?
+   - Does `activeSavedDocId` reset to null so the subsequent bill doesn't accidentally overwrite the previous bill?
+2. Run tests and type checks (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
+
+Write your findings to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md`
+State clearly your final verdict: APPROVE or CHALLENGE_FAILED.
+Use send_message to report back to orchestrator.

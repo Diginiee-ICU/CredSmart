@@ -1,53 +1,50 @@
-# BRIEFING — 2026-09-26T03:48:00+05:30
+# BRIEFING — 2026-10-14T11:02:00Z
 
 ## Mission
-Empirically challenge, test, and verify Milestone 1 changes (TALLY_EXPORT_DAYBOOK_XML and getDefaultSyncConfig syncScope) across autoSyncService.ts and credsmart-sync-agent/index.cjs.
+Adversarially challenge and stress-test Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1 & R2).
 
 ## 🔒 My Identity
-- Archetype: empirical-challenger
+- Archetype: challenger
 - Roles: critic, specialist
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m1_1
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 1
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Report any failure points as findings — do NOT fix them yourself
-- Layout compliance: .agents/teamwork/ holds ONLY agent metadata (never place source or tests here)
-- Empirical verification: run verification code ourselves, do not trust worker claims without empirical reproduction
+- Run verification code directly (cmd.exe /c npx vitest, tsc)
+- Do not trust claims or logs without empirical reproduction
+- Empirical proof required for any bug/challenge
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-26T03:48:00+05:30
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T11:02:00Z
 
 ## Review Scope
-- **Files to review**: `src/services/autoSyncService.ts`, `scripts/credsmart-sync-agent/index.cjs`, `.agents/teamwork/worker_m1/handoff.md`
-- **Interface contracts**: `PROJECT.md`, `.agents/teamwork/ORIGINAL_REQUEST.md`
-- **Review criteria**: XML well-formedness & parsing, STATICVARIABLES nesting of SVFROMDATE and SVTODATE, syncScope defaults (items, parties, balances, vouchers, banks === true), TypeScript types validation, edge cases and failure modes
+- **Files to review**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`, `src/services/stockService.ts`, `src/test/billingLifecycleEngine.test.ts`, `src/test/billingLifecycleEngine.adversarial.test.ts`
+- **Interface contracts**: ORIGINAL_REQUEST.md, worker_m1/handoff.md
+- **Review criteria**: In-place update lifecycle correctness, activeSavedDocId consistency across repeated edit-save cycles, local storage duplicate prevention, line items add/modify/remove stock adjustments and item totals
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. `TALLY_EXPORT_DAYBOOK_XML` well-formedness and standard XML parseability: VERIFIED.
-  2. `<SVFROMDATE>` and `<SVTODATE>` nested properly inside `<STATICVARIABLES>`: VERIFIED.
-  3. `getDefaultSyncConfig` syncScope defaults (all 5 true): VERIFIED.
-  4. Interface contract type adherence across `SyncConfig`, `SyncAuditLog`, and `SyncExecutionResult`: VERIFIED.
-- **Vulnerabilities found**:
-  1. Top-level `server.listen()` in `scripts/credsmart-sync-agent/index.cjs` executes on `require()` rather than being guarded by `if (require.main === module)`, keeping event loop alive and risking port conflict if imported directly.
-  2. `getSyncConfig()` performs shallow spread (`{ ...getDefaultSyncConfig(orgId), ...parsed }`), which means legacy persisted configs without `banks` in `localStorage` will overwrite `syncScope` without default `banks: true`.
-- **Untested angles**:
-  1. Live connection to physical Tally Prime instance with massive multi-year dataset over port 9000.
+  1. *Hypothesis 1*: Repeated re-edits (10 consecutive cycles) could cause `activeSavedDocId` drift, ID reassignment, or cache record duplication. Result: DISPROVEN. Tested via 10 consecutive cycles; `doc.id` remained strictly invariant and cache had exactly 1 document throughout.
+  2. *Hypothesis 2*: Offline/local documents with `doc_` prefix or re-sequenced invoice numbers could produce duplicate records. Result: DISPROVEN. Tested with invoice number revisions and multi-tenant isolation; duplicate prevention logic matched cleanly by `d.id === doc.id`.
+  3. *Hypothesis 3*: Dynamic line item mutations (adding, removing, quantity changing) could fail to supply `previousDoc` to `stockService` or compute incorrect delta totals. Result: DISPROVEN. Verified `stockService.handleDocumentStock` was called with action `"update"` and full `previousDoc` snapshot containing original items.
+  4. *Hypothesis 4*: "Save & New" sequence reset could retain stale `activeSavedDocId`, corrupting subsequent documents. Result: DISPROVEN. Verified state reset clears `activeSavedDocId` to null, creating distinct records with isolated update paths.
+- **Vulnerabilities found**: None. In-place update engine is robust and strictly complies with R1 & R2.
+- **Untested angles**: Hardware-level local storage quota exhaustion (exceeding browser 5MB localStorage quota).
 
 ## Loaded Skills
-- None loaded.
+- None specified in dispatch
 
 ## Key Decisions Made
-- Concluded deep AST, XML parser, and type verification.
-- Prepared comprehensive verification suite in `scripts/test_challenger_m1.cjs`.
-- Approved Milestone 1 with noted non-blocking edge cases and advisories.
+- Created empirical stress test harness `src/test/billingLifecycleEngine.adversarial.test.ts` covering 6 adversarial test cases across all attack dimensions.
+- Verified TypeScript type integrity (`tsc --noEmit` exits with 0 errors).
+- Issued final verdict: APPROVE.
 
 ## Artifact Index
-- handoff.md — final challenger verdict and findings
-- progress.md — liveness heartbeat
-- BRIEFING.md — situational awareness
-- scripts/test_challenger_m1.cjs — project test script
+- DISPATCH.md — Dispatch log
+- progress.md — Heartbeat and progress log
+- handoff.md — Final handoff report
+- src/test/billingLifecycleEngine.adversarial.test.ts — Adversarial stress test harness

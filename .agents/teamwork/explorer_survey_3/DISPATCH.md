@@ -1,26 +1,25 @@
-## 2026-10-14T06:48:25Z
+## 2026-10-14T09:58:04Z
+You are Explorer 3 investigating test infrastructure and existing tests in `src/test/MobileInvoiceSuccessView*.test.tsx`, `src/services/documentsService.ts`, and test execution commands.
 
-You are Explorer 3 on the Mobile Invoice Success Edit Triggers project.
-Your assigned working directory is:
-`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3`
+Your working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3
+
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
 
 Task:
-1. Read `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (specifically the header `## 2026-10-14T06:45:25Z`).
-2. Investigate the project's testing setup and existing test suites:
-   - Inspect `package.json` for test commands and dependencies (Vitest, @testing-library/react, etc.).
-   - Check existing test files under `src/test/` or `src/components/**` to see mocking patterns, render test utilities, and conventions.
-   - Specifically check if any tests exist for `MobileInvoiceSuccessView` or `MobileCreateInvoice` or `SalesInvoiceModal`.
-3. Provide a concrete specification for adding unit tests for `MobileInvoiceSuccessView`:
-   - Exact file path to create (e.g. `src/test/MobileInvoiceSuccessView.test.tsx` or `src/components/invoices/mobile/MobileInvoiceSuccessView.test.tsx`).
-   - Test cases to cover:
-     a) Rendering circular Edit action button in action row and firing `onEdit` when clicked.
-     b) Rendering dual sticky footer with `Edit Bill` and `Done` buttons.
-     c) Firing `onEdit` when clicking `Edit Bill` in footer.
-     d) Firing `onClose` when clicking `Done` in footer.
-     e) Proper button styling, accessibility labels, and safe-area inset classes.
-     f) Graceful behavior when optional callbacks are omitted or provided.
-   - Identify any mocks needed (e.g. icons, child components, or router/context).
-4. Produce a detailed handoff report in:
-   `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`
-   Follow the Handoff Protocol: Observation, Logic Chain, Caveats, Conclusion, Verification Method.
-5. Send a message back to the orchestrator when finished.
+Deeply investigate test infrastructure and existing tests:
+1. Examine existing tests in `src/test/MobileInvoiceSuccessView*.test.tsx`: what is currently tested? How are mocks configured (mocking `documentsService`, toast, etc.)?
+2. Check existing tests for `SalesInvoiceModal.tsx` (if any) or how `SalesInvoiceModal` can be tested or unit-tested.
+3. Examine `src/services/documentsService.ts`: how it defines `saveDocument`, `updateDocument`, and `deleteDocument`.
+4. Define the exact unit test cases needed to test:
+   - In-place update on re-edit (R1)
+   - Save & New sequence reset on mobile (R2)
+   - Safe deletion with confirmation (R3)
+   - More menu & WhatsApp sharing (R4)
+5. Identify the exact verification commands to run for tests and compiler checks (`npx tsc --noEmit`, Vitest test commands).
+
+Write your comprehensive findings and recommendations to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`
+
+Use send_message to report completion back to the orchestrator.

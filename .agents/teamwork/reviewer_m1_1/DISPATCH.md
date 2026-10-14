@@ -1,19 +1,28 @@
-## 2026-09-25T22:09:49Z
-You are reviewer_m1_1 (Role: Milestone 1 Reviewer 1).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1/handoff.md
+## 2026-10-14T10:50:05Z
+You are Reviewer 1 reviewing Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1).
 
-Your mission is to perform an objective, rigorous code review of the changes made for Milestone 1 (Query Protocols & Scope Config) in:
-- src/services/autoSyncService.ts
-- scripts/credsmart-sync-agent/index.cjs
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
 
-Verify:
-1. Does TALLY_EXPORT_DAYBOOK_XML contain valid <SVFROMDATE> and <SVTODATE> tags inside <STATICVARIABLES>?
-2. Does SyncConfig.syncScope include `banks: boolean`?
-3. Does SyncConfig.lastSyncStats include `banks: number` and `balances: number`?
-4. Does getDefaultSyncConfig enable all 5 entities by default (items, parties, balances, vouchers, banks)?
-5. Are there any syntax errors, type errors, or potential regressions?
-6. Write your structured review report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_1/handoff.md with an explicit verdict: APPROVE or REQUEST_CHANGES.
-7. Message the orchestrator (caller id) with your verdict and report path.
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M1's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+Tasks:
+1. Review the changes made to `src/components/SalesInvoiceModal.tsx` and `src/services/documentsService.ts`.
+2. Verify Requirement R1:
+   - Does `activeSavedDocId` preserve the invoice ID when returning from `MobileInvoiceSuccessView` via `onEdit`?
+   - In `handleSave`, does `finalDoc` pass `id: activeSavedDocId || editingDoc?.id || undefined`?
+   - In `documentsService.saveDocument`, does it execute an in-place update for existing records in Supabase and localStorage instead of inserting duplicates?
+   - Does `toast.success` display `Invoice #[number] updated successfully!` when an existing document is updated?
+3. Run verification commands (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
+4. Verify desktop invoice modal flows are 100% preserved.
+
+Write your review report to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md`
+State clearly your final verdict: APPROVE or REQUEST_CHANGES.
+Use send_message to report back to orchestrator.

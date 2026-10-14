@@ -1,22 +1,26 @@
-## 2026-09-25T22:10:00Z
-You are challenger_m1_1 (Role: Milestone 1 Challenger 1).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m1_1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1/handoff.md
+## 2026-10-14T10:50:07Z
+You are Challenger 1 stress-testing Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1).
 
-Your mission is to empirically challenge and stress-test the changes made for Milestone 1:
-1. Examine TALLY_EXPORT_DAYBOOK_XML in src/services/autoSyncService.ts and scripts/credsmart-sync-agent/index.cjs.
-2. Write verification scripts/tests to verify:
-   - XML string is well-formed XML and parseable by standard XML parsers.
-   - <SVFROMDATE> and <SVTODATE> are properly nested inside <STATICVARIABLES>.
-   - getDefaultSyncConfig returns an object where syncScope.items, parties, balances, vouchers, and banks are all strictly true.
-   - SyncConfig satisfies all TypeScript types without runtime failure.
-3. Report any edge cases, defects, or failure points discovered.
-4. Write your handoff report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m1_1/handoff.md with an explicit verdict: APPROVE or FAIL.
-5. Message the orchestrator (caller id) with your verdict and report path.
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
 
-## 2026-09-25T22:16:47Z
-**Context**: Milestone 1 Challenger 1 Verification
-**Content**: Please finalize your evaluation. If terminal execution prompts require interactive confirmation or time out, use direct code inspection, AST verification, and file reading to verify well-formedness of XML and types. Write your verdict (APPROVE / FAIL) to handoff.md.
-**Action**: Conclude evaluation and send completion message.
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read Worker M1's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+Tasks:
+1. Adversarially test and challenge the in-place update logic:
+   - What happens on repeated re-edits (edit → save → edit → save)? Does `activeSavedDocId` stay consistent across multiple edit cycles?
+   - What happens when an offline/local document is edited and saved? Does local storage maintain exactly 1 document without duplicates?
+   - What happens when line items are added, modified, or removed during re-edit? Are item totals and stock adjustments computed cleanly?
+2. Run tests and type checks (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
+3. Write adversarial tests if needed or verify existing tests.
+
+Write your findings to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md`
+State clearly your final verdict: APPROVE or CHALLENGE_FAILED.
+Use send_message to report back to orchestrator.

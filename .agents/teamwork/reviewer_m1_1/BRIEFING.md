@@ -1,67 +1,58 @@
-# BRIEFING — 2026-09-26T03:43:30+05:30
+# BRIEFING — 2026-10-14T10:55:00Z
 
 ## Mission
-Perform an objective, rigorous code review and adversarial stress-test of Milestone 1 changes (Query Protocols & Scope Config) in `src/services/autoSyncService.ts` and `scripts/credsmart-sync-agent/index.cjs`.
+Review Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1) implemented by Worker M1.
 
 ## 🔒 My Identity
-- Archetype: reviewer_and_adversarial_critic
+- Archetype: reviewer & critic
 - Roles: reviewer, critic
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_1
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 1 (Query Protocols & Scope Config)
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 1 (Requirement R1)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated verifications)
-- Verdict must be REQUEST_CHANGES if any integrity violation or breaking bug is found
-- Review report in handoff.md following 5-component format + explicit verdict
+- Actively check for integrity violations (hardcoded test results, facade implementations, shortcuts, fake logs)
+- Adversarially challenge assumptions and edge cases
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-26T03:43:30+05:30
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T10:55:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `src/services/autoSyncService.ts`
-  - `scripts/credsmart-sync-agent/index.cjs`
-- **Interface contracts**:
-  - `PROJECT.md`
-  - `ORIGINAL_REQUEST.md`
-  - `worker_m1/handoff.md`
-- **Review criteria**:
-  - Correctness of `<SVFROMDATE>` and `<SVTODATE>` inside `<STATICVARIABLES>`
-  - Completeness of `SyncConfig.syncScope` (`banks: boolean`)
-  - Completeness of `SyncConfig.lastSyncStats` (`banks: number`, `balances: number`)
-  - Completeness of `getDefaultSyncConfig` (all 5 entities: items, parties, balances, vouchers, banks)
-  - Syntax, typecheck, lint, regressions, backward compatibility
+- **Files to review**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`, `src/test/billingLifecycleEngine.test.ts`, `src/test/MobileInvoiceSuccessView*.test.tsx`
+- **Interface contracts**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+- **Review criteria**: correctness, integrity, style, edge cases, desktop preservation
+
+## Key Decisions Made
+- Confirmed zero integrity violations: implementation in `documentsService.ts` and `SalesInvoiceModal.tsx` is genuine and non-facade.
+- Verified TypeScript compilation (`tsc --noEmit` exited 0).
+- Verified Vitest test suite (`billingLifecycleEngine` and `MobileInvoiceSuccessView` 52/52 tests passed).
+- Verified Requirement R1 in-place update lifecycle across both Supabase and localStorage.
+- Verified desktop modal workflows are 100% preserved.
+- Issued verdict: APPROVE.
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/services/autoSyncService.ts` (lines 10-105, 180-205, 740-810)
-  - `scripts/credsmart-sync-agent/index.cjs` (lines 35-75, 150-227)
-  - `src/test/tallyBridge.test.ts`
-  - `src/test/tallyE2E.test.ts` (sections 1.1, 1.2, 1.3)
+  - `src/components/SalesInvoiceModal.tsx` (lines 262, 495, 562, 1052-1110, 1175-1215, 1500-1530)
+  - `src/services/documentsService.ts` (lines 645-770, 1075-1108)
+  - `src/test/billingLifecycleEngine.test.ts` (lines 1-170)
+  - `src/test/MobileInvoiceSuccessView*.test.tsx`
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All code verified by direct static analysis and source inspection.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Tested: Date formatting compatibility in Tally XML (`YYYYMMDD` without delimiters). Result: PASS.
-  - Tested: Completeness of all 5 entity types in `syncScope` and `lastSyncStats`. Result: PASS.
-  - Tested: XML well-formedness of `TALLY_EXPORT_DAYBOOK_XML`. Result: PASS.
-  - Tested: LocalStorage backward compatibility with legacy saved `syncScope`. Result: Minor caveat documented for M4.
-- **Vulnerabilities found**:
-  - Shallow merge in `getSyncConfig` can cause `syncScope.banks` to be undefined if user has existing legacy localStorage state.
-- **Untested angles**:
-  - Live Tally HTTP daemon communication (requires active running Tally instance).
-
-## Key Decisions Made
-- Confirmed zero integrity violations: no hardcoded fake outputs, no facades, no bypassed tasks.
-- Confirmed all 5 Milestone 1 criteria are satisfied.
-- Verdict issued: APPROVE.
+  - Re-editing multiple times sequentially: Pass. `activeSavedDocId` stays invariant.
+  - Offline fallback persistence (`doc_...`): Pass. `getLocalDocuments` index lookup replaces in-place.
+  - Stock delta handling: Pass. `handleDocumentStock` receives `"update"` and `previousDoc`.
+  - Closing modal and starting new bill: Pass. `activeSavedDocId` resets to null on close and modal reopen.
+  - Desktop flow preservation: Pass. `window.innerWidth >= 1024` closes modal or executes `saveAndNew` as expected.
+- **Vulnerabilities found**: None.
+- **Untested angles**: Live Supabase DB connection (mocked in tests, verified via query syntax and null checks).
 
 ## Artifact Index
 - `.agents/teamwork/reviewer_m1_1/DISPATCH.md` — Dispatch log
-- `.agents/teamwork/reviewer_m1_1/BRIEFING.md` — Persistent state index
+- `.agents/teamwork/reviewer_m1_1/progress.md` — Liveness heartbeat
 - `.agents/teamwork/reviewer_m1_1/handoff.md` — Final review report

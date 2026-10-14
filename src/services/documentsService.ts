@@ -643,48 +643,121 @@ export const documentsService = {
   },
 
   // Save or Update Document
-  async saveDocument(doc: BusinessDocument, userId?: string): Promise<BusinessDocument> {
-    if (!doc.id) {
-      doc.id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  async saveDocument(rawDoc: BusinessDocument | (Omit<BusinessDocument, "id"> & { id?: string }), userId?: string): Promise<BusinessDocument> {
+    if (!rawDoc.id) {
+      rawDoc.id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     }
+    const doc = rawDoc as BusinessDocument;
     const orgId = doc.organizationId;
     const docType = doc.docType;
 
     // 1. If standard sales invoice, attempt saving to Supabase sales table
     if (docType === "sales_invoice" && userId) {
       try {
-        const { data: saleData, error: saleErr } = await supabase
-          .from("sales")
-          .insert({
-            organization_id: orgId,
-            invoice_number: doc.documentNumber,
-            subtotal: doc.subtotal,
-            discount_amount: doc.discountTotal,
-            discount_label: doc.discountTotal > 0 ? "Discount" : null,
-            tax: doc.taxTotal,
-            total: doc.grandTotal,
-            payment_method: doc.paymentMethod || "Cash",
-            created_by: userId,
-            customer_id: doc.partyId || null,
-          })
-          .select()
-          .single();
+        const isExistingSupabaseSale = Boolean(doc.id && !doc.id.startsWith("doc_"));
 
-        if (!saleErr && saleData) {
-          doc.id = saleData.id;
+        if (isExistingSupabaseSale) {
+          const { data: saleData, error: saleErr } = await supabase
+            .from("sales")
+            .update({
+              organization_id: orgId,
+              invoice_number: doc.documentNumber,
+              subtotal: doc.subtotal,
+              discount_amount: doc.discountTotal,
+              discount_label: doc.discountTotal > 0 ? "Discount" : null,
+              tax: doc.taxTotal,
+              total: doc.grandTotal,
+              payment_method: doc.paymentMethod || "Cash",
+              customer_id: doc.partyId || null,
+            })
+            .eq("id", doc.id)
+            .select()
+            .maybeSingle();
 
-          // Save items
-          if (doc.items.length > 0) {
-            const saleItems = doc.items.map((it) => ({
-              sale_id: saleData.id,
-              product_name: it.productName,
-              product_id: it.productId || null,
-              batch_number: it.batchNumber || null,
-              mrp: it.rate,
-              quantity: it.quantity,
-              line_total: it.lineTotal,
-            }));
-            await supabase.from("sale_items").insert(saleItems);
+          if (!saleErr && saleData) {
+            // Delete existing line items and re-insert updated items
+            await supabase.from("sale_items").delete().eq("sale_id", doc.id);
+            if (doc.items.length > 0) {
+              const saleItems = doc.items.map((it) => ({
+                sale_id: doc.id,
+                product_name: it.productName,
+                product_id: it.productId || null,
+                batch_number: it.batchNumber || null,
+                mrp: it.rate,
+                quantity: it.quantity,
+                line_total: it.lineTotal,
+              }));
+              await supabase.from("sale_items").insert(saleItems);
+            }
+          } else if (!saleData && !saleErr) {
+            // Fallback: If not found in sales by ID, insert as new
+            const { data: newSaleData, error: newSaleErr } = await supabase
+              .from("sales")
+              .insert({
+                organization_id: orgId,
+                invoice_number: doc.documentNumber,
+                subtotal: doc.subtotal,
+                discount_amount: doc.discountTotal,
+                discount_label: doc.discountTotal > 0 ? "Discount" : null,
+                tax: doc.taxTotal,
+                total: doc.grandTotal,
+                payment_method: doc.paymentMethod || "Cash",
+                created_by: userId,
+                customer_id: doc.partyId || null,
+              })
+              .select()
+              .single();
+
+            if (!newSaleErr && newSaleData) {
+              doc.id = newSaleData.id;
+              if (doc.items.length > 0) {
+                const saleItems = doc.items.map((it) => ({
+                  sale_id: newSaleData.id,
+                  product_name: it.productName,
+                  product_id: it.productId || null,
+                  batch_number: it.batchNumber || null,
+                  mrp: it.rate,
+                  quantity: it.quantity,
+                  line_total: it.lineTotal,
+                }));
+                await supabase.from("sale_items").insert(saleItems);
+              }
+            }
+          }
+        } else {
+          const { data: saleData, error: saleErr } = await supabase
+            .from("sales")
+            .insert({
+              organization_id: orgId,
+              invoice_number: doc.documentNumber,
+              subtotal: doc.subtotal,
+              discount_amount: doc.discountTotal,
+              discount_label: doc.discountTotal > 0 ? "Discount" : null,
+              tax: doc.taxTotal,
+              total: doc.grandTotal,
+              payment_method: doc.paymentMethod || "Cash",
+              created_by: userId,
+              customer_id: doc.partyId || null,
+            })
+            .select()
+            .single();
+
+          if (!saleErr && saleData) {
+            doc.id = saleData.id;
+
+            // Save items
+            if (doc.items.length > 0) {
+              const saleItems = doc.items.map((it) => ({
+                sale_id: saleData.id,
+                product_name: it.productName,
+                product_id: it.productId || null,
+                batch_number: it.batchNumber || null,
+                mrp: it.rate,
+                quantity: it.quantity,
+                line_total: it.lineTotal,
+              }));
+              await supabase.from("sale_items").insert(saleItems);
+            }
           }
         }
       } catch (err) {

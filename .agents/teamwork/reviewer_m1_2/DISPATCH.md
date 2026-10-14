@@ -1,21 +1,29 @@
-# Task Assignment: Milestone 1 Reviewer 2
-Assigned to reviewer_m1_2.
+## 2026-10-14T10:50:06Z
+You are Reviewer 2 reviewing Milestone 1: Mobile "Save & New" Engine & Sequence Reset (Requirement R2).
 
-## 2026-09-25T22:10:00Z
-You are reviewer_m1_2 (Role: Milestone 1 Reviewer 2).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1/handoff.md
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
 
-Your mission is to perform an independent, rigorous code review of Milestone 1 changes in:
-- src/services/autoSyncService.ts
-- scripts/credsmart-sync-agent/index.cjs
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
 
-Verify:
-1. XML envelope validity and correctness of <SVFROMDATE> and <SVTODATE> in Day Book queries.
-2. Interface completeness across SyncAuditLog, SyncExecutionResult, and SyncConfig.
-3. Default scope initialization with all 5 flags enabled.
-4. Robustness against null/undefined values.
-5. Write your structured review report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_2/handoff.md with an explicit verdict: APPROVE or REQUEST_CHANGES.
-6. Message the orchestrator (caller id) with your verdict and report path.
+Read Worker M1's handoff:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+Tasks:
+1. Review the changes made to `src/components/SalesInvoiceModal.tsx` and `src/services/documentsService.ts`.
+2. Verify Requirement R2:
+   - In `SalesInvoiceModal.tsx:1163`, verify that `if (saveAndNew)` is evaluated before `else if (window.innerWidth < 1024)`.
+   - Verify that sequence number increments cleanly (e.g. `INV-139` → `INV-140`) with number padding preserved.
+   - Verify that party selection, items, payment amounts, and optional fields are completely reset.
+   - Verify that `activeSavedDocId` and `mobileSuccessInvoice` are cleared, keeping mobile in editor mode on `MobileCreateInvoice`.
+   - Verify that toast displays `Invoice #[number] created! Ready for next bill.`.
+3. Run verification commands (via `cmd.exe /c`):
+   - `cmd.exe /c npx tsc --noEmit`
+   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
+4. Verify desktop invoice modal flows are 100% preserved.
+
+Write your review report to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md`
+State clearly your final verdict: APPROVE or REQUEST_CHANGES.
+Use send_message to report back to orchestrator.

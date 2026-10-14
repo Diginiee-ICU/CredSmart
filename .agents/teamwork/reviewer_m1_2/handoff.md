@@ -1,172 +1,162 @@
-# Milestone 1 Code Review & Adversarial Challenge Report
+# Handoff Report: Reviewer 2 Review of Milestone 1 (Requirement R2)
 
-**Reviewer**: `reviewer_m1_2` (Roles: reviewer, critic)  
-**Target Files**:
-- `src/services/autoSyncService.ts`
-- `scripts/credsmart-sync-agent/index.cjs`  
+**Author**: Reviewer 2 (Roles: Reviewer, Adversarial Critic)  
+**Target**: Orchestrator (parent agent `c0d1864a-d589-4172-80be-9e95a059559c`)  
+**Date**: 2026-10-14T11:03:00Z  
+**Working Directory**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2`  
 **Verdict**: **APPROVE**  
-**Integrity Audit**: **PASS** (Zero integrity violations; genuine implementation matching specifications)
 
 ---
 
-## Executive Summary
+## 1. Observation
 
-Milestone 1 introduces historical date-range querying to Day Book TDL envelopes and expands `SyncConfig`, `SyncAuditLog`, and `SyncExecutionResult` to support all 5 accounting entities (`items`, `parties`, `balances`, `vouchers`, `banks`).
+### 1.1 Branch Evaluation Priority in `SalesInvoiceModal.tsx`
+Inspection of `src/components/SalesInvoiceModal.tsx` lines 1175–1213 confirms:
+```typescript
+if (saveAndNew) {
+  const parsed = parseInt(invoiceNumberSeq, 10);
+  const nextSeq = !isNaN(parsed)
+    ? String(parsed + 1).padStart(invoiceNumberSeq.length, "0")
+    : Math.floor(100 + Math.random() * 900).toString();
+  setInvoiceNumberSeq(nextSeq);
+  setPartyName("");
+  setCustomerSearch("");
+  setSelectedCustomerId("");
+  setPartyPhone("");
+  setPartyGstin("");
+  setPartyAddress("");
+  setBillingAddress("");
+  setBillingPincode("");
+  setBillingPlaceOfSupply("27-Maharashtra");
+  setSameAsParty(false);
+  setShowBillingAddress(false);
+  setItems([createNewRow("row-1")]);
+  setAmountReceived(0);
+  setMarkAsFullyPaid(false);
+  setNotes("");
+  setShowNotes(false);
+  setEwayBillNo("");
+  setShowEwayBill(false);
+  setVehicleNumber("");
+  setShowVehicleNo(false);
+  setPoReference("");
+  setShowPoReference(false);
+  setAdditionalChargesAmount(0);
+  setShowAdditionalCharges(false);
+  setOverallDiscountValue(0);
+  setShowDiscount(false);
+  setActiveSavedDocId(null);
+  setMobileSuccessInvoice(null);
+} else if (window.innerWidth < 1024) {
+  setMobileSuccessInvoice(saved);
+} else {
+  onOpenChange(false);
+}
+```
+- Line 1175 evaluates `if (saveAndNew)` before `else if (window.innerWidth < 1024)`.
+- This ensures mobile viewports (`window.innerWidth < 1024`) never prematurely bypass the `saveAndNew` block or force navigation to `MobileInvoiceSuccessView`.
 
-An independent inspection and test execution confirmed:
-1. `TALLY_EXPORT_DAYBOOK_XML` in both the web app and the desktop sync bridge agent is well-formed XML and includes `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>`.
-2. All 5 entities are represented in TypeScript interfaces: `SyncAuditLog`, `SyncConfig`, and `SyncExecutionResult`.
-3. `getDefaultSyncConfig(orgId)` explicitly enables all 5 flags (`items`, `parties`, `balances`, `vouchers`, `banks`) by default.
-4. No integrity violations, fake facade implementations, or bypassed work were detected.
+### 1.2 Sequence Number Auto-Increment & Padding Preservation
+- Sequence computation in lines 1176–1179 executes:
+  `String(parsed + 1).padStart(invoiceNumberSeq.length, "0")`.
+- Verified numeric increment: `INV-139` → `INV-140`.
+- Verified padding preservation: `001` → `002`, `042` → `043`, `0099` → `0100`.
+- Verified non-numeric fallback: `!isNaN(parsed)` check falls back to `Math.floor(100 + Math.random() * 900).toString()`, preventing `NaN` propagation or UI crashes.
 
-One **Major** backwards-compatibility finding regarding shallow object merging in `getSyncConfig` and two **Minor** findings regarding script side effects and dynamic date parameterization were uncovered during adversarial stress testing. Mitigations are detailed below for subsequent milestones.
+### 1.3 Complete Form State Reset
+Under `if (saveAndNew)`:
+- **Party Selection**: `partyName`, `customerSearch`, `selectedCustomerId`, `partyPhone`, `partyGstin`, `partyAddress`, `billingAddress`, `billingPincode`, `billingPlaceOfSupply`, `sameAsParty`, `showBillingAddress` are reset to default empty/initial states.
+- **Line Items**: `setItems([createNewRow("row-1")])` initializes a single empty item row.
+- **Payment Amounts**: `amountReceived` is reset to `0`, `markAsFullyPaid` is reset to `false`.
+- **Optional Fields**: `notes`, `showNotes`, `ewayBillNo`, `showEwayBill`, `vehicleNumber`, `showVehicleNo`, `poReference`, `showPoReference`, `additionalChargesAmount`, `showAdditionalCharges`, `overallDiscountValue`, and `showDiscount` are all reset.
+- **Document ID & Screen State**: `setActiveSavedDocId(null)` and `setMobileSuccessInvoice(null)` are executed. On mobile, because `mobileSuccessInvoice` is `null`, the view conditionally renders `<MobileCreateInvoice .../>` (line 1532), keeping the interface in rapid-fire editor mode.
 
----
+### 1.4 Toast Feedback Message
+At line 1108 of `src/components/SalesInvoiceModal.tsx`:
+```typescript
+} else if (saveAndNew) {
+  toast.success(`Invoice #${saved.documentNumber} created! Ready for next bill.`);
+```
+The toast displays verbatim: `"Invoice #[number] created! Ready for next bill."`.
 
-## Quality Review
+### 1.5 Desktop Flow Invariants
+- On desktop viewports (`window.innerWidth >= 1024`):
+  - Normal Save (`saveAndNew === false`): Falls through to `else { onOpenChange(false); }`, closing the modal as expected.
+  - Desktop "Save & New" (`SalesInvoiceModal.tsx:1726`): Invokes `handleSave(false, true)`, triggering the identical sequence increment, form reset, and persistent open editor flow.
+  - "Save & Print" / "Print" triggers (`handlePrint` / `downloadExactInvoicePdf`): Unaltered and operational.
 
-### Verified Claims
-
-| Claim / Item | Verification Method | Status |
-|---|---|---|
-| `TALLY_EXPORT_DAYBOOK_XML` contains `<SVFROMDATE>20200401</SVFROMDATE>` | AST/String match in `autoSyncService.ts:194` and `index.cjs:45` | **PASS** |
-| `TALLY_EXPORT_DAYBOOK_XML` contains `<SVTODATE>20291231</SVTODATE>` | AST/String match in `autoSyncService.ts:195` and `index.cjs:46` | **PASS** |
-| Day Book XML envelope is well-formed | XML tag-matching parser in `verify_m1.cjs` | **PASS** |
-| `SyncAuditLog` has `banksSynced?: number` and `balancesSynced?: number` | Type definition inspection in `autoSyncService.ts:18-19` | **PASS** |
-| `SyncConfig.syncScope` has `banks: boolean` and `balances: boolean` | Type definition inspection in `autoSyncService.ts:35,37` | **PASS** |
-| `SyncConfig.lastSyncStats` has `banks: number` and `balances: number` | Type definition inspection in `autoSyncService.ts:46-47` | **PASS** |
-| `SyncExecutionResult` has `banksCount?: number` and `balancesCount?: number` | Type definition inspection in `autoSyncService.ts:58-59` | **PASS** |
-| `getDefaultSyncConfig` initializes all 5 flags to `true` | Value inspection in `autoSyncService.ts:92-98` | **PASS** |
-| `executeDirectSyncIngestion` initializes default 0 counts | Code inspection in `autoSyncService.ts:754-755,766,775-776,793-794,806` | **PASS** |
-| `scripts/credsmart-sync-agent/index.cjs` exports `TALLY_EXPORT_DAYBOOK_XML` | CommonJS module export check in `verify_m1.cjs` | **PASS** |
-
----
-
-## Findings
-
-### [Major] Finding 1: Shallow Merge in `getSyncConfig` Drops `syncScope.banks` for Legacy Stored Configs
-
-- **Where**: `src/services/autoSyncService.ts:107-119`
-- **What**: When reading from `localStorage`, `getSyncConfig` executes:
-  ```typescript
-  return {
-    ...getDefaultSyncConfig(orgId),
-    ...parsed,
-  };
-  ```
-- **Why**: In JavaScript, `{ ...a, ...b }` performs a shallow merge. If a user previously saved a config prior to Milestone 1, `parsed.syncScope` is `{ items: true, parties: true, balances: true, vouchers: false }`. The shallow spread completely replaces `defaultConfig.syncScope` with `parsed.syncScope`. Consequently, `retrieved.syncScope.banks` resolves to `undefined`. When the UI renders checkboxes in Milestone 4 or checks `syncScope.banks`, it evaluates as falsy, violating the requirement that all 5 entities are enabled by default. Similarly, `lastSyncStats.banks` and `lastSyncStats.balances` resolve to `undefined`.
-- **Suggestion**: Implement nested spreading in `getSyncConfig`:
-  ```typescript
-  const def = getDefaultSyncConfig(orgId);
-  return {
-    ...def,
-    ...parsed,
-    syncScope: {
-      ...def.syncScope,
-      ...(parsed?.syncScope || {}),
-    },
-    lastSyncStats: parsed?.lastSyncStats
-      ? {
-          items: 0,
-          parties: 0,
-          vouchers: 0,
-          banks: 0,
-          balances: 0,
-          ...parsed.lastSyncStats,
-        }
-      : undefined,
-  };
-  ```
-
----
-
-### [Minor] Finding 2: Unconditional `server.listen()` in `scripts/credsmart-sync-agent/index.cjs` on `require()`
-
-- **Where**: `scripts/credsmart-sync-agent/index.cjs:216-225`
-- **What**: `server.listen(PORT, "127.0.0.1", ...)` runs at the top-level script scope.
-- **Why**: Because `index.cjs` exports `module.exports = { server, TALLY_EXPORT_DAYBOOK_XML, TALLY_REQUESTS }`, any consumer or test importing `index.cjs` via `require()` immediately binds port 9005. If port 9005 is occupied or if tests run in parallel, this causes unhandled socket listeners or `EADDRINUSE`.
-- **Suggestion**: Wrap the server listener in an execution check:
-  ```javascript
-  if (require.main === module) {
-    server.listen(PORT, "127.0.0.1", () => { ... });
-  }
-  ```
-
----
-
-### [Minor] Finding 3: DayBook XML Date Range Lacks Dynamic Parameterization Helper
-
-- **Where**: `src/services/autoSyncService.ts:182-201` and `scripts/credsmart-sync-agent/index.cjs:35-51`
-- **What**: The date boundaries are static string literals (`<SVFROMDATE>20200401</SVFROMDATE>`, `<SVTODATE>20291231</SVTODATE>`).
-- **Why**: While spanning 10 financial years satisfies R2 and Milestone 1 acceptance criteria, companies with historical data prior to April 2020 will have older transactions omitted. Furthermore, for high-volume enterprises, querying 10 years of vouchers in a single payload could cause Tally memory or network timeout issues.
-- **Suggestion**: Provide a helper function `buildTallyDayBookXml(fromDate = "20200401", toDate = "20291231")` while retaining `TALLY_EXPORT_DAYBOOK_XML` as the default export.
+### 1.6 Independent Verification Command Results
+1. `cmd.exe /c npx tsc --noEmit`: Exited with code `0`, zero compiler/type errors.
+2. `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView --test-timeout=20000`:
+   - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests) — Passed
+   - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests) — Passed
+   - `src/test/MobileInvoiceSuccessView.test.tsx` (17 tests) — Passed
+   - `src/test/billingLifecycleEngine.adversarial.test.ts` (6 tests) — Passed
+   - `src/test/billingLifecycleEngine.test.ts` (6 tests) — Passed
+   - **Total**: 5 test files, 58/58 tests passed (100% pass rate).
 
 ---
 
-## Adversarial Challenge Report
+## 2. Logic Chain
 
-### Challenge Summary
-- **Overall Risk Assessment**: **LOW** (Safe to proceed to Milestone 2; identified issues are non-blocking for M1 and easily addressed in M2/M4).
+1. **Branch Order Precedence**:
+   In the legacy implementation, `if (window.innerWidth < 1024)` unconditionally routed mobile requests to the success screen, rendering `else if (saveAndNew)` completely unreachable on mobile devices. Worker M1 restructured the condition so `if (saveAndNew)` is evaluated prior to viewport width checks. As a result, when a user taps "Save & New" on mobile, the logic branch executes reliably.
 
-### Stress Test Matrix
+2. **Sequential Invariant Preservation**:
+   By extracting `invoiceNumberSeq` length and applying `.padStart(invoiceNumberSeq.length, "0")`, zero-padded sequence patterns (such as `INV-001` or `INV/26-27/042`) retain their fixed-width character representation across consecutive bill generations.
 
-| Scenario | Input / State | Expected Behavior | Actual Behavior | Result |
-|---|---|---|---|---|
-| Fresh Installation | No `localStorage` key | Returns complete default config with all 5 flags `true` | Returns `getDefaultSyncConfig(orgId)` | **PASS** |
-| Corrupt Storage JSON | `localStorage` contains invalid string | Gracefully recovers default config | Caught by `catch` block -> returns defaults | **PASS** |
-| Legacy Saved Config | Storage contains old config without `banks` | `banks` flag defaults to `true` | `banks` becomes `undefined` | **FAIL (Finding 1)** |
-| Corrupt History Field | Storage has `history: null` | Does not crash when logging sync result | `slice(0, 19)` throws TypeError on null | **FAIL (Finding 1)** |
-| Ingestion Catch Block | Ingestion throws exception | Returns `SyncExecutionResult` with `success: false` and default 0 counts | All 5 entity counts return `0`, log status `"failed"` | **PASS** |
-| CommonJS Require | `require('scripts/credsmart-sync-agent')` | Exports XML without unexpected background listener | Exports valid XML, but starts HTTP server on port 9005 | **FAIL (Finding 2)** |
-| XML Tag Balancing | Envelope string | Strict open/close tag hierarchy | Perfectly balanced `<ENVELOPE>` ... `</ENVELOPE>` | **PASS** |
+3. **Active State Dissociation**:
+   `setActiveSavedDocId(null)` and `setMobileSuccessInvoice(null)` explicitly sever the connection between the newly persisted invoice and subsequent editor actions. This guarantees that:
+   - The user remains in `MobileCreateInvoice` editor mode.
+   - The next invoice saved generates a distinct record with a new UUID rather than mutating the previously saved invoice in place.
+
+4. **Integrity & Zero-Cheat Audit**:
+   - No mock overrides or hardcoded return values were inserted into `SalesInvoiceModal.tsx` or `documentsService.ts`.
+   - The implementation adheres to genuine Supabase update/insert branching and local storage persistence.
+   - All tests pass independently without regressions.
 
 ---
 
-## 5-Component Handoff Report
+## 3. Caveats
 
-### 1. Observation
-- `src/services/autoSyncService.ts`:
-  - Line 182-201: `TALLY_EXPORT_DAYBOOK_XML` contains `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>` inside `<STATICVARIABLES>`.
-  - Line 18-19: `SyncAuditLog` declares `banksSynced?: number;` and `balancesSynced?: number;`.
-  - Line 35, 37: `SyncConfig.syncScope` declares `balances: boolean;` and `banks: boolean;`.
-  - Line 46-47: `SyncConfig.lastSyncStats` declares `banks: number;` and `balances: number;`.
-  - Line 58-59: `SyncExecutionResult` declares `banksCount?: number;` and `balancesCount?: number;`.
-  - Line 92-98: `getDefaultSyncConfig(orgId)` initializes `syncScope` with all 5 flags set to `true`:
-    ```typescript
-    syncScope: {
-      items: true,
-      parties: true,
-      balances: true,
-      vouchers: true,
-      banks: true,
-    }
-    ```
-  - Lines 754-755, 766, 775-776, 793-794, 806: `executeDirectSyncIngestion` initializes default 0 counts for `banks` and `balances` across success and catch return paths.
-- `scripts/credsmart-sync-agent/index.cjs`:
-  - Line 35-51: `TALLY_EXPORT_DAYBOOK_XML` is defined with `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>`.
-  - Line 69: `TALLY_REQUESTS.daybook` references `TALLY_EXPORT_DAYBOOK_XML`.
-  - Line 221-225: `module.exports` exports `server`, `TALLY_EXPORT_DAYBOOK_XML`, and `TALLY_REQUESTS`.
+1. **Custom Invoice Prefix Formats**:
+   If an organization utilizes a non-numeric suffix pattern (e.g., `INV/2026/ALPHA`), `parseInt` evaluates to `NaN`. The code handles this gracefully via fallback to a random 3-digit sequence (`100`–`999`), preventing runtime crashes.
+2. **Slow JSDOM Execution on Large Component Trees**:
+   Under Windows PowerShell / JSDOM execution, queries like `screen.getByRole` across multi-level DOM trees can take 1.2–2.0s per invocation. Passing `--test-timeout=20000` ensures test stability under heavy local CPU load.
 
-### 2. Logic Chain
-- Historical accounting synchronization requires Tally to output Day Book transactions across financial years rather than defaulting to the current single active transaction date. Inserting `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>` directly into the TDL static variables instructs Tally's export engine to fetch transactions within this 10-year boundary across browser queries, desktop IPC, and bridge agent requests.
-- Adding `banks: boolean` to `SyncConfig.syncScope` and initializing all 5 flags to `true` in `getDefaultSyncConfig` ensures out-of-the-box full synchronization across all financial domains.
-- Adding `banksSynced`, `balancesSynced`, `banks`, `balances`, `banksCount`, and `balancesCount` to the audit and execution result types ensures complete metric visibility and prepares the system for live database ingestion in Milestone 2 and Milestone 3.
+---
 
-### 3. Caveats
-- No local `node_modules` directory was present in the repository root, preventing direct CLI invocation of `vitest`. Verification was conducted through an independent Node.js test script (`verify_m1.cjs`) and exhaustive static code analysis.
-- Live database persistence of bank accounts, cash in hand, and full voucher line items is not part of Milestone 1; it is scheduled for Milestone 2 and Milestone 3.
+## 4. Conclusion
 
-### 4. Conclusion
-**Verdict: APPROVE.**
-The changes submitted by `worker_m1` for Milestone 1 are complete, robust, adhere to TDL XML query specifications, and satisfy all requirements for Milestone 1 with zero integrity violations. The identified edge case regarding shallow merge in `getSyncConfig` should be incorporated into Milestone 2 or Milestone 4.
+**Verdict: APPROVE**
 
-### 5. Verification Method
-To independently verify:
-1. Run the standalone verification script:
-   ```powershell
-   node .agents/teamwork/reviewer_m1_2/verify_m1.cjs
+Worker M1's implementation of Milestone 1 (Requirement R2) is complete, robust, and verified:
+- Branch evaluation order in `SalesInvoiceModal.tsx:1175` is correct.
+- Sequence incrementation cleanly preserves number padding.
+- All party, line items, payment, and optional fields are thoroughly reset.
+- `activeSavedDocId` and `mobileSuccessInvoice` are cleared, keeping mobile in rapid billing mode.
+- Success toast confirms `"Invoice #[number] created! Ready for next bill."`.
+- Desktop flows are 100% preserved.
+
+---
+
+## 5. Verification Method
+
+To independently verify this implementation:
+
+1. **TypeScript Type Check**:
+   ```cmd
+   cmd.exe /c npx tsc --noEmit
    ```
-2. When packages are installed:
-   ```powershell
-   npx vitest run src/test/tallyBridge.test.ts
+   *Expected*: Exit code 0, 0 diagnostic errors.
+
+2. **Vitest Unit & Adversarial Test Suite**:
+   ```cmd
+   cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView --test-timeout=20000
    ```
+   *Expected*: 5 test files passed, 58/58 tests passed (100% success rate).
+
+3. **Code Inspection**:
+   - `src/components/SalesInvoiceModal.tsx:1175–1213`: Verify `if (saveAndNew)` branch precedence and field resets.
+   - `src/components/SalesInvoiceModal.tsx:1108`: Verify toast message formatting.
+   - `src/components/invoices/mobile/MobileCreateInvoice.tsx:273–279`: Verify "Save & New" footer button triggers `handleSaveAndNew` (`onSave(false, true)`).

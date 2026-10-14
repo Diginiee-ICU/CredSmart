@@ -1,60 +1,80 @@
-# Handoff Report: Mobile Invoice Success Screen Edit Triggers
+# Final Handoff Report: CredSmart Mobile Billing Lifecycle Actions
 
-- **Agent**: Project Sentinel
-- **Status**: COMPLETE
-- **Verdict**: VICTORY CONFIRMED
+**Author**: Project Sentinel (`6d3cf7cd-918f-43ca-aae8-5902d7673e54`)  
+**Date**: 2026-10-14T12:35:00Z  
+**Target**: Caller Agent (`1307d47f-5ff8-4ec5-9e3a-339e86942692`) & User  
+**Status**: PROJECT COMPLETE — VICTORY CONFIRMED  
 
 ---
 
 ## 1. Observation
-The user requested adding prominent, touch-friendly edit triggers to the Mobile Invoice Success screen (`MobileInvoiceSuccessView.tsx`) in CredSmart:
-1. A dedicated circular Edit button in the quick action row (`w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50/60`, `Edit2` pen icon, and "Edit" label below).
-2. A dual-button sticky bottom bar (`Edit Bill` + `Done`) with safe area inset support.
-3. Seamless return to the mobile invoice editor (`MobileCreateInvoice.tsx`) via `setMobileSuccessInvoice(null)` in `SalesInvoiceModal.tsx`, keeping all entered form data intact.
-4. Clean TypeScript check (`tsc --noEmit`), passing Vitest tests, and dedicated unit tests for `MobileInvoiceSuccessView`.
+
+All 4 requirements from `ORIGINAL_REQUEST.md` (header `## 2026-10-14T09:50:17Z`) have been implemented, verified across reviewer and challenger loops, and independently audited:
+
+1. **R1: In-Place Update Lifecycle on Re-Edit**:
+   - `SalesInvoiceModal.tsx`: Introduced persistent React state `activeSavedDocId`.
+   - On returning from `MobileInvoiceSuccessView.tsx` via Edit or Edit Bill, `activeSavedDocId` retains `saved.id`.
+   - In `handleSave`, `activeSavedDocId` is passed as `finalDoc.id`, causing `documentsService.saveDocument` to execute an in-place SQL update rather than inserting a duplicate record into Supabase and local cache.
+   - Shows feedback toast: `"Invoice #[number] updated successfully!"`.
+
+2. **R2: Mobile "Save & New" Engine & Sequence Reset**:
+   - In `SalesInvoiceModal.tsx:1175`, reordered conditionals so `if (saveAndNew)` executes before `else if (window.innerWidth < 1024)`.
+   - Automatically calculates next sequence number with zero-padding preserved (e.g. `INV-139` → `INV-140`).
+   - Resets line items to a single clean default row, resets party selection, cleared payments, and resets `placeOfSupply` to `"27-Maharashtra"` (preventing IGST tax bleed).
+   - Displays toast: `"Invoice #[number] created! Ready for next bill."`.
+   - Leaves the user on `MobileCreateInvoice.tsx` ready for subsequent entries.
+
+3. **R3: Safe Invoice Deletion with Confirmation**:
+   - In `MobileInvoiceSuccessView.tsx`: Clicking the header `Trash2` icon opens a mobile confirmation bottom sheet / alert dialog (`z-[600]`) with warning: `"Delete this invoice? This action cannot be undone."`.
+   - Only confirming triggers `onDelete`.
+   - In `SalesInvoiceModal.tsx`: `onDelete` invokes `documentsService.deleteDocument(orgId, docType, id)`, which removes the invoice from Supabase, reverts stock quantities in inventory via `stockService.handleDocumentStock`, clears state, closes the modal, and shows toast: `"Invoice #[number] deleted"`.
+
+4. **R4: Header More Menu & Direct WhatsApp Share**:
+   - In `MobileInvoiceSuccessView.tsx`: Clicking `MoreVertical` opens a mobile action sheet featuring:
+     - **Duplicate / Copy Bill**: Advances sequence number, clears payment state, returns to mobile editor with line items loaded.
+     - **Share via WhatsApp**: Generates `https://wa.me/` direct URL with sanitized recipient phone number (or universal link fallback) and pre-filled invoice summary (invoice number, store, customer, date, formatted total, and status).
+     - **Download Thermal Receipt / PDF**: Triggers direct thermal/PDF download.
+     - **Cancel / Void Invoice**: Persists `status: "cancelled"` to the database and displays the Cancelled badge.
 
 ---
 
 ## 2. Logic Chain
-- Evaluated request against routing decision table and routed to the **General Path** (`teamwork_preview_orchestrator`).
-- Initialized orchestrator workspace and dispatched Project Orchestrator (`128ce6df-e01a-4513-8b58-90303779e4c7`).
-- Scheduled two background sentinel monitoring crons (Reporting: task-24, Liveness: task-26).
-- Orchestrator executed 4 phases:
-  - Phase 0: 3 parallel explorers surveyed UI, state transitions, and testing harness.
-  - Phase 1: Worker implemented the circular Edit quick action button and dual sticky footer in `MobileInvoiceSuccessView.tsx`.
-  - Phase 2: Test Writer authored 17 comprehensive unit tests in `src/test/MobileInvoiceSuccessView.test.tsx`.
-  - Phase 3: Reviewers, Challengers, and Forensic Auditor audited code quality, accessibility, touch boundaries, and integrity (all confirmed APPROVE/CLEAN).
-- Orchestrator claimed project completion.
-- Sentinel dispatched independent Victory Auditor (`3830018e-1dce-49db-8e77-3c33336e68ef`).
-- Victory Auditor executed independent 3-phase audit:
-  - Phase A (Timeline & Provenance): PASS
-  - Phase B (Integrity Forensics): PASS
-  - Phase C (Independent Test Execution): PASS (`tsc --noEmit` exit 0, Vitest 17/17 passed, challenge tests passed).
-- Final Verdict: `VICTORY CONFIRMED`.
-- Performed mandatory cleanup: cancelled all crons and terminated all subagents via `manage_subagents(action="kill_all")`.
+
+- **General Path Routing**: The task encompassed multi-file architecture, state lifecycle management, and test suite verification across mobile and service layers. Spawning `teamwork_preview_orchestrator` provided systematic milestone decomposition (Phase 0 survey, M1 core engine, M2 success actions, M3 hardening).
+- **Adversarial & Multi-Tier Verification**: Each functional milestone was challenged by dedicated reviewer and challenger subagents, who caught subtle concurrency issues (rapid double-tap on Save & New) and tax code persistence (state bleed of placeOfSupply).
+- **Independent Victory Audit**: Following orchestrator victory claim, `teamwork_preview_victory_auditor` independently performed 3-phase verification (Timeline analysis, Anti-cheat detection, and clean test execution), confirming 0 TypeScript errors and 100% test pass rate with zero desktop regressions.
 
 ---
 
 ## 3. Caveats
-- The circular Edit trigger and Edit Bill footer button render conditionally when `onEdit` is provided. If `onEdit` is omitted, the `Done` button gracefully expands to full width (`w-full`), maintaining complete backward compatibility.
-- Safe area inset padding (`pb-[max(1rem,env(safe-area-inset-bottom))]`) is preserved on the sticky bottom bar for devices with home indicators (e.g. modern iOS and Android).
+
+- **Popup Blocker Awareness**: The direct WhatsApp share executes via `window.open(url, "_blank")` inside the direct touch click handler to ensure mobile and desktop browser popup blockers do not suppress the link.
+- **Desktop Isolation**: All mobile-specific overrides (`window.innerWidth < 1024`, touch sheets, bottom-sheet overlays) are strictly partitioned, ensuring desktop invoice creation and editing flows operate without side effects.
 
 ---
 
 ## 4. Conclusion
-All acceptance criteria and requirements from `ORIGINAL_REQUEST.md` have been met with 100% success rate:
-- Circular `Edit` action button rendered in the Action Buttons row and executes `onEdit` on tap.
-- Sticky footer displays side-by-side `Edit Bill` and `Done` buttons.
-- State transition returns back to mobile invoice editor preserving all invoice data.
-- Zero TypeScript compiler errors (`tsc --noEmit`).
-- 17/17 unit tests passing in `src/test/MobileInvoiceSuccessView.test.tsx`.
+
+The mobile billing and success workflow lifecycle actions in CredSmart are complete, robustly tested, and independently certified. All acceptance criteria are fully met.
+
+- TypeScript Compilation: **0 diagnostic errors** (`tsc --noEmit`).
+- Vitest Test Suite: **8 test files passed (8), 94 tests passed (94), 0 failures**.
+- Independent Victory Auditor Verdict: **VICTORY CONFIRMED**.
 
 ---
 
 ## 5. Verification Method
-1. **Independent Victory Auditor Verdict**:
-   - Verdict: `VICTORY CONFIRMED` (recorded in `victory_auditor_mobile_edit/handoff.md`).
-2. **TypeScript Compilation**:
-   - `npx.cmd tsc --noEmit` exited with code 0 (zero errors).
-3. **Unit Tests**:
-   - `npx.cmd vitest run src/test/MobileInvoiceSuccessView.test.tsx` (17/17 passed in 3.10s).
+
+To verify the deliverables independently:
+
+1. **TypeScript Typecheck**:
+   ```cmd
+   cmd.exe /c npx tsc --noEmit
+   ```
+   *Expected: Exit code 0, 0 diagnostic errors.*
+
+2. **Mobile Billing Test Suite**:
+   ```cmd
+   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress
+   ```
+   *Expected: 8 test files passed, 94 tests passed, 0 failures.*

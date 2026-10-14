@@ -9,6 +9,7 @@ import { DocumentLineItem } from "@/types/documents";
 
 export interface MobileCreateInvoiceProps {
   onClose: () => void;
+  saving?: boolean;
   docType: string;
   docDate: string;
   dueDate: string;
@@ -273,7 +274,8 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
           <button 
             type="button"
             onClick={handleSaveAndNew}
-            className="col-span-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 py-3.5 rounded-xl font-bold text-[13px] text-center transition-colors cursor-pointer"
+            disabled={props.saving}
+            className={`col-span-3 ${props.saving ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-200 active:bg-slate-300 cursor-pointer"} bg-slate-100 text-slate-700 py-3.5 rounded-xl font-bold text-[13px] text-center transition-colors`}
           >
             Save & New
           </button>
@@ -288,7 +290,8 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
           <button 
             type="button"
             onClick={handleGenerateBill}
-            className="col-span-5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white py-3.5 rounded-xl font-bold text-[13px] text-center flex items-center justify-center gap-1 shadow-md transition-colors cursor-pointer"
+            disabled={props.saving}
+            className={`col-span-5 ${props.saving ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-700 active:bg-indigo-800 cursor-pointer"} bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-[13px] text-center flex items-center justify-center gap-1 shadow-md transition-colors`}
           >
             <span>Generate Bill</span>
           </button>

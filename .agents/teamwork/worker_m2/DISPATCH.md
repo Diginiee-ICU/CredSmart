@@ -1,53 +1,122 @@
-## 2026-09-26T03:49:36Z
+## 2026-10-14T11:03:25Z
 
-You are worker_m2 (Role: Milestone 2 Worker).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
+You are Worker M2 implementing Milestone 2: Mobile Success Actions & Modals (Requirements R3 and R4) and Challenger 2's Milestone 1 Remediation.
+
+Your designated working directory is:
+c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
+
+MANDATORY FIRST STEP:
+Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+
+Read the technical investigation and findings reports:
+- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md
+- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-File write ownership:
-- src/services/autoSyncService.ts (executeDirectSyncIngestion signature, bank & cash persistence, credit_transactions opening balance schema fix, getSyncConfig deep merge)
-- src/pages/TallyImport.tsx (handleDirectSaveParties opening balance schema fix)
+Scope & Write Ownership:
+- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+- `src/components/SalesInvoiceModal.tsx`
+- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+- Test files: `src/test/MobileInvoiceSuccessView*.test.tsx`, `src/test/challengerM1_2Stress.test.ts`
 
-Your tasks for Milestone 2 (Master Data, Balances, & Bank/Cash Pipeline):
-1. In src/services/autoSyncService.ts:
-   - In `executeDirectSyncIngestion`:
-     - Update parameter signature for `parsedData` to include `bankAccounts?: TallyBankAccount[]; cashInHand?: number;`.
-     - Ingest bank accounts and cash-in-hand:
-       - If `parsedData.bankAccounts` and `syncConfig?.syncScope?.banks !== false`:
-         - Probe Supabase for `bank_accounts` table: `await supabase.from("bank_accounts").select("id").limit(1)`. If available without error, upsert bank accounts.
-         - Reliably persist to localStorage key `credsmart_bank_accounts_${orgId}` as JSON array of BankAccount objects (`id`, `name`, `bankName`, `accountNumber`, `ifscCode`, `accountType: "current"`, `balance`, `isPrimary`, `createdAt`).
-       - If `parsedData.cashInHand !== undefined && parsedData.cashInHand !== null`:
-         - Persist to localStorage key `credsmart_cash_in_hand_${orgId}`.
-         - If `typeof window !== "undefined"`, dispatch CustomEvent `"credsmart_bank_updated"` with `{ detail: { orgId } }`.
-       - Update return values: set `banksCount` and `banksSynced` to the count of ingested bank accounts.
-     - Fix Party Opening Balance Ingestion:
-       - In lines ~605-657: replace the invalid columns (`customer_id`, `supplier_id`, `payment_mode`, `status`, `transaction_date`) with the exact valid columns from `src/integrations/supabase/types.ts`:
-         - `organization_id`: orgId
-         - `party_id`: cust.id (or supp.id)
-         - `party_type`: "customer" (or "supplier")
-         - `amount`: Math.abs(origParty.openingBalance)
-         - `type`: origParty.openingBalance >= 0 ? "credit" : "payment"
-         - `description`: "Opening Balance"
-         - `reference_id`: "SYNC-OPENING"
-         - `created_by`: userId || "00000000-0000-0000-0000-000000000000"
-       - Set `balancesCount` and `balancesSynced` in return values to the count of opening balance records inserted.
-     - Fix `getSyncConfig`:
-       - When loading config from localStorage, do a deep merge on `syncScope` with default `syncScope` so `syncScope.banks` is guaranteed to be `true` even for older cached configs.
-2. In src/pages/TallyImport.tsx:
-   - In `handleDirectSaveParties`:
-     - In the opening balance insertion into `credit_transactions`, ensure:
-       - `organization_id`: orgId
-       - `party_id`: partyId
-       - `party_type`: isSupplier ? "supplier" : "customer"
-       - `amount`: Math.abs(opBal)
-       - `type`: opBal >= 0 ? "credit" : "payment"
-       - `description`: "Opening Balance"
-       - `reference_id`: "IMPORT-OPENING"
-       - `created_by`: user?.id || "00000000-0000-0000-0000-000000000000"
-3. Verify changes: ensure no syntax or type errors.
-4. Write handoff report to `c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m2/handoff.md`.
-5. Send a completion message to the orchestrator (caller id).
+Tasks:
+1. Apply Challenger 2's M1 Remediation:
+   - In `SalesInvoiceModal.tsx:1036`: add `if (saving) return;` at entry of `handleSave`.
+   - In the `if (saveAndNew)` reset block: add `setPlaceOfSupply("27-Maharashtra");`, `setShowDueDate(false);`, `setManualRoundOff(0);`.
+   - Pass `saving={saving}` prop to `<MobileCreateInvoice>` and in `src/components/invoices/mobile/MobileCreateInvoice.tsx:273`, add `disabled={props.saving}` on the "Save & New" button.
+
+2. Implement Requirement R3 (Safe Invoice Deletion with Confirmation):
+   - In `MobileInvoiceSuccessView.tsx`:
+     - Maintain `isDeleteConfirmOpen: boolean` state.
+     - Tapping the header `Trash2` button sets `setIsDeleteConfirmOpen(true)`.
+     - Render mobile confirmation bottom-sheet / alert dialog:
+       - Text: "Delete this invoice? This action cannot be undone."
+       - Actions: "Cancel" button (dismisses sheet) and "Delete" button (invokes `onDelete?.()` and dismisses sheet).
+       - Ensure styling and z-index (`z-[600]` or embedded bottom-sheet) renders cleanly on mobile viewports.
+   - In `SalesInvoiceModal.tsx`:
+     - Implement deletion in `onDelete`:
+       ```tsx
+       onDelete={async () => {
+         if (mobileSuccessInvoice) {
+           try {
+             await documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id);
+             toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} deleted`);
+           } catch (err) {
+             console.error("Delete failed:", err);
+             toast.error("Failed to delete invoice");
+           }
+         }
+         setActiveSavedDocId(null);
+         setMobileSuccessInvoice(null);
+         onOpenChange(false);
+       }}
+       ```
+
+3. Implement Requirement R4 (Header More Menu & Direct WhatsApp Share):
+   - In `MobileInvoiceSuccessView.tsx`:
+     - Expose new optional props in `MobileInvoiceSuccessViewProps`:
+       - `onDuplicate?: () => void;`
+       - `onVoid?: () => void;`
+     - Wire `MoreVertical` button to toggle `isMoreMenuOpen: boolean`.
+     - Render mobile action sheet / bottom-sheet containing 4 touch-friendly options (min 48px touch target):
+       1. "Duplicate / Copy Bill" (calls `onDuplicate?.()`)
+       2. "Share via WhatsApp" (calls `handleWhatsAppShare()`, which generates `https://wa.me/${phoneParam}?text=${encodeURIComponent(message)}` with invoice summary text: store, customer, invoice #, date, grand total, status, and opens via `window.open(url, "_blank")`)
+       3. "Download Thermal Receipt / PDF" (calls `handleDownload()`)
+       4. "Cancel / Void Invoice" (calls `onVoid?.()`)
+       5. "Cancel" button to dismiss action sheet.
+     - In activity status section, add status badge styling for `invoice.status === "cancelled"`.
+   - In `SalesInvoiceModal.tsx`:
+     - Provide `onDuplicate`:
+       ```tsx
+       onDuplicate={() => {
+         if (!mobileSuccessInvoice) return;
+         setActiveSavedDocId(null);
+         const parsed = parseInt(invoiceNumberSeq, 10);
+         const nextSeq = !isNaN(parsed)
+           ? String(parsed + 1).padStart(invoiceNumberSeq.length, "0")
+           : Math.floor(100 + Math.random() * 900).toString();
+         setInvoiceNumberSeq(nextSeq);
+         setAmountReceived(0);
+         setMarkAsFullyPaid(false);
+         setMobileSuccessInvoice(null);
+         toast.success(`Bill duplicated! New bill sequence #${nextSeq}`);
+       }}
+       ```
+     - Provide `onVoid`:
+       ```tsx
+       onVoid={async () => {
+         if (!mobileSuccessInvoice) return;
+         try {
+           const voidedDoc: BusinessDocument = {
+             ...mobileSuccessInvoice,
+             status: "cancelled",
+           };
+           await documentsService.saveDocument(voidedDoc, user?.id);
+           setMobileSuccessInvoice(voidedDoc);
+           toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} marked as Cancelled`);
+         } catch (err) {
+           console.error("Void failed:", err);
+           toast.error("Failed to cancel invoice");
+         }
+       }}
+       ```
+
+4. Verification & Existing Tests:
+   - Run verification commands via `cmd.exe /c`:
+     - `cmd.exe /c npx tsc --noEmit`
+     - `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress`
+   - In `src/test/MobileInvoiceSuccessView.test.tsx` and `src/test/MobileInvoiceSuccessView.challenger.test.tsx`, update the trash button test so it clicks the trash button, verifies the confirmation dialog appears, and clicks the confirm delete button to invoke `onDelete`.
+   - Add new tests in `src/test/MobileInvoiceSuccessView.test.tsx` for:
+     - Cancel deletion keeps invoice
+     - Header More menu opens with 4 options
+     - WhatsApp share URL formulation and window.open
+     - Duplicate bill callback
+     - Void invoice callback
+   - Verify 0 TypeScript compiler errors and 100% test pass rate across all suites.
+
+Write your handoff report to:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md`
+
+Use send_message to report completion back to the orchestrator.

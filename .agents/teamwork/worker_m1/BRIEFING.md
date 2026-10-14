@@ -1,63 +1,63 @@
-# BRIEFING — 2026-09-26T03:39:00Z
+# BRIEFING — 2026-10-14T10:49:00Z
 
 ## Mission
-Milestone 1: Update Tally DayBook XML queries with historical date range (SVFROMDATE/SVTODATE) and expand SyncConfig interfaces, metrics, and defaults to include all 5 entities (items, parties, balances, vouchers, banks) across autoSyncService.ts and scripts/credsmart-sync-agent/index.cjs.
+Implement Milestone 1: Core Billing Lifecycle Engine (Requirements R1 and R2) for CredSmart billing system.
 
 ## 🔒 My Identity
-- Archetype: worker
+- Archetype: implementer, qa, specialist
 - Roles: implementer, qa, specialist
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m1
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 1 (Query Protocols & Scope Config)
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 1: Core Billing Lifecycle Engine (R1 & R2)
 
 ## 🔒 Key Constraints
-- File write ownership:
-  - src/services/autoSyncService.ts (query constants, SyncConfig interface, getDefaultSyncConfig)
-  - scripts/credsmart-sync-agent/index.cjs (daybook query constants)
-- Do not touch files outside ownership unless instructed.
-- All implementations must be genuine, maintaining real state and real behavior.
-- Vitest tests (tallyImport.test.ts, tallyBridge.test.ts) must pass with zero regressions.
+- DO NOT CHEAT. All implementations must be genuine.
+- Strict ownership: `src/components/SalesInvoiceModal.tsx` and `src/services/documentsService.ts`.
+- On Windows, invoke all commands via `cmd.exe /c`.
+- Zero TypeScript compiler errors (`cmd.exe /c npx tsc --noEmit`).
+- 100% test pass rate across existing tests (`cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView`).
+- Zero regressions to desktop invoice modal flows.
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: not yet
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T10:49:00Z
 
 ## Task Summary
 - **What to build**:
-  1. Add `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>` to `TALLY_EXPORT_DAYBOOK_XML` in `src/services/autoSyncService.ts` and `scripts/credsmart-sync-agent/index.cjs`.
-  2. In `src/services/autoSyncService.ts`:
-     - Update `SyncConfig.syncScope` to include `banks: boolean`.
-     - Update `SyncConfig.lastSyncStats` to include `banks: number` and `balances: number`.
-     - Update `SyncAuditLog` to include `banksSynced?: number` and `balancesSynced?: number`.
-     - Update `SyncExecutionResult` to include `banksCount?: number` and `balancesCount?: number`.
-     - Update `getDefaultSyncConfig(orgId)` so that all 5 entities are enabled by default (`items: true, parties: true, balances: true, vouchers: true, banks: true`).
+  - R1: In-Place Update Lifecycle on Re-Edit (preserve document ID, update Supabase sales/sale_items in place instead of duplicate insert, update toast).
+  - R2: Mobile "Save & New" Engine & Sequence Reset (reorder conditional check, increment invoice sequence, reset all form fields & items, keep on mobile editor, display proper toast).
 - **Success criteria**:
-  - Code updated accurately following TypeScript types and minimal edits.
-  - Zero test regressions.
-- **Interface contracts**: `PROJECT.md`
-- **Code layout**: `src/services/autoSyncService.ts`, `scripts/credsmart-sync-agent/index.cjs`
+  - Re-editing an invoice updates it in place without duplicating records in Supabase or local storage.
+  - "Save & New" immediately prepares the next invoice with incremented sequence number and clean fields.
+  - Full TypeScript validation and test passing.
+- **Interface contracts**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`
+- **Code layout**: React component in `src/components/`, business service in `src/services/`
+
+## Key Decisions Made
+- Reordered post-save conditional to prioritize `saveAndNew` before viewport width check `window.innerWidth < 1024`, ensuring "Save & New" works properly on mobile.
+- Maintained `activeSavedDocId` state in `SalesInvoiceModal.tsx` initialized to `editingDoc?.id` and updated with `saved.id` on save.
+- Preserved `activeSavedDocId` when returning from `MobileInvoiceSuccessView` via `onEdit`.
+- In `documentsService.saveDocument`, added in-place update branch for Supabase `sales` using `.update(...)` and replacing `sale_items`, preventing duplicate record creation.
+- Preserved existing local storage caching and stock adjustment delta updating.
+
+## Artifact Index
+- `.agents/teamwork/worker_m1/DISPATCH.md` — Dispatch requirements and instructions
+- `.agents/teamwork/worker_m1/progress.md` — Progress tracker and liveness heartbeat
+- `.agents/teamwork/worker_m1/handoff.md` — Final handoff report
+- `src/test/billingLifecycleEngine.test.ts` — Comprehensive unit test suite for R1 and R2
 
 ## Change Tracker
 - **Files modified**:
-  - `src/services/autoSyncService.ts`: added date range to DayBook query, expanded SyncAuditLog, SyncConfig (syncScope + lastSyncStats), SyncExecutionResult, and updated getDefaultSyncConfig.
-  - `scripts/credsmart-sync-agent/index.cjs`: added date range to DayBook query constant and exported it.
-- **Build status**: Verified clean TypeScript interface matching and syntax.
+  - `src/components/SalesInvoiceModal.tsx`: Added `activeSavedDocId` state, preserved it on `onEdit`, passed `currentDocId` in `finalDoc`, updated toasts, reordered `saveAndNew` branch and added full state reset.
+  - `src/services/documentsService.ts`: Added in-place Supabase `sales` update and `sale_items` replacement for existing invoices, preserved local storage update and stock update delta.
+  - `src/test/billingLifecycleEngine.test.ts`: Added unit tests for R1 and R2 lifecycle behavior.
+- **Build status**: Pass (0 errors)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: All edits verified line-by-line; zero regressions introduced.
+- **Build/test result**: Pass (0 TypeScript errors, 52/52 Vitest tests passing)
 - **Lint status**: Clean
-- **Tests added/modified**: None (Milestone 1 is scope configuration and query constants)
+- **Tests added/modified**: `src/test/billingLifecycleEngine.test.ts` (6 tests covering in-place updates, no duplicates, stock adjustment, sequence bumping with padding).
 
 ## Loaded Skills
-- None
-
-## Key Decisions Made
-- Followed minimal-change principle on `src/services/autoSyncService.ts` and `scripts/credsmart-sync-agent/index.cjs`.
-- Made sure internal usage in `executeDirectSyncIngestion` is also updated to provide default 0 for `banksSynced`, `balancesSynced`, `banks`, `balances`, `banksCount`, and `balancesCount` to prevent any runtime or type errors.
-
-## Artifact Index
-- `.agents/teamwork/worker_m1/DISPATCH.md` — Assignment instructions
-- `.agents/teamwork/worker_m1/BRIEFING.md` — Agent working memory
-- `.agents/teamwork/worker_m1/progress.md` — Agent heartbeat & progress log
-- `.agents/teamwork/worker_m1/handoff.md` — Completion handoff report
+None

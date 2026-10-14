@@ -1,198 +1,128 @@
-# Milestone 1 Challenger Report: Query Protocols & Scope Config
+# Challenger Handoff Report: Milestone 1 - In-Place Update Lifecycle on Re-Edit (Requirement R1 & R2)
 
-**Verdict**: **APPROVE** (with 2 non-blocking advisories)
+**Author**: Challenger 1 (critic, specialist)  
+**Target**: Orchestrator (parent agent `c0d1864a-d589-4172-80be-9e95a059559c`)  
+**Date**: 2026-10-14T11:03:00Z  
+**Working Directory**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1`  
+**Verdict**: **APPROVE**
 
 ---
 
 ## 1. Observation
 
-Direct code and structural observations across the repository targets:
+### Observation 1.1: Type Safety Verification
+- Command: `cmd.exe /c npx tsc --noEmit`
+- Result: Exited with code `0`. Zero diagnostic errors across the entire codebase.
 
-### A. `TALLY_EXPORT_DAYBOOK_XML` in `src/services/autoSyncService.ts` (lines 182–201)
-```xml
-export const TALLY_EXPORT_DAYBOOK_XML = `
-<ENVELOPE>
-  <HEADER>
-    <TALLYREQUEST>Export Data</TALLYREQUEST>
-  </HEADER>
-  <BODY>
-    <EXPORTDATA>
-      <REQUESTDESC>
-        <REPORTNAME>Day Book</REPORTNAME>
-        <STATICVARIABLES>
-          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
-          <EXPLODEFLAG>Yes</EXPLODEFLAG>
-          <SVFROMDATE>20200401</SVFROMDATE>
-          <SVTODATE>20291231</SVTODATE>
-        </STATICVARIABLES>
-      </REQUESTDESC>
-    </EXPORTDATA>
-  </BODY>
-</ENVELOPE>
-`.trim();
-```
-- Line 191: `<REPORTNAME>Day Book</REPORTNAME>`.
-- Line 192: `<STATICVARIABLES>`.
-- Line 194: `<SVFROMDATE>20200401</SVFROMDATE>`.
-- Line 195: `<SVTODATE>20291231</SVTODATE>`.
-- Line 196: `</STATICVARIABLES>`.
-- Closing elements `</REQUESTDESC>`, `</EXPORTDATA>`, `</BODY>`, `</ENVELOPE>` strictly match their openers.
+### Observation 1.2: Empirical Unit & Adversarial Test Suite Execution
+- Command: `cmd.exe /c npx vitest run src/test/billingLifecycleEngine.adversarial.test.ts src/test/billingLifecycleEngine.test.ts`
+- Result:
+  ```text
+  ✓ src/test/billingLifecycleEngine.adversarial.test.ts (6 tests) 138ms
+  ✓ src/test/billingLifecycleEngine.test.ts (6 tests) 70ms
 
-### B. `TALLY_EXPORT_DAYBOOK_XML` in `scripts/credsmart-sync-agent/index.cjs` (lines 35–51, 69, 221–225)
-```javascript
-const TALLY_EXPORT_DAYBOOK_XML = `
-<ENVELOPE>
-  <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
-  <BODY>
-    <EXPORTDATA>
-      <REQUESTDESC>
-        <REPORTNAME>Day Book</REPORTNAME>
-        <STATICVARIABLES>
-          <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
-          <EXPLODEFLAG>Yes</EXPLODEFLAG>
-          <SVFROMDATE>20200401</SVFROMDATE>
-          <SVTODATE>20291231</SVTODATE>
-        </STATICVARIABLES>
-      </REQUESTDESC>
-    </EXPORTDATA>
-  </BODY>
-</ENVELOPE>`.trim();
-```
-- Line 45: `<SVFROMDATE>20200401</SVFROMDATE>`.
-- Line 46: `<SVTODATE>20291231</SVTODATE>`.
-- Line 69: `TALLY_REQUESTS.daybook: TALLY_EXPORT_DAYBOOK_XML`.
-- Line 223: `module.exports = { server, TALLY_EXPORT_DAYBOOK_XML, TALLY_REQUESTS };`.
+  Test Files  2 passed (2)
+       Tests  12 passed (12)
+    Duration  9.28s
+  ```
+- Command: `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView.test.tsx`
+- Result: All 17 tests passed (100% pass rate).
 
-### C. `getDefaultSyncConfig` in `src/services/autoSyncService.ts` (lines 82–103)
-```typescript
-export function getDefaultSyncConfig(orgId: string): SyncConfig {
-  const desktopToken =
-    typeof window !== "undefined" ? window.credsmartDesktop?.pairingToken : undefined;
-  return {
-    organizationId: orgId,
-    enabled: false,
-    pairingToken: desktopToken || `crds_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`,
-    selectedSoftware: "tally",
-    tallyHost: "http://127.0.0.1:9000",
-    syncIntervalMinutes: 15,
-    syncScope: {
-      items: true,
-      parties: true,
-      balances: true,
-      vouchers: true,
-      banks: true,
-    },
-    conflictStrategy: "erp_master",
-    lastSyncStatus: "idle",
-    history: [],
-  };
-}
-```
-- `syncScope.items === true` (strict boolean)
-- `syncScope.parties === true` (strict boolean)
-- `syncScope.balances === true` (strict boolean)
-- `syncScope.vouchers === true` (strict boolean)
-- `syncScope.banks === true` (strict boolean)
+### Observation 1.3: Repeated Re-Edit Cycle Consistency Across 10 Cycles
+- In `src/test/billingLifecycleEngine.adversarial.test.ts`, lines 13–97:
+  - Subjected the document lifecycle to 10 consecutive edit → save → edit → save iterations with mutating item sets and totals.
+  - Across all 10 cycles:
+    - `saved.id === persistentDocId` held true (10/10).
+    - `documentsService.getLocalDocuments(orgId, "sales_invoice")` maintained `length === 1` strictly with zero duplicates.
+    - `notes` and `grandTotal` correctly updated on every cycle.
 
-### D. TypeScript Interface Conformance in `src/services/autoSyncService.ts` (lines 10–63)
-- `SyncAuditLog`:
-  - Line 18: `banksSynced?: number;`
-  - Line 19: `balancesSynced?: number;`
-- `SyncConfig`:
-  - Line 37: `banks: boolean;` inside `syncScope`
-  - Lines 46–47: `banks: number;` and `balances: number;` inside `lastSyncStats`
-- `SyncExecutionResult`:
-  - Line 58: `banksCount?: number;`
-  - Line 59: `balancesCount?: number;`
-- Fallback and return values in `executeDirectSyncIngestion`:
-  - Lines 754–755: `banksSynced: 0, balancesSynced: 0`
-  - Line 766: `updatedConfig.lastSyncStats = { items: itemsCount, parties: partiesCount, vouchers: vouchersCount, banks: 0, balances: 0 }`
-  - Lines 775–776: `banksCount: 0, balancesCount: 0`
-  - Lines 793–794: `banksSynced: 0, balancesSynced: 0`
-  - Line 806: `banksCount: 0, balancesCount: 0`
+### Observation 1.4: Offline / Local Document Duplicate Prevention & Multi-Tenant Isolation
+- In `src/test/billingLifecycleEngine.adversarial.test.ts`, lines 99–176:
+  - Offline document initialized with `doc_` prefix.
+  - Re-edited with modified `documentNumber` (`OFFLINE-001` → `OFFLINE-001-REV1`).
+  - Saved document matched existing index by `d.id === doc.id` (in `src/services/documentsService.ts:1080`), maintaining exactly 1 record without duplicate generation.
+  - Multi-tenant isolation verified: editing an invoice in `orgId` did not mutate or duplicate documents in `otherOrgId`.
+
+### Observation 1.5: Dynamic Line Item Mutations & Stock Adjustment Oracles
+- In `src/test/billingLifecycleEngine.adversarial.test.ts`, lines 178–254:
+  - Initial save with items [Prod A: 10, Prod B: 5] invoked `stockService.handleDocumentStock` with action `"create"`.
+  - Re-edit removing Prod A, modifying Prod B to 8, and adding Prod C (15) invoked `stockService.handleDocumentStock`:
+    - Action: `"update"`
+    - Target `doc.items`: Prod B (qty 8), Prod C (qty 15)
+    - `previousDoc.items`: Prod A (qty 10), Prod B (qty 5)
+  - Mathematical integrity verified: subtotal, discount, 18% GST (CGST/SGST split), and roundOff match `grandTotal` and `balanceDue` throughout payment status transitions.
+
+### Observation 1.6: Save & New State Reset and Isolation
+- In `src/components/SalesInvoiceModal.tsx:1175–1208` and `src/test/billingLifecycleEngine.adversarial.test.ts:256–349`:
+  - Resetting `activeSavedDocId = null` on "Save & New" ensures the subsequent bill receives a new unique document ID rather than overwriting the previous invoice.
+  - Verified local storage holds 2 distinct records, and updating Bill 1 does not mutate Bill 2.
 
 ---
 
 ## 2. Logic Chain
 
-1. **XML Well-Formedness & Nesting**:
-   - Both XML definitions contain a single root element (`<ENVELOPE>`).
-   - Every tag is closed symmetrically without overlapping or orphaned tags.
-   - `<STATICVARIABLES>` is an immediate child of `<REQUESTDESC>`.
-   - `<SVFROMDATE>` and `<SVTODATE>` are properly nested within `<STATICVARIABLES>`, formatted as `20200401` and `20291231` (YYYYMMDD standard date syntax recognized by Tally Prime / ERP 9).
-   - This directly satisfies Requirement R2 and PROJECT.md Feature #1.
+1. **State Preservation Across Edit Cycles [Ref: Observation 1.3, 1.6]**:
+   - In `SalesInvoiceModal.tsx`, `activeSavedDocId` is initialized from `editingDoc?.id` and updated on save via `setActiveSavedDocId(saved.id)`.
+   - When tapping "Edit" or "Edit Bill" from `MobileInvoiceSuccessView`, `onEdit` assigns `setActiveSavedDocId(mobileSuccessInvoice.id)`.
+   - In `handleSave`, `const currentDocId = activeSavedDocId || editingDoc?.id || undefined;` injects the ID into `finalDoc`.
+   - On "Save & New", `setActiveSavedDocId(null)` clears the ID so rapid billing generates independent invoices.
+   - Tested across 10 consecutive cycles: zero ID drift or state leakage.
 
-2. **Sync Scope Configuration**:
-   - `getDefaultSyncConfig(orgId)` constructs and returns `syncScope` with all 5 flags (`items`, `parties`, `balances`, `vouchers`, `banks`) explicitly assigned `true`.
-   - This directly satisfies Requirement R3 and PROJECT.md Feature #2.
+2. **In-Place Supabase & Local Cache Update [Ref: Observation 1.2, 1.4]**:
+   - In `documentsService.saveDocument`, Supabase `sales` table executes `.update({ ... }).eq("id", doc.id)` when `isExistingSupabaseSale` is true, deletes previous line items from `sale_items`, and re-inserts updated items.
+   - Local storage updates in-place via `existingList[index] = { ...doc, updated_at: ... }`.
+   - When offline or when document numbers are revised, `d.id === doc.id` prevents duplicates.
 
-3. **Type Safety & Runtime Stability**:
-   - All 5 entity fields are typed across `SyncConfig.syncScope`, `SyncConfig.lastSyncStats`, `SyncAuditLog`, and `SyncExecutionResult`.
-   - `executeDirectSyncIngestion` initializes `banks` and `balances` count fields to numeric zero (`0`) across both success and exception code paths, eliminating `undefined` access errors or downstream UI crashes.
+3. **Accurate Stock Reversal & Re-Application [Ref: Observation 1.5]**:
+   - `stockService.handleDocumentStock(doc, "update", previousDoc)` delegates to `handleDocumentStock(previousDoc, "delete")` followed by `handleDocumentStock(doc, "create")`.
+   - Reverting the old document's stock effect restores removed/reduced items, and applying the new document's stock effect deducts the updated quantities.
 
 ---
 
-## 3. Caveats & Adversarial Findings
+## 3. Caveats
 
-### Advisory 1: Unscoped `server.listen()` in `scripts/credsmart-sync-agent/index.cjs`
-- **Finding**: In `scripts/credsmart-sync-agent/index.cjs`, line 216 calls `server.listen(PORT, "127.0.0.1", ...)` at top-level.
-- **Impact**: While child process execution via `spawn()` (used in `src/test/tallyBridge.test.ts`) works normally, requiring `index.cjs` as a module (`require('.../index.cjs')`) will immediately start the server and bind port 9005, keeping the Node event loop alive.
-- **Recommendation for M5 / Hardening**: Guard server startup with `if (require.main === module) { server.listen(...) }`.
-
-### Advisory 2: Shallow Spread in `getSyncConfig(orgId)`
-- **Finding**: Line 112 in `src/services/autoSyncService.ts` uses:
-  ```typescript
-  return {
-    ...getDefaultSyncConfig(orgId),
-    ...parsed,
-  };
-  ```
-- **Impact**: If a client has a pre-existing legacy sync config saved in `localStorage` prior to Milestone 1, `parsed.syncScope` lacks `banks`. Because `parsed` shallowly overrides the object, `syncScope.banks` would evaluate to `undefined` rather than defaulting to `true` for that legacy user.
-- **Recommendation for M2 / M4**: Enhance `getSyncConfig` to merge `syncScope` deeply:
-  ```typescript
-  syncScope: {
-    ...getDefaultSyncConfig(orgId).syncScope,
-    ...(parsed?.syncScope || {}),
-  },
-  ```
+1. **Browser LocalStorage Quota**:
+   - Adversarial tests confirmed zero duplicate records; however, if the browser hits the physical 5MB localStorage limit, standard browser quota exceptions will apply. Supabase cloud sync provides persistent storage.
+2. **Offline Network Reconnect**:
+   - Offline records created with `doc_` prefix reside in local storage until synchronized. When online, Supabase updates operate on UUIDs.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: APPROVE.**
+### Final Verdict: **APPROVE**
 
-The worker has successfully and accurately implemented all requirements for Milestone 1:
-- `TALLY_EXPORT_DAYBOOK_XML` is well-formed XML with `<SVFROMDATE>20200401</SVFROMDATE>` and `<SVTODATE>20291231</SVTODATE>` properly nested within `<STATICVARIABLES>` in both `src/services/autoSyncService.ts` and `scripts/credsmart-sync-agent/index.cjs`.
-- `getDefaultSyncConfig` returns `syncScope` with all 5 entity types (`items`, `parties`, `balances`, `vouchers`, `banks`) strictly set to `true`.
-- TypeScript definitions and runtime assignments in `autoSyncService.ts` cleanly accommodate all 5 entities across audit logs, config stats, and execution results.
+Milestone 1 implementation successfully withstands all adversarial challenges:
+- **Repeated Re-Edits**: Preserves `activeSavedDocId` across arbitrary edit-save cycles without ID mutation or document duplication.
+- **Offline / Local Document Safety**: Guarantees exactly 1 document in cache with clean update semantics even when document numbers change.
+- **Line Item Mutations & Stock Deltas**: Supplies clean `previousDoc` state to `stockService` on update, cleanly handling item additions, removals, and quantity modifications.
+- **Save & New**: Correctly clears `activeSavedDocId`, auto-increments sequences, and isolates multi-bill workflows.
+- **Verification**: 12/12 unit and adversarial tests pass with 0 TypeScript errors.
 
 ---
 
 ## 5. Verification Method
 
-1. **Standalone Test Suite**:
-   Run the verification test suite created in `scripts/test_challenger_m1.cjs`:
-   ```bash
-   node scripts/test_challenger_m1.cjs
-   ```
-   Expected output:
-   - `autoSyncService.ts exports TALLY_EXPORT_DAYBOOK_XML` [PASS]
-   - `autoSync XML starts with <ENVELOPE> and ends with </ENVELOPE>` [PASS]
-   - `autoSync XML specifies REPORTNAME Day Book` [PASS]
-   - `SVFROMDATE is nested inside STATICVARIABLES` [PASS]
-   - `SVTODATE is nested inside STATICVARIABLES` [PASS]
-   - `index.cjs defines TALLY_EXPORT_DAYBOOK_XML with matching date bounds` [PASS]
-   - `getDefaultSyncConfig sets all 5 syncScope flags strictly to true` [PASS]
-   - `SyncConfig.syncScope has banks: boolean` [PASS]
-   - `Results: 15 passed, 0 failed.`
+To independently reproduce the empirical verification results, execute via `cmd.exe /c`:
 
-2. **Vitest E2E Suite** (when npm dependencies are installed):
-   ```bash
-   npx vitest run src/test/tallyE2E.test.ts -t "1.1 DayBook XML Date Range Support"
-   npx vitest run src/test/tallyE2E.test.ts -t "1.2 SyncConfig & Scope Expansion"
-   ```
+### 1. Type Check
+```powershell
+cmd.exe /c npx tsc --noEmit
+```
+*Expected*: Exit code 0, 0 diagnostic errors.
 
-3. **Invalidation Conditions**:
-   - Any modification altering the tag symmetry or omitting `<SVFROMDATE>`/`<SVTODATE>`.
-   - Modifying `getDefaultSyncConfig` to set any of `items`, `parties`, `balances`, `vouchers`, `banks` to false.
+### 2. Adversarial & Core Billing Lifecycle Tests
+```powershell
+cmd.exe /c npx vitest run src/test/billingLifecycleEngine.adversarial.test.ts src/test/billingLifecycleEngine.test.ts
+```
+*Expected*: 2 test files passed, 12/12 tests passed (100% pass rate).
+
+### 3. Mobile Invoice Success View Tests
+```powershell
+cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView.test.tsx
+```
+*Expected*: 1 test file passed, 17/17 tests passed (100% pass rate).
+
+### 4. Invalidation Conditions
+- Any occurrence where `activeSavedDocId` reverts to null during "Edit" transition, causing a duplicate record.
+- Any occurrence where `stockService.handleDocumentStock` is invoked with action `"create"` instead of `"update"` on re-edit.

@@ -147,3 +147,64 @@ Ensure tapping either edit trigger transitions immediately back to `MobileCreate
 - [ ] Zero TypeScript compiler errors across all modified files (`tsc --noEmit`).
 - [ ] All 219+ existing Vitest test suites continue to pass with 100% success rate.
 - [ ] Unit tests added for `MobileInvoiceSuccessView` verifying edit trigger callbacks and dual-footer rendering.
+
+
+## 2026-10-14T09:50:17Z
+
+Complete all remaining lifecycle actions from the mobile billing & success workflow in CredSmart: implement in-place invoice updates when returning via Edit (preventing duplicate invoices), fix mobile `Save & New` sequence reset, implement confirmed invoice deletion from the success screen, and wire the header More menu with WhatsApp direct sharing.
+
+Working directory: c:\Users\bishn\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. In-Place Update Lifecycle on Re-Edit (Prevent Duplicate Invoices)
+When a user clicks "Edit" or "Edit Bill" from `MobileInvoiceSuccessView.tsx`:
+- `SalesInvoiceModal.tsx` transitions back to `MobileCreateInvoice.tsx`.
+- The saved invoice's ID (`saved.id`) must be preserved in active editing state (`activeSavedDocId` or updating `editingDoc`).
+- When the user modifies line items, party details, or amounts and taps "Generate Bill" again, `handleSave` must pass the existing document ID so `documentsService.saveDocument` executes an **in-place update** rather than inserting a duplicate record into the database.
+- Provide clear visual toast feedback: "Invoice #[number] updated successfully!"
+
+### R2. Mobile "Save & New" Engine & Sequence Reset
+Fix the conditional block in `SalesInvoiceModal.tsx:1163`:
+- Currently, `if (window.innerWidth < 1024)` forces `setMobileSuccessInvoice(saved)` unconditionally, starving the `else if (saveAndNew)` branch.
+- When `saveAndNew` is true on mobile:
+  - Persist the saved invoice to the database.
+  - Reset form fields: clear party selection, reset line items to a single blank row, reset payment amounts.
+  - Automatically bump the invoice sequence number (e.g. `INV-139` → `INV-140`).
+  - Display a success toast: "Invoice #[number] created! Ready for next bill."
+  - Remain on `MobileCreateInvoice` ready for rapid-fire billing.
+
+### R3. Safe Invoice Deletion with Confirmation
+Implement full deletion lifecycle in `MobileInvoiceSuccessView.tsx` and `SalesInvoiceModal.tsx`:
+- Clicking the header `Trash2` icon on the success screen opens a sleek mobile confirmation bottom-sheet / alert dialog: "Delete this invoice? This action cannot be undone."
+- On confirmation, invoke `documentsService.deleteDocument(invoice.id)`.
+- Reset active invoice state (`setMobileSuccessInvoice(null)`), close the modal, and show toast: "Invoice #[number] deleted".
+
+### R4. Header More Menu & Direct WhatsApp Share
+- Wire the 3-dots `MoreVertical` button on `MobileInvoiceSuccessView.tsx`:
+  - Open a touch-friendly bottom sheet or dropdown menu with options:
+    - **Duplicate / Copy Bill**: Loads invoice items into a new bill with next sequence number.
+    - **Share via WhatsApp**: Directly opens `https://wa.me/?text=...` with pre-filled invoice summary and link.
+    - **Download Thermal Receipt / PDF**: Instant print/download trigger.
+    - **Cancel / Void Invoice**: Allows marking invoice status as cancelled.
+
+## Acceptance Criteria
+
+### Lifecycle & State Fidelity
+- [ ] Editing an invoice from the success screen and clicking "Generate Bill" updates the existing invoice without creating duplicate records.
+- [ ] Tapping "Save & New" on mobile saves the invoice, increments the invoice number, resets form fields, and stays in editor mode.
+- [ ] Tapping "Trash" on success screen displays confirmation and deletes the record from database upon confirm.
+- [ ] Header 3-dots menu opens mobile action sheet with Duplicate, WhatsApp Share, and Void options.
+- [ ] WhatsApp share button triggers WhatsApp URL scheme (`https://wa.me/` or `whatsapp://send`) with formatted text summary.
+
+### Code Quality & Standards
+- [ ] Zero TypeScript compiler errors across all modified files (`tsc --noEmit`).
+- [ ] 100% test pass rate across `src/test/MobileInvoiceSuccessView*.test.tsx`.
+- [ ] Unit tests added for update-on-edit, save-and-new, delete confirmation, and WhatsApp sharing.
+- [ ] Zero regressions to desktop invoice modal flows.
+
+
+## 2026-10-14T12:07:00Z
+
+Server restarted. Please resume execution, complete final verification (tsc --noEmit and test suite validation), and run the Victory Audit to finalize.

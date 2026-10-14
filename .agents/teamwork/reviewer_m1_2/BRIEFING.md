@@ -1,60 +1,61 @@
-# BRIEFING — 2026-09-25T22:16:00Z
+# BRIEFING — 2026-10-14T11:02:00Z
 
 ## Mission
-Conduct an independent, rigorous code review and adversarial critique of Milestone 1 changes in autoSyncService.ts and credsmart-sync-agent/index.cjs.
+Review Milestone 1: Mobile "Save & New" Engine & Sequence Reset (Requirement R2) as Reviewer 2 (Reviewer and Adversarial Critic).
 
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_2
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Milestone 1
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
+- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
+- Milestone: Milestone 1: Mobile "Save & New" Engine & Sequence Reset (R2)
 - Instance: 2 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Integrity mode: check for hardcoded test results, facade implementations, bypassed tasks, fabricated artifacts
-- Independent evidence-based evaluation: inspect code directly and run tests if possible
+- Check for integrity violations (hardcoded test data, dummy logic, facade code)
+- Verify mobile R2 branch order, sequence incrementing, state resets, toast message, desktop flow preservation
+- Deliver comprehensive handoff report with verdict: APPROVE or REQUEST_CHANGES
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-25T22:16:00Z
+- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Updated: 2026-10-14T11:02:00Z
 
 ## Review Scope
-- **Files to review**: src/services/autoSyncService.ts, scripts/credsmart-sync-agent/index.cjs
-- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md
-- **Review criteria**: XML envelope validity, interface completeness, default scope initialization, robustness against null/undefined, adversarial challenges
+- **Files to review**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/test/billingLifecycleEngine*.test.ts`, `src/test/MobileInvoiceSuccessView*.test.tsx`
+- **Interface contracts**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+- **Review criteria**: correctness, adversarial failure modes, edge cases, desktop preservation, sequence increment robustness
+
+## Key Decisions Made
+- Confirmed evaluation priority of `if (saveAndNew)` at `SalesInvoiceModal.tsx:1175` before `else if (window.innerWidth < 1024)`.
+- Confirmed zero integrity violations, no dummy or facade implementations, and full test suite passes (58/58 tests passed).
+- Final review verdict: APPROVE.
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/services/autoSyncService.ts` (lines 1-150, 180-215, 345-410, 745-810)
-  - `scripts/credsmart-sync-agent/index.cjs` (lines 35-70, 150-227)
-  - `src/test/tallyE2E.test.ts` (lines 180-320)
-  - `src/test/tallyBridge.test.ts` (lines 1-94)
-- **Verdict**: APPROVE (with 1 Major and 2 Minor findings)
-- **Unverified claims**: None. All core claims verified independently via custom verification script.
+  - `SalesInvoiceModal.tsx:1035-1215` (saveAndNew flow, priority evaluation, sequence calculation, reset fields, toast)
+  - `SalesInvoiceModal.tsx:1500-1530` (activeSavedDocId retention on edit, clearing on save & new)
+  - `SalesInvoiceModal.tsx:1720-1735` (desktop Save & New button preservation)
+  - `documentsService.ts:654-762` (in-place Supabase update vs insert, line item synchronization)
+  - `documentsService.ts:1080-1108` (in-place localStorage cache and stockService delta tracking)
+  - `MobileCreateInvoice.tsx:73-75, 273-279` (Save & New button wiring)
+  - `billingLifecycleEngine.test.ts` & `billingLifecycleEngine.adversarial.test.ts`
+  - `MobileInvoiceSuccessView*.test.tsx` (all 3 suites)
+- **Verdict**: APPROVE
+- **Unverified claims**: None
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. XML envelope validity and tag closure -> PASS. Both envelopes well-formed with balanced tags.
-  2. Interface completeness across all 5 entities -> PASS.
-  3. Default scope initialization with all 5 flags enabled -> PASS.
-  4. Shallow merge in `getSyncConfig` with legacy stored localStorage configs -> CONFIRMED (Major Finding).
-  5. Slicing corrupted `history` property -> CONFIRMED POTENTIAL FAILURE (Minor Finding).
-  6. Unconditional `server.listen()` in `index.cjs` upon `require()` -> CONFIRMED (Minor Finding).
-  7. Hardcoded 10-year date range omitting pre-2020 records -> CONFIRMED (Minor Finding).
-- **Vulnerabilities found**:
-  - [Major] `getSyncConfig` shallow-merges legacy saved configs, leaving `syncScope.banks` as undefined.
-  - [Minor] Top-level `server.listen` executes on module require.
-  - [Minor] Fixed 2020-2029 date boundaries lack runtime dynamic parameterization.
-- **Untested angles**:
-  - Live Tally HTTP connection (requires physical running Tally Prime instance).
-
-## Key Decisions Made
-- Confirmed zero integrity violations (no dummy facades, no hardcoded test cheats).
-- Verified all core Milestone 1 requirements are satisfied.
-- Approved Milestone 1 changes while providing clear mitigations for Milestone 2 & Milestone 4 workers.
+  - Evaluation starvation on mobile viewports: Resolved by prioritizing `if (saveAndNew)`
+  - Sequence padding loss during increment (e.g. `001` -> `2`): Resolved by `padStart(invoiceNumberSeq.length, "0")`
+  - Leaking previous document ID into next invoice during Save & New: Resolved by `setActiveSavedDocId(null)`
+  - Re-saving edited invoice creating duplicates: Resolved by passing ID and in-place update in `documentsService.ts`
+  - Regressions in desktop flows: Verified desktop modal closes on regular save and resets properly on Save & New
+- **Vulnerabilities found**: None in reviewed implementation
+- **Untested angles**: None
 
 ## Artifact Index
-- c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_2/verify_m1.cjs — Independent verification test runner
-- c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m1_2/handoff.md — Final comprehensive review and challenge report
+- `.agents/teamwork/reviewer_m1_2/DISPATCH.md` — Initial dispatch message
+- `.agents/teamwork/reviewer_m1_2/BRIEFING.md` — Persistent state and working memory
+- `.agents/teamwork/reviewer_m1_2/progress.md` — Liveness heartbeat and activity log
+- `.agents/teamwork/reviewer_m1_2/handoff.md` — 5-component handoff report with APPROVE verdict
