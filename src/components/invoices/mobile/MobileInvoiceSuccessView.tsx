@@ -260,7 +260,15 @@ export function MobileInvoiceSuccessView({
       </div>
 
       {/* ── 6. Action Buttons Row ── */}
-      <div className="bg-white flex justify-around px-4 py-5 border-t border-slate-100 shrink-0">
+      <div className="bg-white flex justify-around px-2 sm:px-4 py-5 border-t border-slate-100 shrink-0">
+        {onEdit && (
+          <button onClick={onEdit} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+            <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
+              <Edit2 className="w-5 h-5" />
+            </div>
+            <span className="text-[11px] font-semibold text-slate-700">Edit</span>
+          </button>
+        )}
         <button onClick={handlePrint} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
           <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
             <Printer className="w-5 h-5" />
@@ -291,10 +299,19 @@ export function MobileInvoiceSuccessView({
       <div className="h-24 shrink-0" />
 
       {/* ── 7. Sticky Footer ── */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 pb-[max(1rem,env(safe-area-inset-bottom))] z-30">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 pb-[max(1rem,env(safe-area-inset-bottom))] z-30 flex items-center gap-3">
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="flex-1 flex items-center justify-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 py-3.5 rounded-xl font-bold text-[15px] shadow-sm active:bg-indigo-100 transition-colors"
+          >
+            <Edit2 className="w-4 h-4" />
+            <span>Edit Bill</span>
+          </button>
+        )}
         <button
           onClick={onClose}
-          className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-[15px] shadow-sm active:bg-indigo-700 transition-colors"
+          className={`flex-1 flex items-center justify-center bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-[15px] shadow-sm active:bg-indigo-700 transition-colors ${!onEdit ? "w-full" : ""}`}
         >
           Done
         </button>

@@ -1,17 +1,26 @@
-## 2026-09-25T21:44:17Z
-You are explorer_survey_3 (Role: UI and Test Suite Explorer).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/explorer_survey_3
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
+## 2026-10-14T06:48:25Z
 
-Your task is to conduct a thorough investigation of CredSmart's UI components for Tally sync/import and the existing test suites:
-1. Inspect <TallyImportModal> (find where it is defined, e.g. src/components/tally/ or src/components/, and where it is mounted/used). Check what entity types it currently imports (Items, Parties, etc.), how files (XML) are uploaded and processed, and how bank/cash or voucher importing should be wired into it.
-2. Inspect the Auto-Sync dashboard and Live Sync UI (e.g., in src/pages/TallyIntegration.tsx, src/components/tally/, src/services/tally/tallyBridge.ts). Note what entity checkboxes exist, what sync stats are tracked and displayed (Items, Parties, Balances, Vouchers, Banks), and how the sync state is managed.
-3. Inspect the existing test suites:
-   - src/test/tallyImport.test.ts
-   - src/test/tallyBridge.test.ts
-   - Any other relevant test files in src/test/
-   - Check test runners, Vitest configuration (vitest.config.ts, package.json), mock setups, and test commands (npm test / npx vitest run ...).
-4. Identify gaps between existing UI/test implementations and the Acceptance Criteria in ORIGINAL_REQUEST.md.
-5. Write your complete findings to:
-c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/explorer_survey_3/handoff.md
-6. When complete, use send_message to report your completion back to the orchestrator (caller id). Include a concise summary in the message and reference the handoff.md path.
+You are Explorer 3 on the Mobile Invoice Success Edit Triggers project.
+Your assigned working directory is:
+`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3`
+
+Task:
+1. Read `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (specifically the header `## 2026-10-14T06:45:25Z`).
+2. Investigate the project's testing setup and existing test suites:
+   - Inspect `package.json` for test commands and dependencies (Vitest, @testing-library/react, etc.).
+   - Check existing test files under `src/test/` or `src/components/**` to see mocking patterns, render test utilities, and conventions.
+   - Specifically check if any tests exist for `MobileInvoiceSuccessView` or `MobileCreateInvoice` or `SalesInvoiceModal`.
+3. Provide a concrete specification for adding unit tests for `MobileInvoiceSuccessView`:
+   - Exact file path to create (e.g. `src/test/MobileInvoiceSuccessView.test.tsx` or `src/components/invoices/mobile/MobileInvoiceSuccessView.test.tsx`).
+   - Test cases to cover:
+     a) Rendering circular Edit action button in action row and firing `onEdit` when clicked.
+     b) Rendering dual sticky footer with `Edit Bill` and `Done` buttons.
+     c) Firing `onEdit` when clicking `Edit Bill` in footer.
+     d) Firing `onClose` when clicking `Done` in footer.
+     e) Proper button styling, accessibility labels, and safe-area inset classes.
+     f) Graceful behavior when optional callbacks are omitted or provided.
+   - Identify any mocks needed (e.g. icons, child components, or router/context).
+4. Produce a detailed handoff report in:
+   `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`
+   Follow the Handoff Protocol: Observation, Logic Chain, Caveats, Conclusion, Verification Method.
+5. Send a message back to the orchestrator when finished.

@@ -1,80 +1,60 @@
-# Handoff Report — Sentinel Final Verification
+# Handoff Report: Mobile Invoice Success Screen Edit Triggers
 
-**Agent**: Sentinel  
-**Role**: Project Sentinel  
-**Task**: CredSmart Master GST Invoice Redesign (Section 2026-10-13T20:00:31Z)  
-**Date**: 2026-10-14  
-**Status**: PROJECT COMPLETED — VICTORY CONFIRMED  
+- **Agent**: Project Sentinel
+- **Status**: COMPLETE
+- **Verdict**: VICTORY CONFIRMED
 
 ---
 
 ## 1. Observation
-
-1. **User Request & Requirements**:
-   - Redesign master GST invoice layout in CredSmart to match enterprise visual specification in `Correction/New folder/New Invoice.jpeg`, replacing legacy boxed layout from `Correction/New folder/Old Invoice.jpeg` across web previews and single-page PDF generation.
-   - Preserves complete backward compatibility across all 11 `UniversalDocType` documents (`sales_invoice`, `pos_invoice`, `purchase_invoice`, `quotation`, `proforma_invoice`, `credit_note`, `debit_note`, etc.), multi-unit calculations, and custom company settings without regressions.
-
-2. **Implementation Landed in Repository**:
-   - `src/components/invoices/UnifiedInvoiceRenderer.tsx`:
-     - Clean unboxed stationery canvas (`max-w-[794px]`, `data-print-container="invoice"`).
-     - Bold navy `TAX INVOICE` (`#0c324e`) on the left with stacked right-aligned metadata (`Invoice No.`, `Invoice Date`, `Due Date`).
-     - Full-width cyan accent horizontal divider line (`#0ea5e9`).
-     - Dual equal-width pods (`FROM` & `BILL TO`) with light-blue ribbons (`#e8f4fd`), bold cyan labels (`#0284c7`), and bottom sub-compartments (`Place of Supply` and `Customer: [Name]`).
-     - Uppercase `ITEM DETAILS` section heading (`#0284c7`).
-     - Solid dark navy table header (`bg-[#0c324e]`) with crisp white typography (`text-white`) and 6 standard columns (`S.No.`, `Description`, `HSN`, `Qty`, `Rate`, `Amount`).
-     - Right-aligned financial summary breakdown with soft-blue rounded highlight pill (`bg-[#e0f2fe]`) for `Invoice total (rounded)` and `Amount received (Cash)`.
-     - Clean single-line `Amount in words: INR ... Only`.
-     - Dual side-by-side bordered cards with light-blue ribbons for `BANK ACCOUNT DETAILS` and `AUTHORISED SIGNATORY`.
-     - Minimalist footer: `Thank you for your business.`.
-   - `src/utils/downloadExactInvoice.ts`:
-     - Standard A4 96 DPI container (`794px` width, `1123px` min-height).
-     - 0.5mm single-page tolerance scaling (`imgHeightMm <= 297.5mm`) preventing subpixel downscale distortion.
-     - Bank details payload support (`bankDetails`) forwarded to invoice renderer.
-     - Path-safe filename sanitization and guaranteed container cleanup in `finally`.
-
-3. **Independent Victory Audit Verdict**:
-   - Agent: `teamwork_preview_victory_auditor` (`5241a514-2a29-49fc-a631-9cfade7a2e21`).
-   - Verdict: **VICTORY CONFIRMED**.
-   - Phase A (Timeline): PASS, 0 anomalies.
-   - Phase B (Integrity): PASS, 0 hardcoded test outputs, 0 facade implementations, 0 skipped tests.
-   - Phase C (Independent Tests): PASS, 219/219 tests passing across 7 test files, 0 TypeScript compiler errors.
+The user requested adding prominent, touch-friendly edit triggers to the Mobile Invoice Success screen (`MobileInvoiceSuccessView.tsx`) in CredSmart:
+1. A dedicated circular Edit button in the quick action row (`w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50/60`, `Edit2` pen icon, and "Edit" label below).
+2. A dual-button sticky bottom bar (`Edit Bill` + `Done`) with safe area inset support.
+3. Seamless return to the mobile invoice editor (`MobileCreateInvoice.tsx`) via `setMobileSuccessInvoice(null)` in `SalesInvoiceModal.tsx`, keeping all entered form data intact.
+4. Clean TypeScript check (`tsc --noEmit`), passing Vitest tests, and dedicated unit tests for `MobileInvoiceSuccessView`.
 
 ---
 
 ## 2. Logic Chain
-
-1. **Routing**: Task was evaluated against Routing Decision Table and dispatched to `teamwork_preview_orchestrator` via the General path.
-2. **Decomposition & Swarm Execution**: The orchestrator managed Phase 0 architecture discovery, Milestone 1 test creation, Milestone 2 visual redesign, and Milestone 3 PDF engine parity.
-3. **Multi-Perspective Review**: 5 independent subagents (Visual Reviewer, Architecture Reviewer, Edge Challenger, PDF Challenger, Forensic Auditor) audited the changes and confirmed zero regressions.
-4. **Independent Post-Victory Verification**: In accordance with Sentinel governance, the orchestrator's victory claim was subjected to a fresh, independent post-victory auditor with zero shared context from the implementation swarm. The auditor independently executed the build and test suites, confirming 100% compliance.
-5. **Governance Cleanup**: All crons and subagents were terminated upon victory confirmation.
+- Evaluated request against routing decision table and routed to the **General Path** (`teamwork_preview_orchestrator`).
+- Initialized orchestrator workspace and dispatched Project Orchestrator (`128ce6df-e01a-4513-8b58-90303779e4c7`).
+- Scheduled two background sentinel monitoring crons (Reporting: task-24, Liveness: task-26).
+- Orchestrator executed 4 phases:
+  - Phase 0: 3 parallel explorers surveyed UI, state transitions, and testing harness.
+  - Phase 1: Worker implemented the circular Edit quick action button and dual sticky footer in `MobileInvoiceSuccessView.tsx`.
+  - Phase 2: Test Writer authored 17 comprehensive unit tests in `src/test/MobileInvoiceSuccessView.test.tsx`.
+  - Phase 3: Reviewers, Challengers, and Forensic Auditor audited code quality, accessibility, touch boundaries, and integrity (all confirmed APPROVE/CLEAN).
+- Orchestrator claimed project completion.
+- Sentinel dispatched independent Victory Auditor (`3830018e-1dce-49db-8e77-3c33336e68ef`).
+- Victory Auditor executed independent 3-phase audit:
+  - Phase A (Timeline & Provenance): PASS
+  - Phase B (Integrity Forensics): PASS
+  - Phase C (Independent Test Execution): PASS (`tsc --noEmit` exit 0, Vitest 17/17 passed, challenge tests passed).
+- Final Verdict: `VICTORY CONFIRMED`.
+- Performed mandatory cleanup: cancelled all crons and terminated all subagents via `manage_subagents(action="kill_all")`.
 
 ---
 
 ## 3. Caveats
-
-- None. All 219 tests pass unconditionally with zero skipped tests and zero TypeScript compiler warnings or errors.
+- The circular Edit trigger and Edit Bill footer button render conditionally when `onEdit` is provided. If `onEdit` is omitted, the `Done` button gracefully expands to full width (`w-full`), maintaining complete backward compatibility.
+- Safe area inset padding (`pb-[max(1rem,env(safe-area-inset-bottom))]`) is preserved on the sticky bottom bar for devices with home indicators (e.g. modern iOS and Android).
 
 ---
 
 ## 4. Conclusion
-
-The CredSmart Master GST Invoice Redesign has been completed and verified to pixel-perfect fidelity with `New Invoice.jpeg`. All acceptance criteria have been confirmed independently by the Victory Auditor.
+All acceptance criteria and requirements from `ORIGINAL_REQUEST.md` have been met with 100% success rate:
+- Circular `Edit` action button rendered in the Action Buttons row and executes `onEdit` on tap.
+- Sticky footer displays side-by-side `Edit Bill` and `Done` buttons.
+- State transition returns back to mobile invoice editor preserving all invoice data.
+- Zero TypeScript compiler errors (`tsc --noEmit`).
+- 17/17 unit tests passing in `src/test/MobileInvoiceSuccessView.test.tsx`.
 
 ---
 
 ## 5. Verification Method
-
-To reproduce the verification results:
-
-1. **TypeScript Type Check**:
-   ```powershell
-   cmd /c npx tsc --noEmit
-   ```
-   *Expected*: Exit code 0, 0 errors.
-
-2. **Full Invoice Test Suite Execution**:
-   ```powershell
-   cmd /c npx vitest run src/test/unifiedInvoiceRenderer.test.tsx src/test/unifiedInvoiceRenderer.edge.test.tsx src/test/downloadExactInvoice.test.ts src/test/downloadExactInvoice.adversarial.test.ts src/test/downloadExactInvoice.realjspdf.test.ts src/test/unitConversionBill.test.ts src/test/invoiceCalculations.test.ts
-   ```
-   *Expected*: 7 test files passed, 219 tests passed (0 failed, 0 skipped).
+1. **Independent Victory Auditor Verdict**:
+   - Verdict: `VICTORY CONFIRMED` (recorded in `victory_auditor_mobile_edit/handoff.md`).
+2. **TypeScript Compilation**:
+   - `npx.cmd tsc --noEmit` exited with code 0 (zero errors).
+3. **Unit Tests**:
+   - `npx.cmd vitest run src/test/MobileInvoiceSuccessView.test.tsx` (17/17 passed in 3.10s).

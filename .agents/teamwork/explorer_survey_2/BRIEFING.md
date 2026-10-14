@@ -1,51 +1,45 @@
-# BRIEFING — 2026-09-26T03:27:00Z
+# BRIEFING — 2026-10-14T06:57:30Z
 
 ## Mission
-Thorough investigation of CredSmart's database schemas, persistence layers, and local storage mechanisms to inform full financial entity ingestion (Products/Batches, Customers/Suppliers, Credit Transactions, Bank Accounts/Cash, Sales/Items, Purchases/Items, Expenses).
+Investigate state management and edit transitions between MobileInvoiceSuccessView, SalesInvoiceModal, and MobileCreateInvoice to verify state preservation and seamless return upon edit triggers.
 
 ## 🔒 My Identity
 - Archetype: explorer
-- Roles: Database Schema Explorer
-- Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/explorer_survey_2
-- Original parent: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Milestone: Database & Persistence Exploration
+- Roles: investigation, state architecture analysis
+- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
+- Original parent: 128ce6df-e01a-4513-8b58-90303779e4c7
+- Milestone: mobile_invoice_success_edit_triggers_survey
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
-- Inspect src/integrations/supabase/types.ts and models/services
-- Inspect CashAndBank.tsx and localStorage fallback mechanisms
-- Document exact table structures, columns, types, nullability, foreign keys, constraints, and insertion patterns
-- Output complete report to handoff.md and send_message to orchestrator
+- Strictly observe file boundaries and write only to own folder
+- Verify state preservation across transitions
 
 ## Current Parent
-- Conversation ID: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Updated: 2026-09-26T03:27:00Z
+- Conversation ID: 128ce6df-e01a-4513-8b58-90303779e4c7
+- Updated: 2026-10-14T06:57:30Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/integrations/supabase/types.ts`
-  - `supabase/migrations/*.sql`
-  - `src/pages/CashAndBank.tsx`
-  - `src/pages/TallyImport.tsx`
-  - `src/pages/Customers.tsx`, `src/pages/Suppliers.tsx`, `src/pages/Parties.tsx`
-  - `src/pages/Expenses.tsx`, `src/pages/POSBilling.tsx`, `src/pages/Purchases.tsx`, `src/pages/PurchaseReturns.tsx`
-  - `src/services/autoSyncService.ts`, `src/services/documentsService.ts`, `src/services/stockService.ts`
-  - `src/utils/tallyXmlParser.ts`, `src/utils/universalDataImporter.ts`, `src/utils/ledgerReconciliation.ts`
-  - `src/test/tallyImport.test.ts`, `src/test/tallyBridge.test.ts`
+  - `src/components/SalesInvoiceModal.tsx`
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+  - `src/components/PurchaseInvoiceModal.tsx`
+  - `src/services/documentsService.ts`
 - **Key findings**:
-  - Mapped complete database schemas for 11 entities (products, product_batches, customers, suppliers, credit_transactions, bank_accounts, sales, sale_items, purchase_invoices, purchase_invoice_items, expenses).
-  - Uncovered critical check constraint on `credit_transactions`: `CHECK (type IN ('credit', 'payment'))` and `CHECK (party_type IN ('customer', 'supplier'))`. Opening balances must be recorded as `type: 'credit'` (or `'payment'` if negative), NOT `'opening_balance'`.
-  - Found that `autoSyncService.ts` had invalid column references (`customer_id`, `supplier_id`, `payment_mode`, `status`, `transaction_date`) causing credit_transactions insert failures.
-  - Documented that `purchase_invoice_items.product_id` is NOT NULL (unlike `sale_items.product_id`), requiring auto-creation/resolution of products.
-  - Documented that `purchase_invoices.supplier_id` is NOT NULL, requiring auto-creation/resolution of suppliers.
-  - Documented localStorage keys and format for `credsmart_bank_accounts_${orgId}` and `credsmart_cash_in_hand_${orgId}`.
-  - Documented missing date range parameters in `TALLY_EXPORT_DAYBOOK_XML`.
-- **Unexplored areas**: None for this phase.
+  - `mobileSuccessInvoice` state in `SalesInvoiceModal.tsx` controls conditional rendering between `MobileInvoiceSuccessView` and `MobileCreateInvoice`.
+  - On mobile save (`window.innerWidth < 1024`), `handleSave` sets `setMobileSuccessInvoice(saved)` without resetting any form state (`items`, `partyName`, `totals`, etc.).
+  - `onEdit={() => setMobileSuccessInvoice(null)}` is already correctly wired in `SalesInvoiceModal.tsx` line 1479 and bound to the top header pen icon.
+  - Setting `mobileSuccessInvoice(null)` seamlessly restores `<MobileCreateInvoice>` with 100% data preservation because all data states live in `SalesInvoiceModal` and `open` has not changed.
+  - Quick action row in `MobileInvoiceSuccessView` currently lacks an Edit button (R1).
+  - Sticky footer in `MobileInvoiceSuccessView` currently has only single full-width "Done" button (R2).
+- **Unexplored areas**: None within Survey 2 scope.
 
 ## Key Decisions Made
-- Fully documented all database constraints, nullability, foreign keys, triggers, and local storage formats in `handoff.md`.
+- Confirmed that state preservation upon `setMobileSuccessInvoice(null)` is 100% intact.
+- Recommended passing `onUpdateNotes` to `MobileCreateInvoice` in `SalesInvoiceModal.tsx` to elevate notes state if added on mobile.
 
 ## Artifact Index
-- handoff.md — Complete Database Schema & Persistence Exploration Report
-- progress.md — Liveness heartbeat and progress log
-- DISPATCH.md — Log of incoming dispatches
+- DISPATCH.md — incoming dispatch instructions
+- progress.md — liveness heartbeat
+- handoff.md — detailed 5-component report

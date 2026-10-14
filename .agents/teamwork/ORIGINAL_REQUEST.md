@@ -109,3 +109,41 @@ Preserve complete backward compatibility for all document types (`sales_invoice`
 ## 2026-10-13T21:57:56Z
 
 The system underwent a server restart. Please resume execution of the master GST invoice redesign project from your last checkpoint. Check current subagent/orchestrator state, verify Milestone 1 test status, and proceed with Milestone 2 implementation and verification as planned.
+
+
+## 2026-10-14T06:45:25Z
+
+Add prominent, touch-friendly Edit triggers to the Mobile Invoice Success screen (`MobileInvoiceSuccessView.tsx`) in CredSmart, including a dedicated circular Edit button in the quick action row and a dual-button sticky footer (`Edit Bill` + `Done`), ensuring seamless return to the mobile invoice editor with zero regressions.
+
+Working directory: c:\Users\bishn\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. Quick Action Row Edit Button
+Add a dedicated circular `Edit` action button to the action row in `MobileInvoiceSuccessView.tsx` alongside `Print`, `Download`, `Share`, and `E-Way Bill`:
+- Circular container styled consistently with existing purple/indigo action circles (`w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50/60`).
+- Features the `Edit2` pen icon with an "Edit" label below.
+- Binds cleanly to the `onEdit` prop.
+
+### R2. Dual-Action Sticky Footer
+Refactor the sticky bottom bar in `MobileInvoiceSuccessView.tsx` from a single full-width button to a dual-action flex row:
+- **Left button (`Edit Bill`)**: Styled as an outline/soft button (`bg-indigo-50 border border-indigo-200 text-indigo-700`) with an `Edit2` icon, triggering `onEdit`.
+- **Right button (`Done`)**: Styled as the primary filled button (`bg-indigo-600 text-white`), triggering `onClose`.
+- Full touch targets with safe area inset support (`pb-[max(1rem,env(safe-area-inset-bottom))]`).
+
+### R3. Seamless State Transition & Zero Regressions
+Ensure tapping either edit trigger transitions immediately back to `MobileCreateInvoice.tsx` via `setMobileSuccessInvoice(null)` in `SalesInvoiceModal.tsx`, keeping all entered line items, party details, discounts, and totals fully intact for further editing.
+
+## Acceptance Criteria
+
+### UI & Interaction
+- [ ] Circular `Edit` action button renders in the Action Buttons row and executes `onEdit` on tap.
+- [ ] Sticky footer displays side-by-side `Edit Bill` and `Done` buttons.
+- [ ] Clicking `Edit Bill` or the circular `Edit` button transitions back to the mobile invoice editor without dropping entered invoice data.
+- [ ] Clicking `Done` closes the invoice modal and returns to the parent sales page.
+
+### Code Quality & Standards
+- [ ] Zero TypeScript compiler errors across all modified files (`tsc --noEmit`).
+- [ ] All 219+ existing Vitest test suites continue to pass with 100% success rate.
+- [ ] Unit tests added for `MobileInvoiceSuccessView` verifying edit trigger callbacks and dual-footer rendering.
