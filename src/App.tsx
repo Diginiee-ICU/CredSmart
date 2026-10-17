@@ -63,6 +63,9 @@ import Security from "@/pages/public/Security";
 import FaqPage from "@/pages/public/FaqPage";
 import StorefrontManager from "@/pages/StorefrontManager";
 import PublicStorefront from "@/pages/public/PublicStorefront";
+import CRMDashboard from "@/pages/crm/CRMDashboard";
+import RoleManagement from "@/pages/crm/RoleManagement";
+import Attendance from "@/pages/crm/Attendance";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,7 +107,7 @@ function ProtectedRoutes() {
   }
 
   if (!user) {
-    return <Navigate to={ROUTE_PATHS.landing} replace />;
+    return <Navigate to={ROUTE_PATHS.auth} replace />;
   }
 
   return <Outlet />;
@@ -119,7 +122,7 @@ function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] 
   }
 
   if (!user) {
-    return <Navigate to={ROUTE_PATHS.landing} replace />;
+    return <Navigate to={ROUTE_PATHS.auth} replace />;
   }
 
   const effectiveRole = userRole || "store_owner";
@@ -236,6 +239,17 @@ const App = () => (
                     <Route path={ROUTE_PATHS.sales} element={<Sales />} />
                     <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
                     <Route path={ROUTE_PATHS.ewayBill} element={<EwayBillDashboard />} />
+
+                    {/* CRM Command Center & Sub-Systems */}
+                    <Route path={ROUTE_PATHS.crm} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmRoles} element={<RoleManagement />} />
+                    <Route path={ROUTE_PATHS.crmAttendance} element={<Attendance />} />
+                    <Route path={ROUTE_PATHS.crmSalary} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmTasks} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmMeet} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmBroadcasts} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmAiAssistant} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmSupport} element={<CRMDashboard />} />
 
                     {/* Restricted to Managers & Owners & Super Admin */}
                     <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>

@@ -1,139 +1,55 @@
-# Handoff Report: Milestone 2 Mobile Success Actions & Modals (Requirements R3, R4) and Challenger 2 M1 Remediation
-
-**Agent**: Worker M2 (Implementer, QA, Specialist)  
-**Date**: 2026-10-14T11:22:30Z  
-**Target**: Orchestrator (Parent Agent `c0d1864a-d589-4172-80be-9e95a059559c`)  
-**Working Directory**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2`  
-**Status**: COMPLETE / VERIFIED  
-
----
+# Handoff Report: CRM Phase 2 Milestone 2 — Geo Location Calculation Engine & Utilities
 
 ## 1. Observation
-
-### 1.1 Baseline Deficiencies Observed
-1. **Challenger 2 M1 Defects**:
-   - `src/components/SalesInvoiceModal.tsx:1035`: `handleSave` lacked an entry guard (`if (saving) return;`), allowing rapid duplicate clicks on "Save & New" or "Generate Bill" to spawn concurrent saving operations and duplicated database records.
-   - `src/components/SalesInvoiceModal.tsx:1175`: In the `if (saveAndNew)` reset block, `setPlaceOfSupply("27-Maharashtra")`, `setShowDueDate(false)`, and `setManualRoundOff(0)` were absent, leading to state bleed where an out-of-state customer's GST state code (e.g. `"07-Delhi"`) contaminated subsequent cash/walk-in bills, producing incorrect IGST tax calculations.
-   - `src/components/invoices/mobile/MobileCreateInvoice.tsx:273`: The "Save & New" button did not accept or enforce `disabled={props.saving}`.
-2. **Requirement R3 (Safe Invoice Deletion with Confirmation)**:
-   - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx:124`: Tapping the header `Trash2` button called `onDelete` directly without any confirmation dialog.
-   - `src/components/SalesInvoiceModal.tsx:1516`: `onDelete` simply closed the modal and nulled state without calling `documentsService.deleteDocument(...)` or notifying user via toast.
-3. **Requirement R4 (Header More Menu & Direct WhatsApp Share)**:
-   - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx:129`: The `MoreVertical` button was a no-op with no click handler or menu sheet.
-   - `MobileInvoiceSuccessViewProps` lacked optional `onDuplicate` and `onVoid` callbacks.
-   - No direct WhatsApp universal link (`https://wa.me/...`) generator existed on the success screen.
-   - No visual status badge was styled for `invoice.status === "cancelled"`.
-
----
+- Dispatch instructions in `.agents/teamwork/worker_m2/DISPATCH.md` assigned the implementation of Milestone 2:
+  - Create `src/utils/crmGeoUtils.ts` exporting:
+    - `EARTH_RADIUS_METERS = 6371000`
+    - `calculateHaversineDistance(lat1, lon1, lat2, lon2): number` with bounding checks, fast-path identical coordinate return, radian conversions, antimeridian normalization, intermediate haversine $a$ computation, numerical clamping `Math.min(1, Math.max(0, a))`, and angular distance computation.
+    - `isWithinGeofence(userLat, userLon, officeLat, officeLon, radiusMeters): boolean`
+    - `findNearestGeofence(userLat, userLon, geofences: CRMGeolocation[]): NearestGeofenceResult | null`
+    - `getCurrentPosition(options?: PositionOptions): Promise<CoordinatesResult>`
+    - Testing mock helpers: `mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, `resetGeolocationMock`.
+  - Create `src/test/crmGeoUtils.test.ts` covering benchmark distances, identical points, antimeridian crossings, pole coordinates, numerical clamping, invalid coordinates, geofence boundary checks, nearest geofence selection, and Geolocation API mock resolution/rejection.
+- Database domain types in `src/types/crmAttendance.ts:13` define `CRMGeolocation` (`id`, `org_id`, `name`, `latitude`, `longitude`, `radius_meters`, `is_active`, `created_at`).
+- Executing `cmd /c npx tsc --noEmit` yielded code 0 with zero compiler warnings or errors.
+- Executing `npm.cmd test -- src/test/crmGeoUtils.test.ts --run` passed all 33 tests across 5 test suites in 4.79s:
+  ```
+  RUN v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
+  ✓ src/test/crmGeoUtils.test.ts (33 tests) 33ms
+  Test Files 1 passed (1)
+  Tests 33 passed (33)
+  ```
+- Executing `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run` passed all 31 tests in 4.20s:
+  ```
+  RUN v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
+  ✓ src/test/crmAttendanceMigrationStress.test.ts (31 tests) 53ms
+  Test Files 1 passed (1)
+  Tests 31 passed (31)
+  ```
+- Executing `npm.cmd test -- crm --run` passed all 216 tests across 9 test suites in 24.05s without regressions.
 
 ## 2. Logic Chain
-
-### 2.1 Challenger 2 M1 Remediation
-1. **Concurrency Guard**:
-   - Adding `if (saving) return;` at entry of `handleSave` (`src/components/SalesInvoiceModal.tsx:1036`) immediately halts redundant execution if a save operation is in-flight.
-   - Propagating `saving={saving}` to `<MobileCreateInvoice>` and setting `disabled={props.saving}` on both "Save & New" and "Generate Bill" buttons visually and functionally prevents rapid double taps on touch screens.
-2. **State Bleed Elimination**:
-   - In `SalesInvoiceModal.tsx` `if (saveAndNew)` reset block:
-     ```tsx
-     setBillingPlaceOfSupply("27-Maharashtra");
-     setPlaceOfSupply("27-Maharashtra");
-     setShowDueDate(false);
-     setManualRoundOff(0);
-     ```
-   - Explicitly resetting `placeOfSupply` guarantees that `isInterState` (`placeOfSupply.slice(0, 2) !== "27"`) correctly computes intrastate CGST + SGST for subsequent walk-in customers.
-   - Resetting `showDueDate` and `manualRoundOff` ensures zero residual financial adjustments bleed between rapid-fire bills.
-
-### 2.2 Requirement R3: Safe Invoice Deletion with Confirmation
-1. **Accidental Tap Prevention**:
-   - Tapping the header `Trash2` icon now triggers `setIsDeleteConfirmOpen(true)`.
-   - Renders a mobile confirmation sheet (`role="dialog"`, `z-[600]`) with:
-     - Clear warning: `"Delete this invoice? This action cannot be undone."`
-     - Action buttons: "Cancel" (dismisses sheet without action) and "Delete" (invokes `onDelete?.()` and dismisses sheet).
-2. **Persistent Document Deletion in SalesInvoiceModal**:
-   - `SalesInvoiceModal.tsx` `onDelete` handler now invokes:
-     ```tsx
-     await documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id);
-     toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} deleted`);
-     ```
-   - Upon completion, `setActiveSavedDocId(null)`, `setMobileSuccessInvoice(null)`, and `onOpenChange(false)` cleanly close the modal and reset editor state.
-
-### 2.3 Requirement R4: Header More Menu & Direct WhatsApp Share
-1. **Action Sheet Ergonomics**:
-   - Tapping header `MoreVertical` toggles `isMoreMenuOpen`.
-   - Renders a slide-up bottom sheet (`z-[600]`) with 4 distinct touch-friendly actions (min 48px touch targets):
-     1. **Duplicate / Copy Bill**: Invokes `onDuplicate?.()`.
-     2. **Share via WhatsApp**: Invokes `handleWhatsAppShare()`.
-     3. **Download Thermal Receipt / PDF**: Invokes `handleDownload()`.
-     4. **Cancel / Void Invoice**: Invokes `onVoid?.()`.
-     5. **Cancel**: Closes action sheet.
-2. **Direct WhatsApp URL Generation**:
-   - `handleWhatsAppShare` extracts store name, customer name, document number, date, formatted total (`₹...`), and status into an organized invoice summary text.
-   - Sanitizes `invoice.partyPhone`:
-     - If $\ge 10$ digits, formats country code (`91` prefix for 10-digit Indian numbers) into `https://wa.me/${phoneParam}?text=${encodeURIComponent(message)}`.
-     - If absent or invalid, uses universal link `https://wa.me/?text=${encodeURIComponent(message)}`.
-   - Opens via `window.open(url, "_blank")`.
-3. **Duplicate Bill Callback**:
-   - In `SalesInvoiceModal.tsx`, `onDuplicate` nulls `activeSavedDocId`, advances the numeric sequence (preserving zero-padding), clears payment fields, resets `mobileSuccessInvoice` to return to `MobileCreateInvoice`, and toasts `Bill duplicated! New bill sequence #[nextSeq]`.
-4. **Void Invoice Callback**:
-   - In `SalesInvoiceModal.tsx`, `onVoid` updates `mobileSuccessInvoice` with `status: "cancelled"`, persists via `documentsService.saveDocument(voidedDoc, user?.id)`, updates active state, and toasts `Invoice #[docNum] marked as Cancelled`.
-   - `MobileInvoiceSuccessView.tsx` renders a status badge for `cancelled` status.
-
----
+1. Based on the requirements in `DISPATCH.md` and `analysis.md`, the Haversine formula requires strict coordinate bounding ($\text{lat} \in [-90, 90]$, $\text{lon} \in [-180, 180]$) and non-finite number rejection before calculation. An invalid coordinate throws a `RangeError`.
+2. For identical points (`lat1 === lat2 && lon1 === lon2`) or both points at the same geographic pole (`Math.abs(lat1) === 90 && lat1 === lat2`), the physical distance is 0 meters. Early returning 0 avoids floating-point epsilon noise (e.g. $7.7 \times 10^{-10}\text{m}$).
+3. Calculating across the 180° meridian requires normalizing $\Delta\lambda$ to the range $[-180, 180]$, ensuring the shortest great-circle arc is taken rather than traveling the 359° back-arc.
+4. Float inaccuracies near antipodal points can produce $a = 1.0000000000000002$, which causes $\sqrt{1 - a}$ to evaluate to `NaN`. Strict numerical clamping `Math.min(1, Math.max(0, a))` guarantees stable evaluation of $c = 2 \cdot \operatorname{atan2}(\sqrt{a}, \sqrt{1 - a})$.
+5. For `findNearestGeofence`, only active geofences (`geofence.is_active === true`) are evaluated. If no geofences exist or all are inactive, it safely returns `null`. Otherwise, it finds the minimal distance office and returns whether the user is within that specific office's configured `radius_meters`.
+6. For `getCurrentPosition`, the browser's `navigator.geolocation.getCurrentPosition` is wrapped in a Promise with standard options (`enableHighAccuracy: true`, `timeout: 10000`, `maximumAge: 0`). When rejected, it translates W3C error codes 1, 2, and 3 into human-readable error messages and retains the error `code`.
+7. Testing mock helpers allow Vitest/jsdom unit tests to simulate GPS coordinates and errors without external hardware dependencies, resetting cleanly after each test via `resetGeolocationMock()`.
 
 ## 3. Caveats
-
-1. **Window / Browser Security Constraints**:
-   - `window.open` inside `handleWhatsAppShare` is invoked directly synchronously inside user click event handlers to prevent popup blockers from intercepting the WhatsApp web/app launch.
-2. **Z-Index Layering Invariant**:
-   - `SalesInvoiceModal` renders at `z-modal: 500`. The delete confirmation bottom sheet and more options action sheet both use `z-[600]` fixed overlays to ensure they render above the modal shell without portal collision.
-3. **No Database Facades or Mock Violations**:
-   - All state mutations and document service calls are real and verified against real persistence mechanisms.
-
----
+- Browser geolocation accuracy depends on the client device's physical GPS hardware, cellular signal, or Wi-Fi network; in actual mobile devices, low-accuracy readings (> 500m) can occur in basements. Downstream UI components (Milestone 3) should display GPS accuracy warnings when accuracy > radius.
+- `resetGeolocationMock()` restores the pre-mock state of `navigator.geolocation`. If running in environments where `navigator` is undefined (pure Node without jsdom), the mock helpers safely exit without throwing.
 
 ## 4. Conclusion
-
-Milestone 2 implementation is 100% complete:
-- Challenger 2's M1 remediation is fully applied (`placeOfSupply`, `showDueDate`, `manualRoundOff`, `saving` concurrency lock).
-- Requirement R3 (confirmed deletion bottom sheet + database deletion) is fully implemented.
-- Requirement R4 (More menu action sheet, direct WhatsApp share, duplicate sequence bump, void status update) is fully implemented.
-- All test suites pass with 0 failures, and TypeScript compilation has 0 diagnostic errors.
-
----
+Milestone 2 is fully implemented and genuinely verified:
+- `src/utils/crmGeoUtils.ts` provides all required constants, validation, distance calculation, geofence matching, and Geolocation API wrappers and test mocks.
+- `src/test/crmGeoUtils.test.ts` provides 33 tests with 100% pass rate.
+- TypeScript compilation and all existing CRM migration/RBAC tests pass with zero regressions.
 
 ## 5. Verification Method
-
-### 5.1 Verification Commands
-Executed in Windows PowerShell via `cmd.exe /c`:
-
-1. **TypeScript Typecheck**:
-   ```cmd
-   cmd.exe /c npx tsc --noEmit
-   ```
-   *Result*: Exit Code `0`, 0 diagnostic errors.
-
-2. **Full Vitest Test Suite Execution**:
-   ```cmd
-   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine src/test/challengerM1_2Stress
-   ```
-   *Result*:
-   - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests) PASS
-   - `src/test/billingLifecycleEngine.test.ts` (6 tests) PASS
-   - `src/test/billingLifecycleEngine.adversarial.test.ts` (6 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests) PASS
-   - `src/test/challengerM1_2Stress.test.ts` (10 tests) PASS
-   - **Total**: 6 test files passed, 75 tests passed, 0 failures.
-
-### 5.2 Files Modified
-- `src/components/SalesInvoiceModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-- `src/test/MobileInvoiceSuccessView.test.tsx`
-- `src/test/MobileInvoiceSuccessView.challenger.test.tsx`
-
-### 5.3 Invalidation Conditions
-- Any occurrence of unconfirmed deletion on clicking the header trash icon.
-- Any occurrence of IGST applying to intrastate customers following "Save & New".
-- Concurrent save operations triggering when tapping save buttons rapidly.
-- More options action sheet failing to open or missing any of the 4 touch-friendly actions.
+Run the following commands in the workspace root:
+1. `cmd /c npx tsc --noEmit`
+2. `npm.cmd test -- src/test/crmGeoUtils.test.ts --run`
+3. `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run`
+4. `npm.cmd test -- crm --run`

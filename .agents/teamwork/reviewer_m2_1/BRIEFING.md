@@ -1,56 +1,55 @@
-# BRIEFING — 2026-10-14T11:32:00Z
+# BRIEFING — 2026-10-17T10:25:00Z
 
 ## Mission
-Review Milestone 2 (Safe Invoice Deletion with Confirmation R3) and M1 Remediation for correctness, quality, adversarial robustness, and integrity.
+Objective review and adversarial challenge of CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities (`src/utils/crmGeoUtils.ts`).
 
 ## 🔒 My Identity
-- Archetype: reviewer_critic
+- Archetype: reviewer_and_critic
 - Roles: reviewer, critic
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 2: Safe Invoice Deletion with Confirmation (Requirement R3) and M1 Remediation
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 2 (Geo Location Calculation Engine & Utilities)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Evidence-based findings; verify claims independently
-- Check integrity violations (hardcoded test results, facade implementations, shortcuts)
+- Enforce strict integrity check (no hardcoded outputs, facade logic, cheats, or shortcuts)
+- Require Haversine formula rigor (EARTH_RADIUS_METERS = 6371000, bounds checks, antimeridian normalization, clamping, etc.)
+- Run and verify TypeScript compilation (`npx tsc --noEmit`)
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T11:23:33Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T10:25:00Z
 
 ## Review Scope
-- **Files to review**: `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/test/MobileInvoiceSuccessView.test.tsx`, `src/test/challengerM1_2Stress.test.ts`, `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx`
-- **Interface contracts**: `.agents/teamwork/ORIGINAL_REQUEST.md`, `.agents/teamwork/worker_m2/handoff.md`
-- **Review criteria**: correctness, style, conformance, adversarial edge cases, integrity
+- **Files to review**: `src/utils/crmGeoUtils.ts`, `worker_m2/handoff.md`, `src/test/crmGeoUtils.test.ts`, `src/test/crmGeoUtilsAdversarial.test.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`), `crm-rbac-skill`
+- **Review criteria**: Mathematical correctness, numerical stability, boundary/edge-case handling, active geofence filtering, typing, and compiler clean status.
+
+## Key Decisions Made
+- Confirmed zero integrity violations: no hardcoded results, no dummy facade implementations, no shortcuts.
+- Verified TypeScript compilation: `cmd /c npx tsc --noEmit` exited 0 with zero warnings or errors.
+- Verified test suites: `src/test/crmGeoUtils.test.ts` (33 tests passed), `src/test/crmGeoUtilsAdversarial.test.ts` (22 tests passed), and full CRM suite (238 tests passed).
+- Identified minor ESLint finding (3 occurrences of `@typescript-eslint/no-explicit-any` in mock/error property assignment), documented for follow-up polish.
+- Final review verdict: APPROVE.
+
+## Artifact Index
+- `DISPATCH.md` — Incoming task specifications
+- `BRIEFING.md` — Situational awareness and persistent memory
+- `progress.md` — Liveness heartbeat and step tracking
+- `handoff.md` — Final review and challenge report
 
 ## Review Checklist
-- **Items reviewed**:
-  - `MobileInvoiceSuccessView.tsx`: Trash2 header trigger, confirmation bottom sheet dialog (`role="dialog"`), Cancel dismissal, Delete trigger.
-  - `SalesInvoiceModal.tsx`: `onDelete` handler calling `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`, toast `Invoice #[number] deleted`, clearing `activeSavedDocId` and `mobileSuccessInvoice`, closing modal.
-  - `SalesInvoiceModal.tsx`: `if (saving) return;` guard in `handleSave`.
-  - `SalesInvoiceModal.tsx`: reset of `placeOfSupply`, `billingPlaceOfSupply`, `showDueDate`, and `manualRoundOff` in `saveAndNew` branch.
-  - `MobileCreateInvoice.tsx`: `disabled={props.saving}` on Save & New and Generate Bill buttons.
-  - Integrity check: Verified zero hardcoded outputs, zero facade implementations, and genuine test suites.
+- **Items reviewed**: `src/utils/crmGeoUtils.ts`, `src/test/crmGeoUtils.test.ts`, `worker_m2/handoff.md`
 - **Verdict**: APPROVE
 - **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Unconfirmed deletion via rapid clicks: Passed (sheet opens, 0 accidental deletes).
-  - Dialog event propagation: Passed (backdrop dismisses, card stopPropagation preserves sheet).
-  - Database rejection during deletion: Passed (handled gracefully with error toast, state cleaned up).
-  - Rapid double-click concurrency on save: Passed (`saving` lock blocks duplicate triggers).
-  - State leakage across consecutive bills: Passed (`placeOfSupply` reset prevents IGST bleed).
-- **Vulnerabilities found**: None.
-- **Untested angles**: None within M2 scope.
-
-## Key Decisions Made
-- Confirmed full compliance with Requirement R3 and Challenger 2 M1 Remediation.
-- Issued verdict: APPROVE.
-
-## Artifact Index
-- handoff.md — Review & challenge report
-- progress.md — Liveness & task execution log
-- DISPATCH.md — Task dispatch record
+  - Antimeridian crossing (179.5° to -179.5°) yields shortest great-circle arc (~111km) -> PASSED
+  - Antipodal coordinates (poles, equator 180° separation) avoid NaN via clamping -> PASSED
+  - Out-of-bounds coordinates throw RangeError -> PASSED
+  - Empty or all-inactive geofence arrays safely return null -> PASSED
+  - Single and tied-distance geofences resolve deterministically -> PASSED
+- **Vulnerabilities found**: None that affect functional execution or runtime stability. 3 explicit `any` casts flagged under ESLint.
+- **Untested angles**: Hardware-specific GPS multipath/indoor attenuation (addressed via UI caveat).

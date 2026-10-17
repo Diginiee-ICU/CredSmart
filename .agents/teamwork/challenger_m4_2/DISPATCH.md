@@ -1,21 +1,16 @@
-## 2026-09-26T00:53:18Z
-You are challenger_m4_2 (Role: Milestone 4 Challenger 2).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m4_2
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m4/handoff.md
+## 2026-10-17T12:02:18Z
+You are challenger_m4_2 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_2
 
-Your mission is to independently challenge and stress-test Milestone 4 in `src/pages/TallyImport.tsx`:
-NOTE: Perform verification via direct code inspection and AST/syntax checks rather than interactive terminal commands.
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Also read worker_m4's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md.
 
-Verify:
-1. Check `<TallyImportModal>` definition and invocation: does the component signature accept `onImportBankAccounts` and does `TallyImport.tsx` pass it with the expected signature `(banks: TallyBankAccount[], cashInHand?: number) => Promise<void>`?
-2. Check responsive layout of the 7-card stats grid on mobile (`grid-cols-2`), tablet (`sm:grid-cols-3`), and desktop (`lg:grid-cols-7`). Does it cause horizontal scroll or layout breakage?
-3. Check `importedStats` updates during multi-step imports: are counts additive or do they overwrite each other?
-4. Write your handoff report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m4_2/handoff.md with an explicit verdict: APPROVE or FAIL.
-5. Send a message to the orchestrator (caller id) with your verdict and report path.
+Challenge Tasks:
+Empirically stress-test PDF generation and CSV export in `src/utils/crmAttendancePdf.ts`:
+1. Stress-test multi-page vector PDF generation with large record volumes (50, 100, and 150 records) and assert correct page counts (`doc.getNumberOfPages() >= 4`).
+2. Stress-test CSV escaping with malicious/unusual strings (commas, double quotes, line breaks, unicode characters, empty strings).
+3. Verify that running `generateAttendanceReportPDF` produces valid PDF byte output without memory leaks or crashes.
+4. Output your verdict: CONFIRMED or ISSUES_FOUND.
 
-## 2026-09-26T01:00:12Z
-**Context**: Milestone 4 Verification
-**Content**: Please do NOT wait on interactive terminal commands (like vitest) as they may block indefinitely on user permission prompts. Please complete your challenge report via direct code inspection, schema analysis, and AST checks of `src/pages/TallyImport.tsx`.
-**Action**: Cancel or bypass the pending terminal command, complete your analysis, write your handoff.md, and send your verdict.
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_2\handoff.md and report your verdict via send_message.

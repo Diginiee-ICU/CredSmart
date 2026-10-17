@@ -1,235 +1,116 @@
-# Review Report: Milestone 1 — In-Place Update Lifecycle on Re-Edit (Requirement R1)
+# Handoff Report — CRM Phase 2 Milestone 1 Review
 
-**Reviewer**: Reviewer 1 (Archetype: reviewer & critic)  
-**Target**: Orchestrator (parent agent `c0d1864a-d589-4172-80be-9e95a059559c`)  
-**Date**: 2026-10-14T10:55:00Z  
+**Reviewer / Critic**: `reviewer_m1_1`  
+**Date**: 2026-10-17  
+**Target Milestone**: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types  
 **Verdict**: **APPROVE**  
-**Integrity Status**: **CLEAN** (No hardcoding, no facades, no shortcuts, no fabricated outputs)  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Document ID State & Preservation on Re-Edit
-In `src/components/SalesInvoiceModal.tsx`:
-- Line 262: State variable initialized:
-  ```typescript
-  const [activeSavedDocId, setActiveSavedDocId] = useState<string | null>(editingDoc?.id || null);
-  ```
-- Lines 494–496, 562: State synchronized with `editingDoc`:
-  ```typescript
-  if (editingDoc) {
-    setActiveSavedDocId(editingDoc.id);
-  ...
-  } else {
-    setActiveSavedDocId(null);
-  ```
-- Lines 1510–1515: `MobileInvoiceSuccessView`'s `onEdit` callback retains the saved invoice ID:
-  ```typescript
-  onEdit={() => {
-    if (mobileSuccessInvoice) {
-      setActiveSavedDocId(mobileSuccessInvoice.id);
-    }
-    setMobileSuccessInvoice(null);
-  }}
-  ```
-- Lines 1505–1509 & 1516–1520: `onClose` and `onDelete` clean up `activeSavedDocId`:
-  ```typescript
-  onClose={() => {
-    setActiveSavedDocId(null);
-    setMobileSuccessInvoice(null);
-    onOpenChange(false);
-  }}
-  ```
+1. **Database Migration File**:
+   File: `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` (182 lines).
+   - **Transaction safety**: Line 1 begins with `BEGIN;` and line 181 closes with `COMMIT;`.
+   - **Idempotency**:
+     - `CREATE TABLE IF NOT EXISTS public.crm_geolocations` (line 15)
+     - `CREATE TABLE IF NOT EXISTS public.crm_attendance` (line 32)
+     - `CREATE TABLE IF NOT EXISTS public.crm_attendance_requests` (line 75)
+     - All 11 indices use `CREATE INDEX IF NOT EXISTS` (lines 26-27, 59-63, 93-96)
+     - Triggers use `DROP TRIGGER IF EXISTS ...` before `CREATE TRIGGER` (lines 66-70, 99-103) invoking `public.update_updated_at()`
+     - RLS policies use `DROP POLICY IF EXISTS ...` before `CREATE POLICY` (lines 115-179)
+   - **Relational & Integrity Constraints**:
+     - `crm_geolocations.org_id REFERENCES public.organizations(id) ON DELETE CASCADE`
+     - `crm_attendance.org_id REFERENCES public.organizations(id) ON DELETE CASCADE`
+     - `crm_attendance.staff_id REFERENCES auth.users(id) ON DELETE CASCADE`
+     - `crm_attendance.clock_in_location_id REFERENCES public.crm_geolocations(id) ON DELETE SET NULL`
+     - `crm_attendance.clock_out_location_id REFERENCES public.crm_geolocations(id) ON DELETE SET NULL`
+     - `CONSTRAINT uq_crm_attendance_staff_date UNIQUE (org_id, staff_id, date)` (line 56)
+     - `crm_attendance_requests.attendance_id REFERENCES public.crm_attendance(id) ON DELETE CASCADE`
+     - `crm_attendance_requests.reviewer_id REFERENCES auth.users(id) ON DELETE SET NULL`
+   - **Row Level Security (RLS)**:
+     - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;` on all 3 tables (lines 108-110)
+     - All 12 RLS policies (SELECT, INSERT, UPDATE, DELETE for all 3 tables) consistently enforce:
+       `auth.role() = 'authenticated' AND has_org_access(org_id)`
+       with `WITH CHECK` on INSERT and `USING` on SELECT/UPDATE/DELETE.
 
-### 1.2 `finalDoc` ID Passing & Dynamic Update Toast
-In `src/components/SalesInvoiceModal.tsx`:
-- Lines 1052–1056:
-  ```typescript
-  const currentDocId = activeSavedDocId || editingDoc?.id || undefined;
-  const isUpdate = Boolean(currentDocId);
+2. **Domain Interfaces File**:
+   File: `src/types/crmAttendance.ts` (70 lines).
+   - Exports union types: `AttendanceStatus` (`"present" | "absent" | "half_day" | "on_leave"`), `AttendanceVerificationMethod` (`"geo_verified" | "manual" | "regularized"`), `AttendanceRequestStatus` (`"pending" | "approved" | "rejected"`).
+   - Exports core interfaces: `CRMGeolocation` (lines 13-22), `CRMAttendanceRecord` (lines 24-50), `CRMAttendanceRequest` (lines 52-69).
+   - Cleanly types coordinate nullability, punch timestamps, and optional frontend display fields (`staff_name?: string; staff_email?: string`).
 
-  const finalDoc: Omit<BusinessDocument, "id"> & { id?: string } = {
-    id: currentDocId,
-  ...
-  ```
-- Line 1103: Updates active state upon resolution:
-  ```typescript
-  const saved = await documentsService.saveDocument(finalDoc, user?.id);
-  setActiveSavedDocId(saved.id);
-  ```
-- Lines 1106–1108: Toast notification upon updating existing document:
-  ```typescript
-  if (isUpdate) {
-    toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
-  }
-  ```
+3. **Supabase Schema Registration**:
+   File: `src/integrations/supabase/types.ts` (lines 105-314).
+   - Registered alphabetically in `Database["public"]["Tables"]` between `credit_transactions` (line 104) and `crm_permissions` (line 315):
+     1. `crm_attendance` (lines 105-204)
+     2. `crm_attendance_requests` (lines 205-273)
+     3. `crm_geolocations` (lines 274-314)
+   - Every table contains complete `Row`, `Insert`, `Update`, and `Relationships` blocks mirroring database column types and nullabilities.
 
-### 1.3 In-Place Update Execution in Supabase & LocalStorage
-In `src/services/documentsService.ts`:
-- Lines 646–650: Assigns fallback ID if unset:
-  ```typescript
-  if (!rawDoc.id) {
-    rawDoc.id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  }
-  const doc = rawDoc as BusinessDocument;
-  ```
-- Lines 657–691: Checks for existing Supabase record and executes update:
-  ```typescript
-  const isExistingSupabaseSale = Boolean(doc.id && !doc.id.startsWith("doc_"));
-
-  if (isExistingSupabaseSale) {
-    const { data: saleData, error: saleErr } = await supabase
-      .from("sales")
-      .update({
-        organization_id: orgId,
-        invoice_number: doc.documentNumber,
-        subtotal: doc.subtotal,
-        discount_amount: doc.discountTotal,
-        discount_label: doc.discountTotal > 0 ? "Discount" : null,
-        tax: doc.taxTotal,
-        total: doc.grandTotal,
-        payment_method: doc.paymentMethod || "Cash",
-        customer_id: doc.partyId || null,
-      })
-      .eq("id", doc.id)
-      .select()
-      .maybeSingle();
-
-    if (!saleErr && saleData) {
-      await supabase.from("sale_items").delete().eq("sale_id", doc.id);
-      if (doc.items.length > 0) {
-        const saleItems = doc.items.map((it) => ({
-          sale_id: doc.id,
-          product_name: it.productName,
-          product_id: it.productId || null,
-          batch_number: it.batchNumber || null,
-          mrp: it.rate,
-          quantity: it.quantity,
-          line_total: it.lineTotal,
-        }));
-        await supabase.from("sale_items").insert(saleItems);
-      }
-    }
-  ```
-- Lines 1078–1090: In-place update in localStorage cache:
-  ```typescript
-  const existingList = this.getLocalDocuments(orgId, docType);
-  const index = existingList.findIndex(
-    (d) => d.id === doc.id || (doc.documentNumber && d.documentNumber === doc.documentNumber)
-  );
-  const previousDoc = index >= 0 ? existingList[index] : undefined;
-
-  if (index >= 0) {
-    existingList[index] = { ...doc, updated_at: new Date().toISOString() };
-  } else {
-    existingList.unshift(doc);
-  }
-
-  this.saveLocalDocuments(orgId, docType, existingList);
-  ```
-- Lines 1096–1100: Stock delta adjustment on update:
-  ```typescript
-  if (previousDoc) {
-    await stockService.handleDocumentStock(doc, "update", previousDoc);
-  } else {
-    await stockService.handleDocumentStock(doc, "create");
-  }
-  ```
-
-### 1.4 Desktop Flow Preservation
-In `src/components/SalesInvoiceModal.tsx`:
-- Lines 1175–1213:
-  ```typescript
-  if (saveAndNew) {
-    ...
-  } else if (window.innerWidth < 1024) {
-    setMobileSuccessInvoice(saved);
-  } else {
-    onOpenChange(false);
-  }
-  ```
-  Desktop viewports (`window.innerWidth >= 1024`) continue to close the modal via `onOpenChange(false)` on normal saves and reset/remain open on `saveAndNew`. Desktop split-panel layouts, tables, and tax summaries are 100% untouched.
-
-### 1.5 Command Executions
-1. `cmd.exe /c npx tsc --noEmit`: Exited with code `0`, 0 diagnostic errors.
-2. `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`:
-   - All 4 test files passed.
-   - All 52 tests passed:
-     - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests passed)
-     - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests passed)
-     - `src/test/MobileInvoiceSuccessView.test.tsx` (17 tests passed)
-     - `src/test/billingLifecycleEngine.test.ts` (6 tests passed)
-   - Duration: 52.35s, 0 failures.
+4. **Independent Tool Commands & Verbatim Results**:
+   - `cmd /c npx tsc --noEmit`: Exited with code `0` (zero compilation or type errors).
+   - `npm.cmd test -- src/test/crmPermissionRbac.test.ts`: Exited with code `0`:
+     ```
+     ✓ src/test/crmPermissionRbac.test.ts (26 tests) 2902ms
+     Test Files  1 passed (1)
+          Tests  26 passed (26)
+     ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **State Preservation Chain [Ref: Observation 1.1]**:
-   - When a bill is generated on mobile, `saved` from `documentsService.saveDocument` is assigned to `mobileSuccessInvoice` (which contains `id`).
-   - When the user taps either "Edit" or "Edit Bill", `onEdit` fires and assigns `activeSavedDocId = mobileSuccessInvoice.id`.
-   - When returning to the mobile editor (`MobileCreateInvoice`), all previously entered data remains in state, and `activeSavedDocId` reliably holds the invoice's identifier.
+1. **Integrity & Authenticity Assessment (Step 1)**:
+   - Evaluated the source files for hardcoded mock results, facade definitions, or bypassed implementations.
+   - Observation 1 demonstrates genuine, fully specified SQL DDL with appropriate primary keys, foreign keys, cascades, indexes, triggers, and RLS policies.
+   - Observation 3 confirms complete type definitions integrated into `Database["public"]["Tables"]` rather than stubbed or empty facades.
+   - Observation 4 confirms independent execution of compiler checks and test suites without artificial bypasses.
+   - *Result*: Zero integrity violations detected.
 
-2. **In-Place Mutation Chain [Ref: Observation 1.2, 1.3]**:
-   - When tapping "Generate Bill" again, `handleSave` sets `currentDocId = activeSavedDocId || editingDoc?.id || undefined`.
-   - `finalDoc` passes `id: currentDocId` into `documentsService.saveDocument`.
-   - In `documentsService.saveDocument`, `isExistingSupabaseSale` evaluates to `true` for non-`doc_` UUIDs, performing a direct `.update().eq("id", doc.id)` on `sales` and refreshing `sale_items`.
-   - For local storage, `existingList.findIndex(...)` finds the existing entry by ID/number and updates `existingList[index]` in place rather than unshifting a duplicate.
-   - `stockService.handleDocumentStock(doc, "update", previousDoc)` receives both the new and previous doc state, calculating stock deltas accurately without over-deducting.
+2. **Correctness & Contract Conformance (Step 2)**:
+   - Compared table definitions against the prompt requirements and `crm-rbac-skill` conventions.
+   - Required columns (`radius_meters`, `verification_method`, `is_within_geofence`, `distance_from_office_meters`, `uq_crm_attendance_staff_date`) are all present with correct types and defaults.
+   - Transactional wrapping (`BEGIN;` ... `COMMIT;`) and idempotent guards (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DROP TRIGGER IF EXISTS`) ensure clean multi-run safety without migration collision.
+   - Alphabetical sorting in `types.ts` strictly preserves Supabase type generation ordering conventions.
+   - *Result*: 100% contract compliance.
 
-3. **User Feedback Chain [Ref: Observation 1.2]**:
-   - Since `isUpdate = Boolean(currentDocId)` is `true`, `toast.success` displays `Invoice #[number] updated successfully!`.
-
-4. **Desktop Preservation Chain [Ref: Observation 1.4]**:
-   - For desktop screen sizes (`window.innerWidth >= 1024`), the `window.innerWidth < 1024` branch is false.
-   - Standard saves trigger `onOpenChange(false)` to close the modal as before.
-   - When editing an existing document on desktop (`editingDoc`), `currentDocId` passes `editingDoc.id`, resolving an existing issue where desktop re-saves previously lost the document ID.
+3. **Adversarial & Stress-Testing Assessment (Step 3)**:
+   - *Failure Mode 1: Geolocation Deletion Cascades*: If an office geofence is deleted, historical punches should not be erased. SQL uses `ON DELETE SET NULL` on `clock_in_location_id` and `clock_out_location_id`, preserving audit punch history.
+   - *Failure Mode 2: Multi-Punch Collision*: The unique constraint `uq_crm_attendance_staff_date (org_id, staff_id, date)` prevents race conditions or duplicate attendance creation on the same day for an employee.
+   - *Failure Mode 3: Unauthenticated or Cross-Org Access*: RLS strictly guards every table with `auth.role() = 'authenticated' AND has_org_access(org_id)`. Unauthenticated requests and cross-tenant queries are blocked at the database engine level.
 
 ---
 
 ## 3. Caveats
 
-- **Supabase Network Fallback**: In offline mode or during network disconnections, Supabase `.update` throws/catches gracefully and execution falls through to the local storage update, where the document is matched by `d.id` or `d.documentNumber` and updated in place.
-- No other caveats.
+1. **Supabase Cloud Migration Execution**: The SQL migration `20261017010000_create_crm_attendance_tables.sql` is authored and checked for syntax and schema correctness. Actual deployment to remote Supabase instances requires `supabase db push` or execution via the Supabase management console.
+2. **Upcoming Milestones**: Milestone 1 defines the relational model and TypeScript types. Subsequent Milestones 2 through 6 will implement the Haversine geo-engine (`crmGeoUtils.ts`), attendance UI (`Attendance.tsx`), and reporting exports.
 
 ---
 
 ## 4. Conclusion
 
-Requirement R1 ("In-Place Update Lifecycle on Re-Edit") is **fully satisfied**:
-- `activeSavedDocId` preserves the invoice ID when returning from `MobileInvoiceSuccessView` via `onEdit`.
-- In `handleSave`, `finalDoc` passes `id: activeSavedDocId || editingDoc?.id || undefined`.
-- `documentsService.saveDocument` executes an in-place update in both Supabase and localStorage instead of inserting duplicate records.
-- `toast.success` displays `Invoice #[number] updated successfully!` when an existing document is updated.
-- Desktop invoice modal flows and layouts are 100% preserved.
-- Code has zero TypeScript errors and passes 100% of the 52 unit/adversarial tests.
-
 **Verdict: APPROVE**
+
+Milestone 1 satisfies all criteria with zero errors, zero integrity violations, full idempotency, robust RLS policies, and precise TypeScript type synchronization. Ready to proceed to Milestone 2 (Geo Location Calculation Engine & Utilities).
 
 ---
 
 ## 5. Verification Method
 
-### 1. TypeScript Compilation
-```powershell
-cmd.exe /c npx tsc --noEmit
-```
-*Expected*: Exit code 0, 0 diagnostic errors.
-
-### 2. Automated Test Suite Execution
-```powershell
-cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView
-```
-*Expected*: 4 test files passed, 52/52 tests passed.
-
-### 3. Source Inspections
-- Check `src/components/SalesInvoiceModal.tsx`:
-  - Line 262 (`activeSavedDocId` definition)
-  - Line 1052 (`currentDocId = activeSavedDocId || editingDoc?.id || undefined`)
-  - Line 1056 (`id: currentDocId` in `finalDoc`)
-  - Line 1107 (`toast.success("Invoice #" + fullDocumentNumber + " updated successfully!")`)
-  - Line 1512 (`setActiveSavedDocId(mobileSuccessInvoice.id)`)
-- Check `src/services/documentsService.ts`:
-  - Lines 657–675 (Supabase update branch)
-  - Lines 1079–1086 (LocalStorage in-place replace)
+To independently reproduce this verification:
+1. Run the TypeScript typecheck:
+   ```cmd
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected outcome*: Exits with code 0.
+2. Run the CRM permission test suite:
+   ```cmd
+   npm.cmd test -- src/test/crmPermissionRbac.test.ts
+   ```
+   *Expected outcome*: 26 passed tests, exits with code 0.
+3. Review files:
+   - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
+   - `src/types/crmAttendance.ts`
+   - `src/integrations/supabase/types.ts`

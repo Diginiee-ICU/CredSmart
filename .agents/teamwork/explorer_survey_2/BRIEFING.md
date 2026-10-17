@@ -1,50 +1,48 @@
-# BRIEFING — 2026-10-14T10:33:00Z
+# BRIEFING — 2026-10-17T09:12:00Z
 
 ## Mission
-Investigate MobileInvoiceSuccessView header actions, more menu, trash confirmation dialog, and WhatsApp direct sharing (Requirements R3 and R4 of mobile billing lifecycle).
+Survey existing CRM UI components, hooks, routing, permissions, and dashboard integration to specify how src/pages/crm/Attendance.tsx must be constructed to conform 100% with the CRM design system, mobile responsiveness, and permission gating.
 
 ## 🔒 My Identity
 - Archetype: explorer
-- Roles: investigation, state architecture analysis, mobile UI/UX lifecycle survey
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: mobile_billing_lifecycle_survey_2
+- Roles: CRM Phase 2 UI infrastructure & design system survey explorer
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Survey & UI Infrastructure Analysis
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
-- Strictly observe file boundaries and write only to own folder
-- Verify state preservation and UI components
-- Focus on Requirements R3 (Safe Invoice Deletion) and R4 (Header More Menu & Direct WhatsApp Share)
+- Do NOT modify source code files
+- Document how src/pages/crm/Attendance.tsx should be constructed to conform 100% with CRM design system, mobile responsiveness, and permission gating
+- Write detailed analysis report to analysis.md and create self-contained handoff.md
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T10:33:00Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T08:58:46Z
 
 ## Investigation State
 - **Explored paths**:
-  - `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
-  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-  - `src/components/SalesInvoiceModal.tsx`
-  - `src/components/PurchaseInvoiceModal.tsx`
-  - `src/services/documentsService.ts`
-  - `src/utils/whatsappPdfShare.ts`
-  - `src/components/ui/` (alert-dialog, sheet, drawer, dropdown-menu, dialog)
-  - `src/test/MobileInvoiceSuccessView*.test.tsx`
+  - `src/components/crm/` (CRMCard, CRMBadge, CRMDataTable, CRMPageHeader, CRMStatCard, CRMPermissionGate, CRMRolePill, index.ts)
+  - `src/hooks/useCRMPermission.ts` (hasPermission, isSuperAdmin, storage keys, fallback)
+  - `src/pages/crm/CRMDashboard.tsx` (attendance stat card query & quick nav items)
+  - `src/pages/crm/RoleManagement.tsx` (attendance module taxonomy and staff query pattern)
+  - `src/config/routes.ts` & `src/App.tsx` (routes, guards, layouts)
+  - `src/components/AppSidebar.tsx` (nav routes iteration)
+  - `src/test/crmShellRoutes.test.ts` (route test assertions and regression alert)
+  - `src/utils/whatsappPdfShare.ts` (jsPDF vector document generation pattern)
 - **Key findings**:
-  - Verified current wiring: Back arrow closes, Edit returns to editor, Trash2 has no confirmation and doesn't delete, MoreVertical is completely unhandled.
-  - Formulated Trash2 confirmation lifecycle: toggle internal bottom-sheet/alert dialog ("Delete this invoice? This action cannot be undone."), call `onDelete?.()` on confirm, and wire `SalesInvoiceModal` to execute `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`, reset state, close modal, and show toast.
-  - Discovered `z-modal` layering constraint: `SalesInvoiceModal` has `z-index: 500`. Default Radix `AlertDialog` has `z-50`, which would be masked behind unless styled with `z-[600]` or embedded inside `MobileInvoiceSuccessView`.
-  - Defined MoreVertical action sheet: Duplicate / Copy Bill (`onDuplicate`), Share via WhatsApp (`handleWhatsAppShare` with `https://wa.me/`), Download Thermal/PDF (`handleDownload`), and Cancel/Void Invoice (`onVoid` updating status to `"cancelled"`).
-  - Verified test suite: 17/17 tests pass in `MobileInvoiceSuccessView.test.tsx`, 29/29 tests pass in challenger suites, 0 TS errors.
-- **Unexplored areas**: None within Survey 2 scope.
+  - All 7 CRM components are production-ready and fully exported from `src/components/crm/index.ts`.
+  - The `"attendance"` module has two canonical actions: `"view"` (daily logs, self clock-in) and `"edit"` (punch adjustment, geofences, regularisation approvals).
+  - `CRMDashboard.tsx` queries `crm_attendance` with a type cast fallback, ready to be upgraded to typed query once types are added.
+  - Critical test assertion in `src/test/crmShellRoutes.test.ts:320` expects `<Route path={ROUTE_PATHS.crmAttendance} element={<CRMDashboard />} />` and must be updated to `<Attendance />` when App.tsx is wired.
+- **Unexplored areas**: None. UI infrastructure survey is complete.
 
 ## Key Decisions Made
-- Recommended embedded mobile bottom-sheet for Delete confirmation and More options to eliminate Radix portal and z-index collisions with `z-modal`.
-- Mapped WhatsApp URL scheme formatting directly in `MobileInvoiceSuccessView.tsx` using `https://wa.me/${phoneParam}?text=...`.
-- Exposed optional `onDuplicate?: () => void` and `onVoid?: () => void` props in `MobileInvoiceSuccessViewProps`.
+- Recommending vector-based `jsPDF` generation for monthly attendance statements to avoid rasterization/DOM canvas flakiness.
+- Structuring `Attendance.tsx` with responsive segmented tabs on mobile (375px) and split layout on desktop (1280px+).
 
 ## Artifact Index
-- DISPATCH.md — incoming dispatch instructions
-- BRIEFING.md — persistent situational awareness
-- progress.md — liveness heartbeat
-- handoff.md — detailed 5-component report
+- analysis.md — Full investigation findings, component API breakdown, and Attendance.tsx construction blueprint
+- handoff.md — 5-component handoff report for orchestrator and builders
+- progress.md — Liveness heartbeat and step tracking
+- DISPATCH.md — Stored dispatch instructions

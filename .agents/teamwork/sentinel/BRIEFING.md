@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-14T12:35:00Z
+# BRIEFING — 2026-10-17T08:52:11Z
 
 ## Mission
-Complete all remaining lifecycle actions from the mobile billing & success workflow in CredSmart: implement in-place invoice updates when returning via Edit (preventing duplicate invoices), fix mobile `Save & New` sequence reset, implement confirmed invoice deletion from the success screen, and wire the header More menu with WhatsApp direct sharing.
+Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendance — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform, featuring geofencing, clock-in/out hub, attendance reports & PDF, and integration with the Phase 1 CRM design system and RBAC.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -15,44 +15,38 @@ Complete all remaining lifecycle actions from the mobile billing & success workf
 - Victory Auditor (New Task): 3830018e-1dce-49db-8e77-3c33336e68ef
 - Active Orchestrator (Lifecycle Task): c0d1864a-d589-4172-80be-9e95a059559c (terminated upon victory)
 - Victory Auditor (Lifecycle Task): bf004818-bd2d-4705-b819-4fc6d3869b10 (terminated upon victory confirmation)
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\sentinel
+- Active Orchestrator (CRM Phase 1): f65e7324-0a80-4f4b-bb4c-bc82b84e3cdd
+- Victory Auditor (CRM Phase 1): [to be spawned on victory claim]
+- Active Orchestrator (CRM Phase 2): 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Victory Auditor (CRM Phase 2): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
 - Victory Audit is MANDATORY before reporting completion
 - Must not write code, analyze problems, or make technical decisions
 - Monitor orchestrator via progress and liveness crons
+- CRM roles must be fully configurable by business owner — zero hard-coded roles
+- Never take orchestrator completion claim at face value — spawn victory auditor
+- Clean context execution: keep Sentinel context ultra-light
 
 ## User Context
-- **Last user request**: Complete mobile billing lifecycle actions: in-place invoice updates on re-edit, mobile Save & New sequence reset, confirmed invoice deletion from success screen, and header More menu with WhatsApp direct sharing.
+- **Last user request**: Build CRM Tab Phase 2 (Attendance & Geo Location Attendance, Haversine engine, Clock-In hub, Admin table, PDF export, CRMDashboard real count, SKILL.md).
 - **Pending clarifications**: none
-- **Delivered results**:
-  - In-place updates on re-edit implemented via `activeSavedDocId` state, preventing duplicate database entries.
-  - Mobile `Save & New` branch reordered before desktop modal logic; sequences increment cleanly (`INV-139` → `INV-140`), line items & party state reset, state code set to `27-Maharashtra` preventing tax bleed.
-  - Safe invoice deletion bottom sheet implemented with `documentsService.deleteDocument` and stock reversion.
-  - Header More menu wired with WhatsApp universal share (`https://wa.me/`), bill duplication, thermal printing, and cancellation/voiding.
-  - 0 TypeScript compiler diagnostic errors (`tsc --noEmit`).
-  - 8 test files, 94 tests passed, 0 failures.
-  - Independent Victory Audit confirmed (VERDICT: VICTORY CONFIRMED).
+- **Delivered results**: none yet for CRM Phase 2
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: c0d1864a-d589-4172-80be-9e95a059559c (terminated on completion)
-- **Cron 1 (Reporting)**: cancelled (task-265)
-- **Cron 2 (Liveness)**: cancelled (task-267)
+- **Active Orchestrator ID**: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- **Cron 1 (Reporting)**: task-26 (*/8 * * * *)
+- **Cron 2 (Liveness)**: task-28 (*/10 * * * *)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
-- **Auditor Conversation ID**: bf004818-bd2d-4705-b819-4fc6d3869b10
-- **Auditor Report**: VICTORY CONFIRMED (Phase A Timeline: PASS, Phase B Integrity: PASS, Phase C Tests: PASS, 8 test files passed (8), 94 tests passed (94), 0 failures, 0 tsc errors)
 
 ## Artifact Index
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\Documents\GitHub\CredSmart\ORIGINAL_REQUEST.md — Original verbatim user request (workspace root)
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_lifecycle\DISPATCH.md — Project Orchestrator dispatch
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_lifecycle\handoff.md — Project Orchestrator victory report
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_mobile_lifecycle\DISPATCH.md — Victory Auditor dispatch
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_mobile_lifecycle\handoff.md — Victory Auditor report
-- c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\sentinel\handoff.md — Sentinel final handoff report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md — Project Orchestrator dispatch

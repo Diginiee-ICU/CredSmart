@@ -1,64 +1,61 @@
-# BRIEFING — 2026-10-14T11:22:00Z
+# BRIEFING — 2026-10-17T10:18:00Z
 
 ## Mission
-Implement Milestone 2: Mobile Success Actions & Modals (Requirements R3 and R4) and Challenger 2's Milestone 1 Remediation.
+Implement CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities (`src/utils/crmGeoUtils.ts`) and comprehensive unit tests (`src/test/crmGeoUtils.test.ts`).
 
 ## 🔒 My Identity
-- Archetype: worker
+- Archetype: implementer
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 2: Mobile Success Actions & Modals & M1 Remediation
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
 
 ## 🔒 Key Constraints
-- Genuine implementation only, no mock/hardcoded bypasses
-- Follow minimal change principle
-- Strictly preserve desktop functionality and existing mobile features
-- Comply with all TypeScript types and pass all tests
-- Touch targets min 48px, accessible modal/bottom-sheet styling
+- Integrity Mandate: Genuine logic, no hardcoding of test outputs, no fake test assertions.
+- Minimal change principle: only write to owned files (`src/utils/crmGeoUtils.ts` and `src/test/crmGeoUtils.test.ts`).
+- Verification required: `cmd /c npx tsc --noEmit`, `npm.cmd test -- src/test/crmGeoUtils.test.ts --run`, and `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run`.
+- All geofence calculations must follow Haversine formula with EARTH_RADIUS_METERS = 6371000.
+- Handle coordinate bounding (lat: [-90, 90], lon: [-180, 180]), fast return 0 for identical points and polar convergence, normalize longitude difference to [-180, 180], numerical clamping Math.min(1, Math.max(0, a)).
+- Geolocation API wrapper must wrap navigator.geolocation with clean Promise, default options, and error messages.
+- Geolocation mock helpers for testing.
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T11:03:25Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T10:18:00Z
 
 ## Task Summary
-- **What to build**: Challenger 2's M1 Remediation (save locks and state reset), Requirement R3 (Safe Invoice Deletion with Confirmation bottom sheet / dialog), Requirement R4 (Header More Menu & Direct WhatsApp Share, duplicate, void, download), and comprehensive test suite updates.
-- **Success criteria**: 0 TS compiler errors (`tsc --noEmit`), 100% vitest pass rate across test suites (`MobileInvoiceSuccessView`, `billingLifecycleEngine`, `challengerM1_2Stress`).
-- **Interface contracts**: DISPATCH.md, ORIGINAL_REQUEST.md
-- **Code layout**: src/components/invoices/mobile/MobileInvoiceSuccessView.tsx, src/components/SalesInvoiceModal.tsx, src/components/invoices/mobile/MobileCreateInvoice.tsx, src/test/
+- **What to build**: `src/utils/crmGeoUtils.ts` containing EARTH_RADIUS_METERS, calculateHaversineDistance, isWithinGeofence, findNearestGeofence, getCurrentPosition, and mock helpers (mockGeolocationPosition, mockGeolocationError, mockGeolocationUnsupported, resetGeolocationMock). Comprehensive test suite `src/test/crmGeoUtils.test.ts`.
+- **Success criteria**: 100% test pass rate, tsc passes with 0 errors, no regressions in existing tests.
+- **Interface contracts**: `src/types/crmAttendance.ts` for `CRMGeolocation`.
+
+## Key Decisions Made
+- Exported `EARTH_RADIUS_METERS = 6371000`.
+- Implemented `calculateHaversineDistance` with coordinate validation (lat in [-90, 90], lon in [-180, 180]), fast path for identical points and polar convergence, normalized antimeridian longitude delta, and strict numerical clamping of `a` in `[0, 1]` to prevent `NaN` on antipodal points.
+- Implemented `isWithinGeofence` with non-negative radius validation and Haversine distance evaluation.
+- Implemented `findNearestGeofence` filtering active geofences and returning nearest office with distance and `isWithin` boolean.
+- Implemented `getCurrentPosition` with high accuracy options (`enableHighAccuracy: true`, `timeout: 10000`, `maximumAge: 0`) and descriptive error messages for permission denied, position unavailable, and timeout.
+- Implemented mock utilities `mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, and `resetGeolocationMock` for Vitest jsdom test environments.
+
+## Artifact Index
+- `src/utils/crmGeoUtils.ts` — Core geolocation utilities and wrapper
+- `src/test/crmGeoUtils.test.ts` — Comprehensive unit and edge case tests (33 tests, 100% pass)
+- `.agents/teamwork/worker_m2/DISPATCH.md` — Assigned instructions
+- `.agents/teamwork/worker_m2/progress.md` — Liveness and progress tracker
+- `.agents/teamwork/worker_m2/handoff.md` — Final handoff report
 
 ## Change Tracker
 - **Files modified**:
-  - `src/components/SalesInvoiceModal.tsx`: Added `if (saving) return;` concurrency guard at `handleSave`; added `setPlaceOfSupply("27-Maharashtra");`, `setShowDueDate(false);`, `setManualRoundOff(0);` in `saveAndNew` reset block; implemented `onDelete`, `onDuplicate`, `onVoid` handlers and passed `saving={saving}` to `MobileCreateInvoice`.
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`: Added `saving?: boolean;` prop and `disabled={props.saving}` on "Save & New" and "Generate Bill" buttons.
-  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`: Extended `MobileInvoiceSuccessViewProps` with `onDuplicate?: () => void;`, `onVoid?: () => void;`; wired header Trash icon to delete confirmation bottom-sheet; wired header More icon to 4-action mobile bottom sheet; implemented `handleWhatsAppShare` direct link; added badge for `status === "cancelled"`.
-  - `src/test/MobileInvoiceSuccessView.test.tsx`: Updated trash button test to confirm deletion; added test for delete cancel; added Suite 7 covering all R4 behaviors (More menu options, duplicate callback, void callback, WhatsApp URL formatting and phone fallback, cancelled badge).
-  - `src/test/MobileInvoiceSuccessView.challenger.test.tsx`: Updated trash button path click test to confirm through delete dialog.
-- **Build status**: PASS (`tsc --noEmit` exit 0, vitest 6 suites / 75 tests pass 100%)
-- **Pending issues**: None
+  - `src/utils/crmGeoUtils.ts`: Created geolocation utilities engine.
+  - `src/test/crmGeoUtils.test.ts`: Created 33 unit and edge-case tests.
+- **Build status**: `npx tsc --noEmit` PASS (0 errors).
+- **Pending issues**: None.
 
 ## Quality Status
-- **Build/test result**: All 6 suites (75/75 tests) PASS:
-  - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests) PASS
-  - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests) PASS
-  - `src/test/billingLifecycleEngine.test.ts` (6 tests) PASS
-  - `src/test/billingLifecycleEngine.adversarial.test.ts` (6 tests) PASS
-  - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests) PASS
-  - `src/test/challengerM1_2Stress.test.ts` (10 tests) PASS
-- **Lint status**: 0 violations, clean TypeScript compilation
-- **Tests added/modified**: Delete confirmation & cancel tests, More menu action sheet test, Duplicate callback test, Void callback test, WhatsApp direct share URL and fallback tests, Cancelled status badge test.
+- **Build/test result**: PASS (33/33 tests passing in `crmGeoUtils.test.ts`, 31/31 passing in `crmAttendanceMigrationStress.test.ts`, 216/216 passing across all CRM tests).
+- **Lint status**: Clean.
+- **Tests added/modified**: 33 unit and edge-case tests in `src/test/crmGeoUtils.test.ts`.
 
 ## Loaded Skills
-- **Source**: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\skills\mobile-invoice-generate-bill-redesign\SKILL.md
-- **Local copy**: None
-- **Core methodology**: Mobile-first bill generation success screen design, touch interactions, action sheet hierarchy, thermal printing, and sharing.
-
-## Key Decisions Made
-- Used embedded bottom-sheet overlays with `z-[600]` to eliminate portal z-index collisions inside `SalesInvoiceModal` (`z-modal: 500`).
-- Sanitized phone numbers to prepend country code `91` when 10 digits are provided for WhatsApp link generation, falling back cleanly to `https://wa.me/?text=...` when phone number is missing.
-- Maintained exact 100% desktop compatibility and pure component isolation.
-
-## Artifact Index
-- `handoff.md` — Complete 5-component handoff report
-- `DISPATCH.md` — Task assignment & requirements
-- `progress.md` — Task liveness & progress log
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Local copy**: None needed as no RBAC changes are in scope for M2.
+- **Core methodology**: RBAC architecture, database schema, permissions.

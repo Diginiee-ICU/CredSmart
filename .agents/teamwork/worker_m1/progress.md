@@ -1,33 +1,12 @@
-# Progress Log - Worker M1
+# Progress — CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
 
-Last visited: 2026-10-14T10:49:00Z
+Last visited: 2026-10-17T09:14:00Z
 
-## Status
-- Implementation of Milestone 1 (Requirements R1 and R2) COMPLETE.
-- Verification passed: 0 TypeScript errors, 52/52 Vitest unit tests passing.
+## Step-by-Step Execution Plan
 
-## Completed Work
-1. Read ORIGINAL_REQUEST.md and exploration handoff reports (explorer_survey_1 and explorer_survey_3).
-2. Requirement R1 (In-Place Update Lifecycle on Re-Edit):
-   - Added `activeSavedDocId` state in `SalesInvoiceModal.tsx` tracking active saved document ID.
-   - Synchronized `activeSavedDocId` with `editingDoc?.id` in form initialization effect.
-   - Preserved `activeSavedDocId` when returning from `MobileInvoiceSuccessView` via `onEdit`.
-   - Updated `handleSave` in `SalesInvoiceModal.tsx` to pass `currentDocId` (`activeSavedDocId || editingDoc?.id || undefined`) in `finalDoc`.
-   - Updated `setActiveSavedDocId(saved.id)` after `saveDocument` resolves.
-   - Added update toast feedback: `toast.success(\`Invoice #${fullDocumentNumber} updated successfully!\`)`.
-   - Implemented in-place Supabase update in `src/services/documentsService.ts` for existing `sales` (`.from("sales").update(...).eq("id", doc.id)`) and `sale_items` (delete + insert).
-   - Preserved in-place local storage cache replacement and stock adjustment handling (`stockService.handleDocumentStock(doc, "update", previousDoc)`).
-3. Requirement R2 (Mobile "Save & New" Engine & Sequence Reset):
-   - Reordered post-save conditional hierarchy in `SalesInvoiceModal.tsx` so `if (saveAndNew)` is evaluated before `else if (window.innerWidth < 1024)`.
-   - In `if (saveAndNew)` branch:
-     - Implemented clean sequence auto-increment preserving padding (`parseInt(invoiceNumberSeq, 10) + 1` with `padStart`).
-     - Cleared all party fields (`partyName`, `selectedCustomerId`, `customerSearch`, `partyPhone`, `partyGstin`, `partyAddress`, `billingAddress`, `billingPincode`, `billingPlaceOfSupply`, `sameAsParty`, `showBillingAddress`).
-     - Reset items to a single blank row (`setItems([createNewRow("row-1")])`).
-     - Reset payments (`setAmountReceived(0)`, `setMarkAsFullyPaid(false)`).
-     - Reset optional fields (`notes`, `showNotes`, `ewayBillNo`, `showEwayBill`, `vehicleNumber`, `showVehicleNo`, `poReference`, `showPoReference`, `additionalChargesAmount`, `showAdditionalCharges`, `overallDiscountValue`, `showDiscount`).
-     - Reset `activeSavedDocId(null)` and `setMobileSuccessInvoice(null)` to keep mobile in editor mode for next bill.
-     - Displayed toast: `toast.success(\`Invoice #${saved.documentNumber} created! Ready for next bill.\`)`.
-4. Verification & Testing:
-   - Added unit tests in `src/test/billingLifecycleEngine.test.ts`.
-   - Ran `cmd.exe /c npx tsc --noEmit` -> 0 errors.
-   - Ran `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine` -> 52/52 tests passing (100%).
+- [x] Step 1: Review current `src/integrations/supabase/types.ts` surrounding lines 90-130 to confirm exact insertion points.
+- [x] Step 2: Author `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` with fully idempotent SQL, tables (`crm_geolocations`, `crm_attendance`, `crm_attendance_requests`), indexes, update triggers, RLS and policies.
+- [x] Step 3: Author `src/types/crmAttendance.ts` with strongly-typed interfaces (`AttendanceStatus`, `AttendanceVerificationMethod`, `AttendanceRequestStatus`, `CRMAttendanceRecord`, `CRMGeolocation`, `CRMAttendanceRequest`).
+- [x] Step 4: Update `src/integrations/supabase/types.ts` inserting `crm_attendance`, `crm_attendance_requests`, and `crm_geolocations` alphabetically with full `Row`, `Insert`, `Update`, and `Relationships`.
+- [x] Step 5: Run compiler check `cmd /c npx tsc --noEmit` and test suite `npm.cmd test -- src/test/crmPermissionRbac.test.ts`. Both exited code 0 with 0 errors and 26/26 tests passing.
+- [x] Step 6: Produce handoff report `handoff.md` and send completion message to orchestrator parent.

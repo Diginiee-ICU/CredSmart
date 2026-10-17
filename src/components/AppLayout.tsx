@@ -209,6 +209,18 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Configure thermal printer, barcode hardware, and digital scales",
     };
   }
+  if (pathname === ROUTE_PATHS.crmRoles || pathname === "/crm/roles") {
+    return {
+      title: "CRM Role & Permission Manager",
+      subtitle: "Configure custom roles, granular module permissions, and staff assignments",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crm || pathname === "/crm" || pathname.startsWith("/crm/")) {
+    return {
+      title: "CRM Command Center",
+      subtitle: "Unified customer relations, team attendance, tasks, and communications",
+    };
+  }
 
   return {
     title: "CredSmart POS",

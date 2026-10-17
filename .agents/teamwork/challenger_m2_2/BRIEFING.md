@@ -1,50 +1,50 @@
-# BRIEFING — 2026-10-14T11:37:00Z
+# BRIEFING — 2026-10-17T10:24:00Z
 
 ## Mission
-Stress-test Milestone 2 (Header More Menu & WhatsApp Sharing, Requirement R4) with empirical verification and edge case analysis.
+Adversarial empirical challenge of Geolocation API wrapper, mock harness, and findNearestGeofence in src/utils/crmGeoUtils.ts for Milestone 2.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 2: Header More Menu & WhatsApp Sharing
-- Instance: 2 of 2 (Challenger 2)
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
+- Instance: 2 of 2 (challenger_m2_2)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Run verification code yourself; do NOT trust worker's claims or logs
-- Report verdict: APPROVE or CHALLENGE_FAILED in handoff.md
-- Use send_message to report back to orchestrator
+- Report failures as findings — do NOT fix them myself
+- Run verification code empirically; do not trust claims or logs
+- Keep .agents/teamwork containing metadata only (tests co-located in test suites)
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T11:37:00Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: not yet
 
 ## Review Scope
-- **Files reviewed**: `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`
-- **Test files executed**: `src/test/MobileInvoiceSuccessView.m2Challenger.test.tsx`, `src/test/MobileInvoiceSuccessView.test.tsx`, `src/test/MobileInvoiceSuccessView.challenger.test.tsx`, `src/test/MobileInvoiceSuccessView.challenge.test.tsx`, `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx`, `src/test/billingLifecycleEngine.test.ts`, `src/test/billingLifecycleEngine.adversarial.test.ts`
-- **Review criteria**: WhatsApp URL encoding, Duplicate Bill sequence & payment reset & overwrite isolation, Void Invoice cancelled status & documentsService persistence.
-
-## Key Decisions Made
-- Verdict: APPROVE.
-- Validated that WhatsApp URLs are syntactically valid and properly percent-encoded across all special characters, emojis, and phone formatting inputs.
-- Validated that Duplicate Bill cleanly increments sequence numbers and resets payments.
-- Validated that Void Invoice updates status to "cancelled" and persists into documentsService.
-- Documented two edge cases for future worker cycles: `maximumFractionDigits: 2` in currency formatting, and `editingDoc?.id` fallback handling when duplicating an existing invoice.
-
-## Artifact Index
-- DISPATCH.md — Recorded instructions
-- BRIEFING.md — Working memory and scope
-- progress.md — Liveness heartbeat
-- handoff.md — Final handoff report
+- **Files to review**: src/utils/crmGeoUtils.ts, src/test/crmGeoUtils.test.ts
+- **Interface contracts**: ORIGINAL_REQUEST.md, worker_m2/handoff.md
+- **Review criteria**: Geolocation wrapper error handling, mock cleanup and restoration, findNearestGeofence edge cases.
 
 ## Attack Surface
-- **Hypotheses tested**: Special characters in WhatsApp URLs, decimal amount formatting, phone number variations, sequence advancement, duplicate isolation, void persistence.
-- **Vulnerabilities found**: 
-  1. `maximumFractionDigits: 2` missing in currency formatting (causes raw floating points with >2 decimals to display 3 digits).
-  2. `currentDocId = activeSavedDocId || editingDoc?.id` fallback in `SalesInvoiceModal.tsx:1053` when duplicating an existing invoice opened via `editingDoc`.
-- **Untested angles**: Hardware thermal printer rendering in mobile webview.
+- **Hypotheses tested**:
+  1. Geolocation failure codes (PERMISSION_DENIED=1, POSITION_UNAVAILABLE=2, TIMEOUT=3, custom/unknown error codes) produce structured errors with exact human-readable messages and retain error `code`. (PASSED)
+  2. Mock cleanup via `resetGeolocationMock` restores navigator.geolocation cleanly without test pollution across test runs, handles pre-existing custom geolocation objects, and is idempotent. (PASSED)
+  3. `findNearestGeofence` handles empty array, null/undefined inputs, all inactive geofences, single geofence (inside/outside/boundary), identical distance geofences (deterministic tie-breaking), and large scales (1,000 geofences). (PASSED)
+  4. Extreme antimeridian and pole coordinates evaluate without NaN or instability. (PASSED)
+- **Vulnerabilities found**: None. Implementation in `src/utils/crmGeoUtils.ts` is fully robust, mathematically sound, defensively typed, and resilient to test pollution.
+- **Untested angles**: Hardware-level GPS battery drain or jitter under real Android/iOS WebView (cannot be simulated in Node/jsdom test runner; deferred to physical device testing).
 
 ## Loaded Skills
-- None
+- None specified in dispatch
+
+## Key Decisions Made
+- Created comprehensive adversarial empirical test suite at `src/test/crmGeoUtilsAdversarial.test.ts` (22 tests).
+- Verified `cmd /c npx tsc --noEmit` (code 0).
+- Verified `cmd /c npm test -- src/test/crmGeoUtilsAdversarial.test.ts --run` (22/22 passed).
+- Verified `cmd /c npm test -- crm --run` (238/238 passed across 10 suites).
+- Reached final verdict: CONFIRMED.
+
+## Artifact Index
+- src/test/crmGeoUtilsAdversarial.test.ts — Comprehensive 22-test adversarial empirical challenge suite
+- .agents/teamwork/challenger_m2_2/handoff.md — Final 5-component handoff report

@@ -23,6 +23,7 @@ import {
   Activity,
   FileText,
   Store,
+  Briefcase,
 } from "lucide-react";
 
 export const ROUTE_PATHS = {
@@ -83,6 +84,18 @@ export const ROUTE_PATHS = {
   staff: "/staff",
   activityLog: "/activity-log",
 
+  // CRM
+  crm: "/crm",
+  crmDashboard: "/crm",
+  crmAttendance: "/crm/attendance",
+  crmSalary: "/crm/salary",
+  crmTasks: "/crm/tasks",
+  crmMeet: "/crm/meet",
+  crmBroadcasts: "/crm/broadcasts",
+  crmAiAssistant: "/crm/ai-assistant",
+  crmSupport: "/crm/support",
+  crmRoles: "/crm/roles",
+
   // SETTINGS & HELP
   settings: "/settings",
   businessSettings: "/settings/business",
@@ -135,6 +148,8 @@ export const RESTRICTED_ROUTES_FOR_CASHIER: ReadonlySet<string> = new Set([
   ROUTE_PATHS.printSettings,
   ROUTE_PATHS.staff,
   ROUTE_PATHS.activityLog,
+  ROUTE_PATHS.crm,
+  ROUTE_PATHS.crmRoles,
 ]);
 
 export type FeatureKey =
@@ -151,7 +166,8 @@ export type FeatureKey =
   | "reports"
   | "analytics"
   | "staff"
-  | "settings";
+  | "settings"
+  | "crm";
 
 export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
   dashboard: [ROUTE_PATHS.dashboard],
@@ -172,6 +188,17 @@ export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
     ROUTE_PATHS.businessSettings,
     ROUTE_PATHS.invoiceSettings,
     ROUTE_PATHS.printSettings,
+  ],
+  crm: [
+    ROUTE_PATHS.crm,
+    ROUTE_PATHS.crmAttendance,
+    ROUTE_PATHS.crmSalary,
+    ROUTE_PATHS.crmTasks,
+    ROUTE_PATHS.crmMeet,
+    ROUTE_PATHS.crmBroadcasts,
+    ROUTE_PATHS.crmAiAssistant,
+    ROUTE_PATHS.crmSupport,
+    ROUTE_PATHS.crmRoles,
   ],
 };
 
@@ -426,6 +453,23 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
   {
     label: "BUSINESS TOOLS",
     items: [
+      {
+        title: "CRM",
+        url: ROUTE_PATHS.crm,
+        icon: Briefcase,
+        badge: "NEW",
+        children: [
+          { title: "Dashboard", url: ROUTE_PATHS.crm },
+          { title: "Attendance", url: ROUTE_PATHS.crmAttendance },
+          { title: "Salary", url: ROUTE_PATHS.crmSalary },
+          { title: "Tasks", url: ROUTE_PATHS.crmTasks },
+          { title: "Meet", url: ROUTE_PATHS.crmMeet },
+          { title: "Broadcasts", url: ROUTE_PATHS.crmBroadcasts },
+          { title: "AI Assistant", url: ROUTE_PATHS.crmAiAssistant },
+          { title: "Support", url: ROUTE_PATHS.crmSupport },
+          { title: "Role Management", url: ROUTE_PATHS.crmRoles },
+        ],
+      },
       {
         title: "Digital Storefront",
         url: ROUTE_PATHS.storefront,

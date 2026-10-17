@@ -1,29 +1,21 @@
-## 2026-10-14T10:50:06Z
-You are Reviewer 2 reviewing Milestone 1: Mobile "Save & New" Engine & Sequence Reset (Requirement R2).
+## 2026-10-17T09:15:26Z
 
-Your designated working directory is:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
+You are reviewer_m1_2 for CRM Phase 2 Milestone 1: Database Migration & TypeScript Types.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
 
-MANDATORY FIRST STEP:
-Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z) before starting review.
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Also read worker_m1's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md.
 
-Read Worker M1's handoff:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+Review Tasks:
+1. Inspect relational integrity:
+   - Unique constraint uq_crm_attendance_staff_date on (org_id, staff_id, date)
+   - Foreign key cascading: ON DELETE CASCADE for organizations and auth.users, ON DELETE SET NULL for geolocations
+   - Indexes on org_id, date, staff_id, status, location IDs
+   - update_updated_at triggers
+2. Inspect src/types/crmAttendance.ts:
+   - Check completeness of domain types (CRMAttendanceRecord, CRMGeolocation, CRMAttendanceRequest, status unions).
+3. Run test regression check: npm.cmd test -- src/test/crmPermissionRbac.test.ts
+4. Output your clear verdict: APPROVE or REQUEST_CHANGES.
 
-Tasks:
-1. Review the changes made to `src/components/SalesInvoiceModal.tsx` and `src/services/documentsService.ts`.
-2. Verify Requirement R2:
-   - In `SalesInvoiceModal.tsx:1163`, verify that `if (saveAndNew)` is evaluated before `else if (window.innerWidth < 1024)`.
-   - Verify that sequence number increments cleanly (e.g. `INV-139` → `INV-140`) with number padding preserved.
-   - Verify that party selection, items, payment amounts, and optional fields are completely reset.
-   - Verify that `activeSavedDocId` and `mobileSuccessInvoice` are cleared, keeping mobile in editor mode on `MobileCreateInvoice`.
-   - Verify that toast displays `Invoice #[number] created! Ready for next bill.`.
-3. Run verification commands (via `cmd.exe /c`):
-   - `cmd.exe /c npx tsc --noEmit`
-   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
-4. Verify desktop invoice modal flows are 100% preserved.
-
-Write your review report to:
-`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md`
-State clearly your final verdict: APPROVE or REQUEST_CHANGES.
-Use send_message to report back to orchestrator.
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md and send a completion message with your verdict.

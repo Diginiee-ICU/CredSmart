@@ -1,23 +1,19 @@
-# Progress Log - Challenger M1 (In-Place Update Lifecycle)
+# Progress — challenger_m1_1
 
-Last visited: 2026-10-14T11:02:30Z
-Status: Completed - Verdict: APPROVE
+Last visited: 2026-10-17T09:28:00Z
+Status: Completed
 
-## Steps
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [x] Read ORIGINAL_REQUEST.md
-- [x] Read worker_m1/handoff.md
-- [x] Inspect implementation files and existing tests
-- [x] Run baseline test suite and type check (`cmd.exe /c npx tsc --noEmit`, `cmd.exe /c npx vitest run ...`)
-- [x] Formulated adversarial test scenarios:
-  1. Repeated re-edits (edit -> save -> edit -> save across 10 cycles) activeSavedDocId consistency
-  2. Offline/local document saving and duplicate prevention with modified invoice numbers and multi-tenant isolation
-  3. Adding, modifying, and removing line items during re-edit (stock adjustments and item totals)
-  4. Save & New state reset, sequence increment, and multi-document isolation
-- [x] Implemented empirical verification test harness: `src/test/billingLifecycleEngine.adversarial.test.ts`
-- [x] Executed empirical tests (6/6 passed in 169ms)
-- [x] Re-verified Worker M1's test suite (6/6 passed) and combined suites (12/12 passed)
-- [x] Re-verified type check `cmd.exe /c npx tsc --noEmit` (0 errors)
-- [x] Updated BRIEFING.md
-- [x] Evaluated findings, issued verdict: APPROVE
-- [x] Wrote handoff.md and reported back to orchestrator via send_message
+## Milestones & Status
+- [x] Initialized DISPATCH.md and copied skill to workspace
+- [x] Initialized BRIEFING.md
+- [x] Empirical stress-testing of `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
+  - [x] 1. Syntax validation (DDL parsing, semicolons, parentheses, constraints) -> CONFIRMED
+  - [x] 2. Idempotency test (consecutive executions simulation) -> CONFIRMED
+  - [x] 3. Constraint and defaults analysis ('present', 'absent', 'half_day', 'on_leave'; 'geo_verified', 'manual', 'regularized') -> ISSUES_FOUND (Missing SQL CHECK constraints; defaults confirmed)
+  - [x] 4. Relation integrity & RLS validation -> CONFIRMED (adheres to R1.4)
+- [x] TypeScript type synchronization check (`src/types/crmAttendance.ts` and `src/integrations/supabase/types.ts`) -> Nullability divergence noted
+- [x] Authored automated empirical test harness `src/test/crmAttendanceMigrationStress.test.ts` (30/30 tests pass)
+- [x] TypeScript compilation check (`tsc --noEmit` exits with 0 errors)
+- [x] Regression test check (`crmPermissionRbac.test.ts` 26/26 tests pass)
+- [x] Updated BRIEFING.md with Attack Surface findings
+- [x] Generate Handoff Report (`handoff.md`)

@@ -208,3 +208,207 @@ Implement full deletion lifecycle in `MobileInvoiceSuccessView.tsx` and `SalesIn
 ## 2026-10-14T12:07:00Z
 
 Server restarted. Please resume execution, complete final verification (tsc --noEmit and test suite validation), and run the Victory Audit to finalize.
+
+
+## 2026-10-17T00:24:04Z
+
+Build a fully integrated CRM Tab — Phase 1: Foundation, CRM Shell & Custom Role-Based Access — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform. All UI must be polished, production-quality, matching the existing CredSmart mobile + desktop design standards, using a custom CRM design system housed in src/components/crm/. Roles are fully configurable by business owner (not fixed — no hard-coded roles).
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: benchmark (no restrictions — any approach that works)
+
+## Tech Stack Context
+
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- Backend/DB: Supabase (existing client in src/integrations/supabase/)
+- Auth: Supabase Auth (existing useAuth.tsx hook)
+- App shell: src/components/AppSidebar.tsx, src/components/AppLayout.tsx
+- Routing: React Router in src/App.tsx
+- Existing pages: Dashboard, Sales, POS, Inventory, Parties, Reports, CashBank, Staff, Settings
+- Existing Staff page: src/pages/Staff.tsx (extend/integrate where relevant, do NOT replace)
+- Brand colors: Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981
+- Custom CRM components go in: src/components/crm/
+- CRM pages go in: src/pages/crm/
+- Supabase migrations go in: supabase/migrations/
+
+## Requirements
+
+### R1. CRM Tab & Navigation Shell
+Add a "CRM" tab to AppSidebar.tsx with sub-navigation for all future CRM features (placeholder nav items for: Dashboard, Attendance, Salary, Tasks, Meet, Broadcasts, AI Assistant, Support). The CRM shell must be fully responsive (mobile + desktop). Create src/pages/crm/CRMDashboard.tsx as the CRM landing page with a summary card grid showing: staff count, today's attendance count, pending tasks, unread broadcasts, and upcoming meetings. Each card queries Supabase for live data. Add the CRM route to src/App.tsx and src/components/routes.ts.
+
+### R2. Custom Configurable Role System
+Implement a full role management system:
+- A Role Management page (src/pages/crm/RoleManagement.tsx) where the super-admin can: create custom roles with a name, color, and icon; define per-role permissions across all CRM modules (attendance view/edit, salary view/edit, tasks view/create/approve, meetings view/create, broadcasts send/view, AI assistant access, support tickets view/manage); assign roles to staff members; promote/demote users.
+- Supabase tables: crm_roles (id, org_id, name, color, icon, is_super_admin, created_at) and crm_permissions (id, role_id, module, action, allowed). Seed a super_admin role automatically via migration.
+- crm_staff_roles table (staff_id, role_id, assigned_by, assigned_at) linking existing auth users to CRM roles.
+- Role assignment UI with searchable staff list and role dropdown.
+- No hard-coded roles anywhere in the codebase — all roles are user-defined.
+
+### R3. CRM Design System Bootstrap
+Create src/components/crm/ with the following reusable, fully documented components (inline JSDoc on every component and prop):
+- CRMCard: a styled card wrapper with CredSmart brand tokens
+- CRMBadge: a status/label badge with variant support (success, warning, error, info, neutral)
+- CRMDataTable: a sortable, filterable, paginated data table with column config prop
+- CRMPageHeader: page header with title, subtitle, breadcrumb, and action slot
+- CRMStatCard: stat card with icon, value, label, trend indicator (up/down/neutral)
+- CRMPermissionGate: a React component that renders children only if the current user has the required permission; if not, renders null and fires a "Not Authorized" toast
+- CRMRolePill: a colored pill showing a role name with its configured color
+- Export all from src/components/crm/index.ts
+
+### R4. Reusable Skill File
+Create .agents/skills/crm-rbac-skill/SKILL.md with YAML frontmatter (name: crm-rbac-skill, description: ...). The SKILL.md must document:
+- The Supabase schema for crm_roles, crm_permissions, crm_staff_roles
+- How CRMPermissionGate is used in subsequent phases
+- The pattern for checking permissions in page components (usePermission hook)
+- How to add new CRM modules/permissions as new phases are built
+- Migration patterns and naming conventions
+- The CredSmart brand color tokens and CRM component usage guide
+This skill is for future sub-agents building Phases 2–6.
+
+## Acceptance Criteria
+
+### Navigation & Shell
+- [ ] A "CRM" item appears in AppSidebar.tsx on all screen sizes
+- [ ] Mobile: CRM tab collapses correctly into the mobile hamburger menu without breaking existing nav
+- [ ] CRM sub-navigation renders placeholder links for all 8 future sections
+- [ ] Navigating to /crm renders CRMDashboard.tsx with no runtime errors
+- [ ] CRM route is guarded: unauthenticated users are redirected to /auth
+
+### Role Management
+- [ ] Super-admin can create a new custom role with name, color, icon via the Role Management UI
+- [ ] Per-role permissions can be toggled for each module+action and are persisted to Supabase
+- [ ] Staff can be searched and assigned a role from the Role Management page
+- [ ] CRMPermissionGate correctly blocks rendering for users missing the required permission
+- [ ] CRMPermissionGate fires a toast notification when access is denied
+- [ ] crm_roles and crm_permissions tables are created via idempotent Supabase migration
+- [ ] super_admin role is seeded automatically with all permissions enabled
+
+### Design System
+- [ ] All 7 CRM components exist in src/components/crm/ and export from index.ts
+- [ ] CRMDataTable renders sortable columns, pagination controls, and a search filter
+- [ ] CRMStatCard shows icon, numeric value, label, and a trend arrow (up/down)
+- [ ] All components follow CredSmart brand tokens (Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981)
+- [ ] Every component has inline JSDoc
+
+### Dashboard
+- [ ] CRMDashboard shows 5 stat cards (staff count, today's attendance, pending tasks, unread broadcasts, upcoming meetings) with live Supabase queries
+- [ ] Dashboard is responsive at 375px, 768px, and 1280px
+
+### Code Quality
+- [ ] Zero TypeScript errors (strict mode, no `any` types in CRM files)
+- [ ] Zero ESLint errors in all new/modified files
+- [ ] No existing protected routes (/dashboard, /sales, /pos, /purchases, /inventory, /parties, /reports, /cash-bank, /settings) are broken
+- [ ] crm-rbac-skill SKILL.md exists at .agents/skills/crm-rbac-skill/SKILL.md with full content
+- [ ] usePermission hook is created in src/hooks/useCRMPermission.ts and exported
+
+
+## 2026-10-17T08:52:11Z
+
+Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendance — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform. All UI must be polished, production-quality, matching the existing CredSmart mobile + desktop design standards, using the custom CRM design system in src/components/crm/ and RBAC integration from Phase 1.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: benchmark (no restrictions — any approach that works)
+
+## Tech Stack & Phase 1 Foundations
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- Backend/DB: Supabase (client in src/integrations/supabase/)
+- Auth: Supabase Auth (existing useAuth.tsx hook)
+- App shell: src/components/AppSidebar.tsx, src/components/AppLayout.tsx, src/config/routes.ts
+- CRM Design System: src/components/crm/ (CRMCard, CRMBadge, CRMDataTable, CRMPageHeader, CRMStatCard, CRMPermissionGate, CRMRolePill)
+- RBAC Hook: src/hooks/useCRMPermission.ts (useCRMPermission, usePermission)
+- Reusable Skill Guide: .agents/skills/crm-rbac-skill/SKILL.md (read this before starting)
+- Brand colors: Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981, Gold #F59E0B
+
+## Requirements
+
+### R1. Database Schema & Idempotent Migration
+Create `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` containing:
+1. `public.crm_geolocations`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `name TEXT NOT NULL`
+   - `latitude DOUBLE PRECISION NOT NULL`
+   - `longitude DOUBLE PRECISION NOT NULL`
+   - `radius_meters INTEGER NOT NULL DEFAULT 150`
+   - `is_active BOOLEAN NOT NULL DEFAULT true`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+2. `public.crm_attendance`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+   - `date DATE NOT NULL DEFAULT CURRENT_DATE`
+   - `clock_in TIMESTAMPTZ`
+   - `clock_out TIMESTAMPTZ`
+   - `clock_in_latitude DOUBLE PRECISION`
+   - `clock_in_longitude DOUBLE PRECISION`
+   - `clock_in_accuracy DOUBLE PRECISION`
+   - `clock_out_latitude DOUBLE PRECISION`
+   - `clock_out_longitude DOUBLE PRECISION`
+   - `clock_out_accuracy DOUBLE PRECISION`
+   - `clock_in_location_id UUID REFERENCES public.crm_geolocations(id) ON DELETE SET NULL`
+   - `clock_out_location_id UUID REFERENCES public.crm_geolocations(id) ON DELETE SET NULL`
+   - `status TEXT NOT NULL DEFAULT 'present'` ('present', 'absent', 'half_day', 'on_leave')
+   - `verification_method TEXT NOT NULL DEFAULT 'geo_verified'` ('geo_verified', 'manual', 'regularized')
+   - `is_within_geofence BOOLEAN NOT NULL DEFAULT true`
+   - `distance_from_office_meters DOUBLE PRECISION`
+   - `work_duration_minutes INTEGER DEFAULT 0`
+   - `overtime_minutes INTEGER DEFAULT 0`
+   - `notes TEXT`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `CONSTRAINT uq_crm_attendance_staff_date UNIQUE (org_id, staff_id, date)`
+3. `public.crm_attendance_requests`:
+   - For regularisation / manual correction with status ('pending', 'approved', 'rejected').
+4. Enable RLS on all tables with `has_org_access(org_id)` policy.
+5. Update `src/integrations/supabase/types.ts` with these new table definitions.
+
+### R2. Geo Location Calculation Engine
+Create `src/utils/crmGeoUtils.ts`:
+- Haversine distance formula calculating exact distance in meters between `(lat1, lon1)` and `(lat2, lon2)`
+- `isWithinGeofence(userLat, userLon, officeLat, officeLon, radiusMeters)`
+- Geolocation API wrapper with timeout, high accuracy flag, and clean error handling
+- Geolocation mock helpers for test suites
+
+### R3. Attendance UI & Clock-In Hub
+Create `src/pages/crm/Attendance.tsx`:
+- Staff Clock-In / Clock-Out pod:
+  - Live digital time display, shift info, and single touch-optimized button (Clock In Emerald `#10B981` / Clock Out Orange `#FF6A00`)
+  - Live GPS status indicator ("Acquiring GPS...", "Within Geofence ✓", "Outside Geofence ⚠️")
+  - Distance radar / map preview indicator showing office center and user position
+  - Work timer showing elapsed time for today's session
+- Admin Attendance Oversight:
+  - Daily Attendance Table using `CRMDataTable` with date filter, staff search, role filter, status badge
+  - Geofence Management Modal: add/edit office locations (name, lat, lon, radius)
+  - Regularisation approval drawer/modal
+- Gated using `CRMPermissionGate` and `useCRMPermission("attendance", "view")`
+
+### R4. Attendance Reports & PDF Export
+- Monthly attendance breakdown: Present days, Absent, Half day, Overtime hours
+- Formatted PDF export using `jsPDF` matching CredSmart design tokens
+- CSV export for payroll processing
+
+### R5. Wire Routes & Update CRMDashboard
+- Wire `ROUTE_PATHS.crmAttendance` in `src/App.tsx` pointing to `Attendance.tsx`
+- In `src/pages/crm/CRMDashboard.tsx`, update the Attendance stat card to query `crm_attendance` for today's real attendance count
+
+### R6. Reusable Skill Documentation
+Create `.agents/skills/crm-attendance-skill/SKILL.md` documenting:
+- Database schema for attendance & geolocations
+- Haversine calculation guidelines
+- Shift calculation rules (overtime, late arrival, half day)
+- Pattern for consuming attendance data in Phase 3 (Salary & Payroll calculation)
+- Permissions matrix for attendance module
+
+### Acceptance Criteria
+- [ ] Database migration is idempotent with IF NOT EXISTS and RLS
+- [ ] TypeScript types updated in `src/integrations/supabase/types.ts`
+- [ ] `src/utils/crmGeoUtils.ts` Haversine formula implemented and tested
+- [ ] Staff can clock in/out with live elapsed timer
+- [ ] GPS coordinates captured on clock in/out
+- [ ] Geofence check correctly marks attendance as "Geo-Verified ✓" or "Manual ⚠️"
+- [ ] Admin can view logs in `CRMDataTable` and manage geofences
+- [ ] Monthly PDF report downloads cleanly
+- [ ] Responsive design verified on mobile (375px) and desktop
+- [ ] `tsc --noEmit` exits with 0 errors
+- [ ] All new tests pass with 0 failures
+- [ ] `.agents/skills/crm-attendance-skill/SKILL.md` authored and committed

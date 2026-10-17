@@ -1,56 +1,56 @@
-# BRIEFING — 2026-10-14T10:55:00Z
+# BRIEFING — 2026-10-17T09:24:00Z
 
 ## Mission
-Adversarially challenge and stress-test Milestone 1: Mobile "Save & New" Engine & Sequence Reset (Requirement R2) in CredSmart.
+Empirically stress-test the TypeScript type definitions in src/types/crmAttendance.ts and src/integrations/supabase/types.ts against SQL migration 20261017010000_create_crm_attendance_tables.sql for CRM Phase 2 Milestone 1.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 1 (Requirement R2)
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
 - Instance: 2 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code directly; write verification tests and stress harnesses to empirically reproduce bugs.
-- Must run verification code ourselves. Do not trust worker's claims or logs without reproduction.
-- Must provide clear final verdict: APPROVE or CHALLENGE_FAILED.
+- Review-only — do NOT modify implementation code unless creating standalone test verification harnesses outside of .agents/teamwork
+- Run verification code empirically; do not trust worker claims
+- Check exact field parity between SQL columns and TS types
+- Verify Row, Insert, and Update type compatibility with valid/invalid payloads
+- Run `npx tsc --noEmit` to confirm zero compilation errors across codebase
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T10:55:00Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T09:15:27Z
 
 ## Review Scope
-- **Files to review**: `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/services/documentsService.ts`, `src/test/billingLifecycleEngine.test.ts`, `src/test/MobileInvoiceSuccessView.test.tsx`
-- **Interface contracts**: `ORIGINAL_REQUEST.md`, `worker_m1/handoff.md`
-- **Review criteria**: Leading zero padding, rapid succession clicks / race conditions, state leakage / bleed between bills, activeSavedDocId reset to null.
-
-## Key Decisions Made
-- Executed `tsc --noEmit` (passed 0 errors).
-- Executed `vitest run src/test/MobileInvoiceSuccessView.test.tsx` (17/17 passed).
-- Executed `vitest run src/test/billingLifecycleEngine.test.ts` (6/6 passed).
-- Authored and executed dedicated stress test suite `src/test/challengerM1_2Stress.test.ts`.
-- Discovered 2 distinct bugs / risks in Requirement R2 implementation:
-  1. `placeOfSupply` is NOT reset during `saveAndNew` (only `billingPlaceOfSupply` was reset). This causes out-of-state `placeOfSupply` (e.g. "07-Delhi") to bleed into subsequent walk-in bills, falsely triggering interstate IGST instead of intrastate CGST+SGST.
-  2. Missing `saving` re-entry guard in `handleSave` and missing `disabled` state on `Save & New` button in `MobileCreateInvoice.tsx`. Rapid succession clicks can concurrently trigger `documentsService.saveDocument`, causing duplicate Supabase inserts, duplicate stock deductions, and duplicate toasts.
-
-## Artifact Index
-- `DISPATCH.md` — Initial dispatch message
-- `BRIEFING.md` — Persistent state and awareness
-- `progress.md` — Liveness and execution steps
-- `src/test/challengerM1_2Stress.test.ts` — Empirical challenge test suite
-- `handoff.md` — Final 5-component handoff report
+- **Files to review**:
+  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
+  - `src/types/crmAttendance.ts`
+  - `src/integrations/supabase/types.ts`
+  - `src/test/crmAttendanceTypes.challenger.test.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (## 2026-10-17T08:52:11Z) & `DISPATCH.md`
+- **Review criteria**: Field parity, nullability parity, default values handling, Row/Insert/Update conformance, negative type testing, zero compiler breaks
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - H1: Sequence padding with leading zeros ("001" -> "002", "099" -> "100") -> CONFIRMED ROBUST.
-  - H2: Rapid succession clicks on "Save & New" without debounce or disabled guard -> CONFIRMED VULNERABLE.
-  - H3: State bleed (placeOfSupply, manualRoundOff, showDueDate) -> CONFIRMED VULNERABILITY (placeOfSupply bleeds).
-  - H4: activeSavedDocId reset to null to prevent subsequent bill overwrite -> CONFIRMED ROBUST.
-- **Vulnerabilities found**:
-  - Bug 1: State Bleed on `placeOfSupply` (`SalesInvoiceModal.tsx:1181-1207`).
-  - Bug 2: Missing concurrency/debounce guard on `Save & New` (`SalesInvoiceModal.tsx:1035` and `MobileCreateInvoice.tsx:273`).
-- **Untested angles**: None.
+  1. SQL migration columns vs Supabase types Row/Insert/Update: Confirmed exact parity across all 8 columns of `crm_geolocations`, 23 columns of `crm_attendance`, and 15 columns of `crm_attendance_requests`.
+  2. Required vs optional Insert fields: Confirmed only non-default NOT NULL columns are required in Insert (`org_id`, `name`, `latitude`, `longitude` for geolocations; `org_id`, `staff_id` for attendance; `org_id`, `staff_id`, `date`, `reason` for requests).
+  3. Domain models vs DB types: `CRMAttendanceRecord` and `CRMAttendanceRequest` include optional UI enrichment fields (`staff_name`, `staff_email`) for join queries and strict status union types.
+  4. Extreme values and boundary conditions: Sub-meter precision floating points, pole coordinates, and timezone representations evaluated and verified.
+- **Vulnerabilities found**: None. Zero type discrepancies, zero compile breaks, zero missing foreign keys.
+- **Untested angles**: Local PostgreSQL execution (requires running Docker / Supabase CLI).
 
 ## Loaded Skills
-- None explicitly assigned
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Core methodology**: RBAC permission checks, database schemas, strict typing conventions
+
+## Key Decisions Made
+- Authored comprehensive empirical test suite `src/test/crmAttendanceTypes.challenger.test.ts` with 18 automated tests.
+- Tested compile-time negative constraints via TypeScript utility types and Vitest `expectTypeOf`.
+- Verified whole-project compilation with `cmd /c npx tsc --noEmit`.
+
+## Artifact Index
+- `src/test/crmAttendanceTypes.challenger.test.ts` — 18-test empirical test suite
+- `handoff.md` — Final 5-component challenger report
+- `DISPATCH.md` — Incoming dispatch log
+- `progress.md` — Liveness and execution tracking

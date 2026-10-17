@@ -1,17 +1,22 @@
-## 2026-09-26T00:53:20Z
+## 2026-10-17T12:02:19Z
+You are auditor_m4 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4
 
-You are auditor_m4 (Role: Milestone 4 Auditor).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m4
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m4/handoff.md
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Also read worker_m4's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md.
 
-Your mission is forensic integrity auditing of Milestone 4 changes:
-1. Inspect git status and exact diffs in src/pages/TallyImport.tsx.
-2. Check for any integrity violations:
-   - Hardcoded fake results or test-specific cheats
-   - Dummy facades or bypassed logic
-   - Fabrication of outputs or mock bypasses
-3. Confirm genuine implementation of UI controls, stats grid expansions, and modal wiring.
-4. Write your audit report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/auditor_m4/handoff.md with an explicit verdict: CLEAN or INTEGRITY VIOLATION.
-5. Send a message to the orchestrator (caller id) with your verdict and report path.
+Forensic Audit Tasks:
+Perform an independent forensic integrity audit of Milestone 4 work products:
+- `src/utils/crmAttendancePdf.ts`
+- `src/pages/crm/Attendance.tsx` (export wiring)
+- `src/test/crmAttendancePdf.test.ts`
+
+Verify:
+1. Static analysis: Verify pure vector jsPDF implementation. Zero imports of `jspdf-autotable`. Zero hardcoded test fixture mocks, dummy returns, or shortcuts.
+2. Genuine calculation logic in `calculateMonthlyAttendanceMetrics` and genuine RFC 4180 CSV serialization.
+3. Verify `cmd /c npx tsc --noEmit` exits code 0.
+4. Verify all tests pass: `npm.cmd test -- src/test/crmAttendancePdf.test.ts --run` and `npm.cmd test -- crm --run`.
+5. Output your binary verdict: CLEAN or INTEGRITY VIOLATION.
+
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\handoff.md and send your verdict via send_message.

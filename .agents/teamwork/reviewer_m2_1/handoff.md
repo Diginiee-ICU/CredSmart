@@ -1,114 +1,135 @@
-# Review & Challenge Report: Milestone 2 (Safe Invoice Deletion R3) & M1 Remediation
+# Handoff Report — CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
 
-**Agent**: Reviewer 1 (reviewer, critic)  
-**Date**: 2026-10-14T11:33:00Z  
-**Target**: Orchestrator (Conversation ID: `c0d1864a-d589-4172-80be-9e95a059559c`)  
+**Reviewer & Adversarial Critic**: `reviewer_m2_1`  
+**Date**: 2026-10-17  
+**Milestone**: Phase 2 Milestone 2 — Geo Location Calculation Engine & Utilities (`src/utils/crmGeoUtils.ts`)  
 **Verdict**: **APPROVE**  
-**Integrity Assessment**: **NO INTEGRITY VIOLATIONS DETECTED** (0 hardcoded test facades, genuine implementation & test coverage)
 
 ---
 
 ## 1. Observation
 
-### 1.1 Requirement R3: Safe Invoice Deletion with Confirmation
-1. **Confirmation Bottom Sheet Trigger (`MobileInvoiceSuccessView.tsx:174-181`)**:
-   ```tsx
-   {onDelete && (
-     <button 
-       onClick={() => setIsDeleteConfirmOpen(true)} 
-       className="p-2 text-rose-500 active:opacity-60 cursor-pointer"
-     >
-       <Trash2 className="w-4 h-4" />
-     </button>
-   )}
-   ```
-   Tapping the header `Trash2` button opens the bottom sheet via `setIsDeleteConfirmOpen(true)` rather than deleting immediately.
-
-2. **Confirmation Sheet UI & Accessibility (`MobileInvoiceSuccessView.tsx:383-434`)**:
-   - Rendered with `role="dialog"`, `aria-modal="true"`, `aria-labelledby="delete-dialog-title"`, and high z-index overlay `z-[600]`.
-   - Title: `"Delete Invoice"`, sub-label `#{invoice.documentNumber}`.
-   - Verbatim prompt: `"Delete this invoice? This action cannot be undone."`
-   - "Cancel" button: `onClick={() => setIsDeleteConfirmOpen(false)}` closes the sheet without executing deletion.
-   - "Delete" button: `onClick={() => { setIsDeleteConfirmOpen(false); onDelete?.(); }}` invokes `onDelete`.
-   - Backdrop tap dismisses via outer container `onClick={() => setIsDeleteConfirmOpen(false)}` with `e.stopPropagation()` on the dialog card.
-
-3. **Deletion Handler & Database Integration (`SalesInvoiceModal.tsx:1520-1533`)**:
-   ```tsx
-   onDelete={async () => {
-     if (mobileSuccessInvoice) {
-       try {
-         await documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id);
-         toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} deleted`);
-       } catch (err) {
-         console.error("Delete failed:", err);
-         toast.error("Failed to delete invoice");
-       }
+1. **Haversine Formula Implementation (`src/utils/crmGeoUtils.ts:12, 62-108`)**:
+   - `EARTH_RADIUS_METERS` is defined and exported as verbatim:
+     ```ts
+     export const EARTH_RADIUS_METERS = 6371000;
+     ```
+   - Coordinate validation via `isValidCoordinate` (lines 39–50):
+     ```ts
+     export function isValidCoordinate(lat: number, lon: number): boolean {
+       return (
+         typeof lat === "number" &&
+         typeof lon === "number" &&
+         Number.isFinite(lat) &&
+         Number.isFinite(lon) &&
+         lat >= -90 &&
+         lat <= 90 &&
+         lon >= -180 &&
+         lon <= 180
+       );
      }
-     setActiveSavedDocId(null);
-     setMobileSuccessInvoice(null);
-     onOpenChange(false);
-   }}
-   ```
-   - Invokes `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)`.
-   - Triggers toast: `"Invoice #[number] deleted"`.
-   - Cleans up state: `setActiveSavedDocId(null)`, `setMobileSuccessInvoice(null)`, and closes modal via `onOpenChange(false)`.
+     ```
+     Throws a descriptive `RangeError` if coordinates are outside standard WGS-84 boundaries or non-finite (lines 68–72).
+   - Fast-path identical coordinate / pole convergence return (lines 74–80):
+     ```ts
+     if (
+       (lat1 === lat2 && lon1 === lon2) ||
+       (Math.abs(lat1) === 90 && lat1 === lat2)
+     ) {
+       return 0;
+     }
+     ```
+   - Antimeridian delta normalization to shortest arc $[-180, +180]$ (lines 84–88):
+     ```ts
+     let diffLonDeg = (lon2 - lon1) % 360;
+     if (diffLonDeg > 180) diffLonDeg -= 360;
+     if (diffLonDeg < -180) diffLonDeg += 360;
+     ```
+   - Radian conversions: `toRad = (deg: number) => (deg * Math.PI) / 180` applied to `lat2 - lat1`, `diffLonDeg`, `lat1`, and `lat2` (lines 82, 89–93).
+   - Haversine intermediate formulation:
+     ```ts
+     const a =
+       sinHalfDLat * sinHalfDLat +
+       Math.cos(phi1) * Math.cos(phi2) * sinHalfDLon * sinHalfDLon;
+     ```
+   - Intermediate numerical clamping and angular distance computation (lines 104–107):
+     ```ts
+     const clampedA = Math.min(1, Math.max(0, a));
+     const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
+     return EARTH_RADIUS_METERS * c;
+     ```
 
-### 1.2 Challenger 2 M1 Remediation
-1. **Concurrency Guard in `handleSave` (`SalesInvoiceModal.tsx:1035-1036`)**:
-   ```tsx
-   const handleSave = async (andPrint = false, saveAndNew = false) => {
-     if (saving) return;
-   ```
-   Entry guard halts concurrent invocations when a save is already in-flight.
-2. **State Bleed Reset in `saveAndNew` (`SalesInvoiceModal.tsx:1190-1193`)**:
-   ```tsx
-   setBillingPlaceOfSupply("27-Maharashtra");
-   setPlaceOfSupply("27-Maharashtra");
-   setShowDueDate(false);
-   setManualRoundOff(0);
-   ```
-   Explicitly resets `placeOfSupply`, `billingPlaceOfSupply`, `showDueDate`, and `manualRoundOff`, preventing out-of-state GST tax bleed and residual manual adjustments from contaminating subsequent bills.
-3. **UI Save Disabling (`MobileCreateInvoice.tsx:277, 293`)**:
-   - `disabled={props.saving}` on both "Save & New" and "Generate Bill" buttons with `opacity-50 cursor-not-allowed` styling.
-   - `saving` prop passed from `SalesInvoiceModal.tsx:1575`.
+2. **Geofence Boundary and Nearest Office Detection (`src/utils/crmGeoUtils.ts:120-184`)**:
+   - `isWithinGeofence` validates `radiusMeters >= 0 && Number.isFinite(radiusMeters)` (lines 127–129), computes distance via `calculateHaversineDistance`, and checks `distance <= radiusMeters` (lines 131–133).
+   - `findNearestGeofence` defensively handles non-array or empty arrays (`!Array.isArray(geofences) || geofences.length === 0` -> `return null`).
+   - Active filtering (`geofences.filter((g) => g && g.is_active === true)`): returns `null` if no active geofences exist.
+   - Iterates active geofences with strict `< minDistance` comparison, stably returning `{ geofence, distance, isWithin: minDistance <= nearest.radius_meters }`.
 
-### 1.3 Independent Verification Tool Executions
-1. `cmd.exe /c npx tsc --noEmit`
-   - Result: Exit code `0`, 0 diagnostic errors.
-2. `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/challengerM1_2Stress`
-   - Result: 4 test files passed, 63 tests passed, 0 failures.
-3. `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx`
-   - Result: 1 test file passed, 10 tests passed, 0 failures.
-4. `cmd.exe /c npx vitest run src/test/billingLifecycleEngine`
-   - Result: 2 test files passed, 12 tests passed, 0 failures.
+3. **Browser Geolocation API Wrapper & Mock Utilities (`src/utils/crmGeoUtils.ts:17-33, 186-429`)**:
+   - `DEFAULT_GEOLOCATION_OPTIONS` specifies `{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }`.
+   - Promise wrapper converts W3C error codes 1, 2, and 3 into descriptive English messages and preserves `err.code`.
+   - Mock functions `mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, and `resetGeolocationMock` support isolated, deterministic offline unit testing.
+
+4. **Independent Tool Executions & Verbatim Results**:
+   - **TypeScript Compiler Check**:
+     Command: `cmd /c npx tsc --noEmit`
+     Exit Code: `0` (Zero compiler warnings or errors across the entire codebase).
+   - **GeoUtils Unit Test Suite**:
+     Command: `npm.cmd test -- src/test/crmGeoUtils.test.ts --run`
+     Exit Code: `0`
+     Result: `✓ src/test/crmGeoUtils.test.ts (33 tests) 43ms` — 33 passed (100%).
+   - **Adversarial GeoUtils Challenge Suite**:
+     Command: `npm.cmd test -- src/test/crmGeoUtilsAdversarial.test.ts --run`
+     Exit Code: `0`
+     Result: `✓ src/test/crmGeoUtilsAdversarial.test.ts (22 tests) 92ms` — 22 passed (100%).
+   - **CRM Phase 2 Attendance Migration Suite**:
+     Command: `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run`
+     Exit Code: `0`
+     Result: `✓ src/test/crmAttendanceMigrationStress.test.ts (31 tests) 65ms` — 31 passed (100%).
+   - **Full CRM Regression Suite**:
+     Command: `npm.cmd test -- crm --run`
+     Exit Code: `0`
+     Result: `Test Files 10 passed (10), Tests 238 passed (238)`.
+   - **ESLint Inspection**:
+     Command: `cmd /c npx eslint src/utils/crmGeoUtils.ts`
+     Exit Code: `1`
+     Errors:
+     - Line 236:17 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`(err as any).code = error.code;`)
+     - Line 391:24 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`delete (navigator as any).geolocation;`)
+     - Line 417:28 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`delete (navigator as any).geolocation;`)
+
+5. **Adversarial Integrity Inspection**:
+   - Source code inspection confirms NO hardcoded test results, facade logic, or shortcuts exist in `crmGeoUtils.ts`.
+   - Distance calculations strictly use spherical trigonometric formulas (`Math.sin`, `Math.cos`, `Math.atan2`, `Math.sqrt`).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Safety Against Accidental Deletion**:
-   - In `MobileInvoiceSuccessView.tsx:176`, the header `Trash2` click handler only sets `isDeleteConfirmOpen(true)`. The callback `onDelete` cannot be invoked without an explicit second confirmation tap on the red "Delete" button inside the dialog (`MobileInvoiceSuccessView.tsx:424`).
-   - If the user taps "Cancel" or taps the backdrop outside the dialog, `isDeleteConfirmOpen` returns to `false` and `onDelete` is never invoked.
+1. **Step 1 — Mathematical Rigor & Numerical Stability**:
+   - Observation 1 demonstrates full compliance with IUGG standards (`EARTH_RADIUS_METERS = 6371000`).
+   - Floating-point calculations near antipodal points ($\Delta\sigma = \pi$) frequently produce $a = 1.0000000000000002$ due to IEEE-754 representation limits; passing this to $\sqrt{1 - a}$ evaluates to `NaN`. Clamping `Math.min(1, Math.max(0, a))` eliminates this failure mode.
+   - Longitude normalization (`diffLonDeg = (lon2 - lon1) % 360`) ensures that coordinates spanning the $180^\circ$ antimeridian take the shortest great-circle arc (e.g. $179.5^\circ$ to $-179.5^\circ$ computes as a $1^\circ$ arc of $\sim 111.19\text{ km}$, not $359^\circ$).
 
-2. **Full Deletion Lifecycle & Persistence**:
-   - When confirmed, `onDelete` calls `documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id)` which removes the invoice from local cache (`localStorage`), dispatches network deletion to Supabase (`sales`), triggers stock rollback (`stockService.handleDocumentStock(targetDoc, "delete")`), and broadcasts `notifyDocumentChange`.
-   - Toast displays `"Invoice #[number] deleted"`.
-   - Clearing `activeSavedDocId` and `mobileSuccessInvoice` ensures no ghost state persists when returning to the bill list or opening a new invoice.
+2. **Step 2 — Input Sanitization & Boundary Handling**:
+   - Observation 1 and 2 show that `calculateHaversineDistance` and `isWithinGeofence` strictly validate inputs. Non-numeric or out-of-range coordinates ($|\text{lat}| > 90$ or $|\text{lon}| > 180$) and negative/non-finite radii throw explicit `RangeError` exceptions.
+   - `findNearestGeofence` gracefully returns `null` when inputs are empty or all geofences are inactive, preventing runtime crashes or dereferencing undefined objects.
 
-3. **Concurrency and State Isolation**:
-   - The addition of `if (saving) return;` in `handleSave` combined with `disabled={props.saving}` in `MobileCreateInvoice.tsx` guarantees that rapid double taps do not invoke parallel saving promises or duplicate records.
-   - Resetting `placeOfSupply` back to `"27-Maharashtra"` guarantees that intrastate CGST+SGST is computed for new walk-in bills rather than inheriting an interstate party's tax rate.
+3. **Step 3 — Determinism & Tie-Breaking**:
+   - In cases where multiple active geofences have identical distance from the user (e.g. co-located facilities or equidistant outposts), strict `< minDistance` logic guarantees deterministic selection by preserving the first encountered geofence without oscillation.
 
-4. **Integrity & Quality**:
-   - Source code contains real logic rather than hardcoded mock outputs.
-   - Test suites independently assert real DOM interactions and asynchronous state changes.
+4. **Step 4 — Verification of Compilation & Test Pass Rates**:
+   - Observation 4 confirms that the TypeScript compiler passed with zero errors (`tsc --noEmit`).
+   - Over 55 dedicated geolocation tests (`crmGeoUtils.test.ts` and `crmGeoUtilsAdversarial.test.ts`) and 238 total CRM tests passed with 100% success rate, confirming non-regression across Phase 1 and Phase 2.
 
 ---
 
 ## 3. Caveats
 
-1. **Offline Deletion Reversion**: If the network is unavailable during deletion, Supabase delete logs a warning, but local cache and UI state are cleanly updated immediately (local-first paradigm). This is consistent with CredSmart's architecture.
-2. **Scope Limitation**: Review was focused on `MobileInvoiceSuccessView.tsx`, `SalesInvoiceModal.tsx`, `MobileCreateInvoice.tsx`, and the corresponding unit and stress test suites. `PurchaseInvoiceModal.tsx` was verified to remain unaffected.
+1. **Client-Side GPS Hardware Accuracy**:
+   - `crmGeoUtils.ts` accurately surfaces the device's reported `accuracy` in meters via `CoordinatesResult`. In physical mobile devices, GPS accuracy can degrade indoors (e.g. 50–500m). Downstream Milestone 3 UI components should alert users when reported accuracy exceeds the geofence radius.
+2. **ESLint Minor Finding**:
+   - Three occurrences of `any` were flagged by `@typescript-eslint/no-explicit-any` (lines 236, 391, 417). While these do not impact runtime behavior or TypeScript compilation, they can be polished in the next milestone by typing `err as GeolocationCustomError` and using `Reflect.deleteProperty(navigator, "geolocation")`.
 
 ---
 
@@ -116,35 +137,42 @@
 
 **Verdict: APPROVE**
 
-- Requirement R3 (Safe Invoice Deletion with Confirmation) is completely implemented according to specifications:
-  - Header `Trash2` opens a confirmation dialog with text `"Delete this invoice? This action cannot be undone."`
-  - "Cancel" dismisses without deleting.
-  - "Delete" invokes `onDelete`.
-  - In `SalesInvoiceModal.tsx`, `onDelete` deletes from database, toasts deletion message, clears active state, and closes modal.
-- Challenger 2 M1 Remediation is fully satisfied:
-  - `handleSave` has `if (saving) return;`.
-  - `placeOfSupply`, `billingPlaceOfSupply`, `showDueDate`, and `manualRoundOff` are reset on `saveAndNew`.
-  - Save buttons are disabled during saving.
-- Zero TypeScript diagnostics, 100% test pass rate across all related test suites.
+Milestone 2 fully satisfies all requirements from `ORIGINAL_REQUEST.md` (R2) and dispatch specifications:
+- Exact Haversine distance engine with bounds checking, antimeridian normalization, pole convergence, and numerical clamping.
+- Comprehensive `isWithinGeofence` and `findNearestGeofence` utility functions with active filtering.
+- Production-ready Geolocation API wrapper and complete Vitest mock helpers.
+- 100% test pass rate across 238 tests and clean `tsc --noEmit` exit code 0.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify these conclusions:
+To independently reproduce this verification:
 
-1. **TypeScript Compilation**:
+1. **Verify TypeScript compilation**:
    ```cmd
-   cmd.exe /c npx tsc --noEmit
+   cmd /c npx tsc --noEmit
    ```
-   *Expected*: Exit code 0, 0 errors.
+   *Expected outcome*: Exits with code 0 (zero errors).
 
-2. **Test Suites**:
+2. **Verify GeoUtils unit test suite**:
    ```cmd
-   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView.test.tsx src/test/MobileInvoiceSuccessView.challenger.test.tsx src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx src/test/challengerM1_2Stress.test.ts
+   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
    ```
-   *Expected*: All tests PASS.
+   *Expected outcome*: 33 passed tests (100% pass rate).
 
-3. **Code Inspection**:
-   - Inspect `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` lines 174-181 and 383-434.
-   - Inspect `src/components/SalesInvoiceModal.tsx` lines 1035-1036, 1180-1200, and 1520-1533.
+3. **Verify Adversarial GeoUtils test suite**:
+   ```cmd
+   npm.cmd test -- src/test/crmGeoUtilsAdversarial.test.ts --run
+   ```
+   *Expected outcome*: 22 passed tests (100% pass rate).
+
+4. **Verify Full CRM test suite**:
+   ```cmd
+   npm.cmd test -- crm --run
+   ```
+   *Expected outcome*: 10 test files passed, 238 passed tests.
+
+5. **Files to inspect**:
+   - `src/utils/crmGeoUtils.ts`
+   - `src/test/crmGeoUtils.test.ts`

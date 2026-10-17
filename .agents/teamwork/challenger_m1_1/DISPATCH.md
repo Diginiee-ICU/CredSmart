@@ -1,26 +1,14 @@
-## 2026-10-14T10:50:07Z
-You are Challenger 1 stress-testing Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1).
+## 2026-10-17T09:15:26Z
+You are challenger_m1_1 for CRM Phase 2 Milestone 1: Database Migration & TypeScript Types.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
 
-Your designated working directory is:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
 
-MANDATORY FIRST STEP:
-Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+Challenge Tasks:
+Empirically stress-test the SQL migration supabase/migrations/20261017010000_create_crm_attendance_tables.sql:
+1. Syntax validation: parse all DDL commands, check for SQL syntax errors, missing semicolons, unbalanced parentheses, or malformed constraints.
+2. Idempotency test: check whether running the entire script twice in succession would fail (e.g., duplicated policy names without DROP POLICY IF EXISTS, unhandled triggers, or table creation failures).
+3. Confirm status constraints and defaults align with requirements ('present', 'absent', 'half_day', 'on_leave'; 'geo_verified', 'manual', 'regularized').
 
-Read Worker M1's handoff:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
-
-Tasks:
-1. Adversarially test and challenge the in-place update logic:
-   - What happens on repeated re-edits (edit → save → edit → save)? Does `activeSavedDocId` stay consistent across multiple edit cycles?
-   - What happens when an offline/local document is edited and saved? Does local storage maintain exactly 1 document without duplicates?
-   - What happens when line items are added, modified, or removed during re-edit? Are item totals and stock adjustments computed cleanly?
-2. Run tests and type checks (via `cmd.exe /c`):
-   - `cmd.exe /c npx tsc --noEmit`
-   - `cmd.exe /c npx vitest run src/test/billingLifecycleEngine src/test/MobileInvoiceSuccessView`
-3. Write adversarial tests if needed or verify existing tests.
-
-Write your findings to:
-`c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md`
-State clearly your final verdict: APPROVE or CHALLENGE_FAILED.
-Use send_message to report back to orchestrator.
+Write your stress-test report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md and report whether correctness is CONFIRMED or ISSUES_FOUND.

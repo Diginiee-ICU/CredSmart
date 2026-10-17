@@ -1,50 +1,55 @@
-# BRIEFING — 2026-10-14T11:02:00Z
+# BRIEFING — 2026-10-17T09:28:00Z
 
 ## Mission
-Adversarially challenge and stress-test Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1 & R2).
+Empirically stress-test SQL migration supabase/migrations/20261017010000_create_crm_attendance_tables.sql and TypeScript types for CRM Phase 2 Milestone 1.
 
 ## 🔒 My Identity
 - Archetype: challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 1: In-Place Update Lifecycle on Re-Edit (Requirement R1)
-- Instance: 1 of 1
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
+- Instance: 1 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Run verification code directly (cmd.exe /c npx vitest, tsc)
-- Do not trust claims or logs without empirical reproduction
-- Empirical proof required for any bug/challenge
+- Stress-test the SQL migration supabase/migrations/20261017010000_create_crm_attendance_tables.sql:
+  1. Syntax validation: parse all DDL commands, check for SQL syntax errors, missing semicolons, unbalanced parentheses, or malformed constraints.
+  2. Idempotency test: check whether running the entire script twice in succession would fail.
+  3. Confirm status constraints and defaults align with requirements ('present', 'absent', 'half_day', 'on_leave'; 'geo_verified', 'manual', 'regularized').
+- Must write and execute verification code directly.
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T11:02:00Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T09:15:26Z
 
 ## Review Scope
-- **Files to review**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`, `src/services/stockService.ts`, `src/test/billingLifecycleEngine.test.ts`, `src/test/billingLifecycleEngine.adversarial.test.ts`
-- **Interface contracts**: ORIGINAL_REQUEST.md, worker_m1/handoff.md
-- **Review criteria**: In-place update lifecycle correctness, activeSavedDocId consistency across repeated edit-save cycles, local storage duplicate prevention, line items add/modify/remove stock adjustments and item totals
+- **Files to review**: `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`, `src/types/crmAttendance.ts`, `src/integrations/supabase/types.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`), `DISPATCH.md`
+- **Review criteria**: DDL syntax validity, idempotency under repeat runs, CHECK constraints / ENUM alignment, RLS completeness, trigger validity, TypeScript type parity
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. *Hypothesis 1*: Repeated re-edits (10 consecutive cycles) could cause `activeSavedDocId` drift, ID reassignment, or cache record duplication. Result: DISPROVEN. Tested via 10 consecutive cycles; `doc.id` remained strictly invariant and cache had exactly 1 document throughout.
-  2. *Hypothesis 2*: Offline/local documents with `doc_` prefix or re-sequenced invoice numbers could produce duplicate records. Result: DISPROVEN. Tested with invoice number revisions and multi-tenant isolation; duplicate prevention logic matched cleanly by `d.id === doc.id`.
-  3. *Hypothesis 3*: Dynamic line item mutations (adding, removing, quantity changing) could fail to supply `previousDoc` to `stockService` or compute incorrect delta totals. Result: DISPROVEN. Verified `stockService.handleDocumentStock` was called with action `"update"` and full `previousDoc` snapshot containing original items.
-  4. *Hypothesis 4*: "Save & New" sequence reset could retain stale `activeSavedDocId`, corrupting subsequent documents. Result: DISPROVEN. Verified state reset clears `activeSavedDocId` to null, creating distinct records with isolated update paths.
-- **Vulnerabilities found**: None. In-place update engine is robust and strictly complies with R1 & R2.
-- **Untested angles**: Hardware-level local storage quota exhaustion (exceeding browser 5MB localStorage quota).
+  - DDL syntax: tested 27 statements, balanced quotes/parens, semicolon terminations (PASSED)
+  - Idempotency: tested `IF NOT EXISTS` on tables & indexes, `DROP ... IF EXISTS` on triggers & policies (PASSED)
+  - Status constraints & defaults: tested default values and DB-level CHECK constraints (DEFAULTS PASSED, CHECK CONSTRAINTS MISSING)
+  - Type nullability: tested synchronization between SQL schema, `src/types/crmAttendance.ts`, and `src/integrations/supabase/types.ts` (DISCREPANCY DETECTED on work_duration_minutes & overtime_minutes)
+- **Vulnerabilities found**:
+  1. Missing database-level CHECK constraints on `crm_attendance.status`, `crm_attendance.verification_method`, and `crm_attendance_requests.status`.
+  2. Minor nullability discrepancy on `work_duration_minutes` and `overtime_minutes` (non-nullable in domain types vs nullable in DB/Supabase types).
+  3. Permissive database-level RLS (`has_org_access` allows any employee to UPDATE/DELETE office geolocations at DB layer; must rely on application-tier CRMPermissionGate).
+- **Untested angles**:
+  - Actual migration execution against a live cloud Supabase instance (CLI/live connection not configured in local environment; simulated empirically via Vitest AST and DDL parsing).
 
 ## Loaded Skills
-- None specified in dispatch
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Local copy**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\crm-rbac-skill\SKILL.md
+- **Core methodology**: RBAC architecture, database schema, RLS policies, permissions model
 
 ## Key Decisions Made
-- Created empirical stress test harness `src/test/billingLifecycleEngine.adversarial.test.ts` covering 6 adversarial test cases across all attack dimensions.
-- Verified TypeScript type integrity (`tsc --noEmit` exits with 0 errors).
-- Issued final verdict: APPROVE.
+- Created comprehensive empirical test suite `src/test/crmAttendanceMigrationStress.test.ts` (30/30 tests pass).
+- Reported status: ISSUES_FOUND (with detailed severity breakdown and mitigations).
 
 ## Artifact Index
-- DISPATCH.md — Dispatch log
-- progress.md — Heartbeat and progress log
-- handoff.md — Final handoff report
-- src/test/billingLifecycleEngine.adversarial.test.ts — Adversarial stress test harness
+- `handoff.md` — Final challenge report
+- `src/test/crmAttendanceMigrationStress.test.ts` — 30-test empirical verification suite

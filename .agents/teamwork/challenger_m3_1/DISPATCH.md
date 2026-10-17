@@ -1,20 +1,16 @@
-## 2026-09-25T22:57:36Z
+## 2026-10-17T10:41:35Z
+You are challenger_m3_1 for CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1
 
-<USER_REQUEST>
-You are challenger_m3_1 (Role: Milestone 3 Challenger 1).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m3_1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m3/handoff.md
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read worker_m3's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md.
 
-Your mission is to empirically challenge and stress-test the changes made for Milestone 3:
-1. Examine code in autoSyncService.ts and TallyImport.tsx.
-   NOTE: Please perform validation using direct code inspection, AST verification, and unit logic scripts rather than interactive terminal commands that may stall.
-2. Verify:
-   - Structure of inserted rows for sales, sale_items, purchase_invoices, purchase_invoice_items.
-   - Non-null enforcement for purchase_invoice_items.product_id.
-   - Exact credit_transactions schema for receipts and payments.
-   - Expense categorization and localStorage key credsmart_expenses_${orgId}.
-3. Write your handoff report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/challenger_m3_1/handoff.md with an explicit verdict: APPROVE or FAIL.
-4. Message the orchestrator (caller id) with your verdict and report path.
-</USER_REQUEST>
+Challenge Tasks:
+Empirically stress-test Staff Clock-In / Out pod interactions in src/pages/crm/Attendance.tsx:
+1. Test clock-in flow with GPS within geofence -> sets verification_method: 'geo_verified', is_within_geofence: true.
+2. Test clock-in flow with GPS outside geofence -> sets verification_method: 'manual', is_within_geofence: false.
+3. Test clock-in flow when GPS is denied / times out -> graceful warning and fallback.
+4. Test active clock-in session stopwatch timer and clock-out duration/overtime calculations.
+5. Output verdict: CONFIRMED or ISSUES_FOUND.
+
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md and report your verdict.

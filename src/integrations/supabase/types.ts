@@ -102,6 +102,315 @@ export type Database = {
           },
         ]
       }
+      crm_attendance: {
+        Row: {
+          clock_in: string | null
+          clock_in_accuracy: number | null
+          clock_in_latitude: number | null
+          clock_in_location_id: string | null
+          clock_in_longitude: number | null
+          clock_out: string | null
+          clock_out_accuracy: number | null
+          clock_out_latitude: number | null
+          clock_out_location_id: string | null
+          clock_out_longitude: number | null
+          created_at: string
+          date: string
+          distance_from_office_meters: number | null
+          id: string
+          is_within_geofence: boolean
+          notes: string | null
+          org_id: string
+          overtime_minutes: number
+          staff_id: string
+          status: string
+          updated_at: string
+          verification_method: string
+          work_duration_minutes: number
+        }
+        Insert: {
+          clock_in?: string | null
+          clock_in_accuracy?: number | null
+          clock_in_latitude?: number | null
+          clock_in_location_id?: string | null
+          clock_in_longitude?: number | null
+          clock_out?: string | null
+          clock_out_accuracy?: number | null
+          clock_out_latitude?: number | null
+          clock_out_location_id?: string | null
+          clock_out_longitude?: number | null
+          created_at?: string
+          date?: string
+          distance_from_office_meters?: number | null
+          id?: string
+          is_within_geofence?: boolean
+          notes?: string | null
+          org_id: string
+          overtime_minutes?: number
+          staff_id: string
+          status?: string
+          updated_at?: string
+          verification_method?: string
+          work_duration_minutes?: number
+        }
+        Update: {
+          clock_in?: string | null
+          clock_in_accuracy?: number | null
+          clock_in_latitude?: number | null
+          clock_in_location_id?: string | null
+          clock_in_longitude?: number | null
+          clock_out?: string | null
+          clock_out_accuracy?: number | null
+          clock_out_latitude?: number | null
+          clock_out_location_id?: string | null
+          clock_out_longitude?: number | null
+          created_at?: string
+          date?: string
+          distance_from_office_meters?: number | null
+          id?: string
+          is_within_geofence?: boolean
+          notes?: string | null
+          org_id?: string
+          overtime_minutes?: number
+          staff_id?: string
+          status?: string
+          updated_at?: string
+          verification_method?: string
+          work_duration_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_attendance_clock_in_location_id_fkey"
+            columns: ["clock_in_location_id"]
+            isOneToOne: false
+            referencedRelation: "crm_geolocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_attendance_clock_out_location_id_fkey"
+            columns: ["clock_out_location_id"]
+            isOneToOne: false
+            referencedRelation: "crm_geolocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_attendance_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_attendance_requests: {
+        Row: {
+          attendance_id: string | null
+          created_at: string
+          date: string
+          id: string
+          org_id: string
+          reason: string
+          requested_clock_in: string | null
+          requested_clock_out: string | null
+          requested_status: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          staff_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attendance_id?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          org_id: string
+          reason: string
+          requested_clock_in?: string | null
+          requested_clock_out?: string | null
+          requested_status?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          staff_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attendance_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          org_id?: string
+          reason?: string
+          requested_clock_in?: string | null
+          requested_clock_out?: string | null
+          requested_status?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          staff_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_attendance_requests_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "crm_attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_attendance_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_geolocations: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          name: string
+          org_id: string
+          radius_meters: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          org_id: string
+          radius_meters?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          org_id?: string
+          radius_meters?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_geolocations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_permissions: {
+        Row: {
+          action: string
+          allowed: boolean
+          id: string
+          module: string
+          role_id: string
+        }
+        Insert: {
+          action: string
+          allowed?: boolean
+          id?: string
+          module: string
+          role_id: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          id?: string
+          module?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "crm_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_roles: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_super_admin: boolean
+          name: string
+          org_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_super_admin?: boolean
+          name: string
+          org_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_super_admin?: boolean
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_staff_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          role_id: string
+          staff_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id: string
+          staff_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_staff_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "crm_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null

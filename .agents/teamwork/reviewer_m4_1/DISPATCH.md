@@ -1,20 +1,18 @@
-## 2026-09-26T00:53:14Z
-You are reviewer_m4_1 (Role: Milestone 4 Reviewer 1).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m4_1
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
-Read the worker handoff report at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m4/handoff.md
+## 2026-10-17T12:02:17Z
+You are reviewer_m4_1 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1
 
-Your mission is to perform an objective, rigorous code review of the changes made for Milestone 4 (UI Controls & Auto-Sync Dashboard Updates) in:
-- src/pages/TallyImport.tsx
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Also read worker_m4's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md.
 
-Verify:
-1. Does `importedStats` state include `balances: number`?
-2. Do `handleExecuteImport` and `handleDirectSaveParties` increment `balances` in `importedStats` when opening balance transactions are inserted?
-3. Does the Migration Successfully Completed card display all 5 entity types (items, parties, balances, vouchers, and banks)?
-4. Does the Auto-Sync Host & Status Stats Grid render 7 columns (`lg:grid-cols-7`) and display stat cards for all 5 entity types (Items, Parties, Balances, Vouchers, Banks & Cash)?
-5. Are all 5 scope checkboxes (`items`, `parties`, `balances`, `vouchers`, `banks`) rendered and bound to `syncConfig.syncScope` in Entities to Synchronize?
-6. Is `onImportBankAccounts` properly wired in `<TallyImportModal>` to `handleDirectSaveBankAccounts`?
+Review Tasks:
+1. Inspect `src/utils/crmAttendancePdf.ts`:
+   - Verify pure vector `jsPDF` usage without importing `jspdf-autotable`.
+   - Verify CredSmart CRM brand tokens (Navy `#0F172A`, Orange `#FF6A00`, Emerald `#10B981`, Slate `#64748B`, Light Slate `#F1F5F9`).
+   - Verify executive header banner, KPI cards, table row heights, and multi-page pagination logic with continuation headers.
+   - Verify `calculateMonthlyAttendanceMetrics` and defensive handling.
+2. Run TypeScript strict typecheck: `cmd /c npx tsc --noEmit`.
+3. Output your verdict: APPROVE or REQUEST_CHANGES.
 
-Write your review report to c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/reviewer_m4_1/handoff.md with an explicit verdict: APPROVE or REQUEST_CHANGES.
-Send a message to the orchestrator (caller id) with your verdict and report path.
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1\handoff.md and report your verdict via send_message.

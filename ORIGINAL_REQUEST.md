@@ -203,3 +203,95 @@ Implement full deletion lifecycle in `MobileInvoiceSuccessView.tsx` and `SalesIn
 ## 2026-10-14T12:07:00Z
 
 Server restarted. Please resume execution, complete final verification (tsc --noEmit and test suite validation), and run the Victory Audit to finalize.
+
+
+## 2026-10-17T00:24:04Z
+
+Build a fully integrated CRM Tab — Phase 1: Foundation, CRM Shell & Custom Role-Based Access — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform. All UI must be polished, production-quality, matching the existing CredSmart mobile + desktop design standards, using a custom CRM design system housed in src/components/crm/. Roles are fully configurable by business owner (not fixed — no hard-coded roles).
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: benchmark (no restrictions — any approach that works)
+
+## Tech Stack Context
+
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- Backend/DB: Supabase (existing client in src/integrations/supabase/)
+- Auth: Supabase Auth (existing useAuth.tsx hook)
+- App shell: src/components/AppSidebar.tsx, src/components/AppLayout.tsx
+- Routing: React Router in src/App.tsx
+- Existing pages: Dashboard, Sales, POS, Inventory, Parties, Reports, CashBank, Staff, Settings
+- Existing Staff page: src/pages/Staff.tsx (extend/integrate where relevant, do NOT replace)
+- Brand colors: Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981
+- Custom CRM components go in: src/components/crm/
+- CRM pages go in: src/pages/crm/
+- Supabase migrations go in: supabase/migrations/
+
+## Requirements
+
+### R1. CRM Tab & Navigation Shell
+Add a "CRM" tab to AppSidebar.tsx with sub-navigation for all future CRM features (placeholder nav items for: Dashboard, Attendance, Salary, Tasks, Meet, Broadcasts, AI Assistant, Support). The CRM shell must be fully responsive (mobile + desktop). Create src/pages/crm/CRMDashboard.tsx as the CRM landing page with a summary card grid showing: staff count, today's attendance count, pending tasks, unread broadcasts, and upcoming meetings. Each card queries Supabase for live data. Add the CRM route to src/App.tsx and src/components/routes.ts.
+
+### R2. Custom Configurable Role System
+Implement a full role management system:
+- A Role Management page (src/pages/crm/RoleManagement.tsx) where the super-admin can: create custom roles with a name, color, and icon; define per-role permissions across all CRM modules (attendance view/edit, salary view/edit, tasks view/create/approve, meetings view/create, broadcasts send/view, AI assistant access, support tickets view/manage); assign roles to staff members; promote/demote users.
+- Supabase tables: crm_roles (id, org_id, name, color, icon, is_super_admin, created_at) and crm_permissions (id, role_id, module, action, allowed). Seed a super_admin role automatically via migration.
+- crm_staff_roles table (staff_id, role_id, assigned_by, assigned_at) linking existing auth users to CRM roles.
+- Role assignment UI with searchable staff list and role dropdown.
+- No hard-coded roles anywhere in the codebase — all roles are user-defined.
+
+### R3. CRM Design System Bootstrap
+Create src/components/crm/ with the following reusable, fully documented components (inline JSDoc on every component and prop):
+- CRMCard: a styled card wrapper with CredSmart brand tokens
+- CRMBadge: a status/label badge with variant support (success, warning, error, info, neutral)
+- CRMDataTable: a sortable, filterable, paginated data table with column config prop
+- CRMPageHeader: page header with title, subtitle, breadcrumb, and action slot
+- CRMStatCard: stat card with icon, value, label, trend indicator (up/down/neutral)
+- CRMPermissionGate: a React component that renders children only if the current user has the required permission; if not, renders null and fires a "Not Authorized" toast
+- CRMRolePill: a colored pill showing a role name with its configured color
+- Export all from src/components/crm/index.ts
+
+### R4. Reusable Skill File
+Create .agents/skills/crm-rbac-skill/SKILL.md with YAML frontmatter (name: crm-rbac-skill, description: ...). The SKILL.md must document:
+- The Supabase schema for crm_roles, crm_permissions, crm_staff_roles
+- How CRMPermissionGate is used in subsequent phases
+- The pattern for checking permissions in page components (usePermission hook)
+- How to add new CRM modules/permissions as new phases are built
+- Migration patterns and naming conventions
+- The CredSmart brand color tokens and CRM component usage guide
+This skill is for future sub-agents building Phases 2–6.
+
+## Acceptance Criteria
+
+### Navigation & Shell
+- [ ] A "CRM" item appears in AppSidebar.tsx on all screen sizes
+- [ ] Mobile: CRM tab collapses correctly into the mobile hamburger menu without breaking existing nav
+- [ ] CRM sub-navigation renders placeholder links for all 8 future sections
+- [ ] Navigating to /crm renders CRMDashboard.tsx with no runtime errors
+- [ ] CRM route is guarded: unauthenticated users are redirected to /auth
+
+### Role Management
+- [ ] Super-admin can create a new custom role with name, color, icon via the Role Management UI
+- [ ] Per-role permissions can be toggled for each module+action and are persisted to Supabase
+- [ ] Staff can be searched and assigned a role from the Role Management page
+- [ ] CRMPermissionGate correctly blocks rendering for users missing the required permission
+- [ ] CRMPermissionGate fires a toast notification when access is denied
+- [ ] crm_roles and crm_permissions tables are created via idempotent Supabase migration
+- [ ] super_admin role is seeded automatically with all permissions enabled
+
+### Design System
+- [ ] All 7 CRM components exist in src/components/crm/ and export from index.ts
+- [ ] CRMDataTable renders sortable columns, pagination controls, and a search filter
+- [ ] CRMStatCard shows icon, numeric value, label, and a trend arrow (up/down)
+- [ ] All components follow CredSmart brand tokens (Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981)
+- [ ] Every component has inline JSDoc
+
+### Dashboard
+- [ ] CRMDashboard shows 5 stat cards (staff count, today's attendance, pending tasks, unread broadcasts, upcoming meetings) with live Supabase queries
+- [ ] Dashboard is responsive at 375px, 768px, and 1280px
+
+### Code Quality
+- [ ] Zero TypeScript errors (strict mode, no `any` types in CRM files)
+- [ ] Zero ESLint errors in all new/modified files
+- [ ] No existing protected routes (/dashboard, /sales, /pos, /purchases, /inventory, /parties, /reports, /cash-bank, /settings) are broken
+- [ ] crm-rbac-skill SKILL.md exists at .agents/skills/crm-rbac-skill/SKILL.md with full content
+- [ ] usePermission hook is created in src/hooks/useCRMPermission.ts and exported

@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { ROUTE_PATHS } from "@/config/routes";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
@@ -987,6 +989,40 @@ export default function Staff() {
             <UserCheck className="w-3.5 h-3.5 text-emerald-600 mr-1" />
             {members.length} Active {members.length === 1 ? "Member" : "Members"}
           </Badge>
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* CRM RBAC INTEGRATION BANNER */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-[#1D4ED8] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-bold text-slate-900 font-sans">
+                Looking for CRM Module Permissions &amp; Custom Roles?
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                CRM RBAC
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-0.5 max-w-2xl leading-relaxed">
+              This page manages store-level cashier and billing staff. To create custom roles and configure granular permissions for Attendance, Salaries, Tasks, Meetings, Broadcasts, and AI Assistant, visit CRM Role Management.
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 flex items-center gap-2">
+          <Link
+            to={ROUTE_PATHS.crmRoles}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-colors"
+          >
+            <span>Open CRM Role Manager</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

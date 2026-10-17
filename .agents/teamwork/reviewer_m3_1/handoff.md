@@ -1,272 +1,154 @@
-# Handoff Report — Milestone 3 Reviewer 1 (Review & Adversarial Audit)
+# Review & Adversarial Challenge Report: CRM Phase 2 Milestone 3 (Attendance UI & Clock-In Hub)
 
-## Review Summary
-
-**Verdict**: **APPROVE**  
-**Integrity Audit**: **PASSED (NO INTEGRITY VIOLATION DETECTED)**  
-**Target Milestone**: Milestone 3 — Full Voucher & Transaction Ingestion  
-**Reviewed Work Products**:
-- `src/services/autoSyncService.ts` (lines 71–104, 724–1013, 1121–1156)
-- `src/pages/TallyImport.tsx` (lines 39–79, 913–1114, 1361–1702)
-- Worker Handoff: `.agents/teamwork/worker_m3/handoff.md`
+**Reviewer**: `reviewer_m3_1`  
+**Roles**: Reviewer, Adversarial Critic  
+**Timestamp**: 2026-10-17T10:45:00Z  
+**Target Milestone**: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub  
+**Subject Under Review**: `src/pages/crm/Attendance.tsx` authored by `worker_m3`  
+**Verdict**: **APPROVE**
 
 ---
 
 ## 1. Observation
 
-Direct code observations from inspection of the work products:
+### A. Integrity & Source Inspection (`src/pages/crm/Attendance.tsx`)
+1. **CRM Design System Components**:
+   - `CRMPageHeader` (line 64, 1455): Implements title `"Attendance & Geolocation Hub"`, subtitle, breadcrumbs (`Home` → `CRM` → `Attendance`), `<CRMBadge variant="success" size="sm" dot>Phase 2 Live</CRMBadge>`, and desktop/mobile action slots.
+   - `CRMCard` (line 65): Utilized with distinct variants:
+     - `variant="brand"` for the Staff Clock-In Pod (line 1614).
+     - `variant="elevated"` for the Distance Radar & Location Visualizer (line 1771).
+     - `variant="default"` for Team Attendance Logs (line 1896), Geofence Management (line 1946), and Regularisation Requests (line 2031).
+   - `CRMBadge` (line 66): Applied semantically across all states:
+     - `variant="success"`: Within Geofence ✓ (line 1664), Geo-Verified ✓ (line 1386), Approved ✓ (line 2070), Active Geofence (line 1975).
+     - `variant="warning"`: Acquiring GPS... (line 1659), Outside Geofence ⚠️ (line 1669), Manual ⚠️ (line 1399), Pending Review (line 2064).
+     - `variant="error"`: GPS Disabled / Unavailable (line 1674), Rejected (line 2074).
+     - `variant="orange"`: Active session indicator (line 1349).
+     - `variant="neutral"`: GPS Standby (line 1679), Inactive location (line 1980).
+     - `variant="info"`: Regularized (line 1393).
+   - `CRMDataTable` (line 67, 1924): Configured with sortable columns, client-side name/email fuzzy search filter (`searchFilter`), pagination (`pageSize={10}`), and empty state message.
+   - `CRMStatCard` (line 68, 1516-1548): 4 summary metric KPI cards:
+     - "Present Today" (`accent="emerald"`)
+     - "Geo-Verified" (`accent="blue"`, with compliance trend % up arrow)
+     - "Manual / Regularised" (`accent="gold"`)
+     - "Office Geofences" (`accent="navy"`)
+   - `CRMPermissionGate` (line 69, 1436): Wraps the entire view for `module="attendance"` and `action="view"`, providing a dedicated "Access Restricted" shield fallback. Admin geofence management and request review actions are gated by `canEdit` (`isSuperAdmin || hasPermission("attendance", "edit")`).
+   - `CRMRolePill` (line 70, 1314): Renders dynamically colored staff role pills with crown for super-admins inside table rows.
 
-### 1.1 Sales Voucher Ingestion (`autoSyncService.ts` & `TallyImport.tsx`)
-- In `src/services/autoSyncService.ts:760-792`:
-  ```ts
-  const saleId = crypto.randomUUID();
-  const saleRecord = {
-    id: saleId,
-    organization_id: orgId,
-    invoice_number: vch.voucherNumber,
-    subtotal: subtotal || Number(vch.amount) || 0,
-    total: Number(vch.amount) || 0,
-    tax: computedTax,
-    payment_method: "Credit",
-    customer_id: customerId,
-    created_by: userId || "00000000-0000-0000-0000-000000000000",
-    created_at: vch.date ? `${vch.date}T10:00:00.000Z` : new Date().toISOString(),
-  };
-  salesToInsert.push(saleRecord);
-  salesMap.set(vch.voucherNumber, saleRecord);
+2. **Color Token Fidelity**:
+   - **Navy `#0F172A`**: Used in `CRMStatCard` accent `navy`, jsPDF header fill `doc.setFillColor(15, 23, 42)` (line 1170), and deep slate headers `text-slate-900`.
+   - **Orange `#FF6A00`**: Used in Clock Out button `bg-[#FF6A00] hover:bg-orange-600` (line 1739), Active Work Session banner `text-[#FF6A00]` (line 1724), and Submit Request button `bg-[#FF6A00]` (line 2039, 2281).
+   - **Blue `#1D4ED8`**: Used in Add Office Geofence buttons `bg-[#1D4ED8]` (line 1502, 1955, 2198), `CRMStatCard` accent `blue`, and icon highlights `text-[#1D4ED8]` (line 1693).
+   - **Emerald `#10B981`**: Used in Clock In button `bg-emerald-600 hover:bg-emerald-700` (line 1714), `CRMStatCard` accent `emerald`, radar center indicator, and success badges.
+   - **Gold `#F59E0B`**: Used in `CRMStatCard` accent `gold` and super-admin fallback role colors.
 
-  if (vch.items && vch.items.length > 0) {
-    for (const item of vch.items) {
-      const prod = productMap.get((item.itemName || "").toLowerCase().trim());
-      const qty = Math.abs(Number(item.quantity) || 1);
-      const rate = Number(item.rate) || 0;
-      const lineTotal = Math.abs(Number(item.amount) || (qty * rate));
-      saleItemsToInsert.push({
-        sale_id: saleId,
-        product_id: prod?.id || null,
-        product_name: item.itemName,
-        mrp: rate,
-        quantity: qty,
-        line_total: lineTotal,
-        batch_number: item.batchNumber || null,
-      });
-    }
-  }
-  ```
-- Lines 961–968: Batched inserts into `sales` and `sale_items` (1000-row chunks).
-- In `src/pages/TallyImport.tsx:1409–1420` & `1564–1594`: Batched inserts into `sales` and `sale_items` with `quantity`, `mrp`, and `line_total`.
+3. **Staff Clock-In / Clock-Out Pod**:
+   - **Digital Time Display**: Live clock updating every 1000ms via `setInterval` (`currentTime.toLocaleTimeString(...)`, line 1634).
+   - **Shift Info**: Clear banner `"General Shift • 09:00 AM - 06:00 PM (8h)"` (line 1638).
+   - **Punch Buttons**:
+     - Pre-punch: Touch-optimized Emerald `#10B981` `"Clock In Now"` button with loading indicator.
+     - Active session: Active ticking stopwatch (`formatSecondsToHMS(elapsedSeconds)`) with Orange `#FF6A00` `"Clock Out"` button.
+     - Completed session: Shift completed card with time range, total hours, and regularisation adjustment trigger.
+   - **GPS Status Indicator**: Real-time badge with dynamic state handling ("Acquiring GPS...", "Within Geofence ✓", "Outside Geofence ⚠️", "GPS Disabled / Unavailable").
+   - **Distance Radar Visualizer**: SVG concentric circles with center office pin, pulsing user location marker, compass rotation animation, and live distance readout in meters.
+   - **Live Work Timer**: Real-time session elapsed timer counting seconds from `clock_in` timestamp (`HH:MM:SS`).
 
-### 1.2 Purchase Voucher & Missing Master Auto-Resolution
-- In `src/services/autoSyncService.ts:801–813`:
-  ```ts
-  const partyKey = (vch.partyName || "").toLowerCase().trim();
-  let supp = partyKey ? supplierMap.get(partyKey) : null;
-  if (!supp) {
-    const newSuppId = crypto.randomUUID();
-    const newSupplier = {
-      id: newSuppId,
-      organization_id: orgId,
-      name: vch.partyName || "Default Supplier",
-    };
-    await supabase.from("suppliers").insert([newSupplier]);
-    supplierMap.set(partyKey || "default supplier", newSupplier);
-    supp = newSupplier;
-  }
-  ```
-- In `src/services/autoSyncService.ts:822`: `status: "received"`.
-- In `src/services/autoSyncService.ts:832–852`:
-  ```ts
-  const itemKey = (item.itemName || "").toLowerCase().trim();
-  let prod = productMap.get(itemKey);
-  if (!prod) {
-    const newProdId = crypto.randomUUID();
-    const newProduct = {
-      id: newProdId,
-      organization_id: orgId,
-      name: item.itemName,
-      category: "General",
-      sku: getStableTallySku(item.itemName),
-      tags: {
-        selling_price: Number(item.rate) || 0,
-        purchase_price: Number(item.rate) || 0,
-        mrp: Number(item.rate) || 0,
-        unit: item.unit || "PCS",
-      },
-    };
-    await supabase.from("products").insert([newProduct]);
-    productMap.set(itemKey, newProduct);
-    prod = newProduct;
-  }
-  ```
-- In `src/services/autoSyncService.ts:855–865`: `purchaseItemsToInsert.push({ purchase_invoice_id: purchaseId, product_id: prod.id, quantity: qty, cost_price: rate, mrp: rate, batch_number: item.batchNumber || "BATCH-01", expiry_date: item.expiryDate || null, received_quantity: qty })`.
-- In `src/pages/TallyImport.tsx:1435–1446` & `1608–1637`: `handleDirectSaveVouchers` auto-creates missing suppliers and missing products with `getStableTallySku(it.itemName)` and sets `status: "received"`.
-- **Discrepancy in `TallyImport.tsx:1055` (`handleExecuteImport`)**: Line 1055 uses `product_id: productMap.get((it.itemName || "").toLowerCase().trim())?.id || null` without the auto-creation logic present in `handleDirectSaveVouchers`.
+4. **Mobile & Desktop Responsiveness**:
+   - Navigation: Scrollable segmented button switcher (`overflow-x-auto`, `w-full sm:w-auto`).
+   - Stat Cards: 2-column mobile grid (`grid-cols-2`) scaling to 4 columns on desktop (`md:grid-cols-4`).
+   - Layout Pod vs Radar: 1-column mobile stacking (`grid-cols-1`) transitioning to 3-column asymmetric layout on desktop (`lg:grid-cols-3` with `lg:col-span-1` and `lg:col-span-2`).
+   - Action buttons: Responsive text hiding (`hidden sm:inline`) preserving compact icon targets on mobile.
 
-### 1.3 Customer Receipts & Vendor Payments (`credit_transactions`)
-- In `src/services/autoSyncService.ts:884–893`:
-  ```ts
-  creditTxnsToInsert.push({
-    organization_id: orgId,
-    party_id: customerId,
-    party_type: "customer",
-    amount: Math.abs(Number(vch.amount) || 0),
-    type: "payment",
-    description: vch.narration || "Customer Receipt",
-    reference_id: vch.voucherNumber,
-    created_by: userId || "00000000-0000-0000-0000-000000000000",
-  });
-  ```
-- In `src/services/autoSyncService.ts:926–935`:
-  ```ts
-  creditTxnsToInsert.push({
-    organization_id: orgId,
-    party_id: supplierId,
-    party_type: "supplier",
-    amount: Math.abs(Number(vch.amount) || 0),
-    type: "payment",
-    description: vch.narration || "Supplier Payment",
-    reference_id: vch.voucherNumber,
-    created_by: userId || "00000000-0000-0000-0000-000000000000",
-  });
-  ```
-
-### 1.4 Operating Expenses & Journal Vouchers
-- In `src/services/autoSyncService.ts:80–104`:
-  ```ts
-  export function isExpenseVoucher(vch: TallyVoucher, supplierMap: Map<string, any>): boolean {
-    if (vch.voucherType === "Journal") return true;
-    const vchNum = (vch.voucherNumber || "").toLowerCase();
-    if (vchNum.includes("exp")) return true;
-    const normalizedParty = (vch.partyName || "").trim().toLowerCase();
-    if (!normalizedParty) return true;
-    const expenseKeywords = [
-      "expense", "rent", "electricity", "utilit", "bill", "salary", "salaries", "wage",
-      "tea", "refreshment", "petty", "office", "fuel", "travel", "maintenance", "repair",
-      "stationery", "courier", "postage", "internet", "telephone", "phone", "wifi",
-      "cleaning", "audit", "legal", "professional", "charge", "fee", "tax", "tds", "gst"
-    ];
-    const matchesExpenseKeyword = expenseKeywords.some(kw => 
-      normalizedParty.includes(kw) || (vch.narration && vch.narration.toLowerCase().includes(kw))
-    );
-    if (matchesExpenseKeyword && !supplierMap.has(normalizedParty)) return true;
-    return false;
-  }
-  ```
-- In `src/services/autoSyncService.ts:896–909` & `938–952`: Inserts expense payments and journal vouchers into `expensesToInsert`.
-- In `src/services/autoSyncService.ts:981–1012`: Inserts into Supabase `expenses` table and appends to `localStorage.getItem("credsmart_expenses_" + orgId)`.
-- In `src/pages/TallyImport.tsx:1492–1546` & `1657–1688`: Mirrors the exact same table insertion and localStorage backup logic.
-
-### 1.5 Voucher Counts & Sync Statistics
-- In `src/services/autoSyncService.ts:793, 867, 894, 937, 952, 954`: `vouchersCount++` on Sales, Purchases, Receipts, Payments, Journals, and Notes.
-- In `src/services/autoSyncService.ts:1129, 1142, 1150`: `vouchersSynced: vouchersCount` in `SyncAuditLog`, `lastSyncStats.vouchers`, and returned `result.vouchersCount`.
-- In `src/pages/TallyImport.tsx:1690`: `setImportedStats(prev => ({ ...prev, vouchers: prev.vouchers + count }))`.
+### B. Empirical Verification Tool Outputs
+1. **TypeScript Compiler Check**:
+   ```
+   Command: cmd /c npx tsc --noEmit
+   Exit Code: 0
+   Errors: 0
+   ```
+2. **Attendance UI Test Suite**:
+   ```
+   Command: npm.cmd test -- src/test/crmAttendance.test.tsx --run
+   Exit Code: 0
+   Result: 15 passed (15 total)
+   Duration: 24.28s
+   ```
+3. **Geo Location Engine Test Suite**:
+   ```
+   Command: npm.cmd test -- src/test/crmGeoUtils.test.ts --run
+   Exit Code: 0
+   Result: 33 passed (33 total)
+   Duration: 13.21s
+   ```
+4. **CRM Resilience & Permission Gate Test Suites**:
+   ```
+   Command: npm.cmd test -- src/test/crmPermissionGate.test.tsx src/test/crmDashboardResilience.test.tsx --run
+   Exit Code: 0
+   Result: 23 passed (23 total)
+   Duration: 20.24s
+   ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Sales & Line Items (Requirement 1)**: Observations in 1.1 confirm that every Sales voucher generates a parent row in `sales` and children in `sale_items` with non-null `quantity`, `mrp`, and `line_total`. Customer link (`customer_id`) is resolved via party map.
-2. **Purchase Invoices & Received Status (Requirement 2)**: Observations in 1.2 demonstrate that Purchase vouchers insert into `purchase_invoices` with `status: "received"`, and corresponding line items into `purchase_invoice_items`.
-3. **No Null `product_id` in Purchases (Requirement 3)**:
-   - In `autoSyncService.ts`, when a line item is encountered whose product is absent from `productMap`, a product stub is synchronously upserted into `products` with stable SKU (`getStableTallySku`), updated in `productMap`, and `prod.id` is assigned.
-   - In `TallyImport.tsx:handleDirectSaveVouchers`, missing products are likewise auto-created in `products`.
-   - Supplier stubs are created if absent, preventing FK violations.
-4. **Receipts & Payments in `credit_transactions` (Requirements 4 & 5)**:
-   - Customer receipts insert with `party_type: "customer"` and `type: "payment"`.
-   - Trade vendor payments insert with `party_type: "supplier"` and `type: "payment"`.
-5. **Operating Expenses & Journal Vouchers (Requirement 6)**:
-   - `isExpenseVoucher` segregates trade payments from operational expenses.
-   - Journal vouchers and expense payments insert into `expenses` and append to `credsmart_expenses_${orgId}` in `localStorage`.
-6. **Accounting Accuracy of Voucher Metrics (Requirement 7)**:
-   - Every supported voucher type increments `vouchersCount`.
-   - Deduplicated sales/purchases skip double-counting.
-   - Metrics propagate to `SyncAuditLog`, `lastSyncStats`, and UI state.
+1. **Step 1 (Integrity Check)**:
+   - Scanned `src/pages/crm/Attendance.tsx` for hardcoded test responses, fake mock facades, dummy stubs, or test-bypass logic.
+   - None detected. The component implements real Haversine formula calls, real Geolocation API calls, Supabase upserts, and dual-layer local storage persistence.
+   - All tests in `crmAttendance.test.tsx` interact with real DOM elements, fire real click/input events, and verify real state transitions.
+
+2. **Step 2 (Design System & Color Token Compliance)**:
+   - Confirmed all 7 CRM components (`CRMPageHeader`, `CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMStatCard`, `CRMPermissionGate`, `CRMRolePill`) are imported from `@/components/crm` and actively utilized.
+   - Verified exact color hex values: Navy `#0F172A`, Orange `#FF6A00`, Blue `#1D4ED8`, Emerald `#10B981`, Gold `#F59E0B`.
+
+3. **Step 3 (Adversarial Robustness & Edge Cases)**:
+   - *Adversarial Challenge 1: GPS Permission Denied or Timeout*: Handled cleanly in `refreshLocation` and `handleClockIn` via try/catch, toast notification, and error badge status. On `handleClockOut`, if GPS is unavailable, the system safely records timestamp and duration rather than trapping the employee in an uncloseable shift.
+   - *Adversarial Challenge 2: Network / Supabase Offline*: Dual-layer persistence synchronously loads from `localStorage` on initial render and mirrors all changes to `localStorage`, so users never encounter blank screens during database hiccups.
+   - *Adversarial Challenge 3: Out-of-Geofence Punch*: Correctly flags `verification_method: 'manual'`, marks `is_within_geofence: false`, records distance in meters, and notifies user.
+   - *Adversarial Challenge 4: Overtime / Duration Calculation*: Properly calculates total work minutes and overtime minutes (beyond 480 mins).
+   - *Adversarial Challenge 5: Permission Demotion*: `CRMPermissionGate` renders the styled "Access Restricted" fallback when permission is revoked.
+
+4. **Step 4 (Independent Compiler & Test Verification)**:
+   - Executed `tsc --noEmit` independently: 0 errors.
+   - Executed unit tests across Attendance, GeoUtils, PermissionGate, and Dashboard: 100% pass rate (71/71 tests passed).
 
 ---
 
-## 3. Findings
+## 3. Caveats
 
-### [Major] Finding 1: Unresolved Missing Products in `TallyImport.tsx:handleExecuteImport`
-- **What**: In `src/pages/TallyImport.tsx`, line 1055 inside `handleExecuteImport` does not auto-create missing products when inserting purchase items, assigning `product_id: productMap.get(...)?.id || null`.
-- **Where**: `src/pages/TallyImport.tsx:1055`
-- **Why**: Database table `purchase_invoice_items` enforces `product_id string NOT NULL`. If a user uploads an XML file via the 1-Click File Upload button that contains a Purchase voucher referencing an unmapped item, the batch insert into `purchase_invoice_items` will fail with a null-value constraint violation.
-- **Suggestion**: Port the auto-creation logic from `handleDirectSaveVouchers` (lines 1608–1630) to `handleExecuteImport` (line 1055), or default `product_id` to a valid stub UUID:
-  ```ts
-  const itemKey = (it.itemName || "").toLowerCase().trim();
-  let productId = productMap.get(itemKey)?.id || null;
-  if (!productId && it.itemName) {
-    const { data: newProd } = await supabase.from("products").insert({
-      organization_id: orgId,
-      name: it.itemName,
-      category: "General",
-      sku: getStableTallySku(it.itemName),
-      tags: { selling_price: Number(it.rate) || 0, mrp: Number(it.rate) || 0, unit: it.unit || "PCS" }
-    }).select("id").single();
-    if (newProd) {
-      productId = newProd.id;
-      productMap.set(itemKey, newProd);
-    }
-  }
-  ```
-
-### [Minor] Finding 2: Unhandled Error Propagation on Expense Table Insert
-- **What**: `src/services/autoSyncService.ts:984` logs error to console instead of throwing or recording a partial failure in audit log when table insert fails.
-- **Where**: `src/services/autoSyncService.ts:984`
-- **Why**: While localStorage backup succeeds, the user is unaware that Supabase persistence was rejected.
-- **Suggestion**: Record table insertion failures in `unsupportedVoucherTypes` or audit log warnings.
+- As noted by `worker_m3` and in alignment with the dispatch boundaries, wiring `ROUTE_PATHS.crmAttendance` to `<Attendance />` in `src/App.tsx` and updating `src/test/crmShellRoutes.test.ts` is explicitly reserved for Milestone 5 / worker_m5.
 
 ---
 
-## 4. Adversarial Challenge & Stress-Test Results
+## 4. Conclusion
 
-| # | Attack Scenario / Hypothesis | Expected Behavior | Actual Behavior | Result |
-|---|-----------------------------|-------------------|-----------------|--------|
-| C1 | Duplicate Sales voucher re-synced with same `voucherNumber` | Idempotent skip without double-counting | `salesMap.get(vch.voucherNumber)` detects duplicate and skips | **PASS** |
-| C2 | Vendor with name containing "bill" (e.g. "Bill & Co Suppliers") receives trade payment | Must be classified as supplier payment, NOT expense | `isExpenseVoucher` checks `!supplierMap.has(normalizedParty)`; resolves as trade payment in `credit_transactions` | **PASS** |
-| C3 | Purchase voucher referencing item absent from inventory catalog | Must not crash or violate `product_id NOT NULL` constraint | `autoSyncService.ts` auto-creates item in `products` with stable SKU; assigns non-null UUID | **PASS** |
-| C4 | Journal voucher without line items | Entire amount recorded under party/ledger as expense | Recorded in `expenses` table and localStorage buffer | **PASS** |
-| C5 | Null or undefined `userId` passed to sync daemon | Defaults safely without DB constraint failure | Falls back to `"00000000-0000-0000-0000-000000000000"` UUID | **PASS** |
-| C6 | 1-Click File Upload with unmapped purchase item (`TallyImport.tsx:1055`) | Purchase items must succeed | `product_id` set to `null`, risking DB constraint violation | **FLAGGED (Finding 1)** |
+The implementation of `src/pages/crm/Attendance.tsx` meets and exceeds all requirements set forth in `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`) and `DISPATCH.md`. Visual fidelity, CRM design system adoption, color token compliance, interactive radar telemetry, and adversarial resilience are fully validated.
+
+**Verdict: APPROVE**
 
 ---
 
-## 5. Verified Claims Matrix
+## 5. Verification Method
 
-| Requirement | Implementation Location | Verified Via | Status |
-|-------------|-------------------------|--------------|--------|
-| 1. Sales vouchers -> `sales` + `sale_items` with qty, mrp, line_total | `autoSyncService.ts:760-792`, `TallyImport.tsx:1409-1420,1571-1594` | Direct AST inspection & schema cross-check | **VERIFIED** |
-| 2. Purchase vouchers -> `purchase_invoices` (status: "received") + `purchase_invoice_items` | `autoSyncService.ts:816-865`, `TallyImport.tsx:1449-1458,1628-1647` | Direct AST inspection & schema cross-check | **VERIFIED** |
-| 3. Purchase ingestion auto-creates missing suppliers & products (non-null `product_id`) | `autoSyncService.ts:801-852`, `TallyImport.tsx:1435-1446,1608-1630` | Direct AST inspection (`getStableTallySku`, UUID generator) | **VERIFIED** (Finding 1 noted for 1-Click handler) |
-| 4. Customer Receipts -> `credit_transactions` (`customer`, `payment`) | `autoSyncService.ts:884-893`, `TallyImport.tsx:925-934,1481-1490` | Schema verification & E2E scenario 1.11 | **VERIFIED** |
-| 5. Vendor Payments -> `credit_transactions` (`supplier`, `payment`); OpEx -> `expenses` | `autoSyncService.ts:895-936`, `TallyImport.tsx:936-974,1492-1531` | `isExpenseVoucher` logic verification & E2E scenario 1.12/1.13 | **VERIFIED** |
-| 6. Journal / Expenses -> `expenses` + localStorage `credsmart_expenses_${orgId}` | `autoSyncService.ts:981-1012`, `TallyImport.tsx:1081-1112,1657-1688` | LocalStorage buffer read/write AST trace | **VERIFIED** |
-| 7. `vouchersCount` / `vouchersSynced` incremented accurately | `autoSyncService.ts:793,867,894,937,952,954,1129,1142` | Metric counter and state propagation trace | **VERIFIED** |
+To independently reproduce this verification:
 
----
+1. **Compiler Verification**:
+   ```cmd
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected*: Exit code 0, 0 errors.
 
-## 6. Caveats
+2. **Run Attendance Unit Test Suite**:
+   ```cmd
+   npm.cmd test -- src/test/crmAttendance.test.tsx --run
+   ```
+   *Expected*: 15 passed, 0 failed.
 
-- Direct live HTTP TCP sync requires a running Tally Prime / ERP 9 instance on port 9000 or the Node bridge daemon on port 9005.
-- Credit Notes and Debit Notes increment `vouchersCount` and are accepted without errors, but do not yet generate dedicated return invoices (scheduled for future expansion).
+3. **Run Geolocation Engine Test Suite**:
+   ```cmd
+   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
+   ```
+   *Expected*: 33 passed, 0 failed.
 
----
-
-## 7. Conclusion
-
-Milestone 3 (Full Voucher & Transaction Ingestion) is **APPROVED**.  
-The core ingestion engine in `src/services/autoSyncService.ts` and the modal voucher handler in `src/pages/TallyImport.tsx` strictly implement all transactional accounting entities (Sales, Purchases, Receipts, Payments, Expenses, and Journals) with genuine database persistence, schema compliance, deterministic SKU generation, and accurate audit metrics. No integrity violations or shortcuts were found.
-
-A non-blocking Major Finding (Finding 1) is documented regarding `TallyImport.tsx:1055` for resolution during Milestone 4/5 polish.
-
----
-
-## 8. Verification Method
-
-To independently verify this review:
-1. Inspect `src/services/autoSyncService.ts`:
-   - Lines 71–104: `getStableTallySku` and `isExpenseVoucher`.
-   - Lines 724–1013: Voucher ingestion loop, missing party/product stub creation, batched Supabase inserts, and localStorage expense buffering.
-2. Inspect `src/pages/TallyImport.tsx`:
-   - Lines 1361–1702: `handleDirectSaveVouchers` handling all voucher types.
-3. Inspect `src/test/tallyE2E.test.ts`:
-   - Sections 1.9 through 1.13, 3.5, and 4.1–4.2 verifying voucher transactions end-to-end against Supabase mock harness.
+4. **Inspect Files**:
+   - `src/pages/crm/Attendance.tsx`
+   - `src/test/crmAttendance.test.tsx`

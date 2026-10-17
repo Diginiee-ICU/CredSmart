@@ -1,70 +1,121 @@
-# Forensic Audit Report — Milestone 3 (Full Voucher & Transaction Ingestion)
+# Forensic Integrity Audit Report: CRM Phase 2 Milestone 3 (Attendance UI & Clock-In Hub)
 
-**Work Product**: `src/services/autoSyncService.ts` and `src/pages/TallyImport.tsx`  
-**Profile**: General Project  
-**Integrity Mode**: Development  
 **Auditor**: `auditor_m3`  
+**Timestamp**: 2026-10-17T10:47:00Z  
+**Target Milestone**: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub  
+**Working Directory**: `.agents/teamwork/auditor_m3`  
+**Recipient**: `1beca3ca-d4b2-4508-99a0-6c9d39936bfb` (orchestrator_crm_phase2)  
+**Binary Verdict**: **CLEAN**
+
+---
+
+## Forensic Audit Summary
+
+**Work Product**: `src/pages/crm/Attendance.tsx`, `src/test/crmAttendance.test.tsx`  
+**Profile**: General Project (CRM RBAC / Phase 2)  
 **Verdict**: **CLEAN**
+
+### Phase Results
+- **Phase 1: Source Code Static Analysis**: **PASS** — Zero mock bypasses, fake clock tickers, or stubbed action handlers in production code.
+- **Phase 2: Geolocation Engine Integration**: **PASS** — Proper integration with `src/utils/crmGeoUtils.ts` (`getCurrentPosition`, `findNearestGeofence`, `calculateHaversineDistance`, `isWithinGeofence`).
+- **Phase 3: Database & Resilience Verification**: **PASS** — Authentic Supabase client queries & mutations across `crm_attendance`, `crm_geolocations`, `crm_attendance_requests`, with synchronous localStorage resilience fallbacks.
+- **Phase 4: TypeScript Typecheck Verification**: **PASS** — `cmd /c npx tsc --noEmit` exited with code 0 (0 type errors).
+- **Phase 5: Unit Test Execution**: **PASS** — `npm.cmd test -- src/test/crmAttendance.test.tsx --run` exited with code 0 (15 passed out of 15).
 
 ---
 
 ## 1. Observation
 
-Direct forensic inspection of the codebase, git working tree, and database schema mappings reveals the following verifiable facts:
+1. **Static Analysis of `src/pages/crm/Attendance.tsx`**:
+   - `src/pages/crm/Attendance.tsx` is a 2,386-line production React component.
+   - Genuine CRM Design System usage:
+     - `CRMPageHeader`: Configured at line 1455 with title "Attendance & Geolocation Hub", breadcrumbs (`Home` → `CRM` → `Attendance`), live badge (`<CRMBadge variant="success" size="sm" dot>`), and actions (Sync GPS, CSV export, PDF export, Add Geofence).
+     - `CRMCard`: Rendered at lines 1614, 1770, 1895, 1945, 2030 (`variant="brand"`, `variant="elevated"`, `variant="default"`).
+     - `CRMBadge`: Semantic variants applied at lines 1349, 1386, 1393, 1399, 1464, 1659, 1664, 1669, 1674, 1679, 1975, 1980, 2064, 2069, 2074.
+     - `CRMDataTable`: Rendered at line 1924 with search filter, sortable columns, and paginated display.
+     - `CRMStatCard`: 4 KPI cards rendered at lines 1516-1548 ("Present Today", "Geo-Verified", "Manual / Regularised", "Office Geofences").
+     - `CRMPermissionGate`: Top-level gate wrapping entire component at line 1436 requiring `module="attendance"` and `action="view"`.
+     - `CRMRolePill`: Rendered at line 1314 displaying custom staff role color and super-admin badge.
 
-1. **Git Status & Working Tree Modifications**:
-   - `git status` confirms modifications strictly bounded to:
-     - `src/services/autoSyncService.ts`
-     - `src/pages/TallyImport.tsx`
-     - `scripts/credsmart-sync-agent/index.cjs` (from prior milestone M1)
-   - No unexpected files or temporary test stubs were committed or modified.
+2. **Geolocation Engine Integration (`crmGeoUtils.ts`)**:
+   - Lines 73-80 import `calculateHaversineDistance`, `isWithinGeofence`, `findNearestGeofence`, and `getCurrentPosition`.
+   - `getCurrentPosition` is invoked with high accuracy at lines 304, 559, 692, and 807.
+   - `findNearestGeofence` is invoked at lines 311, 582, and 716 to identify nearest office boundary and compute distance via Haversine great-circle formula.
+   - Lines 585-618 assign `verification_method = isInside ? "geo_verified" : "manual"` with exact distance in meters and telemetry coordinates.
 
-2. **Source Code Implementation Inspection**:
-   - **`src/services/autoSyncService.ts`**:
-     - **Lines 71–78**: `getStableTallySku(name)` produces deterministic 32-bit FNV-1a hash-based SKUs (`TALLY-XXXXXXXX`) ensuring consistent cross-referencing between sync cycles.
-     - **Lines 80–104**: `isExpenseVoucher(vch, supplierMap)` provides robust heuristic classification distinguishing trade vendor payments from operational expenses (Journal vouchers, voucher numbers containing "exp", keywords matching rent/electricity/salary/utility/fuel/tax/maintenance unless registered as an active supplier).
-     - **Lines 724–800**: Sales voucher ingestion in `executeDirectSyncIngestion`. Verifies `salesMap` deduplication by `invoice_number`, queries customer mapping, aggregates ledger tax (GST/CGST/SGST/IGST), computes subtotal, creates sales header in `sales`, iterates line items, maps `product_id` from `productMap`, and prepares `sale_items` with quantity, MRP, line total, and batch number.
-     - **Lines 794–867**: Purchase voucher ingestion. Resolves or auto-provisions supplier records in `suppliers`, inserts headers to `purchase_invoices` with status `"received"`, and iterates items. Resolves `product_id` against `productMap`. If an item is missing from `productMap`, dynamically inserts a new product with category "General", unit, rate, and stable SKU into `products`, populating `productMap` to satisfy the database's non-null `purchase_invoice_items.product_id` constraint.
-     - **Lines 868–894**: Customer Receipt vouchers. Resolves or provisions customer in `customers`, and inserts a `"payment"` record into `credit_transactions` with `party_type: "customer"`, reference ID, and narration.
-     - **Lines 895–952**: Vendor Payment & Journal vouchers. Dispatches via `isExpenseVoucher`. Expense vouchers insert into `expenses` (`category`, `amount`, `date`, `expense_number`, `description`, `payment_method: "Cash"`) and mirror to `localStorage` key `credsmart_expenses_${orgId}`. Trade payments insert into `credit_transactions` with `party_type: "supplier"`, `type: "payment"`.
-     - **Lines 953–958**: Credit Notes and Debit Notes increment `vouchersCount` and are excluded from `unsupportedVoucherTypes`.
-     - **Lines 960–1013**: Batched chunking (1,000 items per chunk) for database inserts across `sales`, `sale_items`, `purchase_invoices`, `purchase_invoice_items`, `credit_transactions`, and `expenses`.
-   - **`src/pages/TallyImport.tsx`**:
-     - **Lines 77–78**: Imports `isExpenseVoucher` and `getStableTallySku` from `@/services/autoSyncService`.
-     - **Lines 808–1114**: `handleImportAll` parses uploaded file batches for all voucher types with complete database and local storage persistence.
-     - **Lines 1361–1700**: `handleDirectSaveVouchers` provides standalone voucher ingestion with conflict resolution strategy (`skip`, `overwrite`, `merge`), automated product/supplier stub provisioning, subtotal/tax extraction, line item persistence, and window event dispatching (`credsmart_documents_updated`, `credsmart_network_update`).
-     - **Lines 3156–3170**: `<TallyImportModal>` properly wired with `onImportVouchers: async (vouchers, mode) => { await handleDirectSaveVouchers(vouchers, mode); }`.
+3. **Active Timers & Digital Clock**:
+   - Lines 266-271: `setInterval` runs every 1000ms updating `currentTime` with clean `clearInterval` unmount.
+   - Lines 281-297: `computeElapsed` calculates `diffSecs = Math.max(0, Math.floor((now - clockInTime) / 1000))` and ticks every 1000ms while active session is running.
+   - Zero hardcoded mock bypasses or static fake values.
 
-3. **Absence of Prohibited Patterns**:
-   - Zero hardcoded test names (e.g., searches for "Sharma", "Agro", "Gupta" in `autoSyncService.ts` yielded zero results).
-   - Zero dummy facades or bypassed functions (`executeDirectSyncIngestion` and `handleDirectSaveVouchers` perform full data transformations and Supabase inserts).
-   - Zero mock bypasses or fabricated return metrics.
+4. **Database & Resilience Operations**:
+   - `crm_geolocations`:
+     - Select: line 343 (`order("created_at")`)
+     - Update: line 868 (`eq("id", updated.id)`)
+     - Insert: line 898 (`insert(...)`)
+     - Delete: line 922 (`delete().eq("id", id)`)
+   - `crm_attendance`:
+     - Select: line 386 (`order("date")`)
+     - Upsert: line 623 (`upsert(..., { onConflict: "org_id, staff_id, date" })`)
+     - Update: line 734 (`update(...).eq("org_id").eq("staff_id").eq("date")`)
+   - `crm_attendance_requests`:
+     - Select: line 414 (`order("created_at")`)
+     - Insert: line 979 (`insert(...)`)
+     - Update: line 1089 (`update(...).eq("id", req.id)`)
+   - Synchronous lazy initializers at lines 167-221 read from `localStorage` (`credsmart_crm_geolocations_*`, `credsmart_crm_attendance_*`, `credsmart_crm_attendance_requests_*`) and fallback safely to default office HQ.
+
+5. **Empirical Independent Verification Outputs**:
+   - `cmd /c npx tsc --noEmit`:
+     ```
+     Exited with code 0.
+     Stdout: (empty)
+     Stderr: (empty)
+     ```
+   - `npm.cmd test -- src/test/crmAttendance.test.tsx --run`:
+     ```
+     ✓ src/test/crmAttendance.test.tsx (15 tests) 23351ms
+     Test Files  1 passed (1)
+          Tests  15 passed (15)
+     ```
+   - Dependent suites: `npm.cmd test -- src/test/crmGeoUtils.test.ts src/test/crmDashboardResilience.test.tsx src/test/crmPermissionGate.test.tsx --run`:
+     ```
+     Test Files  3 passed (3)
+          Tests  56 passed (56)
+     ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Schema Compliance**:
-   - The Supabase schema (`src/integrations/supabase/types.ts`) requires `purchase_invoice_items.product_id` to be a non-null string. The worker's implementation explicitly handles unmapped products by dynamically creating them in `products` and associating the returned UUID.
-   - For `sale_items`, nullable `product_id` is supported, and is linked when matched or set to `null` while preserving `product_name`.
-   - For `credit_transactions`, both receipts (`party_type: "customer"`) and payments (`party_type: "supplier"`) are categorized as `type: "payment"` with required foreign keys and non-null `created_by` UUIDs.
-   - For `expenses`, required fields (`category`, `amount`, `date`, `payment_method`, `created_by`, `organization_id`) are populated, with a secondary backup into `localStorage` (`credsmart_expenses_${orgId}`) to guarantee resilience during offline or client-side operations.
+1. **Premise 1 (Authentic Implementation)**:
+   - Inspection of `src/pages/crm/Attendance.tsx` confirms genuine React hooks (`useState`, `useEffect`, `useMemo`, `useCallback`), complete interactive dialogs, real CSV/PDF generation, and error handling. No dummy functions or facade returns were detected.
 
-2. **Deduplication & Conflict Handling**:
-   - Duplicate voucher imports (re-syncing or re-importing existing daybooks) are prevented by checking existing `invoice_number` entries in both `sales` and `purchase_invoices`.
-   - In manual file import (`handleDirectSaveVouchers`), strategies (`skip`, `overwrite`, `merge`) are respected, updating existing totals or inserting new records accordingly.
+2. **Premise 2 (Zero Prohibited Patterns)**:
+   - Searches for test-only mock flags (`NODE_ENV`, hardcoded pass values) yielded 0 matches in production code. The component interacts directly with the production Supabase client and browser Geolocation APIs.
 
-3. **Authenticity & Integrity**:
-   - All logic performs genuine database queries and mutations.
-   - Calculations (such as GST extraction across CGST, SGST, IGST ledgers and subtotal derivation) operate dynamically over input payload data.
-   - No test-specific shortcuts, fake counters, or dummy bypasses were identified.
+3. **Premise 3 (Specification Compliance)**:
+   - The component satisfies all specifications in `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z` R3):
+     - Staff Clock-In / Clock-Out pod with live digital clock, shift info, and touch-optimized buttons (Emerald `#10B981` Clock In, Orange `#FF6A00` Clock Out).
+     - Live GPS status indicator ("Acquiring GPS...", "Within Geofence ✓", "Outside Geofence ⚠️").
+     - Distance radar visualizer with concentric circles and distance readout.
+     - Work timer showing elapsed time for today's active session.
+     - Daily Attendance Table using `CRMDataTable` with date filter, status filter, and staff search.
+     - Geofence Management Modal with "Use My Current Location" button.
+     - Regularisation approval workflow with manager approval/rejection.
+     - Gated by `CRMPermissionGate` and `useCRMPermission("attendance", "view")`.
+
+4. **Premise 4 (Empirical Execution)**:
+   - Compilation and all 15 unit tests pass cleanly without errors or regressions.
+
+5. **Deductive Conclusion**:
+   - The work product is authentic, robust, and free of integrity violations.
 
 ---
 
 ## 3. Caveats
 
-- Operating expenses inferred from Payment vouchers rely on the heuristic defined in `isExpenseVoucher`. If an unlisted supplier shares a name with an expense keyword and is not in `supplierMap`, the transaction is recorded as an operational expense. This behavior aligns with standard small-business accounting import flows where petty cash vouchers frequently use ledger names like "Office Refreshments" or "Printing".
-- Direct sync live connections require the local Tally endpoint or desktop bridge to be active on the host machine.
+- As noted by `worker_m3`, connecting `ROUTE_PATHS.crmAttendance` to `<Attendance />` in `src/App.tsx` and updating `src/test/crmShellRoutes.test.ts` is scheduled for Milestone 5 / worker_m5 according to orchestrator dispatch boundaries. This does not impair the functionality or audit of Milestone 3.
+- No other caveats.
 
 ---
 
@@ -72,19 +123,32 @@ Direct forensic inspection of the codebase, git working tree, and database schem
 
 **Verdict: CLEAN**
 
-Milestone 3 has achieved complete, authentic implementation of the full voucher ingestion pipeline across both live sync (`executeDirectSyncIngestion`) and file import (`handleDirectSaveVouchers` / `handleImportAll`). All 7 core entity types and sub-entities (`sales`, `sale_items`, `purchase_invoices`, `purchase_invoice_items`, `receipts`, `payments`, and `expenses`) are ingested with strict schema conformance, deduplication, and zero integrity violations.
+Milestone 3 (Attendance UI & Clock-In Hub) passes all forensic checks. The implementation is authentic, adheres strictly to CredSmart design tokens, integrates seamlessly with `crmGeoUtils.ts` and Supabase schemas, and compiles and tests with 100% pass rates.
 
 ---
 
 ## 5. Verification Method
 
-1. **Static Analysis & Schema Validation**:
-   - Verify `src/services/autoSyncService.ts`: lines 71–104 (helper algorithms), lines 724–1013 (voucher ingestion pipeline).
-   - Verify `src/pages/TallyImport.tsx`: lines 77–78 (helper imports), lines 808–1114 (`handleImportAll`), lines 1361–1700 (`handleDirectSaveVouchers`).
-2. **Entity Pipeline Checks**:
-   - Sales vouchers write to `sales` and `sale_items` with line amounts, rates, quantities, and batch numbers.
-   - Purchase vouchers write to `purchase_invoices` and `purchase_invoice_items`, generating fallback product stubs to satisfy the non-null `product_id` foreign key.
-   - Customer receipts and vendor payments write to `credit_transactions` as `type: "payment"`.
-   - Expenses write to `expenses` and `localStorage.credsmart_expenses_{orgId}`.
-3. **Vitest E2E Suite**:
-   - Inspect `src/test/tallyE2E.test.ts` suites 1.9 (Sales), 1.10 (Purchases), 1.11 (Receipts), 1.12 (Payments), and 1.13 (Expenses) for full behavioral validation against the mock database harness.
+To independently reproduce this verification:
+
+1. **Verify TypeScript compilation**:
+   ```cmd
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected*: Exit code 0, 0 errors.
+
+2. **Run Attendance test suite**:
+   ```cmd
+   npm.cmd test -- src/test/crmAttendance.test.tsx --run
+   ```
+   *Expected*: 15 passed, 0 failed.
+
+3. **Run Geolocation engine tests**:
+   ```cmd
+   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
+   ```
+   *Expected*: 33 passed, 0 failed.
+
+4. **Inspect source files**:
+   - `src/pages/crm/Attendance.tsx`
+   - `src/test/crmAttendance.test.tsx`

@@ -1,63 +1,69 @@
-# BRIEFING — 2026-10-14T10:49:00Z
+# BRIEFING — 2026-10-17T09:14:00Z
 
 ## Mission
-Implement Milestone 1: Core Billing Lifecycle Engine (Requirements R1 and R2) for CredSmart billing system.
+Implement CRM Phase 2 Milestone 1: Database migration, domain TypeScript interfaces, and Supabase TypeScript types for Attendance & Geo Location Attendance tables.
 
 ## 🔒 My Identity
 - Archetype: implementer, qa, specialist
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Milestone 1: Core Billing Lifecycle Engine (R1 & R2)
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
 
 ## 🔒 Key Constraints
-- DO NOT CHEAT. All implementations must be genuine.
-- Strict ownership: `src/components/SalesInvoiceModal.tsx` and `src/services/documentsService.ts`.
-- On Windows, invoke all commands via `cmd.exe /c`.
-- Zero TypeScript compiler errors (`cmd.exe /c npx tsc --noEmit`).
-- 100% test pass rate across existing tests (`cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView`).
-- Zero regressions to desktop invoice modal flows.
+- Exclusive write ownership:
+  - supabase/migrations/20261017010000_create_crm_attendance_tables.sql
+  - src/types/crmAttendance.ts
+  - src/integrations/supabase/types.ts
+- Fully idempotent SQL migration: BEGIN ... COMMIT, CREATE TABLE IF NOT EXISTS, CREATE INDEX IF NOT EXISTS, DROP POLICY IF EXISTS, DROP TRIGGER IF EXISTS.
+- Strict RLS on crm_geolocations, crm_attendance, crm_attendance_requests with auth.role() = 'authenticated' AND has_org_access(org_id).
+- Alphabetical placement of tables in src/integrations/supabase/types.ts.
+- Verification must pass: npx tsc --noEmit and npm test -- src/test/crmPermissionRbac.test.ts with zero errors.
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
-- Updated: 2026-10-14T10:49:00Z
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Updated: 2026-10-17T09:14:00Z
 
 ## Task Summary
 - **What to build**:
-  - R1: In-Place Update Lifecycle on Re-Edit (preserve document ID, update Supabase sales/sale_items in place instead of duplicate insert, update toast).
-  - R2: Mobile "Save & New" Engine & Sequence Reset (reorder conditional check, increment invoice sequence, reset all form fields & items, keep on mobile editor, display proper toast).
+  1. `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
+  2. `src/types/crmAttendance.ts`
+  3. Update `src/integrations/supabase/types.ts`
 - **Success criteria**:
-  - Re-editing an invoice updates it in place without duplicating records in Supabase or local storage.
-  - "Save & New" immediately prepares the next invoice with incremented sequence number and clean fields.
-  - Full TypeScript validation and test passing.
-- **Interface contracts**: `src/components/SalesInvoiceModal.tsx`, `src/services/documentsService.ts`
-- **Code layout**: React component in `src/components/`, business service in `src/services/`
+  - Migration idempotency & completeness
+  - Zero TypeScript compile errors
+  - Vitest RBAC tests passing
+- **Interface contracts**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\analysis.md`
+- **Code layout**: Supabase migration in `supabase/migrations/`, types in `src/types/` and `src/integrations/supabase/types.ts`.
 
 ## Key Decisions Made
-- Reordered post-save conditional to prioritize `saveAndNew` before viewport width check `window.innerWidth < 1024`, ensuring "Save & New" works properly on mobile.
-- Maintained `activeSavedDocId` state in `SalesInvoiceModal.tsx` initialized to `editingDoc?.id` and updated with `saved.id` on save.
-- Preserved `activeSavedDocId` when returning from `MobileInvoiceSuccessView` via `onEdit`.
-- In `documentsService.saveDocument`, added in-place update branch for Supabase `sales` using `.update(...)` and replacing `sale_items`, preventing duplicate record creation.
-- Preserved existing local storage caching and stock adjustment delta updating.
+- Authored idempotent SQL migration `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` with transactional wrapper, `IF NOT EXISTS` on tables and indexes, `DROP TRIGGER IF EXISTS` and `DROP POLICY IF EXISTS`.
+- Created clean domain types in `src/types/crmAttendance.ts`.
+- Integrated `crm_attendance`, `crm_attendance_requests`, and `crm_geolocations` into `src/integrations/supabase/types.ts` in exact alphabetical order.
 
 ## Artifact Index
-- `.agents/teamwork/worker_m1/DISPATCH.md` — Dispatch requirements and instructions
-- `.agents/teamwork/worker_m1/progress.md` — Progress tracker and liveness heartbeat
-- `.agents/teamwork/worker_m1/handoff.md` — Final handoff report
-- `src/test/billingLifecycleEngine.test.ts` — Comprehensive unit test suite for R1 and R2
+- `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` — Idempotent database migration
+- `src/types/crmAttendance.ts` — TypeScript domain models & enum unions
+- `src/integrations/supabase/types.ts` — Supabase database tables mapping
+- `.agents/teamwork/worker_m1/DISPATCH.md` — Assigned instructions from orchestrator
+- `.agents/teamwork/worker_m1/BRIEFING.md` — Agent memory and tracking
+- `.agents/teamwork/worker_m1/progress.md` — Execution heartbeat and step tracker
+- `.agents/teamwork/worker_m1/handoff.md` — Final 5-component handoff report
 
 ## Change Tracker
 - **Files modified**:
-  - `src/components/SalesInvoiceModal.tsx`: Added `activeSavedDocId` state, preserved it on `onEdit`, passed `currentDocId` in `finalDoc`, updated toasts, reordered `saveAndNew` branch and added full state reset.
-  - `src/services/documentsService.ts`: Added in-place Supabase `sales` update and `sale_items` replacement for existing invoices, preserved local storage update and stock update delta.
-  - `src/test/billingLifecycleEngine.test.ts`: Added unit tests for R1 and R2 lifecycle behavior.
-- **Build status**: Pass (0 errors)
+  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` (created)
+  - `src/types/crmAttendance.ts` (created)
+  - `src/integrations/supabase/types.ts` (updated with 3 tables)
+- **Build status**: Pass (`tsc --noEmit` 0 errors, Vitest 26/26 passed)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (0 TypeScript errors, 52/52 Vitest tests passing)
+- **Build/test result**: Pass (0 errors)
 - **Lint status**: Clean
-- **Tests added/modified**: `src/test/billingLifecycleEngine.test.ts` (6 tests covering in-place updates, no duplicates, stock adjustment, sequence bumping with padding).
+- **Tests added/modified**: Existing RBAC test suite verified passing (26/26)
 
 ## Loaded Skills
-None
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Local copy**: .agents/teamwork/worker_m1/crm-rbac-skill/SKILL.md
+- **Core methodology**: Architecture, schema, permission hooks, gating components, migration conventions, and developer guidelines for CredSmart CRM RBAC.

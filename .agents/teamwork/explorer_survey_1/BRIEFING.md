@@ -1,44 +1,49 @@
-# BRIEFING — 2026-10-14T10:25:30Z
+# BRIEFING — 2026-10-17T09:05:30Z
 
 ## Mission
-Investigate SalesInvoiceModal state management, in-place edit updates, and Save & New sequence reset for mobile billing lifecycle (Requirements R1 and R2).
+Investigate existing database migrations, RLS patterns, organizations/auth references, and Supabase TypeScript types to specify Milestone 1 (CRM Attendance, Geolocation, and Attendance Requests schema & types).
 
 ## 🔒 My Identity
 - Archetype: explorer
-- Roles: read-only investigation, analyze problems, synthesize findings, produce structured reports
-- Working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
-- Original parent: c0d1864a-d589-4172-80be-9e95a059559c
-- Milestone: Mobile Billing Lifecycle R1 & R2 Investigation
+- Roles: investigator, synthesizer
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
+- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Milestone: CRM Phase 2 - Milestone 1 Investigation
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement
-- Deliver findings in handoff.md following 5-component structure
-- Report completion to parent via send_message
+- Read-only investigation — do NOT implement or modify project source/migration files directly
+- Write only to .agents/teamwork/explorer_survey_1/
+- Produce evidence-based findings with exact file paths and line numbers
+- Deliver detailed analysis.md and 5-component handoff.md
 
 ## Current Parent
-- Conversation ID: c0d1864a-d589-4172-80be-9e95a059559c
+- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Updated: not yet
 
 ## Investigation State
 - **Explored paths**:
-  - `src/components/SalesInvoiceModal.tsx`
-  - `src/services/documentsService.ts`
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+  - `supabase/migrations/20261017000000_create_crm_rbac_tables.sql`
+  - `supabase/migrations/20260211173918_6bb13237-b72e-4831-9dd1-304eca51792b.sql`
   - `src/integrations/supabase/types.ts`
-  - `src/test/MobileInvoiceSuccessView*.test.tsx`
+  - `src/pages/crm/CRMDashboard.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/components/crm/`
+  - `src/test/crmPermissionRbac.test.ts`
 - **Key findings**:
-  - Line 1163 evaluates `if (window.innerWidth < 1024)` before `else if (saveAndNew)`, starving `saveAndNew` on mobile viewports.
-  - `handleSave` creates `finalDoc: Omit<BusinessDocument, "id">` without passing document ID, even when editing.
-  - `documentsService.saveDocument` lacks an update path for Supabase `sales` table, always running `.insert(...)`.
-  - Returning via `onEdit` in `MobileInvoiceSuccessView` calls `setMobileSuccessInvoice(null)` but discards `saved.id`, causing subsequent saves to create duplicate invoices.
-  - Adding `activeSavedDocId` state in `SalesInvoiceModal` and wiring `id` to `finalDoc` and `documentsService` solves duplicate creation.
-- **Unexplored areas**: None for R1/R2.
+  - `has_org_access(org_id)` helper function is defined in migration 20260211173918 line 78 and verifies membership in `public.organization_memberships`.
+  - `public.update_updated_at()` trigger function is defined in migration 20260211173918 line 171.
+  - Supabase types structure requires `crm_attendance`, `crm_attendance_requests`, and `crm_geolocations` inserted alphabetically into `Database["public"]["Tables"]`.
+  - Foreign keys to `public` tables are included in `Relationships` array, while `auth.users(id)` is omitted from `Relationships` in `types.ts`.
+  - Repository baseline is completely clean (`tsc --noEmit` exits 0, Vitest CRM tests exit 0).
+- **Unexplored areas**: None for Milestone 1 scope.
 
 ## Key Decisions Made
-- Fully documented all 5 survey questions with code lines, call stacks, and architectural recommendations for the implementer agent.
+- Formatted full DDL specification for `20261017010000_create_crm_attendance_tables.sql` with idempotent guards (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DROP TRIGGER IF EXISTS`).
+- Outlined precise TypeScript definitions for `src/integrations/supabase/types.ts`.
 
 ## Artifact Index
-- `handoff.md` — Final structured 5-component report
-- `progress.md` — Liveness and progress tracking
-- `DISPATCH.md` — Dispatch log
+- DISPATCH.md — Incoming task dispatch record
+- BRIEFING.md — Persistent context index
+- progress.md — Liveness heartbeat
+- analysis.md — Full investigation analysis report
+- handoff.md — 5-component handoff report

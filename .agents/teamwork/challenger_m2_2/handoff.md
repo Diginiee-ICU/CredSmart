@@ -1,173 +1,92 @@
-# Handoff Report: Milestone 2 Header More Menu & WhatsApp Sharing Stress-Testing
-
-**Agent**: Challenger 2 (Empirical Challenger, Critic, Specialist)  
-**Date**: 2026-10-14T11:37:30Z  
-**Target**: Orchestrator (Parent Agent `c0d1864a-d589-4172-80be-9e95a059559c`)  
-**Working Directory**: `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2`  
-**Verdict**: **APPROVE** (All Milestone 2 requirements verified; minor edge-case recommendations documented)
-
----
+# Empirical Challenge Report: CRM Phase 2 Milestone 2 — Geolocation API Wrapper & Mock Harness
 
 ## 1. Observation
 
-### 1.1 Empirical Test Execution Results
-1. **TypeScript Compilation**:
-   ```cmd
-   cmd.exe /c npx tsc --noEmit
-   ```
-   *Result*: Exit Code `0`. Zero type diagnostics or errors.
-
-2. **Full Mobile Invoice Success & Billing Lifecycle Vitest Suites**:
-   ```cmd
-   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine
-   ```
-   *Result*:
-   - `src/test/MobileInvoiceSuccessView.m2Challenger.test.tsx` (9 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.r3Deletion.test.tsx` (10 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests) PASS
-   - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests) PASS
-   - `src/test/billingLifecycleEngine.adversarial.test.ts` (6 tests) PASS
-   - `src/test/billingLifecycleEngine.test.ts` (6 tests) PASS
-   - **Total**: 7 test files passed, 84 tests passed, 0 failures.
-
-### 1.2 WhatsApp URL Encoding & Sharing Observations
-- In `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx:123-146`:
-  ```typescript
-  const handleWhatsAppShare = () => {
-    const store = storeInfo?.name || "CredSmart Store";
-    const customer = invoice.partyName || "Valued Customer";
-    const total = `₹${invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-
-    const message = 
-      `🧾 *${store.toUpperCase()} - TAX INVOICE*\n\n` +
-      `Hello *${customer}*,\n` +
-      `Here is your invoice summary:\n` +
-      `• *Invoice No:* #${invoice.documentNumber}\n` +
-      `• *Date:* ${invoice.docDate}\n` +
-      `• *Total Amount:* ${total}\n` +
-      `• *Status:* ${invoice.status.toUpperCase()}\n\n` +
-      `Thank you for your business!`;
-
-    const rawPhone = invoice.partyPhone ? invoice.partyPhone.replace(/\D/g, "") : "";
-    const phoneParam = rawPhone.length >= 10 ? (rawPhone.length === 10 ? `91${rawPhone}` : rawPhone) : "";
-
-    const url = phoneParam
-      ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(message)}`
-      : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-    window.open(url, "_blank");
-  };
+- Assigned Challenge Tasks in `.agents/teamwork/challenger_m2_2/DISPATCH.md`:
+  1. Test error handling under simulated geolocation failures (`PERMISSION_DENIED`, `POSITION_UNAVAILABLE`, `TIMEOUT`).
+  2. Test cleanup and mock restoration (`resetGeolocationMock`) to ensure no test pollution between test cases.
+  3. Test `findNearestGeofence` with empty array, all inactive geofences, identical distance geofences, and single geofence.
+  4. Output verdict: `CONFIRMED` or `ISSUES_FOUND`.
+- Codebase inspection of `src/utils/crmGeoUtils.ts`:
+  - Lines 216-238: Error handler maps W3C error codes 1, 2, and 3 to explicit strings ("Location permission denied. Please allow location access to continue.", "Location position unavailable. Please check your GPS or network settings.", "Location request timed out. Please try again.") and attaches `(err as any).code = error.code`.
+  - Lines 404-429: `resetGeolocationMock` restores pre-mock `navigator.geolocation` or safely deletes/clears it if originally undefined, and resets `isMocked` flag.
+  - Lines 143-184: `findNearestGeofence` validates array input, filters for `g && g.is_active === true`, iterates over active geofences computing Haversine distance, and checks `minDistance <= nearest.radius_meters`.
+- Executing empirical test suite `src/test/crmGeoUtilsAdversarial.test.ts` via `cmd /c npm test -- src/test/crmGeoUtilsAdversarial.test.ts --run`:
   ```
-- **Special Characters & Emojis**: Verified with `M/S D'Souza & Sons (P) Ltd. <Special> #1 & % $ @ ! ? / \\` and `Café ☕`. `encodeURIComponent` properly escapes all characters into valid percent-encoded query params.
-- **Decimal Amounts**: Verified with `1234.5` -> `₹1,234.50` and `0` -> `₹0.00`.
-- **Phone Number Parsing**:
-  - `9876543210` -> `https://wa.me/919876543210?text=...` (correctly prepends `91`).
-  - `+91 98765 43210` and `+91-98765-43210` -> `https://wa.me/919876543210?text=...` (correctly removes non-digits).
-  - `919876543210` -> `https://wa.me/919876543210?text=...` (length 12, stays `919876543210`).
-  - `""`, `undefined`, `"0"`, `"12345"`, `"invalid_text"` -> `https://wa.me/?text=...` (valid universal URL without invalid phone parameter).
-  - All URLs parsed cleanly via `new URL(url)` without throwing.
+  RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
 
-### 1.3 Duplicate Bill Sequence & Overwrite Observations
-- In `src/components/SalesInvoiceModal.tsx:1534-1546`:
-  ```typescript
-  onDuplicate={() => {
-    if (!mobileSuccessInvoice) return;
-    setActiveSavedDocId(null);
-    const parsed = parseInt(invoiceNumberSeq, 10);
-    const nextSeq = !isNaN(parsed)
-      ? String(parsed + 1).padStart(invoiceNumberSeq.length, "0")
-      : Math.floor(100 + Math.random() * 900).toString();
-    setInvoiceNumberSeq(nextSeq);
-    setAmountReceived(0);
-    setMarkAsFullyPaid(false);
-    setMobileSuccessInvoice(null);
-    toast.success(`Bill duplicated! New bill sequence #${nextSeq}`);
-  }}
+  ✓ src/test/crmGeoUtilsAdversarial.test.ts (22 tests) 170ms
+
+  Test Files  1 passed (1)
+       Tests  22 passed (22)
+    Duration  14.42s
   ```
-- Cleanly advances numeric sequences while preserving zero-padding: `140` -> `141`, `0042` -> `0043`, `0099` -> `0100`, `999` -> `1000`.
-- Clears `amountReceived` to `0` and sets `markAsFullyPaid` to `false`.
-- For invoices created from scratch (`editingDoc = null`), `setActiveSavedDocId(null)` ensures `finalDoc.id = undefined`, creating a new record with a new ID in `documentsService` without mutating the original bill.
-
-### 1.4 Void Invoice Observations
-- In `src/components/SalesInvoiceModal.tsx:1547-1560`:
-  ```typescript
-  onVoid={async () => {
-    if (!mobileSuccessInvoice) return;
-    try {
-      const voidedDoc: BusinessDocument = {
-        ...mobileSuccessInvoice,
-        status: "cancelled",
-      };
-      await documentsService.saveDocument(voidedDoc, user?.id);
-      setMobileSuccessInvoice(voidedDoc);
-      toast.success(`Invoice #${mobileSuccessInvoice.documentNumber} marked as Cancelled`);
-    } catch (err) {
-      console.error("Void failed:", err);
-      toast.error("Failed to cancel invoice");
-    }
-  }}
+- Executing TypeScript compilation via `cmd /c npx tsc --noEmit` exited with code 0 and zero errors.
+- Executing full CRM test suite via `cmd /c npm test -- crm --run`:
   ```
-- Successfully sets `status: "cancelled"`.
-- Persists to `documentsService.saveDocument`, which updates the record in local cache and dispatches `credsmart_documents_updated`.
-- Displays the `Cancelled` badge (`text-slate-600 bg-slate-100`) on `MobileInvoiceSuccessView.tsx`.
-- Displays toast: `Invoice #[docNum] marked as Cancelled`.
-
----
+  Test Files  10 passed (10)
+       Tests  238 passed (238)
+    Duration  57.11s
+  ```
 
 ## 2. Logic Chain
 
-1. **WhatsApp URL Robustness**:
-   - Every input tested (including strings with apostrophes, ampersands, angle brackets, emojis, and undefined phones) yielded a valid URL compliant with standard URI specifications.
-   - Phone numbers under 10 digits or non-digit strings safely fall back to `https://wa.me/?text=...`, allowing WhatsApp to open and let the user select a contact directly.
-2. **Duplicate Bill State Flow**:
-   - `onDuplicate` resets `mobileSuccessInvoice` to `null` to return to `MobileCreateInvoice.tsx`.
-   - The sequence increment preserves field padding, preventing duplicate invoice number collisions.
-   - `amountReceived` and `markAsFullyPaid` are reset, ensuring the duplicated bill does not inherit the previous bill's payment settlement state.
-3. **Void Invoice Lifecycle**:
-   - `onVoid` updates the document's status property to `"cancelled"`.
-   - `documentsService.saveDocument` updates the existing cached document by ID, rather than appending a new record.
-   - The UI immediately renders the "Cancelled" status pill.
+1. **Simulated Geolocation Failure Stress-Testing**:
+   - Simulated error code 1 (`PERMISSION_DENIED`): `getCurrentPosition` rejects with `Error`, exact message `"Location permission denied. Please allow location access to continue."`, and `err.code === 1`.
+   - Simulated error code 2 (`POSITION_UNAVAILABLE`): `getCurrentPosition` rejects with `Error`, exact message `"Location position unavailable. Please check your GPS or network settings."`, and `err.code === 2`.
+   - Simulated error code 3 (`TIMEOUT`): `getCurrentPosition` rejects with `Error`, exact message `"Location request timed out. Please try again."`, and `err.code === 3`.
+   - Simulated non-standard error codes (codes 4, 99) with custom messages: properly preserves custom message and attaches code.
+   - Non-standard error code with empty message: falls back to `"Failed to retrieve location."` and retains error code.
+   - `mockGeolocationUnsupported()`: properly triggers environment unsupported rejection.
+   - Custom `PositionOptions` override (`timeout: 5000, enableHighAccuracy: false`): verified to merge with defaults and pass through to `navigator.geolocation.getCurrentPosition`.
+   - `watchPosition` error callback: verified to supply `GeolocationPositionError` constants (`PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3`).
 
----
+2. **Mock Cleanup & Test Pollution Resistance (`resetGeolocationMock`)**:
+   - When `navigator.geolocation` was initially `undefined` (jsdom environment), `resetGeolocationMock()` cleans up `navigator.geolocation` so subsequent calls to `getCurrentPosition()` reject with unsupported error rather than leaking previous coordinates.
+   - When `navigator.geolocation` is a pre-existing custom/real object, `resetGeolocationMock()` strictly restores the original reference and retains all original spy functions and custom properties.
+   - Idempotency verified: calling `resetGeolocationMock()` 3 times consecutively does not throw, leak, or corrupt state.
+   - Consecutive mocks without intermediate reset: calling `mockGeolocationPosition` then `mockGeolocationError` then `resetGeolocationMock` restores the initial pre-mock state, not an intermediate state.
+   - Inter-test sequence verified: 4 alternating simulated tests running consecutively with `resetGeolocationMock` demonstrated zero state pollution.
 
-## 3. Caveats & Recommendations for Future Iterations
+3. **`findNearestGeofence` Boundary & Edge Cases**:
+   - Empty array `[]`: safely returns `null`.
+   - Non-array inputs (`null`, `undefined`, `{}`, `"string"`): safely returns `null`.
+   - All inactive geofences: single inactive geofence, multiple inactive geofences, and arrays with mixed `null`/`undefined` entries all safely return `null`.
+   - Single active geofence:
+     - Exact center (0m): returns `{ distance: 0, isWithin: true }`.
+     - Inside radius (~30m of 100m radius): returns `{ isWithin: true }`.
+     - Outside radius (~500m of 100m radius): returns `{ isWithin: false }`.
+     - Exact perimeter boundary (100.0m): returns `{ isWithin: true }`.
+   - Identical distance geofences (Ties):
+     - Two geofences at identical coordinates: deterministically picks the first encountered active geofence in array order, preserving stable first-match semantics.
+     - Equidistant geofences in opposite directions (e.g. North and South outposts at equal distance from user): selects first encountered office deterministically with exact matching distance.
+   - Scale & Performance: tested with 1,000 active geofences worldwide; correctly locates the target office 15 meters away in under 50ms.
+   - Antimeridian proximity: geofence at +179.99° longitude evaluated against user at -179.99° longitude accurately computes distance across the 180° meridian (~2.2km) without wrapping around the back-arc.
+   - Invalid coordinates: passing out-of-bounds latitude/longitude (`95`, `200`, `NaN`) propagates `RangeError`.
 
-1. **Currency Decimal Formatting (`maximumFractionDigits`)**:
-   - `invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })` currently does not specify `maximumFractionDigits: 2`. For raw floating point numbers with more than 2 decimal digits (e.g. `1234.5678`), JavaScript formats up to 3 digits (`1,234.568`).
-   - *Recommendation*: Add `maximumFractionDigits: 2` to ensure consistent 2-decimal precision.
-2. **Leading Zero in 11-Digit Indian Phone Numbers**:
-   - For an 11-digit phone number with a leading zero (e.g. `09876543210`), `phoneParam` currently retains the leading zero (`09876543210`). WhatsApp web/app requires international country codes without leading zero.
-   - *Recommendation*: In a future maintenance pass, apply `rawPhone.replace(/^0+/, "")` before formatting.
-3. **Duplication of Existing Invoices Opened via `editingDoc` Prop**:
-   - In `SalesInvoiceModal.tsx:1053`, `const currentDocId = activeSavedDocId || editingDoc?.id || undefined;` is used. When duplicating a bill that was originally opened via `<SalesInvoiceModal editingDoc={doc} ... />`, `editingDoc?.id` remains populated.
-   - *Recommendation*: In a future pass, introduce an `isDuplicate` boolean flag or clear `activeSavedDocId` explicitly in `currentDocId` calculation so duplicated bills opened from `editingDoc` do not inadvertently fall back to `editingDoc.id`.
+## 3. Caveats
 
----
+- Real device GPS hardware inaccuracy (e.g. cellular triangulation vs GPS chip) and user permission prompts cannot be triggered in headless Node/jsdom environments and must be validated during end-to-end device testing in Milestone 3.
+- `findNearestGeofence` resolves identical distance ties by preserving the earliest array entry. In business logic where multiple branches occupy the same campus, the primary branch should be placed first in the geofence configuration array.
 
 ## 4. Conclusion
 
-**Verdict: APPROVE**
+**Verdict**: **`CONFIRMED`**
 
-Milestone 2 (Requirement R4: Header More Menu & WhatsApp Sharing) is fully implemented, verified, and passes all empirical stress tests. 
-
-- Header More Menu opens touch-friendly action sheet with 4 distinct options.
-- WhatsApp Direct Sharing generates valid URLs with encoded invoice summaries.
-- Duplicate Bill cleanly advances the sequence number and resets payment fields.
-- Void Invoice marks invoices as "cancelled" and persists into `documentsService`.
-- TypeScript compiler passes with 0 errors, and all 84 test cases in the test suite pass with 100% success rate.
-
----
+The Geolocation API wrapper, mock harness, and nearest geofence algorithm in `src/utils/crmGeoUtils.ts` meet all requirements with zero defects:
+- Error handling under simulated failures (`PERMISSION_DENIED`, `POSITION_UNAVAILABLE`, `TIMEOUT`, custom errors) is fully verified.
+- Mock cleanup (`resetGeolocationMock`) completely isolates test cases with zero state pollution.
+- `findNearestGeofence` operates flawlessly across all boundary conditions (empty array, all inactive, identical distance ties, single geofence, 1000 geofences).
+- `tsc --noEmit` passes with 0 errors, and all 238 CRM test cases pass cleanly.
 
 ## 5. Verification Method
 
-To independently verify:
-```cmd
-cmd.exe /c npx tsc --noEmit
-cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine
-```
-
-**Invalidation Conditions**:
-- TypeScript compilation returning any diagnostics.
-- Failure of any of the 84 unit and stress tests across `src/test/MobileInvoiceSuccessView*` and `src/test/billingLifecycleEngine*`.
-- WhatsApp URL generator throwing an unhandled exception on malformed phone numbers or special characters.
+To independently reproduce and verify this assessment:
+1. Run TypeScript check:
+   `cmd /c npx tsc --noEmit`
+2. Run the 22 adversarial empirical challenge tests:
+   `cmd /c npm test -- src/test/crmGeoUtilsAdversarial.test.ts --run`
+3. Run the original unit tests:
+   `cmd /c npm test -- src/test/crmGeoUtils.test.ts --run`
+4. Run the entire CRM test suite (10 test files, 238 tests):
+   `cmd /c npm test -- crm --run`

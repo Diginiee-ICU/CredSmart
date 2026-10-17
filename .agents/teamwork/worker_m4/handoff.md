@@ -1,73 +1,122 @@
-# Milestone 4 Handoff Report — UI Controls & Auto-Sync Dashboard Updates
+# Handoff Report — worker_m4: CRM Phase 2 Milestone 4 (Attendance Reports & PDF/CSV Export)
+
+**Agent:** `worker_m4`  
+**Parent Orchestrator:** `1beca3ca-d4b2-4508-99a0-6c9d39936bfb`  
+**Working Directory:** `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4`  
+**Date:** 2026-10-17  
+**Type:** Hard Handoff (Task Complete)
+
+---
 
 ## 1. Observation
-- File inspected and modified: `src/pages/TallyImport.tsx`.
-- Prior to modification:
-  - In `src/pages/TallyImport.tsx:382`:
-    ```tsx
-    const [importedStats, setImportedStats] = useState({
-      items: 0,
-      parties: 0,
-      banks: 0,
-      vouchers: 0,
-    });
-    ```
-    `balances` was absent from `importedStats`.
-  - In `handleExecuteImport` (`src/pages/TallyImport.tsx:611-615`):
-    `balancesCount` was not tracked or passed into `setImportedStats`.
-  - In `handleDirectSaveParties` (`src/pages/TallyImport.tsx:1530`):
-    `setImportedStats` only incremented `parties: prev.parties + count`, omitting `balances`.
-  - In the Migration Successfully Completed card (`src/pages/TallyImport.tsx:3484`):
-    The text read:
-    `Imported {importedStats.items} Items, {importedStats.parties} Parties, and {importedStats.vouchers} Vouchers. Your business is live and ready for billing.`
-    It omitted `balances` and `banks`.
-  - In the Host & Status Stats Grid (`src/pages/TallyImport.tsx:2406`):
-    The grid container had class `grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-border/80 text-xs` with only 6 cards (Target Endpoint, Last Sync Status, Items Synced, Parties Synced, Vouchers Synced, Banks & Cash), missing a dedicated "Balances Synced" card.
-  - In Entities to Synchronize (`src/pages/TallyImport.tsx:2737-2743`):
-    All 5 entity scopes (`items`, `parties`, `balances`, `vouchers`, `banks`) were already defined with descriptive labels and wired to `handleToggleScope(sc.key)`.
-  - In `<TallyImportModal>` (`src/pages/TallyImport.tsx:3543-3545`):
-    `onImportBankAccounts={async (banks, cashInHand) => { await handleDirectSaveBankAccounts(banks, cashInHand); }}` was correctly connected and forwarded both `banks` and `cashInHand`.
+
+1. **User Request & Dispatch Requirements**:
+   - `ORIGINAL_REQUEST.md` (lines 385–389) and `orchestrator_crm_phase2/DISPATCH.md` (lines 74–78) mandated:
+     - Monthly attendance breakdown: Present days, Absent, Half day, Overtime hours.
+     - Formatted PDF export using `jsPDF` matching CredSmart CRM design tokens (Navy `#0F172A`, Orange `#FF6A00`, Emerald `#10B981`, Slate `#64748B`, Light Slate `#F1F5F9`).
+     - `jspdf-autotable` is **NOT** installed in `package.json` line 112 (`"jspdf": "^4.2.1"`). No autotable imports allowed.
+     - Pure vector jsPDF primitives (`rect`, `text`, `setFillColor`, `setTextColor`, `addPage`, `save`) following pattern in `src/utils/whatsappPdfShare.ts`.
+     - CSV export for payroll processing with 14 columns matching RFC 4180 quotation and escaping rules.
+   - Dispatch write ownership assigned:
+     - `src/utils/crmAttendancePdf.ts` (new file)
+     - `src/pages/crm/Attendance.tsx` (wire export buttons and callbacks)
+     - `src/test/crmAttendancePdf.test.ts` (new test suite)
+     - `src/test/crmAttendance.test.tsx` (ensure seamless integration)
+
+2. **Existing Implementation State**:
+   - `src/pages/crm/Attendance.tsx` lines 1156–1290 had an inline stub that sliced only 30 records (`attendanceRecords.slice(0, 30)`), lacked multi-page pagination, had no KPI summary cards, and did not support filtered log exports from the Admin Team Attendance table.
+   - `src/test/crmAttendance.test.tsx` line 78 mocked `jspdf` default export only without chaining or named export support, which required alignment for vector drawing primitives (`setDrawColor`, `line`, `addPage`, `setPage`, `getNumberOfPages`).
+
+3. **Verification Command Results**:
+   - `cmd /c npx tsc --noEmit` exited with code 0 (0 errors).
+   - `npm.cmd test -- src/test/crmAttendancePdf.test.ts --run` passed with exit code 0 (`19 passed (19)` in 251ms).
+   - `npm.cmd test -- src/test/crmAttendance.test.tsx --run` passed with exit code 0 (`16 passed (16)`).
+   - `npm.cmd test -- crm --run` passed with exit code 0 (`327 passed (327)` across 17 test suites).
+
+---
 
 ## 2. Logic Chain
-1. By adding `balances: 0` to `importedStats` state (`src/pages/TallyImport.tsx:385`), the component maintains explicit, reactive counts of imported ledger opening balances alongside items, parties, banks, and vouchers.
-2. In `handleExecuteImport`, declaring `let balancesCount = 0;` and updating it when opening balance records are inserted into `credit_transactions` (`balancesCount = txToInsert.length;`), then supplying `balances: balancesCount` to `setImportedStats`, ensures 1-click universal imports record and report opening balances.
-3. In `handleDirectSaveParties`, updating `setImportedStats` with `balances: prev.balances + txToInsert.length` ensures that standalone/modal party imports record opening balance inserts accurately.
-4. Updating the Migration Successfully Completed card copy to:
-   `Imported {importedStats.items} Items, {importedStats.parties} Parties, {importedStats.balances} Balances, {importedStats.vouchers} Vouchers, and {importedStats.banks} Bank Accounts. Your business is live and ready for billing.`
-   directly reflects the full multi-entity migration state to the user.
-5. In the Auto-Sync dashboard Host & Status Stats Grid, changing the column span to `lg:grid-cols-7` and adding the "Balances Synced" card:
-   ```tsx
-   <div className="p-3 rounded-xl bg-background/60 border border-border">
-     <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Balances Synced</span>
-     <p className="font-mono font-black text-foreground mt-1 text-sm">
-       {syncConfig.lastSyncStats?.balances ?? 0} Ledgers
-     </p>
-   </div>
-   ```
-   completes the 7-card layout and gives direct visibility into synchronized khata balance counts (`syncConfig.lastSyncStats?.balances`).
-6. All 5 entity toggle checkboxes in Entities to Synchronize and `<TallyImportModal>` callback wiring for `onImportBankAccounts` were inspected and confirmed to conform strictly to `PROJECT.md` and `ORIGINAL_REQUEST.md`.
+
+1. **Pure Vector jsPDF Engine Design (`src/utils/crmAttendancePdf.ts`)**:
+   - Referencing observation 1: because `jspdf-autotable` is absent in `package.json`, `generateAttendanceReportPDF` was built using native vector drawing primitives on `jsPDF` directly.
+   - Page 1 renders the CredSmart Navy header banner (`[15, 23, 42]`), Orange accent dividing rule (`[255, 106, 0]`), organization name, employee title, period label, and generated timestamp.
+   - 5 KPI summary tiles are rendered using `doc.roundedRect()` / `doc.rect()` and color-coded typography: Present (Emerald), Absent (Orange), Half/Leave (Gold), Work Hours (Navy), and Overtime Hours (Blue).
+   - Columns adapt intelligently: when displaying "All Staff" or multiple employees, an 8-column layout with employee name column is rendered; for individual employee reports, a 7-column layout with expanded date and verification detail is rendered.
+   - Multi-page pagination tracking evaluates `curY + rowHeight > 275mm`. Upon page boundary overflow, it calls `doc.addPage()`, draws a compact Navy/Orange continuation header (`CredSmart CRM — Attendance Report (Page N)`), re-renders the column headers, and continues row placement.
+   - At the completion of table drawing, a loop iterates through `doc.getNumberOfPages()` to stamp thin Slate dividers, confidentiality notices, and dynamic `"Page X of Y"` footers on every page.
+   - Returns the `jsPDF` instance and calls `doc.save(filename)` when running in browser context.
+
+2. **Monthly Attendance Aggregation Math (`calculateMonthlyAttendanceMetrics`)**:
+   - Referencing observation 1: `calculateMonthlyAttendanceMetrics(records: CRMAttendanceRecord[])` evaluates statuses (`present`, `absent`, `half_day`, `on_leave`), sums `work_duration_minutes` and `overtime_minutes`, calculates decimal hours rounded to 1 decimal place (`Math.round((mins / 60) * 10) / 10`), and aggregates verification methods (`geo_verified`, `manual`, `regularized`).
+   - Defensive checks coerce non-numeric or null fields to 0 and handle non-array inputs gracefully.
+
+3. **RFC 4180 CSV Engine (`exportAttendanceCSV`)**:
+   - Generates the standard 14-column format: `Staff ID`, `Staff Name`, `Date`, `Clock In`, `Clock Out`, `Work Duration (Minutes)`, `Work Duration (Formatted)`, `Overtime (Minutes)`, `Status`, `Verification Method`, `Within Geofence`, `Distance (m)`, `Geofence Location`, `Notes`.
+   - Incorporates `staffProfiles` dictionary lookup when `record.staff_name` is missing, and resolves geofence names via `geofenceMap`.
+   - Properly escapes quotation marks by replacing `"` with `""` and wrapping fields containing commas, quotes, or newlines in quotes per RFC 4180 standards.
+   - Automatically invokes browser download via `exportToCSV` or Blob URL, and returns `{ csvContent, rows }` for deterministic testing in headless/JSDOM environments.
+
+4. **Attendance UI Wiring (`src/pages/crm/Attendance.tsx`)**:
+   - Replaced inline stub handlers with delegates to `generateAttendanceReportPDF` and `exportAttendanceCSV`.
+   - Handlers safely inspect `Array.isArray(recordsToExport)` so that when triggered as direct React `onClick` event handlers without arguments, they gracefully fall back to `activeTab === "logs" ? filteredLogs : attendanceRecords`.
+   - In TAB 2 (Team Daily Attendance Logs), added dedicated "Export CSV" and "Export PDF" buttons to the card `headerAction` alongside the date, status, and role filters. Clicking them exports the current filtered view (`filteredLogs`).
+
+5. **Test Harness & Integration (`src/test/crmAttendancePdf.test.ts` & `src/test/crmAttendance.test.tsx`)**:
+   - Updated `src/test/crmAttendance.test.tsx` `jspdf` mock to support chained vector primitives (`setDrawColor`, `line`, `addPage`, `setPage`, `getNumberOfPages`) and both named and default exports.
+   - Created `src/test/crmAttendancePdf.test.ts` containing 19 unit and integration tests covering:
+     - Formatter helpers (`formatMinutesToHM`, `formatTimeDisplay`, `BRAND_COLORS`).
+     - Calculation edge cases (empty arrays, malformed inputs, single/multi-day work and overtime accumulations).
+     - Vector PDF generation with real `jsPDF` instances, validating 1-page reports for small datasets (20 records), multi-page pagination for >30 records (45 records -> 2 pages), and large datasets (80 records -> 3 pages).
+     - RFC 4180 escaping and quotation compliance in CSV outputs.
+
+---
 
 ## 3. Caveats
-- No caveats. All tasks assigned to Milestone 4 have been executed directly in `src/pages/TallyImport.tsx` with zero extraneous modifications.
+
+- In headless JSDOM environments, clicking an HTML anchor tag created during download triggers a benign JSDOM warning `Error: Not implemented: navigation (except hash changes)`. This does not affect browser runtime execution and all tests pass with exit code 0.
+- No other caveats.
+
+---
 
 ## 4. Conclusion
-Milestone 4 (UI Controls & Auto-Sync Dashboard Updates) is fully implemented:
-- `importedStats` accurately captures items, parties, balances, banks, and vouchers.
-- Both `handleExecuteImport` and `handleDirectSaveParties` update opening balance import stats upon inserting into `credit_transactions`.
-- Migration completion card displays all 5 entity counts.
-- Auto-sync stats grid renders in 7 columns with dedicated cards for Items, Parties, Balances, Vouchers, and Banks & Cash.
-- Entities to Synchronize toggles and `<TallyImportModal>` bank account handler are fully operational.
+
+CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export is complete, genuinely implemented, and fully verified.
+- `src/utils/crmAttendancePdf.ts` provides complete monthly metric calculation, pure vector jsPDF generation with CredSmart branding and multi-page pagination, and RFC 4180 CSV export.
+- `src/pages/crm/Attendance.tsx` wires both page-level and table-level export controls to the new export engine with live toasts.
+- 100% of TypeScript type checks and all 327 CRM tests pass with 0 errors.
+
+---
 
 ## 5. Verification Method
-1. Inspect `src/pages/TallyImport.tsx`:
-   - Line 382: verify `importedStats` state has `balances: 0`.
-   - Line 614 & 844 & 1315: verify `balancesCount` tracks `txToInsert.length` and is passed to `setImportedStats`.
-   - Line 1533: verify `handleDirectSaveParties` updates `balances: prev.balances + txToInsert.length`.
-   - Line 2406: verify `lg:grid-cols-7` on the stats grid container.
-   - Line 2456-2462: verify "Balances Synced" card with `{syncConfig.lastSyncStats?.balances ?? 0} Ledgers`.
-   - Line 2737-2743: verify all 5 checkboxes in Entities to Synchronize.
-   - Line 3484: verify complete summary string in Migration Successfully Completed card.
-   - Line 3543-3545: verify `onImportBankAccounts` forwards `(banks, cashInHand)`.
-2. Invalidation conditions:
-   - Any absence of `balances` in `importedStats` or `lastSyncStats`.
-   - Any missing entity card in the Auto-Sync stats grid.
+
+To independently verify this milestone:
+
+1. **Verify TypeScript compilation**:
+   ```cmd
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected result*: Exits with code 0 and 0 errors.
+
+2. **Verify Milestone 4 unit & integration test suite**:
+   ```powershell
+   npm.cmd test -- src/test/crmAttendancePdf.test.ts --run
+   ```
+   *Expected result*: 19 tests pass in `crmAttendancePdf.test.ts`.
+
+3. **Verify Attendance UI integration tests**:
+   ```powershell
+   npm.cmd test -- src/test/crmAttendance.test.tsx --run
+   ```
+   *Expected result*: 16 tests pass in `crmAttendance.test.tsx`.
+
+4. **Verify all CRM test suites**:
+   ```powershell
+   npm.cmd test -- crm --run
+   ```
+   *Expected result*: 327 tests pass across 17 test suites with 0 failures.
+
+5. **Inspect generated files**:
+   - `src/utils/crmAttendancePdf.ts`
+   - `src/pages/crm/Attendance.tsx` (lines 1150–1210 and 1925–1960)
+   - `src/test/crmAttendancePdf.test.ts`
+   - `src/test/crmAttendance.test.tsx` (lines 75–100)

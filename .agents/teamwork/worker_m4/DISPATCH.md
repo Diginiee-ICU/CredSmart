@@ -1,42 +1,57 @@
-## 2026-09-26T00:45:04Z
-You are worker_m4 (Role: Milestone 4 Worker).
-Your working directory is: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m4
-Read the authoritative user request at: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/ORIGINAL_REQUEST.md
-Read the project specifications at: c:/Users/Rudra/Desktop/Git/CredSmart/PROJECT.md
+## 2026-10-17T11:37:11Z
+You are worker_m4 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-File write ownership:
-- src/pages/TallyImport.tsx (UI Controls & Auto-Sync Dashboard Updates)
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z) before doing any work.
+Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Also read spec miner survey findings at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\spec_miner_survey_3\handoff.md.
 
-Your tasks for Milestone 4 (UI Controls & Auto-Sync Dashboard Updates):
-1. In `src/pages/TallyImport.tsx`:
-   - In `importedStats` state (around line 382):
-     Add `balances: number` to `importedStats`:
-     `const [importedStats, setImportedStats] = useState({ items: 0, parties: 0, balances: 0, banks: 0, vouchers: 0 });`
-   - In `handleDirectSaveParties` (and `handleExecuteImport` when inserting opening balances):
-     Update `setImportedStats` to track the count of opening balances inserted (`balances: prev.balances + count`).
-   - In the Migration Successfully Completed card (around line 3469):
-     Update the summary string to include balances and banks:
-     `Imported {importedStats.items} Items, {importedStats.parties} Parties, {importedStats.balances} Balances, {importedStats.vouchers} Vouchers, and {importedStats.banks} Bank Accounts. Your business is live and ready for billing.`
-2. In `src/pages/TallyImport.tsx` around lines 2398–2462 (Host & Status Stats Grid in `activeMode === "auto_sync"`):
-   - Update the grid columns from `lg:grid-cols-6` to `lg:grid-cols-7` to fit all 5 entity types:
-     `className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mt-6 pt-6 border-t border-border/80 text-xs"`
-   - Add the missing "Balances Synced" card between "Parties Synced" and "Vouchers Synced":
-     ```tsx
-     <div className="p-3 rounded-xl bg-background/60 border border-border">
-       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Balances Synced</span>
-       <p className="font-mono font-black text-foreground mt-1 text-sm">
-         {syncConfig.lastSyncStats?.balances ?? 0} Ledgers
-       </p>
-     </div>
-     ```
-   - Ensure all 5 entity stat cards are present: Items, Parties, Balances, Vouchers, Banks & Cash.
-3. In `src/pages/TallyImport.tsx` around lines 2722–2738 (Entities to Synchronize checkboxes):
-   - Verify that all 5 checkboxes (`items`, `parties`, `balances`, `vouchers`, `banks`) are correctly rendered with descriptive labels and wired to `handleToggleScope(sc.key)`.
-4. In `src/pages/TallyImport.tsx` around lines 3514–3532 (`<TallyImportModal>`):
-   - Ensure `onImportBankAccounts={async (banks, cashInHand) => { await handleDirectSaveBankAccounts(banks, cashInHand); }}` is wired and properly passes `banks` and `cashInHand`.
-5. Check TypeScript types and syntax to ensure 0 errors.
-6. Write your handoff report to `c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/worker_m4/handoff.md`.
-7. Send a message to the orchestrator (caller id) with your summary and report path.
+Your write ownership:
+- src/utils/crmAttendancePdf.ts (new file)
+- src/pages/crm/Attendance.tsx (wire export buttons and callbacks)
+- src/test/crmAttendancePdf.test.ts (new test suite)
+- src/test/crmAttendance.test.tsx (ensure existing export tests integrate seamlessly)
+
+Requirements to implement:
+1. Create `src/utils/crmAttendancePdf.ts`:
+   - `calculateMonthlyAttendanceMetrics(records: CRMAttendanceRecord[])`:
+     - Returns: totalDays, presentDays, absentDays, halfDays, onLeaveDays, totalWorkMinutes, totalWorkHours (rounded to 1 decimal), totalOvertimeMinutes, totalOvertimeHours (rounded to 1 decimal), geoVerifiedCount, manualCount, regularizedCount.
+   - `generateAttendanceReportPDF(options: AttendanceReportPdfOptions)`:
+     - Pure vector jsPDF (`import { jsPDF } from "jspdf"`).
+     - **CRITICAL**: `jspdf-autotable` is NOT installed in package.json. DO NOT IMPORT `jspdf-autotable`.
+     - Use programmatic vector primitives (`doc.rect()`, `doc.text()`, `doc.setFillColor()`, `doc.setTextColor()`, `doc.addPage()`, `doc.save()`) following the clean pattern in `src/utils/whatsappPdfShare.ts`.
+     - Design with CredSmart CRM brand tokens: Navy (`[15, 23, 42]`), Orange (`[255, 106, 0]`), Emerald (`[16, 185, 129]`), Slate (`[100, 116, 139]`), Light Slate (`[241, 245, 249]`).
+     - Header: CredSmart by CredAlert Attendance & Shift Summary Report, Organization Name, Staff Member (or "All Staff"), Month & Year, Generated timestamp.
+     - Metric Summary KPI Cards: Present, Absent, Half Day, Work Hours, Overtime Hours.
+     - Table of attendance records: Date, Clock In, Clock Out, Duration, Status, Verification Method (Geo-Verified, Manual, Regularized), Overtime.
+     - Pagination: calculate row height and call `doc.addPage()` with clean header continuation if records span multiple pages.
+     - Footer: Page X of Y, Confidential CredSmart CRM Report.
+     - Returns the `jsPDF` instance or Blob, and calls `doc.save(filename)` if running in browser context.
+   - `exportAttendanceCSV(records: CRMAttendanceRecord[], options?: { filename?: string; staffProfiles?: Record<string, { full_name?: string; email?: string }>; geofenceMap?: Record<string, string> })`:
+     - Formats rows with columns: Staff ID, Staff Name, Date, Clock In, Clock Out, Work Duration (Minutes), Work Duration (Formatted), Overtime (Minutes), Status, Verification Method, Within Geofence, Distance (m), Geofence Location, Notes.
+     - Uses `exportToCSV(filename, rows)` from `src/lib/utils.ts` or creates Blob download.
+2. In `src/pages/crm/Attendance.tsx`:
+   - In the Admin Team Attendance table toolbar (or table header actions alongside date/status/role filters), ensure "Export PDF" and "Export CSV" buttons are present and wired to call `generateAttendanceReportPDF` and `exportAttendanceCSV` using the current `filteredLogs`, organization name, staff profiles, and geofences.
+3. Create comprehensive test suite `src/test/crmAttendancePdf.test.ts`:
+   - Unit tests for `calculateMonthlyAttendanceMetrics`:
+     - Empty array returns zeroes.
+     - Present, absent, half_day, on_leave counts.
+     - Work duration & overtime accumulation.
+     - Verification method breakdown (geo_verified, manual, regularized).
+   - Tests for `generateAttendanceReportPDF`:
+     - Generates valid PDF doc with jsPDF.
+     - Supports multi-page pagination for >30 records without crashing.
+     - Handles empty records gracefully.
+   - Tests for `exportAttendanceCSV`:
+     - Produces RFC 4180 compliant CSV rows with escaped fields.
+4. Run verification:
+   - cmd /c npx tsc --noEmit
+   - npm.cmd test -- src/test/crmAttendancePdf.test.ts --run
+   - npm.cmd test -- src/test/crmAttendance.test.tsx --run
+   - npm.cmd test -- crm --run
+   Ensure 100% pass with 0 errors.
+
+Write your handoff report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md and notify orchestrator.

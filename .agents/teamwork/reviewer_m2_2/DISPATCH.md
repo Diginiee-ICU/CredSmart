@@ -1,25 +1,17 @@
-## 2026-10-14T11:23:34Z
-You are Reviewer 2 reviewing Milestone 2: Header More Menu & Direct WhatsApp Share (Requirement R4).
+## 2026-10-17T10:18:31Z
+You are reviewer_m2_2 for CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities.
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
 
-Your designated working directory is:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
+MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
+Also read worker_m2's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md.
 
-MANDATORY FIRST STEP:
-Read c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md.
+Review Tasks:
+1. Inspect Geolocation API wrapper and test helpers in src/utils/crmGeoUtils.ts:
+   - getCurrentPosition options (enableHighAccuracy: true, timeout: 10000, maximumAge: 0).
+   - Error code mapping (1: PERMISSION_DENIED, 2: POSITION_UNAVAILABLE, 3: TIMEOUT).
+   - Mock helpers: mockGeolocationPosition, mockGeolocationError, mockGeolocationUnsupported, resetGeolocationMock.
+2. Inspect src/test/crmGeoUtils.test.ts: verify all 33 tests pass.
+3. Run: npm.cmd test -- src/test/crmGeoUtils.test.ts --run.
+4. Output verdict: APPROVE or REQUEST_CHANGES.
 
-Read Worker M2's handoff:
-c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
-
-Tasks:
-1. Review changes in `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` and `src/components/SalesInvoiceModal.tsx`.
-2. Verify Requirement R4:
-   - Does tapping `MoreVertical` (3-dots) open the mobile action sheet?
-   - Does the action sheet render all 4 touch-friendly options: Duplicate / Copy Bill, Share via WhatsApp, Download Thermal Receipt / PDF, Cancel / Void Invoice, plus Cancel button?
-   - Does WhatsApp share construct a valid universal URL (`https://wa.me/...`) with formatted invoice text summary and trigger `window.open`?
-   - Does Duplicate Bill advance sequence number, reset payment amount, clear active doc ID, return to editor, and show toast?
-   - Does Cancel / Void Invoice update doc status to `cancelled`, persist in database, update view, and show toast?
-3. Run verification commands (via `cmd.exe /c`):
-   - `cmd.exe /c npx tsc --noEmit`
-   - `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView src/test/billingLifecycleEngine`
-4. Report verdict: APPROVE or REQUEST_CHANGES in `handoff.md`.
-Use send_message to report back to orchestrator.
+Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\handoff.md and send a completion message with your verdict.

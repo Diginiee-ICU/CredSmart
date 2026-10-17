@@ -1,15 +1,14 @@
-# Progress — Explorer 1
+# Progress — survey_explorer_1
 
-Last visited: 2026-10-14T10:27:00Z
+Last visited: 2026-10-17T09:05:00Z
+Status: In Progress
 
-## Status: COMPLETE
-- [x] Read DISPATCH.md and ORIGINAL_REQUEST.md
-- [x] Initialized BRIEFING.md and progress.md
-- [x] Investigate Question 1: Line 1163 and surrounding code in `SalesInvoiceModal.tsx`, saveAndNew branch vs mobile branch
-- [x] Investigate Question 2: `handleSave` in `SalesInvoiceModal.tsx` & `documentsService.saveDocument` create vs update
-- [x] Investigate Question 3: Preserving `editingDoc` / `activeSavedDocId` when returning from `MobileInvoiceSuccessView` via `onEdit`
-- [x] Investigate Question 4: Sequence number reset / incrementation, form reset, toast feedback
-- [x] Investigate Question 5: Props passed to `MobileCreateInvoice.tsx` and `MobileInvoiceSuccessView.tsx`
-- [x] Ran and verified existing Vitest suites (46/46 passing)
-- [x] Wrote comprehensive 5-component `handoff.md`
-- [x] Sent completion message to orchestrator
+## Current Activity
+Completed codebase and database investigation for CRM Phase 2 Milestone 1:
+- Analyzed 20261017000000_create_crm_rbac_tables.sql
+- Analyzed has_org_access(org_id) and is_org_owner_or_manager(org_id) from 20260211173918_6bb13237-b72e-4831-9dd1-304eca51792b.sql
+- Verified public.update_updated_at() trigger function existence
+- Verified auth.users vs public.organizations foreign key conventions and types.ts relationship rules
+- Confirmed baseline TypeScript build passes (cmd /c npx tsc --noEmit)
+- Confirmed CRM Vitest test suite passes (cmd /c npx vitest run src/test/crmPermissionRbac.test.ts)
+- Preparing comprehensive analysis.md and handoff.md
