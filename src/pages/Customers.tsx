@@ -32,7 +32,7 @@ import {
   Copy,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
-import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
@@ -112,12 +112,12 @@ export default function Customers() {
     if (!orgId || !customerId) return;
     setLoadingTx(true);
     try {
-      const { data: txData } = await supabase
-        .from("credit_transactions")
-        .select("*")
-        .eq("party_id", customerId)
-        .order("created_at", { ascending: false })
-        .limit(15);
+      const { data: txData } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyId: customerId,
+        order: "desc",
+        limit: 15,
+      });
       setSelectedTransactions(txData || []);
     } catch (e) {
       console.error("Failed to load customer transactions:", e);
@@ -219,11 +219,10 @@ export default function Customers() {
     }
     setLoading(true);
     try {
-      const { data: custs, error } = await supabase
-        .from("customers")
-        .select("id, name, phone, email, address, created_at, custom_fields")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: custs, error } = await partiesApi.getCustomers(orgId, {
+        sort: "name",
+        order: "asc",
+      });
 
       if (error) {
         console.error("fetchCustomers error:", error);
@@ -232,11 +231,10 @@ export default function Customers() {
         return;
       }
 
-      const { data: credits, error: creditsError } = await supabase
-        .from("credit_transactions")
-        .select("party_id, amount, type")
-        .eq("organization_id", orgId)
-        .eq("party_type", "customer");
+      const { data: credits, error: creditsError } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyType: "customer",
+      });
 
       if (creditsError) {
         console.error("fetchCustomers credits error:", creditsError);
@@ -353,15 +351,12 @@ export default function Customers() {
     setSaving(true);
     try {
       if (editingId) {
-        const { error } = await supabase
-          .from("customers")
-          .update({
-            name: form.name.trim(),
-            phone: form.phone,
-            email: form.email,
-            address: form.address,
-          })
-          .eq("id", editingId);
+        const { error } = await partiesApi.updateCustomer(editingId, {
+          name: form.name.trim(),
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+        }, orgId);
         if (error) throw error;
         toast.success("Customer updated successfully");
       } else {
@@ -373,15 +368,13 @@ export default function Customers() {
           return;
         }
 
-        const { error } = await supabase
-          .from("customers")
-          .insert({
-            organization_id: orgId,
-            name: form.name.trim(),
-            phone: form.phone,
-            email: form.email,
-            address: form.address,
-          });
+        const { error } = await partiesApi.createCustomer({
+          organization_id: orgId,
+          name: form.name.trim(),
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+        }, orgId);
         if (error) throw error;
         toast.success("Customer created successfully");
       }
@@ -396,7 +389,7 @@ export default function Customers() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("customers").delete().eq("id", id);
+      const { error } = await partiesApi.deleteCustomer(id, orgId);
       if (error) toast.error(error.message);
       else {
         toast.success("Customer deleted");
@@ -415,13 +408,13 @@ export default function Customers() {
     setCreditDesc("");
     setCreditType("credit");
     try {
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select("id, amount, type, description, created_at")
-        .eq("party_id", c.id)
-        .eq("party_type", "customer")
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const { data, error } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyId: c.id,
+        partyType: "customer",
+        order: "desc",
+        limit: 20,
+      });
       if (error) {
         console.error("openCreditModal error:", error);
         setCreditHistory([]);
@@ -442,7 +435,7 @@ export default function Customers() {
     }
     if (!orgId || !user || !creditModal) return;
     try {
-      const { error } = await supabase.from("credit_transactions").insert({
+      const { error } = await partiesApi.recordCreditTransaction({
         organization_id: orgId,
         party_type: "customer",
         party_id: creditModal.customerId,
@@ -450,7 +443,7 @@ export default function Customers() {
         type: creditType,
         description: creditDesc,
         created_by: user.id,
-      });
+      }, orgId);
       if (error) {
         toast.error(error.message);
         return;

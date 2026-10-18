@@ -1,56 +1,46 @@
-## 2026-10-17T10:08:42Z
-You are worker_m2 for CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
+## 2026-10-18T18:31:54Z
+You are worker_m2. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
+
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+
+Reference Specifications & Survey Reports:
+- Project specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Products & Inventory Survey Audit: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md (and analysis.md)
+- Centralized API Client: src/lib/apiClient.ts
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z) before doing any work.
-Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
-Also read the detailed spec miner analysis at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\spec_miner_survey_3\analysis.md (which provides the exact mathematical formulas, numerical clamping constants, Geolocation API wrapper requirements, and mock test helpers).
+Mission:
+Implement Milestone 2 (M2) — Products & Inventory Domain Query Migration:
+1. Create `src/services/productsApi.ts`:
+   - Use `apiClient`, `apiGet`, `apiPost`, `apiPut`, `apiDelete` from `src/lib/apiClient.ts`.
+   - Implement typed functions for all product and batch operations:
+     * `getProducts(orgId)` -> `GET /products?organization_id=...`
+     * `getProductById(id)` -> `GET /products/:id`
+     * `createProduct(payload)` -> `POST /products`
+     * `updateProduct(id, payload)` -> `PUT /products/:id`
+     * `deleteProduct(id, orgId)` -> `DELETE /products/:id`
+     * `bulkImport(items, strategy, orgId)` -> `POST /products/bulk`
+     * `bulkDelete(ids, orgId)` -> `POST /products/bulk-delete`
+     * `bulkUpdate(ids, update, orgId)` -> `POST /products/bulk-update`
+     * `adjustStock(params)` -> `POST /inventory/adjust-stock`
+     * `getBatches(productIds)` -> `GET /product-batches?product_ids=...`
+     * `updateBatch(batchId, payload)` -> `PUT /product-batches/:batchId`
+   - Maintain full TypeScript typing (`ProductCatalogOption`, `ProductBatch`, `SaveProductPayload`).
+2. Migrate frontend query call sites in the Products & Inventory domain:
+   - `src/context/ProductsContext.tsx`: Replace direct `supabase.from("products").select(...)` with `productsApi.getProducts(...)`. Retain `localStorage` caching (`credsmart_cached_products_${orgId}`) for offline responsiveness.
+   - `src/pages/Items.tsx` & `src/pages/ItemMaster.tsx`: Replace all direct queries with `productsApi` methods for single/bulk create, update, delete, batch lookup, and stock adjustments.
+   - `src/pages/Inventory.tsx`: Replace direct batch and product queries with `productsApi.getProducts`, `productsApi.adjustStock`, and `productsApi.updateBatch`.
+   - `src/services/stockService.ts`: Replace direct `supabase.from("product_batches")` mutations with `productsApi` batch adjustments.
+   - In `POSBilling.tsx`, `BarcodeGenerator.tsx`, `PurchaseReturns.tsx`, `storefrontService.ts`, `StorefrontCatalogTab.tsx`, `TallyImport.tsx`, `autoSyncService.ts`, `offlineQueue.ts`: Migrate product/batch table queries to `productsApi`.
+3. Verification:
+   - Run `cmd /c npx tsc --noEmit` to ensure 0 TypeScript compilation errors.
+   - Run `cmd /c npx vitest run src/test/e2eApiMigration.test.ts` to verify product domain migration tests pass.
 
-Your write ownership:
-- src/utils/crmGeoUtils.ts
-- src/test/crmGeoUtils.test.ts
-
-Tasks to execute:
-1. Create src/utils/crmGeoUtils.ts:
-   - Export EARTH_RADIUS_METERS = 6371000.
-   - calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number
-     - Check for coordinate bounding (lat: [-90, 90], lon: [-180, 180]).
-     - Fast return 0 if lat1 === lat2 && lon1 === lon2.
-     - Convert degrees to radians.
-     - Normalize longitude difference to [-180, 180].
-     - Calculate a = sin^2(dLat/2) + cos(lat1)*cos(lat2)*sin^2(dLon/2).
-     - Numerically clamp a: Math.min(1, Math.max(0, a)) to avoid NaN.
-     - Calculate c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)).
-     - Return distance in meters (rounded or float as appropriate).
-   - isWithinGeofence(userLat: number, userLon: number, officeLat: number, officeLon: number, radiusMeters: number): boolean
-     - Return distance <= radiusMeters.
-   - findNearestGeofence(userLat: number, userLon: number, geofences: CRMGeolocation[]): { geofence: CRMGeolocation; distance: number; isWithin: boolean } | null
-     - Handle empty geofences array returning null.
-     - Calculate distance to each active geofence and return the nearest one.
-   - getCurrentPosition(options?: PositionOptions): Promise<{ latitude: number; longitude: number; accuracy: number }>
-     - Default options: enableHighAccuracy: true, timeout: 10000, maximumAge: 0.
-     - Check if navigator.geolocation is supported.
-     - Wrap navigator.geolocation.getCurrentPosition in a clean Promise with descriptive error messages for PERMISSION_DENIED (1), POSITION_UNAVAILABLE (2), and TIMEOUT (3).
-   - Mock helpers for testing:
-     - mockGeolocationPosition(coords: { latitude: number; longitude: number; accuracy?: number }): void
-     - mockGeolocationError(error: { code: number; message: string }): void
-     - resetGeolocationMock(): void
-2. Create src/test/crmGeoUtils.test.ts:
-   - Comprehensive unit tests:
-     - Distance between identical points is 0m.
-     - Distance between known coordinates (e.g., benchmark coordinates).
-     - Distance across antimeridian / near poles.
-     - Numerical clamping tests (antipodal points).
-     - Invalid coordinates handling / errors.
-     - isWithinGeofence tests (inside, on boundary, outside).
-     - findNearestGeofence tests (closest selection, multiple active/inactive geofences, empty array).
-     - getCurrentPosition tests using mock helpers (success, permission denied, timeout).
-3. Run verification:
-   - cmd /c npx tsc --noEmit
-   - npm.cmd test -- src/test/crmGeoUtils.test.ts --run
-   - npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run
-
-Write your handoff report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md and notify orchestrator.
+Write your complete handoff report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

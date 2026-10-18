@@ -1,67 +1,71 @@
-# BRIEFING — 2026-10-18T10:58:00Z
+# BRIEFING — 2026-10-18T19:12:00Z
 
 ## Mission
-Review and adversarially challenge Milestone M2 (Payroll Calculation Engine & Utilities): verify `src/utils/crmPayrollUtils.ts` pure function logic, snapshot fidelity, attendance/adjustments integration, multi-salary type arithmetic ('monthly', 'daily', 'hourly'), division-by-zero protection, and regression suites across Phase 1 & 2.
+Adversarial quality review of Milestone 2 (Products & Inventory Migration to Backend REST API) implemented by worker_m2.
 
 ## 🔒 My Identity
-- Archetype: reviewer / critic
+- Archetype: reviewer_and_adversarial_critic
 - Roles: reviewer, critic
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
-- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Milestone: CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
-- Instance: reviewer_m2_2
-- Phase 3 Assignment: Reviewer M2-2 (Payslip Aggregation & Regression Verification)
-- Current Caller Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Milestone: Milestone 2 (Products & Inventory)
+- Instance: 2 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoding, facades, shortcuts, fake verification)
-- Follow Handoff Protocol and communication rules
-- Report findings without fixing external files directly
+- Check integrity violations (hardcoded test outputs, dummy implementations, bypassed tasks, fabricated logs)
+- Check batch-level calculations, pricing overrides, barcode duplication lookups
+- Verify stock adjustments in stockService.ts and Inventory.tsx (negative adjustments, zero stock)
+- Verify bulk import and bulk delete error handling
+- Render explicit gate verdict: APPROVE or REQUEST_CHANGES
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T10:53:37Z
+- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Updated: 2026-10-18T19:12:00Z
 
 ## Review Scope
-- **Files to review**: `src/utils/crmPayrollUtils.ts`, `src/types/crmPayroll.ts`, `.agents/teamwork/worker_m2_1/handoff.md`
-- **Interface contracts**: `.agents/teamwork/ORIGINAL_REQUEST.md` (Milestone M2), `src/types/crmPayroll.ts`
-- **Review criteria**: Mathematical accuracy, 2-decimal rounding, div-by-zero safeguards, snapshot fidelity, attendance aggregation, adjustment status filtering, zero regressions on Phase 1 & 2 tests
-
-## Key Decisions Made
-- Verified complete compliance of `src/utils/crmPayrollUtils.ts` with Phase 3 Milestone M2 requirements:
-  - All 8 required functions plus `round2` and `createSalaryProfileSnapshot` implemented cleanly.
-  - Zero hardcoding or facades; genuine trigonometric and arithmetic algorithms with Monte Carlo integer oracle validation.
-  - Static type check (`cmd /c npx tsc --noEmit`) passes with 0 errors.
-  - 64 tests pass across M2 suites (`src/test/crmPayrollUtils.test.ts`: 48 tests, `src/test/crmPayrollUtils.stress.test.ts`: 16 tests).
-  - Regression suites pass with 0 regressions: `crmSalary` (98 tests passed), `crmAttendanceMigrationStress` & `crmPermissionRbac` (57 tests passed).
-  - Noted discovery of a pre-existing date-hardcoding issue in Phase 2 challenger test `crmAttendanceRoleFilterStress.challenger.test.tsx` (uses hardcoded "2026-10-17"), which does not affect Milestone M2 or production code.
-- Verdict: APPROVE.
-
-## Artifact Index
-- `handoff.md` — Final review and adversarial challenge report
-- `DISPATCH.md` — Incoming dispatch instructions
-- `progress.md` — Liveness heartbeat and progress log
+- **Files reviewed**:
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md`
+  - `src/services/productsApi.ts`
+  - `src/services/stockService.ts`
+  - `src/pages/Inventory.tsx`
+  - `src/pages/Items.tsx`
+  - `src/pages/ItemMaster.tsx`
+  - `src/pages/POSBilling.tsx`
+  - `src/pages/BarcodeGenerator.tsx`
+  - `src/pages/PurchaseReturns.tsx`
+  - `src/context/ProductsContext.tsx`
+  - `src/services/autoSyncService.ts`
+  - `src/pages/TallyImport.tsx`
+  - `src/test/e2eApiMigration.test.ts`
+  - `src/test/productsApiStress.test.ts`
+  - `src/test/productsApi.m2ReviewerChallenge.test.ts`
+- **Interface contracts**: PROJECT.md, backend API contracts
+- **Review criteria**: Correctness, integrity, adversarial resilience, regression testing, type checking, test passes
 
 ## Review Checklist
-- **Items reviewed**:
-  - `src/utils/crmPayrollUtils.ts` (pure functions, calendar date math, daily rate, LOP, OT, PF, ESI, net salary, snapshot, aggregation)
-  - `src/types/crmPayroll.ts` (domain interfaces, snapshot type, computed data contract)
-  - `src/test/crmPayrollUtils.test.ts` (48 unit tests)
-  - `src/test/crmPayrollUtils.stress.test.ts` (16 stress tests)
-  - `worker_m2_1/handoff.md` (upstream claims)
+- **Items reviewed**: productsApi client, 21 migrated domain callers, batch calculations, pricing overrides, barcode deduplication, negative/zero stock adjustments, bulk import/delete error handling, static query compliance.
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified via test runs, compiler runs, and source inspection.
+- **Unverified claims**: None. All claims independently verified with AST scan, compiler check, and test suites.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Zero working days in month returns zeroed payslip without NaN/Infinity: Verified pass.
-  - 1,000 Monte Carlo randomized parameters against independent Cent Oracle: Maximum drift <= ₹0.01: Verified pass.
-  - Full-month absent staff yields 0 net salary: Verified pass.
-  - Advances exceeding gross pay clamp net salary to 0: Verified pass.
-  - Half-day attendance records correctly yield 0.5 LOP days: Verified pass.
-  - Only approved adjustments applied; pending/rejected strictly ignored: Verified pass.
-  - Astronomical century leap years (1900 vs 2000 vs 2024 vs 2100): Deterministic UTC days: Verified pass.
-  - Snapshot immutability: Captures all 7 profile parameters with non-null safeguards: Verified pass.
-- **Vulnerabilities found**: Minor finding on Phase 2 test fixture `crmAttendanceRoleFilterStress.challenger.test.tsx` hardcoding yesterday's date. M2 implementation code itself is robust and defect-free.
-- **Untested angles**: Large-scale distributed parallel lock transactions (belongs to M3/database phase).
+  - Direct database queries to products or product_batches remaining in frontend codebase: Passed (0 violations found).
+  - Negative stock adjustments from UI or stock service: Passed (handled with validation, toasts, and Math.max(0, ...)).
+  - Zero stock adjustments on reduction: Passed (prevented with warning toasts).
+  - Barcode duplication check collision detection: Passed (excludeProductId prevents self-collision on edit, flags collisions with other products).
+  - Bulk import and delete error handling: Passed (all call sites inspect error envelope and display toast notifications / throw to abort).
+  - High concurrency race conditions: Passed (tested with 50 concurrent adjustments and 1000 bulk imports).
+- **Vulnerabilities found**: No blocker or critical vulnerabilities. Minor observation noted regarding AST scan regex in test file using weak boolean type check rather than strict assertion `expect(report.compliant).toBe(true)`.
+- **Untested angles**: Cross-domain queries in Milestones 3-5 (scheduled for subsequent milestones).
+
+## Key Decisions Made
+- Confirmed zero integrity violations in worker_m2's implementation.
+- Verified TypeScript compiler (`tsc --noEmit`) passes with 0 errors.
+- Verified test suite passes: 43/43 in `e2eApiMigration.test.ts`, 29/29 in `productsApiStress.test.ts`, 13/13 in `productsApi.m2ReviewerChallenge.test.ts`.
+- Issued verdict: APPROVE.
+
+## Artifact Index
+- `.agents/teamwork/reviewer_m2_2/handoff.md` — Final review and adversarial challenge report

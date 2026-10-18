@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, X, Save, PackageCheck, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,13 +110,12 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
   }, [showProductDropdown]);
 
   const fetchSuppliers = async () => {
-    const { data } = await supabase
-      .from("suppliers")
-      .select("id, name, phone, gstin")
-      .eq("organization_id", organizationId)
-      .order("name");
+    const { data } = await partiesApi.getSuppliers(organizationId, {
+      sort: "name",
+      order: "asc",
+    });
     if (data) {
-      setSuppliers(data);
+      setSuppliers(data as any);
       if (initialSupplierId && data.some((s) => s.id === initialSupplierId)) {
         setSelectedSupplierId(initialSupplierId);
       } else if (initialSupplier?.name) {
@@ -121,22 +123,15 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
           (s) => s.name.toLowerCase() === initialSupplier.name.toLowerCase()
         );
         if (match) {
-          setSelectedSupplierId(match.id);
+          setSelectedSupplierId(match.id!);
         }
       }
     }
   };
 
   const fetchProducts = async () => {
-    const { data } = await supabase
-      .from("products")
-      .select(`
-        id, name, barcode, brand,
-        product_batches ( id, batch_number, cost_price, mrp, expiry_date, stock )
-      `)
-      .eq("organization_id", organizationId)
-      .order("name");
-    if (data) setProducts(data as ProductOption[]);
+    const { data } = await productsApi.getProducts(organizationId);
+    if (data) setProducts(data as unknown as ProductOption[]);
   };
 
   const handleAddSupplier = async () => {
@@ -144,22 +139,21 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
       toast.error("Please enter supplier name");
       return;
     }
-    const { data, error } = await supabase
-      .from("suppliers")
-      .insert({
+    const { data, error } = await partiesApi.createSupplier(
+      {
         organization_id: organizationId,
         name: newSupplierName.trim(),
         phone: newSupplierPhone.trim(),
         gstin: newSupplierGstin.trim().toUpperCase(),
-      })
-      .select("id, name, phone, gstin")
-      .single();
-    if (error) {
-      toast.error(error.message || "Failed to add supplier");
+      },
+      organizationId
+    );
+    if (error || !data) {
+      toast.error(error?.message || "Failed to add supplier");
       return;
     }
-    setSuppliers((prev) => [...prev, data]);
-    setSelectedSupplierId(data.id);
+    setSuppliers((prev) => [...prev, data as any]);
+    setSelectedSupplierId(data.id!);
     setShowNewSupplier(false);
     setNewSupplierName("");
     setNewSupplierPhone("");
@@ -219,21 +213,17 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
     setSaving(true);
     try {
       // Always insert as draft first so the UPDATE trigger can fire for stock
-      const { data: invoice, error: invError } = await supabase
-        .from("purchase_invoices")
-        .insert({
-          organization_id: organizationId,
-          supplier_id: selectedSupplierId,
-          invoice_number: invoiceNumber.trim(),
-          status: "draft",
-          notes: notes ? `${notes} (GST: ${taxRate}%)` : (taxRate > 0 ? `GST: ${taxRate}%` : ""),
-          total_amount: totalAmount,
-          created_by: user.id,
-        })
-        .select("id")
-        .single();
+      const { data: invoice, error: invError } = await invoicesApi.createPurchaseInvoice({
+        organization_id: organizationId,
+        supplier_id: selectedSupplierId,
+        invoice_number: invoiceNumber.trim(),
+        status: "draft",
+        notes: notes ? `${notes} (GST: ${taxRate}%)` : (taxRate > 0 ? `GST: ${taxRate}%` : ""),
+        total_amount: totalAmount,
+        created_by: user.id,
+      }, organizationId);
 
-      if (invError) throw invError;
+      if (invError || !invoice) throw invError || new Error("Failed to create purchase invoice");
 
       const items = lineItems.map((li) => ({
         purchase_invoice_id: invoice.id,
@@ -246,15 +236,16 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
         received_quantity: markReceived ? (Number(li.quantity) || 1) : 0,
       }));
 
-      const { error: itemsError } = await supabase.from("purchase_invoice_items").insert(items);
+      const { error: itemsError } = await invoicesApi.createPurchaseInvoiceItems(items, organizationId);
       if (itemsError) throw itemsError;
 
       // Update to 'received' triggers handle_purchase_receive() which auto-updates stock
       if (markReceived) {
-        const { error: recvError } = await supabase
-          .from("purchase_invoices")
-          .update({ status: "received" })
-          .eq("id", invoice.id);
+        const { error: recvError } = await invoicesApi.updatePurchaseInvoice(
+          invoice.id,
+          { status: "received" },
+          organizationId
+        );
         if (recvError) throw recvError;
       }
 

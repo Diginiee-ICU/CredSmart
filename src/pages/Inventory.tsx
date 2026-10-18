@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { toast } from "@/hooks/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { Progress } from "@/components/ui/progress";
@@ -97,11 +97,7 @@ export default function Inventory() {
     if (!orgId) return;
     setLoading(true);
     try {
-      const { data: prods, error: prodsErr } = await supabase
-        .from("products")
-        .select("id, name, brand, category, barcode, tags")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: prods, error: prodsErr } = await productsApi.getProducts(orgId);
 
       if (prodsErr) {
         toast({ title: "Error loading inventory", description: prodsErr.message, variant: "destructive" });
@@ -115,10 +111,7 @@ export default function Inventory() {
       }
 
       const prodIds = prods.map((p) => p.id);
-      const { data: batches, error: batchesErr } = await supabase
-        .from("product_batches")
-        .select("id, product_id, batch_number, cost_price, mrp, stock, expiry_date")
-        .in("product_id", prodIds.length > 0 ? prodIds : ["__none__"]);
+      const { data: batches, error: batchesErr } = await productsApi.getBatches(prodIds, orgId);
 
       if (batchesErr) {
         console.warn("Failed to load batches:", batchesErr.message);
@@ -193,19 +186,18 @@ export default function Inventory() {
           return;
         }
 
-        const { data: newBatch, error: insErr } = await supabase
-          .from("product_batches")
-          .insert({
+        const { data: newBatch, error: insErr } = await productsApi.createBatch(
+          {
             product_id: adjustProduct.id,
             batch_number: "BATCH-01",
             cost_price: 0,
             mrp: 0,
             stock: qty,
-          })
-          .select("id")
-          .single();
+          },
+          orgId
+        );
 
-        if (insErr) throw insErr;
+        if (insErr) throw new Error(insErr.message);
 
         toast({
           title: "Stock Initialized",
@@ -252,12 +244,13 @@ export default function Inventory() {
 
       const newStock = adjustType === "add" ? currentStock + qty : Math.max(0, currentStock - qty);
 
-      const { error } = await supabase
-        .from("product_batches")
-        .update({ stock: newStock })
-        .eq("id", batch.id);
+      const { error } = await productsApi.updateBatch(
+        batch.id,
+        { stock: newStock },
+        orgId
+      );
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       toast({
         title: "Stock Adjusted",
@@ -329,28 +322,28 @@ export default function Inventory() {
     try {
       for (const [prodId, data] of entries) {
         if (data.batchId) {
-          const { error } = await supabase
-            .from("product_batches")
-            .update({
+          const { error } = await productsApi.updateBatch(
+            data.batchId,
+            {
               stock: data.stock,
               mrp: data.mrp,
               cost_price: data.cost_price,
-            })
-            .eq("id", data.batchId);
+            },
+            orgId
+          );
           if (!error) successCount++;
         } else {
           // If no batch exists, create one
-          const { error } = await supabase
-            .from("product_batches")
-            .insert([
-              {
-                product_id: prodId,
-                batch_number: "BATCH-01",
-                stock: data.stock,
-                mrp: data.mrp,
-                cost_price: data.cost_price,
-              },
-            ]);
+          const { error } = await productsApi.createBatch(
+            {
+              product_id: prodId,
+              batch_number: "BATCH-01",
+              stock: data.stock,
+              mrp: data.mrp,
+              cost_price: data.cost_price,
+            },
+            orgId
+          );
           if (!error) successCount++;
         }
       }

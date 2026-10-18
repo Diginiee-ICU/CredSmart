@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 
 export interface StockItemPayload {
@@ -125,14 +125,7 @@ async function resolveProductId(
   if (item.productId && item.productId.trim().length > 0) {
     const cleanId = item.productId.trim();
     try {
-      const { data: matched } = await supabase
-        .from("products")
-        .select("id")
-        .eq("organization_id", orgId)
-        .eq("id", cleanId)
-        .limit(1)
-        .maybeSingle();
-
+      const { data: matched } = await productsApi.getProductById(cleanId, orgId);
       if (matched?.id) return matched.id;
     } catch {
       // ignore network errors
@@ -150,29 +143,17 @@ async function resolveProductId(
   if (!cleanName && !cleanBarcode) return null;
 
   try {
-    // 2. Try matching by barcode in Supabase
+    // 2. Try matching by barcode
     if (cleanBarcode) {
-      const { data: byBarcode } = await supabase
-        .from("products")
-        .select("id")
-        .eq("organization_id", orgId)
-        .eq("barcode", cleanBarcode)
-        .limit(1)
-        .maybeSingle();
-
+      const { data: prods } = await productsApi.getProducts(orgId, { barcode: cleanBarcode });
+      const byBarcode = prods?.find((p) => p.barcode === cleanBarcode);
       if (byBarcode?.id) return byBarcode.id;
     }
 
-    // 3. Try matching by product name (case-insensitive) in Supabase
+    // 3. Try matching by product name (case-insensitive)
     if (cleanName) {
-      const { data: byName } = await supabase
-        .from("products")
-        .select("id")
-        .eq("organization_id", orgId)
-        .ilike("name", cleanName)
-        .limit(1)
-        .maybeSingle();
-
+      const { data: prods } = await productsApi.getProducts(orgId, { search: cleanName });
+      const byName = prods?.find((p) => p.name.trim().toLowerCase() === cleanName.toLowerCase());
       if (byName?.id) return byName.id;
     }
   } catch (err) {
@@ -224,11 +205,7 @@ export const stockService = {
 
       try {
         // Fetch existing batches for this product
-        const { data: batches, error: batchErr } = await supabase
-          .from("product_batches")
-          .select("id, batch_number, stock, mrp, cost_price, expiry_date")
-          .eq("product_id", productId)
-          .order("created_at", { ascending: true });
+        const { data: batches, error: batchErr } = await productsApi.getBatches([productId], orgId);
 
         if (batchErr) {
           console.warn(`Failed to fetch batches for product ${productId}:`, batchErr);
@@ -240,7 +217,7 @@ export const stockService = {
           let targetBatch = item.batchNumber
             ? batches.find(
                 (b) =>
-                  b.batch_number.toLowerCase().trim() ===
+                  (b.batch_number || b.batchNumber || "").toLowerCase().trim() ===
                   item.batchNumber?.toLowerCase().trim()
               )
             : undefined;
@@ -252,55 +229,45 @@ export const stockService = {
           const currentStock = Number(targetBatch.stock) || 0;
           const newStock = Math.max(0, currentStock - qtyToDeduct);
 
-          await supabase
-            .from("product_batches")
-            .update({
-              stock: newStock,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", targetBatch.id)
-            .throwOnError();
+          if (targetBatch.id) {
+            await productsApi.updateBatch(
+              targetBatch.id,
+              { stock: newStock },
+              orgId
+            );
+          }
         } else {
           // No batch existed; create initial batch with 0 stock
-          await supabase
-            .from("product_batches")
-            .insert({
+          await productsApi.createBatch(
+            {
               product_id: productId,
               batch_number: item.batchNumber?.trim() || "BATCH-01",
               cost_price: Number(item.costPrice || item.rate || 0),
               mrp: Number(item.mrp || item.rate || 0),
               stock: 0,
-            })
-            .throwOnError();
+            },
+            orgId
+          );
         }
 
         // Sync total stock in products.tags and local cache
         try {
-          const { data: allBatches } = await supabase
-            .from("product_batches")
-            .select("stock")
-            .eq("product_id", productId);
+          const { data: allBatches } = await productsApi.getBatches([productId], orgId);
 
           const totalStock = (allBatches || []).reduce(
             (sum, b) => sum + (Number(b.stock) || 0),
             0
           );
 
-          const { data: prodRecord } = await supabase
-            .from("products")
-            .select("name, barcode, category, sku, tags")
-            .eq("id", productId)
-            .maybeSingle();
+          const { data: prodRecord } = await productsApi.getProductById(productId, orgId);
 
           if (prodRecord) {
             const currentTags = (prodRecord.tags && typeof prodRecord.tags === "object" ? prodRecord.tags : {}) as Record<string, unknown>;
-            await supabase
-              .from("products")
-              .update({
-                tags: { ...currentTags, stock: totalStock },
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", productId);
+            await productsApi.updateProduct(
+              productId,
+              { tags: { ...currentTags, stock: totalStock } },
+              orgId
+            );
 
             addOrUpdateLocalCachedProduct(orgId, {
               id: productId,
@@ -355,18 +322,17 @@ export const stockService = {
             min_stock_alert: 5,
           };
 
-          const { data: newProd, error: prodCreateErr } = await supabase
-            .from("products")
-            .insert({
+          const { data: newProd, error: prodCreateErr } = await productsApi.createProduct(
+            {
               organization_id: orgId,
               name: cleanName,
               barcode: cleanBarcode,
               category: "General",
               sku: generatedSku,
               tags: tagsPayload,
-            })
-            .select("id, name, barcode, sku, category, tags")
-            .maybeSingle();
+            },
+            orgId
+          );
 
           if (!prodCreateErr && newProd?.id) {
             productId = newProd.id;
@@ -414,77 +380,66 @@ export const stockService = {
         const costVal = Number(item.costPrice || item.rate || 0);
         const mrpVal = Number(item.mrp || item.rate || 0);
 
-        // Check if batch already exists in Supabase
-        const { data: existingBatches } = await supabase
-          .from("product_batches")
-          .select("id, batch_number, stock, cost_price, mrp, expiry_date")
-          .eq("product_id", productId);
+        // Check if batch already exists
+        const { data: existingBatches } = await productsApi.getBatches([productId], orgId);
 
         const matchedBatch = existingBatches?.find(
-          (b) => b.batch_number.toLowerCase().trim() === batchNum.toLowerCase().trim()
+          (b) => (b.batch_number || b.batchNumber || "").toLowerCase().trim() === batchNum.toLowerCase().trim()
         );
 
         let finalBatchStock = qtyToAdd;
-        if (matchedBatch) {
+        if (matchedBatch && matchedBatch.id) {
           const currentStock = Number(matchedBatch.stock) || 0;
           finalBatchStock = currentStock + qtyToAdd;
 
-          await supabase
-            .from("product_batches")
-            .update({
+          await productsApi.updateBatch(
+            matchedBatch.id,
+            {
               stock: finalBatchStock,
               cost_price: costVal > 0 ? costVal : matchedBatch.cost_price,
               mrp: mrpVal > 0 ? mrpVal : matchedBatch.mrp,
               expiry_date: item.expiryDate || matchedBatch.expiry_date,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", matchedBatch.id)
-            .throwOnError();
+            },
+            orgId
+          );
         } else {
           // Create new batch with added stock
-          await supabase
-            .from("product_batches")
-            .insert({
+          await productsApi.createBatch(
+            {
               product_id: productId,
               batch_number: batchNum,
               cost_price: costVal,
               mrp: mrpVal,
               expiry_date: item.expiryDate || null,
               stock: qtyToAdd,
-            })
-            .throwOnError();
+            },
+            orgId
+          );
         }
 
         // Sync total stock into products.tags and local cache
         try {
-          const { data: allBatches } = await supabase
-            .from("product_batches")
-            .select("stock, batch_number, mrp, cost_price, expiry_date, id")
-            .eq("product_id", productId);
+          const { data: allBatches } = await productsApi.getBatches([productId], orgId);
 
           const totalStock = (allBatches || []).reduce(
             (sum, b) => sum + (Number(b.stock) || 0),
             0
           );
 
-          const { data: prodRec } = await supabase
-            .from("products")
-            .select("name, barcode, sku, category, tags")
-            .eq("id", productId)
-            .maybeSingle();
+          const { data: prodRec } = await productsApi.getProductById(productId, orgId);
 
           if (prodRec) {
             const currentTags = (prodRec.tags && typeof prodRec.tags === "object" ? prodRec.tags : {}) as Record<string, unknown>;
-            await supabase
-              .from("products")
-              .update({
+            await productsApi.updateProduct(
+              productId,
+              {
                 tags: {
                   ...currentTags,
                   stock: totalStock,
                 },
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", productId);
+              },
+              orgId
+            );
 
             addOrUpdateLocalCachedProduct(orgId, {
               id: productId,

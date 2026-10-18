@@ -1,6 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invoicesApi } from "@/services/invoicesApi";
 import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentType, DocumentStatus } from "@/types/documents";
 import { stockService } from "@/services/stockService";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
 
 const STORAGE_KEY_PREFIX = "credsmart_docs_";
 
@@ -164,27 +166,13 @@ export const documentsService = {
 
     const localDocs = this.getLocalDocuments(orgId, docType);
 
-    // If fetching standard sales invoices, also query Supabase `sales` and merge
+    // If fetching standard sales invoices, also query `sales` and merge
     if (docType === "sales_invoice") {
       try {
-        const { data: sales, error } = await supabase
-          .from("sales")
-          .select(`
-            id,
-            invoice_number,
-            subtotal,
-            discount_amount,
-            discount_label,
-            tax,
-            total,
-            payment_method,
-            created_at,
-            customer_id,
-            customers ( name, phone, gstin, email, address ),
-            sale_items (*)
-          `)
-          .eq("organization_id", orgId)
-          .order("created_at", { ascending: false });
+        const { data: sales, error } = await invoicesApi.getSales(orgId, {
+          sort: "created_at",
+          order: "desc",
+        });
 
         if (!error && sales) {
           const supabaseDocs: BusinessDocument[] = (sales as SalesRow[]).map((s) => {
@@ -272,17 +260,10 @@ export const documentsService = {
       }
     }
 
-    // If fetching sales return or credit note, also query Supabase `sales_returns` and merge
+    // If fetching sales return or credit note, also query `sales_returns` and merge
     if (docType === "sales_return" || docType === "credit_note") {
       try {
-        const { data: returns, error } = await supabase
-          .from("sales_returns")
-          .select(`
-            *,
-            sales_return_items (*)
-          `)
-          .eq("organization_id", orgId)
-          .order("created_at", { ascending: false });
+        const { data: returns, error } = await invoicesApi.getSalesReturns(orgId);
 
         if (!error && returns) {
           interface RawReturnItem {
@@ -422,30 +403,7 @@ export const documentsService = {
 
     if (docType === "purchase_invoice") {
       try {
-        const { data, error } = await supabase
-          .from("purchase_invoices")
-          .select(`
-            id,
-            invoice_number,
-            total_amount,
-            status,
-            created_at,
-            notes,
-            supplier_id,
-            suppliers ( name, phone, gstin, email, address ),
-            purchase_invoice_items (
-              id,
-              product_id,
-              batch_number,
-              quantity,
-              cost_price,
-              mrp,
-              expiry_date,
-              products ( name, barcode, sku )
-            )
-          `)
-          .eq("organization_id", orgId)
-          .order("created_at", { ascending: false });
+        const { data, error } = await invoicesApi.getPurchaseInvoices(orgId);
 
         if (!error && data) {
           const supabaseDocs: BusinessDocument[] = (data as PurchaseInvoiceRow[]).map((inv) => {
@@ -535,28 +493,7 @@ export const documentsService = {
 
     if (docType === "purchase_return" || docType === "debit_note") {
       try {
-        const { data, error } = await supabase
-          .from("purchase_returns")
-          .select(`
-            id,
-            return_number,
-            total_amount,
-            status,
-            reason,
-            created_at,
-            supplier_id,
-            suppliers ( name, phone, gstin, email, address ),
-            purchase_return_items (
-              id,
-              product_id,
-              batch_number,
-              quantity,
-              cost_price,
-              products ( name )
-            )
-          `)
-          .eq("organization_id", orgId)
-          .order("created_at", { ascending: false });
+        const { data, error } = await invoicesApi.getPurchaseReturns(orgId);
 
         if (!error && data) {
           const supabaseDocs: BusinessDocument[] = (data as PurchaseReturnRow[]).map((ret) => {
@@ -657,9 +594,9 @@ export const documentsService = {
         const isExistingSupabaseSale = Boolean(doc.id && !doc.id.startsWith("doc_"));
 
         if (isExistingSupabaseSale) {
-          const { data: saleData, error: saleErr } = await supabase
-            .from("sales")
-            .update({
+          const { data: saleData, error: saleErr } = await invoicesApi.updateSale(
+            doc.id,
+            {
               organization_id: orgId,
               invoice_number: doc.documentNumber,
               subtotal: doc.subtotal,
@@ -669,14 +606,13 @@ export const documentsService = {
               total: doc.grandTotal,
               payment_method: doc.paymentMethod || "Cash",
               customer_id: doc.partyId || null,
-            })
-            .eq("id", doc.id)
-            .select()
-            .maybeSingle();
+            },
+            orgId
+          );
 
           if (!saleErr && saleData) {
             // Delete existing line items and re-insert updated items
-            await supabase.from("sale_items").delete().eq("sale_id", doc.id);
+            await invoicesApi.deleteSaleItemsBySaleId(doc.id, orgId);
             if (doc.items.length > 0) {
               const saleItems = doc.items.map((it) => ({
                 sale_id: doc.id,
@@ -687,13 +623,12 @@ export const documentsService = {
                 quantity: it.quantity,
                 line_total: it.lineTotal,
               }));
-              await supabase.from("sale_items").insert(saleItems);
+              await invoicesApi.createSaleItems(saleItems, orgId);
             }
           } else if (!saleData && !saleErr) {
             // Fallback: If not found in sales by ID, insert as new
-            const { data: newSaleData, error: newSaleErr } = await supabase
-              .from("sales")
-              .insert({
+            const { data: newSaleData, error: newSaleErr } = await invoicesApi.createSale(
+              {
                 organization_id: orgId,
                 invoice_number: doc.documentNumber,
                 subtotal: doc.subtotal,
@@ -704,9 +639,9 @@ export const documentsService = {
                 payment_method: doc.paymentMethod || "Cash",
                 created_by: userId,
                 customer_id: doc.partyId || null,
-              })
-              .select()
-              .single();
+              },
+              orgId
+            );
 
             if (!newSaleErr && newSaleData) {
               doc.id = newSaleData.id;
@@ -720,14 +655,13 @@ export const documentsService = {
                   quantity: it.quantity,
                   line_total: it.lineTotal,
                 }));
-                await supabase.from("sale_items").insert(saleItems);
+                await invoicesApi.createSaleItems(saleItems, orgId);
               }
             }
           }
         } else {
-          const { data: saleData, error: saleErr } = await supabase
-            .from("sales")
-            .insert({
+          const { data: saleData, error: saleErr } = await invoicesApi.createSale(
+            {
               organization_id: orgId,
               invoice_number: doc.documentNumber,
               subtotal: doc.subtotal,
@@ -738,9 +672,9 @@ export const documentsService = {
               payment_method: doc.paymentMethod || "Cash",
               created_by: userId,
               customer_id: doc.partyId || null,
-            })
-            .select()
-            .single();
+            },
+            orgId
+          );
 
           if (!saleErr && saleData) {
             doc.id = saleData.id;
@@ -756,7 +690,7 @@ export const documentsService = {
                 quantity: it.quantity,
                 line_total: it.lineTotal,
               }));
-              await supabase.from("sale_items").insert(saleItems);
+              await invoicesApi.createSaleItems(saleItems, orgId);
             }
           }
         }
@@ -771,58 +705,38 @@ export const documentsService = {
         // Resolve or create supplier in suppliers table to satisfy NOT NULL foreign key constraint
         let resolvedSupplierId: string | null = null;
         if (doc.partyId) {
-          const { data: suppCheck } = await supabase
-            .from("suppliers")
-            .select("id")
-            .eq("id", doc.partyId)
-            .maybeSingle();
-          if (suppCheck) resolvedSupplierId = doc.partyId;
+          const { data: suppCheck } = await partiesApi.getSupplierById(doc.partyId, orgId);
+          if (suppCheck?.id) resolvedSupplierId = doc.partyId;
         }
 
-        if (!resolvedSupplierId && doc.partyPhone) {
-          const cleanDigits = doc.partyPhone.replace(/[^0-9]/g, "").slice(-10);
-          if (cleanDigits) {
-            const { data: phoneSupp } = await supabase
-              .from("suppliers")
-              .select("id")
-              .eq("organization_id", orgId)
-              .ilike("phone", `%${cleanDigits}%`)
-              .maybeSingle();
-            if (phoneSupp) resolvedSupplierId = phoneSupp.id;
+        if (!resolvedSupplierId && (doc.partyPhone || doc.partyName)) {
+          const { data: existingSuppliers } = await partiesApi.getSuppliers(orgId, {
+            search: doc.partyPhone || doc.partyName,
+          });
+          if (existingSuppliers && existingSuppliers.length > 0) {
+            resolvedSupplierId = existingSuppliers[0].id || null;
           }
-        }
-
-        if (!resolvedSupplierId && doc.partyName) {
-          const { data: nameSupp } = await supabase
-            .from("suppliers")
-            .select("id")
-            .eq("organization_id", orgId)
-            .ilike("name", doc.partyName.trim())
-            .maybeSingle();
-          if (nameSupp) resolvedSupplierId = nameSupp.id;
         }
 
         // If supplier doesn't exist in Supabase suppliers table, auto-create it
         if (!resolvedSupplierId) {
-          const { data: newSupp } = await supabase
-            .from("suppliers")
-            .insert({
+          const { data: newSupp } = await partiesApi.createSupplier(
+            {
               organization_id: orgId,
               name: doc.partyName || "Supplier",
               phone: doc.partyPhone || "",
               email: doc.partyEmail || "",
               gstin: doc.partyGstin || "",
               address: doc.partyAddress || "",
-            })
-            .select("id")
-            .maybeSingle();
-          if (newSupp) resolvedSupplierId = newSupp.id;
+            },
+            orgId
+          );
+          if (newSupp?.id) resolvedSupplierId = newSupp.id;
         }
 
         if (resolvedSupplierId) {
-          const { data: piData, error: piErr } = await supabase
-            .from("purchase_invoices")
-            .insert({
+          const { data: piData, error: piErr } = await invoicesApi.createPurchaseInvoice(
+            {
               organization_id: orgId,
               supplier_id: resolvedSupplierId,
               invoice_number: doc.documentNumber,
@@ -830,9 +744,9 @@ export const documentsService = {
               status: doc.status === "paid" ? "received" : "sent",
               notes: doc.notes || null,
               created_by: userId,
-            })
-            .select()
-            .single();
+            },
+            orgId
+          );
 
           if (!piErr && piData) {
             doc.id = piData.id;
@@ -841,33 +755,22 @@ export const documentsService = {
               for (const it of doc.items) {
                 let pId = it.productId;
                 if (pId) {
-                  const { data: prodCheck } = await supabase
-                    .from("products")
-                    .select("id")
-                    .eq("id", pId)
-                    .maybeSingle();
+                  const { data: prodCheck } = await productsApi.getProductById(pId, orgId);
                   if (!prodCheck) pId = undefined;
                 }
                 if (!pId) {
-                  const { data: prodMatch } = await supabase
-                    .from("products")
-                    .select("id")
-                    .eq("organization_id", orgId)
-                    .ilike("name", it.productName.trim())
-                    .maybeSingle();
+                  const { data: existingProducts } = await productsApi.getProducts(orgId);
+                  const prodMatch = (existingProducts || []).find(
+                    (p) => p.name?.toLowerCase().trim() === it.productName.trim().toLowerCase()
+                  );
                   pId = prodMatch?.id;
                 }
                 if (!pId) {
-                  const { data: newProd } = await supabase
-                    .from("products")
-                    .insert({
-                      organization_id: orgId,
-                      name: it.productName.trim(),
-                      category: "General",
-                      sku: `SKU-${Date.now().toString(36).toUpperCase()}`,
-                    })
-                    .select("id")
-                    .maybeSingle();
+                  const { data: newProd } = await productsApi.createProduct({
+                    name: it.productName.trim(),
+                    category: "General",
+                    sku: `SKU-${Date.now().toString(36).toUpperCase()}`,
+                  }, orgId);
                   pId = newProd?.id;
                 }
 
@@ -884,7 +787,7 @@ export const documentsService = {
                 }
               }
               if (piItems.length > 0) {
-                await supabase.from("purchase_invoice_items").insert(piItems);
+                await invoicesApi.createPurchaseInvoiceItems(piItems, orgId);
               }
             }
           }
@@ -899,53 +802,46 @@ export const documentsService = {
       try {
         let resolvedSupplierId: string | null = null;
         if (doc.partyId) {
-          const { data: suppCheck } = await supabase
-            .from("suppliers")
-            .select("id")
-            .eq("id", doc.partyId)
-            .maybeSingle();
-          if (suppCheck) resolvedSupplierId = doc.partyId;
+          const { data: suppCheck } = await partiesApi.getSupplierById(doc.partyId, orgId);
+          if (suppCheck?.id) resolvedSupplierId = doc.partyId;
         }
         if (!resolvedSupplierId && doc.partyName) {
-          const { data: nameSupp } = await supabase
-            .from("suppliers")
-            .select("id")
-            .eq("organization_id", orgId)
-            .ilike("name", doc.partyName.trim())
-            .maybeSingle();
-          if (nameSupp) resolvedSupplierId = nameSupp.id;
+          const { data: existingSuppliers } = await partiesApi.getSuppliers(orgId, {
+            search: doc.partyName,
+          });
+          if (existingSuppliers && existingSuppliers.length > 0) {
+            resolvedSupplierId = existingSuppliers[0].id || null;
+          }
         }
         if (!resolvedSupplierId) {
-          const { data: newSupp } = await supabase
-            .from("suppliers")
-            .insert({
+          const { data: newSupp } = await partiesApi.createSupplier(
+            {
               organization_id: orgId,
               name: doc.partyName || "Supplier",
               phone: doc.partyPhone || "",
               email: doc.partyEmail || "",
               gstin: doc.partyGstin || "",
               address: doc.partyAddress || "",
-            })
-            .select("id")
-            .maybeSingle();
-          if (newSupp) resolvedSupplierId = newSupp.id;
+            },
+            orgId
+          );
+          if (newSupp?.id) resolvedSupplierId = newSupp.id;
         }
 
         if (resolvedSupplierId) {
-          const { data: prData, error: prErr } = await supabase
-            .from("purchase_returns")
-            .insert({
+          const { data: prData, error: prErr } = await invoicesApi.createPurchaseReturn(
+            {
               organization_id: orgId,
               supplier_id: resolvedSupplierId,
-              purchase_invoice_id: doc.convertedFromId || null,
+              purchase_id: doc.convertedFromId || null,
               return_number: doc.documentNumber,
               reason: doc.returnReason || doc.notes || "Purchase Return",
               total_amount: doc.grandTotal,
               status: doc.status === "paid" || doc.status === "completed" ? "completed" : "draft",
               created_by: userId,
-            })
-            .select()
-            .single();
+            },
+            orgId
+          );
 
           if (!prErr && prData) {
             doc.id = prData.id;
@@ -954,12 +850,10 @@ export const documentsService = {
               for (const it of doc.items) {
                 let pId = it.productId;
                 if (!pId) {
-                  const { data: pMatch } = await supabase
-                    .from("products")
-                    .select("id")
-                    .eq("organization_id", orgId)
-                    .ilike("name", it.productName.trim())
-                    .maybeSingle();
+                  const { data: existingProducts } = await productsApi.getProducts(orgId);
+                  const pMatch = (existingProducts || []).find(
+                    (p) => p.name?.toLowerCase().trim() === it.productName.trim().toLowerCase()
+                  );
                   pId = pMatch?.id;
                 }
                 if (pId) {
@@ -973,7 +867,7 @@ export const documentsService = {
                 }
               }
               if (prItems.length > 0) {
-                await supabase.from("purchase_return_items").insert(prItems);
+                await invoicesApi.createPurchaseReturnItems(prItems, orgId);
               }
             }
           }
@@ -986,9 +880,8 @@ export const documentsService = {
     // 3. If sales return or credit note, attempt saving to Supabase sales_returns
     if ((docType === "sales_return" || docType === "credit_note") && userId) {
       try {
-        const { data: srData, error: srErr } = await supabase
-          .from("sales_returns")
-          .insert({
+        const { data: srData, error: srErr } = await invoicesApi.createSalesReturn(
+          {
             organization_id: orgId,
             sale_id: doc.convertedFromId || null,
             customer_id: doc.partyId || null,
@@ -1016,9 +909,9 @@ export const documentsService = {
             status: doc.status === "cancelled" ? "cancelled" : "completed",
             notes: doc.notes || "",
             created_by: userId,
-          })
-          .select()
-          .single();
+          },
+          orgId
+        );
 
         if (!srErr && srData) {
           doc.id = srData.id;
@@ -1044,12 +937,12 @@ export const documentsService = {
               line_total: it.lineTotal,
               return_reason: it.returnReason || null,
             }));
-            await supabase.from("sales_return_items").insert(srItems);
+            await invoicesApi.createSalesReturnItems(srItems, orgId);
           }
 
           // If store credit / ledger settlement and customer is linked, record in credit_transactions
           if (doc.settlementMode === "store_credit" && doc.partyId && doc.grandTotal > 0) {
-            await supabase.from("credit_transactions").insert({
+            await partiesApi.recordCreditTransaction({
               organization_id: orgId,
               party_type: "customer",
               party_id: doc.partyId,
@@ -1058,7 +951,7 @@ export const documentsService = {
               reference_id: srData.id,
               description: `Credit Note #${doc.documentNumber} - ${doc.returnReason || "Sales Return"}`,
               created_by: userId,
-            });
+            }, orgId);
           }
         }
       } catch (err) {
@@ -1117,7 +1010,7 @@ export const documentsService = {
     // If sales invoice
     if (docType === "sales_invoice") {
       try {
-        await supabase.from("sales").delete().eq("id", docId);
+        await invoicesApi.deleteSale(docId, orgId);
       } catch (error) {
         console.warn("Failed to delete sales document from Supabase:", error);
       }
@@ -1132,7 +1025,7 @@ export const documentsService = {
     // If purchase invoice
     if (docType === "purchase_invoice") {
       try {
-        await supabase.from("purchase_invoices").delete().eq("id", docId);
+        await invoicesApi.deletePurchaseInvoice(docId, orgId);
       } catch (error) {
         console.warn("Failed to delete purchase document from Supabase:", error);
       }
@@ -1141,9 +1034,9 @@ export const documentsService = {
     // If sales return or credit note
     if (docType === "sales_return" || docType === "credit_note") {
       try {
-        await supabase.from("sales_returns").delete().eq("id", docId);
+        await invoicesApi.deleteSalesReturn(docId, orgId);
         // Also remove associated credit_transactions entry
-        await supabase.from("credit_transactions").delete().eq("reference_id", docId);
+        await partiesApi.deleteCreditTransactionsByReference(docId, orgId);
       } catch (error) {
         console.warn("Failed to delete sales return document from Supabase:", error);
       }
@@ -1152,7 +1045,7 @@ export const documentsService = {
     // If purchase return or debit note
     if (docType === "purchase_return" || docType === "debit_note") {
       try {
-        await supabase.from("purchase_returns").delete().eq("id", docId);
+        await invoicesApi.deletePurchaseReturn(docId, orgId);
       } catch (error) {
         console.warn("Failed to delete purchase return document from Supabase:", error);
       }

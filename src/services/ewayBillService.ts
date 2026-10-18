@@ -5,6 +5,7 @@ import {
   EwayBillStatus,
 } from "@/types/ewayBill";
 import { supabase } from "@/integrations/supabase/client";
+import { invoicesApi } from "@/services/invoicesApi";
 
 const EWAY_STORAGE_PREFIX = "credsmart_eway_bills_";
 
@@ -207,13 +208,11 @@ export const ewayBillService = {
     // Also update associated document in Supabase / Local documents if invoiceId or docNo exists
     try {
       if (record.invoiceId || record.docNo) {
-        // If there's a matching sales record, update referenceNumber
-        const { data: salesMatch } = await supabase
-          .from("sales")
-          .select("id")
-          .eq("organization_id", orgId)
-          .eq("invoice_number", record.docNo)
-          .maybeSingle();
+        const { data: salesList } = await invoicesApi.getSales(orgId, {
+          invoiceNumber: record.docNo,
+          limit: 1,
+        });
+        const salesMatch = salesList?.[0];
 
         if (salesMatch) {
           // Store reference

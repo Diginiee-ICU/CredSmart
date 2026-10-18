@@ -25,7 +25,7 @@ import {
   Layers,
 } from "lucide-react";
 import { Godown, StockTransfer, InventoryItem } from "@/types/inventory";
-import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -94,10 +94,7 @@ export default function GodownPage() {
 
     const fetchLocations = async () => {
       try {
-        const { data: locs, error } = await supabase
-          .from("locations")
-          .select("id, name, address, created_at, updated_at")
-          .eq("organization_id", orgId);
+        const { data: locs, error } = await settingsApi.getLocations(orgId);
 
         if (!error && locs && locs.length > 0) {
           const mapped: Godown[] = locs.map((l, i) => ({
@@ -206,21 +203,22 @@ export default function GodownPage() {
 
     try {
       if (editingGodown) {
-        await supabase
-          .from("locations")
-          .update({
+        await settingsApi.updateLocation(
+          editingGodown.id,
+          {
             name: godownName.trim(),
             address: godownAddress.trim(),
-          })
-          .eq("id", editingGodown.id);
+          },
+          orgId
+        );
         toast.success(`Updated warehouse "${godownName}"`);
       } else {
-        const { error } = await supabase.from("locations").insert({
+        const { error } = await settingsApi.createLocation({
           organization_id: orgId,
           name: godownName.trim(),
           address: godownAddress.trim(),
-        });
-        if (error) throw error;
+        }, orgId);
+        if (error) throw new Error(error.message);
         toast.success(`Created warehouse "${godownName}"!`);
       }
       setShowGodownModal(false);

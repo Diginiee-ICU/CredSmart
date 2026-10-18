@@ -18,7 +18,9 @@ import {
   FileText,
   AlertCircle,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
@@ -99,11 +101,7 @@ export default function PurchaseReturns() {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("purchase_returns")
-        .select("id, return_number, reason, total_amount, status, created_at, suppliers ( name ), purchase_return_items ( id )")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+      const { data, error } = await invoicesApi.getPurchaseReturns(orgId);
       if (error) {
         console.error("fetchReturns error:", error);
         setReturns([]);
@@ -149,30 +147,25 @@ export default function PurchaseReturns() {
     if (!orgId) return;
     (async () => {
       try {
-        const { data: suppData, error: suppError } = await supabase
-          .from("suppliers")
-          .select("id, name")
-          .eq("organization_id", orgId)
-          .order("name");
+        const { data: suppData, error: suppError } = await partiesApi.getSuppliers(orgId, {
+          sort: "name",
+          order: "asc",
+        });
         if (suppError) {
           console.error("fetch suppliers error:", suppError);
         } else if (suppData) {
-          setSuppliers(suppData);
+          setSuppliers(suppData as any);
         }
       } catch (err) {
         console.error("suppliers fetch unexpected error:", err);
       }
 
       try {
-        const { data: prodData, error: prodError } = await supabase
-          .from("products")
-          .select("id, name, barcode, product_batches ( id, batch_number, cost_price, mrp, stock )")
-          .eq("organization_id", orgId)
-          .order("name");
+        const { data: prodData, error: prodError } = await productsApi.getProducts(orgId);
         if (prodError) {
           console.error("fetch products error:", prodError);
         } else if (prodData) {
-          setProducts(prodData as ProductOption[]);
+          setProducts(prodData as unknown as ProductOption[]);
         }
       } catch (err) {
         console.error("products fetch unexpected error:", err);
@@ -188,14 +181,13 @@ export default function PurchaseReturns() {
       return;
     }
     (async () => {
-      const { data } = await supabase
-        .from("purchase_invoices")
-        .select("id, invoice_number, created_at, total_amount")
-        .eq("organization_id", orgId)
-        .eq("supplier_id", selectedSupplierId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (data) setSupplierInvoices(data);
+      const { data } = await invoicesApi.getPurchaseInvoices(orgId, {
+        supplierId: selectedSupplierId,
+        order: "desc",
+        sort: "created_at",
+        limit: 10,
+      });
+      if (data) setSupplierInvoices(data as any);
     })();
   }, [orgId, selectedSupplierId]);
 
@@ -203,10 +195,7 @@ export default function PurchaseReturns() {
     setSelectedInvoiceId(invId);
     if (!invId) return;
     try {
-      const { data: invItems, error } = await supabase
-        .from("purchase_invoice_items")
-        .select("product_id, batch_number, quantity, cost_price, products ( name )")
-        .eq("purchase_invoice_id", invId);
+      const { data: invItems, error } = await invoicesApi.getPurchaseInvoiceItems(invId, orgId);
 
       if (error) throw error;
       if (invItems && invItems.length > 0) {
@@ -237,15 +226,10 @@ export default function PurchaseReturns() {
     if (!user || !orgId) return;
     try {
       // Fetch return details to record debit transaction
-      const { data: ret, error: getErr } = await supabase
-        .from("purchase_returns")
-        .select("id, return_number, supplier_id, total_amount, reason")
-        .eq("id", id)
-        .single();
+      const ret = returns.find((r) => r.id === id);
+      if (!ret) throw new Error("Return record not found");
 
-      if (getErr || !ret) throw getErr || new Error("Return record not found");
-
-      const { error } = await supabase.from("purchase_returns").update({ status: "completed" }).eq("id", id);
+      const { error } = await invoicesApi.updatePurchaseReturn(id, { status: "completed" }, orgId);
       if (error) {
         console.error("handleMarkCompleted error:", error);
         toast.error("Failed to complete return");
@@ -254,7 +238,7 @@ export default function PurchaseReturns() {
 
       // Record supplier debit note in credit_transactions
       if (ret.supplier_id && Number(ret.total_amount) > 0) {
-        await supabase.from("credit_transactions").insert({
+        await partiesApi.recordCreditTransaction({
           organization_id: orgId,
           party_type: "supplier",
           party_id: ret.supplier_id,
@@ -263,7 +247,7 @@ export default function PurchaseReturns() {
           reference_id: ret.id,
           description: `Debit Note #${ret.return_number} - ${ret.reason || "Purchase Return"}`,
           created_by: user.id,
-        });
+        }, orgId);
       }
 
       toast.success("Return completed — stock reversed and supplier account debited!"); 
@@ -311,20 +295,16 @@ export default function PurchaseReturns() {
     try {
       const generatedReturnNum = returnNumber.trim() || `DN-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      const { data: ret, error } = await supabase
-        .from("purchase_returns")
-        .insert({
-          organization_id: orgId,
-          supplier_id: selectedSupplierId,
-          return_number: generatedReturnNum,
-          reason: reason.trim(),
-          total_amount: totalAmount,
-          status: "draft",
-          created_by: user.id,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
+      const { data: ret, error } = await invoicesApi.createPurchaseReturn({
+        organization_id: orgId,
+        supplier_id: selectedSupplierId,
+        return_number: generatedReturnNum,
+        reason: reason.trim(),
+        total_amount: totalAmount,
+        status: "draft",
+        created_by: user.id,
+      }, orgId);
+      if (error || !ret) throw new Error(error?.message || "Failed to create purchase return");
 
       const items = lineItems.map((li) => ({
         purchase_return_id: ret.id,
@@ -333,16 +313,16 @@ export default function PurchaseReturns() {
         quantity: Number(li.quantity) || 1,
         cost_price: Number(li.costPrice) || 0,
       }));
-      const { error: itemsErr } = await supabase.from("purchase_return_items").insert(items);
-      if (itemsErr) throw itemsErr;
+      const { error: itemsErr } = await invoicesApi.createPurchaseReturnItems(items, orgId);
+      if (itemsErr) throw new Error(itemsErr.message || "Failed to save return items");
 
       if (markCompleted) {
-        const { error: upErr } = await supabase.from("purchase_returns").update({ status: "completed" }).eq("id", ret.id);
-        if (upErr) throw upErr;
+        const { error: upErr } = await invoicesApi.updatePurchaseReturn(ret.id, { status: "completed" }, orgId);
+        if (upErr) throw new Error(upErr.message || "Failed to update return status");
 
         // Record supplier debit note in credit_transactions
         if (totalAmount > 0) {
-          await supabase.from("credit_transactions").insert({
+          await partiesApi.recordCreditTransaction({
             organization_id: orgId,
             party_type: "supplier",
             party_id: selectedSupplierId,
@@ -351,7 +331,7 @@ export default function PurchaseReturns() {
             reference_id: ret.id,
             description: `Debit Note #${generatedReturnNum} - ${reason.trim() || "Purchase Return"}`,
             created_by: user.id,
-          });
+          }, orgId);
         }
       }
 

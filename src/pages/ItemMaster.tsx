@@ -14,7 +14,7 @@ import {
 import { AddProductModal, EditProductData } from "@/components/AddProductModal";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { normalizeError } from "@/lib/normalizeError";
@@ -78,11 +78,7 @@ export default function ItemMaster() {
     if (!orgId) return;
     setLoading(true);
     try {
-      const { data: prods, error: prodsErr } = await supabase
-        .from("products")
-        .select("id, name, brand, category, barcode, sku, image_url, tags")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: prods, error: prodsErr } = await productsApi.getProducts(orgId);
 
       if (prodsErr) {
         toast({ title: "Error loading products", description: prodsErr.message, variant: "destructive" });
@@ -96,10 +92,7 @@ export default function ItemMaster() {
       }
 
       const prodIds = prods.map((p) => p.id);
-      const { data: batches, error: batchesErr } = await supabase
-        .from("product_batches")
-        .select("id, product_id, mrp, stock, cost_price, batch_number, expiry_date")
-        .in("product_id", prodIds.length > 0 ? prodIds : ["__none__"]);
+      const { data: batches, error: batchesErr } = await productsApi.getBatches(prodIds, orgId);
 
       if (batchesErr) {
         console.warn("Failed to load batches:", batchesErr.message);
@@ -153,26 +146,43 @@ export default function ItemMaster() {
 
       // Barcode duplication check
       if (barcodeToSave) {
-        const { data: existing } = await supabase
-          .from("products")
-          .select("id, name")
-          .eq("organization_id", orgId)
-          .eq("barcode", barcodeToSave)
-          .maybeSingle();
-
-        if (existing) {
+        const { data: barcodeRes } = await productsApi.checkBarcodeUnique(barcodeToSave, orgId);
+        if (barcodeRes && !barcodeRes.available && barcodeRes.existingProduct) {
           toast({
             title: "Duplicate Barcode / SKU",
-            description: `Barcode "${barcodeToSave}" is already used by "${existing.name}". Please use a unique barcode.`,
+            description: `Barcode "${barcodeToSave}" is already used by "${barcodeRes.existingProduct.name}". Please use a unique barcode.`,
             variant: "destructive",
           });
           return;
         }
       }
 
-      const { data: prod, error } = await supabase
-        .from("products")
-        .insert({
+      // Initial batch creation
+      const validBatches = (data.batches || [])
+        .filter((b) => b && (b.mrp || b.costPrice || b.stock || b.batchNumber))
+        .map((b) => ({
+          batch_number: b.batchNumber?.trim() || "BATCH-01",
+          cost_price: parseFloat(b.costPrice) || 0,
+          mrp: parseFloat(b.mrp) || 0,
+          stock: parseInt(b.stock) || 0,
+          expiry_date: b.expiryDate || null,
+        }));
+
+      const initialBatches =
+        validBatches.length > 0
+          ? validBatches
+          : [
+              {
+                batch_number: "BATCH-01",
+                cost_price: 0,
+                mrp: 0,
+                stock: 0,
+                expiry_date: null,
+              },
+            ];
+
+      const { data: prod, error } = await productsApi.createProduct(
+        {
           name: data.name.trim(),
           brand: data.brand?.trim() || "",
           category: data.category?.trim() || "",
@@ -181,40 +191,19 @@ export default function ItemMaster() {
           organization_id: orgId,
           tags: data.tags || {},
           image_url: data.imageUrl || "",
-        })
-        .select("id")
-        .single();
+          batches: initialBatches,
+        },
+        orgId
+      );
 
       if (error || !prod) {
-        throw error || new Error("Failed to create product");
+        throw new Error(error?.message || "Failed to create product");
       }
 
-      // Initial batch creation
-      const validBatches = (data.batches || [])
-        .filter((b) => b && (b.mrp || b.costPrice || b.stock || b.batchNumber))
-        .map((b) => ({
-          product_id: prod.id,
-          batch_number: b.batchNumber?.trim() || "BATCH-01",
-          cost_price: parseFloat(b.costPrice) || 0,
-          mrp: parseFloat(b.mrp) || 0,
-          stock: parseInt(b.stock) || 0,
-          expiry_date: b.expiryDate || null,
-        }));
-
-      // If no batches were provided, create a default initial batch
-      const batchesToInsert = validBatches.length > 0
-        ? validBatches
-        : [{
-            product_id: prod.id,
-            batch_number: "BATCH-01",
-            cost_price: 0,
-            mrp: 0,
-            stock: 0,
-            expiry_date: null,
-          }];
-
-      const { error: batchErr } = await supabase.from("product_batches").insert(batchesToInsert);
-      if (batchErr) console.warn("Failed to insert initial batches:", batchErr.message);
+      // Insert batches if not automatically created by backend createProduct
+      for (const batch of initialBatches) {
+        await productsApi.createBatch({ ...batch, product_id: prod.id }, orgId);
+      }
 
       toast({ title: "Product saved", description: `${data.name} added to catalog.` });
       setShowAddModal(false);
@@ -233,47 +222,38 @@ export default function ItemMaster() {
 
       // Barcode duplication check across other products
       if (barcodeToSave) {
-        const { data: existing } = await supabase
-          .from("products")
-          .select("id, name")
-          .eq("organization_id", orgId)
-          .eq("barcode", barcodeToSave)
-          .neq("id", id)
-          .maybeSingle();
-
-        if (existing) {
+        const { data: barcodeRes } = await productsApi.checkBarcodeUnique(barcodeToSave, orgId, id);
+        if (barcodeRes && !barcodeRes.available && barcodeRes.existingProduct && barcodeRes.existingProduct.id !== id) {
           toast({
             title: "Duplicate Barcode / SKU",
-            description: `Barcode "${barcodeToSave}" is already used by "${existing.name}". Please choose another barcode.`,
+            description: `Barcode "${barcodeToSave}" is already used by "${barcodeRes.existingProduct.name}". Please choose another barcode.`,
             variant: "destructive",
           });
           return;
         }
       }
 
-      const { error } = await supabase
-        .from("products")
-        .update({
+      const { error } = await productsApi.updateProduct(
+        id,
+        {
           name: data.name.trim(),
           brand: data.brand?.trim() || "",
           category: data.category?.trim() || "",
           barcode: barcodeToSave,
           tags: data.tags || {},
           image_url: data.imageUrl || "",
-        })
-        .eq("id", id);
+        },
+        orgId
+      );
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       // Handle batch updates on product edit
       if (data.batches && Array.isArray(data.batches)) {
         // Fetch existing batches for this product
-        const { data: existingBatches } = await supabase
-          .from("product_batches")
-          .select("id")
-          .eq("product_id", id);
+        const { data: existingBatches } = await productsApi.getBatches([id], orgId);
 
-        const existingIds = new Set((existingBatches || []).map((b) => b.id));
+        const existingIds = new Set((existingBatches || []).map((b) => b.id).filter(Boolean) as string[]);
         const keptIds = new Set<string>();
 
         for (const b of data.batches) {
@@ -288,17 +268,17 @@ export default function ItemMaster() {
 
           if (b.id && existingIds.has(b.id)) {
             keptIds.add(b.id);
-            await supabase.from("product_batches").update(batchPayload).eq("id", b.id);
+            await productsApi.updateBatch(b.id, batchPayload, orgId);
           } else {
-            const { data: ins } = await supabase.from("product_batches").insert(batchPayload).select("id").single();
-            if (ins) keptIds.add(ins.id);
+            const { data: ins } = await productsApi.createBatch(batchPayload, orgId);
+            if (ins?.id) keptIds.add(ins.id);
           }
         }
 
         // Delete any removed batches (that were not kept)
         const toDelete = Array.from(existingIds).filter((eId) => !keptIds.has(eId));
-        if (toDelete.length > 0) {
-          await supabase.from("product_batches").delete().in("id", toDelete);
+        for (const delId of toDelete) {
+          await productsApi.deleteBatch(delId, orgId);
         }
       }
 
@@ -330,29 +310,25 @@ export default function ItemMaster() {
         };
       });
 
-      const { data: inserted, error } = await supabase
-        .from("products")
-        .insert(productsToInsert)
-        .select("id, name");
+      const bulkPayload = importedProducts.map((p, idx) => {
+        const prod = productsToInsert[idx];
+        return {
+          ...prod,
+          batches: [
+            {
+              batch_number: "BATCH-01",
+              cost_price: Number(p.costPrice) || 0,
+              mrp: Number(p.mrp) || 0,
+              stock: Number(p.stock) || 0,
+            },
+          ],
+        };
+      });
 
-      if (error) throw error;
+      const { data: importRes, error } = await productsApi.bulkImport(bulkPayload, "overwrite", orgId);
+      if (error) throw new Error(error.message);
 
-      if (inserted?.length) {
-        const batchInserts = inserted.map((p, idx) => {
-          const src = importedProducts[idx] || importedProducts.find((sp) => sp.name === p.name);
-          return {
-            product_id: p.id,
-            batch_number: "BATCH-01",
-            cost_price: Number(src?.costPrice) || 0,
-            mrp: Number(src?.mrp) || 0,
-            stock: Number(src?.stock) || 0,
-          };
-        });
-        const { error: batchErr } = await supabase.from("product_batches").insert(batchInserts);
-        if (batchErr) console.warn("Failed to insert product batches:", batchErr.message);
-      }
-
-      toast({ title: "Products Imported", description: `${inserted?.length || 0} products added from website.` });
+      toast({ title: "Products Imported", description: `${importedProducts.length} products added from website.` });
       setShowAddModal(false);
       setEditingProduct(null);
       fetchProducts();
@@ -387,11 +363,9 @@ export default function ItemMaster() {
   const handleDeleteProduct = async (id: string, name: string) => {
     if (!confirm(`Delete "${name}"? This will also remove all its batches.`)) return;
     try {
-      const { error: batchErr } = await supabase.from("product_batches").delete().eq("product_id", id);
-      if (batchErr) console.warn("Failed to delete batches:", batchErr.message);
-
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
+      await productsApi.deleteBatchesByProductIds([id], orgId);
+      const { error } = await productsApi.deleteProduct(id, orgId);
+      if (error) throw new Error(error.message);
 
       toast({ title: "Deleted", description: `${name} removed from catalog.` });
       fetchProducts();
@@ -423,11 +397,9 @@ export default function ItemMaster() {
 
     const ids = Array.from(selectedIds);
     try {
-      const { error: batchErr } = await supabase.from("product_batches").delete().in("product_id", ids);
-      if (batchErr) console.warn("Failed to delete batches:", batchErr.message);
-
-      const { error } = await supabase.from("products").delete().in("id", ids);
-      if (error) throw error;
+      await productsApi.deleteBatchesByProductIds(ids, orgId);
+      const { error } = await productsApi.bulkDelete(ids, orgId);
+      if (error) throw new Error(error.message);
 
       toast({ title: "Deleted", description: `${ids.length} product(s) removed.` });
       setSelectedIds(new Set());
@@ -446,8 +418,8 @@ export default function ItemMaster() {
     update[bulkEditField] = bulkEditValue.trim();
 
     try {
-      const { error } = await supabase.from("products").update(update).in("id", ids);
-      if (error) throw error;
+      const { error } = await productsApi.bulkUpdate(ids, update, orgId);
+      if (error) throw new Error(error.message);
 
       toast({ title: "Updated", description: `${ids.length} product(s) updated.` });
       setSelectedIds(new Set());

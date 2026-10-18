@@ -1,63 +1,65 @@
-# BRIEFING — 2026-10-18T10:15:00Z
+# BRIEFING — 2026-10-18T18:28:00Z
 
 ## Mission
-Objective and adversarial review of CredSmart Phase 3: Salary Management & Payroll Engine — Milestone M1: Database Migration & TypeScript Types.
+Adversarial quality review and stress-testing of Milestone 1 deliverables (`src/lib/apiClient.ts` and `src/test/apiClient.test.ts`), verifying integrity, edge-case resilience, and conformance to specifications before issuing gate verdict.
 
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
-- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
-- Instance: reviewer_m1_2
-- Phase 3 Instance: reviewer_m1_2 (Phase 3 Milestone 1: Database Migration & TypeScript Types)
-- Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Milestone: M1 (apiClient implementation & tests)
+- Instance: 2 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code
-- Actively check for integrity violations (hardcoded results, facades, shortcuts, fabricated verification)
-- Enforce strict relational integrity, TypeScript typing standards, and test regression validation
-- Prohibit approval of work that shortcuts or fabricates verification
-- Report test failures as findings without inlining unauthorized fixes
+- Review-only — do NOT modify implementation code.
+- Zero tolerance for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated logs, self-certifying shortcuts).
+- Explicit gate verdict: APPROVE or REQUEST_CHANGES.
+- Check edge cases: infinite 401 retry loop prevention, network error normalization, URL param encoding for nested objects/arrays, handling of null/undefined request bodies.
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T10:15:00Z
+- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Updated: 2026-10-18T18:25:30Z
 
 ## Review Scope
 - **Files to review**:
-  - `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-  - `src/integrations/supabase/types.ts`
-  - `src/types/crmPayroll.ts`
-  - `src/test/crmSalaryMigration.test.ts`
-  - `src/test/crmSalaryTypes.test.ts`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md`, `crm-rbac-skill`, `crm-attendance-skill`
-- **Review criteria**: schema correctness, relational integrity, zero any types, adversarial resilience, regression test pass, zero integrity violations
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
+  - `src/lib/apiClient.ts`
+  - `src/test/apiClient.test.ts`
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- **Verification Commands**:
+  - `cmd /c npx vitest run src/test/apiClient.test.ts`
+  - `cmd /c npx tsc --noEmit`
+- **Review criteria**: Correctness, completeness, quality, edge cases, failure modes, adversarial challenge, integrity.
 
 ## Review Checklist
 - **Items reviewed**:
-  - `supabase/migrations/20261017020000_create_crm_salary_tables.sql`: 4 tables created with IF NOT EXISTS, 12 indexes with IF NOT EXISTS, 3 triggers with DROP TRIGGER IF EXISTS, 16 RLS policies with DROP POLICY IF EXISTS, correct foreign keys, cascades, numeric precision, and check constraints.
-  - `src/integrations/supabase/types.ts`: exact mapping of 4 tables in Database["public"]["Tables"] with Row, Insert, Update, and Relationships definitions.
-  - `src/types/crmPayroll.ts`: full literal unions, UI enrichments, calculation contracts (PayslipComputedData, CrmAttendanceRecord).
-  - Test suites: `crmSalaryMigration.test.ts` (22 tests), `crmSalaryTypes.test.ts` (20 tests).
+  - `src/lib/apiClient.ts` (470 lines) — fully audited
+  - `src/test/apiClient.test.ts` (617 lines) — fully audited
+  - `worker_m1/handoff.md` — verified against independent command executions
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims directly verified via `tsc --noEmit` and `vitest run`.
+- **Unverified claims**: None; all claims verified independently.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Cascading delete safety: verified `ON DELETE CASCADE` on tenant/staff entities; verified `ON DELETE SET NULL` on audit actors (`locked_by`, `requested_by`, `approved_by`) to ensure financial records are not destroyed if an administrator account is deleted.
-  - Multi-tenant constraint collision: verified `uq_crm_salary_profiles_staff (org_id, staff_id)`, `uq_crm_payroll_runs_month (org_id, month_year)`, and `uq_crm_payslips_staff_month (org_id, staff_id, month_year)` are scoped to `org_id`.
-  - JSONB snapshot immutability: verified `salary_profile_snapshot` in `crm_payslips` preserves historical compensation configuration against future profile changes.
-  - Type strictness: `tsc --noEmit` exited code 0; zero `any` types verified via `IsAny<T>`.
-  - Idempotency: verified all DDL statements wrapped in `BEGIN; ... COMMIT;` with `IF NOT EXISTS` or preceding `DROP ... IF EXISTS`.
-- **Vulnerabilities found**: 0 integrity violations in M1 deliverables. Found 1 pre-existing date-drift bug in Phase 2 test `src/test/crmAttendanceRoleFilterStress.challenger.test.tsx` where static `TODAY = "2026-10-17"` failed when the calendar flipped to `2026-10-18`.
-- **Untested angles**: Live DB migration execution against production Supabase instance (to be executed by Supabase CLI/migrations runner in deployment).
+  - *Infinite 401 retry loop*: Tested linear flow on line 255; structurally guaranteed to retry at most once without recursion or loops.
+  - *Network failure normalization*: Tested AbortError / TypeError handling; verified that both signal abortions and network errors normalize to `{ data: null, error: ApiError }` with status 0.
+  - *Query param serialization*: Verified primitive types, arrays, null/undefined stripping, and URL merging. Identified that nested objects produce `[object Object]` if TypeScript types are bypassed.
+  - *Null/undefined request bodies*: Verified that GET and body-less POST do not set invalid `requestBody` or unwanted `Content-Type: application/json`.
+  - *Integrity audit*: Confirmed no mock shortcuts, hardcoded test branches, or facade logic in source code.
+- **Vulnerabilities found**:
+  - Minor: Response stream read (`await response.text()` on line 329) is inside `try/finally` without an inner `catch` for rare mid-stream connection aborts.
+  - Minor: If callers bypass TypeScript and pass nested objects in `params`, they serialize to `[object Object]`.
+- **Untested angles**: None.
 
 ## Key Decisions Made
-- Confirmed full relational integrity, comprehensive indexing, and zero regressions across CRM Phase 3 Milestone 1 deliverables.
-- Issued verdict: APPROVE.
+- Confirmed zero integrity violations in `worker_m1` implementation.
+- Successfully executed independent test runs for vitest (34 passed) and tsc (0 errors).
+- Rendered Gate Verdict: APPROVE.
 
 ## Artifact Index
-- `handoff.md`: 5-component handoff report detailing observations, logic chain, caveats, conclusion, and verification method.
-- `progress.md`: Liveness heartbeat log.
-- `DISPATCH.md`: Task assignment and dispatch log.
+- `DISPATCH.md` — Inbound instructions log
+- `BRIEFING.md` — Persistent state and working memory
+- `progress.md` — Liveness heartbeat
+- `handoff.md` — Final review and adversarial challenge report

@@ -1,26 +1,30 @@
-# Task Assignment: Reviewer M2-1 (Payroll Mathematical Logic & Formula Verification)
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
-Target: Milestone M2 Verification
-Verify:
-1. Examine `src/utils/crmPayrollUtils.ts`, `src/test/crmPayrollUtils.test.ts`, and `src/test/crmPayrollUtils.stress.test.ts`.
-2. Verify all 8 pure functions, zero-division handling, 2-decimal half-up rounding, and clamping logic.
-3. Run `cmd /c npx vitest run crmPayroll` and `cmd /c npx tsc --noEmit`.
-Report APPROVE or REQUEST_CHANGES in handoff.md.
+## 2026-10-18T19:03:48Z
 
-## 2026-10-18T10:53:36Z
-You are Reviewer M2-1 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2_1\handoff.md
-- src/utils/crmPayrollUtils.ts
-- src/test/crmPayrollUtils.test.ts
-- src/test/crmPayrollUtils.stress.test.ts
+You are reviewer_m2_1. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1
 
-Run verification:
-- cmd /c npx vitest run crmPayroll
-- cmd /c npx tsc --noEmit
-Review mathematical logic, round2 half-up rounding, zero division protection, and clamping.
-Write your verdict (APPROVE or REQUEST_CHANGES) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+
+Artifacts to Review:
+- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Products API Service: src/services/productsApi.ts
+- Products Context: src/context/ProductsContext.tsx
+- Migrated Pages & Services: src/pages/Items.tsx, src/pages/ItemMaster.tsx, src/pages/Inventory.tsx, src/services/stockService.ts
+- Worker M2 Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+
+Review Scope:
+1. Examine `src/services/productsApi.ts` and migrated call sites for correctness, completeness, and interface parity:
+   - Full implementation of all product/batch CRUD and adjustment methods.
+   - Parity of return types (`ProductCatalogOption`, `ProductBatch`) matching frontend component expectations.
+   - Preservation of `localStorage` caching (`credsmart_cached_products_${orgId}`) in `ProductsContext.tsx`.
+   - Toast notifications and loading state integrity across `Items.tsx`, `ItemMaster.tsx`, and `Inventory.tsx`.
+2. Run verification commands:
+   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
+   - `cmd /c npx tsc --noEmit`
+3. Render an explicit gate verdict: APPROVE or REQUEST_CHANGES.
+
+Write your report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

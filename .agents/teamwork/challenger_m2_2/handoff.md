@@ -1,155 +1,148 @@
-# Milestone M2 Empirical Challenger Report: Payroll Precision & Invariance Testing
+# Milestone M2 Challenger Report: AST / Grep Compliance Verification
 
-**Challenger ID**: Challenger M2-2  
-**Milestone**: M2 — Salary Management & Payroll Calculation Engine  
-**Target Module**: `src/utils/crmPayrollUtils.ts`  
-**Test Suites**: 
-- `src/test/crmPayrollUtils.test.ts`
-- `src/test/crmPayrollUtils.stress.test.ts`
-- `src/test/crmPayrollUtils.challenger.test.ts`  
-**Date**: 2026-10-18T11:04:00Z  
-**Verdict**: **APPROVE**
+**Challenger Agent**: `challenger_m2_2`  
+**Milestone**: M2 — Products & Inventory Domain Query Migration  
+**Artifacts under Test**:  
+- Project Specification: `PROJECT.md`  
+- Frontend Application Codebase: `src/`  
+- Migration E2E Suite: `src/test/e2eApiMigration.test.ts`  
+- Independent Challenger AST Suite: `src/test/m2GrepAstChallenger.test.ts`  
+**Gate Verdict**: **APPROVE**  
+**Date**: 2026-10-18T19:11:00Z  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Assignment Mandate
-From `.agents/teamwork/challenger_m2_2/DISPATCH.md`:
-> 1. Challenge floating-point precision drift in `src/utils/crmPayrollUtils.ts`.
-> 2. Verify that `computeNetSalary` and `generatePayslipData` match integer-only Cent Oracle arithmetic within <= ₹0.01 bounded difference.
-> 3. Verify deduction stacking never produces negative net salary.
-> 4. Run `cmd /c npx vitest run src/test/crmPayrollUtils.test.ts`.
-> Report APPROVE or REJECT in handoff.md.
+Direct empirical observations, tool executions, and file inspection outputs:
 
-### 1.2 Direct Tool Execution Results
-1. **Unit Test Suite Execution (`src/test/crmPayrollUtils.test.ts`)**:
-   - Command: `cmd /c npx vitest run src/test/crmPayrollUtils.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/crmPayrollUtils.test.ts (48 tests) 31ms
-     Test Files  1 passed (1)
-          Tests  48 passed (48)
-     ```
-2. **Worker Stress Test Suite Execution (`src/test/crmPayrollUtils.stress.test.ts`)**:
-   - Command: `cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/crmPayrollUtils.stress.test.ts (16 tests) 576ms
-     Test Files  1 passed (1)
-          Tests  16 passed (16)
-     ```
-3. **Adversarial Empirical Challenger Test Suite (`src/test/crmPayrollUtils.challenger.test.ts`)**:
-   - Authored new independent test harness with 12 adversarial test cases covering:
-     - 2,500 Monte Carlo runs testing `computeNetSalary` vs Integer Cent Oracle
-     - 1,500 Monte Carlo runs testing `generatePayslipData` (monthly, daily, hourly) vs Integer Cent Oracle
-     - Extreme deduction stacking (50 cumulative adjustments, advances 10x base salary)
-     - Catastrophic LOP exceeding total days in month
-     - Overtime statutory fallback `(dailyRate / 8) * 1.5`
-     - Degenerate inputs (malformed month strings, zero base salary, negative inputs)
-     - High-throughput performance (2,000 full employee payslips in < 500ms)
-   - Command: `cmd /c npx vitest run src/test/crmPayrollUtils.challenger.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/crmPayrollUtils.challenger.test.ts (12 tests) 2519ms
-     Test Files  1 passed (1)
-          Tests  12 passed (12)
-     ```
-4. **Combined M2 Test Suites**:
-   - Command: `cmd /c npx vitest run src/test/crmPayrollUtils.test.ts src/test/crmPayrollUtils.stress.test.ts src/test/crmPayrollUtils.challenger.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/crmPayrollUtils.test.ts (48 tests) 35ms
-     ✓ src/test/crmPayrollUtils.stress.test.ts (16 tests) 576ms
-     ✓ src/test/crmPayrollUtils.challenger.test.ts (12 tests) 3243ms
-     Test Files  3 passed (3)
-          Tests  76 passed (76)
-     ```
-5. **Static Typecheck**:
+### 1.1 Direct Ripgrep / Static Scans for Table Queries
+- Scanned all non-test TypeScript/TSX source files across `src/` for queries targeting `products` and `product_batches`:
+  - Query: `\.from\(\s*["'`]products["'`]\s*\)`
+    * Application files (`src/` excluding `src/test/`): **0 matches**
+    * Test files: Found only in `src/test/tallyE2E.test.ts` (mockDb) and `src/test/e2eApiMigration.test.ts` (sample strings inside scanner unit tests).
+  - Query: `\.from\(\s*["'`]product_batches["'`]\s*\)`
+    * Application files (`src/` excluding `src/test/`): **0 matches**
+    * Test files: Found only in `src/test/tallyE2E.test.ts` (mockDb) and `src/test/e2eApiMigration.test.ts` (scanner switch-case branch).
+  - Storage bucket preservation:
+    * `src/components/storefront/StorefrontCatalogTab.tsx`: Preserves `supabase.storage.from("store-logos")` for binary logo asset uploads while containing zero table queries for `products`.
+
+### 1.2 Verification of 21 Migrated M2 Application Files
+Each of the 21 target files identified in the M2 migration scope was checked for `productsApi` consumption and zero `supabase.from("products" | "product_batches")` calls:
+1. `src/context/ProductsContext.tsx` — Consumes `productsApi.getProducts`, zero direct table queries.
+2. `src/pages/Items.tsx` — Consumes `productsApi`, zero direct table queries.
+3. `src/pages/ItemMaster.tsx` — Consumes `productsApi`, zero direct table queries.
+4. `src/pages/Inventory.tsx` — Consumes `productsApi`, zero direct table queries.
+5. `src/services/stockService.ts` — Consumes `productsApi`, zero direct table queries.
+6. `src/pages/POSBilling.tsx` — Consumes `productsApi`, zero direct table queries.
+7. `src/pages/BarcodeGenerator.tsx` — Consumes `productsApi`, zero direct table queries.
+8. `src/pages/PurchaseReturns.tsx` — Consumes `productsApi`, zero direct table queries.
+9. `src/components/storefront/StorefrontCatalogTab.tsx` — Consumes `productsApi`, zero direct table queries.
+10. `src/services/storefrontService.ts` — Consumes `productsApi`, zero direct table queries.
+11. `src/utils/offlineQueue.ts` — Consumes `productsApi`, zero direct table queries.
+12. `src/components/items/QuickCreateItemModal.tsx` — Consumes `productsApi`, zero direct table queries.
+13. `src/components/PurchaseInvoiceForm.tsx` — Consumes `productsApi`, zero direct table queries.
+14. `src/components/AppLayout.tsx` — Consumes `productsApi`, zero direct table queries.
+15. `src/pages/Dashboard.tsx` — Consumes `productsApi`, zero direct table queries.
+16. `src/hooks/useOrganization.tsx` — Consumes `productsApi`, zero direct table queries.
+17. `src/pages/Auth.tsx` — Consumes `productsApi`, zero direct table queries.
+18. `src/services/documentsService.ts` — Consumes `productsApi`, zero direct table queries.
+19. `src/services/networkInvoicingService.ts` — Consumes `productsApi`, zero direct table queries.
+20. `src/services/autoSyncService.ts` — Consumes `productsApi`, zero direct table queries.
+21. `src/pages/TallyImport.tsx` — Consumes `productsApi`, zero direct table queries.
+
+### 1.3 Execution of Verification Test Suites & Static Check
+1. **TypeScript Typecheck**:
    - Command: `cmd /c npx tsc --noEmit`
    - Result: Exited with code 0 (0 errors).
-6. **Regression Verification**:
-   - `crmSalary`: `cmd /c npx vitest run crmSalary` -> 4 files, 98 passed (0 errors).
-   - `crmPermission`: `cmd /c npx vitest run src/test/crmPermissionRbac.test.ts src/test/crmPermissionGate.test.tsx` -> 2 files, 34 passed (0 errors).
+2. **E2E Migration Test Suite**:
+   - Command: `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
+   - Output verbatim:
+     ```
+     ✓ src/test/e2eApiMigration.test.ts (43 tests) 2027ms
+     Test Files  1 passed (1)
+          Tests  43 passed (43)
+     ```
+3. **Independent Challenger AST Test Suite**:
+   - Implemented in: `src/test/m2GrepAstChallenger.test.ts`
+   - Command: `cmd /c npx vitest run src/test/m2GrepAstChallenger.test.ts`
+   - Output verbatim:
+     ```
+     ✓ src/test/m2GrepAstChallenger.test.ts (7 tests) 598ms
+     Test Files  1 passed (1)
+          Tests  7 passed (7)
+     ```
+4. **Combined Test Verification**:
+   - Command: `cmd /c npx vitest run src/test/e2eApiMigration.test.ts src/test/m2GrepAstChallenger.test.ts`
+   - Output: 2 passed test files, 50 passed tests (100% pass rate).
+5. **API Client Unit Suite**:
+   - Command: `cmd /c npx vitest run src/test/apiClient.test.ts`
+   - Output: 53 passed tests out of 53.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Floating-Point Precision Drift Bound <= ₹0.01 against Integer Cent Oracle** (References: Section 1.2.2, 1.2.3):
-   - In `computeNetSalary`, inputs (`baseSalary`, `dailyRate`, `overtimeAmount`, `bonusAmount`, `pfDeduction`, `esiDeduction`, `advanceDeduction`) were tested against an independent integer Cent Oracle (Paise Oracle) where all values are converted to integer cents, and operations (`lopDeduction = Math.round(dailyRateCents * lopDays)`, `grossCents`, `totalDeductionsCents`, `netCents = Math.max(0, gross - deductions)`) are performed strictly in integer cents.
-   - Across 2,500 randomized Monte Carlo iterations with base amounts up to ₹500,000.00 and fractional half-days, the absolute difference `|engineNet - (oracleNet / 100)|` never exceeded 1 cent (`<= 0.0100`).
-   - In `generatePayslipData`, 1,500 randomized cycles (500 monthly, 500 daily, 500 hourly) were evaluated against the Cent Oracle. For monthly profiles with standard whole-rupee base compensation, cumulative drift between the floating-point engine and integer cent arithmetic stayed strictly within `<= ₹0.01`.
-2. **Total Deductions Exceeding Gross Salary are Strictly Clamped to Net Salary = 0** (References: Section 1.2.3 Suite 2):
-   - In `crmPayrollUtils.ts` line 208 (`computeNetSalary`):
-     `return Math.max(0, round2(net));`
-   - In `crmPayrollUtils.ts` line 369 (`generatePayslipData`):
-     `const netSalary = Math.max(0, round2(grossSalary - totalDeductions));`
-   - When tested adversarially with:
-     - Advance deductions 10x greater than gross salary (e.g. ₹250,000 advance on ₹25,000 salary)
-     - 50 cumulative micro-deductions totaling ₹50,000 on ₹30,000 base salary
-     - Total statutory deductions where `pfPercent` or `esiPercent` are set to 100% or above
-     - Catastrophic LOP where absent days exceed total scheduled working days in the month
-   - The engine strictly evaluated `netSalary = 0`.
-   - Empirically verified with `Object.is(netSalary, -0) === false` — no negative zero is ever returned.
-3. **Statutory Overtime Fallback Guarantee** (Reference: Section 1.2.3 Suite 3):
-   - In `crmPayrollUtils.ts` lines 326-331, when `salaryProfile.hourly_overtime_rate` is null or undefined, the engine defaults to `dailyRate > 0 ? round2((dailyRate / 8) * 1.5) : 0`.
-   - Adversarially verified with 120 overtime minutes on ₹54,000 monthly base salary (27 working days -> daily rate ₹2,000 -> overtime rate `(2000 / 8) * 1.5 = ₹375.00/hr`). Result: exactly ₹750.00 overtime remuneration.
-4. **Leap Year and Calendar Determinism**:
-   - `getWorkingDaysInMonth` parses `YYYY-MM` and computes UTC calendar days (`Date.UTC(year, month - 1, day)`), ensuring Feb 2024 (leap year = 29 days), Feb 2000 (century leap year = 29 days), and Feb 1900 (century non-leap year = 28 days) are evaluated with zero daylight saving or local timezone drift.
-5. **High-Volume Throughput**:
-   - Empirically benchmarked generating 2,000 full employee payslips in under 300ms (threshold < 500ms).
+1. **AST & Grep Completeness (Observation 1.1 & 1.2)**:
+   - Application code across all 267 production `.ts` and `.tsx` source files in `src/` was traversed recursively.
+   - Both single-line and multi-line regex patterns matching `(?:supabase|client|\bdb)\s*\.?\s*from\s*\(\s*["'`]\s*(products|product_batches)\s*["'`]\s*\)` were evaluated against every file.
+   - Result is 0 violations. This proves that all direct Supabase client queries for the `products` and `product_batches` database tables have been eliminated from application code.
+
+2. **Integration with Centralized API Layer (Observation 1.2 & 1.3)**:
+   - `src/services/productsApi.ts` interfaces directly with `apiClient`, `apiGet`, `apiPost`, `apiPut`, and `apiDelete`.
+   - Inspection confirms `productsApi.ts` does not contain recursive direct table queries.
+   - All 21 target files consume `productsApi` methods (`getProducts`, `getProductById`, `createProduct`, `updateProduct`, `deleteProduct`, `bulkImport`, `adjustStock`, `getBatches`, `createBatch`, `updateBatch`, `deleteBatch`, `bulkUpsertBatches`, `checkBarcodeUnique`).
+
+3. **Compiler and Behavioral Parity (Observation 1.3)**:
+   - `tsc --noEmit` verifies strict compile-time type safety with zero type errors across all migrated call sites and signatures.
+   - `vitest run src/test/e2eApiMigration.test.ts` validates Tier 1 (features 1–10), Tier 2 (boundary & corner cases), Tier 3 (cross-domain contract parity), and Tier 4 (static AST grep scanner).
+   - `vitest run src/test/m2GrepAstChallenger.test.ts` provides adversarial verification with 7 dedicated assertion steps.
 
 ---
 
 ## 3. Caveats
 
-- **Whole Rupee Base Profile Assumption for Exact 1-Cent Cent Oracle**: In `getDailyRate(rawBase, workingDays)`, division by prime working days (e.g., 23, 27, 29) produces periodic repeating decimals. If an organization enters a non-integer base salary with fractional paise (e.g., ₹182,999.55), float IEEE 754 half-up rounding in `round2` rounds `18299.955` to `18299.95`, whereas integer cent division `Math.round(18299955 / 10)` rounds to `18299.96`. When multiplied by high LOP days (e.g. 5 days), this 1-cent difference in daily rate scales to 5 cents. In standard production payroll, base salaries are integer rupee values, where daily rate rounding matches integer cent rounding within 1 cent.
-- **No caveats** regarding system stability, type safety, non-negativity guarantees, or compliance with `ORIGINAL_REQUEST.md`.
+- Direct Supabase table queries for unmigrated domains (`customers`, `suppliers`, `credit_transactions`, `sales`, `purchase_invoices`, `organizations`, `crm_*`) remain present in application code, as scheduled for subsequent Milestones (M3, M4, M5).
+- Storage bucket access via `supabase.storage.from("store-logos")` in `StorefrontCatalogTab.tsx` is preserved as intended for binary file handling.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: APPROVE**
+**Gate Verdict**: **APPROVE**
 
-Milestone M2 implementation in `src/utils/crmPayrollUtils.ts` satisfies all mathematical, architectural, and adversarial requirements:
-1. `computeNetSalary` and `generatePayslipData` match Integer Cent Oracle arithmetic within `<= ₹0.01` bounded difference.
-2. Net salary is strictly clamped to `0` whenever deductions exceed gross remuneration; negative net salary is impossible.
-3. All 48 unit tests in `src/test/crmPayrollUtils.test.ts` pass cleanly.
-4. All 16 stress tests in `src/test/crmPayrollUtils.stress.test.ts` pass cleanly.
-5. All 12 adversarial challenger tests in `src/test/crmPayrollUtils.challenger.test.ts` pass cleanly.
-6. Static type analysis (`npx tsc --noEmit`) passes with 0 errors.
-7. Zero regression across all CRM Phase 1 and Phase 2 test suites.
-
-Milestone M2 is approved to proceed to Milestone M3 (Salary Management UI Page).
+Milestone 2 (M2: Products & Inventory Domain Query Migration) satisfies all acceptance criteria:
+1. **0 direct table queries** exist for `products` or `product_batches` across all production application code files in `src/`.
+2. All 21 target files are properly integrated with `src/services/productsApi.ts`.
+3. `cmd /c npx vitest run src/test/e2eApiMigration.test.ts` passes 43/43 tests (100%).
+4. `cmd /c npx tsc --noEmit` exits with code 0 (zero errors).
+5. Independent challenger test harness `src/test/m2GrepAstChallenger.test.ts` passes 7/7 tests (100%).
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce and verify this challenge report:
+To independently reproduce and verify this verdict:
 
-1. **Verify TypeScript compilation**:
-   ```bash
+1. **Run E2E Migration Test Suite**:
+   ```powershell
+   cmd /c npx vitest run src/test/e2eApiMigration.test.ts
+   ```
+   *Expected*: 43 tests pass (100% pass rate).
+
+2. **Run Challenger AST & Grep Scan Suite**:
+   ```powershell
+   cmd /c npx vitest run src/test/m2GrepAstChallenger.test.ts
+   ```
+   *Expected*: 7 tests pass (100% pass rate).
+
+3. **Run TypeScript Strict Compiler Check**:
+   ```powershell
    cmd /c npx tsc --noEmit
    ```
-   *Expected*: Exit code 0 (0 errors).
-
-2. **Run all Payroll test suites (Unit, Stress, and Challenger)**:
-   ```bash
-   cmd /c npx vitest run src/test/crmPayrollUtils.test.ts src/test/crmPayrollUtils.stress.test.ts src/test/crmPayrollUtils.challenger.test.ts
-   ```
-   *Expected*: 76 passed (3 test files).
-
-3. **Run Regression Suites**:
-   ```bash
-   cmd /c npx vitest run crmSalary
-   cmd /c npx vitest run src/test/crmPermissionRbac.test.ts src/test/crmPermissionGate.test.tsx
-   ```
-   *Expected*: 98 passed in crmSalary, 34 passed in crmPermission.
+   *Expected*: Exits with code 0 and zero compilation errors.
 
 4. **Invalidation Conditions**:
-   - Any negative net salary output under any combination of deductions.
-   - Any drift > 0.01 between `computeNetSalary` and the integer cent oracle.
-   - Any compiler error in `npx tsc --noEmit`.
+   - Any match for `supabase.from("products")` or `supabase.from("product_batches")` in any non-test file under `src/`.
+   - Any test failure in `e2eApiMigration.test.ts` or `m2GrepAstChallenger.test.ts`.
+   - Any type error in `tsc --noEmit`.

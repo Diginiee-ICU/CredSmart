@@ -27,7 +27,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
-import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
@@ -163,11 +163,10 @@ export default function Suppliers() {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("suppliers")
-        .select("id, name, phone, email, gstin, address, created_at, custom_fields")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data, error } = await partiesApi.getSuppliers(orgId, {
+        sort: "name",
+        order: "asc",
+      });
 
       if (error) {
         console.error("fetchSuppliers error:", error);
@@ -176,11 +175,10 @@ export default function Suppliers() {
         return;
       }
 
-      const { data: credits, error: creditsError } = await supabase
-        .from("credit_transactions")
-        .select("party_id, amount, type")
-        .eq("organization_id", orgId)
-        .eq("party_type", "supplier");
+      const { data: credits, error: creditsError } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyType: "supplier",
+      });
 
       if (creditsError) {
         console.error("fetchSuppliers credits error:", creditsError);
@@ -330,16 +328,13 @@ export default function Suppliers() {
     setSaving(true);
     try {
       if (editingId) {
-        const { error } = await supabase
-          .from("suppliers")
-          .update({
-            name: nameTrimmed,
-            phone: form.phone.trim(),
-            email: emailTrimmed,
-            gstin: gstinTrimmed,
-            address: form.address.trim(),
-          })
-          .eq("id", editingId);
+        const { error } = await partiesApi.updateSupplier(editingId, {
+          name: nameTrimmed,
+          phone: form.phone.trim(),
+          email: emailTrimmed,
+          gstin: gstinTrimmed,
+          address: form.address.trim(),
+        }, orgId);
         if (error) throw error;
         toast.success("Supplier updated successfully");
       } else {
@@ -351,14 +346,14 @@ export default function Suppliers() {
           return;
         }
 
-        const { error } = await supabase.from("suppliers").insert({
+        const { error } = await partiesApi.createSupplier({
           organization_id: orgId,
           name: nameTrimmed,
           phone: form.phone.trim(),
           email: emailTrimmed,
           gstin: gstinTrimmed,
           address: form.address.trim(),
-        });
+        }, orgId);
         if (error) throw error;
         toast.success("Supplier created successfully");
       }
@@ -374,7 +369,7 @@ export default function Suppliers() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      const { error } = await partiesApi.deleteSupplier(id, orgId);
       if (error) {
         toast.error(
           error.message.includes("violates foreign key")
@@ -399,13 +394,13 @@ export default function Suppliers() {
     setCreditDesc("");
     setCreditType("credit");
     try {
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select("id, amount, type, description, created_at")
-        .eq("party_id", s.id)
-        .eq("party_type", "supplier")
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const { data, error } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyId: s.id,
+        partyType: "supplier",
+        order: "desc",
+        limit: 20,
+      });
       if (error) {
         console.error("openCreditModal error:", error);
         setCreditHistory([]);
@@ -426,7 +421,7 @@ export default function Suppliers() {
     }
     if (!orgId || !user || !creditModal) return;
     try {
-      const { error } = await supabase.from("credit_transactions").insert({
+      const { error } = await partiesApi.recordCreditTransaction({
         organization_id: orgId,
         party_type: "supplier",
         party_id: creditModal.supplierId,
@@ -434,7 +429,7 @@ export default function Suppliers() {
         type: creditType,
         description: creditDesc,
         created_by: user.id,
-      });
+      }, orgId);
       if (error) {
         toast.error(error.message);
         return;

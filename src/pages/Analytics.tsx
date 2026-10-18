@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -66,11 +67,10 @@ export default function Analytics() {
   const fetchSales = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("sales")
-        .select("total, payment_method, created_at")
-        .eq("organization_id", orgId!)
-        .order("created_at", { ascending: true });
+      const { data, error } = await invoicesApi.getSales(orgId!, {
+        order: "asc",
+        sort: "created_at",
+      });
       if (error) {
         console.error("fetchSales error:", error);
         toast({ title: "Could not load analytics", description: "Failed to fetch sales" });

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -55,27 +57,22 @@ export default function CustomerLedger() {
     if (!orgId || !id) return;
     try {
       // 1. Get Customer Details
-      const { data: custData, error: custError } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data: custData, error: custError } = await partiesApi.getCustomerById(id, orgId);
       if (custError) throw custError;
       setCustomer(custData);
 
       // 2. Get Credit Transactions
-      const { data: txData, error: txError } = await supabase
-        .from("credit_transactions")
-        .select("*")
-        .eq("party_id", id)
-        .order("created_at", { ascending: true });
+      const { data: txData, error: txError } = await partiesApi.getCreditTransactions({
+        orgId,
+        partyId: id,
+        order: "asc",
+      });
       if (txError) throw txError;
 
       // 3. Get Sales Invoices for customer (to verify credit sales cross-reference)
-      const { data: salesData } = await supabase
-        .from("sales")
-        .select("id, invoice_number, total, payment_method, created_at, customer_id")
-        .eq("customer_id", id);
+      const { data: salesData } = await invoicesApi.getSales(orgId, {
+        customerId: id,
+      });
 
       // 4. Run Automated Financial Ledger Reconciliation
       const reconResult = reconcilePartyLedger(

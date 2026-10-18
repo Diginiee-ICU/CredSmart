@@ -46,6 +46,7 @@ import {
 import { GenerateEwayBillModal } from "@/components/eway/GenerateEwayBillModal";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { toast } from "sonner";
@@ -430,16 +431,12 @@ export function SalesInvoiceModal({
   const fetchCustomers = async () => {
     if (!orgId) return;
     try {
-      const { data: custData } = await supabase
-        .from("customers")
-        .select("id, name, phone, email, address, custom_fields")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: custData } = await partiesApi.getCustomers(orgId, {
+        sort: "name",
+        order: "asc",
+      });
 
-      const { data: creditData } = await supabase
-        .from("credit_transactions")
-        .select("party_id, amount, type")
-        .eq("organization_id", orgId);
+      const { data: creditData } = await partiesApi.getCreditTransactions({ orgId });
 
       const balanceMap: Record<string, number> = {};
       (creditData || []).forEach((c) => {
@@ -998,19 +995,18 @@ export function SalesInvoiceModal({
     }
 
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .insert({
+      const { data, error } = await partiesApi.createCustomer(
+        {
           organization_id: orgId,
           name: newCustName.trim(),
           phone: newCustPhone.trim() || undefined,
           email: undefined,
           address: newCustAddress.trim() || undefined,
-        })
-        .select()
-        .single();
+        },
+        orgId
+      );
 
-      if (error) throw error;
+      if (error || !data) throw error || new Error("Failed to create customer");
 
       toast.success(`Customer "${newCustName}" created successfully!`);
       const newOpt: CustomerOption = {

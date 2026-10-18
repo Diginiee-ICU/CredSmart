@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationBar } from "@/components/ui/PaginationBar";
-import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
   Activity,
@@ -68,12 +68,7 @@ export default function ActivityLog() {
     if (!orgId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, user_id, action, entity_type, entity_id, details, created_at")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false })
-        .limit(200);
+      const { data, error } = await settingsApi.getAuditLogs(orgId, { limit: 200 });
 
       if (error) {
         console.error("fetchLogs error:", error);
@@ -82,14 +77,11 @@ export default function ActivityLog() {
       }
 
       if (data && data.length > 0) {
-        const userIds = [...new Set(data.map((d) => d.user_id))].filter(Boolean);
-        const profiles: Array<{ id: string; full_name: string | null }> | undefined =
-          userIds.length > 0
-            ? (await supabase
-                .from("profiles")
-                .select("id, full_name")
-                .in("id", userIds)).data ?? []
-            : [];
+        const userIds = [...new Set(data.map((d) => d.user_id))].filter((id): id is string => Boolean(id));
+        const profilesRes = userIds.length > 0
+          ? await settingsApi.getProfiles({ ids: userIds })
+          : { data: [] };
+        const profiles = profilesRes.data ?? [];
 
         const enriched: AuditEntry[] = data.map((d) => ({
           ...d,

@@ -14,6 +14,9 @@ import {
   notifyStockUpdated,
   generateSafeUuid,
 } from "@/services/stockService";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { settingsApi } from "@/services/settingsApi";
 
 const STORAGE_INVOICES_KEY = "credsmart_network_invoices_v1";
 const STORAGE_NOTIFICATIONS_KEY = "credsmart_network_notifications_v1";
@@ -450,33 +453,9 @@ export const networkInvoicingService = {
     // 2. Query storefront_settings (public platform directory of all registered stores)
     try {
       const sfResult = await safeDbCall(async () => {
-        if (cleanPhone) {
-          const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
-          const { data } = await supabase
-            .from("storefront_settings")
-            .select("organization_id, store_name, contact_phone, address")
-            .ilike("contact_phone", `%${digits10}%`)
-            .limit(1);
-          if (data && data.length > 0) return data[0];
-        }
-        if (cleanName && cleanName.length >= 3) {
-          const { data } = await supabase
-            .from("storefront_settings")
-            .select("organization_id, store_name, contact_phone, address")
-            .ilike("store_name", `%${cleanName}%`)
-            .limit(1);
-          if (data && data.length > 0) return data[0];
-
-          // Try matching individual words from the name (length >= 3)
-          const words = cleanName.split(/\s+/).filter((w) => w.length >= 3);
-          for (const word of words) {
-            const { data: wordData } = await supabase
-              .from("storefront_settings")
-              .select("organization_id, store_name, contact_phone, address")
-              .ilike("store_name", `%${word}%`)
-              .limit(1);
-            if (wordData && wordData.length > 0) return wordData[0];
-          }
+        if (cleanPhone || cleanName) {
+          const { data } = await settingsApi.getStorefrontSettings(cleanPhone || cleanName);
+          if (data && data.organization_id) return data;
         }
         return null;
       });
@@ -494,30 +473,32 @@ export const networkInvoicingService = {
       console.warn("Storefront directory lookup notice:", err);
     }
 
-    // 3. Query Supabase organizations table (with safe timeout)
+    // 3. Query organizations via settingsApi (with safe timeout)
     try {
       const dbResult = await safeDbCall(async () => {
-        const query = supabase.from("organizations").select("*");
         if (criteria.orgId) {
-          const { data } = await query.eq("id", criteria.orgId).maybeSingle();
+          const { data } = await settingsApi.getOrganizationById(criteria.orgId);
           if (data) return data;
         }
-        if (cleanGstin) {
-          const { data } = await supabase.from("organizations").select("*").ilike("gstin", cleanGstin).maybeSingle();
-          if (data) return data;
-        }
-        if (cleanPhone) {
-          const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
-          const { data } = await supabase.from("organizations").select("*").ilike("phone", `%${digits10}%`).maybeSingle();
-          if (data) return data;
-        }
-        if (cleanEmail) {
-          const { data } = await supabase.from("organizations").select("*").ilike("email", cleanEmail).maybeSingle();
-          if (data) return data;
-        }
-        if (cleanName && cleanName.length >= 3) {
-          const { data } = await supabase.from("organizations").select("*").ilike("name", cleanName).maybeSingle();
-          if (data) return data;
+        const { data: orgs } = await settingsApi.getUserOrganizations();
+        if (orgs && orgs.length > 0) {
+          if (cleanGstin) {
+            const match = orgs.find((o) => o.gstin?.toLowerCase() === cleanGstin.toLowerCase());
+            if (match) return match;
+          }
+          if (cleanPhone) {
+            const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
+            const match = orgs.find((o) => o.phone?.includes(digits10));
+            if (match) return match;
+          }
+          if (cleanEmail) {
+            const match = orgs.find((o) => o.email?.toLowerCase() === cleanEmail.toLowerCase());
+            if (match) return match;
+          }
+          if (cleanName && cleanName.length >= 3) {
+            const match = orgs.find((o) => o.name?.toLowerCase().includes(cleanName.toLowerCase()));
+            if (match) return match;
+          }
         }
         return null;
       });
@@ -1260,10 +1241,7 @@ export const networkInvoicingService = {
       let supplierId = "";
       try {
         const suppResult = await safeDbCall(async () => {
-          const { data: existingSuppliers } = await supabase
-            .from("suppliers")
-            .select("id, name, phone, gstin")
-            .eq("organization_id", recipientOrg.id);
+          const { data: existingSuppliers } = await partiesApi.getSuppliers(recipientOrg.id);
 
           const matchedSupplier = (existingSuppliers || []).find((s) => {
             if (inv.senderOrgGstin && s.gstin && s.gstin.trim().toUpperCase() === inv.senderOrgGstin.trim().toUpperCase()) return true;
@@ -1272,23 +1250,22 @@ export const networkInvoicingService = {
             return false;
           });
 
-          if (matchedSupplier) {
+          if (matchedSupplier?.id) {
             return matchedSupplier.id;
           }
 
           // Auto-insert Person A as a new Supplier in Person B's store
-          const { data: newSupp } = await supabase
-            .from("suppliers")
-            .insert({
+          const { data: newSupp } = await partiesApi.createSupplier(
+            {
               organization_id: recipientOrg.id,
               name: inv.senderOrgName,
               phone: inv.senderOrgPhone || "",
               email: inv.senderOrgEmail || "",
               gstin: inv.senderOrgGstin || "",
               address: inv.senderOrgAddress || "",
-            })
-            .select("id")
-            .maybeSingle();
+            },
+            recipientOrg.id
+          );
 
           return newSupp?.id || null;
         }, 600);
@@ -1314,6 +1291,9 @@ export const networkInvoicingService = {
       // 4. Resolve or Auto-Create each Line Item in Person B (Buyer)'s Store
       const mappedPurchaseItems: DocumentLineItem[] = [];
 
+      const { data: initialRecipientProducts } = await productsApi.getProducts(recipientOrg.id);
+      const recipientProducts = initialRecipientProducts ? [...initialRecipientProducts] : [];
+
       for (let idx = 0; idx < inv.items.length; idx++) {
         const it = inv.items[idx];
         let resolvedProductId: string | null = null;
@@ -1324,35 +1304,21 @@ export const networkInvoicingService = {
 
           // 1. Try matching by barcode in recipient's store
           if (cleanBarcode) {
-            const barcodeMatch = await safeDbCall(() =>
-              supabase
-                .from("products")
-                .select("id, name")
-                .eq("organization_id", recipientOrg.id)
-                .eq("barcode", cleanBarcode)
-                .limit(1)
-                .maybeSingle()
+            const barcodeMatch = recipientProducts.find(
+              (p) => p.barcode === cleanBarcode
             );
-
-            if (barcodeMatch?.data?.id) {
-              resolvedProductId = barcodeMatch.data.id;
+            if (barcodeMatch?.id) {
+              resolvedProductId = barcodeMatch.id;
             }
           }
 
           // 2. Try matching by product name (case-insensitive) in recipient's store
           if (!resolvedProductId && cleanName) {
-            const nameMatch = await safeDbCall(() =>
-              supabase
-                .from("products")
-                .select("id, name")
-                .eq("organization_id", recipientOrg.id)
-                .ilike("name", cleanName)
-                .limit(1)
-                .maybeSingle()
+            const nameMatch = recipientProducts.find(
+              (p) => (p.name || "").trim().toLowerCase() === cleanName.toLowerCase()
             );
-
-            if (nameMatch?.data?.id) {
-              resolvedProductId = nameMatch.data.id;
+            if (nameMatch?.id) {
+              resolvedProductId = nameMatch.id;
             }
           }
 
@@ -1390,22 +1356,18 @@ export const networkInvoicingService = {
             };
 
             const createRes = await safeDbCall(() =>
-              supabase
-                .from("products")
-                .insert({
-                  organization_id: recipientOrg.id,
-                  name: cleanName,
-                  barcode: cleanBarcode || null,
-                  category: "General",
-                  sku: generatedSku,
-                  tags: tagsPayload,
-                })
-                .select("id, name, barcode, sku, category, tags")
-                .maybeSingle()
+              productsApi.createProduct({
+                name: cleanName,
+                barcode: cleanBarcode || null,
+                category: "General",
+                sku: generatedSku,
+                tags: tagsPayload,
+              }, recipientOrg.id)
             );
 
             if (createRes?.data?.id) {
               resolvedProductId = createRes.data.id;
+              recipientProducts.push(createRes.data);
             } else {
               // Local fallback UUID for offline / demo mode
               resolvedProductId = generateSafeUuid();

@@ -1,49 +1,47 @@
-# BRIEFING — 2026-10-17T09:05:30Z
+# BRIEFING — 2026-10-18T18:06:00Z
 
 ## Mission
-Investigate existing database migrations, RLS patterns, organizations/auth references, and Supabase TypeScript types to specify Milestone 1 (CRM Attendance, Geolocation, and Attendance Requests schema & types).
+Explore and survey the CredSmart codebase for the Frontend Supabase Table Query Migration to Dedicated Backend API project, focusing on Auth/Session handling, Products & Inventory query audit, API contract standards, and architecture recommendations.
 
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: investigator, synthesizer
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
-- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Milestone: CRM Phase 2 - Milestone 1 Investigation
+- Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Milestone: exploration_and_survey
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement or modify project source/migration files directly
-- Write only to .agents/teamwork/explorer_survey_1/
-- Produce evidence-based findings with exact file paths and line numbers
-- Deliver detailed analysis.md and 5-component handoff.md
+- Read-only investigation — do NOT implement changes or modify application source code
+- All analysis and reports written to working directory (.agents/teamwork/explorer_survey_1/)
+- Provide evidence chain with exact file paths and line numbers
+- Write comprehensive handoff.md with 5-component protocol
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
+- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
 - Updated: not yet
 
 ## Investigation State
 - **Explored paths**:
-  - `supabase/migrations/20261017000000_create_crm_rbac_tables.sql`
-  - `supabase/migrations/20260211173918_6bb13237-b72e-4831-9dd1-304eca51792b.sql`
-  - `src/integrations/supabase/types.ts`
-  - `src/pages/crm/CRMDashboard.tsx`
-  - `src/pages/crm/RoleManagement.tsx`
-  - `src/components/crm/`
-  - `src/test/crmPermissionRbac.test.ts`
+  - `src/integrations/supabase/client.ts`, `src/hooks/useAuth.tsx`, `src/hooks/useOrganization.tsx`
+  - `src/context/ProductsContext.tsx`
+  - `src/pages/Items.tsx`, `src/pages/ItemMaster.tsx`, `src/pages/Inventory.tsx`, `src/pages/POSBilling.tsx`, `src/pages/BarcodeGenerator.tsx`, `src/pages/PurchaseReturns.tsx`, `src/pages/TallyImport.tsx`, `src/pages/Auth.tsx`, `src/pages/Dashboard.tsx`
+  - `src/services/stockService.ts`, `src/services/documentsService.ts`, `src/services/networkInvoicingService.ts`, `src/services/storefrontService.ts`, `src/services/autoSyncService.ts`
+  - `src/components/items/QuickCreateItemModal.tsx`, `src/components/PurchaseInvoiceForm.tsx`, `src/components/storefront/StorefrontCatalogTab.tsx`, `src/components/AppLayout.tsx`
+  - `src/utils/offlineQueue.ts`
+  - `supabase/migrations/20261018000000_credsmart_full_schema.sql`
 - **Key findings**:
-  - `has_org_access(org_id)` helper function is defined in migration 20260211173918 line 78 and verifies membership in `public.organization_memberships`.
-  - `public.update_updated_at()` trigger function is defined in migration 20260211173918 line 171.
-  - Supabase types structure requires `crm_attendance`, `crm_attendance_requests`, and `crm_geolocations` inserted alphabetically into `Database["public"]["Tables"]`.
-  - Foreign keys to `public` tables are included in `Relationships` array, while `auth.users(id)` is omitted from `Relationships` in `types.ts`.
-  - Repository baseline is completely clean (`tsc --noEmit` exits 0, Vitest CRM tests exit 0).
-- **Unexplored areas**: None for Milestone 1 scope.
+  - Supabase client has `storage: localStorage`, `persistSession: true`, `autoRefreshToken: true`. Calling `supabase.auth.getSession()` automatically refreshes expired JWTs before returning the session token.
+  - Exactly two Postgres tables govern the Products & Inventory domain: `public.products` and `public.product_batches`. There are no standalone tables for `categories` or `units`; categories, barcodes, units, and base prices are stored as columns or within `tags JSONB` on `products`, and batch pricing/stock is in `product_batches`.
+  - Identified 21 files with ~60 distinct direct `supabase.from("products")` and `supabase.from("product_batches")` queries (SELECT, INSERT, UPDATE, DELETE, UPSERT).
+  - Designed target REST contract for `https://api.credsmart.online/api/products` and `product-batches` with Bearer JWT propagation, `x-organization-id` header, and response envelope parity (`{ data, error }`).
+- **Unexplored areas**:
+  - Other business domains (customers/parties, sales, purchases, crm) will be surveyed in subsequent phases.
 
 ## Key Decisions Made
-- Formatted full DDL specification for `20261017010000_create_crm_attendance_tables.sql` with idempotent guards (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DROP TRIGGER IF EXISTS`).
-- Outlined precise TypeScript definitions for `src/integrations/supabase/types.ts`.
+- Formulated centralized `apiClient.ts` architecture maintaining `{ data, error }` return signature to achieve drop-in replacement parity without modifying consumer component contracts or error-handling flows.
 
 ## Artifact Index
-- DISPATCH.md — Incoming task dispatch record
-- BRIEFING.md — Persistent context index
-- progress.md — Liveness heartbeat
-- analysis.md — Full investigation analysis report
-- handoff.md — 5-component handoff report
+- `DISPATCH.md` — Record of incoming dispatch messages
+- `BRIEFING.md` — Persistent situational memory
+- `progress.md` — Liveness and execution heartbeat
+- `handoff.md` — Comprehensive 5-component survey report

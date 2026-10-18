@@ -29,7 +29,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { InventoryItem, ItemUnit, GSTRate, ItemOffer } from "@/types/inventory";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/context/ProductsContext";
@@ -275,9 +275,9 @@ export default function Items() {
       };
 
       if (editingItem) {
-        await supabase
-          .from("products")
-          .update({
+        const { error: updateErr } = await productsApi.updateProduct(
+          editingItem.id,
+          {
             name: itemData.name,
             sku: itemData.sku,
             barcode: itemData.barcode,
@@ -285,36 +285,36 @@ export default function Items() {
             brand: itemData.brand,
             image_url: itemData.imageUrl || null,
             tags: tagsPayload,
-          })
-          .eq("id", editingItem.id);
+          },
+          orgId
+        );
+        if (updateErr) throw new Error(updateErr.message);
 
         // Synchronize product batch prices & stock
         try {
-          const { data: existingBatches } = await supabase
-            .from("product_batches")
-            .select("id")
-            .eq("product_id", editingItem.id)
-            .limit(1);
+          const { data: existingBatches } = await productsApi.getBatches([editingItem.id], orgId);
 
           if (existingBatches && existingBatches.length > 0) {
-            await supabase
-              .from("product_batches")
-              .update({
+            await productsApi.updateBatch(
+              existingBatches[0].id!,
+              {
                 cost_price: itemData.purchasePrice,
                 mrp: itemData.mrp || itemData.sellingPrice,
                 stock: itemData.currentStock,
-              })
-              .eq("id", existingBatches[0].id);
+              },
+              orgId
+            );
           } else {
-            await supabase
-              .from("product_batches")
-              .insert({
+            await productsApi.createBatch(
+              {
                 product_id: editingItem.id,
                 batch_number: "BATCH-01",
                 cost_price: itemData.purchasePrice,
                 mrp: itemData.mrp || itemData.sellingPrice,
                 stock: itemData.currentStock,
-              });
+              },
+              orgId
+            );
           }
         } catch (batchErr) {
           console.warn("Product batch update notice:", batchErr);
@@ -322,9 +322,8 @@ export default function Items() {
 
         toast.success(`Updated product "${itemData.name}"`);
       } else {
-        const { data: newProd, error } = await supabase
-          .from("products")
-          .insert({
+        const { data: newProd, error } = await productsApi.createProduct(
+          {
             organization_id: orgId,
             name: itemData.name,
             sku: itemData.sku,
@@ -333,23 +332,26 @@ export default function Items() {
             brand: itemData.brand,
             image_url: itemData.imageUrl || null,
             tags: tagsPayload,
-          })
-          .select()
-          .single();
+          },
+          orgId
+        );
 
-        if (error) throw error;
+        if (error) throw new Error(error.message);
 
         if (newProd) {
           const batch = (itemData.batches && itemData.batches.length > 0) ? itemData.batches[0] : null;
           try {
-            await supabase.from("product_batches").insert({
-              product_id: newProd.id,
-              batch_number: batch?.batchNumber || "BATCH-01",
-              cost_price: itemData.purchasePrice,
-              mrp: itemData.mrp || itemData.sellingPrice,
-              stock: itemData.currentStock,
-              expiry_date: batch?.expiryDate || null,
-            });
+            await productsApi.createBatch(
+              {
+                product_id: newProd.id,
+                batch_number: batch?.batchNumber || "BATCH-01",
+                cost_price: itemData.purchasePrice,
+                mrp: itemData.mrp || itemData.sellingPrice,
+                stock: itemData.currentStock,
+                expiry_date: batch?.expiryDate || null,
+              },
+              orgId
+            );
           } catch (batchErr) {
             console.warn("Product batch insert notice:", batchErr);
           }
@@ -436,9 +438,8 @@ export default function Items() {
           min_stock_alert: minStockAlertVal,
         };
 
-        const { data: newProd, error: pErr } = await supabase
-          .from("products")
-          .insert({
+        const { data: newProd, error: pErr } = await productsApi.createProduct(
+          {
             organization_id: orgId,
             name: it.name || "Product",
             brand: it.brand ?? null,
@@ -447,18 +448,21 @@ export default function Items() {
             sku: skuVal,
             image_url: it.imageUrl ?? "",
             tags: tagsPayload,
-          })
-          .select()
-          .single();
+          },
+          orgId
+        );
 
         if (newProd && !pErr) {
-          await supabase.from("product_batches").insert({
-            product_id: newProd.id,
-            batch_number: "BATCH-01",
-            cost_price: pPrice,
-            mrp: it.mrp || sPrice,
-            stock: stock,
-          });
+          await productsApi.createBatch(
+            {
+              product_id: newProd.id,
+              batch_number: "BATCH-01",
+              cost_price: pPrice,
+              mrp: it.mrp || sPrice,
+              stock: stock,
+            },
+            orgId
+          );
         }
       }
       toast.success(`Successfully imported ${importedList.length} products with barcodes & stock!`);
@@ -480,7 +484,8 @@ export default function Items() {
     }
 
     try {
-      await supabase.from("products").delete().eq("id", item.id);
+      const { error } = await productsApi.deleteProduct(item.id, orgId);
+      if (error) throw new Error(error.message);
       toast.success("Product deleted.");
       await refreshProducts(orgId);
     } catch (err: unknown) {
@@ -495,8 +500,9 @@ export default function Items() {
     const ids = Array.from(selectedIds);
     try {
       if (orgId) {
-        await supabase.from("product_batches").delete().in("product_id", ids);
-        await supabase.from("products").delete().in("id", ids);
+        await productsApi.deleteBatchesByProductIds(ids, orgId);
+        const { error } = await productsApi.bulkDelete(ids, orgId);
+        if (error) throw new Error(error.message);
         await refreshProducts(orgId);
       } else {
         setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
@@ -533,22 +539,14 @@ export default function Items() {
 
     try {
       if (orgId) {
-        // Adjust logic needs proper batching if we were using it, but for UI sync:
-        // Actually, stock adjustment belongs in inventory, but for quick adjust on item page:
-        // We might just update the first batch, or we just rely on local state if DB update isn't implemented here fully.
-        // Assuming we need to update the first batch for simplicity, if batches were tracked:
-        const { data: batches } = await supabase.from("product_batches").select("id").eq("product_id", adjustingItem.id).limit(1);
-        if (batches && batches.length > 0) {
-          await supabase.from("product_batches").update({ stock: newStock }).eq("id", batches[0].id);
-        } else {
-          await supabase.from("product_batches").insert({
-            product_id: adjustingItem.id,
-            batch_number: "BATCH-01",
-            cost_price: adjustingItem.purchasePrice,
-            mrp: adjustingItem.mrp || adjustingItem.sellingPrice,
-            stock: newStock,
-          });
-        }
+        await productsApi.adjustStock({
+          productId: adjustingItem.id,
+          adjustType,
+          quantity: qty,
+          orgId,
+          costPrice: adjustingItem.purchasePrice,
+          mrp: adjustingItem.mrp || adjustingItem.sellingPrice,
+        });
         await refreshProducts(orgId);
       } else {
         setItems((prev) =>

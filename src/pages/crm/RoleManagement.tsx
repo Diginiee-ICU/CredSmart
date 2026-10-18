@@ -38,7 +38,8 @@ import {
   type CRMPermission,
   type CRMStaffRole,
 } from "@/hooks/useCRMPermission";
-import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
+import { crmApi } from "@/services/crmApi";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -274,15 +275,12 @@ export default function RoleManagement(): React.ReactElement {
 
     try {
       // 1. Fetch CRM Roles
-      const { data: dbRoles, error: rolesErr } = await supabase
-        .from("crm_roles")
-        .select("*")
-        .eq("org_id", orgId);
+      const { data: dbRoles, error: rolesErr } = await crmApi.getCRMRoles(orgId);
 
       if (rolesErr) console.warn("RoleManagement: crm_roles notice:", rolesErr.message);
 
       let resolvedRoles: CRMRole[] = (dbRoles ? [...dbRoles] : []).sort((a, b) =>
-        a.created_at.localeCompare(b.created_at)
+        (a.created_at || "").localeCompare(b.created_at || "")
       );
 
       // Ensure at least a Super Admin role exists
@@ -311,10 +309,7 @@ export default function RoleManagement(): React.ReactElement {
       let permsData: CRMPermission[] = [];
 
       if (roleIds.length > 0) {
-        const { data: dbPerms, error: permsErr } = await supabase
-          .from("crm_permissions")
-          .select("*")
-          .in("role_id", roleIds);
+        const { data: dbPerms, error: permsErr } = await crmApi.getCRMPermissions({ roleIds });
 
         if (permsErr) console.warn("RoleManagement: crm_permissions notice:", permsErr.message);
         permsData = dbPerms ?? [];
@@ -322,10 +317,7 @@ export default function RoleManagement(): React.ReactElement {
       setAllPermissions(permsData);
 
       // 3. Fetch Staff Members from organization_memberships + profiles
-      const { data: membersData, error: membersErr } = await supabase
-        .from("organization_memberships")
-        .select("id, user_id, role, created_at")
-        .eq("organization_id", orgId);
+      const { data: membersData, error: membersErr } = await settingsApi.getMemberships(orgId);
 
       if (membersErr) console.warn("RoleManagement: memberships notice:", membersErr.message);
 
@@ -337,10 +329,7 @@ export default function RoleManagement(): React.ReactElement {
       // Fetch user profile names
       const profileMap: Record<string, string> = {};
       if (userIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", userIds);
+        const { data: profilesData } = await settingsApi.getProfiles({ ids: userIds });
 
         if (profilesData) {
           profilesData.forEach((p) => {
@@ -350,9 +339,7 @@ export default function RoleManagement(): React.ReactElement {
       }
 
       // 4. Fetch Staff CRM Role Assignments
-      const { data: staffRolesData, error: srErr } = await supabase
-        .from("crm_staff_roles")
-        .select("staff_id, role_id, assigned_by, assigned_at");
+      const { data: staffRolesData, error: srErr } = await crmApi.getCRMStaffRoles(orgId);
 
       if (srErr) console.warn("RoleManagement: crm_staff_roles notice:", srErr.message);
 
@@ -495,7 +482,7 @@ export default function RoleManagement(): React.ReactElement {
     setSavingMatrix(true);
     try {
       // 1. Delete existing permissions for this role
-      await supabase.from("crm_permissions").delete().eq("role_id", selectedRole.id);
+      await crmApi.deleteCRMPermissionsByRoleId(selectedRole.id, orgId);
 
       // 2. Prepare new permission records
       const insertRows: {
@@ -518,7 +505,7 @@ export default function RoleManagement(): React.ReactElement {
       });
 
       if (insertRows.length > 0) {
-        const { error: insErr } = await supabase.from("crm_permissions").insert(insertRows);
+        const { error: insErr } = await crmApi.insertCRMPermissions(insertRows, orgId);
         if (insErr) throw insErr;
       }
 
@@ -608,14 +595,15 @@ export default function RoleManagement(): React.ReactElement {
     try {
       if (editingRole) {
         // Update existing role
-        const { error } = await supabase
-          .from("crm_roles")
-          .update({
+        const { error } = await crmApi.updateCRMRole(
+          editingRole.id,
+          {
             name: roleFormName.trim(),
             color: roleFormColor,
             icon: roleFormIcon,
-          })
-          .eq("id", editingRole.id);
+          },
+          orgId
+        );
 
         if (error) throw error;
 
@@ -650,11 +638,7 @@ export default function RoleManagement(): React.ReactElement {
           is_super_admin: false,
         };
 
-        const { data: inserted, error } = await supabase
-          .from("crm_roles")
-          .insert(newRoleData)
-          .select()
-          .single();
+        const { data: inserted, error } = await crmApi.createCRMRole(newRoleData, orgId);
 
         const createdRole: CRMRole = inserted ?? {
           id: newRoleId,
@@ -681,7 +665,7 @@ export default function RoleManagement(): React.ReactElement {
           });
         });
 
-        await supabase.from("crm_permissions").insert(defaultPerms);
+        await crmApi.insertCRMPermissions(defaultPerms, orgId);
 
         const updatedRoles = [...roles, createdRole];
         setRoles(updatedRoles);
@@ -723,7 +707,7 @@ export default function RoleManagement(): React.ReactElement {
     if (!roleToDelete || !orgId) return;
 
     try {
-      await supabase.from("crm_roles").delete().eq("id", roleToDelete.id);
+      await crmApi.deleteCRMRole(roleToDelete.id, orgId);
 
       const remainingRoles = roles.filter((r) => r.id !== roleToDelete.id);
       setRoles(remainingRoles);
@@ -775,7 +759,7 @@ export default function RoleManagement(): React.ReactElement {
     try {
       if (newRoleId === "none") {
         // Remove CRM role assignment
-        await supabase.from("crm_staff_roles").delete().eq("staff_id", staffId);
+        await crmApi.deleteCRMStaffRole(staffId, orgId);
         const updated = { ...staffRolesMap };
         delete updated[staffId];
         setStaffRolesMap(updated);
@@ -790,12 +774,15 @@ export default function RoleManagement(): React.ReactElement {
         });
       } else {
         // Upsert assignment
-        await supabase.from("crm_staff_roles").upsert({
-          staff_id: staffId,
-          role_id: newRoleId,
-          assigned_by: user?.id ?? null,
-          assigned_at: new Date().toISOString(),
-        });
+        await crmApi.assignCRMStaffRole(
+          {
+            staff_id: staffId,
+            role_id: newRoleId,
+            assigned_by: user?.id ?? null,
+            assigned_at: new Date().toISOString(),
+          },
+          orgId
+        );
 
         const updated = { ...staffRolesMap, [staffId]: newRoleId };
         setStaffRolesMap(updated);

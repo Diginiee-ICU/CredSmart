@@ -1,27 +1,28 @@
-# Task Assignment: Reviewer M1-2
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
-Target: Milestone M1 Review
-Verify:
-1. Interface conformance with Phase 2 Attendance and Phase 1 RBAC.
-2. Complete column, default, nullability, and FK coverage across all 4 tables.
-3. Execute `cmd /c npx tsc --noEmit` and `cmd /c npx vitest run src/test/crm*`.
-Report APPROVE or REQUEST_CHANGES in handoff.md.
+## 2026-10-18T18:25:29Z
+You are reviewer_m1_2. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
 
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
 
-## 2026-10-18T10:02:35Z
-You are Reviewer M1-2 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_1\handoff.md
-- supabase/migrations/20261017020000_create_crm_salary_tables.sql
-- src/integrations/supabase/types.ts
-- src/types/crmPayroll.ts
+Artifacts to Review:
+- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Worker M1 Implementation: src/lib/apiClient.ts
+- Worker M1 Test Suite: src/test/apiClient.test.ts
+- Worker M1 Handoff Report: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
 
-Run verification:
-- cmd /c npx vitest run src/test/crm*
-- cmd /c npx tsc --noEmit
-Verify zero regressions on Phase 1 & 2 tests, check RBAC seeding and relationships.
-Write your verdict (APPROVE or REQUEST_CHANGES) with supporting evidence to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+Review Scope:
+1. Adversarially challenge the implementation for edge cases:
+   - Infinite 401 retry loop prevention (must only retry once).
+   - Network failure error normalization (handling thrown AbortError or TypeError without unhandled rejection).
+   - URL parameter encoding for nested objects or arrays.
+   - Handling of null/undefined request bodies for GET vs POST.
+2. Run verification commands:
+   - `cmd /c npx vitest run src/test/apiClient.test.ts`
+   - `cmd /c npx tsc --noEmit`
+3. Render an explicit gate verdict: APPROVE or REQUEST_CHANGES.
+
+Write your report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

@@ -1,28 +1,26 @@
-# Task Assignment: Reviewer M2-2 (Payslip Aggregation & Regression Verification)
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
-Target: Milestone M2 Verification
-Verify:
-1. Examine `generatePayslipData` attendance and adjustments integration, snapshot fidelity, and salary_type behavior.
-2. Run full regression test suite: `cmd /c npx vitest run crmSalary` and `cmd /c npx vitest run crmAttendance`.
-3. Check for any regression across Phase 1 & 2 tests.
-Report APPROVE or REQUEST_CHANGES in handoff.md.
+## 2026-10-18T19:03:49Z
+You are reviewer_m2_2. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
 
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
 
-## 2026-10-18T10:53:37Z
-Sender: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-Content:
-You are Reviewer M2-2 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2_1\handoff.md
-- src/utils/crmPayrollUtils.ts
-- src/types/crmPayroll.ts
+Artifacts to Review:
+- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Products API Service: src/services/productsApi.ts
+- Worker M2 Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
 
-Run verification:
-- cmd /c npx vitest run crmSalary
-- cmd /c npx vitest run src/test/crmAttendanceMigrationStress.test.ts src/test/crmPermissionRbac.test.ts
-Verify zero regressions on Phase 1 & 2 tests, check integration contracts and snapshot fidelity.
-Write your verdict (APPROVE or REQUEST_CHANGES) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+Review Scope:
+1. Adversarially challenge the Products & Inventory migration:
+   - Check for regressions in batch-level calculations, pricing overrides, and barcode duplication lookups.
+   - Verify stock adjustments in `stockService.ts` and `Inventory.tsx` handle negative adjustments and zero stock properly.
+   - Verify bulk import and bulk delete error handling.
+2. Run verification commands:
+   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
+   - `cmd /c npx tsc --noEmit`
+3. Render an explicit gate verdict: APPROVE or REQUEST_CHANGES.
+
+Write your report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

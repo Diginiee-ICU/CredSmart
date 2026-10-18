@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -151,11 +152,10 @@ export default function Expenses() {
 
     if (orgId) {
       try {
-        const { data, error } = await supabase
-          .from("expenses")
-          .select("*")
-          .eq("organization_id", orgId)
-          .order("date", { ascending: false });
+        const { data, error } = await invoicesApi.getExpenses(orgId, {
+          order: "desc",
+          sort: "date",
+        });
 
         if (!error && data) {
           const mapped: ExpenseRecord[] = data.map((d: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -257,14 +257,14 @@ export default function Expenses() {
       try {
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user) {
-          await supabase.from("expenses").insert({
+          await invoicesApi.createExpense({
             organization_id: orgId,
             category: formCategory,
             amount: numAmount,
             date,
             description: `${newExpense.party_name} - ${newExpense.description || formCategory}`,
             created_by: userData.user.id,
-          });
+          }, orgId);
         }
       } catch (err) {
         console.warn("Could not insert directly to Supabase table, saving locally:", err);
@@ -287,7 +287,7 @@ export default function Expenses() {
   const handleDelete = async (id: string) => {
     if (orgId) {
       try {
-        await supabase.from("expenses").delete().eq("id", id);
+        await invoicesApi.deleteExpense(id, orgId);
       } catch { /* empty */ }
     }
     const updated = expenses.filter((e) => e.id !== id);

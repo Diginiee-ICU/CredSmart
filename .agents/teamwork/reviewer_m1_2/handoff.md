@@ -1,267 +1,248 @@
-# Reviewer & Adversarial Critic Handoff Report: Milestone 1 (Phase 3)
+# Milestone 1 Adversarial Review Report: Centralized API Client & Auth Interceptor
 
-**Role**: Reviewer M1-2 (`reviewer`, `critic`)  
-**Target Milestone**: CRM Phase 3: Salary Management & Payroll Engine — Milestone 1 (Database Migration & TypeScript Types)  
-**Deliverables Reviewed**:
-1. `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-2. `src/integrations/supabase/types.ts`
-3. `src/types/crmPayroll.ts`
-4. `src/test/crmSalaryMigration.test.ts`
-5. `src/test/crmSalaryTypes.test.ts`
-6. `worker_m1_1/handoff.md`
-
+**Reviewer**: `reviewer_m1_2` (Roles: reviewer, critic)  
+**Milestone**: M1 — Centralized API Client & Auth Interceptor (`src/lib/apiClient.ts`)  
+**Target Recipient**: Orchestrator (`73ee3452-ffda-43b4-83da-c3ca2006c47f`)  
+**Date**: 2026-10-18T18:28:30Z  
 **Verdict**: **APPROVE**  
-**Integrity Assessment**: **NO INTEGRITY VIOLATIONS DETECTED** (Zero hardcoded test result shortcuts, zero dummy/facade implementations, genuine type-sound logic, genuine schema contracts).
+
+---
+
+## Executive Summary
+
+Worker `worker_m1` has delivered an exceptionally robust, production-grade centralized HTTP client (`src/lib/apiClient.ts`) and an exhaustive test suite (`src/test/apiClient.test.ts`). 
+
+An adversarial audit and stress-testing evaluation were performed across four designated threat vectors:
+1. **Infinite 401 retry loops**: Structurally impossible due to strict linear execution without recursion or loop constructs.
+2. **Network failure error normalization**: All fetch rejections (`TypeError`, `AbortError`, timeouts) normalize cleanly to `{ data: null, error: ApiError }` with `status: 0`.
+3. **URL parameter encoding**: Fully handles primitive types, arrays, query parameter merging, and null/undefined stripping; strict TypeScript typing prevents runtime object pollution.
+4. **Null/undefined request body handling**: GET and body-less POST cleanly omit request bodies and avoid unwanted `Content-Type: application/json` headers.
+
+Both independent verification commands completed with 100% success:
+- `cmd /c npx vitest run src/test/apiClient.test.ts` (34 passed, 0 failed)
+- `cmd /c npx tsc --noEmit` (0 errors)
+
+Zero integrity violations (no dummy facades, no hardcoded test responses, no bypassed tasks) were detected.
 
 ---
 
 ## 1. Observation
 
-### 1.1 Database Migration Schema (`supabase/migrations/20261017020000_create_crm_salary_tables.sql`)
-- Lines 1–240: Entire DDL transaction is wrapped in `BEGIN;` (line 1) and `COMMIT;` (line 240).
-- Lines 16–31: `public.crm_salary_profiles` is created with `IF NOT EXISTS` containing 13 columns:
-  - `id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY`
-  - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
-  - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-  - `salary_type TEXT NOT NULL DEFAULT 'monthly' CHECK (salary_type IN ('monthly', 'daily', 'hourly'))`
-  - `base_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `currency TEXT NOT NULL DEFAULT 'INR'`
-  - `allowed_leaves_per_month INTEGER NOT NULL DEFAULT 2`
-  - `hourly_overtime_rate NUMERIC(10,2) DEFAULT 0.00`
-  - `pf_deduction_percent NUMERIC(5,2) DEFAULT 0.00`
-  - `esi_deduction_percent NUMERIC(5,2) DEFAULT 0.00`
-  - `is_active BOOLEAN NOT NULL DEFAULT true`
-  - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - Constraint: `CONSTRAINT uq_crm_salary_profiles_staff UNIQUE (org_id, staff_id)`
-  - Indexes: 3 indexes created with `CREATE INDEX IF NOT EXISTS` (`idx_crm_salary_profiles_org`, `idx_crm_salary_profiles_staff`, `idx_crm_salary_profiles_active`).
-  - Trigger: `update_crm_salary_profiles_updated_at` preceded by `DROP TRIGGER IF EXISTS` executing `public.update_updated_at()`.
-- Lines 47–60: `public.crm_payroll_runs` created with `IF NOT EXISTS` containing 11 columns:
-  - `id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY`
-  - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
-  - `month_year TEXT NOT NULL`
-  - `status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'locked', 'disbursed'))`
-  - `total_payout NUMERIC(14,2) DEFAULT 0.00`
-  - `staff_count INTEGER DEFAULT 0`
-  - `locked_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
-  - `locked_at TIMESTAMPTZ`
-  - `notes TEXT`
-  - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - Constraint: `CONSTRAINT uq_crm_payroll_runs_month UNIQUE (org_id, month_year)`
-  - Indexes: 3 indexes created with `IF NOT EXISTS` (`idx_crm_payroll_runs_org_month`, `idx_crm_payroll_runs_status`, `idx_crm_payroll_runs_locked_by`).
-  - Trigger: `update_crm_payroll_runs_updated_at` preceded by `DROP TRIGGER IF EXISTS`.
-- Lines 76–102: `public.crm_payslips` created with `IF NOT EXISTS` containing 24 columns:
-  - `id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY`
-  - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
-  - `payroll_run_id UUID NOT NULL REFERENCES public.crm_payroll_runs(id) ON DELETE CASCADE`
-  - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-  - `month_year TEXT NOT NULL`
-  - `salary_profile_snapshot JSONB NOT NULL`
-  - `working_days_in_month INTEGER NOT NULL`
-  - `present_days INTEGER NOT NULL DEFAULT 0`
-  - `absent_days INTEGER NOT NULL DEFAULT 0`
-  - `half_days INTEGER NOT NULL DEFAULT 0`
-  - `lop_days NUMERIC(5,2) NOT NULL DEFAULT 0.00`
-  - `overtime_minutes INTEGER NOT NULL DEFAULT 0`
-  - `gross_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `lop_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `overtime_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `pf_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `esi_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `advance_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `bonus_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `net_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00`
-  - `payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial'))`
-  - `paid_at TIMESTAMPTZ`
-  - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - Constraint: `CONSTRAINT uq_crm_payslips_staff_month UNIQUE (org_id, staff_id, month_year)`
-  - Indexes: 4 indexes created with `IF NOT EXISTS` (`idx_crm_payslips_org`, `idx_crm_payslips_payroll_run`, `idx_crm_payslips_staff_month`, `idx_crm_payslips_payment_status`).
-  - Trigger: `update_crm_payslips_updated_at` preceded by `DROP TRIGGER IF EXISTS`.
-- Lines 119–132: `public.crm_salary_adjustments` created with `IF NOT EXISTS` containing 12 columns:
-  - `id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY`
-  - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
-  - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-  - `type TEXT NOT NULL CHECK (type IN ('advance', 'bonus', 'deduction', 'loan_repayment'))`
-  - `amount NUMERIC(12,2) NOT NULL`
-  - `description TEXT`
-  - `month_year TEXT`
-  - `status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'deducted', 'rejected'))`
-  - `requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
-  - `approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
-  - `approved_at TIMESTAMPTZ`
-  - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-  - Indexes: 5 indexes created with `IF NOT EXISTS` (`idx_crm_salary_adjustments_org`, `idx_crm_salary_adjustments_staff`, `idx_crm_salary_adjustments_status`, `idx_crm_salary_adjustments_month`, `idx_crm_salary_adjustments_type`).
-- Lines 143–238: RLS enabled on all 4 tables (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`). All 16 CRUD policies enforce `auth.role() = 'authenticated' AND has_org_access(org_id)`. Every policy is preceded by `DROP POLICY IF EXISTS`.
+1. **Independent Test Execution**:
+   - Executed: `cmd /c npx vitest run src/test/apiClient.test.ts`
+   - Result:
+     ```
+     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
 
-### 1.2 Supabase Schema Types (`src/integrations/supabase/types.ts`)
-- Lines 315–364: `crm_payroll_runs` definition under `Database["public"]["Tables"]` containing exact Row, Insert, Update, and Relationships (`crm_payroll_runs_org_id_fkey`).
-- Lines 365–460: `crm_payslips` definition under `Database["public"]["Tables"]` containing exact Row (24 columns), Insert, Update, and Relationships (`crm_payslips_org_id_fkey`, `crm_payslips_payroll_run_id_fkey`).
-- Lines 531–583: `crm_salary_adjustments` definition with Row (12 columns), Insert, Update, and Relationships (`crm_salary_adjustments_org_id_fkey`).
-- Lines 584–639: `crm_salary_profiles` definition with Row (13 columns), Insert, Update, and Relationships (`crm_salary_profiles_org_id_fkey`).
+     ✓ src/test/apiClient.test.ts (34 tests) 422ms
 
-### 1.3 Domain Types Contract (`src/types/crmPayroll.ts`)
-- Lines 13–24: Strict union literal types: `SalaryType`, `PayrollRunStatus`, `PayslipPaymentStatus` (alias `PaymentStatus`), `SalaryAdjustmentType` (alias `AdjustmentType`), `SalaryAdjustmentStatus` (alias `AdjustmentStatus`).
-- Lines 30–39: `CrmSalaryProfileSnapshot` (alias `SalaryProfileSnapshot`) with 7 core rate and configuration parameters.
-- Lines 45–132: Strongly typed domain interfaces `CrmSalaryProfile` (alias `CRMSalaryProfile`), `CrmPayrollRun` (alias `CRMPayrollRun`), `CrmPayslip` (alias `CRMPayslip`), and `CrmSalaryAdjustment` (alias `CRMSalaryAdjustment`) with optional UI display enrichments.
-- Lines 138–164: Explicit calculation engine contracts `CrmAttendanceRecord` (alias `CrmAttendanceRecordForPayroll`) and `PayslipComputedData` matching Milestone M2 requirements verbatim. Zero `any` types present.
+     Test Files  1 passed (1)
+          Tests  34 passed (34)
+       Start at  23:56:36
+       Duration  15.71s
+     ```
 
-### 1.4 Independent Verification Execution Results
-- Command: `cmd /c npx vitest run src/test/crmSalaryMigration.test.ts src/test/crmSalaryTypes.test.ts`
-  - Output:
-    ```
-    ✓ src/test/crmSalaryTypes.test.ts (20 tests)
-    ✓ src/test/crmSalaryMigration.test.ts (22 tests)
-    Test Files  2 passed (2)
-    Tests       42 passed (42)
-    Duration    5.79s
-    ```
-- Command: `cmd /c npx tsc --noEmit`
-  - Output:
-    ```
-    Process exited with code 0 (0 compilation errors).
-    ```
-- Command: `cmd /c npx vitest run src/test/crmAttendanceMigrationStress.test.ts src/test/crmAttendanceTypes.challenger.test.ts src/test/crmPermissionRbac.test.ts`
-  - Output:
-    ```
-    ✓ src/test/crmAttendanceMigrationStress.test.ts (31 tests)
-    ✓ src/test/crmAttendanceTypes.challenger.test.ts (18 tests)
-    ✓ src/test/crmPermissionRbac.test.ts (26 tests)
-    Test Files  3 passed (3)
-    Tests       75 passed (75)
-    Duration    9.00s
-    ```
-- Full Suite Audit: `cmd /c npx vitest run crm`
-  - Result: 21 of 22 test files passed (405 tests passed).
-  - The 1 failing file was `src/test/crmAttendanceRoleFilterStress.challenger.test.tsx` (3 tests failing).
-  - Diagnostic Investigation: The failure was caused by a static date constant `const TODAY = "2026-10-17"` written during Phase 2. Because the test executed on `2026-10-18`, `Attendance.tsx` defaulted `selectedDate` to `2026-10-18`, leaving the mock records from `2026-10-17` filtered out. This is a pre-existing date-drift bug in the Phase 2 test file, unrelated to Phase 3 Milestone 1 deliverables.
+2. **Independent TypeScript Compilation**:
+   - Executed: `cmd /c npx tsc --noEmit`
+   - Result: Exit code 0, 0 compiler errors across the entire codebase.
+
+3. **Code Inspection of `src/lib/apiClient.ts`**:
+   - **401 Single-Retry Flow** (`src/lib/apiClient.ts:255-279`):
+     ```typescript
+     if (response.status === 401 && !skipAuth) {
+       try {
+         const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+         const newToken = refreshData?.session?.access_token;
+         if (!refreshErr && newToken) {
+           requestHeaders.set("Authorization", `Bearer ${newToken}`);
+           try {
+             response = await execute(`Bearer ${newToken}`);
+           } catch (retryErr: unknown) {
+             const message = retryErr instanceof Error ? retryErr.message : "Network retry failed";
+             return {
+               data: null,
+               error: {
+                 message,
+                 code: "NETWORK_ERROR",
+                 status: 0,
+                 details: retryErr,
+               },
+             };
+           }
+         }
+       } catch (refreshErr) {
+         console.warn("apiClient: Token refresh failed on 401:", refreshErr);
+       }
+     }
+     ```
+     Observed that after `response = await execute(...)`, execution drops straight into `if (!response.ok)` at line 282. There is no loop, recursion, or re-invoking `apiClient()`.
+
+   - **Network Failure & Timeout Normalization** (`src/lib/apiClient.ts:236-252`):
+     ```typescript
+     try {
+       response = await execute();
+     } catch (fetchErr: unknown) {
+       const isAbort =
+         (fetchErr as { name?: string })?.name === "AbortError" ||
+         (effectiveSignal?.aborted ?? false);
+       const message = fetchErr instanceof Error ? fetchErr.message : "Network request failed";
+       return {
+         data: null,
+         error: {
+           message: isAbort ? "Request timed out or was aborted" : message,
+           code: isAbort ? "ABORTED" : "NETWORK_ERROR",
+           status: 0,
+           details: fetchErr,
+         },
+       };
+     }
+     ```
+     Observed that any thrown network rejection is captured and converted to `{ data: null, error: ApiError }`.
+
+   - **URL Construction and Param Serialization** (`src/lib/apiClient.ts:81-109`):
+     ```typescript
+     if (params && Object.keys(params).length > 0) {
+       const urlObj = new URL(fullUrl);
+       for (const [key, val] of Object.entries(params)) {
+         if (val === undefined || val === null) {
+           continue;
+         }
+         if (Array.isArray(val)) {
+           for (const item of val) {
+             if (item !== undefined && item !== null) {
+               urlObj.searchParams.append(key, String(item));
+             }
+           }
+         } else {
+           urlObj.searchParams.append(key, String(val));
+         }
+       }
+       return urlObj.toString();
+     }
+     ```
+     Observed that arrays append duplicate keys (`tags=a&tags=b`) conforming to standard REST multi-value parameters, and `null`/`undefined` are stripped.
+
+   - **Body & Content-Type Resolution** (`src/lib/apiClient.ts:151-170`):
+     ```typescript
+     let requestBody: BodyInit | undefined = undefined;
+     if (body !== undefined && body !== null) {
+       const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+       const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
+       const isArrayBuffer = typeof ArrayBuffer !== "undefined" && body instanceof ArrayBuffer;
+       const isSearchParams = typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams;
+       const isString = typeof body === "string";
+
+       if (isFormData || isBlob || isArrayBuffer || isSearchParams || isString) {
+         requestBody = body as BodyInit;
+         if (isString && !requestHeaders.has("Content-Type")) {
+           requestHeaders.set("Content-Type", "application/json");
+         }
+       } else {
+         requestBody = JSON.stringify(body);
+         if (!requestHeaders.has("Content-Type")) {
+           requestHeaders.set("Content-Type", "application/json");
+         }
+       }
+     }
+     ```
+     Observed that when `body` is `null` or `undefined`, `requestBody` remains `undefined` and `Content-Type` is not added to the headers.
+
+   - **Response Envelope Handling** (`src/lib/apiClient.ts:323-382`):
+     Observed handling for HTTP 204 No Content, empty bodies, non-JSON plain text, API-level errors inside 200 OK responses, and unwrapping `{ data: ... }` wrappers.
+
+4. **Integrity Audit**:
+   - Checked `src/lib/apiClient.ts` for dummy logic, hardcoded responses, or stubbed endpoints: None found.
+   - Checked `src/test/apiClient.test.ts` for fake assertions or bypassed assertions: All 34 tests execute real calls against the real client implementation and assert on actual outputs.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Idempotency & Replay Safety (Supports Conclusion to Approve Migration)**:
-   - Observation 1.1 shows all 4 tables use `CREATE TABLE IF NOT EXISTS`, all 15 indexes use `CREATE INDEX IF NOT EXISTS`, all 3 triggers use `DROP TRIGGER IF EXISTS`, and all 16 RLS policies use `DROP POLICY IF EXISTS`.
-   - Wrapping the entire script in `BEGIN; ... COMMIT;` ensures atomic execution in transactional databases. Re-executing the migration in any CI or staging pipeline will not result in naming collisions or partial schema application.
-
-2. **Referential Integrity & Historical Audit Safety (Supports Relational Correctness)**:
-   - Tenant boundaries are strictly enforced via `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`.
-   - User entity links use `ON DELETE CASCADE` for primary actors (`staff_id`).
-   - Audit trail actors (`locked_by` on `crm_payroll_runs`, `requested_by` and `approved_by` on `crm_salary_adjustments`) strictly use `ON DELETE SET NULL`. If an administrative employee is deleted, historical payroll run locks and advance approvals remain intact for statutory accounting and financial audit compliance.
-   - Deleting a `crm_payroll_runs` row cascades to `crm_payslips` via `ON DELETE CASCADE`, preventing orphaned payslips.
-
-3. **Check Constraint Integrity & Precision (Supports Domain Conformance)**:
-   - Financial figures are stored using `NUMERIC(12,2)` and `NUMERIC(14,2)` rather than floating point numbers, eliminating rounding drift in monetary calculations.
-   - Check constraints enforce enum-like values at the database level: `salary_type` (`monthly`, `daily`, `hourly`), `status` (`draft`, `locked`, `disbursed`), `payment_status` (`pending`, `paid`, `partial`), `type` (`advance`, `bonus`, `deduction`, `loan_repayment`), and adjustment `status` (`pending`, `approved`, `deducted`, `rejected`).
-
-4. **Multi-Tenant Constraint Isolation (Supports Multi-Tenant Safety)**:
-   - `uq_crm_salary_profiles_staff` is keyed by `(org_id, staff_id)`.
-   - `uq_crm_payroll_runs_month` is keyed by `(org_id, month_year)`.
-   - `uq_crm_payslips_staff_month` is keyed by `(org_id, staff_id, month_year)`.
-   - None of the unique constraints are globally scoped, preventing multi-tenant collisions when multiple organizations operate in the same shared database cluster.
-
-5. **Type Soundness & Ergonomics (Supports Type-Level Safety)**:
-   - Observation 1.2 and 1.3 show all 4 tables are declared with exact property types in `src/integrations/supabase/types.ts`.
-   - `src/types/crmPayroll.ts` exports both canonical (`Crm*`) and legacy/alias (`CRM*`) names, as well as domain models that allow UI components to bind `staff_name`, `staff_email`, `role_name`, etc.
-   - Observation 1.4 confirms `tsc --noEmit` exits with 0 errors and zero `any` types.
-
-6. **Integrity & Anti-Cheat Validation (Supports Ethical & Engineering Standards)**:
-   - Both test suites (`crmSalaryMigration.test.ts` and `crmSalaryTypes.test.ts`) inspect genuine SQL syntax, parse DDL statements, verify balanced parens/quotes, check AST/types via `expectTypeOf`, and assert negative assignability via TypeScript compiler primitives (`Extends<A, B>`).
-   - There are no hardcoded mocks pretending to be database tables, no bypassed assertions, and no simulated facades.
+1. *From Observation 1 & 2*: Running `npx vitest run src/test/apiClient.test.ts` produced 34/34 passes, and `npx tsc --noEmit` exited cleanly with code 0. This independently confirms that the code compiles without errors and passes all behavioral unit specifications.
+2. *From Observation 3 (401 Retry Flow)*: Because the retry implementation is written as a single conditional statement (`if (response.status === 401 && !skipAuth)`) that performs a single `await execute(...)` without calling `apiClient` recursively or using a loop construct, it is mathematically bounded to at most one retry. If the retry also fails with 401, it falls through to line 282 and returns `{ data: null, error: { status: 401, ... } }`. Therefore, infinite 401 retry loops are structurally impossible.
+3. *From Observation 3 (Network Failure)*: Both the initial request and the retry request are wrapped in explicit `try / catch` blocks. Thrown `TypeError` and `AbortError` instances are intercepted and converted into standardized `{ data: null, error: ApiError }` return structures with `status: 0`. No unhandled promise rejections occur.
+4. *From Observation 3 (URL Parameter Encoding)*: `buildApiUrl` uses `new URL(fullUrl)` and loops through `params`. It properly ignores `null` and `undefined`, expands arrays via repeated `.append(key, String(item))`, and serializes primitives. The TypeScript interface (`src/lib/apiClient.ts:26`) forbids nested objects at compile time (`string | number | boolean | null | undefined | Array<string | number | boolean>`), preventing erroneous query formatting.
+5. *From Observation 3 (Request Body Handling)*: For GET requests, `body` is undefined by default, so `requestBody` is `undefined` and `Content-Type: application/json` is omitted. For POST requests with payloads, `requestBody` is JSON-stringified (unless it is `FormData`/`Blob`) and `Content-Type: application/json` is attached.
+6. *From Observation 4*: Zero integrity violations exist. The implementation is genuine, clean, and complete.
 
 ---
 
-## 3. Caveats
+## 3. Adversarial Challenges & Findings
 
-1. **Pre-Existing Phase 2 Date-Drift Test**:
-   - `src/test/crmAttendanceRoleFilterStress.challenger.test.tsx` (authored during Phase 2) hardcodes `const TODAY = "2026-10-17"`. When executed on `2026-10-18`, 3 assertions timed out because `Attendance.tsx` defaults `selectedDate` to the current date (`2026-10-18`). This is not a regression from Phase 3 (which touched zero attendance files).
-   - In accordance with key reviewer constraints ("Review-only — do NOT modify implementation code" and "Report any failures as findings — do NOT fix them yourself"), this has been flagged as a finding for the Phase 2 test suite.
-2. **RBAC Permission Matrix Action Seeding for Milestone 3**:
-   - In Phase 1's `20261017000000_create_crm_rbac_tables.sql`, the super admin role was seeded with `('salary', 'view')` and `('salary', 'edit')`. Milestone 3 requirements specify `useCRMPermission('salary', 'approve')` for locking payroll and approving advances. Because super admins bypass permissions unconditionally, super admins can already approve payroll; however, when Worker M3 builds the Salary Management UI and Role Management views, `{ id: "approve", label: "Approve Payroll & Advances" }` should be formally added to `CRM_MODULES` in `RoleManagement.tsx`.
+### Findings Summary
 
----
+| ID | Severity | Category | Description | Status |
+|---|---|---|---|---|
+| F-01 | Minor | Resilience | Success body parsing (`await response.text()` on line 329) is inside `try/finally` without an inner `catch` for rare mid-stream connection aborts | Documented recommendation |
+| F-02 | Minor | Edge Case | If TypeScript is bypassed and a nested object is passed in `params`, it serializes to `[object Object]` | Mitigated by TS types |
 
-## 4. Conclusion
+### Detailed Challenge Analysis
 
-Milestone 1 is **FULLY VERIFIED** and **APPROVED**:
-- `supabase/migrations/20261017020000_create_crm_salary_tables.sql` implements all 4 tables with complete column specifications, default values, check constraints, composite unique constraints, cascading foreign keys, RLS policies, indexes, and triggers.
-- `src/integrations/supabase/types.ts` accurately maps all 4 tables into Supabase client types.
-- `src/types/crmPayroll.ts` defines all domain entities, calculation contracts, and union types with zero `any` types.
-- 42 out of 42 Milestone 1 unit tests pass.
-- 75 out of 75 Phase 1 & 2 regression tests pass with zero regressions.
-- `tsc --noEmit` exits with 0 compiler errors.
-- Milestone 1 is ready for handoff to Worker M2 (Payroll Calculation Engine).
+#### Challenge 1: Infinite 401 Retry Loop Prevention
+- **Threat Scenario**: An expired or invalid session receives 401, refreshes session, receives a new token, but the backend still rejects the new token with 401 (e.g., token revoked, user disabled, or clock skew).
+- **Stress-Test Analysis**: `apiClient` uses a non-recursive, single `if` block. If the retry returns 401, it is never passed back into the 401 refresh block. Test 30 in `apiClient.test.ts` validates that exactly 2 network calls occur and the final 401 is normalized into an error.
+- **Verdict**: PASS. Structurally immune to retry loops.
 
----
+#### Challenge 2: Network Failure & Error Normalization
+- **Threat Scenario**: Offline client, server DNS failure, or connection drop throws `TypeError: Failed to fetch`. Caller aborts request via `AbortController`, or timeout expires.
+- **Stress-Test Analysis**: Wrapped in `try / catch (fetchErr: unknown)`. Tested by Tests 32, 33, and 34. Returns `{ data: null, error: { message, code: "NETWORK_ERROR" | "ABORTED", status: 0, details } }`.
+- **Verdict**: PASS. No unhandled promise rejections.
 
-## 5. Verification Method
+#### Challenge 3: URL Parameter Encoding for Nested Objects and Arrays
+- **Threat Scenario**: Query parameters containing arrays (`tags: ['a', 'b']`), null values (`status: null`), or nested objects (`filter: { active: true }`).
+- **Stress-Test Analysis**:
+  - Array serialization cleanly formats as `?tags=a&tags=b`.
+  - Null and undefined values are skipped completely.
+  - Nested objects: The TypeScript type definition for `params` statically forbids nested objects. If a developer uses `any` and passes an object, it outputs `key=%5Bobject+Object%5D`. For the CredSmart migration scope (`PROJECT.md`), all endpoints utilize flat parameters (`orgId`, `partyId`, `partyType`, `limit`, `prefix`).
+- **Verdict**: PASS. Meets all project requirements and interface contracts.
 
-To independently verify this milestone:
-
-```powershell
-# 1. Run Milestone 1 Migration & Type Tests (42 passed)
-cmd /c npx vitest run src/test/crmSalaryMigration.test.ts src/test/crmSalaryTypes.test.ts
-
-# 2. Run Phase 1 & 2 Core Regression Test Suites (75 passed)
-cmd /c npx vitest run src/test/crmAttendanceMigrationStress.test.ts src/test/crmAttendanceTypes.challenger.test.ts src/test/crmPermissionRbac.test.ts
-
-# 3. Verify TypeScript Compilation (0 errors)
-cmd /c npx tsc --noEmit
-```
-
-### Invalidation Conditions:
-- Any modification to column names or nullability in `supabase/migrations/20261017020000_create_crm_salary_tables.sql` without updating `src/integrations/supabase/types.ts`.
-- Introduction of `any` types into `src/types/crmPayroll.ts`.
-- Altering the composite unique constraints `uq_crm_salary_profiles_staff`, `uq_crm_payroll_runs_month`, or `uq_crm_payslips_staff_month` away from their `org_id` scoping.
+#### Challenge 4: Null / Undefined Request Body Handling for GET vs POST
+- **Threat Scenario**: GET request mistakenly sent with body or `Content-Type: application/json` causing CORS preflight failures; or POST request with null body sending invalid JSON `"null"`.
+- **Stress-Test Analysis**:
+  - In `apiClient`, `requestBody` defaults to `undefined`. `Content-Type` is only set when `requestBody` is defined.
+  - Passing `body: undefined` or `body: null` results in no body and no `Content-Type` header sent.
+  - Form data uploads correctly bypass JSON stringification and do not set `Content-Type: application/json`, allowing `fetch` to append the required multipart boundary.
+- **Verdict**: PASS.
 
 ---
 
-## Quality Review Report
+## 4. Caveats
 
-### Review Summary
-**Verdict**: **APPROVE**
-
-### Findings
-
-#### [Minor] Finding 1: Phase 2 Challenger Test Brittle Date Hardcoding
-- **What**: In `src/test/crmAttendanceRoleFilterStress.challenger.test.tsx`, `const TODAY = "2026-10-17"` is hardcoded instead of dynamic or mocked via `vi.setSystemTime()`.
-- **Where**: `src/test/crmAttendanceRoleFilterStress.challenger.test.tsx:69-70`
-- **Why**: As soon as the calendar date progressed to `2026-10-18`, `Attendance.tsx` defaulted the filter date to `2026-10-18`, hiding records dated `2026-10-17` and causing 3 test timeouts.
-- **Suggestion**: Use `const TODAY = new Date().toISOString().split("T")[0]` (matching `crmAttendanceRoleFilterStress.test.tsx:142`) or use Vitest's `vi.useFakeTimers()` / `vi.setSystemTime(new Date("2026-10-17T12:00:00Z"))`.
-
-#### [Minor] Finding 2: RBAC Matrix Consideration for Milestone 3
-- **What**: Milestone 3 requires `useCRMPermission('salary', 'approve')` for payroll lock and advance approval.
-- **Where**: `src/pages/crm/RoleManagement.tsx:100-108`
-- **Why**: Currently `CRM_MODULES` in `RoleManagement.tsx` defines `salary` with actions `view` and `edit`.
-- **Suggestion**: When Worker M3 implements the UI, add `{ id: "approve", label: "Approve Payroll & Advances" }` to the `salary` module definition so custom roles can be granted granular approval permissions.
-
-### Verified Claims
-- Idempotent migration with 4 tables, 15 indexes, 3 triggers, 16 RLS policies → verified via AST analysis and `crmSalaryMigration.test.ts` → **PASS**
-- Supabase types matching SQL schema with 0 discrepancies → verified via `crmSalaryTypes.test.ts` and `tsc --noEmit` → **PASS**
-- Zero `any` types in `src/types/crmPayroll.ts` → verified via `IsAny<T>` compiler utility → **PASS**
-- Phase 1 & 2 core regression test suites pass → verified via vitest (75/75 tests passed) → **PASS**
-
-### Coverage Gaps
-- Live Supabase cloud migration: Not run in CI environment; verified via SQL parser oracle. Risk level: low.
+- **No Caveats**: The review thoroughly inspected all lines of `src/lib/apiClient.ts` and `src/test/apiClient.test.ts`. Downstream worker agents for Milestones M2, M3, M4, and M5 can consume `src/lib/apiClient.ts` without reservations.
 
 ---
 
-## Adversarial Challenge Report
+## 5. Conclusion & Gate Verdict
 
-### Challenge Summary
-**Overall Risk Assessment**: **LOW**
+### **Gate Verdict: APPROVE**
 
-### Challenges
+- **Integrity Audit**: **PASSED** (0 integrity violations).
+- **Functional Requirements**: **PASSED** (Base URL resolution, JWT session retrieval, tenant header injection, 401 single retry, response envelope unwrap, verb helpers).
+- **Edge-Case Resilience**: **PASSED** (No retry loops, no unhandled rejections, clean body handling).
+- **Test Suite**: **PASSED** (34/34 passing tests in `src/test/apiClient.test.ts`).
+- **Type Safety**: **PASSED** (0 TypeScript errors across the codebase).
 
-#### [Low] Challenge 1: Historical Data Preservation on User Account Deletion
-- **Assumption challenged**: Administrative user deletion (`locked_by`, `requested_by`, `approved_by`) might break relational integrity or delete audit trails.
-- **Attack scenario**: An organization super-admin approves an advance or locks a payroll run, and subsequently leaves the organization (user account deleted).
-- **Result**: `ON DELETE SET NULL` on `locked_by`, `requested_by`, and `approved_by` foreign keys ensures the payroll run and salary adjustment records remain preserved in the database with nullified actor IDs rather than triggering cascading deletion of financial data.
-- **Verdict**: Robust.
+Milestone 1 is certified ready for downstream integration by M2 (Products), M3 (Parties), M4 (Invoices), and M5 (Settings/CRM).
 
-#### [Low] Challenge 2: Re-running Migration in Production
-- **Assumption challenged**: Migration script replay could fail with `relation already exists` or `policy already exists`.
-- **Attack scenario**: Running `20261017020000_create_crm_salary_tables.sql` multiple times against the same PostgreSQL database.
-- **Result**: Every `CREATE TABLE` and `CREATE INDEX` uses `IF NOT EXISTS`. Every `CREATE TRIGGER` and `CREATE POLICY` is preceded by `DROP TRIGGER IF EXISTS` and `DROP POLICY IF EXISTS`.
-- **Verdict**: Robust.
+---
+
+## 6. Verification Method
+
+To independently reproduce and verify this review verdict:
+
+1. **Run Vitest Test Suite**:
+   ```powershell
+   cmd /c npx vitest run src/test/apiClient.test.ts
+   ```
+   *Expected Result*: 34 passed tests, 0 failures.
+
+2. **Run TypeScript Compiler**:
+   ```powershell
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected Result*: Exit code 0, 0 compiler errors.
+
+3. **Inspect Implementation and Test Code**:
+   - `src/lib/apiClient.ts`
+   - `src/test/apiClient.test.ts`
+   - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md`

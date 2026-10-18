@@ -68,6 +68,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
 import { notifyStockUpdated } from "@/services/stockService";
 import { OfflineSyncBanner } from "@/components/OfflineSyncBanner";
 
@@ -805,9 +807,8 @@ export default function AppLayout() {
         onClose={() => setCreateItemModalOpen(false)}
         onSave={async (itemData) => {
           if (orgId) {
-            const { data: newProd } = await supabase
-              .from("products")
-              .insert({
+            const { data: newProd } = await productsApi.createProduct(
+              {
                 organization_id: orgId,
                 name: itemData.name,
                 brand: itemData.brand || null,
@@ -824,18 +825,21 @@ export default function AppLayout() {
                   min_stock_alert: itemData.minStockAlert || 5,
                   ...(itemData.tags || {}),
                 },
-              })
-              .select()
-              .single();
+              },
+              orgId
+            );
 
             if (newProd) {
-              await supabase.from("product_batches").insert({
-                product_id: newProd.id,
-                batch_number: "BATCH-01",
-                cost_price: itemData.purchasePrice,
-                mrp: itemData.mrp,
-                stock: itemData.currentStock,
-              });
+              await productsApi.createBatch(
+                {
+                  product_id: newProd.id,
+                  batch_number: "BATCH-01",
+                  cost_price: itemData.purchasePrice,
+                  mrp: itemData.mrp,
+                  stock: itemData.currentStock,
+                },
+                orgId
+              );
             }
 
             // Broadcast real-time stock sync
@@ -867,14 +871,15 @@ export default function AppLayout() {
               ? { ...baseData, gstin: partyData.gstin || undefined }
               : baseData;
 
-            const { data: newParty } = await supabase
-              .from(targetTable)
-              .insert(insertData)
-              .select()
-              .single();
+            const { data: newParty } = await partiesApi.savePartyRecord(
+              targetTable,
+              insertData,
+              undefined,
+              orgId
+            );
 
             if (newParty && Number(partyData.openingBalance) !== 0) {
-              await supabase.from("credit_transactions").insert({
+              await partiesApi.recordCreditTransaction({
                 organization_id: orgId,
                 party_id: newParty.id,
                 party_type: isSupplier ? "supplier" : "customer",
@@ -882,7 +887,7 @@ export default function AppLayout() {
                 type: Number(partyData.openingBalance) > 0 ? "credit" : "payment",
                 description: "Opening balance",
                 created_by: "admin",
-              });
+              }, orgId);
             }
 
             // Broadcast real-time parties sync

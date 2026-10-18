@@ -13,9 +13,9 @@ import {
   RotateCw,
   Sparkles,
   Layers,
-  Award,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
+import { crmApi } from "@/services/crmApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { ROUTE_PATHS } from "@/config/routes";
 import {
@@ -65,17 +65,13 @@ export default function CRMDashboard(): React.ReactElement {
     try {
       const activeOrgId = orgId || "";
 
-      // 1. Staff count: query organization_memberships
+      // 1. Staff count: query organization_memberships via settingsApi
       let staff = 1;
       try {
         if (activeOrgId) {
-          const { count, error } = await supabase
-            .from("organization_memberships")
-            .select("user_id", { count: "exact", head: true })
-            .eq("organization_id", activeOrgId);
-
-          if (!error && typeof count === "number" && count > 0) {
-            staff = count;
+          const { data, error } = await settingsApi.getMemberships(activeOrgId);
+          if (!error && data && data.length > 0) {
+            staff = data.length;
           }
         }
       } catch {
@@ -83,98 +79,36 @@ export default function CRMDashboard(): React.ReactElement {
         staff = 1;
       }
 
-      // 2. Today's attendance: query crm_attendance with graceful fallback
+      // 2. Today's attendance: query crm_attendance via crmApi
       let attendance = 0;
       try {
         if (activeOrgId) {
           const today = new Date().toISOString().split("T")[0];
-          const { count, error } = await supabase
-            .from("crm_attendance")
-            .select("id", { count: "exact", head: true })
-            .eq("org_id", activeOrgId)
-            .eq("date", today);
-
-          if (!error && typeof count === "number") {
-            attendance = count;
+          const { data, error } = await crmApi.getCRMAttendance(activeOrgId, { date: today });
+          if (!error && data) {
+            attendance = data.length;
           }
         }
       } catch {
         attendance = 0;
       }
 
-      // 3. Pending tasks: query crm_tasks with graceful fallback
+      // 3-5. Tasks, Broadcasts, Meetings: query via crmApi.getCRMDashboardCounts
       let tasks = 0;
+      let broadcasts = 0;
+      let meetings = 0;
       try {
         if (activeOrgId) {
-          const { count, error } = await (supabase as unknown as {
-            from: (t: string) => {
-              select: (s: string, o: { count: string; head: boolean }) => {
-                eq: (c: string, v: string) => {
-                  neq: (c2: string, v2: string) => Promise<{ count: number | null; error: Error | null }>;
-                };
-              };
-            };
-          })
-            .from("crm_tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("org_id", activeOrgId)
-            .neq("status", "completed");
-
-          if (!error && typeof count === "number") {
-            tasks = count;
+          const { data } = await crmApi.getCRMDashboardCounts(activeOrgId);
+          if (data) {
+            tasks = typeof data.tasks === "number" ? data.tasks : 0;
+            broadcasts = typeof data.broadcasts === "number" ? data.broadcasts : 0;
+            meetings = typeof data.meetings === "number" ? data.meetings : 0;
           }
         }
       } catch {
         tasks = 0;
-      }
-
-      // 4. Unread broadcasts: query crm_broadcasts with graceful fallback
-      let broadcasts = 0;
-      try {
-        if (activeOrgId) {
-          const { count, error } = await (supabase as unknown as {
-            from: (t: string) => {
-              select: (s: string, o: { count: string; head: boolean }) => {
-                eq: (c: string, v: string) => Promise<{ count: number | null; error: Error | null }>;
-              };
-            };
-          })
-            .from("crm_broadcasts")
-            .select("id", { count: "exact", head: true })
-            .eq("org_id", activeOrgId);
-
-          if (!error && typeof count === "number") {
-            broadcasts = count;
-          }
-        }
-      } catch {
         broadcasts = 0;
-      }
-
-      // 5. Upcoming meetings: query crm_meetings with graceful fallback
-      let meetings = 0;
-      try {
-        if (activeOrgId) {
-          const nowStr = new Date().toISOString();
-          const { count, error } = await (supabase as unknown as {
-            from: (t: string) => {
-              select: (s: string, o: { count: string; head: boolean }) => {
-                eq: (c: string, v: string) => {
-                  gte: (c2: string, v2: string) => Promise<{ count: number | null; error: Error | null }>;
-                };
-              };
-            };
-          })
-            .from("crm_meetings")
-            .select("id", { count: "exact", head: true })
-            .eq("org_id", activeOrgId)
-            .gte("start_time", nowStr);
-
-          if (!error && typeof count === "number") {
-            meetings = count;
-          }
-        }
-      } catch {
         meetings = 0;
       }
 

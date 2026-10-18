@@ -1,26 +1,29 @@
-# Task Assignment: Forensic Auditor M2-1 (Payroll Engine Integrity Audit)
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1
-Target: Milestone M2 Forensic Integrity Audit
-Audit:
-1. Examine `src/utils/crmPayrollUtils.ts`, `src/test/crmPayrollUtils.test.ts`, and `src/test/crmPayrollUtils.stress.test.ts`.
-2. Verify that there are NO mock/facade implementations, NO hardcoded expected results masking broken code, and NO shortcuts.
-3. Verify test assertions genuinely inspect mathematical functions and edge cases.
-Report CLEAN or INTEGRITY VIOLATION in handoff.md.
+## 2026-10-18T19:03:51Z
 
-## 2026-10-18T10:53:38Z
-You are Forensic Auditor M2-1 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2_1\handoff.md
-- src/utils/crmPayrollUtils.ts
-- src/test/crmPayrollUtils.test.ts
-- src/test/crmPayrollUtils.stress.test.ts
+You are auditor_m2_1. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1
 
-Conduct Forensic Integrity Audit:
-1. Static analysis of crmPayrollUtils.ts and test suites.
-2. Verify NO hardcoded test results, NO dummy/facade implementations, NO mock bypasses that cheat the calculations.
-3. Verify test assertions genuinely execute mathematical functions and verify edge cases.
-Write your verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+
+Artifacts to Audit:
+- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Products API Service: src/services/productsApi.ts
+- Products Context: src/context/ProductsContext.tsx
+- Migrated Pages: src/pages/Items.tsx, src/pages/Inventory.tsx
+
+Forensic Audit Mission:
+Verify code authenticity and integrity for Milestone 2:
+1. Static analysis:
+   - Ensure NO mock cheating, no hardcoded responses, and genuine routing through `apiClient`.
+   - Confirm genuine payload serialization and error handling.
+   - Verify that `supabase.from("products")` and `supabase.from("product_batches")` were genuinely replaced, not hidden behind dummy shims.
+2. Run verification:
+   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
+   - `cmd /c npx tsc --noEmit`
+3. Render a binary gate verdict: CLEAN or INTEGRITY VIOLATION.
+
+Write your report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

@@ -36,6 +36,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -56,6 +57,8 @@ import {
 } from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
 import { notifyStockUpdated } from "@/services/stockService";
+import { productsApi } from "@/services/productsApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { cn } from "@/lib/utils";
 
 interface TransactionRow {
@@ -175,13 +178,12 @@ export default function Dashboard() {
     setLoading(true);
     try {
       // 1. Fetch Credit Transactions (All historical for real-time ledger & chart)
-      const { data: creditData } = await supabase
-        .from("credit_transactions")
-        .select("id, party_id, party_type, amount, type, created_at")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: true });
+      const { data: creditData } = await partiesApi.getCreditTransactions({
+        orgId,
+        order: "asc",
+      });
 
-      setCreditTxHistory(creditData || []);
+      setCreditTxHistory((creditData as any) || []);
 
       let collectSum = 0;
       let paySum = 0;
@@ -200,11 +202,10 @@ export default function Dashboard() {
       setToPay(Math.max(0, paySum));
 
       // 2. Fetch All Sales for Cash/Bank, Revenue, and Real-Time Chart
-      const { data: salesData } = await supabase
-        .from("sales")
-        .select("id, created_at, invoice_number, total, payment_method, customer_id, customers(name)")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+      const { data: salesData } = await invoicesApi.getSales(orgId, {
+        order: "desc",
+        sort: "created_at",
+      });
 
       const allSalesList = (salesData || []).map((s) => ({
         id: s.id,
@@ -1214,37 +1215,32 @@ export default function Dashboard() {
         onClose={() => setShowCreateItemModal(false)}
         onSave={async (itemData) => {
           if (orgId) {
-            const { data: newProd } = await supabase
-              .from("products")
-              .insert({
-                organization_id: orgId,
-                name: itemData.name,
-                brand: itemData.brand || null,
-                category: itemData.category || "General",
-                barcode: itemData.barcode || null,
-                sku: itemData.sku,
-                tags: {
-                  selling_price: itemData.sellingPrice,
-                  purchase_price: itemData.purchasePrice,
-                  mrp: itemData.mrp,
-                  unit: itemData.unit,
-                  gst_rate: Number(itemData.gstRate) || 18,
-                  hsn_code: itemData.hsnCode?.trim() || null,
-                  min_stock_alert: itemData.minStockAlert || 5,
-                  ...(itemData.tags || {}),
-                },
-              })
-              .select()
-              .single();
+            const { data: newProd } = await productsApi.createProduct({
+              name: itemData.name,
+              brand: itemData.brand || null,
+              category: itemData.category || "General",
+              barcode: itemData.barcode || null,
+              sku: itemData.sku,
+              tags: {
+                selling_price: itemData.sellingPrice,
+                purchase_price: itemData.purchasePrice,
+                mrp: itemData.mrp,
+                unit: itemData.unit,
+                gst_rate: Number(itemData.gstRate) || 18,
+                hsn_code: itemData.hsnCode?.trim() || null,
+                min_stock_alert: itemData.minStockAlert || 5,
+                ...(itemData.tags || {}),
+              },
+            }, orgId);
 
-            if (newProd) {
-              await supabase.from("product_batches").insert({
-                product_id: newProd.id,
-                batch_number: "BATCH-01",
-                cost_price: itemData.purchasePrice,
+            if (newProd?.id) {
+              await productsApi.createBatch({
+                productId: newProd.id,
+                batchNumber: "BATCH-01",
+                costPrice: itemData.purchasePrice,
                 mrp: itemData.mrp,
                 stock: itemData.currentStock,
-              });
+              }, orgId);
             }
 
             // Broadcast real-time stock sync
@@ -1277,14 +1273,15 @@ export default function Dashboard() {
               ? { ...baseData, gstin: partyData.gstin || undefined }
               : baseData;
 
-            const { data: newParty } = await supabase
-              .from(targetTable)
-              .insert(insertData)
-              .select()
-              .single();
+            const { data: newParty } = await partiesApi.savePartyRecord(
+              targetTable,
+              insertData,
+              undefined,
+              orgId
+            );
 
             if (newParty && Number(partyData.openingBalance) !== 0) {
-              await supabase.from("credit_transactions").insert({
+              await partiesApi.recordCreditTransaction({
                 organization_id: orgId,
                 party_id: newParty.id,
                 party_type: isSupplier ? "supplier" : "customer",
@@ -1292,7 +1289,7 @@ export default function Dashboard() {
                 type: Number(partyData.openingBalance) > 0 ? "credit" : "payment",
                 description: "Opening balance",
                 created_by: "admin",
-              });
+              }, orgId);
             }
 
             // Broadcast real-time parties sync

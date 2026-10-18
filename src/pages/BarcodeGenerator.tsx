@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import {
   Printer,
@@ -98,11 +98,7 @@ export default function BarcodeGenerator() {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const { data: prodData, error: prodError } = await supabase
-          .from("products")
-          .select("id, name, sku, barcode, brand, category")
-          .eq("organization_id", orgId)
-          .order("name");
+        const { data: prodData, error: prodError } = await productsApi.getProducts(orgId);
 
         if (prodError) {
           console.error("fetchProducts error:", prodError);
@@ -120,10 +116,7 @@ export default function BarcodeGenerator() {
 
         // Fetch batches to get current price / MRP for each product
         const prodIds = prodData.map((p) => p.id);
-        const { data: batchData, error: batchError } = await supabase
-          .from("product_batches")
-          .select("product_id, mrp, cost_price, stock, batch_number")
-          .in("product_id", prodIds);
+        const { data: batchData, error: batchError } = await productsApi.getBatches(prodIds, orgId);
 
         if (batchError) {
           console.warn("fetch batches error:", batchError);
@@ -131,11 +124,14 @@ export default function BarcodeGenerator() {
 
         const priceMap: Record<string, { mrp: number; stock: number; batchNumber?: string }> = {};
         (batchData || []).forEach((b) => {
-          if (!priceMap[b.product_id] || (b.stock > 0 && priceMap[b.product_id].stock <= 0)) {
-            priceMap[b.product_id] = {
+          const pId = b.product_id || b.productId;
+          if (!pId) return;
+          const bStock = Number(b.stock || 0);
+          if (!priceMap[pId] || (bStock > 0 && priceMap[pId].stock <= 0)) {
+            priceMap[pId] = {
               mrp: Number(b.mrp || 0),
-              stock: Number(b.stock || 0),
-              batchNumber: b.batch_number,
+              stock: bStock,
+              batchNumber: b.batch_number || b.batchNumber,
             };
           }
         });

@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useProducts } from "@/context/ProductsContext";
@@ -508,24 +509,19 @@ export function PurchaseInvoiceModal({
       };
 
       // 1. Fetch from customers table (same as Sales Invoice)
-      const { data: custData } = await supabase
-        .from("customers")
-        .select("id, name, phone, email, address, gstin, custom_fields")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: custData } = await partiesApi.getCustomers(orgId, {
+        sort: "name",
+        order: "asc",
+      });
 
       // 2. Fetch from suppliers table (legacy/dedicated suppliers)
-      const { data: suppData } = await supabase
-        .from("suppliers")
-        .select("id, name, phone, email, address, gstin, custom_fields")
-        .eq("organization_id", orgId)
-        .order("name");
+      const { data: suppData } = await partiesApi.getSuppliers(orgId, {
+        sort: "name",
+        order: "asc",
+      });
 
       // 3. Fetch credit balances
-      const { data: creditData } = await supabase
-        .from("credit_transactions")
-        .select("party_id, amount, type")
-        .eq("organization_id", orgId);
+      const { data: creditData } = await partiesApi.getCreditTransactions({ orgId });
 
       const balanceMap: Record<string, number> = {};
       (creditData || []).forEach((c) => {
@@ -1047,20 +1043,19 @@ export function PurchaseInvoiceModal({
 
     try {
       // Insert into customers table (shared with Sales Invoice party list)
-      const { data, error } = await supabase
-        .from("customers")
-        .insert({
+      const { data, error } = await partiesApi.createCustomer(
+        {
           organization_id: orgId,
           name: newSuppName.trim(),
           phone: newSuppPhone.trim() || undefined,
           email: undefined,
           address: newSuppAddress.trim() || undefined,
           gstin: newSuppGstin.trim().toUpperCase() || undefined,
-        })
-        .select()
-        .single();
+        },
+        orgId
+      );
 
-      if (error) throw error;
+      if (error || !data) throw error || new Error("Failed to create party");
 
       toast.success(`Party "${newSuppName}" added and synced with Sales!`);
       const newOpt: SupplierOption = {

@@ -1,72 +1,45 @@
-# Worker M1 Task Assignment: Database Schema, Migration & Supabase Types
+## 2026-10-18T18:15:36Z
+You are worker_m1. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
 
-## Mission
-Implement Milestone M1 for CredSmart CRM Phase 3: Salary Management & Payroll Engine.
-You own the following files exclusively:
-1. `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-2. `src/integrations/supabase/types.ts`
-3. `src/test/crmSalaryMigration.test.ts`
-4. `src/test/crmSalaryTypes.test.ts`
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
 
-## MANDATORY INTEGRITY WARNING
-DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
+Reference Specifications & Architecture:
+- Project specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Explorer survey findings: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md
 
-## Inputs & Specifications
-Read the following files before writing any code:
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MANDATORY)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3\DISPATCH.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\spec_miner_m1_3\handoff.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_types\handoff.md`
-- Reference SQL artifact: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_types\proposed_20261017020000_create_crm_salary_tables.sql`
-- Reference Type Test artifact: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_types\proposed_crmSalaryTypes.test.ts`
-
-## Step-by-Step Instructions
-1. Create `supabase/migrations/20261017020000_create_crm_salary_tables.sql` with the complete, verified SQL from `explorer_m1_types/handoff.md` Deliverable 1. Ensure `BEGIN;` at start, `COMMIT;` at end, all tables have `IF NOT EXISTS`, all 15 indexes have `IF NOT EXISTS`, all 3 triggers have `DROP TRIGGER IF EXISTS`, all 16 policies have `DROP POLICY IF EXISTS`, RLS enabled, and constraints named.
-2. Update `src/integrations/supabase/types.ts` inserting the 4 new tables:
-   - Insert `crm_payroll_runs` and `crm_payslips` in alphabetical order (between `crm_geolocations` and `crm_permissions`).
-   - Insert `crm_salary_adjustments` and `crm_salary_profiles` in alphabetical order (between `crm_roles` and `crm_staff_roles`).
-   - Ensure strict typing, matching Deliverable 2 in `explorer_m1_types/handoff.md`. Strict zero `any` types.
-3. Create `src/test/crmSalaryMigration.test.ts` containing all 22 tests specified in `spec_miner_m1_3/handoff.md`.
-4. Create `src/test/crmSalaryTypes.test.ts` containing all 13 tests specified in `explorer_m1_types/handoff.md`.
-5. Run verification commands:
-   - `cmd /c npx vitest run src/test/crmSalaryMigration.test.ts` (all 22 pass)
-   - `cmd /c npx vitest run src/test/crmSalaryTypes.test.ts` (all 13 pass)
-   - `cmd /c npx tsc --noEmit` (zero errors)
-   - `cmd /c npx vitest run src/test/crm*` (zero regressions across Phase 1 & 2 tests)
-
-## Output Requirements
-Write your detailed handoff report to `.agents/teamwork/worker_m1/handoff.md` documenting:
-- Files modified/created
-- Test execution output and passing counts
-- Verification results
-- Exit code and confirmation
-Use `send_message` to notify the orchestrator when completed.
-
-
-## 2026-10-18T09:44:43Z
-You are Worker M1 for CredSmart CRM Phase 3: Salary Management & Payroll Engine.
-Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1`.
-Your detailed assignment is at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\DISPATCH.md`.
-
-MANDATORY FIRST STEP: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` before starting work.
-Also read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3\DISPATCH.md`, `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\spec_miner_m1_3\handoff.md`, and `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_types\handoff.md`.
+Write Ownership:
+You EXCLUSIVELY own:
+- `src/lib/apiClient.ts`
+- `src/test/apiClient.test.ts`
+Do NOT modify files outside your ownership boundary.
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-File write ownership:
-You exclusively own:
-- `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-- `src/integrations/supabase/types.ts`
-- `src/test/crmSalaryMigration.test.ts`
-- `src/test/crmSalaryTypes.test.ts`
+Mission:
+Implement Milestone 1 (M1) — Centralized API Client & Auth Interceptor:
+1. Create `src/lib/apiClient.ts` as a robust, production-grade HTTP client communicating with `https://api.credsmart.online/api`:
+   - Configurable base URL defaulting to `https://api.credsmart.online/api` (allow override via `VITE_API_BASE_URL` or `window.__API_BASE_URL__`).
+   - Automatically retrieve active Supabase JWT session token via `supabase.auth.getSession()` and attach `Authorization: Bearer <token>`.
+   - Automatically attach `x-organization-id` header from caller options or `localStorage.getItem("credsmart_active_org_id")`.
+   - Support standard HTTP methods: GET, POST, PUT, DELETE, PATCH with URL query parameters and JSON serialization.
+   - Provide transparent 401 Unauthorized token refresh: call `supabase.auth.refreshSession()` and retry once if the session expired.
+   - Response normalization envelope: `{ data: T | null, error: ApiError | null }` where `ApiError` has `{ message: string, code?: string, status?: number }`.
+   - Export helper functions: `apiClient<T>(endpoint, options)`, `apiGet`, `apiPost`, `apiPut`, `apiDelete`, `apiPatch`.
+2. Write unit tests in `src/test/apiClient.test.ts` (15+ tests):
+   - Header propagation (Bearer token, Content-Type, x-organization-id).
+   - Method verbs (GET, POST, PUT, DELETE, PATCH).
+   - URL parameter serialization.
+   - Error normalization on 400, 404, 500 responses.
+   - 401 automatic token refresh and retry flow.
+   - Network failure handling.
+3. Verification:
+   - Run `cmd /c npx tsc --noEmit` to verify clean compilation with 0 errors.
+   - Run `cmd /c npx vitest run src/test/apiClient.test.ts` to verify 100% passing tests.
 
-Implement the migration, types, and both test suites.
-Run the tests:
-- `cmd /c npx vitest run src/test/crmSalaryMigration.test.ts`
-- `cmd /c npx vitest run src/test/crmSalaryTypes.test.ts`
-- `cmd /c npx tsc --noEmit`
-- `cmd /c npx vitest run src/test/crm*`
-
-Write your complete handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`.
-Use `send_message` to report back when done.
+Write your complete handoff report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

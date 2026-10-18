@@ -35,7 +35,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Party, PartyType } from "@/types/parties";
-import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
@@ -140,24 +140,15 @@ export default function Parties() {
     setLoading(true);
     try {
       // 1. Fetch Customers
-      const { data: dbCustomers, error: custErr } = await supabase
-        .from("customers")
-        .select("id, name, phone, email, address, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
-        .eq("organization_id", orgId);
+      const { data: dbCustomers, error: custErr } = await partiesApi.getCustomers(orgId);
 
       // 2. Fetch Suppliers
-      const { data: dbSuppliers, error: suppErr } = await supabase
-        .from("suppliers")
-        .select("id, name, phone, email, address, gstin, trade_name, pan, pincode, shipping_address, custom_fields, credit_limit, credit_period_days, category, created_at")
-        .eq("organization_id", orgId);
+      const { data: dbSuppliers, error: suppErr } = await partiesApi.getSuppliers(orgId);
 
       // 3. Fetch Credit Transactions
-      const { data: credits, error: creditErr } = await supabase
-        .from("credit_transactions")
-        .select("party_id, party_type, amount, type, created_at, reference_id, description")
-        .eq("organization_id", orgId);
+      const { data: credits, error: creditErr } = await partiesApi.getCreditTransactions({ orgId });
 
-      setRawCreditTransactions(credits || []);
+      setRawCreditTransactions((credits as any) || []);
 
       const creditBalanceMap: Record<string, number> = {};
       (credits || []).forEach((c) => {
@@ -385,10 +376,10 @@ export default function Parties() {
       };
 
       if (editingParty) {
-        const targetTable = editingParty.partyType === "customer" ? "customers" : "suppliers";
-        await supabase
-          .from(targetTable)
-          .update({
+        const targetTable = editingParty.partyType === "supplier" ? "suppliers" : "customers";
+        const { error } = await partiesApi.savePartyRecord(
+          targetTable,
+          {
             name: partyData.name.trim(),
             phone: partyData.phone,
             email: partyData.email,
@@ -401,8 +392,11 @@ export default function Parties() {
             credit_limit: partyData.creditLimit || null,
             credit_period_days: partyData.creditPeriodDays || null,
             custom_fields: customFieldsPayload,
-          })
-          .eq("id", editingParty.id);
+          },
+          editingParty.id,
+          orgId
+        );
+        if (error) throw error;
 
         toast.success(`Updated party "${partyData.name}"`);
       } else {
@@ -418,9 +412,9 @@ export default function Parties() {
         const isSupplier = partyData.partyType === "supplier";
         const targetTable = isSupplier ? "suppliers" : "customers";
 
-        const { data: newRecord, error } = await supabase
-          .from(targetTable)
-          .insert({
+        const { data: newRecord, error } = await partiesApi.savePartyRecord(
+          targetTable,
+          {
             organization_id: orgId,
             name: partyData.name.trim(),
             phone: partyData.phone,
@@ -434,14 +428,15 @@ export default function Parties() {
             credit_limit: partyData.creditLimit || null,
             credit_period_days: partyData.creditPeriodDays || null,
             custom_fields: customFieldsPayload,
-          })
-          .select()
-          .single();
+          },
+          undefined,
+          orgId
+        );
 
         if (error) throw error;
 
         if (partyData.openingBalance !== 0 && newRecord) {
-          await supabase.from("credit_transactions").insert({
+          await partiesApi.recordCreditTransaction({
             organization_id: orgId,
             party_id: newRecord.id,
             party_type: isSupplier ? "supplier" : "customer",
@@ -449,7 +444,7 @@ export default function Parties() {
             type: partyData.openingBalance > 0 ? "credit" : "payment",
             description: "Opening balance",
             created_by: user?.id || "admin",
-          });
+          }, orgId);
         }
         toast.success(`Created party "${partyData.name}"!`);
       }
@@ -493,21 +488,22 @@ export default function Parties() {
       for (const p of importedList) {
         const isSupplier = p.partyType === "supplier";
         const targetTable = isSupplier ? "suppliers" : "customers";
-        const { data: newParty, error: pErr } = await supabase
-          .from(targetTable)
-          .insert({
+        const { data: newParty, error: pErr } = await partiesApi.savePartyRecord(
+          targetTable,
+          {
             organization_id: orgId,
             name: p.name || "Unnamed Party",
             phone: p.phone || undefined,
             email: p.email || undefined,
             address: p.address || undefined,
             gstin: p.gstin || undefined,
-          })
-          .select()
-          .single();
+          },
+          undefined,
+          orgId
+        );
 
         if (newParty && !pErr && Number(p.openingBalance) !== 0) {
-          await supabase.from("credit_transactions").insert({
+          await partiesApi.recordCreditTransaction({
             organization_id: orgId,
             party_id: newParty.id,
             party_type: isSupplier ? "supplier" : "customer",
@@ -515,7 +511,7 @@ export default function Parties() {
             type: Number(p.openingBalance) > 0 ? "credit" : "payment",
             description: "Opening balance import",
             created_by: user?.id || "admin",
-          });
+          }, orgId);
         }
       }
       toast.success(`Successfully imported ${importedList.length} parties!`);
@@ -538,11 +534,8 @@ export default function Parties() {
     }
 
     try {
-      if (party.partyType === "supplier") {
-        await supabase.from("suppliers").delete().eq("id", party.id);
-      } else {
-        await supabase.from("customers").delete().eq("id", party.id);
-      }
+      const targetTable = party.partyType === "supplier" ? "suppliers" : "customers";
+      await partiesApi.deletePartyRecord(targetTable, party.id, orgId);
       toast.success("Party deleted successfully.");
       fetchParties();
     } catch (err: unknown) {
@@ -593,8 +586,8 @@ export default function Parties() {
       if (orgId) {
         for (const dup of duplicates) {
           const targetTable = dup.partyType === "supplier" ? "suppliers" : "customers";
-          await supabase.from("credit_transactions").update({ party_id: primary.id }).eq("party_id", dup.id);
-          await supabase.from(targetTable).delete().eq("id", dup.id);
+          await partiesApi.reassignCreditTransactions(dup.id, primary.id, orgId);
+          await partiesApi.deletePartyRecord(targetTable, dup.id, orgId);
           mergedCount++;
         }
       }

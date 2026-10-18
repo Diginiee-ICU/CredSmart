@@ -4,6 +4,10 @@ import { parseTallyXml, TallyParseResult, TallyVoucher, TallyBankAccount } from 
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
 import { notifyStockUpdated } from "@/services/stockService";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
+import { settingsApi } from "@/services/settingsApi";
 
 // ─── Interfaces & Types ──────────────────────────────────────────────────────
 
@@ -180,13 +184,12 @@ export async function registerPairingToken(orgId: string, token: string): Promis
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) throw new Error("You must be signed in to register a sync token");
   const tokenHash = await hashPairingToken(token);
-  const syncTokens = (supabase as unknown as { from: (table: string) => any }).from("sync_pairing_tokens");
-  const { error } = await syncTokens.upsert({
+  const { error } = await settingsApi.upsertSyncPairingToken({
     organization_id: orgId,
     user_id: authData.user.id,
     token_hash: tokenHash,
     active: true,
-  }, { onConflict: "token_hash" });
+  });
   if (error) throw error;
 }
 
@@ -481,13 +484,13 @@ export async function executeDirectSyncIngestion(
       { data: existingCreditTxns },
       { data: existingExpenses }
     ] = await Promise.all([
-      supabase.from("products").select("id, name, tags, sku").eq("organization_id", orgId).limit(10000),
-      supabase.from("customers").select("id, name, phone").eq("organization_id", orgId).limit(10000),
-      supabase.from("suppliers").select("id, name, phone").eq("organization_id", orgId).limit(10000),
-      supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-      supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-      supabase.from("credit_transactions").select("reference_id").eq("organization_id", orgId).limit(10000),
-      supabase.from("expenses").select("expense_number").eq("organization_id", orgId).limit(10000)
+      productsApi.getProducts(orgId),
+      partiesApi.getCustomers(orgId, { limit: 10000 }),
+      partiesApi.getSuppliers(orgId, { limit: 10000 }),
+      invoicesApi.getSales(orgId, { limit: 10000 }),
+      invoicesApi.getPurchaseInvoices(orgId, { limit: 10000 }),
+      partiesApi.getCreditTransactions({ orgId, limit: 10000 }),
+      invoicesApi.getExpenses(orgId, { limit: 10000 })
     ]);
 
     const productMap = new Map((existingProducts || []).map(p => [p.name.toLowerCase().trim(), p]));
@@ -587,38 +590,51 @@ export async function executeDirectSyncIngestion(
       // Bulk Execute Products
       const chunkSize = 1000;
       for (let i = 0; i < productsToUpdate.length; i += chunkSize) {
-        const { error } = await supabase.from("products").upsert(productsToUpdate.slice(i, i + chunkSize));
+        const slice = productsToUpdate.slice(i, i + chunkSize);
+        const { error } = await productsApi.bulkImport(slice, "overwrite", orgId);
         if (error) throw new Error(`Failed to update products: ${error.message}`);
-        itemsCount += productsToUpdate.slice(i, i + chunkSize).length;
+        itemsCount += slice.length;
       }
       
       let newProducts: any[] = [];
       for (let i = 0; i < productsToInsert.length; i += chunkSize) {
         const slice = productsToInsert.slice(i, i + chunkSize);
-        const { data, error } = await supabase.from("products").insert(slice).select("id, name");
+        const { data: importRes, error } = await productsApi.bulkImport(slice, "skip", orgId);
         if (error) throw new Error(`Failed to insert products: ${error.message}`);
-        if (data) {
-          newProducts = newProducts.concat(data);
-          itemsCount += data.length;
-          data.forEach(p => {
+        const returnedProducts = importRes?.products || [];
+        if (returnedProducts.length > 0) {
+          newProducts = newProducts.concat(returnedProducts);
+          itemsCount += returnedProducts.length;
+          returnedProducts.forEach((p) => {
             if (p.name) productMap.set(p.name.toLowerCase().trim(), p);
           });
         } else {
+          // If bulk import doesn't return created product entities, look them up to capture IDs
+          const { data: freshProducts } = await productsApi.getProducts(orgId);
           itemsCount += slice.length;
-          slice.forEach(p => {
-            if (p.name && !productMap.has(p.name.toLowerCase().trim())) {
-              productMap.set(p.name.toLowerCase().trim(), p);
+          slice.forEach((s) => {
+            const match = (freshProducts || []).find(
+              (p) => (p.name || "").toLowerCase().trim() === (s.name || "").toLowerCase().trim()
+            );
+            if (match) {
+              newProducts.push(match);
+              productMap.set(match.name.toLowerCase().trim(), match);
             }
           });
         }
       }
       
       // Upsert Product Batches
-      const productIdsToUpdate = productsToUpdate.map(p => p.id);
+      const productIdsToUpdate = productsToUpdate.map((p) => p.id);
       let existingBatchesMap = new Map();
       if (productIdsToUpdate.length > 0) {
-          const { data: batches } = await supabase.from("product_batches").select("id, product_id, batch_number").in("product_id", productIdsToUpdate);
-          existingBatchesMap = new Map((batches || []).map(b => [b.product_id, { id: b.id, batch_number: b.batch_number }]));
+        const { data: batches } = await productsApi.getBatches(productIdsToUpdate, orgId);
+        existingBatchesMap = new Map(
+          (batches || []).map((b) => [
+            b.product_id || b.productId,
+            { id: b.id, batch_number: b.batch_number || b.batchNumber },
+          ])
+        );
       }
       
       const batchesToUpsert: any[] = [];
@@ -647,7 +663,7 @@ export async function executeDirectSyncIngestion(
          });
       }
       for (let i = 0; i < batchesToUpsert.length; i += chunkSize) {
-        const { error } = await supabase.from("product_batches").upsert(batchesToUpsert.slice(i, i + chunkSize));
+        const { error } = await productsApi.bulkUpsertBatches(batchesToUpsert.slice(i, i + chunkSize), orgId);
         if (error) throw new Error(`Failed to upsert batches: ${error.message}`);
       }
     }
@@ -688,60 +704,58 @@ export async function executeDirectSyncIngestion(
       }
       
       for (let i = 0; i < customersToUpsert.length; i += 1000) {
-         const { data, error } = await supabase.from("customers").upsert(customersToUpsert.slice(i, i + 1000)).select("id, name");
+         const chunk = customersToUpsert.slice(i, i + 1000);
+         const { error } = await partiesApi.bulkUpsertCustomers(chunk, orgId);
          if (error) throw new Error(`Failed to upsert customers: ${error.message}`);
-         partiesCount += customersToUpsert.slice(i, i + 1000).length;
+         partiesCount += chunk.length;
          
          // Record opening balances
-         if (data) {
-           data.forEach(cust => {
-             const origParty = parsedData.parties.find(p => p.name?.toLowerCase().trim() === cust.name?.toLowerCase().trim() && p.partyType !== "supplier");
-             if (origParty && origParty.openingBalance && origParty.openingBalance !== 0) {
-               transactionsToInsert.push({
-                 organization_id: orgId,
-                 party_id: cust.id,
-                 party_type: "customer",
-                 amount: Math.abs(origParty.openingBalance),
-                 type: "opening_balance",
-                 description: "Opening Balance",
-                 reference_id: "SYNC-OPENING",
-                 created_by: userId || "00000000-0000-0000-0000-000000000000",
-               });
-             }
-             customerMap.set(cust.name.toLowerCase().trim(), cust);
-           });
-         }
+         chunk.forEach(cust => {
+           const origParty = parsedData.parties.find(p => p.name?.toLowerCase().trim() === cust.name?.toLowerCase().trim() && p.partyType !== "supplier");
+           if (origParty && origParty.openingBalance && origParty.openingBalance !== 0) {
+             transactionsToInsert.push({
+               organization_id: orgId,
+               party_id: cust.id,
+               party_type: "customer",
+               amount: Math.abs(origParty.openingBalance),
+               type: "opening_balance",
+               description: "Opening Balance",
+               reference_id: "SYNC-OPENING",
+               created_by: userId || "00000000-0000-0000-0000-000000000000",
+             });
+           }
+           customerMap.set(cust.name.toLowerCase().trim(), cust);
+         });
       }
       for (let i = 0; i < suppliersToUpsert.length; i += 1000) {
-         const { data, error } = await supabase.from("suppliers").upsert(suppliersToUpsert.slice(i, i + 1000)).select("id, name");
+         const chunk = suppliersToUpsert.slice(i, i + 1000);
+         const { error } = await partiesApi.bulkUpsertSuppliers(chunk, orgId);
          if (error) throw new Error(`Failed to upsert suppliers: ${error.message}`);
-         partiesCount += suppliersToUpsert.slice(i, i + 1000).length;
+         partiesCount += chunk.length;
          
          // Record opening balances
-         if (data) {
-           data.forEach(supp => {
-             const origParty = parsedData.parties.find(p => p.name?.toLowerCase().trim() === supp.name?.toLowerCase().trim() && p.partyType === "supplier");
-             if (origParty && origParty.openingBalance && origParty.openingBalance !== 0) {
-               transactionsToInsert.push({
-                 organization_id: orgId,
-                 party_id: supp.id,
-                 party_type: "supplier",
-                 amount: Math.abs(origParty.openingBalance),
-                 type: "opening_balance",
-                 description: "Opening Balance",
-                 reference_id: "SYNC-OPENING",
-                 created_by: userId || "00000000-0000-0000-0000-000000000000",
-               });
-             }
-             supplierMap.set(supp.name.toLowerCase().trim(), supp);
-           });
-         }
+         chunk.forEach(supp => {
+           const origParty = parsedData.parties.find(p => p.name?.toLowerCase().trim() === supp.name?.toLowerCase().trim() && p.partyType === "supplier");
+           if (origParty && origParty.openingBalance && origParty.openingBalance !== 0) {
+             transactionsToInsert.push({
+               organization_id: orgId,
+               party_id: supp.id,
+               party_type: "supplier",
+               amount: Math.abs(origParty.openingBalance),
+               type: "opening_balance",
+               description: "Opening Balance",
+               reference_id: "SYNC-OPENING",
+               created_by: userId || "00000000-0000-0000-0000-000000000000",
+             });
+           }
+           supplierMap.set(supp.name.toLowerCase().trim(), supp);
+         });
       }
       
       if (transactionsToInsert.length > 0) {
         for (let i = 0; i < transactionsToInsert.length; i += 1000) {
           const chunk = transactionsToInsert.slice(i, i + 1000);
-          const { error } = await supabase.from("credit_transactions").insert(chunk);
+          const { error } = await partiesApi.bulkInsertCreditTransactions(chunk, orgId);
           if (error) {
             console.error("Failed to insert credit_transactions:", error.message);
           } else {
@@ -837,7 +851,7 @@ export async function executeDirectSyncIngestion(
               organization_id: orgId,
               name: vch.partyName || "Default Supplier",
             };
-            await supabase.from("suppliers").insert([newSupplier]);
+            await partiesApi.createSupplier(newSupplier, orgId);
             supplierMap.set(partyKey || "default supplier", newSupplier);
             supp = newSupplier;
           }
@@ -877,12 +891,15 @@ export async function executeDirectSyncIngestion(
                     unit: item.unit || "PCS",
                   },
                 };
-                const { error: pErr } = await supabase.from("products").insert([newProduct]);
-                if (!pErr) {
-                  productMap.set(itemKey, newProduct);
-                  prod = newProduct;
+                const { data: createdProd, error: pErr } = await productsApi.createProduct(newProduct, orgId);
+                if (!pErr && createdProd) {
+                  productMap.set(itemKey, createdProd);
+                  prod = createdProd;
                 } else {
-                  const { data: found } = await supabase.from("products").select("id, name, tags, sku").eq("organization_id", orgId).ilike("name", item.itemName).limit(1).maybeSingle();
+                  const { data: foundList } = await productsApi.getProducts(orgId);
+                  const found = (foundList || []).find(
+                    (p) => (p.name || "").toLowerCase().trim() === item.itemName.toLowerCase().trim()
+                  );
                   if (found) {
                     productMap.set(itemKey, found);
                     prod = found;
@@ -923,7 +940,7 @@ export async function executeDirectSyncIngestion(
               organization_id: orgId,
               name: vch.partyName || "Customer",
             };
-            await supabase.from("customers").insert([newCustomer]);
+            await partiesApi.createCustomer(newCustomer, orgId);
             customerMap.set(partyKey || "customer", newCustomer);
             cust = newCustomer;
           }
@@ -979,7 +996,7 @@ export async function executeDirectSyncIngestion(
                 organization_id: orgId,
                 name: vch.partyName || "Supplier",
               };
-              await supabase.from("suppliers").insert([newSupplier]);
+              await partiesApi.createSupplier(newSupplier, orgId);
               supplierMap.set(partyKey || "supplier", newSupplier);
               supp = newSupplier;
             }
@@ -1028,29 +1045,28 @@ export async function executeDirectSyncIngestion(
 
       // Execute batches
       for (let i = 0; i < salesToInsert.length; i += 1000) {
-        const { error } = await supabase.from("sales").insert(salesToInsert.slice(i, i + 1000));
+        const { error } = await invoicesApi.bulkInsertSales(salesToInsert.slice(i, i + 1000) as any, orgId);
         if (error) throw new Error(`Failed to insert sales: ${error.message}`);
       }
       for (let i = 0; i < saleItemsToInsert.length; i += 1000) {
-        const { error } = await supabase.from("sale_items").insert(saleItemsToInsert.slice(i, i + 1000));
+        const { error } = await invoicesApi.createSaleItems(saleItemsToInsert.slice(i, i + 1000) as any, orgId);
         if (error) throw new Error(`Failed to insert sale items: ${error.message}`);
       }
       for (let i = 0; i < purchasesToInsert.length; i += 1000) {
-        const { error } = await supabase.from("purchase_invoices").insert(purchasesToInsert.slice(i, i + 1000));
+        const { error } = await invoicesApi.bulkInsertPurchaseInvoices(purchasesToInsert.slice(i, i + 1000) as any, orgId);
         if (error) throw new Error(`Failed to insert purchases: ${error.message}`);
       }
       for (let i = 0; i < purchaseItemsToInsert.length; i += 1000) {
-        const { error } = await supabase.from("purchase_invoice_items").insert(purchaseItemsToInsert.slice(i, i + 1000));
+        const { error } = await invoicesApi.createPurchaseInvoiceItems(purchaseItemsToInsert.slice(i, i + 1000) as any, orgId);
         if (error) throw new Error(`Failed to insert purchase items: ${error.message}`);
       }
       for (let i = 0; i < creditTxnsToInsert.length; i += 1000) {
-        const { error } = await supabase.from("credit_transactions").insert(creditTxnsToInsert.slice(i, i + 1000));
+        const { error } = await partiesApi.bulkInsertCreditTransactions(creditTxnsToInsert.slice(i, i + 1000), orgId);
         if (error) throw new Error(`Failed to insert credit transactions: ${error.message}`);
       }
       if (expensesToInsert.length > 0) {
         for (let i = 0; i < expensesToInsert.length; i += 1000) {
-          const { error } = await supabase.from("expenses").insert(expensesToInsert.slice(i, i + 1000));
-          if (error) console.error("Failed to insert expenses to table:", error.message);
+          const { error } = await invoicesApi.bulkInsertExpenses(expensesToInsert.slice(i, i + 1000) as any, orgId);
         }
         try {
           const expenseKey = `credsmart_expenses_${orgId}`;
@@ -1087,7 +1103,7 @@ export async function executeDirectSyncIngestion(
     // --- Process Bank Accounts & Cash in Hand ---
     if (parsedData.bankAccounts && config?.syncScope?.banks !== false) {
       try {
-        const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
+        const { error: probeError } = await partiesApi.getBankAccounts(orgId);
         if (!probeError && parsedData.bankAccounts.length > 0) {
           const dbAccounts = parsedData.bankAccounts.map((b) => ({
             organization_id: orgId,
@@ -1098,7 +1114,7 @@ export async function executeDirectSyncIngestion(
             account_type: "current",
             balance: Number(b.balance) || 0,
           }));
-          await supabase.from("bank_accounts").upsert(dbAccounts);
+          await partiesApi.bulkUpsertBankAccounts(dbAccounts, orgId);
         }
       } catch {
         // Probe or upsert failed, proceed with localStorage

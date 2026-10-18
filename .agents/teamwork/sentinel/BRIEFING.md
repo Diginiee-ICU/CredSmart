@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T09:37:00Z
+# BRIEFING — 2026-10-18T19:18:00Z
 
 ## Mission
-Build a fully integrated CRM Tab — Phase 3: Salary Management & Payroll Engine — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform, featuring salary profiles, payroll engine (LOP, overtime, PF/ESI deductions), monthly payroll run & lock flow, advances & deductions, staff self-service PDF payslips, route wiring, CRMDashboard integration, and crm-salary-skill documentation.
+Migrate all direct frontend Supabase table queries to standard fetch requests communicating with the dedicated backend API (https://api.credsmart.online/api/*), securing endpoints with active session tokens and preserving complete UI and data contract parity.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -24,6 +24,9 @@ Build a fully integrated CRM Tab — Phase 3: Salary Management & Payroll Engine
 - Victory Auditor (CRM Phase 3): [to be spawned on victory claim]
 - Active Orchestrator (CRM Phase 3 Gen 2): caf7924e-19e5-4a1d-ae03-b43c66838dd3
 - Victory Auditor (CRM Phase 3 Gen 2): [to be spawned on victory claim]
+- Active Orchestrator (API Migration Gen 1): 73ee3452-ffda-43b4-83da-c3ca2006c47f (succeeded at 16 spawns)
+- Active Orchestrator (API Migration Gen 2): 02fa2ba5-8091-4db1-9b70-bdb7e414d8ee
+- Victory Auditor (API Migration): 4817e639-ade5-4c21-a49e-d1eba94e20bb
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -39,23 +42,28 @@ Build a fully integrated CRM Tab — Phase 3: Salary Management & Payroll Engine
 - `cmd /c npx` for all CLI commands (PowerShell execution policy)
 
 ## User Context
-- **Last user request**: Build CRM Tab Phase 3: Salary Management & Payroll Engine (M1: Database Schema & Migration, M2: Payroll Calculation Engine, M3: Salary Management UI Page, M4: Vector Payslip PDF Generator, M5: Route Wiring & Dashboard Integration, M6: Reusable Skill Documentation, M7: Final E2E Hardening).
+- **Last user request**: Migrate all direct frontend Supabase table queries to standard fetch requests communicating with the dedicated backend API (https://api.credsmart.online/api/*), securing endpoints with active session tokens and preserving complete UI and data contract parity.
 - **Pending clarifications**: none
-- **Delivered results**: none yet for CRM Phase 3
+- **Delivered results**: M1 (Centralized API Client) PASSED, M2 (Products & Inventory) PASSED, M3 (Customers, Suppliers, Parties & Financial Ledgers) PASSED, M4 (Invoices, Sales, Purchases, Returns & Expenses) PASSED, M5 (Settings, Organizations, Profiles, Locations & CRM) PASSED, M6 (Static AST Scan, E2E Verification & Build) PASSED
 
 ## Project Status
-- **Phase**: in progress
+- **Phase**: complete
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3_gen2
-- **Cron 1 (Reporting)**: b39f974c-65a2-4b8d-8de6-644bb87ae3d1/task-44 (*/8 * * * *)
-- **Cron 2 (Liveness)**: b39f974c-65a2-4b8d-8de6-644bb87ae3d1/task-46 (*/10 * * * *)
+- **Active Orchestrator ID**: 02fa2ba5-8091-4db1-9b70-bdb7e414d8ee (Gen 2)
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration
+- **Cron 1 (Reporting)**: cancelled upon completion
+- **Cron 2 (Liveness)**: cancelled upon completion
 
 ## Victory Audit Status
-- **Triggered**: no
-- **Verdict**: pending
+- **Triggered**: yes
+- **Verdict**: VICTORY CONFIRMED
 - **Retry count**: 0
+- **Auditor Report**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_api_migration\audit_report.md
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3_gen2\DISPATCH.md — Project Orchestrator dispatch
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration\DISPATCH.md — Project Orchestrator dispatch
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration\handoff.md — Gen 1 to Gen 2 soft handoff
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Global architecture spec
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\lib\apiClient.ts — Centralized API Client
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\services\productsApi.ts — Products API Service

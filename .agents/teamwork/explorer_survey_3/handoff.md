@@ -1,282 +1,482 @@
-# Explorer Survey 3: Test Infrastructure, Existing Test Coverage & Verification Strategy
+# Comprehensive Audit & Migration Report: Frontend Supabase Table Queries to Dedicated Backend API
+
+**Author**: Explorer Survey Agent 3 (`explorer_survey_3`)  
+**Target Repository**: CredSmart (`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart`)  
+**Target Backend Base URL**: `https://api.credsmart.online/api/*`  
+**Date**: 2026-10-18T17:55:00Z  
+
+---
 
 ## 1. Observation
 
-### 1.1 Existing Test Infrastructure & Test Execution Environment
-- **Test Framework**: Vitest v3.2.4 configured with `@vitejs/plugin-react-swc`, `jsdom` environment, and global test definitions (`vitest.config.ts:8-12`).
-- **Setup File**: `src/test/setup.ts` imports `@testing-library/jest-dom` and mocks `window.matchMedia`.
-- **Execution Policy Invariant (Windows PowerShell)**: Direct execution of `npx vitest` or `npm test` from PowerShell fails with:
-  ```
-  npx : File C:\Program Files\nodejs\npx.ps1 cannot be loaded because running scripts is disabled on this system.
-  CategoryInfo : SecurityError: (:) [], PSSecurityException
-  ```
-  **Workaround Verified**: Commands must be invoked via `cmd.exe /c npx vitest ...` or `cmd.exe /c npm test`.
-- **Baseline Test Pass Rate**:
-  Running `cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView`:
-  ```
-  ✓ src/test/MobileInvoiceSuccessView.challenger.test.tsx (12 tests) 3216ms
-  ✓ src/test/MobileInvoiceSuccessView.challenge.test.tsx (17 tests) 5328ms
-  ✓ src/test/MobileInvoiceSuccessView.test.tsx (17 tests) 6961ms
-  Test Files  3 passed (3)
-  Tests  46 passed (46)
-  Duration  12.89s
-  ```
-- **TypeScript Compiler Health**:
-  Running `cmd.exe /c npx tsc --noEmit` exits with status `0` and 0 diagnostic errors.
+### 1.1 Complete Global Codebase Inventory Scan
+
+Across **265 non-test source files** in the `src/` directory, an exhaustive multi-line AST/regex scan identified **394 total client-side database table queries** invoking `.from(...)` against Supabase.
+
+In addition, non-database `.from` invocations were audited to avoid false positives:
+- **`Array.from(...)`**: 40 occurrences (JavaScript built-in array conversion).
+- **`supabase.storage.from("store-logos")`**: 12 occurrences (Supabase Storage bucket operations across `AddProductModal.tsx`, `ItemImageUpload.tsx`, `StorefrontCatalogTab.tsx`, `BusinessSettings.tsx`, `Staff.tsx`).
+- **`supabase.rpc(...)`**: 3 occurrences (`bootstrap_default_organization` in `useOrganization.tsx:440` & `Auth.tsx:329`; `get_public_storefront` in `storefrontService.ts:148`).
+- **Realtime Channels**: 6 channel subscriptions (`public:network_invoices`, `pos_batches_realtime`, `inventory_realtime`).
+- **Edge Functions**: 4 invocations via `supabase.functions.invoke(...)` (`invite-staff`, `eway-bill`, `tally-agent-tunnel`).
+
+#### Master Table Query Frequency Distribution (394 Invocations Total)
+
+| Table Name | Count | Domain Category | Primary Handlers / Files |
+|---|:---:|---|---|
+| `products` | 61 | Inventory / Catalog | `autoSyncService.ts`, `TallyImport.tsx`, `Inventory.tsx`, `documentsService.ts` |
+| `product_batches` | 47 | Inventory / Batches | `stockService.ts`, `autoSyncService.ts`, `Inventory.tsx`, `POSBilling.tsx` |
+| `credit_transactions` | 33 | Ledger / Khata | `Parties.tsx`, `CustomerLedger.tsx`, `autoSyncService.ts`, `documentsService.ts` |
+| `suppliers` | 31 | Parties / Vendors | `Parties.tsx`, `documentsService.ts`, `autoSyncService.ts`, `PurchaseInvoiceForm.tsx` |
+| `customers` | 23 | Parties / Debtors | `Parties.tsx`, `documentsService.ts`, `autoSyncService.ts`, `offlineQueue.ts` |
+| `sales` | 20 | Invoices & Billing | `documentsService.ts`, `POSBilling.tsx`, `TallyImport.tsx`, `autoSyncService.ts`, `SalesHistory.tsx`, `Analytics.tsx`, `Dashboard.tsx`, `CustomerLedger.tsx`, `ewayBillService.ts`, `offlineQueue.ts` |
+| `purchase_invoices` | 14 | Purchases / Inbound | `documentsService.ts`, `PurchaseInvoiceForm.tsx`, `PurchaseReturns.tsx`, `TallyImport.tsx`, `autoSyncService.ts` |
+| `organization_memberships` | 12 | Auth & Multi-Tenancy | `useOrganization.tsx`, `Auth.tsx`, `Staff.tsx`, `Attendance.tsx`, `CRMDashboard.tsx`, `RoleManagement.tsx` |
+| `organizations` | 12 | Auth & Organization | `useOrganization.tsx`, `BusinessSettings.tsx`, `Auth.tsx`, `networkInvoicingService.ts` |
+| `sale_items` | 10 | Sales Line Items | `documentsService.ts`, `POSBilling.tsx`, `SalesHistory.tsx`, `TallyImport.tsx`, `autoSyncService.ts` |
+| `expenses` | 9 | Operating Expenses | `Expenses.tsx`, `TallyImport.tsx`, `autoSyncService.ts` |
+| `storefront_settings` | 8 | Public Commerce | `storefrontService.ts`, `networkInvoicingService.ts`, `useOrganization.tsx` |
+| `purchase_returns` | 8 | Returns & Debit Notes | `documentsService.ts`, `PurchaseReturns.tsx` |
+| `network_invoices` | 8 | B2B Network Exchange | `networkInvoicingService.ts` |
+| `network_notifications` | 8 | B2B Push Alerts | `networkInvoicingService.ts` |
+| `$targetTable` *(dynamic)* | 7 | Dynamic Party Routing | `Parties.tsx`, `AppLayout.tsx`, `CreatePartyModal.tsx` *(resolves to `customers` or `suppliers`)* |
+| `crm_roles` | 7 | CRM RBAC (Phase 1) | `useCRMPermission.ts`, `RoleManagement.tsx`, `Attendance.tsx` |
+| `purchase_invoice_items` | 6 | Purchase Line Items | `documentsService.ts`, `PurchaseInvoiceForm.tsx`, `PurchaseReturns.tsx`, `TallyImport.tsx`, `autoSyncService.ts` |
+| `crm_attendance` | 6 | CRM Geofence (Phase 2)| `Attendance.tsx`, `CRMDashboard.tsx`, `SalaryManagement.tsx` |
+| `bank_accounts` | 6 | Cash & Banking | `TallyImport.tsx`, `autoSyncService.ts` |
+| `crm_staff_roles` | 5 | CRM RBAC (Phase 1) | `useCRMPermission.ts`, `RoleManagement.tsx`, `Attendance.tsx` |
+| `crm_permissions` | 5 | CRM RBAC (Phase 1) | `useCRMPermission.ts`, `RoleManagement.tsx` |
+| `profiles` | 5 | User Profiles | `Staff.tsx`, `ActivityLog.tsx`, `Attendance.tsx`, `RoleManagement.tsx`, `SalaryManagement.tsx` |
+| `staff_invitations` | 5 | Staff Team Invites | `Staff.tsx` |
+| `crm_geolocations` | 4 | CRM Geofence (Phase 2)| `Attendance.tsx` |
+| `crm_salary_adjustments` | 4 | CRM Payroll (Phase 3) | `SalaryManagement.tsx` |
+| `crm_attendance_requests`| 3 | CRM Geofence (Phase 2)| `Attendance.tsx` |
+| `crm_payroll_runs` | 3 | CRM Payroll (Phase 3) | `SalaryManagement.tsx` |
+| `crm_payslips` | 3 | CRM Payroll (Phase 3) | `SalaryManagement.tsx` |
+| `locations` | 3 | Multi-Godown / Stock | `Godown.tsx` |
+| `sales_returns` | 3 | Returns & Credit Notes | `documentsService.ts` |
+| `storefront_orders` | 3 | Public Order Ingestion | `storefrontService.ts` |
+| `audit_logs` | 2 | Security & Audit Trail| `useAuditLog.tsx`, `ActivityLog.tsx` |
+| `crm_salary_profiles` | 2 | CRM Payroll (Phase 3) | `SalaryManagement.tsx` |
+| `purchase_return_items` | 2 | Purchase Return Items | `documentsService.ts`, `PurchaseReturns.tsx` |
+| `crm_tasks` | 1 | CRM Tasks Counter | `CRMDashboard.tsx` |
+| `crm_broadcasts` | 1 | CRM Broadcasts Counter| `CRMDashboard.tsx` |
+| `crm_meetings` | 1 | CRM Meetings Counter | `CRMDashboard.tsx` |
+| `$table` *(dynamic)* | 1 | Tally Bulk Party Ingest | `TallyImport.tsx:1519` *(resolves to `customers` or `suppliers`)* |
+| `sync_pairing_tokens` | 1 | Tally Desktop Agent | `autoSyncService.ts:183` |
+| `sales_return_items` | 1 | Sales Return Line Items| `documentsService.ts:1047` |
+| **TOTAL** | **394** | | |
 
 ---
 
-### 1.2 Inspection of Existing Tests (`src/test/MobileInvoiceSuccessView*.test.tsx`)
-There are currently 3 test files targeting `MobileInvoiceSuccessView`:
-1. `src/test/MobileInvoiceSuccessView.test.tsx` (17 tests):
-   - **R1 Quick Action Row**: Renders circular `Edit` button, checks styling (`w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50`), asserts `onEdit` is fired once, verifies action row contains 5 buttons (`Print`, `Download`, `Share`, `E-Way Bill`, `Edit`).
-   - **R2 Dual-Action Sticky Footer**: Checks side-by-side flex layout with `gap-3`, checks `Edit Bill` soft indigo styling and `Done` primary filled indigo styling, verifies safe area padding `pb-[max(1rem,env(safe-area-inset-bottom))]`.
-   - **R3 Footer Callback Handlers**: `fireEvent.click(editBillBtn)` calls `onEdit`, `fireEvent.click(doneBtn)` calls `onClose`.
-   - **Suite 4 Header Actions**: Back button calls `onClose`, edit pen calls `onEdit`, and trash button calls `onDelete` directly.
-   - **Suite 5 Graceful Degradation**: When `onEdit` is omitted, renders full-width `Done` button; when `onDelete` is omitted, does not render header trash button.
-   - **Suite 6 Data Integrity**: Asserts preview renders invoice number, total amount, party name, and minimum 48px touch targets.
-   - **Mocking Setup**: Mocks `@/utils/downloadExactInvoice`:
-     ```tsx
-     vi.mock("@/utils/downloadExactInvoice", () => ({
-       downloadExactInvoicePdf: vi.fn(),
-     }));
-     ```
+### 1.2 Invoices, Sales & Purchases Domain Detailed Audit (84 Queries)
 
-2. `src/test/MobileInvoiceSuccessView.challenge.test.tsx` (17 tests):
-   - **Stress Testing**: 20 rapid successive clicks on `Edit`, `Edit Bill`, and `Done`; interleaved rapid clicks.
-   - **Edge Cases**: Missing party name (falls back to "Cash Sale"), missing phone/GSTIN/address; missing `storeInfo` (falls back to "CredSmart Store"); invoice with 0 items; item with undefined unit (falls back to "PCS"); zero amount invoice (`₹0.00`); status badges for "unpaid" and "partial"; 10 items overflow badge (`+6 more item(s)`); non-sales docType (`purchase_invoice`); `navigator.share` rejection vs fallback to `navigator.clipboard.writeText`.
+#### Table: `sales` (20 occurrences)
+1. **`src/services/documentsService.ts:171`** (`select`)
+   - Query: `.select('id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, created_at, customer_id, customers ( name, phone, gstin, email, address ), sale_items (*)')`
+   - Filter: `.eq("organization_id", orgId).order("created_at", { ascending: false })`
+   - Purpose: Main invoice fetch for Sales History, Sales List, and Document management. Merges Supabase sales with `localStorage`.
+2. **`src/services/documentsService.ts:661`** (`update`)
+   - Payload: `{ organization_id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, customer_id }`
+   - Filter: `.eq("id", doc.id).select().maybeSingle()`
+   - Purpose: In-place update of an existing sales invoice when user returns via "Edit Bill".
+3. **`src/services/documentsService.ts:695`** (`insert`)
+   - Payload: Same as update, plus `created_by: userId`.
+   - Purpose: Fallback insertion if document ID was not found during update.
+4. **`src/services/documentsService.ts:729`** (`insert`)
+   - Payload: Standard new sales invoice creation with `.select().single()`.
+5. **`src/services/documentsService.ts:1120`** (`delete`)
+   - Filter: `.delete().eq("id", docId)`
+   - Purpose: Deletes sales invoice record upon user confirmation.
+6. **`src/pages/POSBilling.tsx:1474`** (`insert`)
+   - Payload: `{ organization_id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, customer_id, created_by }`
+   - Returns: `.select("id").single()`
+   - Purpose: Rapid-fire checkout creation from POS Terminal.
+7. **`src/pages/SalesHistory.tsx:92`** (`select`)
+   - Query: `.select("id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, created_at, customer_id, customers(name, phone)")`
+   - Filter: `.eq("organization_id", orgId).order("created_at", { ascending: false })`
+8. **`src/pages/Dashboard.tsx:204`** (`select`)
+   - Query: `.select("id, created_at, invoice_number, total, payment_method, customer_id, customers(name)").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(5)`
+   - Purpose: Recent 5 sales on Business Dashboard.
+9. **`src/pages/CustomerLedger.tsx:76`** (`select`)
+   - Query: `.select("id, invoice_number, total, payment_method, created_at, customer_id").eq("customer_id", id)`
+   - Purpose: Ledger reconciliation against party credit transactions.
+10. **`src/pages/Analytics.tsx:70`** (`select`)
+    - Query: `.select("total, payment_method, created_at").eq("organization_id", orgId).order("created_at", { ascending: true })`
+    - Purpose: Revenue charts and payment method breakdown.
+11. **`src/pages/TallyImport.tsx:932`** (`select`) & **`src/pages/TallyImport.tsx:1591`** (`select`)
+    - Query: `.select("id, invoice_number").eq("organization_id", orgId).limit(10000)`
+    - Purpose: Deduplication map builder for Tally XML import.
+12. **`src/pages/TallyImport.tsx:1171`** (`upsert`) & **`src/pages/TallyImport.tsx:1830`** (`upsert`)
+    - Batch size: Chunks of 1,000.
+13. **`src/pages/TallyImport.tsx:1186`** (`insert`) & **`src/pages/TallyImport.tsx:1844`** (`insert`)
+    - Batch insert with `.select("id, invoice_number")`.
+14. **`src/services/autoSyncService.ts:487`** (`select`)
+    - Query: `.select("id, invoice_number").eq("organization_id", orgId).limit(10000)`
+15. **`src/services/autoSyncService.ts:1031`** (`insert`)
+    - Batch insert in 1,000-row slices.
+16. **`src/services/ewayBillService.ts:212`** (`select`)
+    - Query: `.select("id").eq("organization_id", orgId).eq("invoice_number", record.docNo).maybeSingle()`
+    - Purpose: Associate government E-Way Bill numbers with sales records.
+17. **`src/utils/offlineQueue.ts:132`** (`insert`)
+    - Offline queue replay: `.insert([item.payload])`.
 
-3. `src/test/MobileInvoiceSuccessView.challenger.test.tsx` (12 tests):
-   - **Event Bubbling**: Asserts clicks on nested child elements (`<path>`, `<svg>`, inner `<div>`, `<span>`) correctly bubble to button triggers.
-   - **Viewport Constraints**: Checks `flex-nowrap`, padding, and mathematical width budget for 5 buttons across 320px, 360px, 375px, and 414px viewports.
+#### Table: `sale_items` (10 occurrences)
+1. **`src/services/documentsService.ts:679`** (`delete`)
+   - Filter: `.delete().eq("sale_id", doc.id)`
+   - Purpose: Cascading clear of old line items prior to updating with revised bill lines.
+2. **`src/services/documentsService.ts:690, 723, 759`** (`insert`)
+   - Payload: Array of `{ sale_id, product_name, product_id, batch_number, mrp, quantity, line_total }`.
+3. **`src/pages/POSBilling.tsx:1503`** (`insert`)
+   - Payload: Array of line items mapped from active POS cart.
+4. **`src/pages/SalesHistory.tsx:148, 166`** (`select`)
+   - Query: `.select("id, product_name, product_id, batch_id, quantity, mrp, line_total, batch_number").eq("sale_id", saleId)`
+   - Purpose: Lazy-loading items when expanding an invoice row or triggering Print/Thermal receipt.
+5. **`src/pages/TallyImport.tsx:1208, 1866`** (`insert`)
+   - Batch insertion in chunks of 1,000 items.
+6. **`src/services/autoSyncService.ts:1035`** (`insert`)
+   - Auto-sync stream ingestion of Tally voucher line items.
+
+#### Table: `purchase_invoices` (14 occurrences)
+1. **`src/services/documentsService.ts:426`** (`select`)
+   - Query: `.select('id, invoice_number, total_amount, status, created_at, notes, supplier_id, suppliers ( name, phone, gstin, email, address ), purchase_invoice_items ( id, product_id, batch_number, quantity, cost_price, mrp, expiry_date, products ( name, barcode, sku ) )')`
+   - Filter: `.eq("organization_id", orgId).order("created_at", { ascending: false })`
+2. **`src/services/documentsService.ts:824`** (`insert`)
+   - Payload: `{ organization_id, supplier_id, invoice_number, total_amount, status, notes, created_by }`
+3. **`src/services/documentsService.ts:1135`** (`delete`)
+   - Filter: `.delete().eq("id", docId)`
+4. **`src/components/PurchaseInvoiceForm.tsx:223`** (`insert`)
+   - Payload: Draft purchase creation with `status: "draft"`.
+5. **`src/components/PurchaseInvoiceForm.tsx:255`** (`update`)
+   - Payload: `.update({ status: "received" }).eq("id", invoice.id)` (triggers stock ingestion trigger).
+6. **`src/pages/PurchaseReturns.tsx:192`** (`select`)
+   - Query: `.select("id, invoice_number, created_at, total_amount").eq("organization_id", orgId).eq("supplier_id", selectedSupplierId)`
+7. **`src/pages/TallyImport.tsx:933, 1592`** (`select`), **`1177, 1836`** (`upsert`), **`1219, 1876`** (`insert`)
+8. **`src/services/autoSyncService.ts:488`** (`select`), **`1039`** (`insert`)
+
+#### Table: `purchase_invoice_items` (6 occurrences)
+1. **`src/services/documentsService.ts:887`** (`insert`)
+   - Payload: `{ purchase_invoice_id, product_id, quantity, cost_price, mrp, batch_number, expiry_date }`.
+2. **`src/components/PurchaseInvoiceForm.tsx:249`** (`insert`)
+3. **`src/pages/PurchaseReturns.tsx:207`** (`select`)
+   - Query: `.select("product_id, batch_number, quantity, cost_price, products ( name )").eq("purchase_invoice_id", invId)`
+4. **`src/pages/TallyImport.tsx:1272, 1929`** (`insert`)
+5. **`src/services/autoSyncService.ts:1043`** (`insert`)
+
+#### Table: `expenses` (9 occurrences)
+1. **`src/pages/Expenses.tsx:155`** (`select`)
+   - Query: `.select("*").eq("organization_id", orgId).order("date", { ascending: false })`
+2. **`src/pages/Expenses.tsx:260`** (`insert`)
+   - Payload: `{ organization_id, category, amount, date, description, created_by, payment_mode }`
+3. **`src/pages/Expenses.tsx:290`** (`delete`)
+   - Filter: `.delete().eq("id", id)`
+4. **`src/pages/TallyImport.tsx:935, 1597`** (`select`), **`1288, 1945`** (`insert`)
+5. **`src/services/autoSyncService.ts:490`** (`select`), **`1052`** (`insert`)
+
+#### Tables: `purchase_returns` (8) & `purchase_return_items` (2)
+1. **`src/services/documentsService.ts:539`** (`select`)
+   - Query: `.select('id, return_number, total_amount, status, reason, created_at, supplier_id, suppliers ( name, phone, gstin, email, address ), purchase_return_items ( id, product_id, batch_number, quantity, cost_price, products ( name ) )').eq("organization_id", orgId).order("created_at", { ascending: false })`
+2. **`src/services/documentsService.ts:936`** (`insert`) & **`976`** (`insert items`)
+3. **`src/services/documentsService.ts:1155`** (`delete`)
+4. **`src/pages/PurchaseReturns.tsx:103`** (`select`), **`241`** (`select single`), **`248`** (`update status`), **`315`** (`insert`), **`336`** (`insert items`), **`340`** (`update status completed`)
+
+#### Tables: `sales_returns` (3) & `sales_return_items` (1)
+1. **`src/services/documentsService.ts:279`** (`select`)
+   - Query: `.select('*, sales_return_items (*)').eq("organization_id", orgId).order("created_at", { ascending: false })`
+2. **`src/services/documentsService.ts:990`** (`insert`) & **`1047`** (`insert items`)
+   - Note: In addition to `sales_returns` and `sales_return_items`, line 1052 inserts into `credit_transactions` when `settlementMode === "store_credit"`.
+3. **`src/services/documentsService.ts:1144`** (`delete`)
+   - Line 1146 also cleans up `credit_transactions` where `reference_id == docId`.
+
+#### Tables: `network_invoices` (8) & `storefront_orders` (3)
+1. **`src/services/networkInvoicingService.ts:698, 894, 915, 1236, 1520, 1640, 1671, 1809`**:
+   - Manages B2B digital invoicing between CredSmart tenants, with invoice status updates (`accepted`, `rejected`, `sync_status`).
+2. **`src/services/storefrontService.ts:289, 318, 364`**:
+   - Order ingestion from public WhatsApp eCommerce storefronts, with order status transitions (`pending`, `confirmed`, `delivered`, `cancelled`).
 
 ---
 
-### 1.3 Inspection of `src/services/documentsService.ts`
-1. **`updateDocument` Method**:
-   - `documentsService.updateDocument` **does NOT exist** anywhere in `documentsService.ts` or the entire codebase.
-2. **`saveDocument(doc: BusinessDocument, userId?: string)` Implementation** (`lines 646-1035`):
-   - If `!doc.id`, creates temporary ID `doc_${Date.now()}_...` (line 648).
-   - In Supabase for `sales_invoice` (lines 654-690):
-     ```ts
-     const { data: saleData, error: saleErr } = await supabase
-       .from("sales")
-       .insert({ ... }) // <-- UNCONDITIONAL INSERT!
-     ```
-     It **never calls `.update()`** in Supabase! If an existing invoice ID is passed with `userId`, it attempts a duplicate insert into `sales`.
-   - In `localStorage` (lines 1005-1015):
-     ```ts
-     const index = existingList.findIndex(
-       (d) => d.id === doc.id || (doc.documentNumber && d.documentNumber === doc.documentNumber)
-     );
-     if (index >= 0) {
-       existingList[index] = { ...doc, updated_at: new Date().toISOString() };
-     } else {
-       existingList.unshift(doc);
-     }
-     ```
-   - In stock adjustment (lines 1023-1027):
-     ```ts
-     if (previousDoc) {
-       await stockService.handleDocumentStock(doc, "update", previousDoc);
-     } else {
-       await stockService.handleDocumentStock(doc, "create");
-     }
-     ```
-3. **`deleteDocument(orgId: string, docType: string, docId: string)` Implementation** (`lines 1038-1099`):
-   - Takes 3 arguments: `(orgId: string, docType: string, docId: string)`.
-   - Removes doc from localStorage (`filter(d => d.id !== docId)`).
-   - Deletes from Supabase `sales` by `eq("id", docId)`.
-   - Cancels network invoice if applicable.
-   - Reverts stock adjustments via `stockService.handleDocumentStock(targetDoc, "delete")`.
-   - Dispatches `notifyDocumentChange(orgId, docType, "delete", targetDoc)`.
+### 1.3 Settings, Organizations, Profiles & CRM Domains Detailed Audit (99 Queries)
 
----
+#### Organization & Identity
+1. **`organizations` (12 occurrences)**:
+   - `src/hooks/useOrganization.tsx:466, 482, 805, 822`: Provisioning new business tenant records.
+   - `src/hooks/useOrganization.tsx:656`: `.select("*").in("id", orgIds)` to resolve active user's organizations.
+   - `src/pages/Auth.tsx:357`: Creating tenant on signup.
+   - `src/pages/BusinessSettings.tsx:306`: Updating business name, GSTIN, PAN, billing address, phone, email, and bank details.
+   - `src/services/networkInvoicingService.ts:500, 506, 511, 515, 519`: Cross-tenant lookup by GSTIN, phone, or name.
+2. **`organization_memberships` (12 occurrences)**:
+   - `src/hooks/useOrganization.tsx:244`: Fetching user's roles across organizations.
+   - `src/hooks/useOrganization.tsx:494, 833` & `src/pages/Auth.tsx:385`: Upserting `store_owner` role link.
+   - `src/pages/Auth.tsx:108, 319`: Fast login role and default org resolution.
+   - `src/pages/Staff.tsx:740, 923, 945`: Listing staff members, updating staff role, and deleting staff membership.
+   - `src/pages/crm/Attendance.tsx:447`, `src/pages/crm/RoleManagement.tsx:326`, `src/pages/crm/CRMDashboard.tsx:73`.
+3. **`profiles` (5 occurrences)**:
+   - `src/pages/Staff.tsx:755`: Enriched user display names and avatars.
+   - `src/pages/ActivityLog.tsx:89`: Enriched audit log names.
+   - `src/pages/crm/Attendance.tsx:454`: Staff names and emails for geofence attendance logs.
+   - `src/pages/crm/RoleManagement.tsx:341`: Linking custom CRM roles to staff user IDs.
+   - `src/pages/crm/SalaryManagement.tsx:266`: Resolving staff members for salary profile configuration.
+4. **`staff_invitations` (5 occurrences)**:
+   - `src/pages/Staff.tsx:778, 823, 856, 872, 897`: Managing pending invitations, resending invites via Edge function, and revoking invitations.
+5. **`storefront_settings` (8 occurrences)**:
+   - `src/services/storefrontService.ts:31, 69, 123, 165`: Managing storefront slug uniqueness, contact details, banner images, and catalog options.
+   - `src/services/networkInvoicingService.ts:456, 464, 474`: Public phone/address discovery.
+   - `src/hooks/useOrganization.tsx:746`: Initializing storefront settings on tenant bootstrap.
+6. **`bank_accounts` (6 occurrences)**:
+   - `src/pages/TallyImport.tsx:851, 866, 2001, 2015` & `src/services/autoSyncService.ts:1090, 1101`: Probing database table availability and bulk upserting bank accounts.
+7. **`locations` (3 occurrences)**:
+   - `src/pages/Godown.tsx:98, 210, 218`: Multi-godown warehouse management (CRUD).
+8. **`audit_logs` (2 occurrences)**:
+   - `src/hooks/useAuditLog.tsx:21`: Recording action telemetry (e.g. `INVOICE_CREATED`, `PRICE_CHANGED`).
+   - `src/pages/ActivityLog.tsx:72`: Reading security logs.
+9. **`sync_pairing_tokens` (1 occurrence)**:
+   - `src/services/autoSyncService.ts:183`: Upserting token hashes for local Tally agent desktop pairing.
 
-### 1.4 Inspection of `src/components/SalesInvoiceModal.tsx` & Mobile Flow
-1. **Save & New Starvation on Mobile (`lines 1163-1183`)**:
-   ```tsx
-   if (window.innerWidth < 1024) {
-     setMobileSuccessInvoice(saved);
-   } else if (saveAndNew) {
-     const nextSeq = (parseInt(invoiceNumberSeq, 10) + 1 || Math.floor(100 + Math.random() * 900)).toString();
-     setInvoiceNumberSeq(nextSeq);
-     setPartyName("");
-     ...
-     setItems([createNewRow("row-1")]);
-     setAmountReceived(0);
-   } else {
-     onOpenChange(false);
-   }
-   ```
-   **Observation**: Because `window.innerWidth < 1024` is evaluated first, when mobile user clicks "Save & New", it forces `setMobileSuccessInvoice(saved)` and **never enters** the `saveAndNew` reset branch!
-2. **Missing In-Place Update ID Preservation (`lines 1049-1095`)**:
-   - `finalDoc` is constructed as `const finalDoc: Omit<BusinessDocument, "id"> = { ... }` without an `id` property.
-   - When returning via `onEdit={() => setMobileSuccessInvoice(null)}`, `SalesInvoiceModal` has no tracking state for `saved.id` (`activeSavedDocId`).
-   - Consequently, when user clicks "Generate Bill" again, a brand new invoice with a brand new ID is generated, creating duplicate records.
-3. **Missing Delete Confirmation in `MobileInvoiceSuccessView.tsx` (`lines 124-128`)**:
-   - The header trash button directly executes `onClick={onDelete}`. There is no confirmation sheet or modal.
-   - In `SalesInvoiceModal.tsx:1480-1483`, `onDelete` simply does:
-     ```tsx
-     onDelete={() => {
-       setMobileSuccessInvoice(null);
-       onOpenChange(false);
-     }}
-     ```
-     It **never calls `documentsService.deleteDocument`**! The invoice remains in the database.
-4. **Header More Menu (`MobileInvoiceSuccessView.tsx:129-131`)**:
-   - The 3-dots `MoreVertical` button is a plain button with no `onClick` handler and no menu/action sheet.
+#### CRM Modules (Phases 1, 2, and 3)
+1. **`crm_roles` (7 occurrences)**:
+   - `src/hooks/useCRMPermission.ts:144`: Reading active org roles.
+   - `src/pages/crm/RoleManagement.tsx:278, 612, 654, 726`: Role Management CRUD (custom role name, color, icon, super-admin flag).
+   - `src/pages/crm/Attendance.tsx:463, 495`: Mapping staff to role pills.
+2. **`crm_permissions` (5 occurrences)**:
+   - `src/hooks/useCRMPermission.ts:193`: RBAC evaluation cache.
+   - `src/pages/crm/RoleManagement.tsx:315, 498, 521, 684`: Deleting and inserting granular module/action permission rules.
+3. **`crm_staff_roles` (5 occurrences)**:
+   - `src/hooks/useCRMPermission.ts:134`, `src/pages/crm/RoleManagement.tsx:354, 778, 793`, `src/pages/crm/Attendance.tsx:459`: Assigning, updating, and unassigning staff roles.
+4. **`crm_geolocations` (4 occurrences)**:
+   - `src/pages/crm/Attendance.tsx:348, 912, 942, 966`: Managing office geofences (latitude, longitude, radius).
+5. **`crm_attendance` (6 occurrences)**:
+   - `src/pages/crm/Attendance.tsx:391, 667, 778, 1103`: Clock-in (with GPS coordinates), Clock-out (with duration), and regularisation overwrite.
+   - `src/pages/crm/CRMDashboard.tsx:92`: Exact count of today's present staff.
+   - `src/pages/crm/SalaryManagement.tsx:365`: Supplying attendance logs to monthly payroll engine.
+6. **`crm_attendance_requests` (3 occurrences)**:
+   - `src/pages/crm/Attendance.tsx:419, 1023, 1133`: Regularisation workflow (request, review, approve/reject).
+7. **`crm_salary_profiles` (2 occurrences)**:
+   - `src/pages/crm/SalaryManagement.tsx:281, 542`: Salary structure configuration (base salary, daily rate, hourly OT, PF%, ESI%, allowed leaves).
+8. **`crm_payroll_runs` (3 occurrences)**:
+   - `src/pages/crm/SalaryManagement.tsx:304, 670, 750`: Monthly payroll run lifecycle (`draft` -> `locked` -> `disbursed`).
+9. **`crm_payslips` (3 occurrences)**:
+   - `src/pages/crm/SalaryManagement.tsx:321, 722, 755`: Itemized payslip records with LOP, OT, deductions, and payout status.
+10. **`crm_salary_adjustments` (4 occurrences)**:
+    - `src/pages/crm/SalaryManagement.tsx:344, 827, 849, 879`: Advances, bonuses, and loan repayments management.
+11. **CRM Dashboard Aggregators (3 occurrences)**:
+    - `crm_tasks` (`CRMDashboard.tsx:118`), `crm_broadcasts` (`CRMDashboard.tsx:142`), `crm_meetings` (`CRMDashboard.tsx:168`).
 
 ---
 
 ## 2. Logic Chain
 
-1. **R1 (In-Place Update Lifecycle on Re-Edit)**:
-   - *Observation*: `SalesInvoiceModal.tsx:1049` drops the document `id`, and `SalesInvoiceModal.tsx:1479` resets `mobileSuccessInvoice` to `null` without retaining `saved.id` in state. Furthermore, `documentsService.saveDocument` always executes `.insert()` into Supabase `sales`.
-   - *Reasoning*: To achieve in-place updates, `SalesInvoiceModal` must maintain an `activeSavedDocId` state (initialized to `editingDoc?.id || null`). When `saveDocument` returns `saved`, `activeSavedDocId` must be updated to `saved.id`. When returning via "Edit", `activeSavedDocId` persists. In `handleSave`, if `activeSavedDocId` exists, `finalDoc` passes `id: activeSavedDocId`. In `documentsService.saveDocument`, if `doc.id` already exists, it must execute `supabase.from("sales").update(...)` and replace `sale_items` rather than inserting a duplicate record. Visual toast feedback must indicate `"Invoice #[number] updated successfully!"`.
+```
+[Observation 1.1: 394 direct supabase.from calls across 265 files]
+      │
+      ▼
+[Observation 1.2: Invoices, Sales & Purchases comprise 84 queries across 11 tables]
+      │
+      ├─► Sale / Purchase / Return inserts/updates require child item management
+      │   (sales <-> sale_items, purchase_invoices <-> purchase_invoice_items)
+      │
+      ├─► Client currently performs manual two-step mutations:
+      │   (1) supabase.from("sales").insert()
+      │   (2) supabase.from("sale_items").insert()
+      │   Risk: Network failure between step 1 & 2 causes orphaned header with 0 items.
+      │
+      └─► Specialized workflows exist:
+          • Sequence numbering in SalesInvoiceModal.tsx and documentsService.ts
+          • In-place update on re-edit (activeSavedDocId) in SalesInvoiceModal.tsx
+          • TallyImport & autoSyncService fetch 10,000 items at a time and batch in 1,000s
+          • Vector PDF / thermal receipt requires hydrated customer & line item details
+          • Store credit sales returns touch customer khata in credit_transactions
+      │
+      ▼
+[Observation 1.3: Settings, Org, Profiles, CRM comprise 99 queries across 22 tables]
+      │
+      ├─► Multi-tenant resolution depends on organizations & organization_memberships
+      │
+      ├─► CRM modules require atomic role/permission updates and transactional payroll locking
+      │
+      └─► Auth context (useAuth.tsx) holds active session.access_token (Supabase JWT)
+      │
+      ▼
+[Deduction: Centralized API Client Architecture Required]
+      │
+      ├─► Base URL: https://api.credsmart.online/api
+      ├─► Automatic header injection: Authorization: Bearer <session.access_token>
+      ├─► Backend endpoints encapsulate transactional child item mutations in single SQL transactions
+      └─► Zero UI regression: preserve existing data contract shapes and loading/toast feedback
+```
 
-2. **R2 (Mobile Save & New Engine & Sequence Reset)**:
-   - *Observation*: Line 1163 checks `if (window.innerWidth < 1024)` before checking `saveAndNew`.
-   - *Reasoning*: Moving the check to prioritize `if (saveAndNew)` ensures that on mobile, saving persists the invoice, resets party/line-item/payment state, clears `activeSavedDocId` (to prevent subsequent bills from overwriting), increments `invoiceNumberSeq`, displays `"Invoice #[number] created! Ready for next bill."`, and keeps the mobile bill editor active instead of showing the success view.
-
-3. **R3 (Safe Invoice Deletion with Confirmation)**:
-   - *Observation*: Header trash button in `MobileInvoiceSuccessView.tsx` currently invokes `onDelete` immediately, and `SalesInvoiceModal.tsx` does not call `documentsService.deleteDocument`.
-   - *Reasoning*: A confirmation dialog/bottom-sheet must be introduced ("Delete this invoice? This action cannot be undone."). When confirmed, `documentsService.deleteDocument(invoice.organizationId, invoice.docType, invoice.id)` must be called, `setMobileSuccessInvoice(null)` and `onOpenChange(false)` executed, and toast `"Invoice #[number] deleted"` displayed.
-
-4. **R4 (Header More Menu & Direct WhatsApp Share)**:
-   - *Observation*: `MoreVertical` button lacks an `onClick` handler, and no action sheet exists.
-   - *Reasoning*: Clicking `MoreVertical` must toggle a mobile bottom sheet / dropdown containing:
-     - "Duplicate / Copy Bill": Loads invoice items into a new bill with incremented sequence number, resets `activeSavedDocId`, returns to editor.
-     - "Share via WhatsApp": Triggers `window.open` with `https://wa.me/?text=...` (or with phone number if available) containing pre-formatted invoice details.
-     - "Download Thermal Receipt / PDF": Calls `downloadExactInvoicePdf`.
-     - "Cancel / Void Invoice": Sets status to `cancelled`, saves via `documentsService.saveDocument`, and provides toast feedback.
+1. **Step 1 (Scope Verification)**: A single-line regex search previously returned 183 calls, but this omitted multi-line formatted chained calls (`supabase\n .from(...)`). Running an AST-aware multi-line parser uncovered the true scope of **394 database queries**. Any partial migration would have resulted in broken production routes.
+2. **Step 2 (Atomicity & Reliability Improvement)**: Currently, saving an invoice (`documentsService.ts:650-760`) requires the frontend to make 2 to 3 consecutive network calls to Supabase (update `sales`, delete from `sale_items`, insert into `sale_items`). If the browser closes or loses internet connection halfway through, data corruption occurs. Migrating to a dedicated `POST /api/sales` and `PUT /api/sales/:id` backend route allows the backend database to execute this inside a single Postgres transaction (`BEGIN ... COMMIT`).
+3. **Step 3 (Authentication Decoupling)**: In `src/hooks/useAuth.tsx:38-42`, the Supabase Auth session is stored in memory and synchronized with `localStorage`. Every request to `https://api.credsmart.online/api/*` can retrieve this token via `(await supabase.auth.getSession()).data.session?.access_token` and attach it as `Authorization: Bearer <token>`.
+4. **Step 4 (Backward Compatibility)**: Existing UI components rely on snake_case Supabase row shapes (e.g. `invoice_number`, `total_amount`) or normalized `BusinessDocument` models. The backend API contract must return shapes matching these expectations to prevent breaking UI components and previewers.
 
 ---
 
 ## 3. Caveats
 
-1. **Dual Deletion Handlers**: Existing tests in `MobileInvoiceSuccessView.test.tsx` (line 242) and `MobileInvoiceSuccessView.challenger.test.tsx` (line 159) click `trashBtn` and assert `expect(onDeleteMock).toHaveBeenCalledTimes(1)`. If `MobileInvoiceSuccessView` opens a confirmation modal internally, clicking `trashBtn` opens the modal; only clicking "Confirm Delete" inside the modal calls `onDelete`. The existing unit tests must either be updated to confirm the dialog, or `MobileInvoiceSuccessView` should support confirming deletion smoothly.
-2. **Supabase In-Memory vs Mock**: In the test environment (`jsdom`), Supabase client network calls are mocked or fall back to local storage cache. All unit tests must verify local storage persistence, state transitions, and mocked service invocations.
-3. **Desktop Isolation**: Changes to `SalesInvoiceModal.tsx` must be guarded so desktop flows (`window.innerWidth >= 1024` and desktop save dialogs) are completely unaffected.
+1. **Supabase Realtime vs. Polling**:
+   - `networkInvoicingService.ts`, `POSBilling.tsx`, and `Inventory.tsx` use `supabase.channel(...)` for realtime updates. The prompt strictly targets `supabase.from(...)` table query migration. Realtime websocket channels should either remain connected to Supabase Realtime or be supplemented by SSE / polling from the dedicated backend API.
+2. **Supabase Storage Buckets**:
+   - The 12 calls to `supabase.storage.from("store-logos")` are binary object storage uploads and public URL resolvers. These do not execute SQL queries and can either continue using Supabase Storage or route through a multipart backend upload endpoint (`POST /api/storage/upload`).
+3. **Supabase Edge Functions**:
+   - 4 calls to `supabase.functions.invoke(...)` (`invite-staff`, `eway-bill`, `tally-agent-tunnel`) are serverless edge invocations. These should eventually be integrated into the backend API under `/api/staff/invite`, `/api/eway-bill`, and `/api/tally/tunnel`.
+4. **Dynamic Table Names**:
+   - The 8 dynamic table calls (`$targetTable` x 7 and `$table` x 1) were rigorously verified and confirmed to ONLY evaluate to `"customers"` or `"suppliers"`. No arbitrary or unknown tables exist.
 
 ---
 
-## 4. Conclusion & Specific Unit Test Case Definitions
+## 4. Conclusion & Backend API Contract Mapping
 
-### 4.1 Unit Test Suite Specification for R1 (In-Place Update on Re-Edit)
-To be added to `src/test/MobileInvoiceSuccessView.lifecycle.test.tsx` or `src/test/SalesInvoiceModal.test.tsx`:
-- **UT-R1-01 (ID Retention on Edit Trigger)**:
-  - Setup: Render `SalesInvoiceModal` with mobile viewport (`window.innerWidth = 375`).
-  - Action: Fill valid line item, click "Generate Bill", invoice is saved with `id = "doc-uuid-1"`. Success screen appears. Click "Edit Bill".
-  - Expected: `mobileSuccessInvoice` is cleared, `MobileCreateInvoice` is visible, and internal `activeSavedDocId` equals `"doc-uuid-1"`.
-- **UT-R1-02 (In-Place Update Without Duplicate)**:
-  - Setup: From the state in UT-R1-01, change item rate from `100` to `200`. Click "Generate Bill".
-  - Expected: `documentsService.saveDocument` is invoked with `id = "doc-uuid-1"`. The returned invoice retains `id = "doc-uuid-1"`.
-  - Assert: Local storage contains exactly 1 document for this invoice number, not 2.
-- **UT-R1-03 (Update Toast Feedback)**:
-  - Setup: Save an existing invoice on re-edit.
-  - Expected: Toast shows `"Invoice #[number] updated successfully!"` instead of `"Sales Invoice #[number] saved successfully!"`.
-- **UT-R1-04 (`documentsService.saveDocument` Update Handling)**:
-  - Setup: Call `documentsService.saveDocument` with an existing document `id`.
-  - Expected: Replaces existing document in local storage, calls `stockService.handleDocumentStock(doc, "update", previousDoc)`, dispatches `"credsmart_documents_updated"`.
+### 4.1 Target API Client Architecture (`src/services/apiClient.ts`)
 
----
+A centralized, type-safe API client should be established to govern all HTTP traffic:
+- **Base URL**: `https://api.credsmart.online/api` (configurable via `VITE_API_BASE_URL`).
+- **Auth Header**: Automatically injects `Authorization: Bearer ${token}` from the active Supabase Auth session.
+- **Error Normalization**: Standardizes API error responses into `{ message: string, code?: string, status: number }`.
 
-### 4.2 Unit Test Suite Specification for R2 (Mobile Save & New Engine)
-- **UT-R2-01 (Save & New Priority over Screen Width Check)**:
-  - Setup: Mobile viewport (`window.innerWidth = 375`). Render invoice modal with party name "Customer A", item "Widget A" (qty 2), and sequence "101".
-  - Action: Trigger Save & New via `handleSave(false, true)`.
-  - Expected: `mobileSuccessInvoice` is NOT displayed (`setMobileSuccessInvoice` was not called).
-- **UT-R2-02 (Sequence Auto-Increment)**:
-  - Setup: Save & New executed on sequence "101".
-  - Expected: Invoice sequence number automatically increments to "102".
-- **UT-R2-03 (Field Reset State)**:
-  - Setup: Save & New executed.
-  - Expected: `partyName` is empty, `selectedCustomerId` is empty, `partyPhone` is empty, `items` contains exactly 1 blank row (`createNewRow("row-1")`), `amountReceived` is 0.
-- **UT-R2-04 (Save & New Success Toast)**:
-  - Setup: Save & New executed.
-  - Expected: `toast.success` called with `"Invoice #INV/26-27/101 created! Ready for next bill."`.
-- **UT-R2-05 (Active Saved Doc ID Cleared)**:
-  - Setup: Save & New executed.
-  - Expected: `activeSavedDocId` is `null`. The subsequent bill save generates a new ID and does not overwrite "101".
+### 4.2 Endpoint Mapping Matrix
 
----
+#### Domain 1: Invoices & Sales (`/api/sales`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `supabase.from("sales").select(...)` | `/api/sales` | `GET` | `?organization_id=UUID&customer_id=UUID&startDate=...&endDate=...&includeItems=true&includeCustomer=true&limit=...` | `SalesRow[]` |
+| `supabase.from("sales").insert(...)` + `sale_items.insert` | `/api/sales` | `POST` | `{ organization_id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, customer_id, items: [{ product_id, product_name, batch_number, mrp, quantity, line_total }] }` | `SalesRow & { sale_items: SaleItemRow[] }` |
+| `supabase.from("sales").update(...)` + line item replace | `/api/sales/:id` | `PUT` | Same as POST (executes atomic in-place update) | Updated `SalesRow` |
+| `supabase.from("sales").delete().eq("id", id)` | `/api/sales/:id` | `DELETE` | `id` in URL parameter | `{ success: true, deletedId: string }` |
+| `sale_items.select().eq("sale_id", id)` | `/api/sales/:id/items` | `GET` | `id` in URL parameter | `SaleItemRow[]` |
+| Tally / AutoSync batch sales import | `/api/sales/bulk` | `POST` | `{ organization_id, sales: [...], sale_items: [...] }` | `{ insertedCount: number, ids: string[] }` |
+| Sequence numbering check | `/api/sales/next-sequence` | `GET` | `?organization_id=UUID&prefix=INV` | `{ nextSequence: string, fullDocumentNumber: string }` |
 
-### 4.3 Unit Test Suite Specification for R3 (Safe Deletion with Confirmation)
-- **UT-R3-01 (Trash Click Opens Confirmation Dialog)**:
-  - Setup: Render `MobileInvoiceSuccessView` with `onDelete` mock.
-  - Action: Click header `Trash2` button.
-  - Expected: Confirmation dialog is displayed with text "Delete this invoice? This action cannot be undone."
-  - Assert: `onDelete` mock is NOT called yet.
-- **UT-R3-02 (Cancel Deletion Keeps Invoice)**:
-  - Setup: In confirmation dialog, click "Cancel" button.
-  - Expected: Confirmation dialog closes. Invoice remains intact. `onDelete` was not invoked.
-- **UT-R3-03 (Confirm Deletion Triggers Safe Deletion)**:
-  - Setup: In confirmation dialog, click "Delete" / "Confirm".
-  - Expected: `onDelete` callback is invoked with invoice ID / metadata.
-- **UT-R3-04 (`SalesInvoiceModal` Deletion Execution)**:
-  - Setup: Confirmation callback executed in `SalesInvoiceModal`.
-  - Expected: Calls `documentsService.deleteDocument(orgId, docType, invoice.id)`.
-  - Expected: `setMobileSuccessInvoice(null)` and `onOpenChange(false)` called.
-  - Expected: Toast shows `"Invoice #[number] deleted"`.
+#### Domain 2: Purchases (`/api/purchases`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `supabase.from("purchase_invoices").select(...)` | `/api/purchases` | `GET` | `?organization_id=UUID&supplier_id=UUID&includeItems=true&limit=...` | `PurchaseInvoiceRow[]` |
+| `supabase.from("purchase_invoices").insert(...)` | `/api/purchases` | `POST` | `{ organization_id, supplier_id, invoice_number, total_amount, status, notes, items: [...] }` | `PurchaseInvoiceRow` |
+| `supabase.from("purchase_invoices").update(...)` | `/api/purchases/:id` | `PUT` | `{ status: "received" }` | Updated `PurchaseInvoiceRow` |
+| `supabase.from("purchase_invoices").delete()` | `/api/purchases/:id` | `DELETE` | `id` in URL parameter | `{ success: true }` |
+| `purchase_invoice_items.select()` | `/api/purchases/:id/items` | `GET` | `id` in URL parameter | `PurchaseInvoiceItemRow[]` |
+| Bulk purchase ingest | `/api/purchases/bulk` | `POST` | `{ organization_id, purchases: [...], items: [...] }` | `{ insertedCount: number }` |
 
----
+#### Domain 3: Returns & Notes (`/api/returns`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `supabase.from("sales_returns").select(...)` | `/api/returns/sales` | `GET` | `?organization_id=UUID` | `SalesReturnRow[]` |
+| `supabase.from("sales_returns").insert(...)` | `/api/returns/sales` | `POST` | `{ return_number, sale_id, customer_id, items: [...], settlement_mode }` *(Atomically updates customer ledger if store credit)* | `SalesReturnRow` |
+| `supabase.from("sales_returns").delete()` | `/api/returns/sales/:id` | `DELETE` | `id` in URL | `{ success: true }` |
+| `supabase.from("purchase_returns").select(...)` | `/api/returns/purchases` | `GET` | `?organization_id=UUID&supplier_id=UUID` | `PurchaseReturnRow[]` |
+| `supabase.from("purchase_returns").insert(...)` | `/api/returns/purchases` | `POST` | `{ return_number, supplier_id, purchase_invoice_id, reason, total_amount, items: [...] }` | `PurchaseReturnRow` |
+| `supabase.from("purchase_returns").update()` | `/api/returns/purchases/:id` | `PUT` | `{ status: "completed" }` | Updated `PurchaseReturnRow` |
+| `supabase.from("purchase_returns").delete()` | `/api/returns/purchases/:id` | `DELETE` | `id` in URL | `{ success: true }` |
 
-### 4.4 Unit Test Suite Specification for R4 (Header More Menu & WhatsApp Sharing)
-- **UT-R4-01 (More Menu Toggle & Options Rendering)**:
-  - Setup: Render `MobileInvoiceSuccessView`.
-  - Action: Click header `MoreVertical` button.
-  - Expected: Action sheet opens displaying:
-    - "Duplicate / Copy Bill"
-    - "Share via WhatsApp"
-    - "Download Thermal Receipt / PDF"
-    - "Cancel / Void Invoice"
-- **UT-R4-02 (WhatsApp URI Encoding & Format)**:
-  - Setup: Invoice with party name "Acme Corp", grand total 924, doc number "INV-0042".
-  - Action: Click "Share via WhatsApp" in More menu.
-  - Expected: Spies on `window.open` or `window.location.href`.
-  - Assert: Opens URL starting with `https://wa.me/` containing encoded text with `INV-0042`, `₹924`, and store name. If party phone is "9876543210", URL starts with `https://wa.me/919876543210` or `https://wa.me/9876543210`.
-- **UT-R4-03 (Duplicate Bill Action)**:
-  - Setup: Click "Duplicate / Copy Bill".
-  - Expected: Transitions back to editor with all line items copied, sequence incremented, `activeSavedDocId` set to `null`, and toast `"Invoice duplicated! Ready to edit."`.
-- **UT-R4-04 (Void / Cancel Invoice Action)**:
-  - Setup: Click "Cancel / Void Invoice".
-  - Expected: Prompts confirmation, updates invoice status to `"cancelled"`, persists update via `documentsService.saveDocument`, and displays toast `"Invoice #[number] cancelled"`.
+#### Domain 4: Expenses (`/api/expenses`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `supabase.from("expenses").select(...)` | `/api/expenses` | `GET` | `?organization_id=UUID&startDate=...&endDate=...` | `ExpenseRecord[]` |
+| `supabase.from("expenses").insert(...)` | `/api/expenses` | `POST` | `{ organization_id, category, amount, date, description, payment_mode }` | `ExpenseRecord` |
+| `supabase.from("expenses").delete()` | `/api/expenses/:id` | `DELETE` | `id` in URL | `{ success: true }` |
+| Bulk expense ingest | `/api/expenses/bulk` | `POST` | `{ organization_id, expenses: [...] }` | `{ insertedCount: number }` |
+
+#### Domain 5: Organizations, Profiles & Settings (`/api/organizations`, `/api/settings`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `organizations.select().in("id", orgIds)` | `/api/organizations` | `GET` | *(Bearer token infers user access)* | `OrganizationRow[]` |
+| `organizations.insert(...)` | `/api/organizations` | `POST` | `{ name, business_type, address, phone, email, gstin }` | `OrganizationRow` |
+| `organizations.update(...).eq("id", id)` | `/api/organizations/:id` | `PUT` | `{ name, phone, email, address, gstin, pan, bank_details }` | Updated `OrganizationRow` |
+| `organization_memberships.select(...)` | `/api/organizations/:id/members` | `GET` | `id` in URL | `MemberWithProfile[]` |
+| `organization_memberships.update(...)` | `/api/organizations/:id/members/:memberId` | `PUT` | `{ role: string }` | `{ success: true }` |
+| `organization_memberships.delete(...)` | `/api/organizations/:id/members/:memberId` | `DELETE` | `memberId` in URL | `{ success: true }` |
+| `staff_invitations.select(...)` | `/api/organizations/:id/invitations` | `GET` | `id` in URL | `StaffInvitationRow[]` |
+| `staff_invitations.insert(...)` | `/api/organizations/:id/invitations` | `POST` | `{ email, role, expires_at }` | `StaffInvitationRow` |
+| `staff_invitations.update(cancelled)` | `/api/organizations/:id/invitations/:invId/cancel` | `PUT` | Empty body | `{ success: true }` |
+| `locations.select(...)` | `/api/organizations/:id/locations` | `GET` | `id` in URL | `LocationRow[]` |
+| `locations.insert(...)` | `/api/organizations/:id/locations` | `POST` | `{ name, address }` | `LocationRow` |
+| `locations.update(...)` | `/api/organizations/:id/locations/:locId` | `PUT` | `{ name, address }` | Updated `LocationRow` |
+| `storefront_settings.select(...)` | `/api/storefront/settings` | `GET` | `?organization_id=UUID` or `?slug=string` | `StorefrontSettings` |
+| `storefront_settings.upsert(...)` | `/api/storefront/settings` | `PUT` | `{ organization_id, store_name, contact_phone, address, banner_url, ... }` | `StorefrontSettings` |
+| `bank_accounts.select(...)` | `/api/bank-accounts` | `GET` | `?organization_id=UUID` | `BankAccountRow[]` |
+| `bank_accounts.upsert(...)` | `/api/bank-accounts/bulk` | `POST` | `{ organization_id, accounts: [...] }` | `{ success: true }` |
+| `audit_logs.select(...)` | `/api/audit-logs` | `GET` | `?organization_id=UUID` | `AuditLogRow[]` |
+| `audit_logs.insert(...)` | `/api/audit-logs` | `POST` | `{ organization_id, action, entity_type, entity_id, details }` | `AuditLogRow` |
+
+#### Domain 6: CRM Modules (`/api/crm/*`)
+| Current Supabase Query | Target HTTP Endpoint | Method | Payload / Query Parameters | Response Shape |
+|---|---|:---:|---|---|
+| `crm_roles.select(...)` + permissions | `/api/crm/roles` | `GET` | `?org_id=UUID` | `(CRMRole & { permissions: CRMPermission[] })[]` |
+| `crm_roles.insert(...)` | `/api/crm/roles` | `POST` | `{ org_id, name, color, icon, permissions: [...] }` | Created `CRMRole` |
+| `crm_roles.update(...)` | `/api/crm/roles/:id` | `PUT` | `{ name, color, icon }` | Updated `CRMRole` |
+| `crm_roles.delete(...)` | `/api/crm/roles/:id` | `DELETE` | `id` in URL | `{ success: true }` |
+| `crm_permissions.delete` + `insert` | `/api/crm/roles/:id/permissions` | `PUT` | `{ permissions: [{ module, action, allowed }] }` | `{ success: true }` |
+| `crm_staff_roles.select(...)` | `/api/crm/staff-roles` | `GET` | `?org_id=UUID` | `CRMStaffRoleAssignment[]` |
+| `crm_staff_roles.upsert(...)` | `/api/crm/staff-roles/:staffId` | `PUT` | `{ role_id: UUID }` | `{ success: true }` |
+| `crm_staff_roles.delete(...)` | `/api/crm/staff-roles/:staffId` | `DELETE` | `staffId` in URL | `{ success: true }` |
+| `crm_geolocations.select(...)` | `/api/crm/geolocations` | `GET` | `?org_id=UUID` | `CrmGeolocation[]` |
+| `crm_geolocations.insert(...)` | `/api/crm/geolocations` | `POST` | `{ org_id, name, latitude, longitude, radius_meters, is_active }` | `CrmGeolocation` |
+| `crm_geolocations.update(...)` | `/api/crm/geolocations/:id` | `PUT` | `{ name, latitude, longitude, radius_meters, is_active }` | Updated `CrmGeolocation` |
+| `crm_geolocations.delete(...)` | `/api/crm/geolocations/:id` | `DELETE` | `id` in URL | `{ success: true }` |
+| `crm_attendance.select(...)` | `/api/crm/attendance` | `GET` | `?org_id=UUID&date=YYYY-MM-DD&staff_id=UUID` | `CrmAttendanceRecord[]` |
+| `crm_attendance.upsert(clock_in)` | `/api/crm/attendance/clock-in` | `POST` | `{ org_id, latitude, longitude, accuracy, location_id }` | `CrmAttendanceRecord` |
+| `crm_attendance.update(clock_out)` | `/api/crm/attendance/clock-out` | `POST` | `{ org_id, latitude, longitude, accuracy }` | `CrmAttendanceRecord` |
+| `crm_attendance_requests.select(...)` | `/api/crm/attendance/requests` | `GET` | `?org_id=UUID&status=pending` | `CrmAttendanceRequest[]` |
+| `crm_attendance_requests.insert(...)` | `/api/crm/attendance/requests` | `POST` | `{ org_id, attendance_id, date, requested_clock_in, requested_clock_out, reason }` | `CrmAttendanceRequest` |
+| `crm_attendance_requests.update(...)` | `/api/crm/attendance/requests/:id/review` | `PUT` | `{ decision: "approved" \| "rejected", reviewer_notes: string }` | `{ success: true }` |
+| `crm_salary_profiles.select(...)` | `/api/crm/salary/profiles` | `GET` | `?org_id=UUID` | `CrmSalaryProfile[]` |
+| `crm_salary_profiles.upsert(...)` | `/api/crm/salary/profiles` | `POST` | `{ org_id, staff_id, salary_type, base_amount, hourly_overtime_rate, pf_deduction_percent, esi_deduction_percent, allowed_leaves_per_month }` | `CrmSalaryProfile` |
+| `crm_payroll_runs.select(...)` | `/api/crm/salary/payroll-runs` | `GET` | `?org_id=UUID` | `CrmPayrollRun[]` |
+| `crm_payroll_runs.upsert(...)` + payslips | `/api/crm/salary/payroll-runs/lock` | `POST` | `{ org_id, month_year, total_payout, staff_count, notes, payslips: [...] }` | `{ success: true, runId: UUID }` |
+| `crm_payroll_runs.update(disbursed)` | `/api/crm/salary/payroll-runs/:monthYear/disburse` | `PUT` | Empty body | `{ success: true }` |
+| `crm_payslips.select(...)` | `/api/crm/salary/payslips` | `GET` | `?org_id=UUID&month_year=YYYY-MM&staff_id=UUID` | `CrmPayslip[]` |
+| `crm_salary_adjustments.select(...)` | `/api/crm/salary/adjustments` | `GET` | `?org_id=UUID&staff_id=UUID` | `CrmSalaryAdjustment[]` |
+| `crm_salary_adjustments.insert(...)` | `/api/crm/salary/adjustments` | `POST` | `{ org_id, staff_id, type, amount, description, month_year }` | `CrmSalaryAdjustment` |
+| `crm_salary_adjustments.update(...)` | `/api/crm/salary/adjustments/:id/review` | `PUT` | `{ status: "approved" \| "rejected" }` | `{ success: true }` |
+| `crm_tasks`, `meetings`, `broadcasts` count | `/api/crm/dashboard/stats` | `GET` | `?org_id=UUID` | `{ staffCount: number, attendanceToday: number, pendingTasks: number, unreadBroadcasts: number, upcomingMeetings: number }` |
 
 ---
 
 ## 5. Verification Method
 
-### 5.1 Verification Commands
-Due to the PowerShell script execution policy on Windows, run all commands via `cmd.exe /c`:
+To independently verify the observations and counts in this report:
 
-1. **TypeScript Compiler Check**:
-   ```powershell
-   cmd.exe /c npx tsc --noEmit
-   ```
-   *Expected Result*: Exit code `0` with 0 diagnostic errors.
+### Step 1: Run Multi-Line AST Scan Script
+Run the following node verification snippet in PowerShell to verify the exact **394 query count** and breakdown:
+```powershell
+@'
+const fs = require('fs');
+const path = require('path');
+function walk(dir) {
+  let res = [];
+  for (const f of fs.readdirSync(dir)) {
+    const p = path.join(dir, f);
+    if (fs.statSync(p).isDirectory()) {
+      if (!['test', 'node_modules', '.git'].includes(f)) res.push(...walk(p));
+    } else if (/\.(ts|tsx)$/.test(f)) res.push(p);
+  }
+  return res;
+}
+const regex = /\.from\s*\(\s*([^)]+)\s*\)/g;
+let tableQueries = 0;
+for (const file of walk('src')) {
+  const content = fs.readFileSync(file, 'utf8');
+  let m;
+  while ((m = regex.exec(content)) !== null) {
+    const lookback = content.substring(Math.max(0, m.index - 30), m.index);
+    if (!/storage\s*$/.test(lookback) && !/Array\s*$/.test(lookback)) {
+      tableQueries++;
+    }
+  }
+}
+console.log("Verified Table Queries:", tableQueries); // Must equal 394
+'@ | node -
+```
 
-2. **Mobile Invoice Success View Test Suites**:
-   ```powershell
-   cmd.exe /c npx vitest run src/test/MobileInvoiceSuccessView
-   ```
-   *Expected Result*: 100% pass rate across all test files (`MobileInvoiceSuccessView.test.tsx`, `MobileInvoiceSuccessView.challenge.test.tsx`, `MobileInvoiceSuccessView.challenger.test.tsx`, and newly added lifecycle tests).
+### Step 2: Validate Application Integrity & Test Suite
+Ensure all existing tests compile and pass without regressions prior to migration:
+```cmd
+cmd /c npx tsc --noEmit
+cmd /c npx vitest run
+```
 
-3. **Complete Vitest Test Suite**:
-   ```powershell
-   cmd.exe /c npm test
-   ```
-   *Expected Result*: All 219+ test suites pass with 0 regressions.
-
-### 5.2 Key Files to Inspect
-- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` (More menu, confirmation dialog, WhatsApp share)
-- `src/components/SalesInvoiceModal.tsx` (Save & New sequence reset, `activeSavedDocId`, in-place update toast, delete trigger)
-- `src/services/documentsService.ts` (`saveDocument` update branch for Supabase & in-place localStorage updates)
-- `src/test/MobileInvoiceSuccessView*.test.tsx` (Test suites)
-
-### 5.3 Invalidation Conditions
-- Any occurrence of duplicate invoices with identical numbers after clicking "Edit" and then "Generate Bill".
-- Failure of "Save & New" to increment invoice number or remaining stuck on the success view.
-- Deletion executing without a confirmation dialog.
-- Failure of WhatsApp share URL to properly encode invoice total and number.
-- Any regression breaking the existing 46 unit tests in `src/test/MobileInvoiceSuccessView*.test.tsx`.
+### Invalidation Conditions
+This audit report is invalidated if:
+1. Any file in `src/` is found with an uncataloged table name not in the 33 master table list.
+2. Direct `.from(...)` table queries remain after migrating to `apiClient.ts`.
+3. The backend API fails to support atomic line item ingestion for sales or purchases.

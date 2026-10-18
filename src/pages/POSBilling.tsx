@@ -65,6 +65,9 @@ import { soundService } from "@/lib/sound";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
 import { SalesReturnModal } from "@/components/returns/SalesReturnModal";
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
@@ -472,11 +475,7 @@ export default function POSBilling() {
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
-        const { data: prods, error: prodsErr } = await supabase
-          .from("products")
-          .select("id, barcode, name, brand, category, sku, tags, image_url")
-          .eq("organization_id", orgId)
-          .order("name");
+        const { data: prods, error: prodsErr } = await productsApi.getProducts(orgId);
 
         if (prodsErr) {
           console.warn("Product fetch notice:", prodsErr.message);
@@ -487,10 +486,7 @@ export default function POSBilling() {
 
         const batchMap: Record<string, Batch[]> = {};
         if (prodIds.length > 0) {
-          const { data: batches } = await supabase
-            .from("product_batches")
-            .select("id, product_id, batch_number, cost_price, mrp, stock, expiry_date")
-            .in("product_id", prodIds);
+          const { data: batches } = await productsApi.getBatches(prodIds, orgId);
 
           (batches || []).forEach((b) => {
             if (!batchMap[b.product_id]) batchMap[b.product_id] = [];
@@ -564,11 +560,10 @@ export default function POSBilling() {
 
     const fetchCustomers = async () => {
       try {
-        const { data, error } = await supabase
-          .from("customers")
-          .select("id, name, phone, email, custom_fields")
-          .eq("organization_id", orgId)
-          .order("name");
+        const { data, error } = await partiesApi.getCustomers(orgId, {
+          sort: "name",
+          order: "asc",
+        });
 
         const list = (data || []).map((c: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => { // eslint-disable-line @typescript-eslint/no-explicit-any
           const cf = typeof c.custom_fields === "object" && c.custom_fields !== null ? c.custom_fields : {};
@@ -1257,26 +1252,28 @@ export default function POSBilling() {
 
     try {
       if (orgId) {
-        const { data: prodData, error: prodErr } = await supabase
-          .from("products")
-          .insert({
+        const { data: prodData, error: prodErr } = await productsApi.createProduct(
+          {
             organization_id: orgId,
             name: newItemName.trim(),
             barcode: barcodeCode,
             category: newItemCategory.trim() || "General",
             sku: barcodeCode,
-          })
-          .select()
-          .single();
+          },
+          orgId
+        );
 
         if (!prodErr && prodData) {
-          await supabase.from("product_batches").insert({
-            product_id: prodData.id,
-            mrp: mrpNum,
-            cost_price: mrpNum * 0.7,
-            stock: stockNum,
-            batch_number: "Main",
-          });
+          await productsApi.createBatch(
+            {
+              product_id: prodData.id,
+              mrp: mrpNum,
+              cost_price: mrpNum * 0.7,
+              stock: stockNum,
+              batch_number: "Main",
+            },
+            orgId
+          );
 
           const createdProduct: Product = {
             id: prodData.id,
@@ -1341,15 +1338,14 @@ export default function POSBilling() {
 
     try {
       if (orgId) {
-        const { data, error } = await supabase
-          .from("customers")
-          .insert({
+        const { data, error } = await partiesApi.createCustomer(
+          {
             organization_id: orgId,
             name: newCustomerName.trim(),
             phone: newCustomerPhone.trim() || null,
-          })
-          .select()
-          .single();
+          },
+          orgId
+        );
 
         if (!error && data) {
           const created: CustomerInfo = {
@@ -1470,22 +1466,18 @@ export default function POSBilling() {
         // 3. Sync to Supabase Database
         if (orgId && user) {
           try {
-            const { data: sale, error: saleErr } = await supabase
-              .from("sales")
-              .insert({
-                organization_id: orgId,
-                invoice_number: invoiceNumber,
-                subtotal: subTotal,
-                discount_amount: itemDiscountsTotal + billDiscountAmount,
-                discount_label: currentTab.discountReason || (billDiscountAmount > 0 ? "Bill Discount" : null),
-                tax: taxAmount,
-                total: grandTotal,
-                payment_method: currentTab.paymentMode,
-                created_by: user.id,
-                customer_id: currentTab.customer?.id || null,
-              })
-              .select()
-              .single();
+            const { data: sale, error: saleErr } = await invoicesApi.createSale({
+              organization_id: orgId,
+              invoice_number: invoiceNumber,
+              subtotal: subTotal,
+              discount_amount: itemDiscountsTotal + billDiscountAmount,
+              discount_label: currentTab.discountReason || (billDiscountAmount > 0 ? "Bill Discount" : null),
+              tax: taxAmount,
+              total: grandTotal,
+              payment_method: currentTab.paymentMode,
+              created_by: user.id,
+              customer_id: currentTab.customer?.id || null,
+            }, orgId);
 
             if (!saleErr && sale) {
               // Insert Sale Items
@@ -1500,13 +1492,13 @@ export default function POSBilling() {
                 line_total: Number((ci.sp * ci.quantity).toFixed(2)),
               }));
 
-              await supabase.from("sale_items").insert(saleItems);
+              await invoicesApi.createSaleItems(saleItems, orgId);
 
               // Deduct Stock
               for (const ci of currentTab.items) {
                 try {
                   const newStock = Math.max(0, ci.batch.stock - ci.quantity);
-                  await supabase.from("product_batches").update({ stock: newStock }).eq("id", ci.batch.id);
+                  await productsApi.updateBatch(ci.batch.id, { stock: newStock }, orgId);
                 } catch (uErr) {
                   console.warn("Stock update notice:", uErr);
                 }
@@ -1515,7 +1507,7 @@ export default function POSBilling() {
 
               // Record Udhar / Credit Ledger if Payment Mode is Credit
               if (currentTab.paymentMode === "Credit" && currentTab.customer) {
-                await supabase.from("credit_transactions").insert({
+                await partiesApi.recordCreditTransaction({
                   organization_id: orgId,
                   party_id: currentTab.customer.id,
                   party_type: "customer",
@@ -1524,7 +1516,7 @@ export default function POSBilling() {
                   description: `Credit Sale Invoice #${invoiceNumber}`,
                   reference_id: sale.id,
                   created_by: user.id,
-                });
+                }, orgId);
               }
 
               // Audit Log

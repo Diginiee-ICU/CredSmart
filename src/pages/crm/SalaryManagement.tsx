@@ -30,7 +30,8 @@ import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useCRMPermission } from "@/hooks/useCRMPermission";
-import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
+import { crmApi } from "@/services/crmApi";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -263,7 +264,7 @@ export default function SalaryManagement(): React.ReactElement {
     try {
       // 1. Fetch Staff Directory
       const dirMap: Record<string, StaffDirectoryMember> = {};
-      const { data: staffData } = await supabase.from("profiles").select("*");
+      const { data: staffData } = await settingsApi.getProfiles();
 
       if (staffData && staffData.length > 0) {
         staffData.forEach((s: Record<string, unknown>) => {
@@ -277,10 +278,7 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 2. Fetch Salary Profiles
-      const { data: profiles, error: profErr } = await supabase
-        .from("crm_salary_profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data: profiles, error: profErr } = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
 
       if (profErr) {
         toast({
@@ -300,10 +298,7 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 3. Fetch Payroll Runs
-      const { data: runs, error: runsErr } = await supabase
-        .from("crm_payroll_runs")
-        .select("*")
-        .order("month_year", { ascending: false });
+      const { data: runs, error: runsErr } = await crmApi.getCRMPayrollRuns(effectiveOrgId);
 
       if (runsErr) {
         toast({
@@ -317,10 +312,7 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 4. Fetch Payslips
-      const { data: slips, error: slipsErr } = await supabase
-        .from("crm_payslips")
-        .select("*")
-        .order("month_year", { ascending: false });
+      const { data: slips, error: slipsErr } = await crmApi.getCRMPayslips(effectiveOrgId);
 
       if (slipsErr) {
         toast({
@@ -340,10 +332,7 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 5. Fetch Salary Adjustments
-      const { data: adjs, error: adjErr } = await supabase
-        .from("crm_salary_adjustments")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data: adjs, error: adjErr } = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
 
       if (adjErr) {
         toast({
@@ -361,9 +350,7 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 6. Fetch Attendance Records for Calculations
-      const { data: attData } = await supabase
-        .from("crm_attendance")
-        .select("*");
+      const { data: attData } = await crmApi.getCRMAttendance(effectiveOrgId);
       if (attData) {
         setAttendanceRecords(attData as CrmAttendanceRecord[]);
       }
@@ -538,9 +525,7 @@ export default function SalaryManagement(): React.ReactElement {
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase
-      .from("crm_salary_profiles")
-      .upsert(payload);
+    const { error } = await crmApi.upsertCRMSalaryProfile(payload, effectiveOrgId);
 
     if (error) {
       toast({
@@ -666,8 +651,8 @@ export default function SalaryManagement(): React.ReactElement {
       updated_at: new Date().toISOString(),
     };
 
-    // Upsert run
-    await supabase.from("crm_payroll_runs").upsert(runPayload);
+    // Upsert run via crmApi
+    await crmApi.upsertCRMPayrollRun(runPayload, effectiveOrgId);
 
     // Upsert payslips
     const profileMap = new Map(salaryProfiles.map((p) => [p.staff_id, p]));
@@ -719,7 +704,7 @@ export default function SalaryManagement(): React.ReactElement {
       };
     });
 
-    await supabase.from("crm_payslips").upsert(payslipRows);
+    await crmApi.upsertCRMPayslips(payslipRows, effectiveOrgId);
 
     // Update local state
     setPayrollRuns((prev) => {
@@ -746,15 +731,17 @@ export default function SalaryManagement(): React.ReactElement {
   const handleMarkAsDisbursed = async () => {
     if (!currentRun || currentRun.status !== "locked" || !canApprove) return;
 
-    await supabase
-      .from("crm_payroll_runs")
-      .update({ status: "disbursed", updated_at: new Date().toISOString() })
-      .eq("month_year", selectedMonth);
+    await crmApi.updateCRMPayrollRun(
+      selectedMonth,
+      { status: "disbursed", updated_at: new Date().toISOString() },
+      effectiveOrgId
+    );
 
-    await supabase
-      .from("crm_payslips")
-      .update({ payment_status: "paid", paid_at: new Date().toISOString() })
-      .eq("month_year", selectedMonth);
+    await crmApi.updateCRMPayslips(
+      { monthYear: selectedMonth },
+      { payment_status: "paid", paid_at: new Date().toISOString() },
+      effectiveOrgId
+    );
 
     // Update local state
     setPayrollRuns((prev) =>
@@ -824,7 +811,7 @@ export default function SalaryManagement(): React.ReactElement {
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from("crm_salary_adjustments").insert(payload);
+    const { error } = await crmApi.createCRMSalaryAdjustment(payload, effectiveOrgId);
     if (error) {
       toast({
         title: "Failed to Record Adjustment",
@@ -845,14 +832,15 @@ export default function SalaryManagement(): React.ReactElement {
 
   const handleApproveAdjustment = async (id: string) => {
     if (!canApprove) return;
-    await supabase
-      .from("crm_salary_adjustments")
-      .update({
+    await crmApi.updateCRMSalaryAdjustment(
+      id,
+      {
         status: "approved",
         approved_by: effectiveUserId,
         approved_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+      },
+      effectiveOrgId
+    );
 
     setAdjustments((prev) =>
       prev.map((a) =>
@@ -875,14 +863,15 @@ export default function SalaryManagement(): React.ReactElement {
 
   const handleRejectAdjustment = async (id: string) => {
     if (!canApprove) return;
-    await supabase
-      .from("crm_salary_adjustments")
-      .update({
+    await crmApi.updateCRMSalaryAdjustment(
+      id,
+      {
         status: "rejected",
         approved_by: effectiveUserId,
         approved_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+      },
+      effectiveOrgId
+    );
 
     setAdjustments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "rejected" } : a))

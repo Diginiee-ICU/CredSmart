@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { toast } from "sonner";
 import { useOrganization } from "@/hooks/useOrganization";
 
@@ -130,14 +130,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     if (!effectiveOrg) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          "id, name, barcode, sku, category, brand, image_url, tags, product_batches(id, batch_number, mrp, cost_price, stock, expiry_date)"
-        )
-        .eq("organization_id", effectiveOrg)
-        .order("name");
-      if (error) throw error;
+      const { data, error } = await productsApi.getProducts(effectiveOrg);
+      if (error) throw new Error(error.message);
 
       const normalized = (data || []).map(normalizeProduct);
 

@@ -51,6 +51,9 @@ import { TallyImportModal } from "@/components/TallyImportModal";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { InventoryItem } from "@/types/inventory";
 import { Party } from "@/types/parties";
 import { getAllTallyVouchers, TallyBankAccount, TallyVoucher } from "@/utils/tallyXmlParser";
@@ -618,9 +621,9 @@ export default function TallyImport() {
     try {
       // Pre-fetch existing data for deduplication and FK mapping
       const [{ data: existingProducts }, { data: existingCustomers }, { data: existingSuppliers }] = await Promise.all([
-        supabase.from("products").select("id, name, tags, sku").eq("organization_id", orgId),
-        supabase.from("customers").select("id, name, phone").eq("organization_id", orgId),
-        supabase.from("suppliers").select("id, name, phone").eq("organization_id", orgId)
+        productsApi.getProducts(orgId),
+        partiesApi.getCustomers(orgId),
+        partiesApi.getSuppliers(orgId)
       ]);
 
       const productMap = new Map((existingProducts || []).map(p => [p.name.toLowerCase().trim(), p]));
@@ -692,42 +695,52 @@ export default function TallyImport() {
 
         // Upsert products in batches of 1000
         for (let i = 0; i < productsToUpsert.length; i += 1000) {
-          const { data, error } = await supabase.from("products").upsert(productsToUpsert.slice(i, i + 1000)).select("id, name");
+          const slice = productsToUpsert.slice(i, i + 1000);
+          const { data, error } = await productsApi.bulkImport(slice, itemConflictResolution, orgId);
           if (error) {
             toast.error(`Failed to upsert products: ${error.message}`);
             throw error;
           }
-          if (data) {
-             for(const p of data) {
-                 productMap.set(p.name.toLowerCase().trim(), p); // Update map for voucher processing
-                 const item = parsedData.items.find(it => it.name.toLowerCase().trim() === p.name.toLowerCase().trim());
-                 if (item) {
-                     batchesToUpsert.push({
-                         product_id: p.id,
-                         batch_number: "INIT-BATCH",
-                         cost_price: item.purchasePrice || Math.round((item.sellingPrice || 100) * 0.8),
-                         mrp: item.mrp || item.sellingPrice || 100,
-                         stock: item.openingStock ?? item.currentStock ?? 0,
-                     });
-                 }
-             }
+          let productsList = data?.products || [];
+          if (productsList.length === 0) {
+            const { data: fresh } = await productsApi.getProducts(orgId);
+            productsList = (fresh || []).filter(p =>
+              slice.some(s => (s.name || "").toLowerCase().trim() === (p.name || "").toLowerCase().trim())
+            );
+          }
+          for (const p of productsList) {
+            productMap.set(p.name.toLowerCase().trim(), p); // Update map for voucher processing
+            const item = parsedData.items.find(it => it.name.toLowerCase().trim() === p.name.toLowerCase().trim());
+            if (item) {
+              batchesToUpsert.push({
+                productId: p.id,
+                batchNumber: "INIT-BATCH",
+                costPrice: item.purchasePrice || Math.round((item.sellingPrice || 100) * 0.8),
+                mrp: item.mrp || item.sellingPrice || 100,
+                stock: item.openingStock ?? item.currentStock ?? 0,
+              });
+            }
           }
         }
 
         if (batchesToUpsert.length > 0) {
-          const { data: existingBatches, error: bErr } = await supabase.from("product_batches").select("id, product_id").in("product_id", Array.from(productMap.values()).map(p => p.id));
+          const productIds = Array.from(productMap.values()).map(p => p.id);
+          const { data: existingBatches, error: bErr } = await productsApi.getBatches(productIds, orgId);
           if (bErr) {
-               toast.error(`Failed to fetch batches: ${bErr.message}`);
-               throw bErr;
+            toast.error(`Failed to fetch batches: ${bErr.message}`);
+            throw bErr;
           }
-          const batchMap = new Map((existingBatches || []).map(b => [b.product_id, b.id]));
-          const finalBatches = batchesToUpsert.map(b => batchMap.has(b.product_id) ? { id: batchMap.get(b.product_id), ...b, updated_at: new Date().toISOString() } : b);
+          const batchMap = new Map((existingBatches || []).map(b => [b.product_id || b.productId, b.id]));
+          const finalBatches = batchesToUpsert.map(b => {
+            const bKey = b.productId || b.product_id;
+            return batchMap.has(bKey) ? { id: batchMap.get(bKey), ...b } : b;
+          });
           
           for (let i = 0; i < finalBatches.length; i += 1000) {
-            const { error } = await supabase.from("product_batches").upsert(finalBatches.slice(i, i + 1000));
+            const { error } = await productsApi.bulkUpsertBatches(finalBatches.slice(i, i + 1000), orgId);
             if (error) {
-                toast.error(`Failed to upsert batches: ${error.message}`);
-                throw error;
+              toast.error(`Failed to upsert batches: ${error.message}`);
+              throw error;
             }
           }
         }
@@ -765,81 +778,80 @@ export default function TallyImport() {
                partiesCount++;
             }
           } else {
-             (isSupplier ? suppliersToUpsert : customersToUpsert).push(payload);
+             const newId = crypto.randomUUID();
+             (isSupplier ? suppliersToUpsert : customersToUpsert).push({ id: newId, ...payload });
              partiesCount++;
           }
         }
 
         // Upsert customers
         for (let i = 0; i < customersToUpsert.length; i += 1000) {
-          const { data, error } = await supabase.from("customers").upsert(customersToUpsert.slice(i, i + 1000)).select("id, name, phone");
+          const chunk = customersToUpsert.slice(i, i + 1000);
+          const { error } = await partiesApi.bulkUpsertCustomers(chunk, orgId);
           if (error) {
              toast.error(`Failed to upsert customers: ${error.message}`);
-             throw error;
+             throw new Error(error.message);
           }
-          if (data) {
-             data.forEach(c => {
-                 customerMap.set(c.name.toLowerCase().trim(), c);
-                 if (c.phone) customerMap.set(c.phone.trim(), c);
-                 
-                 // Process opening balances for new ones if needed...
-                 const party = parsedData.parties.all.find(p => p.partyType !== "supplier" && p.name.toLowerCase().trim() === c.name.toLowerCase().trim());
-                 if (party) {
-                    const opBal = Number(party.balance ?? party.openingBalance ?? 0);
-                    if (opBal !== 0 && !customersToUpsert.find(cu => cu.id === c.id)) { // Only if it was a new insert, or if we didn't have it (this check is basic)
-                       txToInsert.push({
-                          organization_id: orgId,
-                          party_id: c.id,
-                          party_type: "customer",
-                          amount: Math.abs(opBal),
-                          type: "opening_balance",
-                          description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
-                          reference_id: "IMPORT-OPENING",
-                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
-                       });
-                    }
+          chunk.forEach((c: any) => {
+              customerMap.set(c.name.toLowerCase().trim(), c);
+              if (c.phone) customerMap.set(c.phone.trim(), c);
+              
+              // Process opening balances for new ones if needed...
+              const party = parsedData.parties.all.find(p => p.partyType !== "supplier" && p.name.toLowerCase().trim() === c.name.toLowerCase().trim());
+              if (party) {
+                 const opBal = Number(party.balance ?? party.openingBalance ?? 0);
+                 if (opBal !== 0 && c.id) {
+                    txToInsert.push({
+                       organization_id: orgId,
+                       party_id: c.id,
+                       party_type: "customer",
+                       amount: Math.abs(opBal),
+                       type: "opening_balance",
+                       description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
+                       reference_id: "IMPORT-OPENING",
+                       created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+                    });
                  }
-             });
-          }
+              }
+          });
         }
 
         // Upsert suppliers
         for (let i = 0; i < suppliersToUpsert.length; i += 1000) {
-          const { data, error } = await supabase.from("suppliers").upsert(suppliersToUpsert.slice(i, i + 1000)).select("id, name, phone");
+          const chunk = suppliersToUpsert.slice(i, i + 1000);
+          const { error } = await partiesApi.bulkUpsertSuppliers(chunk, orgId);
           if (error) {
              toast.error(`Failed to upsert suppliers: ${error.message}`);
-             throw error;
+             throw new Error(error.message);
           }
-          if (data) {
-             data.forEach(s => {
-                 supplierMap.set(s.name.toLowerCase().trim(), s);
-                 if (s.phone) supplierMap.set(s.phone.trim(), s);
-                 
-                 const party = parsedData.parties.all.find(p => p.partyType === "supplier" && p.name.toLowerCase().trim() === s.name.toLowerCase().trim());
-                 if (party) {
-                    const opBal = Number(party.balance ?? party.openingBalance ?? 0);
-                    if (opBal !== 0 && !suppliersToUpsert.find(su => su.id === s.id)) {
-                       txToInsert.push({
-                          organization_id: orgId,
-                          party_id: s.id,
-                          party_type: "supplier",
-                          amount: Math.abs(opBal),
-                          type: "opening_balance",
-                          description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
-                          reference_id: "IMPORT-OPENING",
-                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
-                       });
-                    }
+          chunk.forEach((s: any) => {
+              supplierMap.set(s.name.toLowerCase().trim(), s);
+              if (s.phone) supplierMap.set(s.phone.trim(), s);
+              
+              const party = parsedData.parties.all.find(p => p.partyType === "supplier" && p.name.toLowerCase().trim() === s.name.toLowerCase().trim());
+              if (party) {
+                 const opBal = Number(party.balance ?? party.openingBalance ?? 0);
+                 if (opBal !== 0 && s.id) {
+                    txToInsert.push({
+                       organization_id: orgId,
+                       party_id: s.id,
+                       party_type: "supplier",
+                       amount: Math.abs(opBal),
+                       type: "opening_balance",
+                       description: `${parsedData.detectedSoftware.toUpperCase()} Opening Balance`,
+                       reference_id: "IMPORT-OPENING",
+                       created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+                    });
                  }
-             });
-          }
+              }
+          });
         }
         
         if (txToInsert.length > 0) {
-           const { error } = await supabase.from("credit_transactions").insert(txToInsert);
+           const { error } = await partiesApi.bulkInsertCreditTransactions(txToInsert, orgId);
            if (error) {
               toast.error(`Failed to insert opening balances: ${error.message}`);
-              throw error;
+              throw new Error(error.message);
            }
            balancesCount = txToInsert.length;
         }
@@ -848,7 +860,7 @@ export default function TallyImport() {
       // 3. Bank & Cash Accounts Import
       if (importBanks && ((parsedData.bankAccounts && parsedData.bankAccounts.length > 0) || (parsedData.cashInHand !== undefined && parsedData.cashInHand !== null))) {
         setImportProgress(75);
-        const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
+        const { error: probeError } = await partiesApi.getBankAccounts(orgId);
         
         const newAccounts = (parsedData.bankAccounts || []).map((b, i) => ({
           organization_id: orgId,
@@ -863,7 +875,7 @@ export default function TallyImport() {
         }));
 
         if (!probeError && newAccounts.length > 0) {
-           const { error } = await supabase.from("bank_accounts").upsert(newAccounts);
+           const { error } = await partiesApi.bulkUpsertBankAccounts(newAccounts, orgId);
            if (error) console.error("Database bank accounts upsert error:", error.message);
         }
 
@@ -929,10 +941,10 @@ export default function TallyImport() {
           { data: existingCreditTxns },
           { data: existingExpenses }
         ] = await Promise.all([
-          supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-          supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-          supabase.from("credit_transactions").select("reference_id").eq("organization_id", orgId).limit(10000),
-          supabase.from("expenses").select("expense_number").eq("organization_id", orgId).limit(10000),
+          invoicesApi.getSales(orgId, { limit: 10000 }),
+          invoicesApi.getPurchaseInvoices(orgId, { limit: 10000 }),
+          partiesApi.getCreditTransactions({ orgId, limit: 10000 }),
+          invoicesApi.getExpenses(orgId, { limit: 10000 }),
         ]);
         
         const salesMap = new Map((existingSales || []).map(s => [s.invoice_number, s.id]));
@@ -1027,11 +1039,11 @@ export default function TallyImport() {
             }
             if (!supplierId) {
                // Create stub
-               const { data: newSupp, error: suErr } = await supabase.from("suppliers").insert({
+               const { data: newSupp, error: suErr } = await partiesApi.createSupplier({
                  organization_id: orgId,
                  name: vch.partyName || "Imported Vendor",
                  category: "Wholesaler",
-               }).select("id").single();
+               }, orgId);
                if (!suErr && newSupp) {
                    supplierId = newSupp.id;
                    supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp);
@@ -1070,10 +1082,10 @@ export default function TallyImport() {
             }
             let customerId = vch.partyName ? (customerMap.get(vch.partyName.toLowerCase().trim())?.id || null) : null;
             if (!customerId && vch.partyName) {
-              const { data: newCust, error: cErr } = await supabase.from("customers").insert({
+              const { data: newCust, error: cErr } = await partiesApi.createCustomer({
                 organization_id: orgId,
                 name: vch.partyName || "Customer",
-              }).select("id").single();
+              }, orgId);
               if (!cErr && newCust) {
                 customerId = newCust.id;
                 customerMap.set(vch.partyName.toLowerCase().trim(), newCust);
@@ -1119,11 +1131,11 @@ export default function TallyImport() {
               }
               let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim())?.id || null) : null;
               if (!supplierId && vch.partyName) {
-                const { data: newSupp, error: suErr } = await supabase.from("suppliers").insert({
+                const { data: newSupp, error: suErr } = await partiesApi.createSupplier({
                   organization_id: orgId,
                   name: vch.partyName || "Supplier",
                   category: "Wholesaler",
-                }).select("id").single();
+                }, orgId);
                 if (!suErr && newSupp) {
                   supplierId = newSupp.id;
                   supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp);
@@ -1168,13 +1180,13 @@ export default function TallyImport() {
 
         if (salesToUpdate.length > 0) {
            for (let i=0; i<salesToUpdate.length; i+=1000) {
-              const { error } = await supabase.from("sales").upsert(salesToUpdate.slice(i, i+1000));
+              const { error } = await invoicesApi.bulkUpsertSales(salesToUpdate.slice(i, i+1000) as any, orgId);
               if (error) { toast.error(`Failed to update sales: ${error.message}`); throw error; }
            }
         }
         if (purchasesToUpdate.length > 0) {
            for (let i=0; i<purchasesToUpdate.length; i+=1000) {
-              const { error } = await supabase.from("purchase_invoices").upsert(purchasesToUpdate.slice(i, i+1000));
+              const { error } = await invoicesApi.bulkUpsertPurchaseInvoices(purchasesToUpdate.slice(i, i+1000) as any, orgId);
               if (error) { toast.error(`Failed to update purchases: ${error.message}`); throw error; }
            }
         }
@@ -1183,12 +1195,13 @@ export default function TallyImport() {
         for (let i=0; i<salesToInsert.length; i+=1000) {
            const batch = salesToInsert.slice(i, i+1000);
            const cleanBatch = batch.map(s => { const { _items, ...rest } = s; return rest; });
-           const { data, error } = await supabase.from("sales").insert(cleanBatch).select("id, invoice_number");
-           if (error) { toast.error(`Failed to insert sales: ${error.message}`); throw error; }
-           if (data) {
-              vouchersCount += data.length;
+           const res = await invoicesApi.bulkInsertSales(cleanBatch as any, orgId);
+           if (res.error) { toast.error(`Failed to insert sales: ${res.error.message}`); throw res.error; }
+           const insertedSales: any[] = Array.isArray(res.data) ? res.data : (res.data?.data || cleanBatch);
+           if (insertedSales) {
+              vouchersCount += insertedSales.length;
               const saleItemsToInsert = [];
-              for (const d of data) {
+              for (const d of insertedSales) {
                  const s = batch.find(x => x.invoice_number === d.invoice_number);
                  if (s && s._items) {
                     for (const it of s._items) {
@@ -1205,7 +1218,7 @@ export default function TallyImport() {
               }
               if (saleItemsToInsert.length > 0) {
                  for (let j=0; j<saleItemsToInsert.length; j+=1000) {
-                    const { error: siErr } = await supabase.from("sale_items").insert(saleItemsToInsert.slice(j, j+1000));
+                    const { error: siErr } = await invoicesApi.createSaleItems(saleItemsToInsert.slice(j, j+1000) as any, orgId);
                     if (siErr) { toast.error(`Failed to insert sale items: ${siErr.message}`); throw siErr; }
                  }
               }
@@ -1216,9 +1229,10 @@ export default function TallyImport() {
         for (let i=0; i<purchasesToInsert.length; i+=1000) {
            const batch = purchasesToInsert.slice(i, i+1000);
            const cleanBatch = batch.map(p => { const { _items, ...rest } = p; return rest; });
-           const { data, error } = await supabase.from("purchase_invoices").insert(cleanBatch).select("id, invoice_number");
-           if (error) { toast.error(`Failed to insert purchases: ${error.message}`); throw error; }
-           if (data) {
+           const res = await invoicesApi.bulkInsertPurchaseInvoices(cleanBatch as any, orgId);
+           if (res.error) { toast.error(`Failed to insert purchases: ${res.error.message}`); throw res.error; }
+           const insertedPurchases: any[] = Array.isArray(res.data) ? res.data : (res.data?.data || cleanBatch);
+           if (insertedPurchases) {
               vouchersCount += data.length;
               const piItemsToInsert = [];
               for (const d of data) {
@@ -1229,8 +1243,7 @@ export default function TallyImport() {
                        let prod = productMap.get(itemKey);
                        if (!prod) {
                           const itemName = it.itemName || "Imported Item";
-                          const { data: newProd, error: prodErr } = await supabase.from("products").insert({
-                             organization_id: orgId,
+                          const { data: newProd, error: prodErr } = await productsApi.createProduct({
                              name: itemName,
                              category: "General",
                              sku: getStableTallySku(itemName),
@@ -1240,12 +1253,15 @@ export default function TallyImport() {
                                 mrp: Number(it.rate) || 0,
                                 unit: it.unit || "PCS",
                              },
-                          }).select("id, name").single();
+                          }, orgId);
                           if (newProd && !prodErr) {
                              prod = newProd;
                              productMap.set(itemKey || "imported item", newProd as any);
                           } else {
-                             const { data: found } = await supabase.from("products").select("id, name").eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle();
+                             const { data: freshProducts } = await productsApi.getProducts(orgId);
+                             const found = (freshProducts || []).find(
+                               (p) => (p.name || "").toLowerCase().trim() === itemName.toLowerCase().trim()
+                             );
                              if (found) {
                                 prod = found;
                                 productMap.set(itemKey || "imported item", found as any);
@@ -1269,7 +1285,7 @@ export default function TallyImport() {
               }
               if (piItemsToInsert.length > 0) {
                  for (let j=0; j<piItemsToInsert.length; j+=1000) {
-                    const { error: piErr } = await supabase.from("purchase_invoice_items").insert(piItemsToInsert.slice(j, j+1000));
+                    const { error: piErr } = await invoicesApi.createPurchaseInvoiceItems(piItemsToInsert.slice(j, j+1000) as any, orgId);
                     if (piErr) { toast.error(`Failed to insert purchase items: ${piErr.message}`); throw piErr; }
                  }
               }
@@ -1278,14 +1294,14 @@ export default function TallyImport() {
 
         if (creditTxnsToInsert.length > 0) {
           for (let i = 0; i < creditTxnsToInsert.length; i += 1000) {
-            const { error: ctErr } = await supabase.from("credit_transactions").insert(creditTxnsToInsert.slice(i, i + 1000));
+            const { error: ctErr } = await partiesApi.bulkInsertCreditTransactions(creditTxnsToInsert.slice(i, i + 1000), orgId);
             if (ctErr) { toast.error(`Failed to insert credit transactions: ${ctErr.message}`); throw ctErr; }
           }
         }
 
         if (expensesToInsert.length > 0) {
           for (let i = 0; i < expensesToInsert.length; i += 1000) {
-            const { error: expErr } = await supabase.from("expenses").insert(expensesToInsert.slice(i, i + 1000));
+            const { error: expErr } = await invoicesApi.bulkInsertExpenses(expensesToInsert.slice(i, i + 1000) as any, orgId);
             if (expErr) { toast.error(`Failed to insert expenses: ${expErr.message}`); throw expErr; }
           }
           try {
@@ -1361,11 +1377,11 @@ export default function TallyImport() {
     setIsImporting(true);
     let count = 0;
     try {
-      const { data: existingProdData } = await supabase.from("products").select("id, name, sku, tags").eq("organization_id", orgId);
+      const { data: existingProdData } = await productsApi.getProducts(orgId);
       const productMap = new Map((existingProdData || []).map(p => [(p.name || "").toLowerCase().trim(), p]));
 
       const productsToUpsert = [];
-      const batchesToUpsert = [];
+      const batchesToUpsert: any[] = [];
 
       for (const item of items) {
         const itemName = (item.name || "Imported Item").trim();
@@ -1420,32 +1436,42 @@ export default function TallyImport() {
       }
 
       for (let i = 0; i < productsToUpsert.length; i += 1000) {
-        const { data, error } = await supabase.from("products").upsert(productsToUpsert.slice(i, i + 1000)).select("id, name");
+        const slice = productsToUpsert.slice(i, i + 1000);
+        const { data, error } = await productsApi.bulkImport(slice, strategy, orgId);
         if (error) { toast.error(`Failed to upsert items: ${error.message}`); throw error; }
-        if (data) {
-           for (const p of data) {
-              const item = items.find(it => (it.name || "Imported Item").toLowerCase().trim() === p.name.toLowerCase().trim());
-              if (item) {
-                 batchesToUpsert.push({
-                    product_id: p.id,
-                    batch_number: "INIT-BATCH",
-                    cost_price: item.purchasePrice || Math.round((item.sellingPrice || 100) * 0.8),
-                    mrp: item.mrp || item.sellingPrice || 100,
-                    stock: item.openingStock ?? item.currentStock ?? 0,
-                 });
-              }
-           }
+        let productsList = data?.products || [];
+        if (productsList.length === 0) {
+          const { data: fresh } = await productsApi.getProducts(orgId);
+          productsList = (fresh || []).filter(p =>
+            slice.some(s => (s.name || "").toLowerCase().trim() === (p.name || "").toLowerCase().trim())
+          );
+        }
+        for (const p of productsList) {
+          const item = items.find(it => (it.name || "Imported Item").toLowerCase().trim() === (p.name || "").toLowerCase().trim());
+          if (item) {
+            batchesToUpsert.push({
+              productId: p.id,
+              batchNumber: "INIT-BATCH",
+              costPrice: item.purchasePrice || Math.round((item.sellingPrice || 100) * 0.8),
+              mrp: item.mrp || item.sellingPrice || 100,
+              stock: item.openingStock ?? item.currentStock ?? 0,
+            });
+          }
         }
       }
 
       if (batchesToUpsert.length > 0) {
-          const { data: existingBatches } = await supabase.from("product_batches").select("id, product_id").in("product_id", batchesToUpsert.map(b => b.product_id));
-          const batchMap = new Map((existingBatches || []).map(b => [b.product_id, b.id]));
-          const finalBatches = batchesToUpsert.map(b => batchMap.has(b.product_id) ? { id: batchMap.get(b.product_id), ...b, updated_at: new Date().toISOString() } : b);
-          for (let i = 0; i < finalBatches.length; i += 1000) {
-              const { error } = await supabase.from("product_batches").upsert(finalBatches.slice(i, i + 1000));
-              if (error) { toast.error(`Failed to upsert batches: ${error.message}`); throw error; }
-          }
+        const productIds = batchesToUpsert.map(b => b.productId || b.product_id);
+        const { data: existingBatches } = await productsApi.getBatches(productIds, orgId);
+        const batchMap = new Map((existingBatches || []).map(b => [b.product_id || b.productId, b.id]));
+        const finalBatches = batchesToUpsert.map(b => {
+          const bKey = b.productId || b.product_id;
+          return batchMap.has(bKey) ? { id: batchMap.get(bKey), ...b } : b;
+        });
+        for (let i = 0; i < finalBatches.length; i += 1000) {
+          const { error } = await productsApi.bulkUpsertBatches(finalBatches.slice(i, i + 1000), orgId);
+          if (error) { toast.error(`Failed to upsert batches: ${error.message}`); throw error; }
+        }
       }
 
       setImportedStats((prev) => ({ ...prev, items: prev.items + count }));
@@ -1470,8 +1496,8 @@ export default function TallyImport() {
     let count = 0;
     try {
       const [{ data: existingCustomers }, { data: existingSuppliers }] = await Promise.all([
-        supabase.from("customers").select("id, name, phone").eq("organization_id", orgId),
-        supabase.from("suppliers").select("id, name, phone").eq("organization_id", orgId)
+        partiesApi.getCustomers(orgId),
+        partiesApi.getSuppliers(orgId)
       ]);
       const customerMap = new Map((existingCustomers || []).map(c => [(c.name || "").toLowerCase().trim(), c]));
       (existingCustomers || []).forEach(c => { if (c.phone) customerMap.set(c.phone.trim(), c); });
@@ -1510,47 +1536,49 @@ export default function TallyImport() {
            continue;
         }
 
-        (isSupplier ? suppliersToUpsert : customersToUpsert).push(payload);
+        const newId = crypto.randomUUID();
+        (isSupplier ? suppliersToUpsert : customersToUpsert).push({ id: newId, ...payload });
         count++;
       }
 
-      const processParties = async (arr, table, isSupplier) => {
+      const processParties = async (arr: any[], isSupplier: boolean) => {
          for (let i = 0; i < arr.length; i += 1000) {
-            const { data, error } = await supabase.from(table).upsert(arr.slice(i, i + 1000)).select("id, name, phone");
-            if (error) { toast.error(`Failed to upsert ${table}: ${error.message}`); throw error; }
-            if (data) {
-               data.forEach(p => {
-                  const map = isSupplier ? supplierMap : customerMap;
-                  map.set(p.name.toLowerCase().trim(), p);
-                  if (p.phone) map.set(p.phone.trim(), p);
+            const chunk = arr.slice(i, i + 1000);
+            const { error } = isSupplier
+              ? await partiesApi.bulkUpsertSuppliers(chunk, orgId)
+              : await partiesApi.bulkUpsertCustomers(chunk, orgId);
+            if (error) { toast.error(`Failed to upsert ${isSupplier ? "suppliers" : "customers"}: ${error.message}`); throw new Error(error.message); }
+            chunk.forEach((p: any) => {
+               const map = isSupplier ? supplierMap : customerMap;
+               map.set(p.name.toLowerCase().trim(), p);
+               if (p.phone) map.set(p.phone.trim(), p);
 
-                  const party = parties.find(pt => pt.partyType === (isSupplier ? "supplier" : "customer") && (pt.name || "Unnamed Party").toLowerCase().trim() === p.name.toLowerCase().trim());
-                  if (party) {
-                     const opBal = Number(party.balance ?? party.openingBalance ?? 0);
-                     if (opBal !== 0 && !arr.find(x => x.id === p.id)) {
-                        txToInsert.push({
-                          organization_id: orgId,
-                          party_id: p.id,
-                          party_type: isSupplier ? "supplier" : "customer",
-                          amount: Math.abs(opBal),
-                          type: "opening_balance",
-                          description: "Opening Balance",
-                          reference_id: "IMPORT-OPENING",
-                          created_by: user?.id || "00000000-0000-0000-0000-000000000000",
-                        });
-                     }
+               const party = parties.find(pt => pt.partyType === (isSupplier ? "supplier" : "customer") && (pt.name || "Unnamed Party").toLowerCase().trim() === p.name.toLowerCase().trim());
+               if (party && p.id) {
+                  const opBal = Number(party.balance ?? party.openingBalance ?? 0);
+                  if (opBal !== 0) {
+                     txToInsert.push({
+                       organization_id: orgId,
+                       party_id: p.id,
+                       party_type: isSupplier ? "supplier" : "customer",
+                       amount: Math.abs(opBal),
+                       type: "opening_balance",
+                       description: "Opening Balance",
+                       reference_id: "IMPORT-OPENING",
+                       created_by: user?.id || "00000000-0000-0000-0000-000000000000",
+                     });
                   }
-               });
-            }
+               }
+            });
          }
       };
 
-      await processParties(customersToUpsert, "customers", false);
-      await processParties(suppliersToUpsert, "suppliers", true);
+      await processParties(customersToUpsert, false);
+      await processParties(suppliersToUpsert, true);
 
       if (txToInsert.length > 0) {
-          const { error } = await supabase.from("credit_transactions").insert(txToInsert);
-          if (error) { toast.error(`Failed to insert opening balances: ${error.message}`); throw error; }
+          const { error } = await partiesApi.bulkInsertCreditTransactions(txToInsert, orgId);
+          if (error) { toast.error(`Failed to insert opening balances: ${error.message}`); throw new Error(error.message); }
       }
 
       setImportedStats((prev) => ({
@@ -1588,13 +1616,13 @@ export default function TallyImport() {
         { data: existingCreditTxns },
         { data: existingExpenses }
       ] = await Promise.all([
-        supabase.from("sales").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-        supabase.from("purchase_invoices").select("id, invoice_number").eq("organization_id", orgId).limit(10000),
-        supabase.from("products").select("id, name").eq("organization_id", orgId).limit(10000),
-        supabase.from("customers").select("id, name").eq("organization_id", orgId).limit(10000),
-        supabase.from("suppliers").select("id, name").eq("organization_id", orgId).limit(10000),
-        supabase.from("credit_transactions").select("reference_id").eq("organization_id", orgId).limit(10000),
-        supabase.from("expenses").select("expense_number").eq("organization_id", orgId).limit(10000),
+        invoicesApi.getSales(orgId, { limit: 10000 }),
+        invoicesApi.getPurchaseInvoices(orgId, { limit: 10000 }),
+        productsApi.getProducts(orgId),
+        partiesApi.getCustomers(orgId, { limit: 10000 }),
+        partiesApi.getSuppliers(orgId, { limit: 10000 }),
+        partiesApi.getCreditTransactions({ orgId, limit: 10000 }),
+        invoicesApi.getExpenses(orgId, { limit: 10000 }),
       ]);
       
       const salesMap = new Map((existingSales || []).map(s => [s.invoice_number, s.id]));
@@ -1685,11 +1713,11 @@ export default function TallyImport() {
           if (!existingPIId) {
             let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
             if (!supplierId && vch.partyName) {
-                 const { data: newSupp, error } = await supabase.from("suppliers").insert({
+                 const { data: newSupp, error } = await partiesApi.createSupplier({
                      organization_id: orgId,
                      name: vch.partyName || "Imported Vendor",
                      category: "Wholesaler",
-                 }).select("id").single();
+                 }, orgId);
                  if (newSupp && !error) {
                    supplierId = newSupp.id;
                    supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp.id);
@@ -1728,10 +1756,10 @@ export default function TallyImport() {
           }
           let customerId = vch.partyName ? (customerMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
           if (!customerId && vch.partyName) {
-            const { data: newCust, error: custErr } = await supabase.from("customers").insert({
+            const { data: newCust, error: custErr } = await partiesApi.createCustomer({
               organization_id: orgId,
               name: vch.partyName || "Customer",
-            }).select("id").single();
+            }, orgId);
             if (newCust && !custErr) {
               customerId = newCust.id;
               customerMap.set(vch.partyName.toLowerCase().trim(), newCust.id);
@@ -1778,11 +1806,11 @@ export default function TallyImport() {
             }
             let supplierId = vch.partyName ? (supplierMap.get(vch.partyName.toLowerCase().trim()) || null) : null;
             if (!supplierId && vch.partyName) {
-              const { data: newSupp, error: suppErr } = await supabase.from("suppliers").insert({
+              const { data: newSupp, error: suppErr } = await partiesApi.createSupplier({
                 organization_id: orgId,
                 name: vch.partyName || "Supplier",
                 category: "Wholesaler",
-              }).select("id").single();
+              }, orgId);
               if (newSupp && !suppErr) {
                 supplierId = newSupp.id;
                 supplierMap.set(vch.partyName.toLowerCase().trim(), newSupp.id);
@@ -1827,13 +1855,13 @@ export default function TallyImport() {
 
       if (salesToUpdate.length > 0) {
          for (let i = 0; i < salesToUpdate.length; i += 1000) {
-             const { error } = await supabase.from("sales").upsert(salesToUpdate.slice(i, i+1000));
+             const { error } = await invoicesApi.bulkUpsertSales(salesToUpdate.slice(i, i+1000) as any, orgId);
              if (error) { toast.error(`Failed to update sales: ${error.message}`); throw error; }
          }
       }
       if (purchasesToUpdate.length > 0) {
          for (let i = 0; i < purchasesToUpdate.length; i += 1000) {
-             const { error } = await supabase.from("purchase_invoices").upsert(purchasesToUpdate.slice(i, i+1000));
+             const { error } = await invoicesApi.bulkUpsertPurchaseInvoices(purchasesToUpdate.slice(i, i+1000) as any, orgId);
              if (error) { toast.error(`Failed to update purchases: ${error.message}`); throw error; }
          }
       }
@@ -1841,12 +1869,13 @@ export default function TallyImport() {
       for (let i = 0; i < salesToInsert.length; i += 1000) {
          const batch = salesToInsert.slice(i, i+1000);
          const cleanBatch = batch.map(s => { const { _items, ...rest } = s; return rest; });
-         const { data, error } = await supabase.from("sales").insert(cleanBatch).select("id, invoice_number");
-         if (error) { toast.error(`Failed to insert sales: ${error.message}`); throw error; }
-         if (data) {
-             count += data.length;
+         const res = await invoicesApi.bulkInsertSales(cleanBatch as any, orgId);
+         if (res.error) { toast.error(`Failed to insert sales: ${res.error.message}`); throw res.error; }
+         const insertedSales: any[] = Array.isArray(res.data) ? res.data : (res.data?.data || cleanBatch);
+         if (insertedSales) {
+             count += insertedSales.length;
              const itemsToInsert = [];
-             for (const d of data) {
+             for (const d of insertedSales) {
                  const s = batch.find(x => x.invoice_number === d.invoice_number);
                  if (s && s._items) {
                      for (const it of s._items) {
@@ -1863,7 +1892,7 @@ export default function TallyImport() {
              }
              if (itemsToInsert.length > 0) {
                  for (let j = 0; j < itemsToInsert.length; j += 1000) {
-                     const { error: err } = await supabase.from("sale_items").insert(itemsToInsert.slice(j, j+1000));
+                     const { error: err } = await invoicesApi.createSaleItems(itemsToInsert.slice(j, j+1000) as any, orgId);
                      if (err) { toast.error(`Failed to insert sale items: ${err.message}`); throw err; }
                  }
              }
@@ -1873,12 +1902,13 @@ export default function TallyImport() {
       for (let i = 0; i < purchasesToInsert.length; i += 1000) {
          const batch = purchasesToInsert.slice(i, i+1000);
          const cleanBatch = batch.map(p => { const { _items, ...rest } = p; return rest; });
-         const { data, error } = await supabase.from("purchase_invoices").insert(cleanBatch).select("id, invoice_number");
-         if (error) { toast.error(`Failed to insert purchases: ${error.message}`); throw error; }
-         if (data) {
-             count += data.length;
+         const res = await invoicesApi.bulkInsertPurchaseInvoices(cleanBatch as any, orgId);
+         if (res.error) { toast.error(`Failed to insert purchases: ${res.error.message}`); throw res.error; }
+         const insertedPurchases: any[] = Array.isArray(res.data) ? res.data : (res.data?.data || cleanBatch);
+         if (insertedPurchases) {
+             count += insertedPurchases.length;
              const itemsToInsert = [];
-             for (const d of data) {
+             for (const d of insertedPurchases) {
                  const p = batch.find(x => x.invoice_number === d.invoice_number);
                  if (p && p._items) {
                      for (const it of p._items) {
@@ -1886,8 +1916,7 @@ export default function TallyImport() {
                          let productId = productMap.get(itemKey);
                          if (!productId) {
                              const itemName = it.itemName || "Imported Item";
-                             const { data: newProd, error: prodErr } = await supabase.from("products").insert({
-                                 organization_id: orgId,
+                             const { data: newProd, error: prodErr } = await productsApi.createProduct({
                                  name: itemName,
                                  category: "General",
                                  sku: getStableTallySku(itemName),
@@ -1897,12 +1926,15 @@ export default function TallyImport() {
                                      mrp: Number(it.rate) || 0,
                                      unit: it.unit || "PCS",
                                  },
-                             }).select("id").single();
+                             }, orgId);
                              if (newProd && !prodErr) {
                                  productId = newProd.id;
                                  productMap.set(itemKey || "imported item", newProd.id);
                              } else {
-                                 const { data: foundProd } = await supabase.from("products").select("id").eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle();
+                                 const { data: foundList } = await productsApi.getProducts(orgId);
+                                 const foundProd = (foundList || []).find(
+                                   (p) => (p.name || "").toLowerCase().trim() === itemName.toLowerCase().trim()
+                                 );
                                  if (foundProd) {
                                      productId = foundProd.id;
                                      productMap.set(itemKey || "imported item", foundProd.id);
@@ -1926,7 +1958,7 @@ export default function TallyImport() {
              }
              if (itemsToInsert.length > 0) {
                  for (let j = 0; j < itemsToInsert.length; j += 1000) {
-                     const { error: err } = await supabase.from("purchase_invoice_items").insert(itemsToInsert.slice(j, j+1000));
+                     const { error: err } = await invoicesApi.createPurchaseInvoiceItems(itemsToInsert.slice(j, j+1000) as any, orgId);
                      if (err) { toast.error(`Failed to insert purchase items: ${err.message}`); throw err; }
                  }
              }
@@ -1935,14 +1967,14 @@ export default function TallyImport() {
 
       if (creditTxnsToInsert.length > 0) {
         for (let i = 0; i < creditTxnsToInsert.length; i += 1000) {
-          const { error: ctErr } = await supabase.from("credit_transactions").insert(creditTxnsToInsert.slice(i, i + 1000));
+          const { error: ctErr } = await partiesApi.bulkInsertCreditTransactions(creditTxnsToInsert.slice(i, i + 1000), orgId);
           if (ctErr) { toast.error(`Failed to insert credit transactions: ${ctErr.message}`); throw ctErr; }
         }
       }
 
       if (expensesToInsert.length > 0) {
         for (let i = 0; i < expensesToInsert.length; i += 1000) {
-          const { error: expErr } = await supabase.from("expenses").insert(expensesToInsert.slice(i, i + 1000));
+          const { error: expErr } = await invoicesApi.bulkInsertExpenses(expensesToInsert.slice(i, i + 1000) as any, orgId);
           if (expErr) { toast.error(`Failed to insert expenses: ${expErr.message}`); throw expErr; }
         }
         try {
@@ -1998,7 +2030,7 @@ export default function TallyImport() {
     setIsImporting(true);
     let count = 0;
     try {
-      const { error: probeError } = await supabase.from("bank_accounts").select("id").limit(1);
+      const { error: probeError } = await partiesApi.getBankAccounts(orgId);
       const newAccounts = banks.map((b, i) => ({
         organization_id: orgId,
         name: b.name || b.bankName || "Bank Account",
@@ -2012,7 +2044,7 @@ export default function TallyImport() {
       }));
 
       if (!probeError) {
-        const { error } = await supabase.from("bank_accounts").upsert(newAccounts);
+        const { error } = await partiesApi.bulkUpsertBankAccounts(newAccounts, orgId);
         if (error) console.error("Database bank accounts upsert error:", error.message);
       }
 

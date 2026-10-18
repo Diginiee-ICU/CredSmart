@@ -720,3 +720,36 @@ Create `.agents/skills/crm-salary-skill/SKILL.md` with YAML frontmatter. Documen
 - [ ] All Phase 3 tests pass
 - [ ] No regression in Phase 1 & 2 tests
 - [ ] Reusable skill `.agents/skills/crm-salary-skill/SKILL.md` authored and committed
+
+
+## 2026-10-18T17:29:31Z
+
+Migrate all direct frontend Supabase table queries to standard fetch requests communicating with the dedicated backend API (https://api.credsmart.online/api/*), securing endpoints with active session tokens and preserving complete UI and data contract parity.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. Frontend Table Query Migration
+Replace all direct client-side Supabase table queries (e.g. `supabase.from(...)`) across all application domains (including products, customers/parties, invoices, settings, and ledgers) with standard `fetch()` requests directed to `https://api.credsmart.online/api/*`.
+
+### R2. Session Authentication & Header Propagation
+Ensure every backend API call that requires authentication automatically retrieves the active session token (e.g., Supabase JWT) and forwards it in standard HTTP headers (`Authorization: Bearer <token>`), handling session expiration gracefully.
+
+### R3. Response Contract & State Parity
+Preserve all existing data contract shapes, component interfaces, error handling, loading states, and mutation workflows so that end-user features continue functioning seamlessly without UI regressions.
+
+### R4. Centralized API Client Architecture
+Provide a clean, maintainable API client layer or utility with base URL configuration (defaulting to `https://api.credsmart.online/api`) that encapsulates request headers, JSON serialization, and error normalization.
+
+## Acceptance Criteria
+
+### Static Verification & Build
+- [ ] Automated grep/AST scan confirms zero `supabase.from(...)` table query calls remain in frontend application code for migrated resources.
+- [ ] The frontend application builds cleanly via `npm run build` with zero TypeScript or syntax compilation errors.
+
+### Runtime & API Parity
+- [ ] Network requests for products, parties, invoices, and other data resources target `https://api.credsmart.online/api/*` via standard HTTP methods (GET, POST, PUT, DELETE).
+- [ ] Protected endpoints consistently attach the active session's Bearer token.
+- [ ] Response handling correctly parses backend payload structures, preserving loading indicators, toast notifications, and error boundary behaviors.

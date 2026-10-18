@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Package, Plus, Layers } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ItemImageUpload } from "./ItemImageUpload";
@@ -179,9 +179,8 @@ export function QuickCreateItemModal({
       };
 
       // 1. Insert product record (pricing will be stored in tags and batches)
-      const { data: newProd, error: prodErr } = await supabase
-        .from("products")
-        .insert({
+      const { data: newProd, error: prodErr } = await productsApi.createProduct(
+        {
           organization_id: orgId,
           name: name.trim(),
           brand: null,
@@ -190,11 +189,11 @@ export function QuickCreateItemModal({
           sku: generatedSku,
           image_url: imageUrl.trim() || null,
           tags: tagsPayload,
-        })
-        .select()
-        .single();
+        },
+        orgId
+      );
 
-      if (prodErr) throw prodErr;
+      if (prodErr) throw new Error(prodErr.message);
 
       // 2. Insert batch / opening inventory
       const batchNumber = "BATCH-01";
@@ -202,13 +201,16 @@ export function QuickCreateItemModal({
         throw new Error("The item was not created. Please try again.");
       }
 
-      const { error: batchErr } = await supabase.from("product_batches").insert({
-        product_id: newProd.id,
-        batch_number: batchNumber,
-        cost_price: pp,
-        mrp: itemMrp,
-        stock: stockQty,
-      });
+      const { error: batchErr } = await productsApi.createBatch(
+        {
+          product_id: newProd.id,
+          batch_number: batchNumber,
+          cost_price: pp,
+          mrp: itemMrp,
+          stock: stockQty,
+        },
+        orgId
+      );
 
       if (batchErr) {
         throw new Error(`Item created, but inventory stock could not be added: ${batchErr.message}`);

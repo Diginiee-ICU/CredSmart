@@ -1,27 +1,26 @@
-# Task Assignment: Challenger M2-1 (Adversarial Payroll Edge Case Stress Testing)
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1
-Target: Milestone M2 Empirical Challenge
-Challenge:
-1. Empirically test adversarial inputs to `src/utils/crmPayrollUtils.ts`:
-   - 0 working days, negative salary, NaN, extreme numbers (₹10 Billion), fractional overtime.
-   - Leap years (Feb 2024, Feb 2000, Feb 1900).
-   - High volume calculations.
-2. Run `cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts`.
-Report APPROVE or REJECT in handoff.md.
+## 2026-10-18T19:03:50Z
+You are challenger_m2_1. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1
 
-## 2026-10-18T10:53:37Z
-You are Challenger M2-1 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2_1\handoff.md
-- src/utils/crmPayrollUtils.ts
-- src/test/crmPayrollUtils.stress.test.ts
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
 
-Adversarially challenge the payroll engine:
-- Check boundary values: 0 working days, zero base salary, negative salary, NaN, extreme numbers (₹10 Billion), fractional overtime.
-- Verify leap years (Feb 2024, Feb 2000, Feb 1900).
-- Run cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts
-Write your verdict (APPROVE or REJECT) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+Artifacts under Test:
+- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+- Products API Service: src/services/productsApi.ts
+
+Challenger Mission:
+Empirically stress-test `src/services/productsApi.ts`:
+1. Author tests in your workspace for:
+   - High-throughput bulk product import (1,000 items).
+   - Concurrent batch stock adjustments without race conditions.
+   - Network failure and error payload parsing.
+2. Run verification:
+   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
+   - `cmd /c npx tsc --noEmit`
+3. Render an explicit gate verdict: APPROVE or REJECT.
+
+Write your report to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

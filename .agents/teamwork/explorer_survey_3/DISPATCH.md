@@ -23,3 +23,35 @@ Write your comprehensive findings and recommendations to:
 `c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`
 
 Use send_message to report completion back to the orchestrator.
+
+
+## 2026-10-18T17:40:54Z
+You are explorer_survey_3. Your working directory is:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3
+
+MANDATORY FIRST STEP:
+Read ORIGINAL_REQUEST.md at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+
+Mission:
+Explore and survey the CredSmart codebase for the Frontend Supabase Table Query Migration to Dedicated Backend API project.
+
+Your specific exploration focus:
+1. Invoices, Sales & Purchases Domain Query Audit:
+   - Systematically search src/ for all direct `supabase.from(...)` table query calls touching `sales`, `sale_items`, `purchase_invoices`, `purchase_invoice_items`, `expenses`, quotations, credit notes, debit notes, and document sequences.
+   - Document every file path, line number, table name, operation, filters, nested relations, and mutations.
+2. Settings, Organization, Profiles & Remaining Domains:
+   - Search src/ for all direct `supabase.from(...)` queries touching `organizations`, `profiles`, app settings, business settings, tax settings.
+   - Check CRM modules (`crm_roles`, `crm_attendance`, `crm_salary_profiles`, etc.) and any other misc tables.
+3. Complete Global Inventory Scan:
+   - Perform a global scan of the entire src/ directory for `supabase.from(` to ensure NO table queries are missed across the entire frontend.
+   - Produce a master list of all tables queried and their occurrence counts.
+4. Backend API Contract Mapping:
+   - Map sales, purchase, expenses, settings, and misc queries to target endpoints under `https://api.credsmart.online/api/*`.
+   - Document any specialized workflows (invoice generation, sequence numbering, PDF data loading).
+
+Write your comprehensive findings and recommendations to:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md
+
+Update your progress.md periodically.
+When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.

@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { seedProductsByBusinessType } from "@/data/seed-products";
 import { WebsiteProductImport } from "@/components/WebsiteProductImport";
+import { productsApi } from "@/services/productsApi";
+import { settingsApi } from "@/services/settingsApi";
 import { ROUTE_PATHS } from "@/config/routes";
 import { useOrganization, getPendingOnboarding, setPendingOnboarding, clearPendingOnboarding, PendingOnboardingData } from "@/hooks/useOrganization";
 import {
@@ -104,13 +106,8 @@ export default function Auth() {
       await refreshOrganization();
 
       // Check role to direct to proper landing surface
-      const { data: membership } = await supabase
-        .from("organization_memberships")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data: memberships } = await settingsApi.getMemberships(undefined, data.user.id);
+      const membership = memberships && memberships.length > 0 ? memberships[0] : null;
 
       const targetRoute = membership?.role === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard;
       navigate(targetRoute);
@@ -238,10 +235,7 @@ export default function Auth() {
 
     if (onboardingProducts.length === 0) return;
 
-    const { data: existingProducts, error: existingError } = await supabase
-      .from("products")
-      .select("name, barcode")
-      .eq("organization_id", orgId);
+    const { data: existingProducts, error: existingError } = await productsApi.getProducts(orgId);
 
     if (existingError) {
       throw new Error(`Failed to check existing products: ${existingError.message}`);
@@ -263,24 +257,25 @@ export default function Auth() {
 
     if (uniqueCandidates.length === 0) return;
 
-    const { data: insertedProducts, error: insertProductsError } = await supabase
-      .from("products")
-      .insert(
-        uniqueCandidates.map((product) => ({
-          name: product.name,
-          barcode: product.barcode,
-          brand: product.brand,
-          category: product.category,
-          organization_id: orgId,
-        }))
+    const createdResults = await Promise.all(
+      uniqueCandidates.map((product) =>
+        productsApi.createProduct(
+          {
+            name: product.name,
+            barcode: product.barcode,
+            brand: product.brand,
+            category: product.category,
+          },
+          orgId
+        )
       )
-      .select("id, name, barcode");
+    );
 
-    if (insertProductsError) {
-      throw new Error(`Failed to import products: ${insertProductsError.message}`);
-    }
+    const insertedProducts = createdResults
+      .map((r) => r.data)
+      .filter((p): p is NonNullable<typeof p> => Boolean(p && p.id));
 
-    if (!insertedProducts || insertedProducts.length === 0) return;
+    if (insertedProducts.length === 0) return;
 
     const batchesToInsert = insertedProducts
       .map((product) => {
@@ -291,20 +286,18 @@ export default function Auth() {
         if (!match) return null;
 
         return {
-          product_id: product.id,
-          batch_number: match.batchNumber,
-          cost_price: match.costPrice,
+          productId: product.id,
+          batchNumber: match.batchNumber,
+          costPrice: match.costPrice,
           mrp: match.mrp,
           stock: match.stock,
         };
       })
-      .filter((batch): batch is { product_id: string; batch_number: string; cost_price: number; mrp: number; stock: number } => Boolean(batch));
+      .filter((batch): batch is NonNullable<typeof batch> => Boolean(batch));
 
     if (batchesToInsert.length === 0) return;
 
-    const { error: insertBatchesError } = await supabase
-      .from("product_batches")
-      .insert(batchesToInsert);
+    const { error: insertBatchesError } = await productsApi.bulkUpsertBatches(batchesToInsert, orgId);
 
     if (insertBatchesError) {
       throw new Error(`Failed to create product batches: ${insertBatchesError.message}`);
@@ -315,13 +308,8 @@ export default function Auth() {
     const payload = getPendingOnboarding();
     if (!payload) return;
 
-    const { data: membership } = await supabase
-      .from("organization_memberships")
-      .select("organization_id")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: memberships } = await settingsApi.getMemberships(undefined, userId);
+    const membership = memberships && memberships.length > 0 ? memberships[0] : null;
 
     let targetOrgId = membership?.organization_id || null;
 
@@ -353,45 +341,33 @@ export default function Auth() {
     }
 
     if (!targetOrgId) {
-      const { data: orgData, error: orgError } = await supabase
-        .from("organizations")
-        .insert({
-          name: payload.storeName,
-          business_type: payload.businessType,
-          address: payload.storeAddress,
-          phone: payload.storePhone,
-          email: payload.storeEmail,
-          gstin: payload.gstin,
-          pan: payload.pan,
-          tax_rate: payload.taxRate,
-          invoice_prefix: payload.invoicePrefix || "INV",
-          logo_url: logoUrl,
-        })
-        .select("id")
-        .single();
+      const { data: orgData, error: orgError } = await settingsApi.createOrganization({
+        name: payload.storeName,
+        business_type: payload.businessType,
+        address: payload.storeAddress,
+        phone: payload.storePhone,
+        email: payload.storeEmail,
+        gstin: payload.gstin,
+        pan: payload.pan,
+        tax_rate: payload.taxRate,
+        invoice_prefix: payload.invoicePrefix || "INV",
+        logo_url: logoUrl,
+      });
 
       if (orgError || !orgData) {
-        if (orgError?.code === "42501") {
-          throw new Error(
-            "Organization creation is blocked by database RLS. Apply the latest Supabase migration and try again."
-          );
-        }
         throw new Error(orgError?.message || "Failed to create organization");
       }
 
       targetOrgId = orgData.id;
 
       // Ensure membership is created in fallback path
-      await supabase.from("organization_memberships").upsert(
+      await settingsApi.upsertMembership(
         {
           organization_id: targetOrgId,
           user_id: userId,
           role: "store_owner",
         },
-        {
-          onConflict: "organization_id,user_id,role,location_id",
-          ignoreDuplicates: true,
-        }
+        targetOrgId
       );
     }
 

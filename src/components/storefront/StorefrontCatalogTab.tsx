@@ -17,6 +17,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
 import { toast } from "sonner";
 
 interface StorefrontCatalogTabProps {
@@ -81,12 +82,9 @@ export function StorefrontCatalogTab({ themeColor = "#FF6A00" }: StorefrontCatal
     const updatedProduct = { ...product, tags: updatedTags };
     addOrUpdateProduct(updatedProduct);
 
-    // Save to Supabase
+    // Save to backend
     try {
-      await supabase
-        .from("products")
-        .update({ tags: updatedTags })
-        .eq("id", product.id);
+      await productsApi.updateProduct(product.id, { tags: updatedTags });
       toast.success(
         nextVal
           ? `"${product.name}" is now visible in online store`
@@ -108,10 +106,7 @@ export function StorefrontCatalogTab({ themeColor = "#FF6A00" }: StorefrontCatal
     addOrUpdateProduct(updatedProduct);
 
     try {
-      await supabase
-        .from("products")
-        .update({ tags: updatedTags })
-        .eq("id", product.id);
+      await productsApi.updateProduct(product.id, { tags: updatedTags });
       toast.success(
         nextVal ? `Featured "${product.name}" on homepage` : `Unfeatured "${product.name}"`
       );
@@ -154,10 +149,7 @@ export function StorefrontCatalogTab({ themeColor = "#FF6A00" }: StorefrontCatal
       const updatedProduct = { ...product, tags: updatedTags };
       addOrUpdateProduct(updatedProduct);
 
-      await supabase
-        .from("products")
-        .update({ tags: updatedTags })
-        .eq("id", product.id);
+      await productsApi.updateProduct(product.id, { tags: updatedTags });
 
       toast.success(`Image updated for "${product.name}"`);
     } catch (err) {
@@ -181,10 +173,7 @@ export function StorefrontCatalogTab({ themeColor = "#FF6A00" }: StorefrontCatal
       addOrUpdateProduct({ ...p, tags: updatedTags });
 
       try {
-        await supabase
-          .from("products")
-          .update({ tags: updatedTags })
-          .eq("id", p.id);
+        await productsApi.updateProduct(p.id, { tags: updatedTags });
       } catch { /* empty */ }
     }
     toast.success(`${count} products ${visible ? "published" : "hidden"}!`);

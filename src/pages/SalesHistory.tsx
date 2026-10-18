@@ -22,6 +22,7 @@ import {
   Share2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invoicesApi } from "@/services/invoicesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
 import { cn, exportToCSV } from "@/lib/utils";
@@ -88,24 +89,25 @@ export default function SalesHistory() {
     }
     setLoading(true);
     try {
-      let query = supabase
-        .from("sales")
-        .select("id, invoice_number, subtotal, discount_amount, discount_label, tax, total, payment_method, created_at, customer_id, customers(name, phone)")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
-
+      let startIso: string | undefined;
+      let endIso: string | undefined;
       if (dateFrom) {
         const start = new Date(dateFrom);
         start.setHours(0, 0, 0, 0);
-        query = query.gte("created_at", start.toISOString());
+        startIso = start.toISOString();
       }
       if (dateTo) {
         const end = new Date(dateTo);
         end.setHours(23, 59, 59, 999);
-        query = query.lte("created_at", end.toISOString());
+        endIso = end.toISOString();
       }
 
-      const { data, error } = await query;
+      const { data, error } = await invoicesApi.getSales(orgId, {
+        startDate: startIso,
+        endDate: endIso,
+        order: "desc",
+        sort: "created_at",
+      });
       if (error) {
         console.error("fetchSales error:", error);
         toast({ title: "Failed to load sales", description: error.message, variant: "destructive" });
@@ -144,10 +146,7 @@ export default function SalesHistory() {
     setExpandedId(saleId);
     if (!itemsCache[saleId]) {
       try {
-        const { data, error } = await supabase
-          .from("sale_items")
-          .select("id, product_name, product_id, batch_id, quantity, mrp, line_total, batch_number")
-          .eq("sale_id", saleId);
+        const { data, error } = await invoicesApi.getSaleItems(saleId, orgId);
         if (error) {
           console.error("fetch sale_items error:", error);
         } else if (data) {
@@ -162,10 +161,7 @@ export default function SalesHistory() {
   const handleReprintReceipt = async (sale: Sale) => {
     let items = itemsCache[sale.id];
     if (!items) {
-      const { data } = await supabase
-        .from("sale_items")
-        .select("id, product_name, product_id, batch_id, quantity, mrp, line_total, batch_number")
-        .eq("sale_id", sale.id);
+      const { data } = await invoicesApi.getSaleItems(sale.id, orgId);
       items = data || [];
       if (data) setItemsCache((prev) => ({ ...prev, [sale.id]: data }));
     }

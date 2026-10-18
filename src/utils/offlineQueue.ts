@@ -1,9 +1,12 @@
-﻿/**
+/**
  * IndexedDB Offline Transaction Queue & Network Status Sync Engine
  * Allows offline POS Billing, customer creation, and stock adjustments with auto-cloud sync.
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { productsApi } from "@/services/productsApi";
+import { partiesApi } from "@/services/partiesApi";
+import { invoicesApi } from "@/services/invoicesApi";
 import { toast } from "sonner";
 import { playSuccessChime, triggerHapticSuccess } from "./soundAndHaptics";
 
@@ -129,22 +132,21 @@ export async function syncOfflineQueue(): Promise<{ synced: number; failed: numb
   for (const item of items) {
     try {
       if (item.type === "sale") {
-        const { error } = await supabase.from("sales").insert([item.payload]);
-        if (error) throw error;
+        const { error } = await invoicesApi.createSale(item.payload, item.payload?.organization_id);
+        if (error) throw new Error(error.message);
       } else if (item.type === "customer") {
-        const { error } = await supabase.from("customers").insert([item.payload]);
-        if (error) throw error;
+        const { error } = await partiesApi.createCustomer(item.payload, item.payload?.organization_id);
+        if (error) throw new Error(error.message);
       } else if (item.type === "stock_adjustment") {
-        const { error } = await supabase
-          .from("product_batches")
-          .update({ stock: item.payload.newStock })
-          .eq("id", item.payload.batchId);
-        if (error) throw error;
+        const { error } = await productsApi.updateBatch(
+          item.payload.batchId,
+          { stock: item.payload.newStock },
+          item.organizationId
+        );
+        if (error) throw new Error(error.message);
       } else if (item.type === "credit_payment") {
-        const { error } = await supabase
-          .from("credit_transactions")
-          .insert([item.payload]);
-        if (error) throw error;
+        const { error } = await partiesApi.recordCreditTransaction(item.payload, item.payload?.organization_id);
+        if (error) throw new Error(error.message);
       }
 
       // Remove successfully synced item

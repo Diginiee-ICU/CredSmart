@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
+import { productsApi } from "@/services/productsApi";
 import { StorefrontSettings, StorefrontProduct, StorefrontOrder, StorefrontOrderItem } from "@/types/storefront";
 
 const STORAGE_PREFIX = "credsmart_storefront_";
@@ -27,16 +29,7 @@ export async function checkSlugAvailability(slug: string, currentOrgId?: string)
   }
 
   try {
-    let query = supabase
-      .from("storefront_settings")
-      .select("organization_id")
-      .eq("slug", cleanSlug);
-
-    if (currentOrgId) {
-      query = query.neq("organization_id", currentOrgId);
-    }
-
-    const { data, error } = await query.maybeSingle();
+    const { data, error } = await settingsApi.getStorefrontSettings(currentOrgId || "");
     if (error && error.code !== "PGRST116") {
       // If table doesn't exist yet or offline, check local registry
       const localCached = localStorage.getItem(`${PUBLIC_STORE_CACHE_PREFIX}${cleanSlug}`);
@@ -65,11 +58,7 @@ export async function getStorefrontSettings(orgId: string): Promise<StorefrontSe
 
   // 1. Try remote Supabase fetch
   try {
-    const { data, error } = await supabase
-      .from("storefront_settings")
-      .select("*")
-      .eq("organization_id", orgId)
-      .maybeSingle();
+    const { data, error } = await settingsApi.getStorefrontSettings(orgId);
 
     if (!error && data) {
       const settings = data as unknown as StorefrontSettings;
@@ -119,14 +108,10 @@ export async function saveStorefrontSettings(
 
   // Save to Supabase
   try {
-    const { data, error } = await supabase
-      .from("storefront_settings")
-      .upsert(payload, { onConflict: "organization_id" })
-      .select()
-      .maybeSingle();
+    const { data, error } = await settingsApi.upsertStorefrontSettings(payload, orgId);
 
     if (error) {
-      console.warn("Supabase storefront upsert notice:", error.message);
+      console.warn("Storefront upsert notice:", error.message);
       return { success: true, data: payload as StorefrontSettings };
     }
 
@@ -159,22 +144,14 @@ export async function getPublicStorefrontData(
     console.warn("RPC get_public_storefront notice:", e);
   }
 
-  // 2. Direct Supabase query fallback
+  // 2. Direct API query fallback
   try {
-    const { data: storeRow, error: storeErr } = await supabase
-      .from("storefront_settings")
-      .select("*")
-      .eq("slug", cleanSlug)
-      .eq("is_enabled", true)
-      .maybeSingle();
+    const { data: storeRow, error: storeErr } = await settingsApi.getStorefrontSettings(cleanSlug);
 
     if (!storeErr && storeRow) {
       const store = storeRow as unknown as StorefrontSettings;
       // Fetch products
-      const { data: prods } = await supabase
-        .from("products")
-        .select("id, name, barcode, sku, category, brand, tags, product_batches(mrp, cost_price, stock)")
-        .eq("organization_id", store.organization_id);
+      const { data: prods } = await productsApi.getProducts(store.organization_id);
 
       const mapped: StorefrontProduct[] = (prods || [])
         .map((p) => {
@@ -284,26 +261,21 @@ export async function submitStorefrontOrder(orderData: {
     localStorage.setItem(key, JSON.stringify([fullOrder, ...existing]));
   } catch { /* empty */ }
 
-  // 2. Persist to Supabase if connected
+  // 2. Persist to API if connected
   try {
-    await supabase.from("storefront_orders").insert({
+    await settingsApi.createStorefrontOrder({
       id: orderId,
       organization_id: orderData.organization_id,
       order_number: orderNumber,
       customer_name: orderData.customer_name,
       customer_phone: orderData.customer_phone,
       customer_address: orderData.customer_address || "",
-      delivery_type: orderData.delivery_type,
       items: orderData.items,
-      subtotal: orderData.subtotal,
-      delivery_charge: orderData.delivery_charge,
       total_amount: orderData.total_amount,
-      notes: orderData.notes || "",
       status: "pending",
-      source: orderData.source || "whatsapp",
-    });
+    }, orderData.organization_id);
   } catch (err) {
-    console.warn("Notice saving storefront order to Supabase:", err);
+    console.warn("Notice saving storefront order to API:", err);
   }
 
   return { success: true, orderId, orderNumber };
@@ -314,11 +286,7 @@ export async function getStorefrontOrders(orgId: string): Promise<StorefrontOrde
 
   let remoteOrders: StorefrontOrder[] = [];
   try {
-    const { data, error } = await supabase
-      .from("storefront_orders")
-      .select("*")
-      .eq("organization_id", orgId)
-      .order("created_at", { ascending: false });
+    const { data, error } = await settingsApi.getStorefrontOrders(orgId);
 
     if (!error && data) {
       remoteOrders = data as unknown as StorefrontOrder[];
@@ -359,9 +327,9 @@ export async function updateStorefrontOrderStatus(
     }
   } catch { /* empty */ }
 
-  // Update Supabase
+  // Update API
   try {
-    await supabase.from("storefront_orders").update({ status }).eq("id", orderId);
+    await settingsApi.updateStorefrontOrder(orderId, { status }, orgId);
   } catch (e) {
     console.warn("Notice updating storefront order status:", e);
   }

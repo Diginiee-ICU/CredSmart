@@ -26,6 +26,7 @@ import { SettingsNavSidebar } from "@/components/settings/SettingsNavSidebar";
 import { SignaturePad } from "@/components/settings/SignaturePad";
 import { useOrganization, saveLocalOrgRegistry } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -302,21 +303,21 @@ export default function BusinessSettings() {
       // Update Supabase organization record & local registry
       if (orgId) {
         try {
-          await supabase
-            .from("organizations")
-            .update({
+          await settingsApi.updateOrganization(
+            orgId,
+            {
               name: businessName.trim(),
               phone: phone.trim(),
               email: email.trim(),
               address: billingAddress.trim(),
               gstin: gstin.trim(),
-              pan: pan.trim(),
+              pan_number: pan.trim(),
               logo_url: finalLogoUrl,
               business_type: selectedBusinessTypes.join(", "),
-            })
-            .eq("id", orgId);
+            }
+          );
         } catch (dbErr) {
-          console.warn("Supabase organization update notice:", dbErr);
+          console.warn("Organization update notice:", dbErr);
         }
 
         try {

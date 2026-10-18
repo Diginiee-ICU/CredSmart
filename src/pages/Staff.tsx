@@ -4,6 +4,7 @@ import { ROUTE_PATHS } from "@/config/routes";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { supabase } from "@/integrations/supabase/client";
+import { settingsApi } from "@/services/settingsApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -736,11 +737,7 @@ export default function Staff() {
 
   const fetchMembers = async (oid: string) => {
     try {
-      const { data, error } = await supabase
-        .from("organization_memberships")
-        .select("id, user_id, role, created_at")
-        .eq("organization_id", oid)
-        .order("created_at", { ascending: true });
+      const { data, error } = await settingsApi.getMemberships(oid);
 
       if (error) throw error;
       if (!data) {
@@ -751,12 +748,13 @@ export default function Staff() {
       const userIds = data.map((m) => m.user_id).filter(Boolean);
       let profiles: Array<{ id: string; full_name: string | null; avatar_url: string | null }> | undefined = [];
       if (userIds.length > 0) {
-        const { data: profilesData, error: profilesErr } = await supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url")
-          .in("id", userIds);
+        const { data: profilesData, error: profilesErr } = await settingsApi.getProfiles({ ids: userIds });
         if (profilesErr) console.warn("Failed to load profiles:", profilesErr.message);
-        profiles = profilesData || [];
+        profiles = (profilesData || []).map((p) => ({
+          id: p.id,
+          full_name: (p.full_name || p.name || null) as string | null,
+          avatar_url: (p.avatar_url || null) as string | null,
+        }));
       }
 
       const enriched: Member[] = data.map((m) => ({
@@ -774,13 +772,9 @@ export default function Staff() {
 
   const fetchInvitations = async (oid: string) => {
     try {
-      const { data, error } = await supabase
-        .from("staff_invitations")
-        .select("id, email, role, status, created_at, expires_at")
-        .eq("organization_id", oid)
-        .order("created_at", { ascending: false });
+      const { data, error } = await settingsApi.getStaffInvitations(oid);
       if (error) throw error;
-      setInvitations((data as Invitation[]) || []);
+      setInvitations((data as unknown as Invitation[]) || []);
     } catch (err: unknown) {
       console.error("fetchInvitations failed:", err);
       setInvitations([]);
@@ -819,16 +813,17 @@ export default function Staff() {
       console.warn("Edge function invite failed, using direct DB fallback:", normalizeError(err));
       try {
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { error: dbError } = await supabase
-          .from("staff_invitations")
-          .insert({
+        const { error: dbError } = await settingsApi.createStaffInvitation(
+          {
             organization_id: orgId,
             email,
             role: inviteRole,
             status: "pending",
             invited_by: user?.id || "",
             expires_at: expiresAt,
-          });
+          },
+          orgId
+        );
 
         if (dbError) throw dbError;
 
@@ -852,10 +847,11 @@ export default function Staff() {
   };
 
   const cancelInvitation = async (invId: string) => {
-    const { error } = await supabase
-      .from("staff_invitations")
-      .update({ status: "cancelled" })
-      .eq("id", invId);
+    const { error } = await settingsApi.updateStaffInvitation(
+      invId,
+      { status: "cancelled" },
+      orgId
+    );
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -869,7 +865,7 @@ export default function Staff() {
     if (!orgId) return;
     setInviting(true);
     try {
-      await supabase.from("staff_invitations").update({ status: "cancelled" }).eq("id", inv.id);
+      await settingsApi.updateStaffInvitation(inv.id, { status: "cancelled" }, orgId);
 
       const res = await supabase.functions.invoke("invite-staff", {
         body: { email: inv.email, role: inv.role, organization_id: orgId },
@@ -894,14 +890,17 @@ export default function Staff() {
     } catch (err: unknown) {
       console.warn("Resend Edge function failed, using DB fallback:", normalizeError(err));
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { error: insertErr } = await supabase.from("staff_invitations").insert({
-        organization_id: orgId,
-        email: inv.email,
-        role: inv.role,
-        status: "pending",
-        invited_by: user?.id || "",
-        expires_at: expiresAt,
-      });
+      const { error: insertErr } = await settingsApi.createStaffInvitation(
+        {
+          organization_id: orgId,
+          email: inv.email,
+          role: inv.role,
+          status: "pending",
+          invited_by: user?.id || "",
+          expires_at: expiresAt,
+        },
+        orgId
+      );
 
       if (insertErr) {
         toast({ title: "Error", description: insertErr.message, variant: "destructive" });
@@ -919,10 +918,7 @@ export default function Staff() {
       toast({ title: "Permission Denied", description: "Only admins or owners can update roles.", variant: "destructive" });
       return;
     }
-    const { error } = await supabase
-      .from("organization_memberships")
-      .update({ role: newRole })
-      .eq("id", membershipId);
+    const { error } = await settingsApi.updateMembership(membershipId, { role: newRole }, orgId);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -941,10 +937,7 @@ export default function Staff() {
       toast({ title: "Error", description: "You cannot remove yourself", variant: "destructive" });
       return;
     }
-    const { error } = await supabase
-      .from("organization_memberships")
-      .delete()
-      .eq("id", membershipId);
+    const { error } = await settingsApi.deleteMembership(membershipId, orgId);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

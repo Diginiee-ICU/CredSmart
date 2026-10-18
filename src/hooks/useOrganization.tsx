@@ -2,6 +2,8 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback,
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { seedProductsByBusinessType } from "@/data/seed-products";
+import { productsApi } from "@/services/productsApi";
+import { settingsApi } from "@/services/settingsApi";
 
 export const ACTIVE_ORG_KEY = "credsmart_active_org_id";
 const PENDING_ONBOARDING_KEY = "credsmart_pending_onboarding_v1";
@@ -240,11 +242,7 @@ const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => 
   }));
 
   try {
-    const { data, error } = await supabase
-      .from("organization_memberships")
-      .select("organization_id, role")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+    const { data, error } = await settingsApi.getMemberships(undefined, userId);
 
     if (error) {
       console.warn("Notice reading organization memberships:", error.message);
@@ -316,25 +314,25 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
   if (uniqueCandidates.length === 0) return;
 
   try {
-    const { data: insertedProducts, error: insertProductsError } = await supabase
-      .from("products")
-      .insert(
-        uniqueCandidates.map((product) => ({
-          name: product.name,
-          barcode: product.barcode,
-          brand: product.brand,
-          category: product.category,
-          organization_id: orgId,
-        }))
+    const createdResults = await Promise.all(
+      uniqueCandidates.map((product) =>
+        productsApi.createProduct(
+          {
+            name: product.name,
+            barcode: product.barcode,
+            brand: product.brand,
+            category: product.category,
+          },
+          orgId
+        )
       )
-      .select("id, name, barcode");
+    );
 
-    if (insertProductsError) {
-      console.warn(`Product seed notice: ${insertProductsError.message}`);
-      return;
-    }
+    const insertedProducts = createdResults
+      .map((r) => r.data)
+      .filter((p): p is NonNullable<typeof p> => Boolean(p && p.id));
 
-    if (!insertedProducts || insertedProducts.length === 0) return;
+    if (insertedProducts.length === 0) return;
 
     const batchesToInsert = insertedProducts
       .map((product) => {
@@ -345,23 +343,20 @@ const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData | {
         if (!match) return null;
 
         return {
-          product_id: product.id,
-          batch_number: match.batchNumber,
-          cost_price: match.costPrice,
+          productId: product.id,
+          batchNumber: match.batchNumber,
+          costPrice: match.costPrice,
           mrp: match.mrp,
           stock: match.stock,
         };
       })
-      .filter(
-        (batch): batch is { product_id: string; batch_number: string; cost_price: number; mrp: number; stock: number } =>
-          Boolean(batch)
-      );
+      .filter((batch): batch is NonNullable<typeof batch> => Boolean(batch));
 
     if (batchesToInsert.length === 0) return;
 
-    await supabase.from("product_batches").insert(batchesToInsert);
+    await productsApi.bulkUpsertBatches(batchesToInsert, orgId);
   } catch (err) {
-    console.warn("Batch seed notice:", err);
+    console.warn("Product/batch seed notice:", err);
   }
 };
 
@@ -463,7 +458,7 @@ const provisionOrganization = async (
   // 2. If RPC did not create org, perform direct insert without .select()
   if (orgId === generatedOrgId) {
     try {
-      const { error: insertErr } = await supabase.from("organizations").insert({
+      const { error: insertErr } = await settingsApi.createOrganization({
         id: generatedOrgId,
         name: payload.storeName || "My Store",
         business_type: payload.businessType || DEFAULT_BUSINESS_TYPE,
@@ -479,7 +474,7 @@ const provisionOrganization = async (
 
       if (insertErr) {
         console.warn("Direct org insert fallback notice:", insertErr.message);
-        await supabase.from("organizations").insert({
+        await settingsApi.createOrganization({
           id: generatedOrgId,
           name: payload.storeName || "My Store",
         });
@@ -491,16 +486,13 @@ const provisionOrganization = async (
 
   // 3. Ensure membership is created
   try {
-    await supabase.from("organization_memberships").upsert(
+    await settingsApi.upsertMembership(
       {
         organization_id: orgId,
         user_id: user.id,
         role: "store_owner",
       },
-      {
-        onConflict: "organization_id,user_id,role",
-        ignoreDuplicates: true,
-      }
+      orgId
     );
   } catch (e) {
     console.warn("Membership provision upsert notice:", e);
@@ -652,13 +644,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       const orgIds = memberships.map((m) => m.organization_id);
       let orgRows: OrganizationRow[] = [];
       try {
-        const { data: dbRows, error: orgError } = await supabase
-          .from("organizations")
-          .select("*")
-          .in("id", orgIds);
+        const { data: dbRows, error: orgError } = await settingsApi.getUserOrganizations();
 
         if (!orgError && dbRows) {
-          orgRows = dbRows as OrganizationRow[];
+          orgRows = (dbRows as OrganizationRow[]).filter((r) => orgIds.includes(r.id));
         } else if (orgError) {
           console.warn("Notice loading remote organization details:", orgError.message);
         }
@@ -736,21 +725,12 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (activeOrgData?.id && activeOrgData.name) {
         // Auto-register in public storefront directory for B2B invoice name discovery
         try {
-          const defaultSlug = (activeOrgData.name || "store")
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9\s-]/g, "")
-            .replace(/\s+/g, "-")
-            .slice(0, 30) + "-" + activeOrgData.id.slice(0, 4);
-
-          supabase.from("storefront_settings" as any).upsert({
+          settingsApi.upsertStorefrontSettings({
             organization_id: activeOrgData.id,
             store_name: activeOrgData.name,
-            contact_phone: activeOrgData.phone || "",
-            address: activeOrgData.address || "",
-            slug: defaultSlug,
-            is_enabled: true,
-          }, { onConflict: "organization_id" }).then(() => {}).catch(() => {});
+            whatsapp_number: activeOrgData.phone || "",
+            is_active: true,
+          }, activeOrgData.id).catch(() => {});
         } catch { /* empty */ }
       }
     } catch (error) {
@@ -799,27 +779,25 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     try {
       const newId = crypto.randomUUID();
 
-      // 1. Try to create organization in Supabase without .select() (avoids SELECT RLS constraint on insert)
+      // 1. Try to create organization in backend via settingsApi
       try {
-        const { error: orgError } = await supabase
-          .from("organizations")
-          .insert({
-            id: newId,
-            name: data.name.trim(),
-            business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
-            address: data.address?.trim() || "",
-            phone: data.phone?.trim() || "",
-            email: data.email?.trim() || user.email || "",
-            gstin: data.gstin?.trim() || "",
-            pan: data.pan?.trim() || "",
-            tax_rate: data.tax_rate || DEFAULT_TAX_RATE,
-            invoice_prefix: data.invoice_prefix?.trim() || DEFAULT_INVOICE_PREFIX,
-            logo_url: data.logo_url || "",
-          });
+        const { error: orgError } = await settingsApi.createOrganization({
+          id: newId,
+          name: data.name.trim(),
+          business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
+          address: data.address?.trim() || "",
+          phone: data.phone?.trim() || "",
+          email: data.email?.trim() || user.email || "",
+          gstin: data.gstin?.trim() || "",
+          pan: data.pan?.trim() || "",
+          tax_rate: data.tax_rate || DEFAULT_TAX_RATE,
+          invoice_prefix: data.invoice_prefix?.trim() || DEFAULT_INVOICE_PREFIX,
+          logo_url: data.logo_url || "",
+        });
 
         if (orgError) {
           console.warn("Direct org insert fallback notice:", orgError.message);
-          await supabase.from("organizations").insert({
+          await settingsApi.createOrganization({
             id: newId,
             name: data.name.trim(),
           });
@@ -830,16 +808,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       // 2. Add owner membership
       try {
-        await supabase.from("organization_memberships").upsert(
+        await settingsApi.upsertMembership(
           {
             organization_id: newId,
             user_id: user.id,
             role: "store_owner",
           },
-          {
-            onConflict: "organization_id,user_id,role",
-            ignoreDuplicates: true,
-          }
+          newId
         );
       } catch (err) {
         console.warn("Membership insert catch notice:", err);

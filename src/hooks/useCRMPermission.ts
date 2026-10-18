@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { crmApi } from "@/services/crmApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 
@@ -130,20 +130,14 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
       setError(null);
 
       // 1. Fetch user's assigned staff role junctions
-      const { data: staffRolesData, error: staffRolesErr } = await supabase
-        .from("crm_staff_roles")
-        .select("staff_id, role_id, assigned_by, assigned_at")
-        .eq("staff_id", user.id);
+      const { data: staffRolesData, error: staffRolesErr } = await crmApi.getCRMStaffRoles(orgId, user.id);
 
       if (staffRolesErr) {
         console.warn("useCRMPermission: staff_roles query notice:", staffRolesErr.message);
       }
 
       // Also fetch all org roles to resolve names and check if user has org super_admin role
-      const { data: orgRolesData, error: orgRolesErr } = await supabase
-        .from("crm_roles")
-        .select("id, org_id, name, color, icon, is_super_admin, created_at")
-        .eq("org_id", orgId);
+      const { data: orgRolesData, error: orgRolesErr } = await crmApi.getCRMRoles(orgId);
 
       if (orgRolesErr) {
         console.warn("useCRMPermission: org_roles query notice:", orgRolesErr.message);
@@ -189,15 +183,12 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
       let resolvedPermissions: CRMPermission[] = [];
 
       if (resolvedRoleIds.length > 0) {
-        const { data: permsData, error: permsErr } = await supabase
-          .from("crm_permissions")
-          .select("id, role_id, module, action, allowed")
-          .in("role_id", resolvedRoleIds);
+        const { data: permsData, error: permsErr } = await crmApi.getCRMPermissions();
 
         if (permsErr) {
           console.warn("useCRMPermission: permissions query notice:", permsErr.message);
         } else if (permsData) {
-          resolvedPermissions = permsData;
+          resolvedPermissions = permsData as unknown as CRMPermission[];
         }
       }
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, User, Phone, MapPin, Building2, Mail, IndianRupee, Check, RotateCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { partiesApi } from "@/services/partiesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { toast } from "sonner";
 import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
@@ -89,18 +89,19 @@ export function CreatePartyModal({
         ? { ...baseData, gstin: cleanGstin || null }
         : { ...baseData, custom_fields: cleanGstin ? { gstin: cleanGstin } : {} };
 
-      const { data: newParty, error } = await supabase
-        .from(targetTable)
-        .insert(insertData)
-        .select()
-        .single();
+      const { data: newParty, error } = await partiesApi.savePartyRecord(
+        targetTable,
+        insertData,
+        undefined,
+        orgId
+      );
 
-      if (error) throw error;
+      if (error || !newParty) throw error || new Error("Failed to create party");
 
       // If opening balance entered, record initial ledger entry
       if (newParty && parsedBalance > 0) {
         try {
-          await supabase.from("credit_transactions").insert({
+          await partiesApi.recordCreditTransaction({
             organization_id: orgId,
             party_id: newParty.id,
             party_type: isSupplier ? "supplier" : "customer",
@@ -108,7 +109,7 @@ export function CreatePartyModal({
             type: balanceType === "receive" ? "credit" : "payment",
             description: "Opening balance",
             created_by: "mobile_invoice",
-          });
+          }, orgId);
         } catch (trxErr) {
           console.warn("Could not insert opening credit transaction:", trxErr);
         }
