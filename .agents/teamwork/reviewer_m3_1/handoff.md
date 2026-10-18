@@ -1,154 +1,143 @@
-# Review & Adversarial Challenge Report: CRM Phase 2 Milestone 3 (Attendance UI & Clock-In Hub)
+# Handoff Report: Reviewer M3-1 (Salary Management UI & Form Validation Review)
 
-**Reviewer**: `reviewer_m3_1`  
-**Roles**: Reviewer, Adversarial Critic  
-**Timestamp**: 2026-10-17T10:45:00Z  
-**Target Milestone**: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub  
-**Subject Under Review**: `src/pages/crm/Attendance.tsx` authored by `worker_m3`  
-**Verdict**: **APPROVE**
+- **Reviewer**: `reviewer_m3_1` (Roles: reviewer, critic)
+- **Target Deliverable**: Milestone M3 — UI Page (`src/pages/crm/SalaryManagement.tsx`), Test Suites (`src/test/crmSalaryManagement.test.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`)
+- **Authoring Worker**: `worker_m3_1`
+- **Parent Orchestrator ID**: `caf7924e-19e5-4a1d-ae03-b43c66838dd3`
+- **Date**: 2026-10-18T11:57:00Z
+- **Verdict**: **APPROVE**
+
+---
+
+## Review Summary
+
+**Verdict**: **APPROVE**  
+The implementation of `SalaryManagement.tsx` and its accompanying test suites adheres to all architectural, functional, brand, and security requirements specified in the project requirements. Static type analysis passed with zero errors (`tsc --noEmit`), and all 43 automated unit/integration tests across `crmSalaryManagement.test.tsx` (26 tests) and `crmSalaryManagementAdmin.test.tsx` (17 tests) passed cleanly. Zero integrity violations or facade shortcuts were detected.
 
 ---
 
 ## 1. Observation
 
-### A. Integrity & Source Inspection (`src/pages/crm/Attendance.tsx`)
-1. **CRM Design System Components**:
-   - `CRMPageHeader` (line 64, 1455): Implements title `"Attendance & Geolocation Hub"`, subtitle, breadcrumbs (`Home` → `CRM` → `Attendance`), `<CRMBadge variant="success" size="sm" dot>Phase 2 Live</CRMBadge>`, and desktop/mobile action slots.
-   - `CRMCard` (line 65): Utilized with distinct variants:
-     - `variant="brand"` for the Staff Clock-In Pod (line 1614).
-     - `variant="elevated"` for the Distance Radar & Location Visualizer (line 1771).
-     - `variant="default"` for Team Attendance Logs (line 1896), Geofence Management (line 1946), and Regularisation Requests (line 2031).
-   - `CRMBadge` (line 66): Applied semantically across all states:
-     - `variant="success"`: Within Geofence ✓ (line 1664), Geo-Verified ✓ (line 1386), Approved ✓ (line 2070), Active Geofence (line 1975).
-     - `variant="warning"`: Acquiring GPS... (line 1659), Outside Geofence ⚠️ (line 1669), Manual ⚠️ (line 1399), Pending Review (line 2064).
-     - `variant="error"`: GPS Disabled / Unavailable (line 1674), Rejected (line 2074).
-     - `variant="orange"`: Active session indicator (line 1349).
-     - `variant="neutral"`: GPS Standby (line 1679), Inactive location (line 1980).
-     - `variant="info"`: Regularized (line 1393).
-   - `CRMDataTable` (line 67, 1924): Configured with sortable columns, client-side name/email fuzzy search filter (`searchFilter`), pagination (`pageSize={10}`), and empty state message.
-   - `CRMStatCard` (line 68, 1516-1548): 4 summary metric KPI cards:
-     - "Present Today" (`accent="emerald"`)
-     - "Geo-Verified" (`accent="blue"`, with compliance trend % up arrow)
-     - "Manual / Regularised" (`accent="gold"`)
-     - "Office Geofences" (`accent="navy"`)
-   - `CRMPermissionGate` (line 69, 1436): Wraps the entire view for `module="attendance"` and `action="view"`, providing a dedicated "Access Restricted" shield fallback. Admin geofence management and request review actions are gated by `canEdit` (`isSuperAdmin || hasPermission("attendance", "edit")`).
-   - `CRMRolePill` (line 70, 1314): Renders dynamically colored staff role pills with crown for super-admins inside table rows.
+### 1.1 Source Code Architecture Inspection (`src/pages/crm/SalaryManagement.tsx`)
+- **Component File Size & Scope**: 2,166 lines of strictly typed React + TypeScript code with zero `any` types.
+- **Top-Level RBAC Gating (Lines 155-159, 962-966)**:
+  - Component invokes `useCRMPermission("salary", "view")` and computes `canEdit` and `canApprove` incorporating `isSuperAdmin` bypass.
+  - Page is wrapped with `<CRMPermissionGate module="salary" action="view" fallback={<SalaryAccessRestrictedFallback />}>`.
+- **CRM Design System Tokens & Components (Lines 50-58, 971-1062)**:
+  - Correctly imports and utilizes `CRMPageHeader`, `CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMStatCard`, `CRMPermissionGate`, and `CRMRolePill`.
+  - Brand colors strictly applied: Navy `#0F172A`, Orange `#FF6A00`, Blue `#1D4ED8`, Emerald `#10B981`, Gold `#F59E0B`.
+- **4 Tabbed Workflows (Lines 1068-1856)**:
+  - **Tab 1: Salary Profiles** (`activeTab === "profiles"`, Lines 1142-1289): Dual layout with desktop `CRMDataTable<CrmSalaryProfile>` (`hidden sm:block`) and mobile cards (`block sm:hidden`). Actions trigger the profile drawer.
+  - **Tab 2: Payroll Run** (`activeTab === "payroll"`, Lines 1294-1593): Month picker input (`type="month"`), dynamic working days calculation via `getWorkingDaysInMonth`, "Generate Payroll" calculating payslip preview using `generatePayslipData`, missing profile detection banner & toast, Summary Totals KPI Bar, "Lock Payroll" button, and "Mark as Disbursed" button.
+  - **Tab 3: Advances & Deductions** (`activeTab === "adjustments"`, Lines 1598-1761): Table and mobile card list of salary adjustments with type badges (advance, bonus, deduction, loan repayment) and approval/rejection actions strictly gated by `canApprove`.
+  - **Tab 4: My Payslips** (`activeTab === "payslips"`, Lines 1766-1856): Self-service employee portal filtering `payslips` for `effectiveUserId`, displaying net take-home pay, earnings/deductions breakdown, and "Download PDF" action.
+- **Slide-over Management Drawers (Lines 1861-2162)**:
+  - **Profile Drawer (`Sheet`)**: Form fields for staff selection, salary type (monthly/daily/hourly), base amount, allowed leaves, hourly overtime rate, PF deduction %, and ESI deduction %. Robust validation guards reject missing staff, negative salary, and percentages exceeding 100%.
+  - **Advance Drawer (`Sheet`)**: Form fields for staff member, adjustment type, amount, target month, and description with positive amount validation.
+- **Indian Currency Notation (Lines 101-116)**:
+  - `formatIndianCurrency` properly formats amounts using `toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })`, safe against `NaN`, `null`, `undefined`, negative numbers, and high values (lakhs & crores).
 
-2. **Color Token Fidelity**:
-   - **Navy `#0F172A`**: Used in `CRMStatCard` accent `navy`, jsPDF header fill `doc.setFillColor(15, 23, 42)` (line 1170), and deep slate headers `text-slate-900`.
-   - **Orange `#FF6A00`**: Used in Clock Out button `bg-[#FF6A00] hover:bg-orange-600` (line 1739), Active Work Session banner `text-[#FF6A00]` (line 1724), and Submit Request button `bg-[#FF6A00]` (line 2039, 2281).
-   - **Blue `#1D4ED8`**: Used in Add Office Geofence buttons `bg-[#1D4ED8]` (line 1502, 1955, 2198), `CRMStatCard` accent `blue`, and icon highlights `text-[#1D4ED8]` (line 1693).
-   - **Emerald `#10B981`**: Used in Clock In button `bg-emerald-600 hover:bg-emerald-700` (line 1714), `CRMStatCard` accent `emerald`, radar center indicator, and success badges.
-   - **Gold `#F59E0B`**: Used in `CRMStatCard` accent `gold` and super-admin fallback role colors.
+### 1.2 Independent Verification Results
 
-3. **Staff Clock-In / Clock-Out Pod**:
-   - **Digital Time Display**: Live clock updating every 1000ms via `setInterval` (`currentTime.toLocaleTimeString(...)`, line 1634).
-   - **Shift Info**: Clear banner `"General Shift • 09:00 AM - 06:00 PM (8h)"` (line 1638).
-   - **Punch Buttons**:
-     - Pre-punch: Touch-optimized Emerald `#10B981` `"Clock In Now"` button with loading indicator.
-     - Active session: Active ticking stopwatch (`formatSecondsToHMS(elapsedSeconds)`) with Orange `#FF6A00` `"Clock Out"` button.
-     - Completed session: Shift completed card with time range, total hours, and regularisation adjustment trigger.
-   - **GPS Status Indicator**: Real-time badge with dynamic state handling ("Acquiring GPS...", "Within Geofence ✓", "Outside Geofence ⚠️", "GPS Disabled / Unavailable").
-   - **Distance Radar Visualizer**: SVG concentric circles with center office pin, pulsing user location marker, compass rotation animation, and live distance readout in meters.
-   - **Live Work Timer**: Real-time session elapsed timer counting seconds from `clock_in` timestamp (`HH:MM:SS`).
+1. **Vitest Unit & Integration Suite (`src/test/crmSalaryManagement.test.tsx`)**:
+   - Command: `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx`
+   - Verbatim Output:
+     ```
+     ✓ src/test/crmSalaryManagement.test.tsx (26 tests) 29160ms
+     Test Files  1 passed (1)
+          Tests  26 passed (26)
+       Duration  44.47s
+     ```
+2. **Vitest Admin Workflow Suite (`src/test/crmSalaryManagementAdmin.test.tsx`)**:
+   - Command: `cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx`
+   - Verbatim Output:
+     ```
+     ✓ src/test/crmSalaryManagementAdmin.test.tsx (17 tests) 62936ms
+     Test Files  1 passed (1)
+          Tests  17 passed (17)
+       Duration  154.94s
+     ```
+3. **TypeScript Static Type Compilation**:
+   - Command: `cmd /c npx tsc --noEmit`
+   - Verbatim Output:
+     ```
+     (exited with code 0, 0 errors)
+     ```
 
-4. **Mobile & Desktop Responsiveness**:
-   - Navigation: Scrollable segmented button switcher (`overflow-x-auto`, `w-full sm:w-auto`).
-   - Stat Cards: 2-column mobile grid (`grid-cols-2`) scaling to 4 columns on desktop (`md:grid-cols-4`).
-   - Layout Pod vs Radar: 1-column mobile stacking (`grid-cols-1`) transitioning to 3-column asymmetric layout on desktop (`lg:grid-cols-3` with `lg:col-span-1` and `lg:col-span-2`).
-   - Action buttons: Responsive text hiding (`hidden sm:inline`) preserving compact icon targets on mobile.
-
-### B. Empirical Verification Tool Outputs
-1. **TypeScript Compiler Check**:
-   ```
-   Command: cmd /c npx tsc --noEmit
-   Exit Code: 0
-   Errors: 0
-   ```
-2. **Attendance UI Test Suite**:
-   ```
-   Command: npm.cmd test -- src/test/crmAttendance.test.tsx --run
-   Exit Code: 0
-   Result: 15 passed (15 total)
-   Duration: 24.28s
-   ```
-3. **Geo Location Engine Test Suite**:
-   ```
-   Command: npm.cmd test -- src/test/crmGeoUtils.test.ts --run
-   Exit Code: 0
-   Result: 33 passed (33 total)
-   Duration: 13.21s
-   ```
-4. **CRM Resilience & Permission Gate Test Suites**:
-   ```
-   Command: npm.cmd test -- src/test/crmPermissionGate.test.tsx src/test/crmDashboardResilience.test.tsx --run
-   Exit Code: 0
-   Result: 23 passed (23 total)
-   Duration: 20.24s
-   ```
+### 1.3 Integrity Verification (Anti-Cheat & Facade Audit)
+- **Zero Hardcoded Outputs in Production Code**: `SalaryManagement.tsx` does not embed hardcoded test returns or stub values. Mathematical calculations invoke domain logic from `crmPayrollUtils.ts` (`generatePayslipData`, `getWorkingDaysInMonth`, `round2`).
+- **Zero Dummy or Facade Implementations**: Data tables render actual records from state hydrated synchronously from `localStorage` and asynchronously synchronized with Supabase. Form submissions perform actual database mutations (`upsert`, `insert`, `update`).
+- **Zero Shortcuts**: Dual mobile card vs desktop table rendering is genuinely constructed for all tabs, not hidden via opacity or dummy divs.
+- **Zero Fabricated Verification Outputs**: All tests and compilation commands were directly executed and observed in background task logs.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Step 1 (Integrity Check)**:
-   - Scanned `src/pages/crm/Attendance.tsx` for hardcoded test responses, fake mock facades, dummy stubs, or test-bypass logic.
-   - None detected. The component implements real Haversine formula calls, real Geolocation API calls, Supabase upserts, and dual-layer local storage persistence.
-   - All tests in `crmAttendance.test.tsx` interact with real DOM elements, fire real click/input events, and verify real state transitions.
-
-2. **Step 2 (Design System & Color Token Compliance)**:
-   - Confirmed all 7 CRM components (`CRMPageHeader`, `CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMStatCard`, `CRMPermissionGate`, `CRMRolePill`) are imported from `@/components/crm` and actively utilized.
-   - Verified exact color hex values: Navy `#0F172A`, Orange `#FF6A00`, Blue `#1D4ED8`, Emerald `#10B981`, Gold `#F59E0B`.
-
-3. **Step 3 (Adversarial Robustness & Edge Cases)**:
-   - *Adversarial Challenge 1: GPS Permission Denied or Timeout*: Handled cleanly in `refreshLocation` and `handleClockIn` via try/catch, toast notification, and error badge status. On `handleClockOut`, if GPS is unavailable, the system safely records timestamp and duration rather than trapping the employee in an uncloseable shift.
-   - *Adversarial Challenge 2: Network / Supabase Offline*: Dual-layer persistence synchronously loads from `localStorage` on initial render and mirrors all changes to `localStorage`, so users never encounter blank screens during database hiccups.
-   - *Adversarial Challenge 3: Out-of-Geofence Punch*: Correctly flags `verification_method: 'manual'`, marks `is_within_geofence: false`, records distance in meters, and notifies user.
-   - *Adversarial Challenge 4: Overtime / Duration Calculation*: Properly calculates total work minutes and overtime minutes (beyond 480 mins).
-   - *Adversarial Challenge 5: Permission Demotion*: `CRMPermissionGate` renders the styled "Access Restricted" fallback when permission is revoked.
-
-4. **Step 4 (Independent Compiler & Test Verification)**:
-   - Executed `tsc --noEmit` independently: 0 errors.
-   - Executed unit tests across Attendance, GeoUtils, PermissionGate, and Dashboard: 100% pass rate (71/71 tests passed).
+1. **RBAC Security Chain**:
+   - `SalaryManagement.tsx` guards the entire page with `<CRMPermissionGate module="salary" action="view" fallback={<SalaryAccessRestrictedFallback />}>`.
+   - Granular admin operations (`Generate Payroll`, `Lock Payroll`, `Mark as Disbursed`, `Approve Adjustment`, `Reject Adjustment`) explicitly check `canApprove = isSuperAdmin || hasPermission("salary", "approve")`.
+   - Tests 8-10 in `crmSalaryManagement.test.tsx` and Tests 5-6 in `crmSalaryManagementAdmin.test.tsx` confirm that non-privileged users cannot view the page or trigger administrative actions, while super admins have unrestricted access.
+2. **Data Hydration and Calculation Chain**:
+   - On load, `loadSalaryData` queries `profiles`, `crm_salary_profiles`, `crm_payroll_runs`, `crm_payslips`, `crm_salary_adjustments`, and `crm_attendance`.
+   - `handleGeneratePayroll` iterates through `salaryProfiles`, joining attendance and adjustment data, and calls `generatePayslipData`.
+   - If an active staff member lacks a profile, `unconfiguredStaff` detects the mismatch, renders an inline warning alert, and fires a descriptive toast.
+3. **Lifecycle Consistency Chain**:
+   - A payroll run can only be locked if it has generated preview data or existing slips (`slipsToLock.length > 0`).
+   - A payroll run can only be disbursed if its status is already `"locked"` (`currentRun.status === "locked"`).
+   - Locking records snapshot records into `crm_payslips` with `createSalaryProfileSnapshot`, preventing retroactive compensation changes from invalidating historical runs.
+4. **Presentation & Responsive Class Chain**:
+   - Desktop viewports employ `hidden sm:block` with full multi-column `CRMDataTable` pagination and sorting.
+   - Mobile viewports employ `block sm:hidden` rendering touch-friendly `CRMCard`s with high-contrast text and accessible button targets.
+   - Currency formatting cleanly renders Indian numerical groupings (`₹12,50,000.00`) without floating-point artifacts.
 
 ---
 
 ## 3. Caveats
 
-- As noted by `worker_m3` and in alignment with the dispatch boundaries, wiring `ROUTE_PATHS.crmAttendance` to `<Attendance />` in `src/App.tsx` and updating `src/test/crmShellRoutes.test.ts` is explicitly reserved for Milestone 5 / worker_m5.
+- **No Caveats**: All 4 tabs, slide-over drawers, responsive classes, currency formatters, and permission gates function as specified. Both test suites pass with 100% success rate and TypeScript compilation is error-free.
 
 ---
 
-## 4. Conclusion
+## 4. Adversarial Review & Stress-Testing
 
-The implementation of `src/pages/crm/Attendance.tsx` meets and exceeds all requirements set forth in `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`) and `DISPATCH.md`. Visual fidelity, CRM design system adoption, color token compliance, interactive radar telemetry, and adversarial resilience are fully validated.
-
-**Verdict: APPROVE**
+| Attack Vector / Failure Mode | Stress Scenario | Expected System Defense | Actual Behavior Observed | Assessment |
+|---|---|---|---|---|
+| **Negative Salary Injection** | User enters negative base salary (`-5000`) in Profile Drawer | Input validation rejects submission and fires destructive toast | `handleSaveProfile` checks `numBase < 0` and halts execution | **PASS (Mitigated)** |
+| **Invalid Deduction Percentage** | User sets PF or ESI deduction to `120%` or `-5%` | Input validation rejects submission with bound error | `handleSaveProfile` checks `numPf < 0 \|\| numPf > 100` and displays toast | **PASS (Mitigated)** |
+| **Premature Disbursement** | Admin clicks "Mark as Disbursed" while run is in draft | Button disabled; handler aborts if status is not `"locked"` | Button is disabled (`disabled={!currentRun \|\| currentRun.status !== "locked"}`) | **PASS (Mitigated)** |
+| **Recalculation of Locked Run** | Admin attempts to recalculate payroll for a locked month | "Generate Payroll" disabled; handler displays error toast | Handler aborts with "Payroll Locked" toast | **PASS (Mitigated)** |
+| **Missing Salary Profile** | Active staff member in directory has no salary profile | Notification banner and toast warning during payroll run | Inline warning rendered and warning toast fired; unconfigured staff safely excluded | **PASS (Mitigated)** |
+| **Unformatted / NaN Amount** | Null, undefined, or empty string passed to currency formatter | Fallback to `₹0.00` without throwing or displaying `NaN` | `formatIndianCurrency` clamps non-finite values to `"₹0.00"` | **PASS (Mitigated)** |
+| **Mobile Breakpoint (375px)** | Rendering on mobile viewport | Responsive card layout displayed without horizontal overflow | Verified in Test 25 (`crmSalaryManagement.test.tsx`) | **PASS (Mitigated)** |
 
 ---
 
-## 5. Verification Method
+## 5. Conclusion
 
-To independently reproduce this verification:
+**Verdict: APPROVE**  
+Worker M3-1's deliverable for Phase 3 Milestone M3 (`SalaryManagement.tsx`, `crmSalaryManagement.test.tsx`, `crmSalaryManagementAdmin.test.tsx`) is robust, fully tested (43/43 tests passing), completely typed (`tsc --noEmit` exit code 0), and ready for production integration.
 
-1. **Compiler Verification**:
-   ```cmd
+---
+
+## 6. Verification Method
+
+To independently reproduce and verify this review:
+
+1. **Run General UI & Responsive Tests**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx
+   ```
+   *Expected*: `26 passed (26)`.
+
+2. **Run Admin & Payroll Lifecycle Tests**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx
+   ```
+   *Expected*: `17 passed (17)`.
+
+3. **Run TypeScript Static Type Check**:
+   ```powershell
    cmd /c npx tsc --noEmit
    ```
-   *Expected*: Exit code 0, 0 errors.
-
-2. **Run Attendance Unit Test Suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmAttendance.test.tsx --run
-   ```
-   *Expected*: 15 passed, 0 failed.
-
-3. **Run Geolocation Engine Test Suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
-   ```
-   *Expected*: 33 passed, 0 failed.
-
-4. **Inspect Files**:
-   - `src/pages/crm/Attendance.tsx`
-   - `src/test/crmAttendance.test.tsx`
+   *Expected*: Exit code 0 (zero errors).

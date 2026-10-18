@@ -1,135 +1,121 @@
-# Handoff Report — CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
+# Milestone M2-1 Review & Adversarial Challenge Report: Payroll Mathematical Logic & Pure Functions
 
-**Reviewer & Adversarial Critic**: `reviewer_m2_1`  
-**Date**: 2026-10-17  
-**Milestone**: Phase 2 Milestone 2 — Geo Location Calculation Engine & Utilities (`src/utils/crmGeoUtils.ts`)  
+**Reviewer ID**: Reviewer M2-1  
+**Milestone**: Phase 3 Milestone M2 — Salary Management & Payroll Engine (Pure Mathematical Functions)  
+**Target Module**: `src/utils/crmPayrollUtils.ts`  
+**Test Suites**: `src/test/crmPayrollUtils.test.ts`, `src/test/crmPayrollUtils.stress.test.ts`  
+**Date**: 2026-10-18T10:58:00Z  
 **Verdict**: **APPROVE**  
 
 ---
 
 ## 1. Observation
 
-1. **Haversine Formula Implementation (`src/utils/crmGeoUtils.ts:12, 62-108`)**:
-   - `EARTH_RADIUS_METERS` is defined and exported as verbatim:
-     ```ts
-     export const EARTH_RADIUS_METERS = 6371000;
+### 1.1 Requirements & Interface Contracts
+The review assessed implementation against the requirements stated in `ORIGINAL_REQUEST.md` (Section `## 2026-10-18T08:57:37Z`, lines 527–604) and `DISPATCH.md`:
+1. Eight exported pure functions:
+   - `getWorkingDaysInMonth(monthYear: string, weekendDays?: number[]): number`
+   - `getDailyRate(baseSalary: number, workingDays: number): number`
+   - `computeLopDays(absentDays: number, allowedLeaves: number): number`
+   - `computeOvertimeAmount(overtimeMinutes: number, hourlyOvertimeRate: number): number`
+   - `computePfDeduction(grossSalary: number, pfPercent: number): number`
+   - `computeEsiDeduction(grossSalary: number, esiPercent: number): number`
+   - `computeNetSalary(params: ComputeNetSalaryParams): number`
+   - `generatePayslipData(params: { staffId: string; monthYear: string; salaryProfile: CrmSalaryProfile; attendanceRecords: CrmAttendanceRecord[]; adjustments: CrmSalaryAdjustment[]; }): PayslipComputedData`
+2. Arithmetic standards:
+   - 2-decimal precision via `round2` (`Math.round(value * 100) / 100`).
+   - Zero-division immunity: 0 working days or invalid month string yields 0 daily rate, with zero `NaN` or `Infinity`.
+   - Clamping: net salary clamped to `Math.max(0, ...)`.
+   - Pure function architecture (no side effects, no database calls, no network).
+3. Domain typing:
+   - Re-exports `CrmSalaryProfile`, `CrmAttendanceRecord`, `CrmSalaryAdjustment`, `PayslipComputedData`, `CrmSalaryProfileSnapshot` aligned with `src/types/crmPayroll.ts`.
+
+### 1.2 Tool Executions & Verbatim Test Results
+
+1. **Vitest Payroll Test Suites** (`src/test/crmPayrollUtils.test.ts` & `src/test/crmPayrollUtils.stress.test.ts`):
+   - Command: `cmd /c npx vitest run crmPayroll`
+   - Result verbatim:
      ```
-   - Coordinate validation via `isValidCoordinate` (lines 39–50):
-     ```ts
-     export function isValidCoordinate(lat: number, lon: number): boolean {
-       return (
-         typeof lat === "number" &&
-         typeof lon === "number" &&
-         Number.isFinite(lat) &&
-         Number.isFinite(lon) &&
-         lat >= -90 &&
-         lat <= 90 &&
-         lon >= -180 &&
-         lon <= 180
-       );
-     }
-     ```
-     Throws a descriptive `RangeError` if coordinates are outside standard WGS-84 boundaries or non-finite (lines 68–72).
-   - Fast-path identical coordinate / pole convergence return (lines 74–80):
-     ```ts
-     if (
-       (lat1 === lat2 && lon1 === lon2) ||
-       (Math.abs(lat1) === 90 && lat1 === lat2)
-     ) {
-       return 0;
-     }
-     ```
-   - Antimeridian delta normalization to shortest arc $[-180, +180]$ (lines 84–88):
-     ```ts
-     let diffLonDeg = (lon2 - lon1) % 360;
-     if (diffLonDeg > 180) diffLonDeg -= 360;
-     if (diffLonDeg < -180) diffLonDeg += 360;
-     ```
-   - Radian conversions: `toRad = (deg: number) => (deg * Math.PI) / 180` applied to `lat2 - lat1`, `diffLonDeg`, `lat1`, and `lat2` (lines 82, 89–93).
-   - Haversine intermediate formulation:
-     ```ts
-     const a =
-       sinHalfDLat * sinHalfDLat +
-       Math.cos(phi1) * Math.cos(phi2) * sinHalfDLon * sinHalfDLon;
-     ```
-   - Intermediate numerical clamping and angular distance computation (lines 104–107):
-     ```ts
-     const clampedA = Math.min(1, Math.max(0, a));
-     const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
-     return EARTH_RADIUS_METERS * c;
+     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
+
+     ✓ src/test/crmPayrollUtils.test.ts (48 tests) 38ms
+     ✓ src/test/crmPayrollUtils.stress.test.ts (16 tests) 464ms
+
+     Test Files  2 passed (2)
+          Tests  64 passed (64)
+       Start at  16:25:16
+       Duration  5.29s (transform 275ms, setup 1.34s, collect 347ms, tests 502ms, environment 4.32s, prepare 1.68s)
      ```
 
-2. **Geofence Boundary and Nearest Office Detection (`src/utils/crmGeoUtils.ts:120-184`)**:
-   - `isWithinGeofence` validates `radiusMeters >= 0 && Number.isFinite(radiusMeters)` (lines 127–129), computes distance via `calculateHaversineDistance`, and checks `distance <= radiusMeters` (lines 131–133).
-   - `findNearestGeofence` defensively handles non-array or empty arrays (`!Array.isArray(geofences) || geofences.length === 0` -> `return null`).
-   - Active filtering (`geofences.filter((g) => g && g.is_active === true)`): returns `null` if no active geofences exist.
-   - Iterates active geofences with strict `< minDistance` comparison, stably returning `{ geofence, distance, isWithin: minDistance <= nearest.radius_meters }`.
+2. **TypeScript Strict Static Compilation**:
+   - Command: `cmd /c npx tsc --noEmit`
+   - Result verbatim:
+     ```
+     The command exited with code 0.
+     Stdout: 
+     Stderr: 
+     ```
+   - Confirmed 0 compiler errors or warnings.
 
-3. **Browser Geolocation API Wrapper & Mock Utilities (`src/utils/crmGeoUtils.ts:17-33, 186-429`)**:
-   - `DEFAULT_GEOLOCATION_OPTIONS` specifies `{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }`.
-   - Promise wrapper converts W3C error codes 1, 2, and 3 into descriptive English messages and preserves `err.code`.
-   - Mock functions `mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, and `resetGeolocationMock` support isolated, deterministic offline unit testing.
+3. **Grep Search for Type Integrity (`any` casts)**:
+   - Search path: `src/utils/crmPayrollUtils.ts`, `src/types/crmPayroll.ts`
+   - Result: 0 occurrences of `any` or `as any`. Strict typing throughout.
 
-4. **Independent Tool Executions & Verbatim Results**:
-   - **TypeScript Compiler Check**:
-     Command: `cmd /c npx tsc --noEmit`
-     Exit Code: `0` (Zero compiler warnings or errors across the entire codebase).
-   - **GeoUtils Unit Test Suite**:
-     Command: `npm.cmd test -- src/test/crmGeoUtils.test.ts --run`
-     Exit Code: `0`
-     Result: `✓ src/test/crmGeoUtils.test.ts (33 tests) 43ms` — 33 passed (100%).
-   - **Adversarial GeoUtils Challenge Suite**:
-     Command: `npm.cmd test -- src/test/crmGeoUtilsAdversarial.test.ts --run`
-     Exit Code: `0`
-     Result: `✓ src/test/crmGeoUtilsAdversarial.test.ts (22 tests) 92ms` — 22 passed (100%).
-   - **CRM Phase 2 Attendance Migration Suite**:
-     Command: `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run`
-     Exit Code: `0`
-     Result: `✓ src/test/crmAttendanceMigrationStress.test.ts (31 tests) 65ms` — 31 passed (100%).
-   - **Full CRM Regression Suite**:
-     Command: `npm.cmd test -- crm --run`
-     Exit Code: `0`
-     Result: `Test Files 10 passed (10), Tests 238 passed (238)`.
-   - **ESLint Inspection**:
-     Command: `cmd /c npx eslint src/utils/crmGeoUtils.ts`
-     Exit Code: `1`
-     Errors:
-     - Line 236:17 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`(err as any).code = error.code;`)
-     - Line 391:24 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`delete (navigator as any).geolocation;`)
-     - Line 417:28 `Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)` (`delete (navigator as any).geolocation;`)
+4. **Regression Verification Suites**:
+   - `crmSalary` (`src/test/crmSalary*`):
+     - Command: `cmd /c npx vitest run crmSalary`
+     - Result: 4 test files passed, 98 tests passed.
+   - `crmGeoUtils` (`src/test/crmGeoUtils*`):
+     - Command: `cmd /c npx vitest run crmGeoUtils`
+     - Result: 3 test files passed, 81 tests passed.
 
-5. **Adversarial Integrity Inspection**:
-   - Source code inspection confirms NO hardcoded test results, facade logic, or shortcuts exist in `crmGeoUtils.ts`.
-   - Distance calculations strictly use spherical trigonometric formulas (`Math.sin`, `Math.cos`, `Math.atan2`, `Math.sqrt`).
+5. **Integrity Violation Audit**:
+   - Hardcoded returns in source code: Checked. None found.
+   - Facade implementations or stubs: Checked. Full logic implemented.
+   - External dependencies bypassing core math: None. Pure standard library functions.
+   - Fabricated logs or self-certification: None. All runs independently executed via system shell.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Step 1 — Mathematical Rigor & Numerical Stability**:
-   - Observation 1 demonstrates full compliance with IUGG standards (`EARTH_RADIUS_METERS = 6371000`).
-   - Floating-point calculations near antipodal points ($\Delta\sigma = \pi$) frequently produce $a = 1.0000000000000002$ due to IEEE-754 representation limits; passing this to $\sqrt{1 - a}$ evaluates to `NaN`. Clamping `Math.min(1, Math.max(0, a))` eliminates this failure mode.
-   - Longitude normalization (`diffLonDeg = (lon2 - lon1) % 360`) ensures that coordinates spanning the $180^\circ$ antimeridian take the shortest great-circle arc (e.g. $179.5^\circ$ to $-179.5^\circ$ computes as a $1^\circ$ arc of $\sim 111.19\text{ km}$, not $359^\circ$).
+1. **Deterministic Calendar & Weekend Logic** (Ref: Section 1.1, lines 47–71 in `crmPayrollUtils.ts`):
+   - `getWorkingDaysInMonth` validates input with regex `^(\d{4})-(0[1-9]|1[0-2])$`.
+   - UTC date constructors (`Date.UTC(year, month - 1, day)`) and `getUTCDay()` isolate calendar computation from daylight saving shifts and machine local time zones.
+   - Verified across leap years (2024 = 29 days, 2023 = 28 days, 2000 = 29 days, 1900 = 28 days) and a 200-year continuous span (1900–2100).
 
-2. **Step 2 — Input Sanitization & Boundary Handling**:
-   - Observation 1 and 2 show that `calculateHaversineDistance` and `isWithinGeofence` strictly validate inputs. Non-numeric or out-of-range coordinates ($|\text{lat}| > 90$ or $|\text{lon}| > 180$) and negative/non-finite radii throw explicit `RangeError` exceptions.
-   - `findNearestGeofence` gracefully returns `null` when inputs are empty or all geofences are inactive, preventing runtime crashes or dereferencing undefined objects.
+2. **Division by Zero Protection** (Ref: Section 1.1, lines 81–89 in `crmPayrollUtils.ts`):
+   - In `getDailyRate`, guards `if (!isFinite(safeBase) || safeBase <= 0) return 0;` and `if (!isFinite(safeDays) || safeDays <= 0) return 0;` prevent division by zero, returning `0` instead of `Infinity` or `NaN`.
+   - In `generatePayslipData` (lines 246–265), if `workingDaysInMonth <= 0`, a fully zeroed `PayslipComputedData` is returned immediately.
 
-3. **Step 3 — Determinism & Tie-Breaking**:
-   - In cases where multiple active geofences have identical distance from the user (e.g. co-located facilities or equidistant outposts), strict `< minDistance` logic guarantees deterministic selection by preserving the first encountered geofence without oscillation.
+3. **Loss of Pay (LOP) & Fractional Leave Handling** (Ref: Section 1.1, lines 99–104, 318–324 in `crmPayrollUtils.ts`):
+   - `computeLopDays` computes `Math.max(0, safeAbsent - safeAllowed)`.
+   - In `generatePayslipData`, half-days count as `0.5` absent days (`effectiveAbsentDays = absentDays + halfDays * 0.5`), supporting fractional LOP days (e.g., 0.5) matching the SQL `NUMERIC(5,2)` specification.
+   - For `monthly` salary, `lopDeduction = Math.min(grossBase, round2(dailyRate * lopDays))`.
+   - For `daily` and `hourly` profiles, earnings are accumulated on days/hours worked; unworked days are not double-penalized.
 
-4. **Step 4 — Verification of Compilation & Test Pass Rates**:
-   - Observation 4 confirms that the TypeScript compiler passed with zero errors (`tsc --noEmit`).
-   - Over 55 dedicated geolocation tests (`crmGeoUtils.test.ts` and `crmGeoUtilsAdversarial.test.ts`) and 238 total CRM tests passed with 100% success rate, confirming non-regression across Phase 1 and Phase 2.
+4. **Statutory Deductions & Overtime Arithmetic** (Ref: lines 114–164 in `crmPayrollUtils.ts`):
+   - `computeOvertimeAmount` evaluates `(safeMinutes / 60) * safeRate`.
+   - In `generatePayslipData`, if `hourly_overtime_rate` is `null` or `undefined`, the engine falls back to `(dailyRate / 8) * 1.5` per statutory labor norms.
+   - PF and ESI are computed on `grossSalary` as `round2((grossSalary * percent) / 100)` and clamped with `Math.min(safeGross, deduction)`.
+
+5. **Net Salary Clamping & Adjustment Ingestion** (Ref: lines 191–208, 337–370 in `crmPayrollUtils.ts`):
+   - Adjustments are strictly filtered: `isApproved = adj.status === "approved"`. Pending and rejected adjustments are ignored.
+   - Adjustments with `month_year === null` or `""` are ingested in the current run as required by DB contract.
+   - `net = grossPay - totalDeductions`.
+   - `Math.max(0, round2(net))` ensures net pay cannot fall below 0 even when advance deductions exceed gross earnings.
+
+6. **Adversarial Stress Testing & Numerical Stability** (Ref: Section 1.2, item 1):
+   - 1,000 Monte Carlo randomized parameter sets tested against an independent integer Cent Oracle (in `crmPayrollUtils.stress.test.ts`) demonstrated absolute rounding drift bounded within <= 1 cent (<= ₹0.01).
+   - High-volume stress tests processed 365 daily attendance records in under 200ms and 100 staff rosters (3,000 records) in under 500ms without memory leaks or race conditions.
 
 ---
 
 ## 3. Caveats
 
-1. **Client-Side GPS Hardware Accuracy**:
-   - `crmGeoUtils.ts` accurately surfaces the device's reported `accuracy` in meters via `CoordinatesResult`. In physical mobile devices, GPS accuracy can degrade indoors (e.g. 50–500m). Downstream Milestone 3 UI components should alert users when reported accuracy exceeds the geofence radius.
-2. **ESLint Minor Finding**:
-   - Three occurrences of `any` were flagged by `@typescript-eslint/no-explicit-any` (lines 236, 391, 417). While these do not impact runtime behavior or TypeScript compilation, they can be polished in the next milestone by typing `err as GeolocationCustomError` and using `Reflect.deleteProperty(navigator, "geolocation")`.
+- **Default Weekend Definition**: Defaults to Sunday exclusion (`[0]`). Callers wishing to support 5-day enterprise schedules must explicitly supply `weekendDays = [0, 6]`.
+- **Advance Balance Carryover**: When advance deductions exceed total earnings, net salary is clamped to ₹0.00. Tracking remaining unrecovered advance balances must be handled at the persistence/UI layer (Milestones M3/M4).
+- **No caveats** regarding mathematical correctness, type safety, zero-division immunity, or test coverage.
 
 ---
 
@@ -137,11 +123,13 @@
 
 **Verdict: APPROVE**
 
-Milestone 2 fully satisfies all requirements from `ORIGINAL_REQUEST.md` (R2) and dispatch specifications:
-- Exact Haversine distance engine with bounds checking, antimeridian normalization, pole convergence, and numerical clamping.
-- Comprehensive `isWithinGeofence` and `findNearestGeofence` utility functions with active filtering.
-- Production-ready Geolocation API wrapper and complete Vitest mock helpers.
-- 100% test pass rate across 238 tests and clean `tsc --noEmit` exit code 0.
+Worker M2-1's implementation of the Payroll Calculation Engine (`src/utils/crmPayrollUtils.ts`) meets all requirements:
+1. All 8 pure calculation functions are correctly implemented with rigorous zero-division protection and non-negative clamping.
+2. 2-decimal half-up precision is preserved and verified against an independent Cent Oracle.
+3. 64 tests in `crmPayroll` pass cleanly (48 unit tests + 16 stress tests).
+4. `tsc --noEmit` compiles with 0 errors and zero `any` types.
+5. Zero regressions across 98 `crmSalary` tests and 81 `crmGeoUtils` tests.
+6. Zero integrity violations detected.
 
 ---
 
@@ -149,30 +137,27 @@ Milestone 2 fully satisfies all requirements from `ORIGINAL_REQUEST.md` (R2) and
 
 To independently reproduce this verification:
 
-1. **Verify TypeScript compilation**:
-   ```cmd
+1. **Verify TypeScript compilation without errors**:
+   ```powershell
    cmd /c npx tsc --noEmit
    ```
-   *Expected outcome*: Exits with code 0 (zero errors).
+   *Expected output*: Exited with code 0.
 
-2. **Verify GeoUtils unit test suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
+2. **Execute all Payroll unit and stress tests**:
+   ```powershell
+   cmd /c npx vitest run crmPayroll
    ```
-   *Expected outcome*: 33 passed tests (100% pass rate).
+   *Expected output*: 2 test files passed, 64 tests passed.
 
-3. **Verify Adversarial GeoUtils test suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmGeoUtilsAdversarial.test.ts --run
+3. **Execute regression suites**:
+   ```powershell
+   cmd /c npx vitest run crmSalary
+   cmd /c npx vitest run crmGeoUtils
    ```
-   *Expected outcome*: 22 passed tests (100% pass rate).
+   *Expected output*: 4 passed in crmSalary (98 tests), 3 passed in crmGeoUtils (81 tests).
 
-4. **Verify Full CRM test suite**:
-   ```cmd
-   npm.cmd test -- crm --run
-   ```
-   *Expected outcome*: 10 test files passed, 238 passed tests.
-
-5. **Files to inspect**:
-   - `src/utils/crmGeoUtils.ts`
-   - `src/test/crmGeoUtils.test.ts`
+4. **Invalidation conditions**:
+   - Any failure in `crmPayrollUtils.test.ts` or `crmPayrollUtils.stress.test.ts`.
+   - Any compiler error or `any` type in `src/utils/crmPayrollUtils.ts` or `src/types/crmPayroll.ts`.
+   - Division by zero yielding `NaN` or `Infinity`.
+   - Negative net salary under oversized advances.

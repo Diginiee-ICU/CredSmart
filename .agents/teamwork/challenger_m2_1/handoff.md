@@ -1,103 +1,219 @@
-# Handoff Report: Empirical Challenge of CRM Phase 2 Milestone 2 (Geo Location Calculation Engine & Utilities)
+# Milestone M2 Adversarial Challenge Report: Salary Management & Payroll Engine
+
+**Challenger ID**: Challenger M2-1  
+**Milestone**: Phase 3 Milestone 2 (Payroll Calculation Engine)  
+**Target Module**: `src/utils/crmPayrollUtils.ts`  
+**Test Suites**: 
+- `src/test/crmPayrollUtils.test.ts` (48 tests)
+- `src/test/crmPayrollUtils.stress.test.ts` (16 tests)
+- `src/test/crmPayrollUtilsAdversarialChallenge.test.ts` (20 tests)
+- `src/test/crmPayrollUtils.challenger.test.ts` (12 tests)  
+**Date**: 2026-10-18T11:05:00Z  
+**Verdict**: **APPROVE**
+
+---
 
 ## 1. Observation
 
-- **Review Target**: Implementation of great-circle distance, coordinate validation, and geofence checking in `src/utils/crmGeoUtils.ts`.
-- **Test Implementation**: Created independent stress and oracle harness `src/test/crmGeoUtilsMathematicalStressOracle.test.ts` (26 test cases) implementing three independent mathematical oracles:
-  1. Spherical Vincenty formula: $\operatorname{atan2}(\text{numerator}, \text{denominator})$
-  2. 3D Cartesian Euclidean chord-to-arc formula: $\vec{v}_1, \vec{v}_2 \in \mathbb{R}^3$, chord $k = \|\vec{v}_2 - \vec{v}_1\|$, arc $= 2 \arcsin(k / 2)$
-  3. Vector dot & cross product angle formula: $\operatorname{atan2}(\|\vec{v}_1 \times \vec{v}_2\|, \vec{v}_1 \cdot \vec{v}_2)$
-- **Command Executions & Verbatim Outputs**:
-  1. `cmd /c npx tsc --noEmit` exited code 0 with zero type errors.
-  2. `npm.cmd test -- src/test/crmGeoUtilsMathematicalStressOracle.test.ts --run`:
+### 1.1 Inbound Dispatch Directives
+From `challenger_m2_1/DISPATCH.md`:
+```
+Adversarially challenge the payroll engine:
+- Check boundary values: 0 working days, zero base salary, negative salary, NaN, extreme numbers (₹10 Billion), fractional overtime.
+- Verify leap years (Feb 2024, Feb 2000, Feb 1900).
+- Run cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts
+Write your verdict (APPROVE or REJECT) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md.
+Send a message back to caller with your verdict and handoff path.
+```
+
+### 1.2 Implementation Code Inspection (`src/utils/crmPayrollUtils.ts`)
+- **Zero-Division & Negative Safeguards** (`getDailyRate`, lines 81-89):
+  ```typescript
+  export function getDailyRate(baseSalary: number, workingDays: number): number {
+    const safeBase = Number(baseSalary);
+    const safeDays = Number(workingDays);
+
+    if (!isFinite(safeBase) || safeBase <= 0) return 0;
+    if (!isFinite(safeDays) || safeDays <= 0) return 0;
+
+    return round2(safeBase / safeDays);
+  }
+  ```
+- **Zero Working Days Fast-Path** (`generatePayslipData`, lines 243-265):
+  ```typescript
+  const workingDaysInMonth = getWorkingDaysInMonth(monthYear);
+  if (workingDaysInMonth <= 0) {
+    return {
+      staffId,
+      monthYear,
+      workingDaysInMonth: 0,
+      presentDays: 0,
+      absentDays: 0,
+      halfDays: 0,
+      lopDays: 0,
+      overtimeMinutes: 0,
+      grossSalary: 0,
+      lopDeduction: 0,
+      overtimeAmount: 0,
+      pfDeduction: 0,
+      esiDeduction: 0,
+      advanceDeduction: 0,
+      bonusAmount: 0,
+      netSalary: 0,
+    };
+  }
+  ```
+- **Deterministic UTC Calendar & Leap Year Calculation** (`getWorkingDaysInMonth`, lines 58-68):
+  ```typescript
+  const totalDays = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const weekendSet = new Set(weekendDays.filter((d) => d >= 0 && d <= 6));
+
+  let workingDays = 0;
+  for (let day = 1; day <= totalDays; day++) {
+    const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    if (!weekendSet.has(dayOfWeek)) {
+      workingDays++;
+    }
+  }
+  ```
+- **Net Pay Clamping** (`computeNetSalary`, lines 201-208):
+  ```typescript
+  const lopDeduction = round2(dailyRate * lopDays);
+  const earnedBase = Math.max(0, baseSalary - lopDeduction);
+  const grossPay = round2(earnedBase + overtimeAmount + bonusAmount);
+  const totalDeductions = round2(pfDeduction + esiDeduction + advanceDeduction);
+
+  const net = grossPay - totalDeductions;
+  return Math.max(0, round2(net));
+  ```
+
+### 1.3 Tool Execution Results
+1. **Baseline Worker Stress Test**:
+   - Command: `cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts`
+   - Output verbatim:
      ```
-     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
-     ✓ src/test/crmGeoUtilsMathematicalStressOracle.test.ts (26 tests) 181ms
+     ✓ src/test/crmPayrollUtils.stress.test.ts (16 tests) 375ms
      Test Files  1 passed (1)
-          Tests  26 passed (26)
+          Tests  16 passed (16)
      ```
-  3. `npm.cmd test -- crmGeoUtils --run`:
+2. **Challenger Independent Adversarial Test Suite** (`src/test/crmPayrollUtilsAdversarialChallenge.test.ts`):
+   - Command: `cmd /c npx vitest run src/test/crmPayrollUtilsAdversarialChallenge.test.ts`
+   - Output verbatim:
      ```
-     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
-     ✓ src/test/crmGeoUtils.test.ts (33 tests) 49ms
-     ✓ src/test/crmGeoUtilsAdversarial.test.ts (22 tests) 88ms
-     ✓ src/test/crmGeoUtilsMathematicalStressOracle.test.ts (26 tests) 417ms
-     Test Files  3 passed (3)
-          Tests  81 passed (81)
+     ✓ src/test/crmPayrollUtilsAdversarialChallenge.test.ts (20 tests) 176ms
+     Test Files  1 passed (1)
+          Tests  20 passed (20)
      ```
-  4. `npm.cmd test -- crm --run`:
+3. **All Combined Payroll Test Suites**:
+   - Command: `cmd /c npx vitest run crmPayroll`
+   - Output verbatim:
      ```
-     Test Files  11 passed (11)
-          Tests  264 passed (264)
-       Duration  41.63s
+     ✓ src/test/crmPayrollUtils.test.ts (48 tests) 41ms
+     ✓ src/test/crmPayrollUtilsAdversarialChallenge.test.ts (20 tests) 176ms
+     ✓ src/test/crmPayrollUtils.stress.test.ts (16 tests) 203ms
+     ✓ src/test/crmPayrollUtils.challenger.test.ts (12 tests) 2095ms
+
+     Test Files  4 passed (4)
+          Tests  96 passed (96)
      ```
-- **Specific Numerical Observations**:
-  - *Identical Points & Poles*: `calculateHaversineDistance(lat, lon, lat, lon)` returned exactly `0`. Longitudinal convergence at North Pole `(90, -45)` to `(90, 120)` and South Pole `(-90, 0)` to `(-90, 180)` returned exactly `0` without floating-point residual noise.
-  - *Pole to Pole*: North Pole `(90, 0)` to South Pole `(-90, 0)` returned `20015086.79602057` meters (exact $R \cdot \pi$).
-  - *Equator to Pole*: `(0, 0)` to `(90, 0)` returned `10007543.398010285` meters (exact $R \cdot \frac{\pi}{2}$).
-  - *Antimeridian Crossing*: `(0, 179)` to `(0, -179)` returned `222389.85328911746` meters (exact $2^\circ$ arc: $2 \times \frac{6371000 \cdot \pi}{180}$), confirming shortest-arc great circle routing.
-  - *Antipodal Numerical Stability*: Across arbitrary antipodal pairs, `Math.min(1, Math.max(0, a))` in `src/utils/crmGeoUtils.ts:104` prevented `NaN` by strictly bounding $a \in [0, 1]$. In extreme IEEE 754 float rounding edge cases (e.g. $[70, -170]$ to $[-70, 10]$ where $a = 1 - 1.11 \times 10^{-16}$), the calculated distance was $20,015,086.66176$ meters, differing from theoretical $R \cdot \pi$ by only $0.134$ meters ($6.7 \times 10^{-9}$ relative variance over a 20,015 km baseline), well within the IEEE 754 square root precision limit.
-  - *Independent Oracle Agreement*: Across 1,000 pseudo-random coordinate pairs generated uniformly over the Earth, maximum observed discrepancy between Haversine and Vincenty was $< 0.005$ meters ($< 5$ millimeters). Major intercontinental city pairs agreed within $< 0.001$ meters.
-  - *Geofence Boundary Conditions*: At radius $R = 150$m:
-    - Exactly on boundary (`distance === radius`): `isWithinGeofence` evaluated to `true`.
-    - 1mm inside (`radius - 0.001m` = 149.999m): evaluated to `true`.
-    - 1mm outside (`radius + 0.001m` = 150.001m): evaluated to `false`.
-    - 0.1mm sub-millimeter precision: evaluated correctly across North, South, East, West, and diagonal bearings.
-    - Zero radius ($R = 0$): identical points returned `true`, 1mm offset returned `false`.
-  - *Performance Throughput*: 10,000 Haversine calculations executed in 4.8ms ($> 2,000,000$ operations/sec).
+4. **TypeScript Compiler Verification**:
+   - Command: `cmd /c npx tsc --noEmit`
+   - Output verbatim: Exited with code 0 (zero errors).
+5. **Full CRM Regression Suite**:
+   - Command: `cmd /c npx vitest run crm`
+   - Output verbatim:
+     ```
+     Test Files  28 passed (28)
+          Tests  512 passed (512)
+       Duration  41.51s
+     ```
+
+---
 
 ## 2. Logic Chain
 
-1. **Edge Case Integrity**:
-   - Lines 74–80 in `src/utils/crmGeoUtils.ts` provide early return: `(lat1 === lat2 && lon1 === lon2) || (Math.abs(lat1) === 90 && lat1 === lat2)`. This guarantees that identical coordinates and polar singularity points evaluate to 0 without machine epsilon noise.
-   - Lines 85–87 normalize longitude differences modulo $360^\circ$ into $[-180^\circ, +180^\circ]$. Observation confirmed that traversing between $179^\circ$ and $-179^\circ$ computes a $2^\circ$ delta rather than a $358^\circ$ back-arc.
-   - Line 104 clamps $a$ to $[0, 1]$ before passing it to `Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA))`. Observation confirmed this prevents `NaN` or unhandled exceptions on antipodal coordinates.
-2. **Oracle Verification**:
-   - The Haversine implementation was compared against three mathematically distinct formulations: Vincenty's spherical equation, 3D Euclidean vector chords, and vector cross/dot product angles.
-   - Observation confirmed sub-millimeter concordance across 1,000 uniform global coordinates, proving the mathematical engine produces truthful geodesic distances.
-   - Furthermore, metric space axioms (non-negativity, symmetry, and triangle inequality across 500 spherical triangles) were strictly satisfied within floating point bounds.
-3. **Geofence Boundary Logic**:
-   - Line 133 of `crmGeoUtils.ts` implements `return distance <= radiusMeters`.
-   - Observation verified that when user distance equals `radiusMeters` exactly, `<=` correctly evaluates to `true`.
-   - At $\pm 1$mm and $\pm 0.1$mm offsets, boundary decisions are razor-sharp across all compass directions and at boundary radius limits ($R = 0$ and $R \approx 10,000$km).
-4. **Input Sanitization**:
-   - Invalid latitudes ($> 90$ or $< -90$), longitudes ($> 180$ or $< -180$), non-finite values (`NaN`, `Infinity`), and negative radiuses consistently throw `RangeError` as specified.
+1. **Zero Working Days & Division by Zero Invariance** (Observation 1.2, 1.3):
+   - When `workingDays <= 0` or invalid, `getDailyRate` evaluates `!isFinite(safeDays) || safeDays <= 0` and immediately returns `0` without attempting floating-point division.
+   - When generating payslips with an invalid `monthYear` or where all 7 days of the week are marked as weekends (`[0, 1, 2, 3, 4, 5, 6]`), `generatePayslipData` detects `workingDaysInMonth <= 0` and returns an all-zero payslip structure. No `NaN`, `Infinity`, or exceptions are produced.
+2. **Boundary Remuneration & Clamping Invariants** (Observation 1.2, 1.3):
+   - Negative salary inputs (e.g. `base_amount = -50000`, `dailyRate = -2000`, `overtimeMinutes = -60`) are intercepted by `Math.max(0, ...)` across all computation functions, preventing negative wage accumulation.
+   - Catastrophic deductions (e.g. advance deduction of ₹100,000 on a ₹50,000 gross salary) produce `net = 50000 - 100000 = -50000`, which is strictly clamped to `0` via `Math.max(0, round2(net))`. The invariant `netSalary >= 0` held across all 1,000 randomized Monte Carlo iterations.
+3. **Extreme Numbers (₹10 Billion)** (Observation 1.3):
+   - Tested with `baseSalary = 10,000,000,000` (₹10 Billion) and 26 working days.
+   - `10_000_000_000 / 26 = 384615384.6153846...` rounds cleanly to `384615384.62`.
+   - JavaScript's double-precision IEEE 754 mantissa provides exact integer representation up to $2^{53} - 1 \approx 9 \times 10^{15}$. ₹10 Billion ($10^{10}$) occupies less than $0.0002\%$ of the safe integer threshold, leaving zero risk of mantissa bit truncation.
+4. **Fractional Overtime Remuneration** (Observation 1.3):
+   - Overtime minutes are computed as `(safeMinutes / 60) * safeRate`.
+   - Tested with sub-minute durations: $0.333333$ minutes (20 seconds) @ ₹600/hr correctly yields `round2((0.333333 / 60) * 600) = ₹3.33`.
+   - Tested with micro-fractions: $10^{-5}$ minutes cleanly rounds to `₹0.00`.
+   - Tested with large multi-month overtime (175,200 minutes) yielding `₹2,920,000.00` with zero precision drift.
+5. **Astronomical Century Leap Year Verification** (Observation 1.2, 1.3):
+   - In `getWorkingDaysInMonth`, dates are constructed via `new Date(Date.UTC(year, month, 0)).getUTCDate()`.
+   - February 2024 (leap year) evaluated to 29 calendar days, 25 working days (excluding 4 Sundays).
+   - February 2000 (century divisible by 400 is a leap year) evaluated to 29 calendar days, 25 working days.
+   - February 1900 (century divisible by 100 but not 400 is NOT a leap year) evaluated to 28 calendar days, 24 working days.
+   - February 2100 evaluated to 28 calendar days; February 2400 evaluated to 29 calendar days.
+   - Stress test verified 200 consecutive Gregorian calendar years (1900–2100) with 100% adherence to leap year rules.
+6. **Floating-Point Drift vs. Integer Cent Oracle** (Observation 1.3):
+   - Comparison against an independent pure-integer Cent/Paisa Oracle across 2,500 randomized Monte Carlo cycles showed maximum drift bounded within $\le \text{₹}0.05$.
+   - The observed ₹0.05 drift occurs only when `baseSalary` contains fractional paise (e.g. `.55`) and is divided across odd days, where IEEE 754 float representation (`18299.954999999998` instead of `.955`) rounds down by 1 cent, which when multiplied by 5 LOP days creates a 5-paise variance. This is mathematically bounded, compliant with the `Math.round(x * 100) / 100` requirement from `ORIGINAL_REQUEST.md`, and does not compound or diverge.
+
+---
 
 ## 3. Caveats
 
-- **Spherical vs. Ellipsoidal Earth**: The engine utilizes the standard spherical Earth model ($R = 6,371,000$m) as mandated by the architectural specification. On the real WGS-84 oblate ellipsoid, Earth's radius varies from $6,356,752$m (poles) to $6,378,137$m (equator). For localized CRM office attendance geofences ($R \approx 50\text{m} - 500\text{m}$), spherical Haversine error is less than $0.3\%$, which is well within commercial GPS receiver hardware uncertainty ($\approx 5\text{m} - 15\text{m}$).
-- **Antipodal Machine Epsilon Horizon**: For antipodal points ($20,015$ km separation), IEEE 754 float64 rounding of $1 - a$ yields an epsilon horizon of $\approx 0.14$ meters ($6.7 \times 10^{-9}$ relative variance). This is a known theoretical limit of double-precision Haversine and has zero effect on CRM attendance radii.
+- **IEEE 754 Half-Way Rounding Representation**: As demonstrated in Section 2 (Logic Chain Step 6), `Math.round(x * 100) / 100` in standard JavaScript binary float representation rounds numbers like `1.005` to `1.00` because `1.005 * 100` evaluates to `100.49999999999999`. This is the standard behavior dictated by the user specification (`ORIGINAL_REQUEST.md:574`).
+- **Review-Only Compliance**: No implementation code was altered in `src/utils/crmPayrollUtils.ts`. Only adversarial challenge test suites were added/executed.
+- No other caveats.
+
+---
 
 ## 4. Conclusion
 
-**Verdict: CONFIRMED**
+**Verdict**: **APPROVE**
 
-The mathematical calculations in `src/utils/crmGeoUtils.ts` are verified to be mathematically accurate, numerically robust, and edge-case resilient:
-- Antipodal points, polar convergence, identical points, and antimeridian crossings evaluate correctly without `NaN` or instability.
-- Distances match independent spherical Vincenty and 3D Euclidean vector oracles to sub-millimeter precision.
-- Geofence boundary checks at exactly on boundary, 1mm inside, and 1mm outside are strictly verified across all directions.
-- All 81 unit/stress tests for `crmGeoUtils` and all 264 CRM test suites pass with 100% success rate.
+The payroll calculation engine implemented in `src/utils/crmPayrollUtils.ts` satisfies all mathematical contracts, edge case boundaries, calendar invariants, and performance requirements:
+1. **0 working days**: Safely handles zero working days, returning 0 without division by zero or NaN.
+2. **Zero/Negative salary**: Cleanly clamped to 0; net salary strictly bounded to `>= 0`.
+3. **Extreme numbers**: Correctly preserves 2-decimal precision up to ₹10 Billion.
+4. **Fractional overtime**: Handled accurately across sub-minute and multi-thousand minute inputs.
+5. **Leap years**: 100% compliant across Feb 2024, Feb 2000, Feb 1900, Feb 2100, and Feb 2400.
+6. **Test coverage**: 96/96 payroll tests pass across 4 suites (unit, worker stress, challenger adversarial, and Monte Carlo oracle). Full CRM regression suite passes 100% (28 files, 512 tests).
+7. **Type safety**: `cmd /c npx tsc --noEmit` exits with 0 errors.
+
+---
 
 ## 5. Verification Method
 
-To independently reproduce and verify this assessment:
-1. Run type check:
-   ```powershell
+To independently verify the empirical challenge results:
+
+1. **Static Typing & Zero Errors**:
+   ```bash
    cmd /c npx tsc --noEmit
    ```
-   (Must exit with code 0)
-2. Run the dedicated mathematical stress and oracle test suite:
-   ```powershell
-   npm.cmd test -- src/test/crmGeoUtilsMathematicalStressOracle.test.ts --run
+   *Expected*: Exit code 0, 0 errors.
+2. **Execute Worker Baseline Stress Test**:
+   ```bash
+   cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts
    ```
-   (Must pass all 26 tests)
-3. Run all `crmGeoUtils` test suites:
-   ```powershell
-   npm.cmd test -- crmGeoUtils --run
+   *Expected*: 16 passed (16).
+3. **Execute Independent Challenger Adversarial Suite**:
+   ```bash
+   cmd /c npx vitest run src/test/crmPayrollUtilsAdversarialChallenge.test.ts
    ```
-   (Must pass all 81 tests across 3 test files)
-4. Run complete CRM regression suite:
-   ```powershell
-   npm.cmd test -- crm --run
+   *Expected*: 20 passed (20).
+4. **Execute All Payroll Test Suites Combined**:
+   ```bash
+   cmd /c npx vitest run crmPayroll
    ```
-   (Must pass all 264 tests across 11 files)
+   *Expected*: 4 test files passed, 96 passed (96).
+5. **Execute Full CRM Regression Test Suite**:
+   ```bash
+   cmd /c npx vitest run crm
+   ```
+   *Expected*: 28 test files passed, 512 passed (512).
+6. **Invalidation Conditions**:
+   - Any failure in `crmPayrollUtils.test.ts`, `crmPayrollUtils.stress.test.ts`, `crmPayrollUtilsAdversarialChallenge.test.ts`, or `crmPayrollUtils.challenger.test.ts`.
+   - Any compiler error in `npx tsc --noEmit`.
+   - Non-zero or NaN output when `workingDays === 0`.
+   - Negative net salary under catastrophic advance deductions.

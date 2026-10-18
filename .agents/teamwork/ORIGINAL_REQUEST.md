@@ -412,3 +412,311 @@ Create `.agents/skills/crm-attendance-skill/SKILL.md` documenting:
 - [ ] `tsc --noEmit` exits with 0 errors
 - [ ] All new tests pass with 0 failures
 - [ ] `.agents/skills/crm-attendance-skill/SKILL.md` authored and committed
+
+
+## 2026-10-18T08:57:37Z
+
+Build a fully integrated CRM Tab — Phase 3: Salary Management & Payroll Engine — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform. All UI must be polished, production-quality, matching the existing CredSmart mobile + desktop design standards, using the custom CRM design system in src/components/crm/ and RBAC integration from Phase 1.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: benchmark (no restrictions — any approach that works)
+
+## CRITICAL: Read These Skill Files First (Before Writing Any Code)
+
+1. Read `.agents/skills/crm-rbac-skill/SKILL.md` — Phase 1 RBAC patterns, useCRMPermission hook, CRMPermissionGate usage
+2. Read `.agents/skills/crm-attendance-skill/SKILL.md` — Phase 2 attendance data schema, Haversine engine, shift rules, and the Phase 3 payroll integration contract (LOP formulas, overtime reconciliation)
+
+## Tech Stack & Phase 1+2 Foundations
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- Backend/DB: Supabase (client in src/integrations/supabase/)
+- Auth: Supabase Auth (existing useAuth.tsx hook)
+- App shell: src/components/AppSidebar.tsx, src/components/AppLayout.tsx, src/config/routes.ts
+- CRM Design System: src/components/crm/ (CRMCard, CRMBadge, CRMDataTable, CRMPageHeader, CRMStatCard, CRMPermissionGate, CRMRolePill)
+- RBAC Hook: src/hooks/useCRMPermission.ts
+- Phase 2 Attendance tables: `crm_attendance`, `crm_geolocations`, `crm_attendance_requests` (already exist in supabase/migrations/20261017010000_...)
+- Brand colors: Navy #0F172A, Orange #FF6A00, Blue #1D4ED8, Emerald #10B981, Gold #F59E0B
+- Route path `ROUTE_PATHS.crmSalary` is already defined in src/config/routes.ts as '/crm/salary'
+
+## Milestone Structure (7 Milestones)
+
+### M1: Database Schema & Idempotent Migration
+
+Create `supabase/migrations/20261017020000_create_crm_salary_tables.sql`:
+
+1. `public.crm_salary_profiles`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+   - `salary_type TEXT NOT NULL DEFAULT 'monthly' CHECK (salary_type IN ('monthly', 'daily', 'hourly'))`
+   - `base_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `currency TEXT NOT NULL DEFAULT 'INR'`
+   - `allowed_leaves_per_month INTEGER NOT NULL DEFAULT 2`
+   - `hourly_overtime_rate NUMERIC(10,2) DEFAULT 0.00`
+   - `pf_deduction_percent NUMERIC(5,2) DEFAULT 0.00`
+   - `esi_deduction_percent NUMERIC(5,2) DEFAULT 0.00`
+   - `is_active BOOLEAN NOT NULL DEFAULT true`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `CONSTRAINT uq_crm_salary_profiles_staff UNIQUE (org_id, staff_id)`
+
+2. `public.crm_payroll_runs`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `month_year TEXT NOT NULL` (format: 'YYYY-MM', e.g. '2026-10')
+   - `status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'locked', 'disbursed'))`
+   - `total_payout NUMERIC(14,2) DEFAULT 0.00`
+   - `staff_count INTEGER DEFAULT 0`
+   - `locked_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
+   - `locked_at TIMESTAMPTZ`
+   - `notes TEXT`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `CONSTRAINT uq_crm_payroll_runs_month UNIQUE (org_id, month_year)`
+
+3. `public.crm_payslips`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `payroll_run_id UUID NOT NULL REFERENCES public.crm_payroll_runs(id) ON DELETE CASCADE`
+   - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+   - `month_year TEXT NOT NULL`
+   - `salary_profile_snapshot JSONB NOT NULL` (snapshot of crm_salary_profiles at time of payroll)
+   - `working_days_in_month INTEGER NOT NULL`
+   - `present_days INTEGER NOT NULL DEFAULT 0`
+   - `absent_days INTEGER NOT NULL DEFAULT 0`
+   - `half_days INTEGER NOT NULL DEFAULT 0`
+   - `lop_days NUMERIC(5,2) NOT NULL DEFAULT 0` (loss of pay days = max(0, absent_days - allowed_leaves))
+   - `overtime_minutes INTEGER NOT NULL DEFAULT 0`
+   - `gross_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `lop_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `overtime_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `pf_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `esi_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `advance_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `bonus_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `net_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00`
+   - `payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial'))`
+   - `paid_at TIMESTAMPTZ`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   - `CONSTRAINT uq_crm_payslips_staff_month UNIQUE (org_id, staff_id, month_year)`
+
+4. `public.crm_salary_adjustments`:
+   - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+   - `staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+   - `type TEXT NOT NULL CHECK (type IN ('advance', 'bonus', 'deduction', 'loan_repayment'))`
+   - `amount NUMERIC(12,2) NOT NULL`
+   - `description TEXT`
+   - `month_year TEXT` (if null, deducted in the next payroll run)
+   - `status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'deducted', 'rejected'))`
+   - `requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
+   - `approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL`
+   - `approved_at TIMESTAMPTZ`
+   - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+
+5. RLS: Enable RLS on all 4 tables. Add policy: `USING (has_org_access(org_id))` for SELECT/INSERT/UPDATE/DELETE.
+
+6. All tables use `CREATE TABLE IF NOT EXISTS`. All indexes use `CREATE INDEX IF NOT EXISTS`.
+
+Also update `src/integrations/supabase/types.ts` with these new table definitions (follow the same pattern used for Phase 2 attendance types).
+
+Write tests:
+- `src/test/crmSalaryMigration.test.ts` — 15+ tests verifying migration schema contracts, type validation, constraint logic
+- `src/test/crmSalaryTypes.test.ts` — 10+ tests verifying TypeScript type completeness
+
+### M2: Payroll Calculation Engine
+
+Create `src/utils/crmPayrollUtils.ts` with the following exported functions:
+
+```typescript
+// Calculate working days in a month (excluding Sundays by default, or custom weekends)
+export function getWorkingDaysInMonth(monthYear: string, weekendDays?: number[]): number
+
+// Compute daily rate from monthly salary
+export function getDailyRate(baseSalary: number, workingDays: number): number
+
+// Compute LOP days = max(0, absentDays - allowedLeaves)
+export function computeLopDays(absentDays: number, allowedLeaves: number): number
+
+// Compute overtime amount from overtime minutes
+export function computeOvertimeAmount(overtimeMinutes: number, hourlyOvertimeRate: number): number
+
+// Compute PF deduction
+export function computePfDeduction(grossSalary: number, pfPercent: number): number
+
+// Compute ESI deduction
+export function computeEsiDeduction(grossSalary: number, esiPercent: number): number
+
+// Main net pay formula:
+// net = (baseSalary - lopDeduction) + overtimeAmount + bonusAmount - pfDeduction - esiDeduction - advanceDeduction
+// lopDeduction = dailyRate * lopDays
+export function computeNetSalary(params: {
+  baseSalary: number;
+  dailyRate: number;
+  lopDays: number;
+  overtimeAmount: number;
+  bonusAmount: number;
+  pfDeduction: number;
+  esiDeduction: number;
+  advanceDeduction: number;
+}): number
+
+// Generate complete payslip data from attendance records and salary profile
+export function generatePayslipData(params: {
+  staffId: string;
+  monthYear: string;
+  salaryProfile: CrmSalaryProfile;
+  attendanceRecords: CrmAttendanceRecord[];
+  adjustments: CrmSalaryAdjustment[];
+}): PayslipComputedData
+```
+
+All computations must be: pure functions (no side effects), use `Math.round(x * 100) / 100` for 2-decimal precision, handle edge cases (zero salary, zero working days, negative values clamped to 0).
+
+Export TypeScript interfaces:
+```typescript
+export interface CrmSalaryProfile { /* all fields from crm_salary_profiles */ }
+export interface CrmAttendanceRecord { /* subset from crm_attendance used for payroll */ }
+export interface CrmSalaryAdjustment { /* all fields from crm_salary_adjustments */ }
+export interface PayslipComputedData {
+  staffId: string;
+  monthYear: string;
+  workingDaysInMonth: number;
+  presentDays: number;
+  absentDays: number;
+  halfDays: number;
+  lopDays: number;
+  overtimeMinutes: number;
+  grossSalary: number;
+  lopDeduction: number;
+  overtimeAmount: number;
+  pfDeduction: number;
+  esiDeduction: number;
+  advanceDeduction: number;
+  bonusAmount: number;
+  netSalary: number;
+}
+```
+
+Write tests:
+- `src/test/crmPayrollUtils.test.ts` — 25+ tests: edge cases (0 salary, 0 LOP, max overtime, advance > net, half-day logic, PF+ESI stacking, full month absent)
+- `src/test/crmPayrollUtils.stress.test.ts` — 15+ mathematical stress tests verifying formula accuracy across different salary types
+
+### M3: Salary Management UI Page
+
+Create `src/pages/crm/SalaryManagement.tsx` (full polished page):
+
+**Tab 1 — Salary Profiles** (default tab):
+- Table of all staff with their salary profile (using `CRMDataTable` with search/filter)
+- Columns: Staff Name, Role, Salary Type, Base Amount (₹), PF%, ESI%, Allowed Leaves, Status
+- "Configure" action per row → opens a slide-over drawer with full edit form
+- "Add New Profile" button → opens create form in drawer
+- Form fields: Salary Type (monthly/daily/hourly), Base Amount, Currency (INR), Allowed Leaves/Month, Hourly Overtime Rate, PF%, ESI%
+- Save persists to `crm_salary_profiles` via Supabase
+
+**Tab 2 — Payroll Run** (admin only, gated with `useCRMPermission('salary', 'approve')`):
+- Month picker (default: current month)
+- "Generate Payroll" button → calls `generatePayslipData` for each staff member and renders a preview table
+- Preview table columns: Staff Name, Present Days, Absent, LOP Days, Gross, Deductions, Net Pay (₹)
+- Summary totals bar: Total Staff, Total Payout, Total Deductions
+- "Lock Payroll" button (disabled if status='locked') → sets payroll run status='locked', saves all payslips
+- "Mark as Disbursed" button (enabled only if locked) → sets status='disbursed'
+- Warning toast if any staff has no salary profile configured
+
+**Tab 3 — Advances & Deductions**:
+- Table of all `crm_salary_adjustments` with type badge (advance=Gold, bonus=Emerald, deduction=Orange, loan=Blue)
+- "Record Advance" button → opens form (staff search, amount, description, month)
+- Approve/Reject actions for pending items (gated with `useCRMPermission('salary', 'approve')`)
+- Approved advances auto-show in next payroll calculation as `advanceDeduction`
+
+**Tab 4 — My Payslips** (staff self-service, visible to all authenticated CRM users):
+- Grid of past payslips for the logged-in staff member
+- Each card: Month, Net Pay, Status badge (pending/paid/partial), Download PDF button
+
+**Design requirements**:
+- Full mobile responsiveness (375px, 768px, 1280px)
+- All CRM brand tokens (Navy `#0F172A`, Orange `#FF6A00`, Blue `#1D4ED8`, Emerald `#10B981`, Gold `#F59E0B`)
+- Use `CRMPageHeader`, `CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMPermissionGate`, `CRMStatCard` from `src/components/crm/`
+- Gated top-level with `useCRMPermission('salary', 'view')`
+- Loading skeletons using shadcn Skeleton component during data fetch
+- Error boundary toast on Supabase errors
+
+Write tests:
+- `src/test/crmSalaryManagement.test.tsx` — 20+ tests: render, tab switching, form validation, permission gating, loading states
+- `src/test/crmSalaryManagementAdmin.test.tsx` — 12+ tests: payroll run generation, lock/disburse flow, advance approval
+
+### M4: Vector Payslip PDF Generator
+
+Create `src/utils/crmPayslipPdf.ts`:
+
+- `generatePayslipPDF(payslip: PayslipComputedData, staffName: string, orgName: string): void`
+- Uses `jsPDF` (already in package.json from Phase 2)
+- NO autotable plugin — use pure vector jsPDF primitives (rect, line, text)
+- Layout:
+  - Header: CredSmart logo area (Navy rect), Org Name, "PAYSLIP" title, Month/Year
+  - Employee section: Name, Staff ID, Designation, Salary Type
+  - Earnings table: Base Salary, Overtime Amount, Bonus (right-aligned ₹)
+  - Deductions table: LOP Deduction, PF, ESI, Advance Deduction (right-aligned ₹)
+  - Summary box: Gross Earnings, Total Deductions, **Net Payable** (bold, larger font)
+  - Footer: Generated on date, "This is a computer-generated payslip. No signature required."
+- Color usage: Navy `#0F172A` header, Orange `#FF6A00` section titles, Emerald `#10B981` net pay highlight
+- Strict zero `any` types
+
+Write tests:
+- `src/test/crmPayslipPdf.test.ts` — 15+ tests: PDF content verification, correct ₹ formatting, zero-deduction payslip, max deduction payslip, edge cases
+
+### M5: Route Wiring & Dashboard Integration
+
+1. In `src/App.tsx`: Wire `/crm/salary` route pointing to `SalaryManagement.tsx` under the ProtectedRoute + AppLayout wrapper. Follow the exact same pattern used for the `/crm/attendance` route that was added in Phase 2.
+
+2. In `src/pages/crm/CRMDashboard.tsx`: Add/update the Salary stat card to show the count of payroll runs this month from `crm_payroll_runs`. If the stat card already exists as a placeholder, update it with a live Supabase query.
+
+Write test:
+- `src/test/crmSalaryRouteWiring.test.tsx` — Verify route `/crm/salary` renders SalaryManagement and is protected
+
+### M6: Reusable Skill Documentation
+
+Create `.agents/skills/crm-salary-skill/SKILL.md` with YAML frontmatter. Document:
+- Full database schema for all 4 salary tables with column names, types, constraints
+- Net pay formula and all computation helper function signatures from `crmPayrollUtils.ts`
+- How to consume `crm_payslips` data in Phase 4 (Task Notifications) and Phase 5 (Broadcasting)
+- LOP day computation rules: `lopDays = Math.max(0, absentDays - allowedLeaves)`
+- Phase 4 integration contract: task_notifications can be triggered on payroll lock events
+- Phase 5 integration contract: payroll disbursement can trigger broadcasts to affected staff
+- RBAC permissions matrix for salary module (view/edit/approve)
+- Working day calculation conventions (Sunday exclusion default)
+- jsPDF payslip layout spec for future extensions
+- Migration naming convention: next migration should be `20261017030000_create_crm_task_tables.sql`
+
+### M7: Final E2E Hardening
+
+1. Run `cmd /c npx tsc --noEmit` — fix ALL TypeScript errors before reporting done. Zero `any` types allowed in any CRM file.
+2. Run `cmd /c npx vitest run src/test/crmSalary* src/test/crmPayroll*` — ALL tests must pass.
+3. Run `cmd /c npx vitest run src/test/crm*` — verify no regression in Phase 1 & 2 tests.
+4. Verify `SalaryManagement.tsx` renders all 4 tabs without errors.
+5. Verify `crmPayrollUtils.ts` handles edge case: staff with 0 working days in month (should produce 0 net salary without division by zero).
+6. Verify `generatePayslipPDF` does not throw on empty/zero payslip data.
+7. Report final test count: X/Y tests passing.
+
+## Key Constraints
+- Zero TypeScript `any` types anywhere in CRM files
+- Zero ESLint errors
+- All SQL migrations are idempotent (IF NOT EXISTS, ON CONFLICT DO NOTHING)
+- `cmd /c npx` for all CLI commands (PowerShell execution policy)
+- Import from `src/components/crm/` design system — never inline duplicate components
+- All monetary amounts formatted as ₹X,XX,XXX.XX (Indian numeral system)
+- All Supabase queries must handle loading + error states
+- Mobile-first responsive design
+
+## Acceptance Criteria — Phase 3
+- [ ] Database migration `20261017020000_create_crm_salary_tables.sql` is idempotent with IF NOT EXISTS and RLS
+- [ ] Supabase types updated in `src/integrations/supabase/types.ts`
+- [ ] `crmPayrollUtils.ts` accurately computes net pay and LOP based on Phase 2 attendance records
+- [ ] Admin can configure salary profiles for staff members
+- [ ] Admin can execute monthly payroll run and lock it
+- [ ] Staff can view and download their own PDF payslips
+- [ ] Advance requests auto-deduct from the next payroll calculation
+- [ ] `tsc --noEmit` exits with 0 errors
+- [ ] All Phase 3 tests pass
+- [ ] No regression in Phase 1 & 2 tests
+- [ ] Reusable skill `.agents/skills/crm-salary-skill/SKILL.md` authored and committed

@@ -1,7 +1,8 @@
-# BRIEFING — 2026-10-17T10:50:00Z
+# BRIEFING — 2026-10-18T11:48:00Z
 
 ## Mission
-Empirically stress-test Admin Attendance Oversight features in src/pages/crm/Attendance.tsx: Geofence modal CRUD and boundary validation, Mocked GPS coordinate capture and error recovery, Regularisation approval/rejection lifecycle, and CRMDataTable multi-dimensional filtering.
+Adversarially challenge CredSmart Phase 3: Salary Management & Payroll Engine (M3-2: Lifecycle & Regression Challenge).
+Empirically verify payroll run transitions (draft -> locked -> disbursed), advance deductions feeding into draft payroll calculations, run regression suites `crmPayroll` and `crmSalary`, and stress-test failure modes.
 
 ## 🔒 My Identity
 - Archetype: challenger (empirical challenger)
@@ -10,33 +11,37 @@ Empirically stress-test Admin Attendance Oversight features in src/pages/crm/Att
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub
 - Instance: 2 of 2
+- Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Phase 3 Milestone: CredSmart Phase 3: Salary Management & Payroll Engine (Milestone M3-2 Lifecycle & Regression Challenge)
+- Phase 3 Instance: Challenger M3-2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Review and challenge must be empirical: write and execute tests, run verification code yourself
 - Layout compliance: .agents/teamwork/ must contain only metadata — source, tests, or data there is a violation
 - Output verdict: CONFIRMED or ISSUES_FOUND
+- Phase 3 Output verdict: APPROVE or REJECT
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T10:50:00Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T11:48:00Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/Attendance.tsx`, `src/utils/crmGeoUtils.ts`, `src/components/crm/CRMDataTable.tsx`
-- **Interface contracts**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section ## 2026-10-17T08:52:11Z), `worker_m3`'s handoff
-- **Review criteria**: Correctness, coordinate boundary validation, state transitions, GPS error handling, filtering logic
+- **Files to review**: `src/pages/crm/SalaryManagement.tsx`, `src/utils/crmPayrollUtils.ts`, `src/test/crmSalaryManagementAdmin.test.tsx`, `src/test/crmSalaryManagement.test.tsx`
+- **Interface contracts**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Phase 3 requirements), `worker_m3_1`'s handoff
+- **Review criteria**:
+  - Full payroll run lifecycle (`draft` -> `locked` -> `disbursed`) mutations and state invariants
+  - Advance deductions accurately feeding into draft payroll calculations
+  - Regression immunity across all `crmPayroll` and `crmSalary` test suites
+  - Adversarial stress tests (unauthorized transitions, mutation after lock, duplicate runs, edge cases)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Geofence creation & editing: tested coordinate bounds (-90..90, -180..180), non-positive radius rejection, non-empty name requirement, in-place updates without record duplication. (CONFIRMED)
-  2. "Use My Current Location" button: tested coordinate capture accuracy to 6 decimals, plus graceful rejection handling on GPS permission denial without app crash. (CONFIRMED)
-  3. Regularisation lifecycle: tested manager approval transitions attendance record to `verification_method: 'regularized'`, computes work durations and overtime minutes; rejection updates request status to `'rejected'` without modifying attendance logs. (CONFIRMED)
-  4. CRMDataTable filtering: tested date filter (specific date & clear date), staff name & email search. (CONFIRMED)
-  5. Role filtering: tested for existence of role filter dropdown/control as specified in R3 and Challenge Task 4. (DEFECT FOUND)
+  - TBD in testing phase
 - **Vulnerabilities found**:
-  - `src/pages/crm/Attendance.tsx` lines 1900-1921: Role filter UI control is MISSING from the Daily Attendance Table controls. Only Date Filter (`<Input type="date">`) and Status Filter (`<Select value={statusFilter}>`) are rendered. While the table renders a Role column using `CRMRolePill`, an admin cannot filter logs by staff role (e.g. Cashier, Sales, Manager).
+  - TBD in testing phase
 - **Untested angles**:
-  - Bulk approval of multiple regularisation requests simultaneously (out of Phase 2 scope).
+  - TBD in testing phase
 
 ## Loaded Skills
 - **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
@@ -47,13 +52,10 @@ Empirically stress-test Admin Attendance Oversight features in src/pages/crm/Att
   - **Core methodology**: Comprehensive testing harness, edge cases, error states, and reporting
 
 ## Key Decisions Made
-- Created 12-test empirical challenge suite `src/test/crmAttendanceAdminChallenge.test.tsx` testing Admin Attendance Oversight.
-- Verified 100% pass rate (83/83 tests across all 5 CRM test suites).
-- Determined verdict: `ISSUES_FOUND` due to missing Role filter in Team Attendance Table header.
+- Initializing Phase 3 lifecycle and regression challenge.
 
 ## Artifact Index
 - `BRIEFING.md` — persistent memory and status
 - `progress.md` — liveness heartbeat and subtask progress
 - `DISPATCH.md` — orchestrator instruction log
 - `handoff.md` — final 5-component handoff report
-- `src/test/crmAttendanceAdminChallenge.test.tsx` — empirical challenge test harness

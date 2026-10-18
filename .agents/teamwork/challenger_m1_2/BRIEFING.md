@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T09:24:00Z
+# BRIEFING — 2026-10-18T10:07:00Z
 
 ## Mission
-Empirically stress-test the TypeScript type definitions in src/types/crmAttendance.ts and src/integrations/supabase/types.ts against SQL migration 20261017010000_create_crm_attendance_tables.sql for CRM Phase 2 Milestone 1.
+Adversarially stress-test TypeScript type soundness and schema contracts for CRM Phase 3 Milestone 1 (Salary Management & Payroll Engine) across `src/integrations/supabase/types.ts`, `src/types/crmPayroll.ts`, and test harnesses.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -10,6 +10,8 @@ Empirically stress-test the TypeScript type definitions in src/types/crmAttendan
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
 - Instance: 2 of 2
+- Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Phase 3 Milestone: CRM Phase 3 Milestone 1: Salary Management & Payroll Engine Type Soundness
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code unless creating standalone test verification harnesses outside of .agents/teamwork
@@ -17,40 +19,46 @@ Empirically stress-test the TypeScript type definitions in src/types/crmAttendan
 - Check exact field parity between SQL columns and TS types
 - Verify Row, Insert, and Update type compatibility with valid/invalid payloads
 - Run `npx tsc --noEmit` to confirm zero compilation errors across codebase
+- Adversarially challenge type soundness: assignability, negative compile checks, missing required properties, JSON snapshot structure, foreign key relations
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T09:15:27Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T10:02:36Z
 
 ## Review Scope
 - **Files to review**:
-  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
-  - `src/types/crmAttendance.ts`
+  - `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
+  - `src/types/crmPayroll.ts`
   - `src/integrations/supabase/types.ts`
-  - `src/test/crmAttendanceTypes.challenger.test.ts`
-- **Interface contracts**: `ORIGINAL_REQUEST.md` (## 2026-10-17T08:52:11Z) & `DISPATCH.md`
-- **Review criteria**: Field parity, nullability parity, default values handling, Row/Insert/Update conformance, negative type testing, zero compiler breaks
+  - `src/test/crmSalaryTypes.test.ts`
+  - `src/test/crmSalaryTypes.challenger.test.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (CRM Phase 3 M1) & `DISPATCH.md`
+- **Review criteria**: Field parity, nullability alignment, strict required Insert keys, total partiality of Update types, foreign key definitions, JSON snapshot structure, literal unions and narrowing, cross-module attendance compatibility, zero `any` types.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. SQL migration columns vs Supabase types Row/Insert/Update: Confirmed exact parity across all 8 columns of `crm_geolocations`, 23 columns of `crm_attendance`, and 15 columns of `crm_attendance_requests`.
-  2. Required vs optional Insert fields: Confirmed only non-default NOT NULL columns are required in Insert (`org_id`, `name`, `latitude`, `longitude` for geolocations; `org_id`, `staff_id` for attendance; `org_id`, `staff_id`, `date`, `reason` for requests).
-  3. Domain models vs DB types: `CRMAttendanceRecord` and `CRMAttendanceRequest` include optional UI enrichment fields (`staff_name`, `staff_email`) for join queries and strict status union types.
-  4. Extreme values and boundary conditions: Sub-meter precision floating points, pole coordinates, and timezone representations evaluated and verified.
-- **Vulnerabilities found**: None. Zero type discrepancies, zero compile breaks, zero missing foreign keys.
-- **Untested angles**: Local PostgreSQL execution (requires running Docker / Supabase CLI).
+  1. SQL migration columns vs Supabase types Row/Insert/Update: Confirmed exact parity across all 13 columns of `crm_salary_profiles`, 11 columns of `crm_payroll_runs`, 24 columns of `crm_payslips`, and 12 columns of `crm_salary_adjustments`.
+  2. Required vs optional Insert fields: Only non-default NOT NULL columns are required in Insert (`org_id`, `staff_id` for profiles; `org_id`, `month_year` for payroll runs; `org_id`, `payroll_run_id`, `staff_id`, `month_year`, `salary_profile_snapshot`, `working_days_in_month` for payslips; `org_id`, `staff_id`, `type`, `amount` for adjustments). Negative compilation checks pass.
+  3. Total partiality in Update types: Verified all 4 Update types accept empty `{}` and partial mutations, while disallowing alien fields.
+  4. JSON Snapshot Structure: Verified `CrmSalaryProfileSnapshot` includes all 7 core compensation attributes, survives JSON round-trip serialization, and is accepted in `CrmPayslip`.
+  5. Foreign key definitions: Verified all 4 tables define proper relational links to `organizations` and `crm_payroll_runs`.
+  6. Strict union literals: Verified `SalaryType`, `PayrollRunStatus`, `PayslipPaymentStatus`, `SalaryAdjustmentType`, `SalaryAdjustmentStatus` reject alien strings at compile-time.
+  7. Cross-module integration: Verified `CrmAttendanceRecord` is compatible with Phase 2 `CRMAttendanceRecord`.
+  8. Zero `any`: Verified zero `any` across all domain and database types.
+- **Vulnerabilities found**: None. Type soundness is rock-solid.
+- **Untested angles**: Runtime DB triggers and Postgres check constraints execution (requires live Postgres connection).
 
 ## Loaded Skills
 - **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
-- **Core methodology**: RBAC permission checks, database schemas, strict typing conventions
+- **Core methodology**: Strict typing conventions, database schemas, RBAC and relational integrity
 
 ## Key Decisions Made
-- Authored comprehensive empirical test suite `src/test/crmAttendanceTypes.challenger.test.ts` with 18 automated tests.
-- Tested compile-time negative constraints via TypeScript utility types and Vitest `expectTypeOf`.
-- Verified whole-project compilation with `cmd /c npx tsc --noEmit`.
+- Authored comprehensive empirical test suite `src/test/crmSalaryTypes.challenger.test.ts` with 27 adversarial tests across 9 dimensions.
+- Verified both test suites pass cleanly (`47 passed (47)`).
+- Issued APPROVE verdict for Milestone M1.
 
 ## Artifact Index
-- `src/test/crmAttendanceTypes.challenger.test.ts` — 18-test empirical test suite
+- `src/test/crmSalaryTypes.challenger.test.ts` — 27-test empirical stress test suite
 - `handoff.md` — Final 5-component challenger report
 - `DISPATCH.md` — Incoming dispatch log
 - `progress.md` — Liveness and execution tracking

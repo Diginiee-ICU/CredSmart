@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T10:52:00Z
+# BRIEFING — 2026-10-18T12:00:00Z
 
 ## Mission
-Review and adversarial critique of CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub.
+Review and adversarial critique of CredSmart Phase 3: Salary Management & Payroll Engine (Admin Workflow & RBAC Gating Review).
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -10,31 +10,35 @@ Review and adversarial critique of CRM Phase 2 Milestone 3: Attendance UI & Cloc
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub
 - Instance: reviewer_m3_2
+- Milestone (Current): CredSmart CRM Phase 3: Salary Management & Payroll Engine (Admin Workflow & RBAC Review)
+- Parent (Current): caf7924e-19e5-4a1d-ae03-b43c66838dd3
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Actively check for integrity violations (hardcoded test results, dummy/facade implementations, bypassed logic)
 - Execute independent tests and verify claims with direct evidence
 - Issue APPROVE or REQUEST_CHANGES verdict
+- Scrutinize `useCRMPermission('salary', 'approve')` gating for payroll generation, locking, disbursement, and advance approval
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T10:41:34Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T11:47:39Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/Attendance.tsx`, `src/test/crmAttendance.test.tsx`, `worker_m3/handoff.md`
-- **Interface contracts**: `ORIGINAL_REQUEST.md`, `crm-rbac-skill`
-- **Review criteria**: Correctness, completeness, RBAC gating, Supabase/localStorage resilience, geofence, regularisation modal, test coverage, security/adversarial edge cases
+- **Files to review**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`, `src/test/crmSalaryManagement.test.tsx`, `worker_m3_1/handoff.md`
+- **Interface contracts**: `ORIGINAL_REQUEST.md`, `crm-rbac-skill`, `crm-attendance-skill`
+- **Review criteria**: Correctness, completeness, RBAC gating (`salary:approve`, `salary:view`), payroll calculation engine integration, summary totals KPI bar, lock/disburse flow, advance review workflow, missing profile warnings, mobile/desktop responsiveness, error handling.
 
 ## Key Decisions Made
-- Executed unit tests (`crmAttendance.test.tsx`: 15/15 passed).
-- Executed typecheck (`tsc --noEmit`: 0 errors).
-- Executed related test suites (`crmGeoUtils.test.ts`, `crmPermissionGate.test.tsx`: 41/41 passed).
-- Executed empirical stress tests (`crmAttendanceStress.test.tsx`: 10/10 passed).
-- Executed admin challenge tests (`crmAttendanceAdminChallenge.test.tsx`: 12/12 passed).
-- Confirmed zero integrity violations (no facades, no hardcoded results).
-- Surfaced 1 Major finding (Role Filter dropdown missing from Daily Attendance Table) and 2 Minor findings (Overnight shift boundary & React act test warnings).
-- Determined verdict: APPROVE with documented findings for Milestone 5 polish.
+- Executed unit & admin test suite (`crmSalaryManagementAdmin.test.tsx`: 17/17 passed).
+- Executed UI interaction test suite (`crmSalaryManagement.test.tsx`: 26/26 passed).
+- Executed RBAC permission test suite (`crmPermissionRbac.test.ts`: 26/26 passed).
+- Executed static typecheck (`tsc --noEmit`: 0 errors).
+- Audited implementation in `src/pages/crm/SalaryManagement.tsx` (2,166 lines) and `src/utils/crmPayrollUtils.ts` (390 lines).
+- Confirmed zero integrity violations (no dummy facades, no hardcoded values).
+- Verified `useCRMPermission('salary', 'approve')` gating across Generate Payroll, Lock Payroll, Mark as Disbursed, and Advance Approve/Reject actions.
+- Verified missing profile detection and warning toasts.
+- Determined verdict: APPROVE.
 
 ## Artifact Index
 - `DISPATCH.md` — Received dispatch instructions
@@ -43,20 +47,16 @@ Review and adversarial critique of CRM Phase 2 Milestone 3: Attendance UI & Cloc
 - `handoff.md` — Final review report and verdict
 
 ## Review Checklist
-- **Items reviewed**: `src/pages/crm/Attendance.tsx`, `src/test/crmAttendance.test.tsx`, `src/hooks/useCRMPermission.ts`, `src/components/crm/CRMPermissionGate.tsx`, `src/utils/crmGeoUtils.ts`
+- **Items reviewed**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`, `src/test/crmSalaryManagement.test.tsx`, `src/utils/crmPayrollUtils.ts`
 - **Verdict**: APPROVE
-- **Unverified claims**: None (all claims empirically verified via test runs and code inspection)
+- **Unverified claims**: None (all claims empirically verified via test runs and direct code inspection)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Offline/LocalStorage resilience fallback: Tested & verified.
-  - GPS error / timeout handling: Tested & verified.
-  - Geofence boundary coordinate and radius validation: Tested & verified.
-  - Geofence CRUD in-place editing: Tested & verified.
-  - Regularisation approval updating attendance to 'regularized': Tested & verified.
-  - Regularisation rejection leaving attendance unmodified: Tested & verified.
-  - Permission gating on restricted roles: Tested & verified.
-- **Vulnerabilities found**:
-  - Missing Role Filter selector in Daily Attendance Table (Major).
-  - Cross-midnight active session lookup limitation for night shifts (Minor).
-- **Untested angles**: Hardware-level GPS spoofing (outside web app scope).
+  - Privilege escalation: Can an unauthorized user trigger generation, locking, or disbursement? Verified gated at button state and handler function levels.
+  - Locked state bypass: Can a user recalculate a locked or disbursed payroll run? Verified prevented with error toast and disabled button state.
+  - Advance deduction exceeding net pay: Handled safely with `Math.max(0, net)`.
+  - Unconfigured staff profiles: Identified safely, warning alert and toast displayed, excluded without null exceptions.
+  - Month switching: Scheduled working days dynamically computed, previous preview cleared.
+- **Vulnerabilities found**: None critical/major. Minor observation: Unrecovered advance amount when advance exceeds gross pay is not automatically carried forward across multiple months (acceptable for Phase 3 scope).
+- **Untested angles**: Hardware-level Supabase outages (handled via offline localStorage hydration cache).

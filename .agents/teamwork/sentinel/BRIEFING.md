@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T08:52:11Z
+# BRIEFING — 2026-10-18T09:37:00Z
 
 ## Mission
-Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendance — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform, featuring geofencing, clock-in/out hub, attendance reports & PDF, and integration with the Phase 1 CRM design system and RBAC.
+Build a fully integrated CRM Tab — Phase 3: Salary Management & Payroll Engine — inside CredSmart, a React + Vite + TypeScript + Supabase PWA business management platform, featuring salary profiles, payroll engine (LOP, overtime, PF/ESI deductions), monthly payroll run & lock flow, advances & deductions, staff self-service PDF payslips, route wiring, CRMDashboard integration, and crm-salary-skill documentation.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -20,6 +20,10 @@ Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendan
 - Victory Auditor (CRM Phase 1): [to be spawned on victory claim]
 - Active Orchestrator (CRM Phase 2): 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Victory Auditor (CRM Phase 2): [to be spawned on victory claim]
+- Active Orchestrator (CRM Phase 3): a6c6970e-7c4c-4a2f-b5be-d02fc8860e0a
+- Victory Auditor (CRM Phase 3): [to be spawned on victory claim]
+- Active Orchestrator (CRM Phase 3 Gen 2): caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Victory Auditor (CRM Phase 3 Gen 2): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -29,18 +33,23 @@ Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendan
 - CRM roles must be fully configurable by business owner — zero hard-coded roles
 - Never take orchestrator completion claim at face value — spawn victory auditor
 - Clean context execution: keep Sentinel context ultra-light
+- Zero TypeScript `any` types anywhere in CRM files
+- Zero ESLint errors
+- All SQL migrations are idempotent (IF NOT EXISTS, ON CONFLICT DO NOTHING)
+- `cmd /c npx` for all CLI commands (PowerShell execution policy)
 
 ## User Context
-- **Last user request**: Build CRM Tab Phase 2 (Attendance & Geo Location Attendance, Haversine engine, Clock-In hub, Admin table, PDF export, CRMDashboard real count, SKILL.md).
+- **Last user request**: Build CRM Tab Phase 3: Salary Management & Payroll Engine (M1: Database Schema & Migration, M2: Payroll Calculation Engine, M3: Salary Management UI Page, M4: Vector Payslip PDF Generator, M5: Route Wiring & Dashboard Integration, M6: Reusable Skill Documentation, M7: Final E2E Hardening).
 - **Pending clarifications**: none
-- **Delivered results**: none yet for CRM Phase 2
+- **Delivered results**: none yet for CRM Phase 3
 
 ## Project Status
 - **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- **Cron 1 (Reporting)**: task-26 (*/8 * * * *)
-- **Cron 2 (Liveness)**: task-28 (*/10 * * * *)
+- **Active Orchestrator ID**: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3_gen2
+- **Cron 1 (Reporting)**: b39f974c-65a2-4b8d-8de6-644bb87ae3d1/task-44 (*/8 * * * *)
+- **Cron 2 (Liveness)**: b39f974c-65a2-4b8d-8de6-644bb87ae3d1/task-46 (*/10 * * * *)
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -49,4 +58,4 @@ Build a fully integrated CRM Tab — Phase 2: Attendance & Geo Location Attendan
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md — Project Orchestrator dispatch
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3_gen2\DISPATCH.md — Project Orchestrator dispatch

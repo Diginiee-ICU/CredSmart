@@ -58,15 +58,25 @@ Build and deliver CredSmart CRM Phase 2: Attendance & Geo Location Attendance, i
 | challenger_m4_1 | teamwork_preview_challenger | M4: Metrics Stress Challenge | completed | 40357ffa-28e5-4104-a1ee-204c2caf938f |
 | challenger_m4_2 | teamwork_preview_challenger | M4: PDF/CSV Stress Challenge | completed | 80d70cbf-ad80-4a64-b71c-ec14ff47cfd7 |
 | auditor_m4 | teamwork_preview_auditor | M4: Forensic Integrity Audit | completed | 313fd32a-4587-433c-8d59-4d1984896eb6 |
-| worker_m5 | teamwork_preview_worker | M5: Route Wiring & Dashboard Integration | in-progress | fa87e479-c811-4218-8de3-ca4cbb5e05d0 |
+| worker_m5 | teamwork_preview_worker | M5: Route Wiring & Dashboard Integration | completed | fa87e479-c811-4218-8de3-ca4cbb5e05d0 |
+| reviewer_m5_1 | teamwork_preview_reviewer | M5: Route Architecture Review | completed | 8ccff248-7177-42d7-b27b-0af4c06c9b69 |
+| reviewer_m5_2 | teamwork_preview_reviewer | M5: Dashboard & Regression Review | completed | 627435ea-1225-4878-8fab-b5706ac95071 |
+| challenger_m5_1 | teamwork_preview_challenger | M5: Route Empirical Challenge | completed | 24779f70-6ec3-4c37-a463-2ba9617b9fe9 |
+| challenger_m5_2 | teamwork_preview_challenger | M5: Dashboard Reactivity Challenge | completed | c6dcb07e-51fc-4571-9404-713921a0f1dc |
+| auditor_m5 | teamwork_preview_auditor | M5: Forensic Integrity Audit | completed | b3211f26-2de4-4bb1-956f-e543b194e9b6 |
+| worker_m6 | teamwork_preview_worker | M6: Attendance Skill Documentation | completed | 26190ef0-f459-4aba-acad-61e709c1ce7b |
+| reviewer_m6_1 | teamwork_preview_reviewer | M6: Architecture & Math Review | in-progress | cdb7fb48-48ac-4b0e-a068-3984f6dbf408 |
+| reviewer_m6_2 | teamwork_preview_reviewer | M6: Payroll & Exports Review | in-progress | d2195722-28c3-4b8d-ba33-c94ca7f20d6c |
+| auditor_m6 | teamwork_preview_auditor | M6: Skill Forensic Integrity Audit | in-progress | 8edef5bd-5526-430f-bc4e-3de2b9152f57 |
 
 ## Succession Status
-- Succession required: no
+- Succession required: yes (fires upon M6 gate completion)
 - Generation: 2 (Gen 1 completed M1-M3, state checkpointed in handoff.md)
-- Spawn count: 7 / 16 (Generation Block 2)
-- Pending subagents: fa87e479-c811-4218-8de3-ca4cbb5e05d0
+- Spawn count: 16 / 16 (Generation Block 2 threshold reached)
+- Pending subagents: cdb7fb48-48ac-4b0e-a068-3984f6dbf408, d2195722-28c3-4b8d-ba33-c94ca7f20d6c, 8edef5bd-5526-430f-bc4e-3de2b9152f57
 - Predecessor: Generation 1 (19 spawns, M1-M3 GATE PASSED)
-- Successor: self-succession in Gen 2
+- Successor: planned for Generation 3
+
 
 ## Active Timers
 - Heartbeat cron: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb/task-465

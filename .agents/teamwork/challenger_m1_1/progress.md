@@ -1,19 +1,19 @@
 # Progress — challenger_m1_1
 
-Last visited: 2026-10-17T09:28:00Z
+Last visited: 2026-10-18T10:12:00Z
 Status: Completed
 
-## Milestones & Status
-- [x] Initialized DISPATCH.md and copied skill to workspace
-- [x] Initialized BRIEFING.md
-- [x] Empirical stress-testing of `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
-  - [x] 1. Syntax validation (DDL parsing, semicolons, parentheses, constraints) -> CONFIRMED
-  - [x] 2. Idempotency test (consecutive executions simulation) -> CONFIRMED
-  - [x] 3. Constraint and defaults analysis ('present', 'absent', 'half_day', 'on_leave'; 'geo_verified', 'manual', 'regularized') -> ISSUES_FOUND (Missing SQL CHECK constraints; defaults confirmed)
-  - [x] 4. Relation integrity & RLS validation -> CONFIRMED (adheres to R1.4)
-- [x] TypeScript type synchronization check (`src/types/crmAttendance.ts` and `src/integrations/supabase/types.ts`) -> Nullability divergence noted
-- [x] Authored automated empirical test harness `src/test/crmAttendanceMigrationStress.test.ts` (30/30 tests pass)
-- [x] TypeScript compilation check (`tsc --noEmit` exits with 0 errors)
-- [x] Regression test check (`crmPermissionRbac.test.ts` 26/26 tests pass)
-- [x] Updated BRIEFING.md with Attack Surface findings
-- [x] Generate Handoff Report (`handoff.md`)
+## Phase 3 Milestone M1: Empirical Adversarial Verification
+- [x] Initialized DISPATCH.md with Phase 3 M1 assignment
+- [x] Inspected Worker M1-1 handoff (`worker_m1_1/handoff.md`)
+- [x] Inspected SQL DDL migration `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
+- [x] Inspected TypeScript definitions in `src/integrations/supabase/types.ts` and `src/types/crmPayroll.ts`
+- [x] Verified quote parity, parentheses depth, regexes, IF NOT EXISTS clauses, DROP POLICY IF EXISTS, DROP TRIGGER IF EXISTS, ON DELETE actions, check constraints
+- [x] Executed Worker M1-1 test suite `cmd /c npx vitest run src/test/crmSalaryMigration.test.ts` (22/22 passed)
+- [x] Executed Types test suite `cmd /c npx vitest run src/test/crmSalaryTypes.test.ts` (20/20 passed)
+- [x] Authored and executed dedicated adversarial challenge suite `src/test/crmSalaryMigrationStress.challenger.test.ts` (29/29 passed)
+- [x] Executed regression test suite for Phase 1 & 2 (75/75 passed)
+- [x] Executed TypeScript compiler check `cmd /c npx tsc --noEmit` (0 errors)
+- [x] Update BRIEFING.md
+- [x] Generate Handoff Report (`handoff.md`) with APPROVE verdict
+- [x] Send coordination message to caller

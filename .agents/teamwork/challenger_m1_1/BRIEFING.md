@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T09:28:00Z
+# BRIEFING — 2026-10-18T10:10:00Z
 
 ## Mission
-Empirically stress-test SQL migration supabase/migrations/20261017010000_create_crm_attendance_tables.sql and TypeScript types for CRM Phase 2 Milestone 1.
+Adversarially challenge and empirically verify SQL migration `supabase/migrations/20261017020000_create_crm_salary_tables.sql` and TypeScript types for CredSmart Phase 3: Salary Management & Payroll Engine (Milestone 1).
 
 ## 🔒 My Identity
 - Archetype: challenger
@@ -10,6 +10,8 @@ Empirically stress-test SQL migration supabase/migrations/20261017010000_create_
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
 - Instance: 1 of 2
+- Phase 3 Instance: Challenger M1-1 for Phase 3 Salary Management & Payroll Engine
+- Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -18,28 +20,36 @@ Empirically stress-test SQL migration supabase/migrations/20261017010000_create_
   2. Idempotency test: check whether running the entire script twice in succession would fail.
   3. Confirm status constraints and defaults align with requirements ('present', 'absent', 'half_day', 'on_leave'; 'geo_verified', 'manual', 'regularized').
 - Must write and execute verification code directly.
+- Phase 3 Key Constraints:
+  - Adversarially challenge the SQL DDL file: supabase/migrations/20261017020000_create_crm_salary_tables.sql
+  - Check quote parity, parentheses depth, regexes, IF NOT EXISTS clauses, DROP POLICY IF EXISTS, DROP TRIGGER IF EXISTS, ON DELETE actions, check constraints.
+  - Run cmd /c npx vitest run src/test/crmSalaryMigration.test.ts
+  - Write verdict (APPROVE or REJECT) in handoff.md.
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T09:15:26Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T10:02:35Z
 
 ## Review Scope
-- **Files to review**: `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`, `src/types/crmAttendance.ts`, `src/integrations/supabase/types.ts`
-- **Interface contracts**: `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`), `DISPATCH.md`
-- **Review criteria**: DDL syntax validity, idempotency under repeat runs, CHECK constraints / ENUM alignment, RLS completeness, trigger validity, TypeScript type parity
+- **Files to review**: `supabase/migrations/20261017020000_create_crm_salary_tables.sql`, `src/types/crmPayroll.ts`, `src/integrations/supabase/types.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (Phase 3 M1 specs), `DISPATCH.md`
+- **Review criteria**: DDL quote parity, parentheses depth, regexes, IF NOT EXISTS clauses, DROP POLICY IF EXISTS, DROP TRIGGER IF EXISTS, ON DELETE actions, check constraints.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - DDL syntax: tested 27 statements, balanced quotes/parens, semicolon terminations (PASSED)
-  - Idempotency: tested `IF NOT EXISTS` on tables & indexes, `DROP ... IF EXISTS` on triggers & policies (PASSED)
-  - Status constraints & defaults: tested default values and DB-level CHECK constraints (DEFAULTS PASSED, CHECK CONSTRAINTS MISSING)
-  - Type nullability: tested synchronization between SQL schema, `src/types/crmAttendance.ts`, and `src/integrations/supabase/types.ts` (DISCREPANCY DETECTED on work_duration_minutes & overtime_minutes)
-- **Vulnerabilities found**:
-  1. Missing database-level CHECK constraints on `crm_attendance.status`, `crm_attendance.verification_method`, and `crm_attendance_requests.status`.
-  2. Minor nullability discrepancy on `work_duration_minutes` and `overtime_minutes` (non-nullable in domain types vs nullable in DB/Supabase types).
-  3. Permissive database-level RLS (`has_org_access` allows any employee to UPDATE/DELETE office geolocations at DB layer; must rely on application-tier CRMPermissionGate).
-- **Untested angles**:
-  - Actual migration execution against a live cloud Supabase instance (CLI/live connection not configured in local environment; simulated empirically via Vitest AST and DDL parsing).
+  - Quote parity (single, double, backtick, dollar): PASSED (strictly balanced, zero backticks)
+  - Parentheses depth (no negative depth, balanced per statement, max depth <= 5): PASSED
+  - Postgres identifier compliance (length <= 63, valid naming): PASSED
+  - Idempotency via IF NOT EXISTS (tables, indexes): PASSED (4/4 tables, 13/13 indexes)
+  - DROP POLICY IF EXISTS preceding CREATE POLICY: PASSED (16/16 policies paired and ordered)
+  - Policy syntax & action specs: PASSED (INSERT uses WITH CHECK, others use USING)
+  - DROP TRIGGER IF EXISTS preceding CREATE TRIGGER: PASSED (3/3 triggers paired and ordered)
+  - ON DELETE actions: PASSED (org_id CASCADE, staff_id CASCADE, payroll_run_id CASCADE, audit users SET NULL)
+  - Domain CHECK constraints & defaults: PASSED (salary_type, payroll_run status, payment_status, adjustment type, adjustment status all match allowed unions and valid defaults)
+  - Column existence in index/unique constraint targets: PASSED (zero typos in column references)
+  - TypeScript compilation: PASSED (`tsc --noEmit` exits 0)
+- **Vulnerabilities found**: None. DDL and types are robust and production-grade.
+- **Untested angles**: Live DB deployment (verified via static AST and empirical lexical testing).
 
 ## Loaded Skills
 - **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
@@ -47,9 +57,13 @@ Empirically stress-test SQL migration supabase/migrations/20261017010000_create_
 - **Core methodology**: RBAC architecture, database schema, RLS policies, permissions model
 
 ## Key Decisions Made
-- Created comprehensive empirical test suite `src/test/crmAttendanceMigrationStress.test.ts` (30/30 tests pass).
-- Reported status: ISSUES_FOUND (with detailed severity breakdown and mitigations).
+- Authored automated empirical test harness `src/test/crmSalaryMigrationStress.challenger.test.ts` (29/29 tests pass).
+- Executed `src/test/crmSalaryMigration.test.ts` (22/22 tests pass).
+- Executed `src/test/crmSalaryTypes.test.ts` (20/20 tests pass).
+- Executed regression suite (75/75 tests pass).
+- Executed `tsc --noEmit` (0 errors).
+- Issued verdict: **APPROVE**.
 
 ## Artifact Index
-- `handoff.md` — Final challenge report
-- `src/test/crmAttendanceMigrationStress.test.ts` — 30-test empirical verification suite
+- `handoff.md` — Final challenge report with APPROVE verdict
+- `src/test/crmSalaryMigrationStress.challenger.test.ts` — 29-test empirical stress harness

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T10:22:00Z
+# BRIEFING — 2026-10-18T10:58:00Z
 
 ## Mission
-Review and adversarially stress-test CRM Phase 2 Milestone 2 (Geo Location Calculation Engine & Utilities), focusing on Geolocation API wrapper, error mapping, options, mock helpers, and test suite integrity.
+Review and adversarially challenge Milestone M2 (Payroll Calculation Engine & Utilities): verify `src/utils/crmPayrollUtils.ts` pure function logic, snapshot fidelity, attendance/adjustments integration, multi-salary type arithmetic ('monthly', 'daily', 'hourly'), division-by-zero protection, and regression suites across Phase 1 & 2.
 
 ## 🔒 My Identity
 - Archetype: reviewer / critic
@@ -10,29 +10,32 @@ Review and adversarially stress-test CRM Phase 2 Milestone 2 (Geo Location Calcu
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities
 - Instance: reviewer_m2_2
+- Phase 3 Assignment: Reviewer M2-2 (Payslip Aggregation & Regression Verification)
+- Current Caller Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Check for integrity violations (hardcoding, facades, shortcuts, fake verification)
 - Follow Handoff Protocol and communication rules
+- Report findings without fixing external files directly
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T10:18:31Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T10:53:37Z
 
 ## Review Scope
-- **Files to review**: `src/utils/crmGeoUtils.ts`, `src/test/crmGeoUtils.test.ts`, `.agents/teamwork/worker_m2/handoff.md`
-- **Interface contracts**: `.agents/teamwork/ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z`), `src/types/crmAttendance.ts`
-- **Review criteria**: Geolocation API wrapper, options, error code mapping, mock helpers, 33 tests passing, adversarial edge cases, integrity
+- **Files to review**: `src/utils/crmPayrollUtils.ts`, `src/types/crmPayroll.ts`, `.agents/teamwork/worker_m2_1/handoff.md`
+- **Interface contracts**: `.agents/teamwork/ORIGINAL_REQUEST.md` (Milestone M2), `src/types/crmPayroll.ts`
+- **Review criteria**: Mathematical accuracy, 2-decimal rounding, div-by-zero safeguards, snapshot fidelity, attendance aggregation, adjustment status filtering, zero regressions on Phase 1 & 2 tests
 
 ## Key Decisions Made
-- Confirmed full compliance of `src/utils/crmGeoUtils.ts` with requirements:
-  - `getCurrentPosition` options (`enableHighAccuracy: true`, `timeout: 10000`, `maximumAge: 0`).
-  - Error code mapping (1: PERMISSION_DENIED, 2: POSITION_UNAVAILABLE, 3: TIMEOUT) with `.code` preserved on rejected Error object.
-  - Mock helpers: `mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, `resetGeolocationMock`.
-  - Haversine distance formula with anti-meridian normalization, antipodal clamping, fast paths for identical points/poles, and strict coordinate bounding.
-  - Zero hardcoding or facades; genuine trigonometric algorithms.
-  - Verified 33 tests pass in `src/test/crmGeoUtils.test.ts` and 216 total tests pass across all CRM test suites without regressions.
+- Verified complete compliance of `src/utils/crmPayrollUtils.ts` with Phase 3 Milestone M2 requirements:
+  - All 8 required functions plus `round2` and `createSalaryProfileSnapshot` implemented cleanly.
+  - Zero hardcoding or facades; genuine trigonometric and arithmetic algorithms with Monte Carlo integer oracle validation.
+  - Static type check (`cmd /c npx tsc --noEmit`) passes with 0 errors.
+  - 64 tests pass across M2 suites (`src/test/crmPayrollUtils.test.ts`: 48 tests, `src/test/crmPayrollUtils.stress.test.ts`: 16 tests).
+  - Regression suites pass with 0 regressions: `crmSalary` (98 tests passed), `crmAttendanceMigrationStress` & `crmPermissionRbac` (57 tests passed).
+  - Noted discovery of a pre-existing date-hardcoding issue in Phase 2 challenger test `crmAttendanceRoleFilterStress.challenger.test.tsx` (uses hardcoded "2026-10-17"), which does not affect Milestone M2 or production code.
 - Verdict: APPROVE.
 
 ## Artifact Index
@@ -42,21 +45,23 @@ Review and adversarially stress-test CRM Phase 2 Milestone 2 (Geo Location Calcu
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/utils/crmGeoUtils.ts` (constants, options, validation, distance calculation, geofencing, wrapper, mocks)
-  - `src/test/crmGeoUtils.test.ts` (33 unit and boundary tests)
-  - `src/types/crmAttendance.ts` (domain interfaces)
-  - `worker_m2/handoff.md` (upstream claims)
+  - `src/utils/crmPayrollUtils.ts` (pure functions, calendar date math, daily rate, LOP, OT, PF, ESI, net salary, snapshot, aggregation)
+  - `src/types/crmPayroll.ts` (domain interfaces, snapshot type, computed data contract)
+  - `src/test/crmPayrollUtils.test.ts` (48 unit tests)
+  - `src/test/crmPayrollUtils.stress.test.ts` (16 stress tests)
+  - `worker_m2_1/handoff.md` (upstream claims)
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified via test runs and source inspection.
+- **Unverified claims**: None. All claims independently verified via test runs, compiler runs, and source inspection.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Antimeridian crossing (179.5° to -179.5°) produces short arc (~111km) rather than back-arc (~39,919km): Verified pass.
-  - Antipodal coordinates do not produce `NaN` via numerical clamping: Verified pass.
-  - Identical points or pole points do not introduce floating-point noise: Verified pass (returns exact 0).
-  - Out of range or non-finite coordinates throw `RangeError`: Verified pass.
-  - Inactive geofences are excluded from nearest office lookup: Verified pass.
-  - W3C Geolocation error codes 1, 2, 3 mapped to specific user-friendly messages: Verified pass.
-  - Environment with unsupported geolocation rejects with clean descriptive message: Verified pass.
-- **Vulnerabilities found**: None critical. Downstream UI should handle GPS hardware accuracy degradation in indoor/basement settings.
-- **Untested angles**: Hardware-level sensor drift (handled via accuracy threshold in UI).
+  - Zero working days in month returns zeroed payslip without NaN/Infinity: Verified pass.
+  - 1,000 Monte Carlo randomized parameters against independent Cent Oracle: Maximum drift <= ₹0.01: Verified pass.
+  - Full-month absent staff yields 0 net salary: Verified pass.
+  - Advances exceeding gross pay clamp net salary to 0: Verified pass.
+  - Half-day attendance records correctly yield 0.5 LOP days: Verified pass.
+  - Only approved adjustments applied; pending/rejected strictly ignored: Verified pass.
+  - Astronomical century leap years (1900 vs 2000 vs 2024 vs 2100): Deterministic UTC days: Verified pass.
+  - Snapshot immutability: Captures all 7 profile parameters with non-null safeguards: Verified pass.
+- **Vulnerabilities found**: Minor finding on Phase 2 test fixture `crmAttendanceRoleFilterStress.challenger.test.tsx` hardcoding yesterday's date. M2 implementation code itself is robust and defect-free.
+- **Untested angles**: Large-scale distributed parallel lock transactions (belongs to M3/database phase).

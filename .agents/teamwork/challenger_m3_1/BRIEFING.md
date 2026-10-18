@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T10:48:30Z
+# BRIEFING — 2026-10-18T11:57:00Z
 
 ## Mission
-Empirically stress-test Staff Clock-In / Out pod interactions and geofence verification in src/pages/crm/Attendance.tsx for CRM Phase 2 Milestone 3.
+Adversarially challenge UI states & permissions for CredSmart Phase 3 Milestone M3: Salary Management & Payroll Engine (`src/pages/crm/SalaryManagement.tsx`).
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -10,6 +10,8 @@ Empirically stress-test Staff Clock-In / Out pod interactions and geofence verif
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub
 - Instance: 1 of 1
+- Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Phase 3 Milestone: CRM Phase 3 Milestone M3: Salary Management UI & Payroll Engine
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -17,31 +19,33 @@ Empirically stress-test Staff Clock-In / Out pod interactions and geofence verif
 - Place metadata only in .agents/teamwork/challenger_m3_1/
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T10:41:35Z
+- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Updated: 2026-10-18T11:47:40Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/Attendance.tsx`, `src/utils/crmGeoUtils.ts`, `src/test/crmAttendance.test.tsx`
-- **Interface contracts**: Phase 2 Milestone 3 Attendance UI & Clock-In Hub specifications
+- **Files to review**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagement.test.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`
+- **Interface contracts**: Phase 3 Milestone M3 Salary Management UI specifications
 - **Review criteria**:
-  1. Clock-in with GPS within geofence -> sets verification_method: 'geo_verified', is_within_geofence: true
-  2. Clock-in with GPS outside geofence -> sets verification_method: 'manual', is_within_geofence: false
-  3. Clock-in when GPS is denied / times out -> graceful warning and fallback
-  4. Active clock-in session stopwatch timer and clock-out duration/overtime calculations
-  5. Overall verification verdict: CONFIRMED or ISSUES_FOUND
+  1. Unauthorized user behavior (without `salary:view` permission -> restricted fallback `SalaryAccessRestrictedFallback`).
+  2. Non-approver user behavior (without `salary:approve` -> cannot lock payroll, generate payroll, or approve/reject adjustments).
+  3. Empty state rendering across Tab 1 (Profiles), Tab 3 (Adjustments), Tab 4 (My Payslips).
+  4. Toast error handling on Supabase errors and form validation errors.
+  5. Vitest test suite execution and TypeScript compilation (`tsc --noEmit`).
 
 ## Key Decisions Made
-- Authored dedicated empirical challenge test suite in `src/test/crmAttendanceStress.test.tsx` covering all 4 stress criteria.
-- Verified all 10 stress tests passed with 100% success rate alongside all 15 worker tests and 33 GeoUtils tests.
-- Verified TypeScript compilation (`npx tsc --noEmit`) passes with 0 errors.
-- Final verdict: CONFIRMED.
+- Executed `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx` -> 26/26 tests passed.
+- Executed `cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx` -> 17/17 tests passed.
+- Executed `cmd /c npx tsc --noEmit` -> 0 errors.
+- Verified all permission gates, fallbacks, empty states, and toast handlers.
+- Final verdict: APPROVE.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - H1: Clock-in inside office boundary sets verification_method='geo_verified', is_within_geofence=true in state, Supabase, and localStorage -> CONFIRMED.
-  - H2: Clock-in outside office boundary sets verification_method='manual', is_within_geofence=false, distance > 150m, notes annotated -> CONFIRMED.
-  - H3: GPS denial/timeout displays error badge, emits destructive toast, blocks corrupted record insertion, and fallback to Regularisation tab correction request is available -> CONFIRMED. Clock-out with GPS unreachable falls back gracefully to null coords and calculates overtime -> CONFIRMED.
-  - H4: Active session stopwatch increments in real-time (`HH:MM:SS`); clock-out computes accurate work duration and overtime beyond 480 minutes -> CONFIRMED.
+  - H1: User lacking `salary:view` cannot see confidential salary data and is presented with `SalaryAccessRestrictedFallback` and a destructive toast -> CONFIRMED.
+  - H2: Super admin bypasses view restriction and can access salary module -> CONFIRMED.
+  - H3: Staff lacking `salary:approve` cannot generate or lock payroll (buttons disabled) and cannot approve/reject adjustments (buttons hidden and handler guarded) -> CONFIRMED.
+  - H4: Empty states render cleanly on all tabs with appropriate informative messages -> CONFIRMED.
+  - H5: Query failures trigger error toasts; form validation blocks invalid inputs (missing staff, negative base salary, invalid percentage ranges) -> CONFIRMED.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.
 
@@ -53,4 +57,3 @@ Empirically stress-test Staff Clock-In / Out pod interactions and geofence verif
 - .agents/teamwork/challenger_m3_1/DISPATCH.md — incoming instructions
 - .agents/teamwork/challenger_m3_1/progress.md — liveness & step tracking
 - .agents/teamwork/challenger_m3_1/handoff.md — final handoff report
-- src/test/crmAttendanceStress.test.tsx — empirical stress test suite (10 tests)

@@ -1,12 +1,16 @@
-# Progress — CRM Phase 2 Milestone 1: Database Migration & TypeScript Types
+# Progress — CRM Phase 3 Milestone 1: Database Schema, Migration & Supabase Types
 
-Last visited: 2026-10-17T09:14:00Z
+Last visited: 2026-10-18T09:48:00Z
 
 ## Step-by-Step Execution Plan
 
-- [x] Step 1: Review current `src/integrations/supabase/types.ts` surrounding lines 90-130 to confirm exact insertion points.
-- [x] Step 2: Author `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` with fully idempotent SQL, tables (`crm_geolocations`, `crm_attendance`, `crm_attendance_requests`), indexes, update triggers, RLS and policies.
-- [x] Step 3: Author `src/types/crmAttendance.ts` with strongly-typed interfaces (`AttendanceStatus`, `AttendanceVerificationMethod`, `AttendanceRequestStatus`, `CRMAttendanceRecord`, `CRMGeolocation`, `CRMAttendanceRequest`).
-- [x] Step 4: Update `src/integrations/supabase/types.ts` inserting `crm_attendance`, `crm_attendance_requests`, and `crm_geolocations` alphabetically with full `Row`, `Insert`, `Update`, and `Relationships`.
-- [x] Step 5: Run compiler check `cmd /c npx tsc --noEmit` and test suite `npm.cmd test -- src/test/crmPermissionRbac.test.ts`. Both exited code 0 with 0 errors and 26/26 tests passing.
-- [x] Step 6: Produce handoff report `handoff.md` and send completion message to orchestrator parent.
+- [ ] Step 1: Create `supabase/migrations/20261017020000_create_crm_salary_tables.sql` with complete idempotent SQL (4 tables, 15 indexes, 3 triggers, 16 RLS policies).
+- [ ] Step 2: Inspect `src/integrations/supabase/types.ts` insertion points.
+- [ ] Step 3: Update `src/integrations/supabase/types.ts` inserting `crm_payroll_runs`, `crm_payslips`, `crm_salary_adjustments`, and `crm_salary_profiles`.
+- [ ] Step 4: Create `src/test/crmSalaryMigration.test.ts` with 22 specification tests.
+- [ ] Step 5: Create `src/test/crmSalaryTypes.test.ts` with 13 specification tests.
+- [ ] Step 6: Verify migration test suite with `cmd /c npx vitest run src/test/crmSalaryMigration.test.ts`.
+- [ ] Step 7: Verify type test suite with `cmd /c npx vitest run src/test/crmSalaryTypes.test.ts`.
+- [ ] Step 8: Verify TypeScript compilation with `cmd /c npx tsc --noEmit`.
+- [ ] Step 9: Verify zero regressions with `cmd /c npx vitest run src/test/crm*`.
+- [ ] Step 10: Write handoff report `handoff.md` and send completion message via `send_message`.

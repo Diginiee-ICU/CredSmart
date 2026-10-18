@@ -1,15 +1,27 @@
-## 2026-10-17T10:18:32Z
-You are challenger_m2_1 for CRM Phase 2 Milestone 2: Geo Location Calculation Engine & Utilities.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1
+# Task Assignment: Challenger M2-1 (Adversarial Payroll Edge Case Stress Testing)
+Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1
+Target: Milestone M2 Empirical Challenge
+Challenge:
+1. Empirically test adversarial inputs to `src/utils/crmPayrollUtils.ts`:
+   - 0 working days, negative salary, NaN, extreme numbers (₹10 Billion), fractional overtime.
+   - Leap years (Feb 2024, Feb 2000, Feb 1900).
+   - High volume calculations.
+2. Run `cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts`.
+Report APPROVE or REJECT in handoff.md.
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read worker_m2's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md.
+## 2026-10-18T10:53:37Z
+You are Challenger M2-1 for CredSmart Phase 3: Salary Management & Payroll Engine.
+Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1.
+Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\DISPATCH.md.
+Read:
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2_1\handoff.md
+- src/utils/crmPayrollUtils.ts
+- src/test/crmPayrollUtils.stress.test.ts
 
-Challenge Tasks:
-Empirically stress-test the mathematical calculations in src/utils/crmGeoUtils.ts:
-1. Test extreme edge cases: antipodal points (opposite sides of earth), identical points, north pole to south pole, equator to pole, crossing antimeridian (179 to -179 degrees).
-2. Validate distance against independent mathematical oracle calculations.
-3. Test boundary cases for isWithinGeofence: exactly on boundary (distance === radius), 1mm inside, 1mm outside.
-4. Output verdict: CONFIRMED or ISSUES_FOUND.
-
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md and report your verdict.
+Adversarially challenge the payroll engine:
+- Check boundary values: 0 working days, zero base salary, negative salary, NaN, extreme numbers (₹10 Billion), fractional overtime.
+- Verify leap years (Feb 2024, Feb 2000, Feb 1900).
+- Run cmd /c npx vitest run src/test/crmPayrollUtils.stress.test.ts
+Write your verdict (APPROVE or REJECT) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md.
+Send a message back to caller with your verdict and handoff path.
