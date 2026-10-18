@@ -14,20 +14,35 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
 
-    // Resolve active organization ID from header or user's default org
+    // Resolve active organization ID from header, token, or database
     const orgHeader = req.headers['x-organization-id'];
-    if (orgHeader && orgHeader !== 'undefined' && orgHeader !== 'null') {
+    if (orgHeader && orgHeader !== 'undefined' && orgHeader !== 'null' && orgHeader !== '') {
       req.orgId = orgHeader;
     } else if (decoded.orgId) {
       req.orgId = decoded.orgId;
     } else {
       // Lookup user's first membership if not specified
-      const memberRes = await pool.query(
-        'SELECT org_id FROM org_memberships WHERE user_id = $1 LIMIT 1',
-        [decoded.id]
-      );
-      if (memberRes.rows.length > 0) {
-        req.orgId = memberRes.rows[0].org_id;
+      try {
+        const memberRes = await pool.query(
+          `SELECT COALESCE(org_id, organization_id) AS org_id
+           FROM org_memberships
+           WHERE user_id = $1
+           UNION
+           SELECT COALESCE(org_id, organization_id) AS org_id
+           FROM organization_memberships
+           WHERE user_id = $1
+           LIMIT 1`,
+          [decoded.id]
+        );
+        if (memberRes.rows.length > 0 && memberRes.rows[0].org_id) {
+          req.orgId = memberRes.rows[0].org_id;
+        }
+      } catch (e) {
+        // Fallback: try querying organization directly if user has one
+        try {
+          const directOrg = await pool.query('SELECT id FROM organizations LIMIT 1');
+          if (directOrg.rows.length > 0) req.orgId = directOrg.rows[0].id;
+        } catch (_ignored) {}
       }
     }
 

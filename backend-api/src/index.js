@@ -4,6 +4,7 @@ const pool = require('./db');
 
 const authRoutes = require('./routes/auth');
 const productsRoutes = require('./routes/products');
+const inventoryRoutes = require('./routes/inventory');
 const partiesRoutes = require('./routes/parties');
 const invoicesRoutes = require('./routes/invoices');
 const settingsRoutes = require('./routes/settings');
@@ -49,13 +50,13 @@ app.get('/health', async (_req, res) => {
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
-app.use('/api', productsRoutes); // For product-batches and adjust-stock
-app.use('/api', partiesRoutes);  // For customers, suppliers, parties, credit-transactions, bank-accounts, party-wise-prices
-app.use('/api', invoicesRoutes); // For sales, purchases, expenses, returns, next-sequence
-app.use('/api', settingsRoutes); // For organizations, memberships, profiles, godowns, stock-transfers, storefront
+app.use('/api', inventoryRoutes); // For product-batches and adjust-stock
+app.use('/api', partiesRoutes);   // For customers, suppliers, parties, credit-transactions, bank-accounts
+app.use('/api', invoicesRoutes);  // For sales, purchases, purchase-invoices, expenses, returns
+app.use('/api', settingsRoutes);  // For organizations, organization-memberships, storefront-settings, locations
 app.use('/api/crm', crmRoutes);
-app.use('/', uploadRoutes);      // For /api/upload/:bucket and /storage/v1/object/public/...
-app.use('/', rpcRoutes);         // For /rpc/:fn and /rest/v1/:table
+app.use('/', uploadRoutes);       // For /api/upload/:bucket and storage
+app.use('/', rpcRoutes);          // For /rpc/:fn and /rest/v1/:table
 
 // 404 Handler
 app.use((req, res) => {
