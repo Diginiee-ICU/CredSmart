@@ -56,23 +56,20 @@ export default function CustomerLedger() {
   const fetchLedger = useCallback(async () => {
     if (!orgId || !id) return;
     try {
-      // 1. Get Customer Details
-      const { data: custData, error: custError } = await partiesApi.getCustomerById(id, orgId);
+      // 1. Get Customer Details, Credit Transactions & Sales Invoices concurrently
+      const [
+        { data: custData, error: custError },
+        { data: txData, error: txError },
+        { data: salesData }
+      ] = await Promise.all([
+        partiesApi.getCustomerById(id, orgId),
+        partiesApi.getCreditTransactions({ orgId, partyId: id, order: "asc" }),
+        invoicesApi.getSales(orgId, { customerId: id })
+      ]);
+
       if (custError) throw custError;
-      setCustomer(custData);
-
-      // 2. Get Credit Transactions
-      const { data: txData, error: txError } = await partiesApi.getCreditTransactions({
-        orgId,
-        partyId: id,
-        order: "asc",
-      });
       if (txError) throw txError;
-
-      // 3. Get Sales Invoices for customer (to verify credit sales cross-reference)
-      const { data: salesData } = await invoicesApi.getSales(orgId, {
-        customerId: id,
-      });
+      setCustomer(custData);
 
       // 4. Run Automated Financial Ledger Reconciliation
       const reconResult = reconcilePartyLedger(

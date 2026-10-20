@@ -660,6 +660,17 @@ export const documentsService = {
             }
           }
         } else {
+          const mappedSaleItems = doc.items.map((it) => ({
+            product_name: it.productName,
+            product_id: it.productId || null,
+            batch_number: it.batchNumber || null,
+            mrp: it.rate,
+            rate: it.rate,
+            quantity: it.quantity,
+            total: it.lineTotal,
+            line_total: it.lineTotal,
+          }));
+
           const { data: saleData, error: saleErr } = await invoicesApi.createSale(
             {
               organization_id: orgId,
@@ -668,30 +679,22 @@ export const documentsService = {
               discount_amount: doc.discountTotal,
               discount_label: doc.discountTotal > 0 ? "Discount" : null,
               tax: doc.taxTotal,
+              tax_amount: doc.taxTotal,
               total: doc.grandTotal,
+              total_amount: doc.grandTotal,
               payment_method: doc.paymentMethod || "Cash",
               created_by: userId,
               customer_id: doc.partyId || null,
+              customer_name: doc.partyName || "",
+              customer_phone: doc.partyPhone || "",
+              customer_gstin: doc.partyGstin || "",
+              items: mappedSaleItems as any,
             },
             orgId
           );
 
           if (!saleErr && saleData) {
             doc.id = saleData.id;
-
-            // Save items
-            if (doc.items.length > 0) {
-              const saleItems = doc.items.map((it) => ({
-                sale_id: saleData.id,
-                product_name: it.productName,
-                product_id: it.productId || null,
-                batch_number: it.batchNumber || null,
-                mrp: it.rate,
-                quantity: it.quantity,
-                line_total: it.lineTotal,
-              }));
-              await invoicesApi.createSaleItems(saleItems, orgId);
-            }
           }
         }
       } catch (err) {

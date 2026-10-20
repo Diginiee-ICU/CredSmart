@@ -1,48 +1,36 @@
-## 2026-10-17T08:58:46Z
-You are survey_explorer_2 in CRM Phase 2.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
+# Dispatch: Backend API Routes Explorer (Survey 2)
 
-Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z) and DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Read:
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
+- All files in `backend-api/` (routes, database connector, server entry points)
 
-Task:
-Investigate existing CRM components and UI infrastructure:
-- src/components/crm/ (CRMCard, CRMBadge, CRMDataTable, CRMPageHeader, CRMStatCard, CRMPermissionGate, CRMRolePill, index.ts)
-- src/hooks/useCRMPermission.ts and how permissions are checked and seeded
-- src/pages/crm/CRMDashboard.tsx (how stat cards query Supabase and how the Attendance card is currently wired)
-- src/pages/crm/RoleManagement.tsx (how modules and actions are listed)
-- Routing in src/config/routes.ts and src/App.tsx (ROUTE_PATHS, auth guards, layout wrappers)
-- Sidebar navigation in src/components/AppSidebar.tsx
-Document how src/pages/crm/Attendance.tsx should be constructed to conform 100% with the CRM design system, mobile responsiveness, and permission gating.
+Investigate:
+1. `backend-api/src/routes/invoices.js`:
+   - How sales are inserted.
+   - Missing endpoints: `POST /api/sale-items` (bulk line item insert with batching), `DELETE /api/sale-items`, `DELETE /api/sale-items/sale/:saleId`, `POST /api/sales/bulk`.
+   - Normalizing `total`/`total_amount` and `tax`/`tax_amount`.
+   - How `POST /api/sales` can receive `items` and insert both sale + items in a single atomic SQL transaction.
+2. `backend-api/src/routes/settings.js`:
+   - Aliasing `/api/storefront-settings` to `/api/storefront`.
+   - How membership queries handle `org_id` vs `organization_id` queries without runtime errors.
+3. `backend-api/src/routes/parties.js`:
+   - How `POST /customers` and `POST /suppliers` handle missing fields and return 201 records.
+4. Deployment context:
+   - Review Dockerfile, docker-compose.yml, environment variables, server structure.
 
-Write your detailed analysis report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\analysis.md and create a self-contained handoff.md. Then send a brief completion message back to the orchestrator.
+Deliverable:
+Write your complete findings and recommendations to `.agents/teamwork/explorer_survey_2/handoff.md`.
 
-
-## 2026-10-18T17:40:53Z
-You are explorer_survey_2. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
-
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-
-Mission:
-Explore and survey the CredSmart codebase for the Frontend Supabase Table Query Migration to Dedicated Backend API project.
-
-Your specific exploration focus:
-1. Customers, Suppliers, Parties & Khata Domain Query Audit:
-   - Systematically search src/ for all direct `supabase.from(...)` table query calls touching `customers`, `suppliers`, `parties`, `credit_transactions`, `party_wise_prices`, opening balances, and khata records.
-   - Document every file path, line number, table name, query operation (SELECT, INSERT, UPDATE, DELETE, UPSERT), filters, joins, and payload shape.
-2. Cash & Bank & Ledger Accounts Query Audit:
-   - Search src/ for all direct queries touching `bank_accounts`, cash ledgers, bank transactions, and related storage.
-3. Contract & State Parity Analysis:
-   - What component state hooks, loading states, and toast notifications depend on these queries?
-   - What data structures are expected by components consuming party and financial ledger queries?
-4. Backend API Contract Mapping:
-   - Map each identified query to target endpoints under `https://api.credsmart.online/api/*` (e.g. `/api/customers`, `/api/suppliers`, `/api/credit-transactions`, `/api/bank-accounts`).
-   - Identify query parameter conventions (pagination, search, filtering).
-
-Write your comprehensive findings and recommendations to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md
-
-Update your progress.md periodically.
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+## 2026-10-20T10:45:15Z
+You are Explorer Survey 2. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2`. Read `DISPATCH.md` in your working directory and `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`).
+Investigate `backend-api/` (routes `invoices.js`, `settings.js`, `parties.js`, db connection, server entry points).
+Analyze what's required for:
+1. `POST /api/sale-items` bulk line items with batching.
+2. `DELETE /api/sale-items` and `DELETE /api/sale-items/sale/:saleId`.
+3. `POST /api/sales/bulk`.
+4. Normalizing `total`/`total_amount` and `tax`/`tax_amount` in `POST /api/sales`.
+5. Atomic sale + items transaction in `POST /api/sales`.
+6. Aliasing `/api/storefront-settings` to `/api/storefront`.
+7. Membership query handling for `org_id` and `organization_id`.
+8. Sanitizing `POST /customers` and `POST /suppliers` to return 201 records.
+Write your complete findings and recommendations to `.agents/teamwork/explorer_survey_2/handoff.md` and send a message back when done.

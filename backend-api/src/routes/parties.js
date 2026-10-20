@@ -71,67 +71,145 @@ router.post('/customers', async (req, res) => {
       pincode = '',
       gstin = '',
       pan = '',
-      credit_limit = 0,
+      credit_limit,
       creditLimit,
-      opening_balance = 0,
+      opening_balance,
       openingBalance,
-      balance_type = 'receivable',
+      balance_type,
       balanceType,
-      is_active = true,
-      trade_name = '',
+      is_active,
+      trade_name,
       tradeName,
-      shipping_address = '',
+      shipping_address,
       shippingAddress,
-      category = 'General',
-      credit_period_days = 30,
+      category,
+      credit_period_days,
       creditPeriodDays,
-      custom_fields = {},
+      custom_fields,
       customFields,
     } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'Customer name is required' });
     }
 
-    const effectiveTradeName = trade_name || tradeName || '';
-    const effectiveShipping = shipping_address || shippingAddress || '';
-    const effectiveCreditLimit = credit_limit || creditLimit || 0;
-    const effectiveCreditDays = credit_period_days || creditPeriodDays || 30;
-    const effectiveOpeningBal = opening_balance || openingBalance || 0;
-    const effectiveBalType = balance_type || balanceType || 'receivable';
-    const effectiveCustomFields = custom_fields || customFields || {};
+    const effectiveName = String(name).trim();
+    const effectivePhone = phone != null ? String(phone).trim() : '';
+    const effectiveEmail = email != null ? String(email).trim() : '';
+    const effectiveAddress = address != null ? String(address).trim() : '';
+    const effectiveCity = city != null ? String(city).trim() : '';
+    const effectiveState = state != null ? String(state).trim() : '';
+    const effectivePincode = pincode != null ? String(pincode).trim() : '';
+    const effectiveGstin = gstin != null ? String(gstin).trim().toUpperCase() : '';
+    const effectivePan = pan != null ? String(pan).trim().toUpperCase() : '';
+    const effectiveTradeName = String(trade_name || tradeName || '').trim();
+    const effectiveShipping = String(shipping_address || shippingAddress || '').trim();
+    const effectiveCategory = String(category || 'General').trim();
+    const effectiveCreditLimit = Number(credit_limit ?? creditLimit ?? 0) || 0;
+    const effectiveOpeningBal = Number(opening_balance ?? openingBalance ?? 0) || 0;
+    const effectiveCreditDays = parseInt(String(credit_period_days ?? creditPeriodDays ?? 30), 10) || 30;
+    const effectiveBalType = String(balance_type || balanceType || 'receivable').toLowerCase();
+    const effectiveIsActive = is_active !== false;
+    const rawCustomFields = custom_fields || customFields || {};
+    let effectiveCustomFields;
+    try {
+      effectiveCustomFields = typeof rawCustomFields === 'object' && rawCustomFields !== null ? rawCustomFields : JSON.parse(String(rawCustomFields || '{}'));
+    } catch {
+      effectiveCustomFields = {};
+    }
 
-    const result = await pool.query(
-      `INSERT INTO customers (
-        org_id, organization_id, name, phone, email, address, city, state, pincode,
-        gstin, pan, credit_limit, opening_balance, balance_type, is_active,
-        trade_name, shipping_address, category, credit_period_days, custom_fields
-      ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-      RETURNING *`,
-      [
-        orgId,
-        name.trim(),
-        phone || '',
-        email || '',
-        address || '',
-        city || '',
-        state || '',
-        pincode || '',
-        gstin || '',
-        pan || '',
-        effectiveCreditLimit,
-        effectiveOpeningBal,
-        effectiveBalType,
-        is_active !== false,
-        effectiveTradeName,
-        effectiveShipping,
-        category || 'General',
-        effectiveCreditDays,
-        JSON.stringify(effectiveCustomFields),
-      ]
-    );
+    let row;
+    try {
+      const result = await pool.query(
+        `INSERT INTO customers (
+          org_id, organization_id, name, phone, email, address, city, state, pincode,
+          gstin, pan, credit_limit, opening_balance, balance_type, is_active,
+          trade_name, shipping_address, category, credit_period_days, custom_fields
+        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        RETURNING *`,
+        [
+          orgId,
+          effectiveName,
+          effectivePhone,
+          effectiveEmail,
+          effectiveAddress,
+          effectiveCity,
+          effectiveState,
+          effectivePincode,
+          effectiveGstin,
+          effectivePan,
+          effectiveCreditLimit,
+          effectiveOpeningBal,
+          effectiveBalType,
+          effectiveIsActive,
+          effectiveTradeName,
+          effectiveShipping,
+          effectiveCategory,
+          effectiveCreditDays,
+          JSON.stringify(effectiveCustomFields),
+        ]
+      );
+      row = result.rows[0];
+    } catch (_colErr) {
+      // Fallback if extended columns do not exist yet in live DB
+      const fallbackResult = await pool.query(
+        `INSERT INTO customers (
+          org_id, organization_id, name, phone, email, address, city, state, pincode,
+          gstin, pan, credit_limit, opening_balance, balance_type, is_active
+        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *`,
+        [
+          orgId,
+          effectiveName,
+          effectivePhone,
+          effectiveEmail,
+          effectiveAddress,
+          effectiveCity,
+          effectiveState,
+          effectivePincode,
+          effectiveGstin,
+          effectivePan,
+          effectiveCreditLimit,
+          effectiveOpeningBal,
+          effectiveBalType,
+          effectiveIsActive,
+        ]
+      );
+      row = fallbackResult.rows[0];
+    }
 
-    return res.status(201).json(result.rows[0]);
+    return res.status(201).json({
+      id: row.id,
+      org_id: row.org_id || row.organization_id || orgId,
+      organization_id: row.organization_id || row.org_id || orgId,
+      name: row.name || effectiveName,
+      phone: row.phone || effectivePhone,
+      email: row.email || effectiveEmail,
+      address: row.address || effectiveAddress,
+      city: row.city || effectiveCity,
+      state: row.state || effectiveState,
+      pincode: row.pincode || effectivePincode,
+      gstin: row.gstin || effectiveGstin,
+      pan: row.pan || effectivePan,
+      trade_name: row.trade_name || effectiveTradeName,
+      tradeName: row.trade_name || effectiveTradeName,
+      shipping_address: row.shipping_address || effectiveShipping,
+      shippingAddress: row.shipping_address || effectiveShipping,
+      category: row.category || effectiveCategory,
+      credit_limit: Number(row.credit_limit ?? effectiveCreditLimit),
+      creditLimit: Number(row.credit_limit ?? effectiveCreditLimit),
+      credit_period_days: Number(row.credit_period_days ?? effectiveCreditDays),
+      creditPeriodDays: Number(row.credit_period_days ?? effectiveCreditDays),
+      opening_balance: Number(row.opening_balance ?? effectiveOpeningBal),
+      openingBalance: Number(row.opening_balance ?? effectiveOpeningBal),
+      balance: Number(row.opening_balance ?? effectiveOpeningBal),
+      balance_type: row.balance_type || effectiveBalType,
+      balanceType: row.balance_type || effectiveBalType,
+      is_active: row.is_active !== false,
+      custom_fields: typeof row.custom_fields === 'string' ? JSON.parse(row.custom_fields || '{}') : (row.custom_fields || effectiveCustomFields),
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || new Date().toISOString(),
+    });
   } catch (err) {
     console.error('Create customer error:', err);
     return res.status(500).json({ error: err.message });
@@ -286,67 +364,145 @@ router.post('/suppliers', async (req, res) => {
       pincode = '',
       gstin = '',
       pan = '',
-      credit_limit = 0,
+      credit_limit,
       creditLimit,
-      opening_balance = 0,
+      opening_balance,
       openingBalance,
-      balance_type = 'payable',
+      balance_type,
       balanceType,
-      is_active = true,
-      trade_name = '',
+      is_active,
+      trade_name,
       tradeName,
-      shipping_address = '',
+      shipping_address,
       shippingAddress,
-      category = 'General',
-      credit_period_days = 30,
+      category,
+      credit_period_days,
       creditPeriodDays,
-      custom_fields = {},
+      custom_fields,
       customFields,
     } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'Supplier name is required' });
     }
 
-    const effectiveTradeName = trade_name || tradeName || '';
-    const effectiveShipping = shipping_address || shippingAddress || '';
-    const effectiveCreditLimit = credit_limit || creditLimit || 0;
-    const effectiveCreditDays = credit_period_days || creditPeriodDays || 30;
-    const effectiveOpeningBal = opening_balance || openingBalance || 0;
-    const effectiveBalType = balance_type || balanceType || 'payable';
-    const effectiveCustomFields = custom_fields || customFields || {};
+    const effectiveName = String(name).trim();
+    const effectivePhone = phone != null ? String(phone).trim() : '';
+    const effectiveEmail = email != null ? String(email).trim() : '';
+    const effectiveAddress = address != null ? String(address).trim() : '';
+    const effectiveCity = city != null ? String(city).trim() : '';
+    const effectiveState = state != null ? String(state).trim() : '';
+    const effectivePincode = pincode != null ? String(pincode).trim() : '';
+    const effectiveGstin = gstin != null ? String(gstin).trim().toUpperCase() : '';
+    const effectivePan = pan != null ? String(pan).trim().toUpperCase() : '';
+    const effectiveTradeName = String(trade_name || tradeName || '').trim();
+    const effectiveShipping = String(shipping_address || shippingAddress || '').trim();
+    const effectiveCategory = String(category || 'General').trim();
+    const effectiveCreditLimit = Number(credit_limit ?? creditLimit ?? 0) || 0;
+    const effectiveOpeningBal = Number(opening_balance ?? openingBalance ?? 0) || 0;
+    const effectiveCreditDays = parseInt(String(credit_period_days ?? creditPeriodDays ?? 30), 10) || 30;
+    const effectiveBalType = String(balance_type || balanceType || 'payable').toLowerCase();
+    const effectiveIsActive = is_active !== false;
+    const rawCustomFields = custom_fields || customFields || {};
+    let effectiveCustomFields;
+    try {
+      effectiveCustomFields = typeof rawCustomFields === 'object' && rawCustomFields !== null ? rawCustomFields : JSON.parse(String(rawCustomFields || '{}'));
+    } catch {
+      effectiveCustomFields = {};
+    }
 
-    const result = await pool.query(
-      `INSERT INTO suppliers (
-        org_id, organization_id, name, phone, email, address, city, state, pincode,
-        gstin, pan, credit_limit, opening_balance, balance_type, is_active,
-        trade_name, shipping_address, category, credit_period_days, custom_fields
-      ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-      RETURNING *`,
-      [
-        orgId,
-        name.trim(),
-        phone || '',
-        email || '',
-        address || '',
-        city || '',
-        state || '',
-        pincode || '',
-        gstin || '',
-        pan || '',
-        effectiveCreditLimit,
-        effectiveOpeningBal,
-        effectiveBalType,
-        is_active !== false,
-        effectiveTradeName,
-        effectiveShipping,
-        category || 'General',
-        effectiveCreditDays,
-        JSON.stringify(effectiveCustomFields),
-      ]
-    );
+    let row;
+    try {
+      const result = await pool.query(
+        `INSERT INTO suppliers (
+          org_id, organization_id, name, phone, email, address, city, state, pincode,
+          gstin, pan, credit_limit, opening_balance, balance_type, is_active,
+          trade_name, shipping_address, category, credit_period_days, custom_fields
+        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        RETURNING *`,
+        [
+          orgId,
+          effectiveName,
+          effectivePhone,
+          effectiveEmail,
+          effectiveAddress,
+          effectiveCity,
+          effectiveState,
+          effectivePincode,
+          effectiveGstin,
+          effectivePan,
+          effectiveCreditLimit,
+          effectiveOpeningBal,
+          effectiveBalType,
+          effectiveIsActive,
+          effectiveTradeName,
+          effectiveShipping,
+          effectiveCategory,
+          effectiveCreditDays,
+          JSON.stringify(effectiveCustomFields),
+        ]
+      );
+      row = result.rows[0];
+    } catch (_colErr) {
+      // Fallback if extended columns do not exist yet in live DB
+      const fallbackResult = await pool.query(
+        `INSERT INTO suppliers (
+          org_id, organization_id, name, phone, email, address, city, state, pincode,
+          gstin, pan, credit_limit, opening_balance, balance_type, is_active
+        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *`,
+        [
+          orgId,
+          effectiveName,
+          effectivePhone,
+          effectiveEmail,
+          effectiveAddress,
+          effectiveCity,
+          effectiveState,
+          effectivePincode,
+          effectiveGstin,
+          effectivePan,
+          effectiveCreditLimit,
+          effectiveOpeningBal,
+          effectiveBalType,
+          effectiveIsActive,
+        ]
+      );
+      row = fallbackResult.rows[0];
+    }
 
-    return res.status(201).json(result.rows[0]);
+    return res.status(201).json({
+      id: row.id,
+      org_id: row.org_id || row.organization_id || orgId,
+      organization_id: row.organization_id || row.org_id || orgId,
+      name: row.name || effectiveName,
+      phone: row.phone || effectivePhone,
+      email: row.email || effectiveEmail,
+      address: row.address || effectiveAddress,
+      city: row.city || effectiveCity,
+      state: row.state || effectiveState,
+      pincode: row.pincode || effectivePincode,
+      gstin: row.gstin || effectiveGstin,
+      pan: row.pan || effectivePan,
+      trade_name: row.trade_name || effectiveTradeName,
+      tradeName: row.trade_name || effectiveTradeName,
+      shipping_address: row.shipping_address || effectiveShipping,
+      shippingAddress: row.shipping_address || effectiveShipping,
+      category: row.category || effectiveCategory,
+      credit_limit: Number(row.credit_limit ?? effectiveCreditLimit),
+      creditLimit: Number(row.credit_limit ?? effectiveCreditLimit),
+      credit_period_days: Number(row.credit_period_days ?? effectiveCreditDays),
+      creditPeriodDays: Number(row.credit_period_days ?? effectiveCreditDays),
+      opening_balance: Number(row.opening_balance ?? effectiveOpeningBal),
+      openingBalance: Number(row.opening_balance ?? effectiveOpeningBal),
+      balance: Number(row.opening_balance ?? effectiveOpeningBal),
+      balance_type: row.balance_type || effectiveBalType,
+      balanceType: row.balance_type || effectiveBalType,
+      is_active: row.is_active !== false,
+      custom_fields: typeof row.custom_fields === 'string' ? JSON.parse(row.custom_fields || '{}') : (row.custom_fields || effectiveCustomFields),
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || new Date().toISOString(),
+    });
   } catch (err) {
     console.error('Create supplier error:', err);
     return res.status(500).json({ error: err.message });

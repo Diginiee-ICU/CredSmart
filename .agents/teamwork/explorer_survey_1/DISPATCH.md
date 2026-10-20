@@ -1,32 +1,23 @@
-## 2026-10-18T17:40:52Z
+# Dispatch: Database Schema & Migrations Explorer (Survey 1)
 
-[Message] timestamp=2026-10-18T17:40:52Z sender=73ee3452-ffda-43b4-83da-c3ca2006c47f priority=MESSAGE_PRIORITY_HIGH content=You are explorer_survey_1. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
+Read:
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
+- Database migrations in `supabase/migrations/`
+- Schema types in `src/integrations/supabase/types.ts`
+- Any existing SQL scripts or Docker PostgreSQL setup in `backend-api/` or root
 
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Investigate:
+1. All tables in the database schema: check whether they use `org_id` or `organization_id` or both.
+2. How to achieve seamless, zero-downtime bidirectional synchronization between `org_id` and `organization_id` in PostgreSQL 16 (e.g. generated columns or triggers).
+3. The exact schema of `customers` and `suppliers`, missing columns (`trade_name`, `shipping_address`, `category`, `credit_period_days`, `custom_fields`), data types, and default values.
+4. Indexes needed for performance on tenant IDs (`org_id`, `organization_id`) and query filters (`barcode`, `sku`, `phone`, `sale_date`, `created_at`).
+5. Ensure `fix_db.sql` will be fully idempotent (runnable repeatedly without error or data loss).
 
-Mission:
-Explore and survey the CredSmart codebase for the Frontend Supabase Table Query Migration to Dedicated Backend API project.
+Deliverable:
+Write your complete findings and recommendations to `.agents/teamwork/explorer_survey_1/handoff.md`.
 
-Your specific exploration focus:
-1. Existing Supabase Auth & Session Architecture:
-   - Inspect src/integrations/supabase/client.ts, src/hooks/useAuth.tsx, or anywhere Supabase client and auth sessions are managed.
-   - How are JWT/session tokens retrieved and refreshed?
-   - How can a centralized API client seamlessly access the active session token (e.g. `supabase.auth.getSession()`)?
-2. Products & Inventory Domain Query Audit:
-   - Systematically search src/ for all direct `supabase.from(...)` table query calls related to products, stock items, inventory, product_batches, categories, units, barcodes, and pricing.
-   - List every file path, line number, table name, operation type (SELECT, INSERT, UPDATE, DELETE, UPSERT), query filters, and payload structure.
-3. Backend API Contract & Standards:
-   - Identify conventions for target endpoints under `https://api.credsmart.online/api/*` (e.g. `/api/products`, etc.).
-   - Document required request headers (`Authorization: Bearer <token>`, `Content-Type: application/json`, etc.), error handling norms, and response format parity.
-4. Recommendations:
-   - Propose architecture for centralized API client (e.g. src/lib/apiClient.ts or src/services/api.ts).
-   - Outline migration steps and file boundaries for the Products & Inventory domain.
 
-Write your comprehensive findings and recommendations to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md
-
-Update your progress.md periodically.
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+## 2026-10-20T10:45:15Z
+You are Explorer Survey 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1`. Read `DISPATCH.md` in your working directory and `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`).
+Investigate the database schema across `supabase/migrations/` and `src/integrations/supabase/types.ts` for all tables regarding `org_id` vs `organization_id`, missing columns in `customers` and `suppliers`, query indexes, and how to write an idempotent `fix_db.sql` for PostgreSQL 16.
+Write your complete findings and recommendations to `.agents/teamwork/explorer_survey_1/handoff.md` and send a message back when done.

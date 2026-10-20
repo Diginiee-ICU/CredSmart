@@ -1,28 +1,21 @@
-## 2026-10-18T18:25:29Z
-You are reviewer_m1_2. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
+# Dispatch: Reviewer 2 for Milestone 1 (Database Schema Alignment)
 
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read:
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- `fix_db.sql` and `backend-api/fix_db.sql`
+- `src/test/fixDbSchema.test.ts`
 
-Artifacts to Review:
-- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
-- Worker M1 Implementation: src/lib/apiClient.ts
-- Worker M1 Test Suite: src/test/apiClient.test.ts
-- Worker M1 Handoff Report: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+Review Tasks:
+1. Objectively and adversarially review `fix_db.sql` and `backend-api/fix_db.sql`.
+2. Inspect trigger logic for `sync_org_id_and_organization_id()`.
+3. Verify that `org_memberships` and `organization_memberships` cross-sync cleanly.
+4. Run tests: `cmd /c npx vitest run src/test/fixDbSchema.test.ts`
+5. Run typecheck: `cmd /c npx tsc --noEmit`.
 
-Review Scope:
-1. Adversarially challenge the implementation for edge cases:
-   - Infinite 401 retry loop prevention (must only retry once).
-   - Network failure error normalization (handling thrown AbortError or TypeError without unhandled rejection).
-   - URL parameter encoding for nested objects or arrays.
-   - Handling of null/undefined request bodies for GET vs POST.
-2. Run verification commands:
-   - `cmd /c npx vitest run src/test/apiClient.test.ts`
-   - `cmd /c npx tsc --noEmit`
-3. Render an explicit gate verdict: APPROVE or REQUEST_CHANGES.
+Deliverable:
+Write review report to `.agents/teamwork/reviewer_m1_2/handoff.md` with explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
 
-Write your report to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+
+## 2026-10-20T11:22:07Z
+You are Reviewer 2 for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Review `fix_db.sql` and `backend-api/fix_db.sql` objectively and adversarially. Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`. Write your review report to `.agents/teamwork/reviewer_m1_2/handoff.md` with verdict APPROVE or REQUEST_CHANGES. Send a message when done.

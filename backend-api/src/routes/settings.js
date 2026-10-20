@@ -10,17 +10,28 @@ router.use(authenticate);
 // GET /api/organizations
 router.get('/organizations', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT o.*, COALESCE(m.role, 'owner') as user_role
-       FROM organizations o
-       LEFT JOIN (
-         SELECT org_id, user_id, role FROM org_memberships
-         UNION
-         SELECT organization_id as org_id, user_id, role FROM organization_memberships
-       ) m ON m.org_id = o.id AND m.user_id = $1
-       ORDER BY o.created_at ASC`,
-      [req.user.id]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        `SELECT o.*, COALESCE(m.role, 'owner') as user_role
+         FROM organizations o
+         LEFT JOIN (
+           SELECT org_id, user_id, role FROM org_memberships
+           UNION
+           SELECT organization_id as org_id, user_id, role FROM organization_memberships
+         ) m ON (m.org_id = o.id) AND m.user_id = $1
+         ORDER BY o.created_at ASC`,
+        [req.user.id]
+      );
+    } catch (_unionErr) {
+      result = await pool.query(
+        `SELECT o.*, COALESCE(m.role, 'owner') as user_role
+         FROM organizations o
+         LEFT JOIN org_memberships m ON (m.org_id = o.id) AND m.user_id = $1
+         ORDER BY o.created_at ASC`,
+        [req.user.id]
+      );
+    }
     return res.json(result.rows);
   } catch (err) {
     console.error('Get organizations error:', err);
@@ -110,26 +121,77 @@ const getMembershipsHandler = async (req, res) => {
     const { user_id, organization_id, org_id } = req.query;
     const targetOrg = organization_id || org_id || req.orgId;
 
-    let query = `
-      SELECT m.*, u.email, u.full_name, u.phone, u.avatar_url
-      FROM org_memberships m
-      LEFT JOIN users u ON u.id = m.user_id
-      WHERE 1=1
-    `;
-    const params = [];
+    let rows = [];
+    let queryErr = null;
 
-    if (user_id) {
-      params.push(user_id);
-      query += ` AND m.user_id = $${params.length}`;
-    }
-    if (targetOrg) {
-      params.push(targetOrg);
-      query += ` AND (m.org_id = $${params.length} OR m.organization_id = $${params.length})`;
+    // Try org_memberships first
+    try {
+      let query = `
+        SELECT m.*, u.email, u.full_name, u.phone, u.avatar_url
+        FROM org_memberships m
+        LEFT JOIN users u ON u.id = m.user_id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (user_id) {
+        params.push(user_id);
+        query += ` AND m.user_id = $${params.length}`;
+      }
+      if (targetOrg) {
+        params.push(targetOrg);
+        try {
+          const testRes = await pool.query(query + ` AND (m.org_id = $${params.length} OR m.organization_id = $${params.length}) ORDER BY m.created_at ASC`, params);
+          rows = testRes.rows;
+        } catch (_colErr) {
+          const testRes = await pool.query(query + ` AND m.org_id = $${params.length} ORDER BY m.created_at ASC`, params);
+          rows = testRes.rows;
+        }
+      } else {
+        query += ' ORDER BY m.created_at ASC';
+        const res1 = await pool.query(query, params);
+        rows = res1.rows;
+      }
+    } catch (err1) {
+      queryErr = err1;
+      // Fallback: try organization_memberships
+      try {
+        let query2 = `
+          SELECT m.*, u.email, u.full_name, u.phone, u.avatar_url
+          FROM organization_memberships m
+          LEFT JOIN users u ON u.id = m.user_id
+          WHERE 1=1
+        `;
+        const params2 = [];
+        if (user_id) {
+          params2.push(user_id);
+          query2 += ` AND m.user_id = $${params2.length}`;
+        }
+        if (targetOrg) {
+          params2.push(targetOrg);
+          query2 += ` AND m.organization_id = $${params2.length}`;
+        }
+        query2 += ' ORDER BY m.created_at ASC';
+        const res2 = await pool.query(query2, params2);
+        rows = res2.rows;
+        queryErr = null;
+      } catch (err2) {
+        console.error('Get memberships fallback error:', err2);
+      }
     }
 
-    query += ' ORDER BY m.created_at ASC';
-    const result = await pool.query(query, params);
-    return res.json(result.rows);
+    if (queryErr && rows.length === 0) {
+      console.warn('Membership query warning:', queryErr.message);
+      return res.json([]);
+    }
+
+    const normalized = rows.map(r => ({
+      ...r,
+      org_id: r.org_id || r.organization_id,
+      organization_id: r.organization_id || r.org_id,
+    }));
+
+    return res.json(normalized);
   } catch (err) {
     console.error('Get memberships error:', err);
     return res.status(500).json({ error: err.message });
@@ -240,7 +302,7 @@ router.put('/profiles/:userId', async (req, res) => {
 
 const getStorefrontHandler = async (req, res) => {
   try {
-    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    const orgId = req.params.orgId || req.orgId || req.query.org_id || req.query.organization_id;
     if (!orgId) return res.json(null);
     const result = await pool.query(
       'SELECT * FROM storefront_settings WHERE org_id = $1 OR organization_id = $1 LIMIT 1',
@@ -254,7 +316,7 @@ const getStorefrontHandler = async (req, res) => {
 
 const saveStorefrontHandler = async (req, res) => {
   try {
-    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const orgId = req.params.orgId || req.orgId || req.body.org_id || req.body.organization_id;
     const { store_name, store_slug, banner_url, description, is_active = true, theme_color } = req.body;
     const result = await pool.query(
       `INSERT INTO storefront_settings (org_id, organization_id, store_name, store_slug, banner_url, description, is_active, theme_color)
@@ -278,10 +340,14 @@ const saveStorefrontHandler = async (req, res) => {
 
 router.get('/storefront-settings', getStorefrontHandler);
 router.get('/storefront', getStorefrontHandler);
+router.get('/storefront-settings/:orgId', getStorefrontHandler);
+router.get('/storefront/:orgId', getStorefrontHandler);
 router.post('/storefront-settings', saveStorefrontHandler);
 router.post('/storefront', saveStorefrontHandler);
 router.put('/storefront-settings', saveStorefrontHandler);
 router.put('/storefront', saveStorefrontHandler);
+router.patch('/storefront-settings', saveStorefrontHandler);
+router.patch('/storefront', saveStorefrontHandler);
 
 // ==================== LOCATIONS / GODOWNS ====================
 

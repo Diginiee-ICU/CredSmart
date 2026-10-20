@@ -177,11 +177,14 @@ export default function Dashboard() {
 
     setLoading(true);
     try {
-      // 1. Fetch Credit Transactions (All historical for real-time ledger & chart)
-      const { data: creditData } = await partiesApi.getCreditTransactions({
-        orgId,
-        order: "asc",
-      });
+      // 1. Fetch Credit Transactions & Sales concurrently in parallel
+      const [creditRes, salesRes] = await Promise.all([
+        partiesApi.getCreditTransactions({ orgId, order: "asc" }),
+        invoicesApi.getSales(orgId, { order: "desc", sort: "created_at" }),
+      ]);
+
+      const creditData = creditRes.data;
+      const salesData = salesRes.data;
 
       setCreditTxHistory((creditData as any) || []);
 
@@ -200,12 +203,6 @@ export default function Dashboard() {
 
       setToCollect(Math.max(0, collectSum));
       setToPay(Math.max(0, paySum));
-
-      // 2. Fetch All Sales for Cash/Bank, Revenue, and Real-Time Chart
-      const { data: salesData } = await invoicesApi.getSales(orgId, {
-        order: "desc",
-        sort: "created_at",
-      });
 
       const allSalesList = (salesData || []).map((s) => ({
         id: s.id,

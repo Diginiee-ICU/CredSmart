@@ -1,54 +1,47 @@
-# BRIEFING — 2026-10-18T18:30:00Z
+# BRIEFING — 2026-10-20T11:25:00Z
 
 ## Mission
-Empirically stress-test src/lib/apiClient.ts with adversarial tests (50 concurrent requests, concurrent 401 refresh, flaky network simulation) and render gate verdict.
+Empirically challenge `fix_db.sql` idempotency, trigger sync logic (INSERT/UPDATE/edge cases), column completeness (20 party columns, dual org columns across all tables), and composite indexes. Run verification suite `src/test/fixDbSchema.test.ts` and write `handoff.md` with explicit verdict APPROVE or REQUEST_CHANGES.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-- Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
+- Original parent: 47768107-cdc6-46b5-a415-7ea52564fffb
 - Milestone: m1
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code (src/lib/apiClient.ts)
+- Review-only — do NOT modify implementation code (`fix_db.sql`, `backend-api/fix_db.sql`)
 - Empirically verify all findings with executable test harnesses
-- Render explicit gate verdict: APPROVE or REJECT
+- Render explicit gate verdict: APPROVE or REQUEST_CHANGES
 
 ## Current Parent
-- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
-- Updated: 2026-10-18T18:30:00Z
+- Conversation ID: 47768107-cdc6-46b5-a415-7ea52564fffb
+- Updated: 2026-10-20T11:25:00Z
 
 ## Review Scope
-- **Files to review**: src/lib/apiClient.ts, src/test/apiClient.test.ts, src/test/apiClient.stress.test.ts
-- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md
-- **Review criteria**: Concurrency safety, race condition resistance, 401 token refresh loops, network timeout & flakiness handling.
+- **Files to review**: `fix_db.sql`, `backend-api/fix_db.sql`, `src/test/fixDbSchema.test.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (R1), `worker_m1/handoff.md`
+- **Review criteria**: Idempotency on repeated execution, trigger synchronization on INSERT and UPDATE, table/column completeness, index coverage, PostgreSQL 16 compatibility.
 
 ## Key Decisions Made
-- Authored 15 adversarial stress tests in `src/test/apiClient.stress.test.ts`.
-- Executed both standard and stress test suites via Vitest: 68/68 passed (53 unit tests + 15 stress tests).
-- Verified TypeScript compilation: `tsc --noEmit` exited 0.
-- Rendered Gate Verdict: APPROVE.
+- [TBD - Pending empirical evaluation]
 
 ## Artifact Index
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md — Final challenge report and gate verdict
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\progress.md — Liveness heartbeat
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\test\apiClient.stress.test.ts — Adversarial stress test harness
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` — Final challenge report and gate verdict
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\progress.md` — Liveness heartbeat
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - 50 simultaneous requests with random jitter (5-25ms) and variable getSession delay: PASSED (zero token loss, zero header bleeding).
-  - 50 concurrent 401 expiration storm: PASSED (transparent refresh, retried successfully, no infinite loops).
-  - 30 concurrent retries where retry also 401: PASSED (strictly 1 retry, total 60 calls, terminates cleanly).
-  - Refresh failure and unhandled refresh rejection: PASSED (catches error, returns normalized 401).
-  - Flaky network dropouts (Failed to fetch, ECONNRESET, ETIMEDOUT): PASSED (normalizes to NETWORK_ERROR).
-  - Hanging connection with timeout: PASSED (aborts within timeout threshold).
-  - In-flight AbortController signal: PASSED (normalizes to ABORTED).
-  - Non-JSON 502/503/504 responses and corrupt JSON bodies: PASSED (gracefully extracted).
-  - Large payload stress (500KB JSON, 5000 items): PASSED (flawless serialization).
-- **Vulnerabilities found**: None in `src/lib/apiClient.ts`.
-- **Untested angles**: WebSocket / Realtime streams (out of scope for apiClient HTTP client).
+  - Idempotency: Can `fix_db.sql` be executed multiple times without error?
+  - Trigger sync on INSERT: org_id only -> copies to organization_id? organization_id only -> copies to org_id?
+  - Trigger sync on UPDATE: updating org_id alone -> does organization_id follow? updating organization_id alone -> does org_id follow?
+  - Null reconciliation: What happens if both are NULL, or one is set from NULL to a value?
+  - Column completeness: Are all required columns present on customers, suppliers, products, etc.?
+  - Dual table sync between org_memberships and organization_memberships.
+- **Vulnerabilities found**: [TBD]
+- **Untested angles**: [TBD]
 
 ## Loaded Skills
 - None

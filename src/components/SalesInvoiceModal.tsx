@@ -1104,27 +1104,30 @@ export function SalesInvoiceModal({
         toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
       } else if (saveAndNew) {
         toast.success(`Invoice #${saved.documentNumber} created! Ready for next bill.`);
-      } else if (docType === "sales_invoice") {
-        try {
-          const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
-          if (netInvoice) {
-            toast.success(
-              `⚡ Sales Invoice #${fullDocumentNumber} saved & shared with ${netInvoice.recipientOrgName} for purchase approval!`,
-              { duration: 5000 }
-            );
-          } else {
-            toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-          }
-        } catch (netErr) {
-          console.warn("Network dispatch notice:", netErr);
-          toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-        }
       } else {
         toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
       }
+
+      // Background network invoice dispatch: non-blocking to keep bill generation sub-500ms
+      if (docType === "sales_invoice") {
+        networkInvoicingService
+          .sendSalesInvoiceToNetwork(saved, org, user?.id)
+          .then((netInvoice) => {
+            if (netInvoice) {
+              toast.success(
+                `⚡ Sales Invoice #${fullDocumentNumber} shared with ${netInvoice.recipientOrgName}!`,
+                { duration: 4000 }
+              );
+            }
+          })
+          .catch((netErr) => {
+            console.warn("Network dispatch notice:", netErr);
+          });
+      }
       onSaved(saved);
 
-      if (andPrint) {
+      const isMobileView = typeof window !== "undefined" && window.innerWidth < 1024;
+      if (andPrint && !isMobileView) {
         if (onPrintRequest) {
           onPrintRequest(saved);
         } else {

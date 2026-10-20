@@ -1,20 +1,21 @@
-## 2026-10-17T09:15:27Z
-You are auditor_m1 for CRM Phase 2 Milestone 1: Database Migration & TypeScript Types.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
+# Dispatch: Forensic Auditor for Milestone 1 (Database Schema Alignment)
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
+Read:
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- `fix_db.sql` and `backend-api/fix_db.sql`
+- `src/test/fixDbSchema.test.ts`
 
-Forensic Audit Tasks:
-Perform an independent integrity audit of Milestone 1 work products:
-- supabase/migrations/20261017010000_create_crm_attendance_tables.sql
-- src/types/crmAttendance.ts
-- src/integrations/supabase/types.ts
+Auditing Tasks:
+1. Forensic integrity analysis:
+   - Check whether `fix_db.sql` is genuine SQL code or a placeholder.
+   - Check whether `src/test/fixDbSchema.test.ts` tests real logic or contains hardcoded/vacuous assertions.
+   - Verify that all 42 tables and triggers are genuinely parsed and tested.
+   - Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
 
-Run the following checks:
-1. Static analysis: Check for mock bypasses, hardcoded test strings, dummy implementations, or fake stubs.
-2. Verify that the SQL migration is genuine and production-ready with real tables, real indexes, and real RLS.
-3. Verify that the TypeScript types accurately model genuine database tables and are not stubbed.
-4. Issue a binary verdict: CLEAN or INTEGRITY VIOLATION.
+Deliverable:
+Write report to `.agents/teamwork/auditor_m1/handoff.md` with explicit verdict: `CLEAN` or `INTEGRITY VIOLATION`.
 
-Write your audit report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md and send a completion message with your verdict.
+
+## 2026-10-20T11:22:09Z
+You are Forensic Auditor for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Conduct forensic integrity verification on `fix_db.sql`, `backend-api/fix_db.sql`, and `src/test/fixDbSchema.test.ts`. Verify implementations are genuine and test assertions are authentic. Run tests. Write report to `.agents/teamwork/auditor_m1/handoff.md` with verdict CLEAN or INTEGRITY VIOLATION. Send a message when done.

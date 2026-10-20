@@ -1,45 +1,43 @@
-## 2026-10-18T18:15:36Z
-You are worker_m1. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
+# Dispatch: Milestone 1 Worker — Live Database Schema Alignment & Idempotent fix_db.sql
 
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read:
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
+- Explorer Survey 1 findings: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md` and `analysis.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix\SCOPE.md`
 
-Reference Specifications & Architecture:
-- Project specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
-- Explorer survey findings: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md
+Your Exclusive File Ownership:
+- `fix_db.sql` (at repository root)
+- `backend-api/fix_db.sql`
+- `src/test/fixDbSchema.test.ts`
 
-Write Ownership:
-You EXCLUSIVELY own:
-- `src/lib/apiClient.ts`
-- `src/test/apiClient.test.ts`
-Do NOT modify files outside your ownership boundary.
+Objectives:
+1. Implement the complete, fully idempotent `fix_db.sql` script at project root `fix_db.sql` and mirror it in `backend-api/fix_db.sql`.
+   - Universal bidirectional trigger `sync_org_id_and_organization_id()` attached to all 42 tenant-scoped tables.
+   - Dual table synchronization between `org_memberships` and `organization_memberships`.
+   - Complete column coverage for `customers` and `suppliers` (all 20 fields matching backend contracts, with safe defaults).
+   - Columns for `products`, `product_batches`, `sales`, `sale_items`, `purchase_invoices`, `purchase_invoice_items`, `credit_transactions`, `expenses`, `bank_accounts`, `invoice_sequences`, `party_wise_prices`, `godowns`, `locations`, `storefront_settings`, `storefront_orders`, `sales_returns`, `purchase_returns`, `crm_*` tables.
+   - Composite B-Tree indexes on tenant IDs and high-throughput query filters (`org_id, barcode`, `org_id, sku`, `org_id, phone`, `org_id, sale_date DESC, created_at DESC`).
+   - Run inside `BEGIN; ... COMMIT;` with `ANALYZE` commands outside the transaction block.
+   - Idempotent and clean execution on PostgreSQL 16.
+2. Create unit / validation tests in `src/test/fixDbSchema.test.ts` verifying:
+   - All 42 tables have both `org_id` and `organization_id` column definitions and triggers in `fix_db.sql`.
+   - All 20 customer/supplier fields are declared with default values.
+   - All performance indexes exist with `IF NOT EXISTS`.
+   - Trigger function logic correctly implements bidirectional assignment.
+3. Run the test suite (`cmd /c npx vitest run src/test/fixDbSchema.test.ts`) and verify all tests pass.
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-Mission:
-Implement Milestone 1 (M1) — Centralized API Client & Auth Interceptor:
-1. Create `src/lib/apiClient.ts` as a robust, production-grade HTTP client communicating with `https://api.credsmart.online/api`:
-   - Configurable base URL defaulting to `https://api.credsmart.online/api` (allow override via `VITE_API_BASE_URL` or `window.__API_BASE_URL__`).
-   - Automatically retrieve active Supabase JWT session token via `supabase.auth.getSession()` and attach `Authorization: Bearer <token>`.
-   - Automatically attach `x-organization-id` header from caller options or `localStorage.getItem("credsmart_active_org_id")`.
-   - Support standard HTTP methods: GET, POST, PUT, DELETE, PATCH with URL query parameters and JSON serialization.
-   - Provide transparent 401 Unauthorized token refresh: call `supabase.auth.refreshSession()` and retry once if the session expired.
-   - Response normalization envelope: `{ data: T | null, error: ApiError | null }` where `ApiError` has `{ message: string, code?: string, status?: number }`.
-   - Export helper functions: `apiClient<T>(endpoint, options)`, `apiGet`, `apiPost`, `apiPut`, `apiDelete`, `apiPatch`.
-2. Write unit tests in `src/test/apiClient.test.ts` (15+ tests):
-   - Header propagation (Bearer token, Content-Type, x-organization-id).
-   - Method verbs (GET, POST, PUT, DELETE, PATCH).
-   - URL parameter serialization.
-   - Error normalization on 400, 404, 500 responses.
-   - 401 automatic token refresh and retry flow.
-   - Network failure handling.
-3. Verification:
-   - Run `cmd /c npx tsc --noEmit` to verify clean compilation with 0 errors.
-   - Run `cmd /c npx vitest run src/test/apiClient.test.ts` to verify 100% passing tests.
+Deliverable:
+Write your complete implementation report to `.agents/teamwork/worker_m1/handoff.md` and send a message back when done.
 
-Write your complete handoff report to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+## 2026-10-20T11:04:33Z
+You are Worker M1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1`.
+Read `DISPATCH.md` in your working directory and `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`.
+Read Explorer Survey 1's findings at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md`.
+Implement the complete, idempotent `fix_db.sql` at root and in `backend-api/fix_db.sql`.
+Create unit/contract tests in `src/test/fixDbSchema.test.ts` to test all triggers, tables, columns, and indexes.
+Run tests via `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
+Write your completion report to `.agents/teamwork/worker_m1/handoff.md` and send a message back when done.
+

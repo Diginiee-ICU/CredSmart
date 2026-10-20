@@ -753,3 +753,62 @@ Provide a clean, maintainable API client layer or utility with base URL configur
 - [ ] Network requests for products, parties, invoices, and other data resources target `https://api.credsmart.online/api/*` via standard HTTP methods (GET, POST, PUT, DELETE).
 - [ ] Protected endpoints consistently attach the active session's Bearer token.
 - [ ] Response handling correctly parses backend payload structures, preserving loading indicators, toast notifications, and error boundary behaviors.
+
+
+## 2026-10-20T10:39:14Z
+
+Resolve critical production issues where:
+1. No data is being stored across products, customers/parties, and invoices.
+2. Entity creation endpoints fail with 500 errors (e.g. `column "org_id" does not exist`).
+3. Existing and newly created items, parties, and customers are not visible in list/table views.
+4. Bill generation hangs or takes excessive time (several seconds) due to synchronous PDF rendering, unbatched queries, and blocking network dispatches.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Server target: Ubuntu server (`woodzire@credsmart:~/server`), `postgres-db`, `backend-api` container
+
+## Requirements
+
+### R1. Live Database Schema Alignment & Resilient Migrations
+- Provide an automated, idempotent SQL migration script (`fix_db.sql`) that:
+  - Ensures every table has both `org_id` AND `organization_id` columns, bidirectionally synchronized.
+  - Ensures all missing columns in `customers` and `suppliers` exist (`trade_name`, `shipping_address`, `category`, `credit_period_days`, `custom_fields`).
+  - Ensures all indexes exist on tenant IDs and primary query filters (`barcode`, `sku`, `phone`, `sale_date`, `created_at`).
+  - Is safe to run repeatedly on PostgreSQL 16 without errors or data loss.
+
+### R2. Backend Route Completion & Full Contract Parity
+- In `backend-api/src/routes/invoices.js`:
+  - Implement `POST /api/sale-items` (bulk line item insert with batching).
+  - Implement `DELETE /api/sale-items` and `DELETE /api/sale-items/sale/:saleId`.
+  - Implement `POST /api/sales/bulk` (bulk sales insertion).
+  - Normalize field names in `POST /api/sales` so both `total` and `total_amount`, `tax` and `tax_amount` are accepted.
+  - Support receiving `items` directly in `POST /api/sales` to insert sale + items in a single atomic SQL transaction.
+- In `backend-api/src/routes/settings.js`:
+  - Alias `/api/storefront-settings` to `/api/storefront` so frontend calls never 404.
+  - Fix membership queries to safely handle cases where either `org_id` or `organization_id` is queried without throwing runtime column errors.
+- In `backend-api/src/routes/parties.js`:
+  - Ensure `POST /customers` and `POST /suppliers` gracefully sanitize missing fields and return complete 201 records.
+
+### R3. Lightning-Fast Bill Generation (< 500ms)
+- In `SalesInvoiceModal.tsx` & `MobileCreateInvoice.tsx`:
+  - Decouple heavy `downloadExactInvoicePdf` (`html2canvas`) from the "Generate Bill" click flow on mobile; transition instantly to `MobileInvoiceSuccessView` and allow downloading/printing on demand.
+  - Run `networkInvoicingService.sendSalesInvoiceToNetwork` asynchronously as a non-blocking background task (`void sendSalesInvoiceToNetwork(...)`) instead of awaiting it on the main save thread.
+  - In `documentsService.saveDocument`, send the sale AND its items together in a single API call when creating or updating, avoiding multiple sequential network round-trips.
+
+### R4. List Visibility & Frontend Cache Hydration
+- Ensure `ProductsContext.tsx`, `Customers.tsx`, `Parties.tsx`, and `documentsService.ts`:
+  - Fall back to local cached data with a non-blocking toast warning if the cloud API encounters a transient network error, rather than clearing the state to empty arrays.
+  - Normalize and display all created items and parties immediately in memory upon successful creation.
+
+### R5. One-Click Automated Server Deployment Script
+- Provide a clean deployment script (`deploy-fix.sh`) and instructions that:
+  - Copies updated `backend-api` files into `~/server/api/`.
+  - Runs `docker exec -i postgres-db psql -U postgres -d app_db < fix_db.sql`.
+  - Rebuilds and restarts the `backend-api` container: `docker compose up -d --build api`.
+  - Tests health via `curl http://localhost:3000/health`.
+
+## Acceptance Criteria
+- [ ] Database migration executes cleanly on the server with 0 errors.
+- [ ] `POST /api/customers`, `POST /api/products`, and `POST /api/sales` return HTTP 201 with stored records.
+- [ ] `GET /api/products`, `GET /api/customers`, `GET /api/parties`, and `GET /api/sales` return full arrays without 500 errors.
+- [ ] Bill generation on mobile transitions to the success screen in under 500ms without freezing the UI.
+- [ ] All created items, parties, and customers are immediately visible in their respective list views and persist across page reloads.

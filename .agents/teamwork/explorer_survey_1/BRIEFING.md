@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T18:06:00Z
+# BRIEFING — 2026-10-20T10:49:30Z
 
 ## Mission
-Explore and survey the CredSmart codebase for the Frontend Supabase Table Query Migration to Dedicated Backend API project, focusing on Auth/Session handling, Products & Inventory query audit, API contract standards, and architecture recommendations.
+Investigate database schema across supabase/migrations/ and src/integrations/supabase/types.ts for all tables regarding org_id vs organization_id, missing columns in customers and suppliers, query indexes, and how to write an idempotent fix_db.sql for PostgreSQL 16.
 
 ## 🔒 My Identity
 - Archetype: explorer
@@ -17,31 +17,34 @@ Explore and survey the CredSmart codebase for the Frontend Supabase Table Query 
 - Write comprehensive handoff.md with 5-component protocol
 
 ## Current Parent
-- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
-- Updated: not yet
+- Conversation ID: 47768107-cdc6-46b5-a415-7ea52564fffb
+- Updated: 2026-10-20T10:45:15Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/integrations/supabase/client.ts`, `src/hooks/useAuth.tsx`, `src/hooks/useOrganization.tsx`
-  - `src/context/ProductsContext.tsx`
-  - `src/pages/Items.tsx`, `src/pages/ItemMaster.tsx`, `src/pages/Inventory.tsx`, `src/pages/POSBilling.tsx`, `src/pages/BarcodeGenerator.tsx`, `src/pages/PurchaseReturns.tsx`, `src/pages/TallyImport.tsx`, `src/pages/Auth.tsx`, `src/pages/Dashboard.tsx`
-  - `src/services/stockService.ts`, `src/services/documentsService.ts`, `src/services/networkInvoicingService.ts`, `src/services/storefrontService.ts`, `src/services/autoSyncService.ts`
-  - `src/components/items/QuickCreateItemModal.tsx`, `src/components/PurchaseInvoiceForm.tsx`, `src/components/storefront/StorefrontCatalogTab.tsx`, `src/components/AppLayout.tsx`
-  - `src/utils/offlineQueue.ts`
-  - `supabase/migrations/20261018000000_credsmart_full_schema.sql`
+  - `supabase/migrations/20261018000000_credsmart_full_schema.sql`, `20260825_add_party_extended_fields.sql`, and all 25 migration files
+  - `src/integrations/supabase/types.ts`
+  - `backend-api/schema.sql`, `backend-api/fix_db.sql`, `backend-api/add_indexes.sql`, `backend-api/deploy-all.sh`
+  - `backend-api/src/routes/products.js`, `parties.js`, `invoices.js`, `settings.js`, `inventory.js`, `crm.js`, `rpc.js`, `auth.js`
+  - `backend-api/src/middleware/auth.js`
+  - `src/services/partiesApi.ts`, `src/services/documentsService.ts`, `src/types/parties.ts`, `src/components/parties/CreatePartyModal.tsx`
 - **Key findings**:
-  - Supabase client has `storage: localStorage`, `persistSession: true`, `autoRefreshToken: true`. Calling `supabase.auth.getSession()` automatically refreshes expired JWTs before returning the session token.
-  - Exactly two Postgres tables govern the Products & Inventory domain: `public.products` and `public.product_batches`. There are no standalone tables for `categories` or `units`; categories, barcodes, units, and base prices are stored as columns or within `tags JSONB` on `products`, and batch pricing/stock is in `product_batches`.
-  - Identified 21 files with ~60 distinct direct `supabase.from("products")` and `supabase.from("product_batches")` queries (SELECT, INSERT, UPDATE, DELETE, UPSERT).
-  - Designed target REST contract for `https://api.credsmart.online/api/products` and `product-batches` with Bearer JWT propagation, `x-organization-id` header, and response envelope parity (`{ data, error }`).
+  - Identified root cause of HTTP 500 entity creation failures: explicit dual-column `INSERT` statements in backend routes (e.g. `INSERT INTO products (org_id, organization_id, ...)`) against tables that only possessed `organization_id` (Supabase schema) or only `org_id` (backend schema).
+  - PostgreSQL 16 generated columns cannot be used because they are read-only and disallow explicit insert values, and cannot be bidirectional.
+  - Selected and designed the universal `BEFORE INSERT OR UPDATE` trigger `sync_org_id_and_organization_id()` for zero-downtime, zero-query-overhead bidirectional synchronization.
+  - Detailed 20 required columns for `customers` and `suppliers` matching the `parties.js` contract.
+  - Formulated composite B-Tree indexes for tenant + search/order queries (`org_id, barcode`, `org_id, sku`, `org_id, phone`, `org_id, sale_date DESC, created_at DESC`).
+  - Authored complete, idempotent PostgreSQL 16 `fix_db.sql` blueprint.
 - **Unexplored areas**:
-  - Other business domains (customers/parties, sales, purchases, crm) will be surveyed in subsequent phases.
+  - Implementation of backend route adjustments (R2), frontend billing speed optimizations (R3), and offline cache hydration (R4) to be completed by respective specialist agents.
 
 ## Key Decisions Made
-- Formulated centralized `apiClient.ts` architecture maintaining `{ data, error }` return signature to achieve drop-in replacement parity without modifying consumer component contracts or error-handling flows.
+- Use universal `BEFORE INSERT OR UPDATE` trigger function instead of generated columns or views to achieve 100% zero-downtime bidirectional compatibility across PostgreSQL 16.
+- Enforce both `org_id` and `organization_id` on all 42 tenant-scoped tables with automatic backfilling.
 
 ## Artifact Index
 - `DISPATCH.md` — Record of incoming dispatch messages
 - `BRIEFING.md` — Persistent situational memory
 - `progress.md` — Liveness and execution heartbeat
-- `handoff.md` — Comprehensive 5-component survey report
+- `analysis.md` — In-depth architectural analysis and table comparison
+- `handoff.md` — Comprehensive 5-component survey report and full `fix_db.sql` code

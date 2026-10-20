@@ -219,22 +219,31 @@ export default function Customers() {
     }
     setLoading(true);
     try {
-      const { data: custs, error } = await partiesApi.getCustomers(orgId, {
-        sort: "name",
-        order: "asc",
-      });
+      const [
+        { data: custs, error },
+        { data: credits, error: creditsError }
+      ] = await Promise.all([
+        partiesApi.getCustomers(orgId, { sort: "name", order: "asc" }),
+        partiesApi.getCreditTransactions({ orgId, partyType: "customer" })
+      ]);
 
       if (error) {
-        console.error("fetchCustomers error:", error);
+        console.warn("fetchCustomers notice, reading cache:", error);
+        try {
+          const raw = localStorage.getItem(`credsmart_cached_customers_${orgId}`);
+          if (raw) {
+            const cached = JSON.parse(raw);
+            if (Array.isArray(cached) && cached.length > 0) {
+              setCustomers(cached);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { /* empty */ }
         setCustomers([]);
         setLoading(false);
         return;
       }
-
-      const { data: credits, error: creditsError } = await partiesApi.getCreditTransactions({
-        orgId,
-        partyType: "customer",
-      });
 
       if (creditsError) {
         console.error("fetchCustomers credits error:", creditsError);

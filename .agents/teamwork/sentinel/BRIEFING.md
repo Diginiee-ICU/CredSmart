@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T19:18:00Z
+# BRIEFING — 2026-10-20T10:42:00Z
 
 ## Mission
-Migrate all direct frontend Supabase table queries to standard fetch requests communicating with the dedicated backend API (https://api.credsmart.online/api/*), securing endpoints with active session tokens and preserving complete UI and data contract parity.
+Resolve critical production issues: live database schema alignment (fix_db.sql), backend route completion & contract parity (invoices.js, settings.js, parties.js), lightning-fast bill generation (< 500ms), list visibility & frontend cache hydration, and automated server deployment script (deploy-fix.sh).
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -27,6 +27,8 @@ Migrate all direct frontend Supabase table queries to standard fetch requests co
 - Active Orchestrator (API Migration Gen 1): 73ee3452-ffda-43b4-83da-c3ca2006c47f (succeeded at 16 spawns)
 - Active Orchestrator (API Migration Gen 2): 02fa2ba5-8091-4db1-9b70-bdb7e414d8ee
 - Victory Auditor (API Migration): 4817e639-ade5-4c21-a49e-d1eba94e20bb
+- Active Orchestrator (Production Fixes): 47768107-cdc6-46b5-a415-7ea52564fffb
+- Victory Auditor (Production Fixes): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -40,30 +42,28 @@ Migrate all direct frontend Supabase table queries to standard fetch requests co
 - Zero ESLint errors
 - All SQL migrations are idempotent (IF NOT EXISTS, ON CONFLICT DO NOTHING)
 - `cmd /c npx` for all CLI commands (PowerShell execution policy)
+- Ensure PostgreSQL 16 compatibility and 0 data loss
+- Decouple PDF generation from bill generation UI thread (< 500ms)
 
 ## User Context
-- **Last user request**: Migrate all direct frontend Supabase table queries to standard fetch requests communicating with the dedicated backend API (https://api.credsmart.online/api/*), securing endpoints with active session tokens and preserving complete UI and data contract parity.
+- **Last user request**: Resolve critical production issues (data storage failure across products/customers/invoices, 500 column org_id errors, missing list visibility, slow bill generation, fix_db.sql, backend route completion, and deploy-fix.sh).
 - **Pending clarifications**: none
-- **Delivered results**: M1 (Centralized API Client) PASSED, M2 (Products & Inventory) PASSED, M3 (Customers, Suppliers, Parties & Financial Ledgers) PASSED, M4 (Invoices, Sales, Purchases, Returns & Expenses) PASSED, M5 (Settings, Organizations, Profiles, Locations & CRM) PASSED, M6 (Static AST Scan, E2E Verification & Build) PASSED
+- **Delivered results**: In progress
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 02fa2ba5-8091-4db1-9b70-bdb7e414d8ee (Gen 2)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration
-- **Cron 1 (Reporting)**: cancelled upon completion
-- **Cron 2 (Liveness)**: cancelled upon completion
+- **Active Orchestrator ID**: 47768107-cdc6-46b5-a415-7ea52564fffb
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix
+- **Cron 1 (Reporting)**: task-22 (*/8 * * * *)
+- **Cron 2 (Liveness)**: task-24 (*/10 * * * *)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
-- **Auditor Report**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_api_migration\audit_report.md
+- **Auditor Report**: [pending]
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration\DISPATCH.md — Project Orchestrator dispatch
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_api_migration\handoff.md — Gen 1 to Gen 2 soft handoff
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Global architecture spec
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\lib\apiClient.ts — Centralized API Client
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\services\productsApi.ts — Products API Service
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix\DISPATCH.md — Orchestrator dispatch instructions

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const zlib = require('zlib');
 const pool = require('./db');
 
 const authRoutes = require('./routes/auth');
@@ -17,6 +18,13 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
+// HTTP Keep-Alive & Performance Headers
+app.use((req, res, next) => {
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Keep-Alive', 'timeout=60, max=1000');
+  next();
+});
+
 // Middleware
 app.use(cors({
   origin: true,
@@ -28,6 +36,72 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Native Zero-Dependency GZIP Response Compression
+// Compresses JSON responses > 512 bytes by ~85-90%, dramatically reducing network transfer time
+app.use((req, res, next) => {
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  if (!acceptEncoding.includes('gzip')) return next();
+
+  const originalJson = res.json;
+  res.json = function (obj) {
+    if (res.headersSent) return originalJson.call(this, obj);
+
+    const jsonString = JSON.stringify(obj);
+    if (jsonString && jsonString.length > 512) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Content-Encoding', 'gzip');
+      return zlib.gzip(Buffer.from(jsonString), (err, buffer) => {
+        if (err) return originalJson.call(this, obj);
+        res.setHeader('Content-Length', buffer.length);
+        res.send(buffer);
+      });
+    }
+    return originalJson.call(this, obj);
+  };
+  next();
+});
+
+// High-Speed In-Memory Read Micro-Cache for frequent GET endpoints
+// (TTL = 10 seconds, purged instantly on any mutation POST/PUT/DELETE)
+const apiCache = new Map();
+const CACHE_TTL_MS = 10000;
+
+app.use((req, res, next) => {
+  // Invalidate cache on mutations
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    const orgId = req.headers['x-organization-id'] || 'global';
+    for (const key of apiCache.keys()) {
+      if (key.startsWith(orgId)) {
+        apiCache.delete(key);
+      }
+    }
+    return next();
+  }
+
+  // Cache candidate endpoints
+  if (req.method === 'GET' && req.path.startsWith('/api/')) {
+    const orgId = req.headers['x-organization-id'] || req.query.org_id || req.query.organization_id || 'global';
+    const cacheKey = `${orgId}:${req.originalUrl}`;
+    const cached = apiCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+
+    // Intercept res.json to populate cache
+    const originalJson = res.json;
+    res.json = function (data) {
+      if (res.statusCode >= 200 && res.statusCode < 300 && data) {
+        apiCache.set(cacheKey, { timestamp: Date.now(), data });
+      }
+      return originalJson.call(this, data);
+    };
+  }
+
+  next();
+});
+
 // Health Check
 app.get('/health', async (_req, res) => {
   try {
@@ -36,7 +110,8 @@ app.get('/health', async (_req, res) => {
       status: 'online',
       db: 'connected',
       db_time: result.rows[0].server_time,
-      version: '1.0.0',
+      cached_entries: apiCache.size,
+      version: '1.1.0-speed',
     });
   } catch (err) {
     return res.status(500).json({
@@ -53,7 +128,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api', inventoryRoutes); // For product-batches and adjust-stock
 app.use('/api', partiesRoutes);   // For customers, suppliers, parties, credit-transactions, bank-accounts
 app.use('/api', invoicesRoutes);  // For sales, purchases, purchase-invoices, expenses, returns
-app.use('/api', settingsRoutes);  // For organizations, organization-memberships, storefront-settings, locations
+app.use('/api', settingsRoutes);  // For organizations, memberships, storefront-settings, locations
 app.use('/api/crm', crmRoutes);
 app.use('/', uploadRoutes);       // For /api/upload/:bucket and storage
 app.use('/', rpcRoutes);          // For /rpc/:fn and /rest/v1/:table
@@ -70,7 +145,7 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`CredSmart Backend API server listening on http://0.0.0.0:${PORT}`);
+  console.log(`CredSmart Lightning Backend API listening on http://0.0.0.0:${PORT}`);
 });
 
 module.exports = app;

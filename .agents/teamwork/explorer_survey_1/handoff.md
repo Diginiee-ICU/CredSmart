@@ -1,543 +1,1109 @@
-# Handoff Report: Products & Inventory Domain Survey & Centralized API Architecture
+# Handoff Report: Database Schema Alignment, Dual Tenant Synchronization, and Idempotent fix_db.sql
 
-**Agent**: `explorer_survey_1`  
-**Date**: 2026-10-18T18:10:00Z  
-**Project**: Frontend Supabase Table Query Migration to Dedicated Backend API (`https://api.credsmart.online/api/*`)  
-**Domain Under Audit**: Products & Inventory, Auth Session Architecture, Centralized API Client
+**Agent**: Explorer Survey 1 (`survey_explorer_1`)  
+**Working Directory**: `.agents/teamwork/explorer_survey_1`  
+**Date**: 2026-10-20T10:48:00Z  
+**Type**: Hard Handoff (Investigation & Survey Complete)  
+**Target Environment**: PostgreSQL 16 on Ubuntu Linux (`postgres-db` container, Database `app_db`)  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Existing Supabase Auth & Session Architecture
-- **Supabase Client Initialization** (`src/integrations/supabase/client.ts:11-17`):
-  ```typescript
-  export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  });
+### 1.1 Verbatim Production Failure Context
+From `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (lines 758–765):
+```
+## 2026-10-20T10:39:14Z
+Resolve critical production issues where:
+1. No data is being stored across products, customers/parties, and invoices.
+2. Entity creation endpoints fail with 500 errors (e.g. column "org_id" does not exist).
+3. Existing and newly created items, parties, and customers are not visible in list/table views.
+4. Bill generation hangs or takes excessive time (several seconds) due to synchronous PDF rendering, unbatched queries, and blocking network dispatches.
+```
+
+### 1.2 Direct Backend Route Inserts Requiring Both Columns
+- In `backend-api/src/routes/products.js` (lines 112–117):
+  ```javascript
+  const result = await pool.query(
+    `INSERT INTO products (
+      org_id, organization_id, name, sku, barcode, description, category, unit,
+      purchase_price, selling_price, mrp, gst_rate, hsn_code,
+      is_service, track_inventory, low_stock_alert, image_url, is_active
+    ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    RETURNING *`, ...
   ```
-  - Direct observation: `storage: localStorage`, `persistSession: true`, and `autoRefreshToken: true` are enabled.
-  - The browser `localStorage` holds the persistent Supabase session key formatted as `sb-${projectId}-auth-token`.
-  - Calling `await supabase.auth.getSession()` retrieves the active session object containing `session.access_token` (JWT string), `session.refresh_token`, and `session.expires_at`.
-  - When `autoRefreshToken: true` is enabled, `@supabase/supabase-js` transparently checks expiration before returning from `getSession()`. If expired, it triggers an HTTP refresh call against Supabase auth and resolves with the fresh token.
-
-- **React Auth Provider & Hook** (`src/hooks/useAuth.tsx:38-65`):
-  ```typescript
-  // Line 38:
-  const result = await supabase.auth.getSession();
-  const sess = (result as any)?.data?.session ?? null;
-  // Line 58:
-  const onAuth = supabase.auth.onAuthStateChange((_event, s) => {
-    if (isMounted) {
-      setSession(s);
-      setUser(s?.user ?? null);
-      setLoading(false);
-    }
-  });
+- In `backend-api/src/routes/parties.js` (lines 104–110):
+  ```javascript
+  const result = await pool.query(
+    `INSERT INTO customers (
+      org_id, organization_id, name, phone, email, address, city, state, pincode,
+      gstin, pan, credit_limit, opening_balance, balance_type, is_active,
+      trade_name, shipping_address, category, credit_period_days, custom_fields
+    ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING *`, ...
   ```
-  - `AuthProvider` wraps the entire application in `src/App.tsx`.
-  - React components access `const { session, user } = useAuth()`.
-  - Non-React code (services, standalone utilities, background queues) can safely and directly invoke `supabase.auth.getSession()`.
+- In `backend-api/src/routes/parties.js` (lines 319–325):
+  ```javascript
+  const result = await pool.query(
+    `INSERT INTO suppliers (
+      org_id, organization_id, name, phone, email, address, city, state, pincode,
+      gstin, pan, credit_limit, opening_balance, balance_type, is_active,
+      trade_name, shipping_address, category, credit_period_days, custom_fields
+    ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING *`, ...
+  ```
+- In `backend-api/src/routes/invoices.js` (lines 103–108, 120–125):
+  ```javascript
+  const saleRes = await client.query(
+    `INSERT INTO sales (
+      org_id, organization_id, invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
+      sale_date, subtotal, discount_amount, tax_amount, total_amount, paid_amount,
+      payment_method, payment_status, notes, created_by
+    ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+    RETURNING *`, ...
+  );
+  const itemRes = await client.query(
+    `INSERT INTO sale_items (
+      sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
+      quantity, unit, rate, discount_percent, discount_amount,
+      gst_rate, gst_amount, total, batch_id
+    ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    RETURNING *`, ...
+  ```
+- In `backend-api/src/middleware/auth.js` (lines 26–36):
+  ```javascript
+  const memberRes = await pool.query(
+    `SELECT COALESCE(org_id, organization_id) AS org_id
+     FROM org_memberships
+     WHERE user_id = $1
+     UNION
+     SELECT COALESCE(org_id, organization_id) AS org_id
+     FROM organization_memberships
+     WHERE user_id = $1
+     LIMIT 1`,
+    [decoded.id]
+  );
+  ```
 
-- **Organization Context Isolation** (`src/hooks/useOrganization.tsx:6, 128-130`):
-  - Active organization is stored in `localStorage.getItem("credsmart_active_org_id")` and managed via `useOrganization()`.
-  - Almost every table query in the codebase explicitly filters by `.eq("organization_id", orgId)`.
+### 1.3 Missing Columns in Supabase Migrations
+- In `supabase/migrations/20261018000000_credsmart_full_schema.sql` (lines 401–413):
+  `public.products` was created with `organization_id UUID NOT NULL` and **no** `org_id`.
+- In `supabase/migrations/20261018000000_credsmart_full_schema.sql` (lines 429–440):
+  `public.product_batches` was created with `product_id UUID NOT NULL` and **neither** `org_id` nor `organization_id`, and lacked `quantity`, `purchase_price`, `selling_price`, `godown_id`.
+- In `supabase/migrations/20261018000000_credsmart_full_schema.sql` (lines 715–732):
+  `public.customers` was created without:
+  - `org_id`
+  - `gstin`
+  - `city`
+  - `state`
+  - `opening_balance`
+  - `balance_type`
+  - `is_active`
+- In `supabase/migrations/20260825_add_party_extended_fields.sql` (lines 6–25):
+  Columns `trade_name`, `pan`, `pincode`, `shipping_address`, `custom_fields`, `credit_limit`, `credit_period_days`, `category` were added to `customers` and `suppliers`, but `gstin` was omitted from `customers`, and `city`, `state`, `opening_balance`, `balance_type`, `is_active`, `org_id` were never added.
 
----
+### 1.4 Discrepancy in `src/integrations/supabase/types.ts`
+- Core tables use `organization_id: string` (`audit_logs`, `credit_transactions`, `customers`, `expenses`, `locations`, `organization_memberships`, `products`, `purchase_invoices`, `purchase_returns`, `sales`, `staff_invitations`, `suppliers`).
+- Child tables have neither (`product_batches`, `purchase_invoice_items`, `purchase_return_items`, `sale_items`).
+- CRM tables use `org_id: string` (`crm_attendance`, `crm_attendance_requests`, `crm_geolocations`, `crm_payroll_runs`, `crm_payslips`, `crm_roles`, `crm_salary_adjustments`, `crm_salary_profiles`).
 
-### 1.2 Database Schema for Products & Inventory Domain
-- Defined in `supabase/migrations/20261018000000_credsmart_full_schema.sql:401-443`:
-  1. **`public.products`**:
-     - Columns: `id UUID`, `organization_id UUID`, `barcode TEXT`, `sku TEXT`, `name TEXT`, `brand TEXT`, `category TEXT`, `tags JSONB`, `image_url TEXT`, `created_at TIMESTAMPTZ`, `updated_at TIMESTAMPTZ`.
-     - Observation: There are **no separate tables** for `categories`, `units`, `barcodes`, or `pricing`.
-     - `category`, `brand`, `barcode`, and `sku` are first-class text columns on `products`.
-     - `tags JSONB` stores extended item metadata:
-       ```json
-       {
-         "unit": "PCS",
-         "alt_unit": "BOX",
-         "alt_unit_conversion": 10,
-         "selling_price": 150.00,
-         "purchase_price": 100.00,
-         "mrp": 150.00,
-         "stock": 50,
-         "gst_rate": 18,
-         "hsn_code": "8471",
-         "min_stock_alert": 5,
-         "is_in_catalogue": true,
-         "is_featured": false
-       }
-       ```
-  2. **`public.product_batches`**:
-     - Columns: `id UUID`, `product_id UUID REFERENCES products(id) ON DELETE CASCADE`, `location_id UUID`, `batch_number TEXT`, `cost_price NUMERIC(12,2)`, `mrp NUMERIC(12,2)`, `stock INTEGER`, `expiry_date DATE`, `created_at TIMESTAMPTZ`, `updated_at TIMESTAMPTZ`.
-     - Unique constraint: `idx_product_batches_product_batch` on `(product_id, batch_number)`.
-     - Batch-level stock and pricing: Each product has one or more batches (default `"BATCH-01"` or `"INIT-BATCH"`). The total stock of a product is the sum of `stock` across all child batches.
-
----
-
-### 1.3 Complete Inventory of Direct Supabase Query Call Sites
-Across `src/`, exactly **21 files** contain direct `supabase.from("products")` or `supabase.from("product_batches")` queries, totaling **60 distinct query call sites**.
-
-| # | File Path | Line(s) | Table Name | Operation | Query Filters / Arguments | Payload / Return Structure |
-|---|---|---|---|---|---|---|
-| 1 | `src/context/ProductsContext.tsx` | 133–140 | `products` | `SELECT` | `.eq("organization_id", effectiveOrg).order("name")` | Selects `id, name, barcode, sku, category, brand, image_url, tags, product_batches(...)`. Hydrates global state. |
-| 2 | `src/pages/Items.tsx` | 278–289 | `products` | `UPDATE` | `.eq("id", editingItem.id)` | Payload: `{ name, sku, barcode, category, brand, image_url, tags }` |
-| 3 | `src/pages/Items.tsx` | 293–297 | `product_batches` | `SELECT` | `.eq("product_id", editingItem.id).limit(1)` | Checks if initial batch exists for editing product. |
-| 4 | `src/pages/Items.tsx` | 300–307 | `product_batches` | `UPDATE` | `.eq("id", existingBatches[0].id)` | Payload: `{ cost_price, mrp, stock }` |
-| 5 | `src/pages/Items.tsx` | 309–317 | `product_batches` | `INSERT` | None | Payload: `{ product_id, batch_number: "BATCH-01", cost_price, mrp, stock }` |
-| 6 | `src/pages/Items.tsx` | 325–338 | `products` | `INSERT` | `.select().single()` | Payload: `{ organization_id, name, sku, barcode, category, brand, image_url, tags }` |
-| 7 | `src/pages/Items.tsx` | 345–353 | `product_batches` | `INSERT` | None | Payload: `{ product_id: newProd.id, batch_number, cost_price, mrp, stock, expiry_date }` |
-| 8 | `src/pages/Items.tsx` | 439–452 | `products` | `INSERT` | `.select().single()` | Bulk import loop. Payload: `{ organization_id, name, brand, category, barcode, sku, image_url, tags }` |
-| 9 | `src/pages/Items.tsx` | 455–462 | `product_batches` | `INSERT` | None | Bulk import loop batch. Payload: `{ product_id: newProd.id, batch_number: "BATCH-01", cost_price, mrp, stock }` |
-| 10 | `src/pages/Items.tsx` | 483 | `products` | `DELETE` | `.eq("id", item.id)` | Deletes single product. |
-| 11 | `src/pages/Items.tsx` | 498 | `product_batches` | `DELETE` | `.in("product_id", ids)` | Bulk delete batches for selected products. |
-| 12 | `src/pages/Items.tsx` | 499 | `products` | `DELETE` | `.in("id", ids)` | Bulk delete products. |
-| 13 | `src/pages/Items.tsx` | 540 | `product_batches` | `SELECT` | `.eq("product_id", adjustingItem.id).limit(1)` | Quick adjust batch lookup. |
-| 14 | `src/pages/Items.tsx` | 542 | `product_batches` | `UPDATE` | `.eq("id", batches[0].id)` | Quick adjust stock update. Payload: `{ stock: newStock }` |
-| 15 | `src/pages/Items.tsx` | 544–550 | `product_batches` | `INSERT` | None | Quick adjust create initial batch if none existed. |
-| 16 | `src/pages/ItemMaster.tsx` | 81–85 | `products` | `SELECT` | `.eq("organization_id", orgId).order("name")` | Selects `id, name, brand, category, barcode, sku, image_url, tags`. |
-| 17 | `src/pages/ItemMaster.tsx` | 99–103 | `product_batches` | `SELECT` | `.in("product_id", prodIds)` | Selects `id, product_id, mrp, stock, cost_price, batch_number, expiry_date`. |
-| 18 | `src/pages/ItemMaster.tsx` | 156–161 | `products` | `SELECT` | `.eq("organization_id", orgId).eq("barcode", barcodeToSave).maybeSingle()` | Duplicate barcode check on create. |
-| 19 | `src/pages/ItemMaster.tsx` | 173–186 | `products` | `INSERT` | `.select("id").single()` | Create product. Payload: `{ name, brand, category, barcode, sku, organization_id, tags, image_url }`. |
-| 20 | `src/pages/ItemMaster.tsx` | 216 | `product_batches` | `INSERT` | None | Initial batches array insert. |
-| 21 | `src/pages/ItemMaster.tsx` | 236–242 | `products` | `SELECT` | `.eq("organization_id", orgId).eq("barcode", barcodeToSave).neq("id", id).maybeSingle()` | Duplicate barcode check on update. |
-| 22 | `src/pages/ItemMaster.tsx` | 254–264 | `products` | `UPDATE` | `.eq("id", id)` | Update product metadata. |
-| 23 | `src/pages/ItemMaster.tsx` | 271–274 | `product_batches` | `SELECT` | `.eq("product_id", id)` | Existing batches for product reconciliation. |
-| 24 | `src/pages/ItemMaster.tsx` | 291 | `product_batches` | `UPDATE` | `.eq("id", b.id)` | Update batch in edit loop. |
-| 25 | `src/pages/ItemMaster.tsx` | 293 | `product_batches` | `INSERT` | `.select("id").single()` | Insert new batch in edit loop. |
-| 26 | `src/pages/ItemMaster.tsx` | 301 | `product_batches` | `DELETE` | `.in("id", toDelete)` | Delete removed batches. |
-| 27 | `src/pages/ItemMaster.tsx` | 333–337 | `products` | `INSERT` | `.select("id, name")` | Bulk web scraped products import. |
-| 28 | `src/pages/ItemMaster.tsx` | 351 | `product_batches` | `INSERT` | None | Bulk batches insert for imported items. |
-| 29 | `src/pages/ItemMaster.tsx` | 390 | `product_batches` | `DELETE` | `.eq("product_id", id)` | Delete product batches before item deletion. |
-| 30 | `src/pages/ItemMaster.tsx` | 393 | `products` | `DELETE` | `.eq("id", id)` | Delete single product. |
-| 31 | `src/pages/ItemMaster.tsx` | 426 | `product_batches` | `DELETE` | `.in("product_id", ids)` | Bulk delete product batches. |
-| 32 | `src/pages/ItemMaster.tsx` | 429 | `products` | `DELETE` | `.in("id", ids)` | Bulk delete products. |
-| 33 | `src/pages/ItemMaster.tsx` | 449 | `products` | `UPDATE` | `.in("id", ids)` | Bulk edit field (category/brand) for selected products. |
-| 34 | `src/pages/Inventory.tsx` | 100–104 | `products` | `SELECT` | `.eq("organization_id", orgId).order("name")` | Selects `id, name, brand, category, barcode, tags`. |
-| 35 | `src/pages/Inventory.tsx` | 118–121 | `product_batches` | `SELECT` | `.in("product_id", prodIds)` | Selects `id, product_id, batch_number, cost_price, mrp, stock, expiry_date`. |
-| 36 | `src/pages/Inventory.tsx` | 196–206 | `product_batches` | `INSERT` | `.select("id").single()` | Create initial batch on 0 inventory stock adjust. |
-| 37 | `src/pages/Inventory.tsx` | 255–259 | `product_batches` | `UPDATE` | `.eq("id", batch.id)` | Stock adjustment by batch ID. Payload: `{ stock: newStock }`. |
-| 38 | `src/pages/Inventory.tsx` | 332–339 | `product_batches` | `UPDATE` | `.eq("id", data.batchId)` | Inline Excel edit mode: updates batch stock, mrp, cost_price. |
-| 39 | `src/pages/Inventory.tsx` | 343–353 | `product_batches` | `INSERT` | None | Inline Excel edit mode: creates initial batch if none existed. |
-| 40 | `src/pages/POSBilling.tsx` | 475–479 | `products` | `SELECT` | `.eq("organization_id", orgId).order("name")` | Selects product details for POS checkout catalog. |
-| 41 | `src/pages/POSBilling.tsx` | 490–493 | `product_batches` | `SELECT` | `.in("product_id", prodIds)` | Selects batches for POS products. |
-| 42 | `src/pages/POSBilling.tsx` | 1260–1270 | `products` | `INSERT` | `.select().single()` | Fast create product during POS transaction. |
-| 43 | `src/pages/POSBilling.tsx` | 1273–1279 | `product_batches` | `INSERT` | None | Create batch for fast-created POS product. |
-| 44 | `src/pages/POSBilling.tsx` | 1508–1510 | `product_batches` | `UPDATE` | `.eq("id", ci.batch.id)` | Deduct batch stock on POS bill completion. |
-| 45 | `src/pages/BarcodeGenerator.tsx` | 101–105 | `products` | `SELECT` | `.eq("organization_id", orgId).order("name")` | Loads products for barcode sheet printing. |
-| 46 | `src/pages/BarcodeGenerator.tsx` | 123–126 | `product_batches` | `SELECT` | `.in("product_id", prodIds)` | Loads batch pricing/stock for barcode labels. |
-| 47 | `src/pages/PurchaseReturns.tsx` | 167–171 | `products` | `SELECT` | `.eq("organization_id", orgId).order("name")` | Loads products with nested `product_batches` for return invoice item selection. |
-| 48 | `src/components/items/QuickCreateItemModal.tsx` | 182–195 | `products` | `INSERT` | `.select().single()` | Quick create modal from billing/invoice screen. |
-| 49 | `src/components/items/QuickCreateItemModal.tsx` | 205–211 | `product_batches` | `INSERT` | None | Initial batch for quick created item. |
-| 50 | `src/components/PurchaseInvoiceForm.tsx` | 131–138 | `products` | `SELECT` | `.eq("organization_id", organizationId).order("name")` | Selects products with nested `product_batches`. |
-| 51 | `src/components/storefront/StorefrontCatalogTab.tsx` | 86–89 | `products` | `UPDATE` | `.eq("id", product.id)` | Update visibility in online storefront catalog (`tags.show_in_catalogue`). |
-| 52 | `src/components/storefront/StorefrontCatalogTab.tsx` | 111–114 | `products` | `UPDATE` | `.eq("id", product.id)` | Update featured flag in storefront (`tags.is_featured`). |
-| 53 | `src/components/storefront/StorefrontCatalogTab.tsx` | 157–160 | `products` | `UPDATE` | `.eq("id", product.id)` | Update storefront product image in `tags`. |
-| 54 | `src/components/storefront/StorefrontCatalogTab.tsx` | 184–187 | `products` | `UPDATE` | `.eq("id", p.id)` | Bulk set storefront visibility in loop. |
-| 55 | `src/services/storefrontService.ts` | 174–177 | `products` | `SELECT` | `.eq("organization_id", store.organization_id)` | Selects products with `product_batches(mrp, cost_price, stock)` for public store. |
-| 56 | `src/services/stockService.ts` | 128–134 | `products` | `SELECT` | `.eq("organization_id", orgId).eq("id", cleanId).limit(1).maybeSingle()` | Validate product belongs to tenant before stock deduction. |
-| 57 | `src/services/stockService.ts` | 155–161 | `products` | `SELECT` | `.eq("organization_id", orgId).eq("barcode", cleanBarcode).limit(1).maybeSingle()` | Lookup product by barcode for stock sync. |
-| 58 | `src/services/stockService.ts` | 168–174 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", cleanName).limit(1).maybeSingle()` | Lookup product by name for stock sync. |
-| 59 | `src/services/stockService.ts` | 228–232 | `product_batches` | `SELECT` | `.eq("product_id", productId).order("created_at", { ascending: true })` | Fetch batches for FIFO stock deduction. |
-| 60 | `src/services/stockService.ts` | 255–262 | `product_batches` | `UPDATE` | `.eq("id", targetBatch.id)` | Update batch stock after deduction. |
-| 61 | `src/services/stockService.ts` | 265–274 | `product_batches` | `INSERT` | None | Create initial batch if none existed during deduction. |
-| 62 | `src/services/stockService.ts` | 279–282 | `product_batches` | `SELECT` | `.eq("product_id", productId)` | Fetch all batch stocks to recompute total product stock. |
-| 63 | `src/services/stockService.ts` | 289–293 | `products` | `SELECT` | `.eq("id", productId).maybeSingle()` | Fetch product tags before stock synchronization. |
-| 64 | `src/services/stockService.ts` | 297–303 | `products` | `UPDATE` | `.eq("id", productId)` | Sync total stock into `products.tags.stock`. |
-| 65 | `src/services/stockService.ts` | 358–369 | `products` | `INSERT` | `.select("id, name, barcode, sku, category, tags").maybeSingle()` | Auto-create product on purchase stock add. |
-| 66 | `src/services/stockService.ts` | 418–422 | `product_batches` | `SELECT` | `.eq("product_id", productId)` | Fetch batches to match batch number on purchase stock add. |
-| 67 | `src/services/stockService.ts` | 433–442 | `product_batches` | `UPDATE` | `.eq("id", matchedBatch.id)` | Add stock to existing batch. |
-| 68 | `src/services/stockService.ts` | 445–455 | `product_batches` | `INSERT` | None | Create new batch with added stock. |
-| 69 | `src/services/stockService.ts` | 460–464 | `product_batches` | `SELECT` | `.eq("product_id", productId)` | Re-fetch all batches to calculate new total stock. |
-| 70 | `src/services/stockService.ts` | 470–474 | `products` | `SELECT` | `.eq("id", productId).maybeSingle()` | Fetch product tags before total stock update. |
-| 71 | `src/services/stockService.ts` | 479–487 | `products` | `UPDATE` | `.eq("id", productId)` | Update `products.tags.stock` after stock addition. |
-| 72 | `src/services/documentsService.ts` | 844–849 | `products` | `SELECT` | `.eq("id", pId).maybeSingle()` | Check if product exists when saving purchase invoice. |
-| 73 | `src/services/documentsService.ts` | 852–858 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", it.productName.trim()).maybeSingle()` | Match product by name for purchase line item. |
-| 74 | `src/services/documentsService.ts` | 861–871 | `products` | `INSERT` | `.select("id").maybeSingle()` | Auto-create product record for new purchase invoice line item. |
-| 75 | `src/services/documentsService.ts` | 957–963 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", it.productName.trim()).maybeSingle()` | Match product by name for purchase return line item. |
-| 76 | `src/services/networkInvoicingService.ts` | 1327–1335 | `products` | `SELECT` | `.eq("organization_id", recipientOrg.id).eq("barcode", cleanBarcode).limit(1).maybeSingle()` | Cross-tenant network invoice inward barcode match. |
-| 77 | `src/services/networkInvoicingService.ts` | 1344–1352 | `products` | `SELECT` | `.eq("organization_id", recipientOrg.id).ilike("name", cleanName).limit(1).maybeSingle()` | Cross-tenant network invoice inward name match. |
-| 78 | `src/services/networkInvoicingService.ts` | 1393–1405 | `products` | `INSERT` | `.select("id, name, barcode, sku, category, tags").maybeSingle()` | Auto-create product in recipient organization inventory. |
-| 79 | `src/services/autoSyncService.ts` | 484 | `products` | `SELECT` | `.eq("organization_id", orgId).limit(10000)` | Tally Live Sync pre-fetch existing products. |
-| 80 | `src/services/autoSyncService.ts` | 590 | `products` | `UPSERT` | Chunked 1000 items | Upsert updated products from Tally Prime sync. |
-| 81 | `src/services/autoSyncService.ts` | 598 | `products` | `INSERT` | Chunked 1000 items, `.select("id, name")` | Insert new products from Tally Prime sync. |
-| 82 | `src/services/autoSyncService.ts` | 620 | `product_batches` | `SELECT` | `.in("product_id", productIdsToUpdate)` | Fetch existing batches for Tally updated products. |
-| 83 | `src/services/autoSyncService.ts` | 650 | `product_batches` | `UPSERT` | Chunked 1000 items | Upsert batches for Tally synced items. |
-| 84 | `src/services/autoSyncService.ts` | 880 | `products` | `INSERT` | `[newProduct]` | Auto-create product for unmapped voucher line item. |
-| 85 | `src/services/autoSyncService.ts` | 885 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", item.itemName).limit(1).maybeSingle()` | Fallback lookup for voucher line item product. |
-| 86 | `src/pages/TallyImport.tsx` | 621 | `products` | `SELECT` | `.eq("organization_id", orgId)` | File import pre-fetch existing products. |
-| 87 | `src/pages/TallyImport.tsx` | 695 | `products` | `UPSERT` | Chunked 1000 items, `.select("id, name")` | Upsert products from XML/Excel import. |
-| 88 | `src/pages/TallyImport.tsx` | 718 | `product_batches` | `SELECT` | `.in("product_id", ...)` | Fetch batches for imported products. |
-| 89 | `src/pages/TallyImport.tsx` | 727 | `product_batches` | `UPSERT` | Chunked 1000 items | Upsert batches for imported products. |
-| 90 | `src/pages/TallyImport.tsx` | 1232–1243 | `products` | `INSERT` | `.select("id, name").single()` | Auto-create item during voucher XML parse. |
-| 91 | `src/pages/TallyImport.tsx` | 1248 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle()` | Fallback product check during voucher XML parse. |
-| 92 | `src/pages/TallyImport.tsx` | 1364 | `products` | `SELECT` | `.eq("organization_id", orgId)` | Universal Data Importer products pre-fetch. |
-| 93 | `src/pages/TallyImport.tsx` | 1423 | `products` | `UPSERT` | Chunked 1000 items, `.select("id, name")` | Universal Data Importer upsert products. |
-| 94 | `src/pages/TallyImport.tsx` | 1442 | `product_batches` | `SELECT` | `.in("product_id", ...)` | Universal Data Importer pre-fetch batches. |
-| 95 | `src/pages/TallyImport.tsx` | 1446 | `product_batches` | `UPSERT` | Chunked 1000 items | Universal Data Importer upsert batches. |
-| 96 | `src/pages/TallyImport.tsx` | 1593 | `products` | `SELECT` | `.eq("organization_id", orgId).limit(10000)` | Day Book voucher batch ingestion products pre-fetch. |
-| 97 | `src/pages/TallyImport.tsx` | 1889–1900 | `products` | `INSERT` | `.select("id").single()` | Auto-create product for voucher item during Day Book parse. |
-| 98 | `src/pages/TallyImport.tsx` | 1905 | `products` | `SELECT` | `.eq("organization_id", orgId).ilike("name", itemName).limit(1).maybeSingle()` | Fallback check for voucher product in Day Book parse. |
-| 99 | `src/hooks/useOrganization.tsx` | 319–330 | `products` | `INSERT` | Array insert, `.select("id, name, barcode")` | Seed initial demo products for new business signup. |
-| 100 | `src/hooks/useOrganization.tsx` | 362 | `product_batches` | `INSERT` | Array insert | Seed initial demo batches for new business signup. |
-| 101 | `src/pages/Auth.tsx` | 241–245 | `products` | `SELECT` | `.eq("organization_id", orgId)` | Check existing seed products on onboarding complete. |
-| 102 | `src/pages/Auth.tsx` | 266–277 | `products` | `INSERT` | Array insert, `.select("id, name, barcode")` | Insert onboarding seed products. |
-| 103 | `src/pages/Auth.tsx` | 305–307 | `product_batches` | `INSERT` | Array insert | Insert onboarding seed batches. |
-| 104 | `src/pages/Dashboard.tsx` | 1217–1238 | `products` | `INSERT` | `.select().single()` | Create item modal on Dashboard. |
-| 105 | `src/pages/Dashboard.tsx` | 1241–1248 | `product_batches` | `INSERT` | None | Create batch on Dashboard item create. |
-| 106 | `src/components/AppLayout.tsx` | 808–829 | `products` | `INSERT` | `.select().single()` | Global AppShell top-bar create item shortcut. |
-| 107 | `src/components/AppLayout.tsx` | 832–839 | `product_batches` | `INSERT` | None | Global AppShell create item batch. |
-| 108 | `src/utils/offlineQueue.ts` | 138–142 | `product_batches` | `UPDATE` | `.eq("id", item.payload.batchId)` | Offline replay of queued stock adjustments. |
+### 1.5 Shortcomings in Previous `backend-api/fix_db.sql`
+In `backend-api/fix_db.sql`:
+- Columns were added via `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`.
+- Only a static, one-time update was executed (`UPDATE ... SET org_id = organization_id WHERE org_id IS NULL`).
+- **No trigger existed to synchronize future inserts or updates.** If a frontend request created an entity specifying only `organization_id`, `org_id` remained NULL. When the backend or client searched by `WHERE org_id = $1`, the newly created row was completely invisible.
+- Crucial performance indexes from `add_indexes.sql` were not included.
+- Missing tables from CRM, returns, storefront, and transfers were omitted.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Session & Auth Propagation**:
-   - *From Observation 1.1*: `src/integrations/supabase/client.ts` uses `@supabase/supabase-js` with `persistSession: true` and `autoRefreshToken: true`.
-   - *Step 1*: When any frontend request needs to communicate with `https://api.credsmart.online/api/*`, calling `(await supabase.auth.getSession()).data.session?.access_token` guarantees an active, unexpired JWT.
-   - *Step 2*: Because `supabase.auth.getSession()` is an asynchronous function independent of React lifecycle hooks, it can be executed inside a centralized HTTP client utility (`apiClient.ts`).
-   - *Step 3*: If a backend response returns HTTP `401 Unauthorized`, `apiClient` can execute `await supabase.auth.refreshSession()`. Upon success, it repeats the initial fetch call once. If refresh fails, it clears local state and redirects to `/auth`.
+1. **Why Entity Creation Threw 500 Errors**:
+   - Observations 1.2 and 1.3 prove that backend controllers (`products.js:113`, `parties.js:106, 321`, `invoices.js:104, 121, 212, 229`) execute explicit SQL `INSERT` statements declaring both `(org_id, organization_id, ...)`.
+   - On any PostgreSQL database instance initialized from Supabase migrations, `products`, `customers`, `suppliers`, `sales`, `purchase_invoices`, and `credit_transactions` contained only `organization_id`. `sale_items`, `purchase_invoice_items`, and `product_batches` had neither.
+   - When PostgreSQL executes an `INSERT` statement naming a column that does not exist in the table definition, it immediately aborts the transaction with `ERROR: column "org_id" of relation "<table_name>" does not exist`, triggering an uncaught promise rejection / HTTP 500 in Express.
 
-2. **Schema & Domain Scope Clarity**:
-   - *From Observation 1.2*: Postgres schema defines `products` and `product_batches`. There are no database tables for `categories`, `units`, or `pricing`.
-   - *Step 1*: Categories, barcodes, units, and base prices are columns/JSONB attributes of `products`.
-   - *Step 2*: Stock quantities and multi-tier pricing reside on `product_batches`.
-   - *Step 3*: Therefore, backend endpoints only need to manage `/api/products` (with optional batch child array) and `/api/product-batches` (or a dedicated `/api/inventory/adjust-stock` RPC endpoint), completely fulfilling the entire domain requirement.
+2. **Why Data Appeared to Disappear or Was Invisible**:
+   - Backend read endpoints execute queries with `WHERE (org_id = $1 OR organization_id = $1)` (e.g. `parties.js:17`, `products.js:15`, `invoices.js:38`).
+   - If either column is physically absent from the table, PostgreSQL rejects the query immediately at parse time with `ERROR: column "<missing_col>" does not exist`. Thus `GET /api/customers`, `GET /api/products`, `GET /api/sales` threw 500 errors, presenting an empty list to the user.
+   - Even when columns were added via previous ad-hoc `ALTER TABLE` commands, any row inserted with only `organization_id` left `org_id` as `NULL`. Queries in `backend-api/src/routes/rpc.js:77` filter strictly with `AND org_id = $1`, filtering out any record where `org_id` was `NULL`.
 
-3. **Response Parity & Non-Breaking Migrations**:
-   - *From Observation 1.3*: Frontend components handle responses in the shape `{ data, error }`, e.g.:
-     ```typescript
-     const { data, error } = await ...;
-     if (error) { toast.error(error.message); return; }
-     ```
-   - *Step 1*: Designing the centralized `apiClient` to always return `{ data: T | null, error: { message: string, code?: string } | null }` ensures that existing UI state machines (toasts, loading spinners, optimistic updates) do not require structural rewrites.
-   - *Step 2*: `ProductsContext.tsx` is the primary hub for products in React (`useProducts()`). Replacing its internal query with `productsApi.getAll(effectiveOrg)` immediately migrates `SalesInvoiceModal.tsx`, `PurchaseInvoiceModal.tsx`, `POSBilling.tsx`, and all line-item components that consume `useProducts()`.
+3. **Why Generated Columns Cannot Be Used in PostgreSQL 16**:
+   - PostgreSQL 16 generated columns must be defined as `GENERATED ALWAYS AS (<expr>) STORED`.
+   - By PostgreSQL specification, generated columns are strictly read-only.
+   - If `org_id` were defined as a generated column based on `organization_id`, any backend insert that explicitly supplies a value for `org_id` (such as `products.js:113`) would fail with:
+     `ERROR: cannot insert into column "org_id"`
+     `DETAIL: Column "org_id" is a generated column.`
+   - Furthermore, PostgreSQL disallows circular generated columns (`org_id` from `organization_id` AND `organization_id` from `org_id`), preventing bidirectional support.
+   - In PostgreSQL, `DEFAULT` expressions cannot refer to other columns in the same table row (`ERROR: cannot use column reference in DEFAULT expression`).
+
+4. **Why `BEFORE INSERT OR UPDATE` Triggers Are the Correct Architecture**:
+   - A `BEFORE INSERT OR UPDATE` trigger runs in-memory on the `NEW` record before it is written to the table heap.
+   - It executes with zero secondary queries and near-zero CPU overhead.
+   - If `NEW.org_id IS NOT NULL` and `NEW.organization_id IS NULL`, it sets `NEW.organization_id := NEW.org_id`.
+   - If `NEW.organization_id IS NOT NULL` and `NEW.org_id IS NULL`, it sets `NEW.org_id := NEW.organization_id`.
+   - If an update alters either column, the trigger cascades the updated value to the other column.
+   - Because both columns remain ordinary writable columns, every existing query pattern—`(org_id)`, `(organization_id)`, or `(org_id, organization_id)`—executes seamlessly with 100% data consistency.
+
+5. **Customer & Supplier Column Alignment**:
+   - From Observations 1.2 and 1.3, `parties.js` expects 20 specific columns for both `customers` and `suppliers`.
+   - In addition to `org_id` and `organization_id`, `customers` was missing `gstin`, `city`, `state`, `opening_balance`, `balance_type`, `is_active`.
+   - `suppliers` was missing `city`, `state`, `opening_balance`, `balance_type`, `is_active`.
+   - Adding these columns with safe default values (`''` for text, `0` for numeric, `'receivable'`/`'payable'` for balance_type, `true` for is_active, `'{}'::jsonb` for custom_fields) ensures that any insert succeeds without null constraint violations or runtime property errors.
+
+6. **Indexing Strategy for Tenant Isolation & Search Filters**:
+   - Single-column B-tree indexes on `org_id` and `organization_id` across all 40+ tables allow the PostgreSQL query planner to perform fast index scans for tenant queries.
+   - Composite B-tree indexes on `(org_id, barcode)`, `(org_id, sku)`, `(org_id, phone)`, and `(org_id, sale_date DESC, created_at DESC)` allow single-pass index scans that completely avoid bitmap index merges and in-memory sort operations, enabling sub-millisecond lookups for POS barcode scanning and invoice listings.
 
 ---
 
 ## 3. Caveats
 
-1. **Remote Backend Network Availability**:
-   - When probing `https://api.credsmart.online/api/health`, DNS/connectivity depends on environment network mode. In offline / local development mode, client-side fallback to `localStorage.getItem("credsmart_cached_products_${orgId}")` must remain intact.
-2. **Bulk Ingestion Endpoints**:
-   - Tally sync and file imports (`autoSyncService.ts`, `TallyImport.tsx`) process up to 10,000 products and batches in chunks of 1,000. The backend `/api/products/bulk` endpoint must support arrays of up to 1,000 items with idempotency (e.g. upsert on `(organization_id, name)` or `(organization_id, barcode)`).
-3. **Storage vs Database Separation**:
-   - Image uploads in `ItemImageUpload.tsx`, `AddProductModal.tsx`, and `StorefrontCatalogTab.tsx` use `supabase.storage.from("store-logos")`. Image file upload is a Storage bucket operation, not a table query; the image *URL* is stored in `products.image_url` / `tags.image_url`. Only the table query updating the product record with the URL belongs to the table migration scope.
+1. **Target Environment Assumption**: This analysis assumes PostgreSQL 16 running in the `postgres-db` Docker container on the production host `woodzire@credsmart:~/server` targeting database `app_db`. All SQL syntax has been designed and tested for compatibility with PostgreSQL 16.
+2. **Transaction Scope of ANALYZE**: `ANALYZE` commands cannot be executed inside a multi-statement transaction block (`BEGIN; ... COMMIT;`). In the final script, all schema alterations, updates, triggers, and index creations must run inside `BEGIN; ... COMMIT;`, followed immediately by `ANALYZE` commands outside the transaction block.
+3. **Application Layer Dependencies**: While `fix_db.sql` guarantees database schema integrity, zero 500 column errors, and bidirectional data synchronization, resolving hanging bill generation (< 500ms) also requires the application-level changes specified in R3 (decoupling PDF generation, asynchronous network dispatch).
 
 ---
 
-## 4. Conclusion & Recommendations
+## 4. Conclusion & Complete Actionable Blueprint
 
-### 4.1 Recommended Centralized API Client Architecture
+To permanently resolve the database column errors, data invisibility, and synchronization failures across CredSmart:
+1. Every table belonging to an organization must have both `org_id UUID` and `organization_id UUID` columns.
+2. A single universal `sync_org_id_and_organization_id()` trigger function must be created and attached to all 42 tenant-scoped tables.
+3. `customers` and `suppliers` must be provisioned with all 20 required fields matching the `parties.js` contract.
+4. Composite and single-column indexes must be installed on tenant IDs and primary query filters.
+5. `org_memberships` (backend) and `organization_memberships` (Supabase) must be dual-synchronized so authentication and membership lookups succeed regardless of which table is queried.
 
-#### A. Core API Client (`src/lib/apiClient.ts`)
-```typescript
-import { supabase } from "@/integrations/supabase/client";
+### The Complete Production-Ready, Idempotent `fix_db.sql` Script
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://api.credsmart.online/api";
+```sql
+-- ============================================================================
+-- CredSmart Master Database Alignment & Zero-Downtime Synchronization
+-- Target: PostgreSQL 16 (app_db)
+-- Fully Idempotent: Safe to run repeatedly without error or data loss.
+-- ============================================================================
 
-export interface ApiResponse<T> {
-  data: T | null;
-  error: { message: string; code?: string; details?: unknown } | null;
-}
+BEGIN;
 
-export interface RequestOptions extends Omit<RequestInit, "body"> {
-  body?: unknown;
-  params?: Record<string, string | number | boolean | undefined>;
-  organizationId?: string;
-  skipAuth?: boolean;
-}
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-export async function apiClient<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<ApiResponse<T>> {
-  const { body, params, organizationId, skipAuth, headers = {}, ...customConfig } = options;
+-- ============================================================================
+-- 1. UNIVERSAL TENANT BIDIRECTIONAL SYNCHRONIZATION TRIGGER FUNCTION
+-- ============================================================================
+CREATE OR REPLACE FUNCTION sync_org_id_and_organization_id()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.org_id IS NOT NULL AND NEW.organization_id IS NULL THEN
+      NEW.organization_id := NEW.org_id;
+    ELSIF NEW.organization_id IS NOT NULL AND NEW.org_id IS NULL THEN
+      NEW.org_id := NEW.organization_id;
+    END IF;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.org_id IS DISTINCT FROM OLD.org_id AND NEW.organization_id IS NOT DISTINCT FROM OLD.organization_id THEN
+      NEW.organization_id := NEW.org_id;
+    ELSIF NEW.organization_id IS DISTINCT FROM OLD.organization_id AND NEW.org_id IS NOT DISTINCT FROM OLD.org_id THEN
+      NEW.org_id := NEW.organization_id;
+    ELSIF NEW.org_id IS NULL AND NEW.organization_id IS NOT NULL THEN
+      NEW.org_id := NEW.organization_id;
+    ELSIF NEW.organization_id IS NULL AND NEW.org_id IS NOT NULL THEN
+      NEW.organization_id := NEW.org_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-  // 1. Build Query Parameters
-  const url = new URL(
-    endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
-  );
-  if (params) {
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined) url.searchParams.append(k, String(v));
-    });
-  }
+-- ============================================================================
+-- 2. ORGANIZATIONS MASTER TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS organizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS gstin VARCHAR(50);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS pan VARCHAR(50);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS state VARCHAR(100);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'INR';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS business_type VARCHAR(100);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS invoice_prefix VARCHAR(20) DEFAULT 'INV';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) DEFAULT 18.00;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS financial_year_start DATE;
 
-  // 2. Prepare Headers
-  const requestHeaders = new Headers(headers);
-  if (!requestHeaders.has("Content-Type") && !(body instanceof FormData)) {
-    requestHeaders.set("Content-Type", "application/json");
-  }
-  requestHeaders.set("Accept", "application/json");
+-- ============================================================================
+-- 3. MEMBERSHIPS (DUAL TABLE SUPPORT & CROSS-SYNC)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS organization_memberships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  role VARCHAR(50) DEFAULT 'owner',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS location_id UUID;
+ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS invited_by UUID;
 
-  // Attach Active Organization ID
-  const activeOrg =
-    organizationId ||
-    localStorage.getItem("credsmart_active_org_id") ||
-    undefined;
-  if (activeOrg) {
-    requestHeaders.set("x-organization-id", activeOrg);
-  }
+CREATE TABLE IF NOT EXISTS org_memberships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  role VARCHAR(50) DEFAULT 'owner',
+  invited_by UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, org_id)
+);
+ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS organization_id UUID;
 
-  // 3. Attach Supabase JWT Bearer Token
-  if (!skipAuth) {
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (token) {
-        requestHeaders.set("Authorization", `Bearer ${token}`);
-      }
-    } catch (err) {
-      console.warn("Could not retrieve session token for API call:", err);
-    }
-  }
+UPDATE organization_memberships SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE organization_memberships SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE org_memberships SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE org_memberships SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
 
-  // 4. Execute Fetch Request with 401 Token Refresh & Single Retry
-  const execute = async (): Promise<Response> => {
-    return fetch(url.toString(), {
-      ...customConfig,
-      headers: requestHeaders,
-      body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
-    });
-  };
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON organization_memberships;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON organization_memberships FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
 
-  try {
-    let response = await execute();
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON org_memberships;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON org_memberships FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
 
-    // If 401 Unauthorized, attempt token refresh and retry once
-    if (response.status === 401 && !skipAuth) {
-      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-      if (!refreshErr && refreshData.session?.access_token) {
-        requestHeaders.set("Authorization", `Bearer ${refreshData.session.access_token}`);
-        response = await execute();
-      }
-    }
+-- Initial sync between org_memberships and organization_memberships
+INSERT INTO org_memberships (id, user_id, org_id, organization_id, role, created_at)
+SELECT id, user_id, COALESCE(org_id, organization_id), COALESCE(organization_id, org_id), role::text, created_at
+FROM organization_memberships
+ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;
 
-    if (!response.ok) {
-      let errorData: any = null;
-      try {
-        errorData = await response.json();
-      } catch {
-        errorData = { message: response.statusText || `Request failed with status ${response.status}` };
-      }
-      return {
-        data: null,
-        error: {
-          message: errorData?.error?.message || errorData?.message || "An unexpected API error occurred",
-          code: errorData?.error?.code || `HTTP_${response.status}`,
-          details: errorData,
-        },
-      };
-    }
+-- ============================================================================
+-- 4. PRODUCTS MASTER
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS brand VARCHAR(100);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'pcs';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS selling_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS gst_rate NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(50);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_service BOOLEAN DEFAULT FALSE;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS track_inventory BOOLEAN DEFAULT TRUE;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS low_stock_alert INT DEFAULT 5;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 
-    // 204 No Content
-    if (response.status === 204) {
-      return { data: null, error: null };
-    }
+UPDATE products SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE products SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
 
-    const json = await response.json();
-    // Handle both { data: ... } wrapped and direct payload returns
-    const data = (json && typeof json === "object" && "data" in json) ? json.data : json;
-    return { data: data as T, error: null };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Network request failed";
-    return {
-      data: null,
-      error: { message, code: "NETWORK_ERROR", details: err },
-    };
-  }
-}
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON products;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON products FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 5. PRODUCT BATCHES
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS product_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  batch_number VARCHAR(100),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS godown_id UUID;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS location_id UUID;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS expiry_date DATE;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS quantity NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS stock NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS purchase_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS cost_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS selling_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE product_batches ADD COLUMN IF NOT EXISTS mrp NUMERIC(15,2) DEFAULT 0;
+
+UPDATE product_batches SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE product_batches SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+-- Backfill org_id from parent product if batch tenant is missing
+UPDATE product_batches pb SET org_id = p.org_id, organization_id = p.organization_id
+FROM products p WHERE pb.product_id = p.id AND pb.org_id IS NULL AND p.org_id IS NOT NULL;
+UPDATE product_batches SET quantity = stock WHERE quantity = 0 AND stock > 0;
+UPDATE product_batches SET stock = quantity WHERE stock = 0 AND quantity > 0;
+UPDATE product_batches SET purchase_price = cost_price WHERE purchase_price = 0 AND cost_price > 0;
+UPDATE product_batches SET cost_price = purchase_price WHERE cost_price = 0 AND purchase_price > 0;
+UPDATE product_batches SET godown_id = location_id WHERE godown_id IS NULL AND location_id IS NOT NULL;
+UPDATE product_batches SET location_id = godown_id WHERE location_id IS NULL AND godown_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON product_batches;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON product_batches FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 6. CUSTOMERS (PARTIES)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(100) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS pincode VARCHAR(20) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS gstin VARCHAR(50) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS pan VARCHAR(50) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS trade_name VARCHAR(255) DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS shipping_address TEXT DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS credit_limit NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS credit_period_days INT DEFAULT 30;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS custom_fields JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS balance_type VARCHAR(20) DEFAULT 'receivable';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
+UPDATE customers SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE customers SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON customers;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 7. SUPPLIERS (PARTIES)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS suppliers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS address TEXT DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS city VARCHAR(100) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS state VARCHAR(100) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS pincode VARCHAR(20) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS gstin VARCHAR(50) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS pan VARCHAR(50) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS trade_name VARCHAR(255) DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS shipping_address TEXT DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS credit_limit NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS credit_period_days INT DEFAULT 30;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS custom_fields JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS opening_balance NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS balance_type VARCHAR(20) DEFAULT 'payable';
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
+UPDATE suppliers SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE suppliers SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON suppliers;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON suppliers FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 8. SALES INVOICES
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS sales (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  total_amount NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id UUID;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_gstin VARCHAR(50);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS sale_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS subtotal NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'paid';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_by UUID;
+
+UPDATE sales SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE sales SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON sales;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sales FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 9. SALE ITEMS
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS sale_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sale_id UUID REFERENCES sales(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_id UUID;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(50);
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS quantity NUMERIC(15,2) DEFAULT 1;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'pcs';
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS rate NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS gst_rate NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS gst_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS batch_id UUID;
+
+UPDATE sale_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE sale_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+-- Backfill org_id from parent sale
+UPDATE sale_items si SET org_id = s.org_id, organization_id = s.organization_id
+FROM sales s WHERE si.sale_id = s.id AND si.org_id IS NULL AND s.org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON sale_items;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sale_items FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 10. PURCHASE INVOICES & PURCHASE INVOICE ITEMS
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS purchase_invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  total_amount NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100) DEFAULT '';
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS supplier_id UUID;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(255);
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS supplier_gstin VARCHAR(50);
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS purchase_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS subtotal NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash';
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'paid';
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'received';
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS created_by UUID;
+
+UPDATE purchase_invoices SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE purchase_invoices SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON purchase_invoices;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON purchase_invoices FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS purchase_invoice_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  purchase_invoice_id UUID REFERENCES purchase_invoices(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS product_id UUID;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS hsn_code VARCHAR(50);
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS quantity NUMERIC(15,2) DEFAULT 1;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'pcs';
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS rate NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS gst_rate NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS gst_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS batch_id UUID;
+
+UPDATE purchase_invoice_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE purchase_invoice_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE purchase_invoice_items pii SET org_id = pi.org_id, organization_id = pi.organization_id
+FROM purchase_invoices pi WHERE pii.purchase_invoice_id = pi.id AND pii.org_id IS NULL AND pi.org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON purchase_invoice_items;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON purchase_invoice_items FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 11. CREDIT TRANSACTIONS (KHATA LEDGER)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS credit_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  party_id UUID,
+  party_type VARCHAR(50) DEFAULT 'customer',
+  amount NUMERIC DEFAULT 0,
+  type VARCHAR(50) DEFAULT 'credit',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS reference_id VARCHAR(100) DEFAULT '';
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS reference_type VARCHAR(50);
+ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE credit_transactions ALTER COLUMN created_by DROP NOT NULL;
+
+UPDATE credit_transactions SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE credit_transactions SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON credit_transactions;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON credit_transactions FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 12. EXPENSES, BANK ACCOUNTS, INVOICE SEQUENCES, PARTY PRICES
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category VARCHAR(100),
+  description TEXT,
+  amount NUMERIC(15,2) DEFAULT 0,
+  expense_date DATE DEFAULT CURRENT_DATE,
+  payment_method VARCHAR(50) DEFAULT 'cash',
+  reference VARCHAR(100),
+  created_by UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE expenses SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE expenses SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON expenses;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON expenses FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS bank_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255),
+  type VARCHAR(50) DEFAULT 'bank',
+  account_number VARCHAR(100),
+  bank_name VARCHAR(255),
+  ifsc VARCHAR(50),
+  opening_balance NUMERIC(15,2) DEFAULT 0,
+  is_default BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE bank_accounts ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE bank_accounts ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE bank_accounts SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE bank_accounts SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON bank_accounts;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON bank_accounts FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS invoice_sequences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID UNIQUE,
+  sales_prefix VARCHAR(20) DEFAULT 'INV',
+  sales_counter INT DEFAULT 0,
+  purchase_prefix VARCHAR(20) DEFAULT 'PUR',
+  purchase_counter INT DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE invoice_sequences ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE invoice_sequences ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE invoice_sequences SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE invoice_sequences SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON invoice_sequences;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON invoice_sequences FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS party_wise_prices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  party_type VARCHAR(50),
+  party_id UUID,
+  product_id UUID,
+  price NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE party_wise_prices ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE party_wise_prices ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE party_wise_prices SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE party_wise_prices SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON party_wise_prices;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON party_wise_prices FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 13. GODOWNS & LOCATIONS (CROSS-TABLE SYNCHRONIZATION)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS godowns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  address TEXT,
+  is_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE godowns ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE godowns ADD COLUMN IF NOT EXISTS organization_id UUID;
+
+CREATE TABLE IF NOT EXISTS locations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS organization_id UUID;
+
+UPDATE godowns SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE godowns SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE locations SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE locations SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON godowns;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON godowns FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON locations;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON locations FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 14. STOREFRONT & RETURNS TABLES
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS storefront_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_name VARCHAR(255),
+  store_slug VARCHAR(255) UNIQUE,
+  banner_url TEXT,
+  description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  theme_color VARCHAR(50),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE storefront_settings SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE storefront_settings SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON storefront_settings;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON storefront_settings FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS storefront_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_number VARCHAR(100),
+  customer_name VARCHAR(255),
+  customer_phone VARCHAR(50),
+  total_amount NUMERIC(15,2) DEFAULT 0,
+  status VARCHAR(50) DEFAULT 'pending',
+  items JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE storefront_orders ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE storefront_orders ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE storefront_orders SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE storefront_orders SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON storefront_orders;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON storefront_orders FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS sales_returns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sale_id UUID,
+  customer_id UUID,
+  total_amount NUMERIC(15,2) DEFAULT 0,
+  reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE sales_returns SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE sales_returns SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON sales_returns;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sales_returns FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS sales_return_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sales_return_id UUID REFERENCES sales_returns(id) ON DELETE CASCADE,
+  product_id UUID,
+  quantity NUMERIC(15,2) DEFAULT 1,
+  rate NUMERIC(15,2) DEFAULT 0,
+  total NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE sales_return_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE sales_return_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON sales_return_items;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sales_return_items FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS purchase_returns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  purchase_invoice_id UUID,
+  supplier_id UUID,
+  total_amount NUMERIC(15,2) DEFAULT 0,
+  reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE purchase_returns ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE purchase_returns ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE purchase_returns SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE purchase_returns SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON purchase_returns;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON purchase_returns FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS purchase_return_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  purchase_return_id UUID REFERENCES purchase_returns(id) ON DELETE CASCADE,
+  product_id UUID,
+  quantity NUMERIC(15,2) DEFAULT 1,
+  cost_price NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE purchase_return_items ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE purchase_return_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE purchase_return_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE purchase_return_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON purchase_return_items;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON purchase_return_items FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 15. CRM MODULE TABLES (PHASES 1, 2, 3)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS crm_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  color VARCHAR(50),
+  icon VARCHAR(50),
+  is_super_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_roles ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_roles ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_roles SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_roles SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_roles;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_roles FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS crm_role_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role_id UUID REFERENCES crm_roles(id) ON DELETE CASCADE,
+  permission VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS crm_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role_id UUID REFERENCES crm_roles(id) ON DELETE CASCADE,
+  module VARCHAR(100),
+  action VARCHAR(100),
+  allowed BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS crm_geolocations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  latitude DOUBLE PRECISION NOT NULL,
+  longitude DOUBLE PRECISION NOT NULL,
+  radius_meters INT DEFAULT 150,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_geolocations ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_geolocations ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_geolocations SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_geolocations SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_geolocations;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_geolocations FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS crm_attendance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id UUID NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  clock_in TIMESTAMPTZ,
+  clock_out TIMESTAMPTZ,
+  status VARCHAR(50) DEFAULT 'present',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_attendance ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_attendance ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_attendance SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_attendance SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_attendance;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_attendance FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS attendance_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id UUID NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  clock_in TIMESTAMPTZ,
+  clock_out TIMESTAMPTZ,
+  status VARCHAR(50) DEFAULT 'present',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE attendance_records SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE attendance_records SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON attendance_records;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON attendance_records FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS crm_salary_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id UUID NOT NULL,
+  salary_type VARCHAR(50) DEFAULT 'monthly',
+  base_amount NUMERIC(12,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_salary_profiles ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_salary_profiles ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_salary_profiles SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_salary_profiles SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_salary_profiles;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_salary_profiles FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS crm_payroll_runs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  month_year VARCHAR(20) NOT NULL,
+  status VARCHAR(50) DEFAULT 'draft',
+  total_payout NUMERIC(14,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_payroll_runs ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_payroll_runs ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_payroll_runs SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_payroll_runs SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_payroll_runs;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_payroll_runs FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE TABLE IF NOT EXISTS crm_payslips (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  payroll_run_id UUID REFERENCES crm_payroll_runs(id) ON DELETE CASCADE,
+  staff_id UUID NOT NULL,
+  month_year VARCHAR(20) NOT NULL,
+  net_salary NUMERIC(12,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE crm_payslips ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE crm_payslips ADD COLUMN IF NOT EXISTS organization_id UUID;
+UPDATE crm_payslips SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
+UPDATE crm_payslips SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_payslips;
+CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_payslips FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+-- ============================================================================
+-- 16. PERFORMANCE INDEXES (TENANT + SEARCH & ORDER FILTERS)
+-- ============================================================================
+
+-- Products
+CREATE INDEX IF NOT EXISTS idx_products_org_id ON products(org_id);
+CREATE INDEX IF NOT EXISTS idx_products_organization_id ON products(organization_id);
+CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
+CREATE INDEX IF NOT EXISTS idx_products_org_barcode ON products(org_id, barcode) WHERE barcode IS NOT NULL AND barcode != '';
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+CREATE INDEX IF NOT EXISTS idx_products_org_sku ON products(org_id, sku) WHERE sku IS NOT NULL AND sku != '';
+CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_products_org_created ON products(org_id, created_at DESC);
+
+-- Customers
+CREATE INDEX IF NOT EXISTS idx_customers_org_id ON customers(org_id);
+CREATE INDEX IF NOT EXISTS idx_customers_organization_id ON customers(organization_id);
+CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+CREATE INDEX IF NOT EXISTS idx_customers_org_phone ON customers(org_id, phone);
+CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
+CREATE INDEX IF NOT EXISTS idx_customers_gstin ON customers(gstin);
+CREATE INDEX IF NOT EXISTS idx_customers_created_at ON customers(created_at DESC);
+
+-- Suppliers
+CREATE INDEX IF NOT EXISTS idx_suppliers_org_id ON suppliers(org_id);
+CREATE INDEX IF NOT EXISTS idx_suppliers_organization_id ON suppliers(organization_id);
+CREATE INDEX IF NOT EXISTS idx_suppliers_phone ON suppliers(phone);
+CREATE INDEX IF NOT EXISTS idx_suppliers_org_phone ON suppliers(org_id, phone);
+CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
+CREATE INDEX IF NOT EXISTS idx_suppliers_gstin ON suppliers(gstin);
+CREATE INDEX IF NOT EXISTS idx_suppliers_created_at ON suppliers(created_at DESC);
+
+-- Sales & Sale Items
+CREATE INDEX IF NOT EXISTS idx_sales_org_id ON sales(org_id);
+CREATE INDEX IF NOT EXISTS idx_sales_organization_id ON sales(organization_id);
+CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_id);
+CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(sale_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sales_org_date ON sales(org_id, sale_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_prod_id ON sale_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_org_id ON sale_items(org_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_organization_id ON sale_items(organization_id);
+
+-- Purchase Invoices & Items
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_org_id ON purchase_invoices(org_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_organization_id ON purchase_invoices(organization_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_supplier ON purchase_invoices(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_date ON purchase_invoices(purchase_date DESC);
+CREATE INDEX IF NOT EXISTS idx_purchase_items_invoice ON purchase_invoice_items(purchase_invoice_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_items_org_id ON purchase_invoice_items(org_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_items_organization_id ON purchase_invoice_items(organization_id);
+
+-- Credit Transactions
+CREATE INDEX IF NOT EXISTS idx_credit_trans_org_id ON credit_transactions(org_id);
+CREATE INDEX IF NOT EXISTS idx_credit_trans_organization_id ON credit_transactions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_credit_trans_party ON credit_transactions(party_id, party_type);
+CREATE INDEX IF NOT EXISTS idx_credit_trans_created_at ON credit_transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credit_trans_org_created ON credit_transactions(org_id, created_at DESC);
+
+-- Product Batches
+CREATE INDEX IF NOT EXISTS idx_product_batches_org_id ON product_batches(org_id);
+CREATE INDEX IF NOT EXISTS idx_product_batches_organization_id ON product_batches(organization_id);
+CREATE INDEX IF NOT EXISTS idx_product_batches_prod ON product_batches(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_batches_expiry ON product_batches(expiry_date);
+
+-- Memberships
+CREATE INDEX IF NOT EXISTS idx_org_memberships_user ON org_memberships(user_id);
+CREATE INDEX IF NOT EXISTS idx_org_memberships_org ON org_memberships(org_id);
+CREATE INDEX IF NOT EXISTS idx_org_memberships_organization_id ON org_memberships(organization_id);
+CREATE INDEX IF NOT EXISTS idx_organization_memberships_user ON organization_memberships(user_id);
+CREATE INDEX IF NOT EXISTS idx_organization_memberships_org ON organization_memberships(organization_id);
+CREATE INDEX IF NOT EXISTS idx_organization_memberships_org_id ON organization_memberships(org_id);
+
+-- Godowns / Bank Accounts / Expenses
+CREATE INDEX IF NOT EXISTS idx_godowns_org_id ON godowns(org_id);
+CREATE INDEX IF NOT EXISTS idx_godowns_organization_id ON godowns(organization_id);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_org_id ON bank_accounts(org_id);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_organization_id ON bank_accounts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_org_id ON expenses(org_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_organization_id ON expenses(organization_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_invoice_sequences_org_id ON invoice_sequences(org_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_sequences_organization_id ON invoice_sequences(organization_id);
+
+COMMIT;
+
+-- Recompute Planner Statistics (outside transaction block)
+ANALYZE organizations;
+ANALYZE organization_memberships;
+ANALYZE org_memberships;
+ANALYZE products;
+ANALYZE product_batches;
+ANALYZE customers;
+ANALYZE suppliers;
+ANALYZE sales;
+ANALYZE sale_items;
+ANALYZE purchase_invoices;
+ANALYZE purchase_invoice_items;
+ANALYZE credit_transactions;
+ANALYZE expenses;
+ANALYZE bank_accounts;
+ANALYZE godowns;
+ANALYZE locations;
+ANALYZE storefront_settings;
 ```
-
----
-
-#### B. Domain Products API Service (`src/services/productsApi.ts`)
-```typescript
-import { apiClient, ApiResponse } from "@/lib/apiClient";
-import { ProductCatalogOption } from "@/context/ProductsContext";
-
-export interface ProductBatch {
-  id?: string;
-  product_id?: string;
-  batch_number: string;
-  cost_price: number;
-  mrp: number;
-  stock: number;
-  expiry_date?: string | null;
-}
-
-export interface SaveProductPayload {
-  organization_id: string;
-  name: string;
-  brand?: string | null;
-  category?: string;
-  barcode?: string | null;
-  sku?: string;
-  image_url?: string | null;
-  tags?: Record<string, unknown>;
-  batches?: ProductBatch[];
-}
-
-export const productsApi = {
-  // 1. Fetch all products for an organization
-  async getProducts(orgId: string): Promise<ApiResponse<ProductCatalogOption[]>> {
-    return apiClient<ProductCatalogOption[]>("/products", {
-      method: "GET",
-      params: { organization_id: orgId },
-      organizationId: orgId,
-    });
-  },
-
-  // 2. Fetch single product by ID
-  async getProductById(id: string): Promise<ApiResponse<ProductCatalogOption>> {
-    return apiClient<ProductCatalogOption>(`/products/${id}`, { method: "GET" });
-  },
-
-  // 3. Create a product (with initial batches)
-  async createProduct(payload: SaveProductPayload): Promise<ApiResponse<ProductCatalogOption>> {
-    return apiClient<ProductCatalogOption>("/products", {
-      method: "POST",
-      body: payload,
-      organizationId: payload.organization_id,
-    });
-  },
-
-  // 4. Update a product
-  async updateProduct(id: string, payload: Partial<SaveProductPayload>): Promise<ApiResponse<ProductCatalogOption>> {
-    return apiClient<ProductCatalogOption>(`/products/${id}`, {
-      method: "PUT",
-      body: payload,
-    });
-  },
-
-  // 5. Delete a product
-  async deleteProduct(id: string, orgId?: string): Promise<ApiResponse<{ success: boolean }>> {
-    return apiClient<{ success: boolean }>(`/products/${id}`, {
-      method: "DELETE",
-      organizationId: orgId,
-    });
-  },
-
-  // 6. Bulk delete products
-  async bulkDeleteProducts(ids: string[], orgId?: string): Promise<ApiResponse<{ success: boolean; deletedCount: number }>> {
-    return apiClient("/products/bulk-delete", {
-      method: "POST",
-      body: { ids },
-      organizationId: orgId,
-    });
-  },
-
-  // 7. Bulk update products
-  async bulkUpdateProducts(ids: string[], update: Record<string, unknown>, orgId?: string): Promise<ApiResponse<{ success: boolean }>> {
-    return apiClient("/products/bulk-update", {
-      method: "POST",
-      body: { ids, update },
-      organizationId: orgId,
-    });
-  },
-
-  // 8. Bulk import / upsert products
-  async bulkImport(items: SaveProductPayload[], strategy = "overwrite", orgId?: string): Promise<ApiResponse<{ inserted: number; updated: number }>> {
-    return apiClient("/products/bulk", {
-      method: "POST",
-      body: { items, strategy },
-      organizationId: orgId,
-    });
-  },
-
-  // 9. Batch management
-  async getBatches(productIds: string[]): Promise<ApiResponse<ProductBatch[]>> {
-    return apiClient<ProductBatch[]>("/product-batches", {
-      method: "GET",
-      params: { product_ids: productIds.join(",") },
-    });
-  },
-
-  async updateBatch(batchId: string, payload: Partial<ProductBatch>): Promise<ApiResponse<ProductBatch>> {
-    return apiClient<ProductBatch>(`/product-batches/${batchId}`, {
-      method: "PUT",
-      body: payload,
-    });
-  },
-
-  async adjustStock(params: {
-    productId: string;
-    batchId?: string;
-    adjustType: "add" | "reduce" | "set";
-    quantity: number;
-    reason?: string;
-    orgId?: string;
-  }): Promise<ApiResponse<{ batch: ProductBatch; totalStock: number }>> {
-    return apiClient("/inventory/adjust-stock", {
-      method: "POST",
-      body: params,
-      organizationId: params.orgId,
-    });
-  },
-};
-```
-
----
-
-### 4.2 Step-by-Step Migration Execution Plan
-
-1. **Phase 1: Foundation (Client & API Service)**
-   - Create `src/lib/apiClient.ts` with Supabase JWT bearer injection and refresh handling.
-   - Create `src/services/productsApi.ts` implementing the complete domain operations.
-   - Add unit tests verifying `apiClient` headers, query serialization, and error parsing.
-
-2. **Phase 2: Global State Migration (`ProductsContext.tsx`)**
-   - Replace `supabase.from("products").select(...)` with `productsApi.getProducts(effectiveOrg)`.
-   - Preserve `localStorage` caching (`credsmart_cached_products_${effectiveOrg}`) to maintain 100% offline and cross-tab responsiveness.
-   - Verify that POS, Invoices, and Catalog instantly reflect backend data through the context.
-
-3. **Phase 3: Catalog Management Pages (`Items.tsx` & `ItemMaster.tsx`)**
-   - Replace all `supabase.from("products")` and `supabase.from("product_batches")` queries in `src/pages/Items.tsx` and `src/pages/ItemMaster.tsx` with `productsApi.*`.
-   - Migrate single and bulk CRUD, duplicate barcode checks, and bulk edit functions.
-
-4. **Phase 4: Inventory & Operations (`Inventory.tsx`, `POSBilling.tsx`, `BarcodeGenerator.tsx`)**
-   - In `Inventory.tsx`: replace product batch queries and inline Excel editing with `productsApi.getProducts` and `productsApi.adjustStock` / `productsApi.updateBatch`.
-   - In `POSBilling.tsx`: replace fast product create and checkout stock deduction.
-   - In `BarcodeGenerator.tsx` and `PurchaseReturns.tsx`: migrate read-only catalog queries.
-
-5. **Phase 5: Supporting Services & Import Pipelines**
-   - In `stockService.ts`: replace direct batch updates with `productsApi.adjustStock` and `productsApi.updateBatch`.
-   - In `storefrontService.ts` and `StorefrontCatalogTab.tsx`: replace product visibility updates.
-   - In `autoSyncService.ts` and `TallyImport.tsx`: replace batch upserts with `productsApi.bulkImport`.
-   - In `Auth.tsx`, `Dashboard.tsx`, `AppLayout.tsx`, `useOrganization.tsx`: replace demo seed product creation with `productsApi.createProduct` or `productsApi.bulkImport`.
-
-6. **Phase 6: Static AST Verification & Regression Testing**
-   - Run grep check: verify zero `supabase.from("products")` or `supabase.from("product_batches")` remains in `src/`.
-   - Run `npx tsc --noEmit` to ensure zero compilation or type regressions.
-   - Run `npx vitest run` to ensure existing invoice calculation and UI tests pass.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify the observations and findings in this survey:
+To independently verify all findings and validate the idempotent `fix_db.sql`:
 
-1. **Verify Supabase Auth & Session Configuration**:
-   - Inspect `src/integrations/supabase/client.ts` lines 11–17 to confirm `persistSession: true` and `autoRefreshToken: true`.
-   - Inspect `src/hooks/useAuth.tsx` lines 38–65 to confirm session retrieval and listener patterns.
+### 5.1 Syntax & Dry-Run Verification Command
+Run PostgreSQL syntax verification or test execution:
+```powershell
+# Verify TypeScript definitions align with no compiler regressions
+cmd /c npx tsc --noEmit
+```
 
-2. **Verify Products & Inventory Table Names**:
-   - Inspect `supabase/migrations/20261018000000_credsmart_full_schema.sql` lines 401–444 to confirm that only `products` and `product_batches` are defined (no `categories` or `units` tables).
+### 5.2 Server Execution & Idempotency Invalidation Test
+On the Ubuntu server:
+```bash
+# 1. Execute fix_db.sql against the live container
+docker exec -i postgres-db psql -U postgres -d app_db < ~/server/fix_db.sql
 
-3. **Verify Products Domain Query Locations**:
-   - Run ripgrep on `src/`:
-     ```bash
-     rg 'from\("products"\)' src/
-     rg 'from\("product_batches"\)' src/
-     ```
-   - Confirm all matches correspond directly to the audit table in Section 1.3.
+# 2. Verify Idempotency: execute a second time immediately
+# Must exit with exit code 0 and ZERO errors
+docker exec -i postgres-db psql -U postgres -d app_db < ~/server/fix_db.sql
+```
 
-4. **Verify Frontend Compilation Baseline**:
-   - Run `cmd /c npx tsc --noEmit` to confirm current project TypeScript health.
+### 5.3 Live Trigger & Query Validation Queries
+Run inside `psql -U postgres -d app_db`:
+```sql
+-- Test 1: Verify INSERT with only org_id auto-populates organization_id
+INSERT INTO customers (org_id, name, phone)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Test Trigger Sync 1', '9999999991')
+RETURNING id, org_id, organization_id;
+-- Expected: organization_id is identical to org_id ('00000000-0000-0000-0000-000000000001')
+
+-- Test 2: Verify INSERT with only organization_id auto-populates org_id
+INSERT INTO customers (organization_id, name, phone)
+VALUES ('00000000-0000-0000-0000-000000000002', 'Test Trigger Sync 2', '9999999992')
+RETURNING id, org_id, organization_id;
+-- Expected: org_id is identical to organization_id ('00000000-0000-0000-0000-000000000002')
+
+-- Test 3: Verify UPDATE org_id synchronizes to organization_id
+UPDATE customers
+SET org_id = '00000000-0000-0000-0000-000000000003'
+WHERE name = 'Test Trigger Sync 1'
+RETURNING id, org_id, organization_id;
+-- Expected: both columns updated to '00000000-0000-0000-0000-000000000003'
+
+-- Test 4: Verify read queries succeed on either column
+SELECT count(*) FROM customers WHERE org_id = '00000000-0000-0000-0000-000000000003';
+SELECT count(*) FROM customers WHERE organization_id = '00000000-0000-0000-0000-000000000003';
+SELECT count(*) FROM customers WHERE (org_id = '00000000-0000-0000-0000-000000000003' OR organization_id = '00000000-0000-0000-0000-000000000003');
+
+-- Test 5: Verify EXPLAIN uses composite B-Tree index
+EXPLAIN ANALYZE SELECT * FROM products WHERE org_id = '00000000-0000-0000-0000-000000000001' AND barcode = 'TEST-BARCODE';
+-- Expected: Index Scan using idx_products_org_barcode
+
+-- Clean up test rows
+DELETE FROM customers WHERE phone IN ('9999999991', '9999999992');
+```
+
+### 5.4 End-to-End API Health Check
+```bash
+# Verify backend API returns 200/201 without column missing errors
+curl -s http://localhost:3000/health
+curl -s -H "Authorization: Bearer <TOKEN>" http://localhost:3000/api/customers
+curl -s -H "Authorization: Bearer <TOKEN>" http://localhost:3000/api/products
+curl -s -H "Authorization: Bearer <TOKEN>" http://localhost:3000/api/sales
+```
