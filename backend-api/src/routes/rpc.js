@@ -46,14 +46,92 @@ router.post('/rpc/:fn', async (req, res) => {
 // ==================== GENERIC REST PASSTHROUGH ====================
 
 const ALLOWED_TABLES = new Set([
-  'users', 'organizations', 'org_memberships', 'products', 'product_batches',
-  'godowns', 'stock_transfers', 'customers', 'suppliers', 'credit_transactions',
+  'users', 'organizations', 'org_memberships', 'organization_memberships', 'products', 'product_batches',
+  'godowns', 'locations', 'stock_transfers', 'customers', 'suppliers', 'credit_transactions',
   'bank_accounts', 'party_wise_prices', 'sales', 'sale_items',
   'purchase_invoices', 'purchase_invoice_items', 'expenses', 'sales_returns',
   'purchase_returns', 'activity_logs', 'storefront_settings', 'storefront_orders',
   'crm_roles', 'crm_role_permissions', 'crm_staff_assignments', 'attendance_records',
-  'salary_profiles', 'payroll_records', 'customer_tickets', 'staff_tasks', 'invoice_sequences'
+  'salary_profiles', 'payroll_records', 'customer_tickets', 'staff_tasks', 'invoice_sequences',
+  'network_invoices', 'network_notifications'
 ]);
+
+function splitClauses(str) {
+  const result = [];
+  let current = '';
+  let inParen = false;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '(') inParen = true;
+    else if (char === ')') inParen = false;
+    else if (char === ',' && !inParen) {
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim()) result.push(current.trim());
+  return result;
+}
+
+function parseOrParam(orQuery, params) {
+  if (!orQuery) return null;
+  const rawOr = String(orQuery).replace(/^\((.*)\)$/, '$1');
+  const clauses = splitClauses(rawOr);
+  const sqlParts = [];
+
+  for (const clause of clauses) {
+    const parts = clause.split('.');
+    if (parts.length >= 3) {
+      const col = parts[0].replace(/[^a-zA-Z0-9_]/g, '');
+      const op = parts[1].toLowerCase();
+      const val = parts.slice(2).join('.');
+      if (col) {
+        if (op === 'eq') {
+          params.push(val);
+          sqlParts.push(`"${col}" = $${params.length}`);
+        } else if (op === 'neq') {
+          params.push(val);
+          sqlParts.push(`"${col}" != $${params.length}`);
+        } else if (op === 'ilike') {
+          params.push(val);
+          sqlParts.push(`"${col}" ILIKE $${params.length}`);
+        } else if (op === 'like') {
+          params.push(val);
+          sqlParts.push(`"${col}" LIKE $${params.length}`);
+        } else if (op === 'gt') {
+          params.push(val);
+          sqlParts.push(`"${col}" > $${params.length}`);
+        } else if (op === 'gte') {
+          params.push(val);
+          sqlParts.push(`"${col}" >= $${params.length}`);
+        } else if (op === 'lt') {
+          params.push(val);
+          sqlParts.push(`"${col}" < $${params.length}`);
+        } else if (op === 'lte') {
+          params.push(val);
+          sqlParts.push(`"${col}" <= $${params.length}`);
+        } else if (op === 'is' && val === 'null') {
+          sqlParts.push(`"${col}" IS NULL`);
+        } else if ((op === 'not' && val === 'is.null') || (op === 'is' && (val === 'not.null' || val === 'not null'))) {
+          sqlParts.push(`"${col}" IS NOT NULL`);
+        } else if (op === 'in' && val.startsWith('(') && val.endsWith(')')) {
+          const inVals = val.slice(1, -1).split(',').map(v => v.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+          if (inVals.length > 0) {
+            const phs = inVals.map(v => { params.push(v); return `$${params.length}`; }).join(', ');
+            sqlParts.push(`"${col}" IN (${phs})`);
+          }
+        } else {
+          params.push(val);
+          sqlParts.push(`"${col}" = $${params.length}`);
+        }
+      }
+    }
+  }
+
+  return sqlParts.length > 0 ? `(${sqlParts.join(' OR ')})` : null;
+}
 
 // GET /rest/v1/:table
 router.get('/rest/v1/:table', async (req, res) => {
@@ -68,25 +146,92 @@ router.get('/rest/v1/:table', async (req, res) => {
     const limit = req.query.limit ? Number(req.query.limit) : 100;
     const order = req.query.order;
 
-    let query = `SELECT ${selectCols === '*' ? '*' : selectCols.split(',').map(c => `"${c.trim()}"`).join(', ')} FROM "${table}" WHERE 1=1`;
-    const params = [];
-
-    // Filter by organization if table has org_id
-    if (orgId && table !== 'users') {
-      params.push(orgId);
-      query += ` AND (org_id = $${params.length} OR org_id IS NULL)`;
+    let projection = '*';
+    if (selectCols && selectCols !== '*') {
+      const cols = selectCols.split(',').map(c => c.trim()).filter(Boolean);
+      const safeCols = cols.filter(c => /^[a-zA-Z0-9_]+$/.test(c)).map(c => `"${c}"`);
+      if (safeCols.length > 0) {
+        projection = safeCols.join(', ');
+      }
     }
 
-    // Process equality filters from query params
+    let query = `SELECT ${projection} FROM "${table}" WHERE 1=1`;
+    const params = [];
+
+    // PostgREST OR filter parsing
+    if (req.query.or) {
+      const orSql = parseOrParam(req.query.or, params);
+      if (orSql) {
+        query += ` AND ${orSql}`;
+      }
+    }
+
+    // Tenant Scoping
+    if (table === 'network_invoices') {
+      if (!req.query.or && orgId) {
+        params.push(orgId);
+        query += ` AND (sender_org_id = $${params.length} OR recipient_org_id = $${params.length})`;
+      }
+    } else if (table === 'network_notifications') {
+      if (!req.query.or && orgId) {
+        params.push(orgId);
+        query += ` AND recipient_org_id = $${params.length}`;
+      }
+    } else if (table !== 'users') {
+      if (orgId) {
+        params.push(orgId);
+        query += ` AND (org_id = $${params.length} OR organization_id = $${params.length} OR org_id IS NULL)`;
+      }
+    }
+
+    // Process equality and PostgREST operator filters from query params
     for (const [key, value] of Object.entries(req.query)) {
       if (['select', 'limit', 'order', 'or', 'org_id'].includes(key)) continue;
-      params.push(value);
-      query += ` AND "${key}" = $${params.length}`;
+      const col = key.replace(/[^a-zA-Z0-9_]/g, '');
+      if (!col) continue;
+
+      if (typeof value === 'string' && value.includes('.')) {
+        const [op, ...rest] = value.split('.');
+        const val = rest.join('.');
+        if (op === 'eq') {
+          params.push(val);
+          query += ` AND "${col}" = $${params.length}`;
+        } else if (op === 'neq') {
+          params.push(val);
+          query += ` AND "${col}" != $${params.length}`;
+        } else if (op === 'ilike') {
+          params.push(val);
+          query += ` AND "${col}" ILIKE $${params.length}`;
+        } else if (op === 'like') {
+          params.push(val);
+          query += ` AND "${col}" LIKE $${params.length}`;
+        } else if (op === 'is' && val === 'null') {
+          query += ` AND "${col}" IS NULL`;
+        } else if ((op === 'not' && val === 'is.null') || (op === 'is' && (val === 'not.null' || val === 'not null'))) {
+          query += ` AND "${col}" IS NOT NULL`;
+        } else {
+          params.push(value);
+          query += ` AND "${col}" = $${params.length}`;
+        }
+      } else {
+        params.push(value);
+        query += ` AND "${col}" = $${params.length}`;
+      }
     }
 
     if (order) {
-      const [col, dir] = order.split('.');
-      query += ` ORDER BY "${col}" ${dir === 'desc' ? 'DESC' : 'ASC'}`;
+      const orderClauses = order.split(',').map(o => o.trim()).filter(Boolean);
+      const orderParts = [];
+      for (const o of orderClauses) {
+        const [col, dir] = o.split('.');
+        const safeCol = col ? col.replace(/[^a-zA-Z0-9_]/g, '') : '';
+        if (safeCol) {
+          orderParts.push(`"${safeCol}" ${String(dir).toLowerCase() === 'desc' ? 'DESC' : 'ASC'}`);
+        }
+      }
+      if (orderParts.length > 0) {
+        query += ` ORDER BY ${orderParts.join(', ')}`;
+      }
     }
 
     params.push(limit);
@@ -95,6 +240,11 @@ router.get('/rest/v1/:table', async (req, res) => {
     const result = await pool.query(query, params);
     return res.json(result.rows);
   } catch (err) {
+    if (err.code === '42P01') {
+      // 42P01: undefined_table in PostgreSQL - return empty array gracefully
+      console.warn(`Table '${req.params.table}' does not exist in DB yet:`, err.message);
+      return res.json([]);
+    }
     return res.status(500).json({ error: err.message });
   }
 });
@@ -107,21 +257,37 @@ router.post('/rest/v1/:table', async (req, res) => {
       return res.status(400).json({ error: `Table '${table}' not accessible` });
     }
 
-    const orgId = req.orgId || req.body.org_id;
-    const body = { ...req.body };
-    if (orgId && !body.org_id && table !== 'users') {
-      body.org_id = orgId;
+    const orgId = req.orgId || req.body?.org_id;
+    const isArray = Array.isArray(req.body);
+    const rawItems = isArray ? req.body : [req.body];
+
+    if (rawItems.length === 0) {
+      return res.status(201).json(isArray ? [] : null);
     }
 
-    const cols = Object.keys(body);
-    const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
-    const values = cols.map(c => body[c]);
+    const insertedRows = [];
+    for (const item of rawItems) {
+      const body = { ...item };
+      if (orgId && !body.org_id && !['users', 'network_invoices', 'network_notifications'].includes(table)) {
+        body.org_id = orgId;
+      }
 
-    const result = await pool.query(
-      `INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders}) RETURNING *`,
-      values
-    );
-    return res.status(201).json(result.rows[0]);
+      const cols = Object.keys(body).filter(k => /^[a-zA-Z0-9_]+$/.test(k));
+      if (cols.length === 0) continue;
+
+      const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+      const values = cols.map(c => body[c]);
+
+      const result = await pool.query(
+        `INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders}) RETURNING *`,
+        values
+      );
+      if (result.rows.length > 0) {
+        insertedRows.push(result.rows[0]);
+      }
+    }
+
+    return res.status(201).json(isArray ? insertedRows : (insertedRows[0] || null));
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -136,7 +302,7 @@ router.patch('/rest/v1/:table', async (req, res) => {
     }
 
     const updates = { ...req.body };
-    const fields = Object.keys(updates);
+    const fields = Object.keys(updates).filter(k => /^[a-zA-Z0-9_]+$/.test(k));
     if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
     let query = `UPDATE "${table}" SET `;
@@ -148,10 +314,33 @@ router.patch('/rest/v1/:table', async (req, res) => {
     });
 
     query += ' WHERE 1=1';
+
+    if (req.query.or) {
+      const orSql = parseOrParam(req.query.or, params);
+      if (orSql) {
+        query += ` AND ${orSql}`;
+      }
+    }
+
     for (const [key, value] of Object.entries(req.query)) {
       if (['select', 'limit', 'order', 'or'].includes(key)) continue;
-      params.push(value);
-      query += ` AND "${key}" = $${params.length}`;
+      const col = key.replace(/[^a-zA-Z0-9_]/g, '');
+      if (!col) continue;
+
+      if (typeof value === 'string' && value.includes('.')) {
+        const [op, ...rest] = value.split('.');
+        const val = rest.join('.');
+        if (op === 'eq') {
+          params.push(val);
+          query += ` AND "${col}" = $${params.length}`;
+        } else {
+          params.push(value);
+          query += ` AND "${col}" = $${params.length}`;
+        }
+      } else {
+        params.push(value);
+        query += ` AND "${col}" = $${params.length}`;
+      }
     }
 
     query += ' RETURNING *';
@@ -173,10 +362,32 @@ router.delete('/rest/v1/:table', async (req, res) => {
     let query = `DELETE FROM "${table}" WHERE 1=1`;
     const params = [];
 
+    if (req.query.or) {
+      const orSql = parseOrParam(req.query.or, params);
+      if (orSql) {
+        query += ` AND ${orSql}`;
+      }
+    }
+
     for (const [key, value] of Object.entries(req.query)) {
       if (['select', 'limit', 'order', 'or'].includes(key)) continue;
-      params.push(value);
-      query += ` AND "${key}" = $${params.length}`;
+      const col = key.replace(/[^a-zA-Z0-9_]/g, '');
+      if (!col) continue;
+
+      if (typeof value === 'string' && value.includes('.')) {
+        const [op, ...rest] = value.split('.');
+        const val = rest.join('.');
+        if (op === 'eq') {
+          params.push(val);
+          query += ` AND "${col}" = $${params.length}`;
+        } else {
+          params.push(value);
+          query += ` AND "${col}" = $${params.length}`;
+        }
+      } else {
+        params.push(value);
+        query += ` AND "${col}" = $${params.length}`;
+      }
     }
 
     query += ' RETURNING *';

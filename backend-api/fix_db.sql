@@ -280,9 +280,19 @@ ALTER TABLE sales ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'p
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS tax NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS discount_label TEXT DEFAULT '';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS location_id UUID;
+ALTER TABLE sales ALTER COLUMN created_by DROP NOT NULL;
+ALTER TABLE sales ALTER COLUMN invoice_number DROP NOT NULL;
 
 UPDATE sales SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE sales SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE sales SET total_amount = total WHERE total_amount = 0 AND total > 0;
+UPDATE sales SET total = total_amount WHERE total = 0 AND total_amount > 0;
+UPDATE sales SET tax_amount = tax WHERE tax_amount = 0 AND tax > 0;
+UPDATE sales SET tax = tax_amount WHERE tax = 0 AND tax_amount > 0;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON sales;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sales FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
@@ -298,6 +308,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
 );
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS sale_id UUID;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_id UUID;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
@@ -311,11 +322,19 @@ ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS gst_rate NUMERIC(5,2) DEFAULT 0;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS gst_amount NUMERIC(15,2) DEFAULT 0;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
 ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS batch_id UUID;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS line_total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS mrp NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS batch_number VARCHAR(100);
+ALTER TABLE sale_items ALTER COLUMN quantity TYPE NUMERIC(15,2);
 
 UPDATE sale_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE sale_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
 UPDATE sale_items si SET org_id = s.org_id, organization_id = s.organization_id
 FROM sales s WHERE si.sale_id = s.id AND si.org_id IS NULL AND s.org_id IS NOT NULL;
+UPDATE sale_items SET total = line_total WHERE total = 0 AND line_total > 0;
+UPDATE sale_items SET line_total = total WHERE line_total = 0 AND total > 0;
+UPDATE sale_items SET rate = mrp WHERE rate = 0 AND mrp > 0;
+UPDATE sale_items SET mrp = rate WHERE mrp = 0 AND rate > 0;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON sale_items;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON sale_items FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
@@ -346,9 +365,17 @@ ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50
 ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'received';
 ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS tax NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoices ADD COLUMN IF NOT EXISTS bill_number VARCHAR(100);
+ALTER TABLE purchase_invoices ALTER COLUMN created_by DROP NOT NULL;
 
 UPDATE purchase_invoices SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE purchase_invoices SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE purchase_invoices SET total_amount = total WHERE total_amount = 0 AND total > 0;
+UPDATE purchase_invoices SET total = total_amount WHERE total = 0 AND total_amount > 0;
+UPDATE purchase_invoices SET tax_amount = tax WHERE tax_amount = 0 AND tax > 0;
+UPDATE purchase_invoices SET tax = tax_amount WHERE tax = 0 AND tax_amount > 0;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON purchase_invoices;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON purchase_invoices FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
@@ -361,6 +388,7 @@ CREATE TABLE IF NOT EXISTS purchase_invoice_items (
 );
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS purchase_invoice_id UUID;
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS product_id UUID;
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
@@ -374,6 +402,12 @@ ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS gst_rate NUMERIC(5,2
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS gst_amount NUMERIC(15,2) DEFAULT 0;
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS total NUMERIC(15,2) DEFAULT 0;
 ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS batch_id UUID;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS cost_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS unit_price NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS mrp NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS received_quantity NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS batch_number VARCHAR(100);
+ALTER TABLE purchase_invoice_items ADD COLUMN IF NOT EXISTS expiry_date DATE;
 
 UPDATE purchase_invoice_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE purchase_invoice_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
@@ -540,6 +574,7 @@ CREATE TABLE IF NOT EXISTS storefront_settings (
 );
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS store_slug VARCHAR(255);
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE;
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS logo_url TEXT;
@@ -615,6 +650,7 @@ CREATE TABLE IF NOT EXISTS sales_return_items (
 );
 ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS sales_return_id UUID;
 UPDATE sales_return_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE sales_return_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
 UPDATE sales_return_items sri SET org_id = sr.org_id, organization_id = sr.organization_id
@@ -652,6 +688,7 @@ CREATE TABLE IF NOT EXISTS purchase_return_items (
 );
 ALTER TABLE purchase_return_items ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE purchase_return_items ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE purchase_return_items ADD COLUMN IF NOT EXISTS purchase_return_id UUID;
 UPDATE purchase_return_items SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE purchase_return_items SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
 UPDATE purchase_return_items pri SET org_id = pr.org_id, organization_id = pr.organization_id
@@ -1198,10 +1235,133 @@ CREATE INDEX IF NOT EXISTS idx_expenses_org_date ON expenses(org_id, expense_dat
 CREATE INDEX IF NOT EXISTS idx_storefront_slug ON storefront_settings(store_slug);
 CREATE INDEX IF NOT EXISTS idx_storefront_orders_status ON storefront_orders(status);
 
+-- ============================================================================
+-- 21. B2B NETWORK INVOICES & NOTIFICATIONS
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS network_invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  sender_org_name TEXT NOT NULL DEFAULT '',
+  sender_org_phone TEXT DEFAULT '',
+  sender_org_email TEXT DEFAULT '',
+  sender_org_gstin TEXT DEFAULT '',
+  sender_org_address TEXT DEFAULT '',
+  sender_user_id UUID,
+  recipient_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+  recipient_org_name TEXT NOT NULL DEFAULT '',
+  recipient_phone TEXT DEFAULT '',
+  recipient_email TEXT DEFAULT '',
+  recipient_gstin TEXT DEFAULT '',
+  recipient_address TEXT DEFAULT '',
+  invoice_number TEXT NOT NULL DEFAULT '',
+  doc_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  due_date DATE,
+  payment_terms TEXT DEFAULT '',
+  payment_method TEXT DEFAULT 'Credit',
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  subtotal NUMERIC(15,2) NOT NULL DEFAULT 0,
+  discount_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+  tax_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+  grand_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  terms TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  purchase_invoice_id UUID,
+  purchase_invoice_number TEXT DEFAULT '',
+  rejection_reason TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  approved_at TIMESTAMPTZ,
+  rejected_at TIMESTAMPTZ
+);
+
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_name TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_phone TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_email TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_gstin TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_org_address TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS sender_user_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_org_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_org_name TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_phone TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_email TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_gstin TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS recipient_address TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS invoice_number TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS doc_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS due_date DATE;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS payment_terms TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'Credit';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS subtotal NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS discount_total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS tax_total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS grand_total NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS terms TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS purchase_invoice_id UUID;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS purchase_invoice_number TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS rejection_reason TEXT DEFAULT '';
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE network_invoices ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMPTZ;
+
+UPDATE network_invoices SET org_id = sender_org_id WHERE org_id IS NULL AND sender_org_id IS NOT NULL;
+UPDATE network_invoices SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS network_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  recipient_user_id UUID,
+  recipient_phone TEXT DEFAULT '',
+  recipient_gstin TEXT DEFAULT '',
+  recipient_org_name TEXT DEFAULT '',
+  type TEXT NOT NULL DEFAULT 'general',
+  title TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'unread',
+  action_status TEXT NOT NULL DEFAULT 'pending',
+  network_invoice_id UUID,
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS recipient_org_id UUID;
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS recipient_user_id UUID;
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS recipient_phone TEXT DEFAULT '';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS recipient_gstin TEXT DEFAULT '';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS recipient_org_name TEXT DEFAULT '';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS message TEXT DEFAULT '';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'unread';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS action_status TEXT DEFAULT 'pending';
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS network_invoice_id UUID;
+ALTER TABLE network_notifications ADD COLUMN IF NOT EXISTS data JSONB DEFAULT '{}'::jsonb;
+
+UPDATE network_notifications SET org_id = recipient_org_id WHERE org_id IS NULL AND recipient_org_id IS NOT NULL;
+UPDATE network_notifications SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_network_invoices_sender ON network_invoices(sender_org_id);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient ON network_invoices(recipient_org_id);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient_phone ON network_invoices(recipient_phone);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient_gstin ON network_invoices(recipient_gstin);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_created_at ON network_invoices(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_network_notifications_recipient ON network_notifications(recipient_org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_phone ON network_notifications(recipient_phone);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_gstin ON network_notifications(recipient_gstin);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_org_name ON network_notifications(recipient_org_name);
+
 COMMIT;
 
 -- ============================================================================
--- 21. PLANNER STATISTICS (OUTSIDE TRANSACTION BLOCK)
+-- 22. PLANNER STATISTICS (OUTSIDE TRANSACTION BLOCK)
 -- ============================================================================
 ANALYZE organizations;
 ANALYZE organization_memberships;
@@ -1246,3 +1406,6 @@ ANALYZE crm_payslips;
 ANALYZE crm_salary_adjustments;
 ANALYZE customer_tickets;
 ANALYZE staff_tasks;
+ANALYZE network_invoices;
+ANALYZE network_notifications;
+

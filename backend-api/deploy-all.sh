@@ -222,6 +222,7 @@ CREATE TABLE IF NOT EXISTS party_wise_prices (
 CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     invoice_number VARCHAR(100) NOT NULL,
     customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
     customer_name VARCHAR(255),
@@ -230,13 +231,17 @@ CREATE TABLE IF NOT EXISTS sales (
     sale_date DATE DEFAULT CURRENT_DATE,
     subtotal NUMERIC(15,2) DEFAULT 0,
     discount_amount NUMERIC(15,2) DEFAULT 0,
+    discount_label TEXT DEFAULT '',
     tax_amount NUMERIC(15,2) DEFAULT 0,
+    tax NUMERIC(15,2) DEFAULT 0,
     total_amount NUMERIC(15,2) DEFAULT 0,
+    total NUMERIC(15,2) DEFAULT 0,
     paid_amount NUMERIC(15,2) DEFAULT 0,
     payment_method VARCHAR(50) DEFAULT 'cash',
     payment_status VARCHAR(20) DEFAULT 'unpaid' CHECK (payment_status IN ('paid', 'partial', 'unpaid')),
     notes TEXT,
     status VARCHAR(20) DEFAULT 'active',
+    location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -246,6 +251,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sale_id UUID REFERENCES sales(id) ON DELETE CASCADE,
     org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id) ON DELETE SET NULL,
     product_name VARCHAR(255) NOT NULL,
     sku VARCHAR(100),
@@ -253,11 +259,14 @@ CREATE TABLE IF NOT EXISTS sale_items (
     quantity NUMERIC(15,2) DEFAULT 1,
     unit VARCHAR(50) DEFAULT 'pcs',
     rate NUMERIC(15,2) DEFAULT 0,
+    mrp NUMERIC(15,2) DEFAULT 0,
     discount_percent NUMERIC(5,2) DEFAULT 0,
     discount_amount NUMERIC(15,2) DEFAULT 0,
     gst_rate NUMERIC(5,2) DEFAULT 0,
     gst_amount NUMERIC(15,2) DEFAULT 0,
     total NUMERIC(15,2) DEFAULT 0,
+    line_total NUMERIC(15,2) DEFAULT 0,
+    batch_number VARCHAR(100),
     batch_id UUID REFERENCES product_batches(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -265,7 +274,9 @@ CREATE TABLE IF NOT EXISTS sale_items (
 CREATE TABLE IF NOT EXISTS purchase_invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     invoice_number VARCHAR(100) NOT NULL,
+    bill_number VARCHAR(100),
     supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
     supplier_name VARCHAR(255),
     supplier_gstin VARCHAR(50),
@@ -273,7 +284,9 @@ CREATE TABLE IF NOT EXISTS purchase_invoices (
     subtotal NUMERIC(15,2) DEFAULT 0,
     discount_amount NUMERIC(15,2) DEFAULT 0,
     tax_amount NUMERIC(15,2) DEFAULT 0,
+    tax NUMERIC(15,2) DEFAULT 0,
     total_amount NUMERIC(15,2) DEFAULT 0,
+    total NUMERIC(15,2) DEFAULT 0,
     paid_amount NUMERIC(15,2) DEFAULT 0,
     payment_method VARCHAR(50) DEFAULT 'cash',
     payment_status VARCHAR(20) DEFAULT 'unpaid',
@@ -288,6 +301,7 @@ CREATE TABLE IF NOT EXISTS purchase_invoice_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_invoice_id UUID REFERENCES purchase_invoices(id) ON DELETE CASCADE,
     org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id) ON DELETE SET NULL,
     product_name VARCHAR(255) NOT NULL,
     sku VARCHAR(100),
@@ -295,12 +309,18 @@ CREATE TABLE IF NOT EXISTS purchase_invoice_items (
     quantity NUMERIC(15,2) DEFAULT 1,
     unit VARCHAR(50) DEFAULT 'pcs',
     rate NUMERIC(15,2) DEFAULT 0,
+    cost_price NUMERIC(15,2) DEFAULT 0,
+    unit_price NUMERIC(15,2) DEFAULT 0,
+    mrp NUMERIC(15,2) DEFAULT 0,
+    received_quantity NUMERIC(15,2) DEFAULT 0,
     discount_percent NUMERIC(5,2) DEFAULT 0,
     discount_amount NUMERIC(15,2) DEFAULT 0,
     gst_rate NUMERIC(5,2) DEFAULT 0,
     gst_amount NUMERIC(15,2) DEFAULT 0,
     total NUMERIC(15,2) DEFAULT 0,
+    batch_number VARCHAR(100),
     batch_id UUID REFERENCES product_batches(id) ON DELETE SET NULL,
+    expiry_date DATE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -488,6 +508,77 @@ CREATE TABLE IF NOT EXISTS invoice_sequences (
     purchase_counter INT DEFAULT 0,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 33. B2B Network Invoices Table
+CREATE TABLE IF NOT EXISTS network_invoices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    sender_org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    sender_org_name TEXT NOT NULL DEFAULT '',
+    sender_org_phone TEXT DEFAULT '',
+    sender_org_email TEXT DEFAULT '',
+    sender_org_gstin TEXT DEFAULT '',
+    sender_org_address TEXT DEFAULT '',
+    sender_user_id UUID,
+    recipient_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+    recipient_org_name TEXT NOT NULL DEFAULT '',
+    recipient_phone TEXT DEFAULT '',
+    recipient_email TEXT DEFAULT '',
+    recipient_gstin TEXT DEFAULT '',
+    recipient_address TEXT DEFAULT '',
+    invoice_number TEXT NOT NULL DEFAULT '',
+    doc_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    due_date DATE,
+    payment_terms TEXT DEFAULT '',
+    payment_method TEXT DEFAULT 'Credit',
+    items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    subtotal NUMERIC(15,2) NOT NULL DEFAULT 0,
+    discount_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+    tax_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+    grand_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+    notes TEXT DEFAULT '',
+    terms TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    purchase_invoice_id UUID,
+    purchase_invoice_number TEXT DEFAULT '',
+    rejection_reason TEXT DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    approved_at TIMESTAMPTZ,
+    rejected_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_network_invoices_sender ON network_invoices(sender_org_id);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient ON network_invoices(recipient_org_id);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient_phone ON network_invoices(recipient_phone);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_recipient_gstin ON network_invoices(recipient_gstin);
+CREATE INDEX IF NOT EXISTS idx_network_invoices_created_at ON network_invoices(created_at DESC);
+
+-- 34. B2B Network Notifications Table
+CREATE TABLE IF NOT EXISTS network_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    recipient_org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    recipient_user_id UUID,
+    recipient_phone TEXT DEFAULT '',
+    recipient_gstin TEXT DEFAULT '',
+    recipient_org_name TEXT DEFAULT '',
+    type TEXT NOT NULL DEFAULT 'general',
+    title TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'unread',
+    action_status TEXT NOT NULL DEFAULT 'pending',
+    network_invoice_id UUID,
+    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_network_notifications_recipient ON network_notifications(recipient_org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_phone ON network_notifications(recipient_phone);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_gstin ON network_notifications(recipient_gstin);
+CREATE INDEX IF NOT EXISTS idx_network_notifications_org_name ON network_notifications(recipient_org_name);
 EOSQL
 
 echo "Applying schema to $DB_NAME in container postgres-db..."
