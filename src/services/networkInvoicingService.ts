@@ -453,8 +453,10 @@ export const networkInvoicingService = {
     // 2. Query storefront_settings (public platform directory of all registered stores)
     try {
       const sfResult = await safeDbCall(async () => {
-        if (cleanPhone || cleanName) {
-          const { data } = await settingsApi.getStorefrontSettings(cleanPhone || cleanName);
+        const canQueryPhone = cleanPhone && cleanPhone.length >= 10;
+        const canQueryName = cleanName && cleanName.length >= 3;
+        if (canQueryPhone || canQueryName) {
+          const { data } = await settingsApi.getStorefrontSettings(canQueryPhone ? cleanPhone : cleanName);
           if (data && data.organization_id) return data;
         }
         return null;
@@ -477,8 +479,12 @@ export const networkInvoicingService = {
     try {
       const dbResult = await safeDbCall(async () => {
         if (criteria.orgId) {
-          const { data } = await settingsApi.getOrganizationById(criteria.orgId);
-          if (data) return data;
+          try {
+            const { data } = await settingsApi.getOrganizationById(criteria.orgId);
+            if (data && data.id) return data;
+          } catch {
+            return null;
+          }
         }
         const { data: orgs } = await settingsApi.getUserOrganizations();
         if (orgs && orgs.length > 0) {
@@ -676,7 +682,11 @@ export const networkInvoicingService = {
 
     // 1. Save to Supabase network_invoices table (with safe timeout)
     await safeDbCall(async () => {
-      return supabase.from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({ // eslint-disable-line @typescript-eslint/no-explicit-any
+      const isSenderUuid = Boolean(senderOrg.id && isUuid(senderOrg.id));
+      if (!isSenderUuid) return null;
+
+      const isRecipientUuid = Boolean(recipientOrgId && isUuid(recipientOrgId) && recipientOrgId !== senderOrg.id);
+      const invoicePayload = {
         id: networkInvoiceId,
         sender_org_id: senderOrg.id,
         sender_org_name: senderOrg.name,
@@ -684,8 +694,8 @@ export const networkInvoicingService = {
         sender_org_email: senderOrg.email || "",
         sender_org_gstin: senderOrg.gstin || "",
         sender_org_address: senderOrg.address || "",
-        sender_user_id: userId || null,
-        recipient_org_id: recipientOrgId || null,
+        sender_user_id: isUuid(userId) ? userId : null,
+        recipient_org_id: isRecipientUuid ? recipientOrgId : null,
         recipient_org_name: recipientOrgName,
         recipient_phone: networkInvoice.recipientPhone || "",
         recipient_email: networkInvoice.recipientEmail || "",
@@ -704,7 +714,16 @@ export const networkInvoicingService = {
         notes: networkInvoice.notes || "",
         terms: networkInvoice.terms || "",
         status: "pending",
-      } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */); // eslint-disable-line @typescript-eslint/no-explicit-any
+      };
+      const res = await supabase.from("network_invoices" as any).insert(invoicePayload as any);
+      // If recipient_org_id failed foreign key constraint on unverified org, retry with null recipient_org_id
+      if (res?.error && isRecipientUuid) {
+        return supabase.from("network_invoices" as any).insert({
+          ...invoicePayload,
+          recipient_org_id: null,
+        } as any);
+      }
+      return res;
     });
 
     // 2. Save into Local Storage
@@ -748,23 +767,32 @@ export const networkInvoicingService = {
       created_at: nowIso,
     };
 
-    await safeDbCall(() =>
-      supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
+    await safeDbCall(async () => {
+      const isRecipientUuid = Boolean(targetRecipientOrgId && isUuid(targetRecipientOrgId) && !targetRecipientOrgId.startsWith("party_match_"));
+      const validRecipientOrgId = isRecipientUuid ? targetRecipientOrgId : null;
+      const isInvoiceUuid = Boolean(notification.networkInvoiceId && isUuid(notification.networkInvoiceId));
+      const notifPayload = {
         id: generateSafeUuid(),
-        recipient_org_id: targetRecipientOrgId.startsWith("party_match_") ? null : targetRecipientOrgId,
-        recipient_phone: notification.recipientPhone || "",
-        recipient_gstin: notification.recipientGstin || "",
-        recipient_org_name: notification.recipientOrgName || "",
+        recipient_org_id: validRecipientOrgId,
         type: notification.type,
         title: notification.title,
         message: notification.message,
         status: notification.status,
         action_status: notification.actionStatus,
-        network_invoice_id: notification.networkInvoiceId,
+        network_invoice_id: isInvoiceUuid ? notification.networkInvoiceId : null,
         data: notification.data,
         created_at: notification.created_at,
-      } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
-    );
+      };
+      const res = await supabase.from("network_notifications" as any).insert(notifPayload as any);
+      if (res?.error) {
+        return supabase.from("network_notifications" as any).insert({
+          ...notifPayload,
+          recipient_org_id: null,
+          network_invoice_id: null,
+        } as any);
+      }
+      return res;
+    });
 
     const existingNotifs = this.getLocalNotifications();
     existingNotifs.unshift(notification);
@@ -858,16 +886,11 @@ export const networkInvoicingService = {
     // Merge with Supabase network_invoices
     try {
       const orClauses = [`recipient_org_id.eq.${orgId}`, `sender_org_id.eq.${orgId}`];
-      if (cleanPhone) {
+      if (cleanPhone && cleanPhone.length >= 10) {
         orClauses.push(`recipient_phone.eq.${cleanPhone}`);
-        orClauses.push(`recipient_phone.ilike.%${cleanPhone}%`);
       }
-      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
-      if (orgName && orgName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
-      }
-      if (userName && userName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
+      if (cleanGstin && cleanGstin.length >= 15) {
+        orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
       }
 
       const dbRes = await safeDbCall(async () => {
@@ -1060,21 +1083,8 @@ export const networkInvoicingService = {
     }
 
     try {
-      // 1. Primary safe DB fetch by recipient_org_id, phone, gstin, or name
-      const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
-      const cleanGstin = (orgGstin || "").toUpperCase().trim();
+      // 1. Primary safe DB fetch by recipient_org_id (and recipient_user_id if available)
       const orClauses = [`recipient_org_id.eq.${orgId}`];
-      if (cleanPhone) {
-        orClauses.push(`recipient_phone.eq.${cleanPhone}`);
-        orClauses.push(`recipient_phone.ilike.%${cleanPhone}%`);
-      }
-      if (cleanGstin) orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
-      if (orgName && orgName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${orgName.trim()}%`);
-      }
-      if (userName && userName.trim().length >= 3) {
-        orClauses.push(`recipient_org_name.ilike.%${userName.trim()}%`);
-      }
 
       const dbRes = await safeDbCall(async () => {
         return supabase

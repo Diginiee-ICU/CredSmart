@@ -69,7 +69,7 @@ export interface LocalCachedProduct {
 }
 
 export function getLocalCachedProducts(orgId: string): LocalCachedProduct[] {
-  if (typeof window === "undefined" || !orgId) return [];
+  if (typeof window === "undefined" || typeof localStorage === "undefined" || !orgId) return [];
   try {
     const raw = localStorage.getItem(`credsmart_cached_products_${orgId}`);
     return raw ? JSON.parse(raw) : [];
@@ -79,7 +79,7 @@ export function getLocalCachedProducts(orgId: string): LocalCachedProduct[] {
 }
 
 export function saveLocalCachedProducts(orgId: string, products: LocalCachedProduct[]): void {
-  if (typeof window === "undefined" || !orgId) return;
+  if (typeof window === "undefined" || typeof localStorage === "undefined" || !orgId) return;
   try {
     localStorage.setItem(`credsmart_cached_products_${orgId}`, JSON.stringify(products));
   } catch { /* empty */ }
@@ -198,95 +198,124 @@ export const stockService = {
   ): Promise<void> {
     if (!orgId || !items || items.length === 0) return;
 
+    // 1. Immediately update local product cache so UI reflects deduction instantaneously
     for (const item of items) {
-      const qtyToDeduct = Math.max(1, Number(item.quantity) || 1);
-      const productId = await resolveProductId(orgId, item);
-      if (!productId) continue;
-
       try {
-        // Fetch existing batches for this product
-        const { data: batches, error: batchErr } = await productsApi.getBatches([productId], orgId);
-
-        if (batchErr) {
-          console.warn(`Failed to fetch batches for product ${productId}:`, batchErr);
-          continue;
-        }
-
-        if (batches && batches.length > 0) {
-          // If specific batch requested, find it; otherwise pick first batch with stock > 0, or the first batch
-          let targetBatch = item.batchNumber
-            ? batches.find(
-                (b) =>
-                  (b.batch_number || b.batchNumber || "").toLowerCase().trim() ===
-                  item.batchNumber?.toLowerCase().trim()
-              )
-            : undefined;
-
-          if (!targetBatch) {
-            targetBatch = batches.find((b) => Number(b.stock) > 0) || batches[0];
-          }
-
-          const currentStock = Number(targetBatch.stock) || 0;
+        const cachedProducts = getLocalCachedProducts(orgId);
+        const match = cachedProducts.find(
+          (p) =>
+            (item.productId && p.id === item.productId) ||
+            (item.barcode && p.barcode === item.barcode) ||
+            (item.productName && p.name.trim().toLowerCase() === item.productName.trim().toLowerCase())
+        );
+        if (match) {
+          const qtyToDeduct = Math.max(1, Number(item.quantity) || 1);
+          const currentStock = Number(match.currentStock ?? match.stock ?? 0);
           const newStock = Math.max(0, currentStock - qtyToDeduct);
-
-          if (targetBatch.id) {
-            await productsApi.updateBatch(
-              targetBatch.id,
-              { stock: newStock },
-              orgId
-            );
-          }
-        } else {
-          // No batch existed; create initial batch with 0 stock
-          await productsApi.createBatch(
-            {
-              product_id: productId,
-              batch_number: item.batchNumber?.trim() || "BATCH-01",
-              cost_price: Number(item.costPrice || item.rate || 0),
-              mrp: Number(item.mrp || item.rate || 0),
-              stock: 0,
-            },
-            orgId
-          );
+          addOrUpdateLocalCachedProduct(orgId, {
+            ...match,
+            currentStock: newStock,
+            stock: newStock,
+          });
         }
-
-        // Sync total stock in products.tags and local cache
-        try {
-          const { data: allBatches } = await productsApi.getBatches([productId], orgId);
-
-          const totalStock = (allBatches || []).reduce(
-            (sum, b) => sum + (Number(b.stock) || 0),
-            0
-          );
-
-          const { data: prodRecord } = await productsApi.getProductById(productId, orgId);
-
-          if (prodRecord) {
-            const currentTags = (prodRecord.tags && typeof prodRecord.tags === "object" ? prodRecord.tags : {}) as Record<string, unknown>;
-            await productsApi.updateProduct(
-              productId,
-              { tags: { ...currentTags, stock: totalStock } },
-              orgId
-            );
-
-            addOrUpdateLocalCachedProduct(orgId, {
-              id: productId,
-              name: prodRecord.name,
-              barcode: prodRecord.barcode,
-              sku: prodRecord.sku || undefined,
-              category: prodRecord.category || undefined,
-              tags: { ...currentTags, stock: totalStock },
-              currentStock: totalStock,
-              stock: totalStock,
-            });
-          }
-        } catch { /* empty */ }
-      } catch (err) {
-        console.warn(`Deduct stock exception for product ${productId} (${reason}):`, err);
-      }
+      } catch { /* empty */ }
     }
-
     notifyStockUpdated(orgId);
+
+    // 2. Concurrently sync batch updates to backend/database in the background
+    const syncBatches = async () => {
+      await Promise.allSettled(
+        items.map(async (item) => {
+          const qtyToDeduct = Math.max(1, Number(item.quantity) || 1);
+          const productId = await resolveProductId(orgId, item);
+          if (!productId) return;
+
+          try {
+            // Fetch existing batches for this product
+            const { data: batches, error: batchErr } = await productsApi.getBatches([productId], orgId);
+
+            if (batchErr) {
+              console.warn(`Failed to fetch batches for product ${productId}:`, batchErr);
+              return;
+            }
+
+            if (batches && batches.length > 0) {
+              // If specific batch requested, find it; otherwise pick first batch with stock > 0, or the first batch
+              let targetBatch = item.batchNumber
+                ? batches.find(
+                    (b) =>
+                      (b.batch_number || b.batchNumber || "").toLowerCase().trim() ===
+                      item.batchNumber?.toLowerCase().trim()
+                  )
+                : undefined;
+
+              if (!targetBatch) {
+                targetBatch = batches.find((b) => Number(b.stock) > 0) || batches[0];
+              }
+
+              const currentStock = Number(targetBatch.stock) || 0;
+              const newStock = Math.max(0, currentStock - qtyToDeduct);
+
+              if (targetBatch.id) {
+                await productsApi.updateBatch(
+                  targetBatch.id,
+                  { stock: newStock },
+                  orgId
+                );
+              }
+            } else {
+              // No batch existed; create initial batch with 0 stock
+              await productsApi.createBatch(
+                {
+                  product_id: productId,
+                  batch_number: item.batchNumber?.trim() || "BATCH-01",
+                  cost_price: Number(item.costPrice || item.rate || 0),
+                  mrp: Number(item.mrp || item.rate || 0),
+                  stock: 0,
+                },
+                orgId
+              );
+            }
+
+            // Sync total stock in products.tags and local cache
+            try {
+              const { data: allBatches } = await productsApi.getBatches([productId], orgId);
+
+              const totalStock = (allBatches || []).reduce(
+                (sum, b) => sum + (Number(b.stock) || 0),
+                0
+              );
+
+              const { data: prodRecord } = await productsApi.getProductById(productId, orgId);
+
+              if (prodRecord) {
+                const currentTags = (prodRecord.tags && typeof prodRecord.tags === "object" ? prodRecord.tags : {}) as Record<string, unknown>;
+                await productsApi.updateProduct(
+                  productId,
+                  { tags: { ...currentTags, stock: totalStock } },
+                  orgId
+                );
+
+                addOrUpdateLocalCachedProduct(orgId, {
+                  id: productId,
+                  name: prodRecord.name,
+                  barcode: prodRecord.barcode,
+                  sku: prodRecord.sku || undefined,
+                  category: prodRecord.category || undefined,
+                  tags: { ...currentTags, stock: totalStock },
+                  currentStock: totalStock,
+                  stock: totalStock,
+                });
+              }
+            } catch { /* empty */ }
+          } catch (err) {
+            console.warn(`Deduct stock exception for product ${productId} (${reason}):`, err);
+          }
+        })
+      );
+    };
+
+    syncBatches().catch((err) => console.warn("Stock sync background notice:", err));
   },
 
   /**
@@ -299,203 +328,269 @@ export const stockService = {
   ): Promise<void> {
     if (!orgId || !items || items.length === 0) return;
 
+    // 1. Immediately update local product cache so UI reflects addition instantaneously
     for (const item of items) {
-      const qtyToAdd = Math.max(1, Number(item.quantity) || 1);
-      let productId = await resolveProductId(orgId, item);
-
-      // If product doesn't exist yet in inventory (e.g. newly purchased item), create it
-      if (!productId && item.productName && item.productName.trim().length > 0) {
-        try {
-          const cleanName = item.productName.trim();
-          const cleanBarcode = item.barcode?.trim() || null;
-          const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-          const sp = Number(item.mrp || item.rate || 0);
-          const pp = Number(item.costPrice || item.rate || 0);
-          const tagsPayload = {
-            unit: (item.unit || "PCS").toUpperCase(),
-            alt_unit: item.altUnit,
-            alt_unit_conversion: item.altUnitConversion,
-            selling_price: sp,
-            purchase_price: pp,
-            mrp: sp,
-            stock: qtyToAdd,
-            min_stock_alert: 5,
-          };
-
-          const { data: newProd, error: prodCreateErr } = await productsApi.createProduct(
-            {
-              organization_id: orgId,
-              name: cleanName,
-              barcode: cleanBarcode,
-              category: "General",
-              sku: generatedSku,
-              tags: tagsPayload,
-            },
-            orgId
-          );
-
-          if (!prodCreateErr && newProd?.id) {
-            productId = newProd.id;
-          } else {
-            // Local fallback UUID for offline / demo mode
-            productId = generateSafeUuid();
-          }
-
-          // Store newly created product into local cache immediately
+      try {
+        const cachedProducts = getLocalCachedProducts(orgId);
+        const match = cachedProducts.find(
+          (p) =>
+            (item.productId && p.id === item.productId) ||
+            (item.barcode && p.barcode === item.barcode) ||
+            (item.productName && p.name.trim().toLowerCase() === item.productName.trim().toLowerCase())
+        );
+        const qtyToAdd = Math.max(1, Number(item.quantity) || 1);
+        if (match) {
+          const currentStock = Number(match.currentStock ?? match.stock ?? 0);
+          const newStock = currentStock + qtyToAdd;
           addOrUpdateLocalCachedProduct(orgId, {
-            id: productId,
+            ...match,
+            currentStock: newStock,
+            stock: newStock,
+          });
+        } else if (item.productName && item.productName.trim().length > 0) {
+          const cleanName = item.productName.trim();
+          const cleanBarcode = item.barcode?.trim() || undefined;
+          const pId = item.productId || generateSafeUuid();
+          const rateVal = Number(item.costPrice || item.rate || 0);
+          const mrpVal = Number(item.mrp || item.rate || 0);
+          addOrUpdateLocalCachedProduct(orgId, {
+            id: pId,
             name: cleanName,
             barcode: cleanBarcode,
-            sku: generatedSku,
-            category: "General",
+            stock: qtyToAdd,
+            currentStock: qtyToAdd,
             unit: (item.unit || "PCS").toUpperCase(),
-            altUnit: item.altUnit,
-            altUnitConversion: item.altUnitConversion,
-            sellingPrice: sp,
-            purchasePrice: pp,
-            mrp: sp,
-            stock: qtyToAdd,
-            currentStock: qtyToAdd,
-            tags: tagsPayload,
-            product_batches: [
-              {
-                id: `batch_${Date.now()}`,
-                batch_number: item.batchNumber?.trim() || "BATCH-01",
-                cost_price: pp,
-                mrp: sp,
-                stock: qtyToAdd,
-                expiry_date: item.expiryDate || null,
-              },
-            ],
-          });
-        } catch (createErr) {
-          console.warn("Failed to auto-create product during purchase stock add:", createErr);
-        }
-      }
-
-      if (!productId) continue;
-
-      try {
-        const batchNum = item.batchNumber?.trim() || "BATCH-01";
-        const costVal = Number(item.costPrice || item.rate || 0);
-        const mrpVal = Number(item.mrp || item.rate || 0);
-
-        // Check if batch already exists
-        const { data: existingBatches } = await productsApi.getBatches([productId], orgId);
-
-        const matchedBatch = existingBatches?.find(
-          (b) => (b.batch_number || b.batchNumber || "").toLowerCase().trim() === batchNum.toLowerCase().trim()
-        );
-
-        let finalBatchStock = qtyToAdd;
-        if (matchedBatch && matchedBatch.id) {
-          const currentStock = Number(matchedBatch.stock) || 0;
-          finalBatchStock = currentStock + qtyToAdd;
-
-          await productsApi.updateBatch(
-            matchedBatch.id,
-            {
-              stock: finalBatchStock,
-              cost_price: costVal > 0 ? costVal : matchedBatch.cost_price,
-              mrp: mrpVal > 0 ? mrpVal : matchedBatch.mrp,
-              expiry_date: item.expiryDate || matchedBatch.expiry_date,
-            },
-            orgId
-          );
-        } else {
-          // Create new batch with added stock
-          await productsApi.createBatch(
-            {
-              product_id: productId,
-              batch_number: batchNum,
-              cost_price: costVal,
-              mrp: mrpVal,
-              expiry_date: item.expiryDate || null,
-              stock: qtyToAdd,
-            },
-            orgId
-          );
-        }
-
-        // Sync total stock into products.tags and local cache
-        try {
-          const { data: allBatches } = await productsApi.getBatches([productId], orgId);
-
-          const totalStock = (allBatches || []).reduce(
-            (sum, b) => sum + (Number(b.stock) || 0),
-            0
-          );
-
-          const { data: prodRec } = await productsApi.getProductById(productId, orgId);
-
-          if (prodRec) {
-            const currentTags = (prodRec.tags && typeof prodRec.tags === "object" ? prodRec.tags : {}) as Record<string, unknown>;
-            await productsApi.updateProduct(
-              productId,
-              {
-                tags: {
-                  ...currentTags,
-                  stock: totalStock,
-                },
-              },
-              orgId
-            );
-
-            addOrUpdateLocalCachedProduct(orgId, {
-              id: productId,
-              name: prodRec.name,
-              barcode: prodRec.barcode,
-              sku: prodRec.sku || undefined,
-              category: prodRec.category || undefined,
-              stock: totalStock,
-              currentStock: totalStock,
-              tags: { ...currentTags, stock: totalStock },
-              product_batches: allBatches?.map((b) => ({
-                id: b.id,
-                batch_number: b.batch_number,
-                cost_price: Number(b.cost_price) || costVal,
-                mrp: Number(b.mrp) || mrpVal,
-                stock: Number(b.stock) || 0,
-                expiry_date: b.expiry_date,
-              })),
-            });
-          }
-        } catch (tagErr) {
-          console.warn(`Tags stock sync notice for product ${productId}:`, tagErr);
-        }
-      } catch (err) {
-        console.warn(`Add stock exception for product ${productId} (${reason}):`, err);
-        // Fallback for local cache stock increment
-        const localList = getLocalCachedProducts(orgId);
-        const target = localList.find((p) => p.id === productId);
-        if (target) {
-          const newStock = (target.stock || 0) + qtyToAdd;
-          addOrUpdateLocalCachedProduct(orgId, {
-            ...target,
-            stock: newStock,
-            currentStock: newStock,
-          });
-        } else {
-          addOrUpdateLocalCachedProduct(orgId, {
-            id: productId,
-            name: item.productName || "Product",
-            barcode: item.barcode || undefined,
-            stock: qtyToAdd,
-            currentStock: qtyToAdd,
+            sellingPrice: mrpVal,
+            purchasePrice: rateVal,
+            mrp: mrpVal,
             tags: {
               stock: qtyToAdd,
               mrp: mrpVal,
               selling_price: mrpVal,
-              purchase_price: costVal,
-              unit: item.unit || "PCS",
+              purchase_price: rateVal,
+              unit: (item.unit || "PCS").toUpperCase(),
             },
           });
         }
-      }
+      } catch { /* empty */ }
     }
 
     notifyStockUpdated(orgId);
-  },
+
+    // 2. Concurrently sync batch updates to backend/database in the background
+    const syncBatches = async () => {
+      await Promise.allSettled(
+        items.map(async (item) => {
+          const qtyToAdd = Math.max(1, Number(item.quantity) || 1);
+        let productId = await resolveProductId(orgId, item);
+
+        // If product doesn't exist yet in inventory (e.g. newly purchased item), create it
+        if (!productId && item.productName && item.productName.trim().length > 0) {
+          try {
+            const cleanName = item.productName.trim();
+            const cleanBarcode = item.barcode?.trim() || null;
+            const generatedSku = `SKU-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            const sp = Number(item.mrp || item.rate || 0);
+            const pp = Number(item.costPrice || item.rate || 0);
+            const tagsPayload = {
+              unit: (item.unit || "PCS").toUpperCase(),
+              alt_unit: item.altUnit,
+              alt_unit_conversion: item.altUnitConversion,
+              selling_price: sp,
+              purchase_price: pp,
+              mrp: sp,
+              stock: qtyToAdd,
+              min_stock_alert: 5,
+            };
+
+            const { data: newProd, error: prodCreateErr } = await productsApi.createProduct(
+              {
+                organization_id: orgId,
+                name: cleanName,
+                barcode: cleanBarcode,
+                category: "General",
+                sku: generatedSku,
+                tags: tagsPayload,
+              },
+              orgId
+            );
+
+            if (!prodCreateErr && newProd?.id) {
+              productId = newProd.id;
+            } else {
+              // Local fallback UUID for offline / demo mode
+              productId = generateSafeUuid();
+            }
+
+            // Store newly created product into local cache immediately
+            addOrUpdateLocalCachedProduct(orgId, {
+              id: productId,
+              name: cleanName,
+              barcode: cleanBarcode,
+              sku: generatedSku,
+              category: "General",
+              unit: (item.unit || "PCS").toUpperCase(),
+              altUnit: item.altUnit,
+              altUnitConversion: item.altUnitConversion,
+              sellingPrice: sp,
+              purchasePrice: pp,
+              mrp: sp,
+              stock: qtyToAdd,
+              currentStock: qtyToAdd,
+              tags: tagsPayload,
+              product_batches: [
+                {
+                  id: `batch_${Date.now()}`,
+                  batch_number: item.batchNumber?.trim() || "BATCH-01",
+                  cost_price: pp,
+                  mrp: sp,
+                  stock: qtyToAdd,
+                  expiry_date: item.expiryDate || null,
+                },
+              ],
+            });
+          } catch (createErr) {
+            console.warn("Failed to auto-create product during purchase stock add:", createErr);
+          }
+        }
+
+        if (!productId) return;
+
+        try {
+          const batchNum = item.batchNumber?.trim() || "BATCH-01";
+          const costVal = Number(item.costPrice || item.rate || 0);
+          const mrpVal = Number(item.mrp || item.rate || 0);
+
+          // Check if batch already exists
+          const { data: existingBatches } = await productsApi.getBatches([productId], orgId);
+
+          const matchedBatch = existingBatches?.find(
+            (b) => (b.batch_number || b.batchNumber || "").toLowerCase().trim() === batchNum.toLowerCase().trim()
+          );
+
+          let finalBatchStock = qtyToAdd;
+          if (matchedBatch && matchedBatch.id) {
+            const currentStock = Number(matchedBatch.stock) || 0;
+            finalBatchStock = currentStock + qtyToAdd;
+
+            await productsApi.updateBatch(
+              matchedBatch.id,
+              {
+                stock: finalBatchStock,
+                cost_price: costVal > 0 ? costVal : matchedBatch.cost_price,
+                mrp: mrpVal > 0 ? mrpVal : matchedBatch.mrp,
+                expiry_date: item.expiryDate || matchedBatch.expiry_date,
+              },
+              orgId
+            );
+          } else {
+            // Create new batch with added stock
+            await productsApi.createBatch(
+              {
+                product_id: productId,
+                batch_number: batchNum,
+                cost_price: costVal,
+                mrp: mrpVal,
+                expiry_date: item.expiryDate || null,
+                stock: qtyToAdd,
+              },
+              orgId
+            );
+          }
+
+          // Sync total stock into products.tags and local cache
+          try {
+            const { data: allBatches } = await productsApi.getBatches([productId], orgId);
+
+            const totalStock = (allBatches || []).reduce(
+              (sum, b) => sum + (Number(b.stock) || 0),
+              0
+            );
+
+            const { data: prodRec } = await productsApi.getProductById(productId, orgId);
+
+            if (prodRec) {
+              const currentTags = (prodRec.tags && typeof prodRec.tags === "object" ? prodRec.tags : {}) as Record<string, unknown>;
+              await productsApi.updateProduct(
+                productId,
+                {
+                  tags: {
+                    ...currentTags,
+                    stock: totalStock,
+                  },
+                },
+                orgId
+              );
+
+              addOrUpdateLocalCachedProduct(orgId, {
+                id: productId,
+                name: prodRec.name,
+                barcode: prodRec.barcode,
+                sku: prodRec.sku || undefined,
+                category: prodRec.category || undefined,
+                stock: totalStock,
+                currentStock: totalStock,
+                tags: { ...currentTags, stock: totalStock },
+                product_batches: allBatches?.map((b) => ({
+                  id: b.id,
+                  batch_number: b.batch_number,
+                  cost_price: Number(b.cost_price) || costVal,
+                  mrp: Number(b.mrp) || mrpVal,
+                  stock: Number(b.stock) || 0,
+                  expiry_date: b.expiry_date,
+                })),
+              });
+            } else {
+              const localList = getLocalCachedProducts(orgId);
+              const target = localList.find((p) => p.id === productId || (item.productName && p.name.trim().toLowerCase() === item.productName.trim().toLowerCase()));
+              if (target) {
+                const currentStock = Number(target.currentStock ?? target.stock ?? 0);
+                const newStock = Math.max(currentStock, qtyToAdd);
+                addOrUpdateLocalCachedProduct(orgId, {
+                  ...target,
+                  stock: newStock,
+                  currentStock: newStock,
+                });
+              }
+            }
+          } catch (tagErr) {
+            console.warn(`Tags stock sync notice for product ${productId}:`, tagErr);
+          }
+        } catch (err) {
+          console.warn(`Add stock exception for product ${productId} (${reason}):`, err);
+          // Fallback for local cache stock increment
+          const localList = getLocalCachedProducts(orgId);
+          const target = localList.find((p) => p.id === productId);
+          if (target) {
+            const newStock = (target.stock || 0) + qtyToAdd;
+            addOrUpdateLocalCachedProduct(orgId, {
+              ...target,
+              stock: newStock,
+              currentStock: newStock,
+            });
+          } else {
+            addOrUpdateLocalCachedProduct(orgId, {
+              id: productId,
+              name: item.productName || "Product",
+              barcode: item.barcode || undefined,
+              stock: qtyToAdd,
+              currentStock: qtyToAdd,
+              tags: {
+                stock: qtyToAdd,
+                mrp: mrpVal,
+                selling_price: mrpVal,
+                purchase_price: costVal,
+                unit: item.unit || "PCS",
+              },
+            });
+          }
+        }
+      })
+    );
+  };
+
+  syncBatches().catch((err) => console.warn("Stock addition sync background notice:", err));
+},
 
   /**
    * Automatically handles stock addition/deduction based on Document Type and Action (create, update, delete)

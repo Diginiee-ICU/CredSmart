@@ -181,7 +181,6 @@ export function SalesInvoiceModal({
       return;
     }
     networkInvoicingService.findConnectedOrganization({
-      orgId: selectedCustomerId,
       phone: partyPhone,
       gstin: partyGstin,
       name: partyName,

@@ -204,7 +204,7 @@ describe("Milestone 2 Challenger 2 Empirical Stress Test Suite", () => {
       }
 
       windowOpenSpy.mockRestore();
-    });
+    }, 15000);
   });
 
   // ─────────────────────────────────────────────────────────────

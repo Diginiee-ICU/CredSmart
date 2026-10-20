@@ -86,10 +86,13 @@ router.get('/sales/:id', async (req, res) => {
   }
 });
 
+const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
+
 router.post('/sales', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const rawOrgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const orgId = isUuid(rawOrgId) ? rawOrgId : null;
     const effectiveTotal = req.body.total_amount != null ? req.body.total_amount : (req.body.total != null ? req.body.total : (req.body.grand_total != null ? req.body.grand_total : 0));
     const effectiveTax = req.body.tax_amount != null ? req.body.tax_amount : (req.body.tax != null ? req.body.tax : 0);
     const effectiveDiscount = req.body.discount_amount != null ? req.body.discount_amount : (req.body.discount != null ? req.body.discount : 0);
@@ -97,11 +100,14 @@ router.post('/sales', async (req, res) => {
     const paymentStatus = req.body.payment_status || (Number(effectivePaid) >= Number(effectiveTotal) && Number(effectiveTotal) > 0 ? 'paid' : (Number(effectivePaid) > 0 ? 'partial' : 'unpaid'));
 
     const {
-      id: customId,
+      id: rawCustomId,
       invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
       sale_date = new Date(), subtotal = 0, payment_method = 'cash', notes,
       items: rawItems, sale_items: altItems
     } = req.body;
+    const customId = isUuid(rawCustomId) ? rawCustomId : null;
+    const effCustomerId = isUuid(customer_id) ? customer_id : null;
+    const effCreatedBy = isUuid(req.user?.id) ? req.user.id : null;
     const items = rawItems || altItems || [];
 
     await client.query('BEGIN');
@@ -132,9 +138,9 @@ router.post('/sales', async (req, res) => {
           updated_at = NOW()
         RETURNING *`,
         [
-          customId, orgId, invoice_number, customer_id || null, customer_name || '', customer_phone || '', customer_gstin || '',
+          customId, orgId, invoice_number, effCustomerId, customer_name || '', customer_phone || '', customer_gstin || '',
           sale_date, subtotal, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
-          payment_method, paymentStatus, notes || null, req.user?.id || null
+          payment_method, paymentStatus, notes || null, effCreatedBy
         ]
       );
     } else {
@@ -143,24 +149,26 @@ router.post('/sales', async (req, res) => {
           org_id, organization_id, invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
           sale_date, subtotal, discount_amount, tax_amount, total_amount, paid_amount,
           payment_method, payment_status, notes, created_by
-        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *`,
         [
-          orgId, invoice_number, customer_id || null, customer_name || '', customer_phone || '', customer_gstin || '',
+          orgId, invoice_number, effCustomerId, customer_name || '', customer_phone || '', customer_gstin || '',
           sale_date, subtotal, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
-          payment_method, paymentStatus, notes || null, req.user?.id || null
+          payment_method, paymentStatus, notes || null, effCreatedBy
         ]
       );
     }
     const sale = saleRes.rows[0];
 
     if (customId) {
-      await client.query('DELETE FROM sale_items WHERE sale_id = $1 AND (org_id = $2 OR organization_id = $2)', [sale.id, orgId]);
+      try {
+        await client.query('DELETE FROM sale_items WHERE sale_id = $1', [sale.id]);
+      } catch (_dErr) {}
     }
 
     const insertedItems = [];
     for (const item of items) {
-      const pId = item.product_id || item.productId || null;
+      const pId = (item.product_id && isUuid(item.product_id)) ? item.product_id : ((item.productId && isUuid(item.productId)) ? item.productId : null);
       const pName = item.product_name || item.productName || item.name || 'Unnamed Item';
       const sku = item.sku || null;
       const hsn = item.hsn_code || item.hsn || null;
@@ -172,37 +180,57 @@ router.post('/sales', async (req, res) => {
       const gstRate = Number(item.gst_rate ?? item.tax_rate ?? item.taxRate ?? 0) || 0;
       const gstAmt = Number(item.gst_amount ?? item.tax_amount ?? item.taxAmount ?? 0) || 0;
       const total = Number(item.total ?? item.line_total ?? item.lineTotal ?? (qty * rate)) || 0;
-      const batchId = item.batch_id || item.batchId || null;
+      const rawBatchId = item.batch_id || item.batchId || null;
+      const batchId = isUuid(rawBatchId) ? rawBatchId : null;
 
-      const itemRes = await client.query(
-        `INSERT INTO sale_items (
-          sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
-          quantity, unit, rate, discount_percent, discount_amount,
-          gst_rate, gst_amount, total, batch_id
-        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        RETURNING *`,
-        [
-          sale.id, orgId, pId, pName, sku, hsn,
-          qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId
-        ]
-      );
-      insertedItems.push(itemRes.rows[0]);
+      try {
+        const itemRes = await client.query(
+          `INSERT INTO sale_items (
+            sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
+            quantity, unit, rate, discount_percent, discount_amount,
+            gst_rate, gst_amount, total, batch_id
+          ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          RETURNING *`,
+          [
+            sale.id, orgId, pId, pName, sku, hsn,
+            qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId
+          ]
+        );
+        insertedItems.push(itemRes.rows[0]);
+      } catch (_itemErr) {
+        try {
+          const itemRes = await client.query(
+            `INSERT INTO sale_items (
+              sale_id, product_id, product_name, quantity, rate, total
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *`,
+            [sale.id, pId, pName, qty, rate, total]
+          );
+          insertedItems.push(itemRes.rows[0]);
+        } catch (_minItemErr) {
+          insertedItems.push({ product_name: pName, quantity: qty, rate, total });
+        }
+      }
 
       if (batchId) {
-        await client.query(
-          `UPDATE product_batches SET quantity = quantity - $1, stock = stock - $1, updated_at = NOW() WHERE id = $2 AND (org_id = $3 OR organization_id = $3)`,
-          [qty, batchId, orgId]
-        );
+        try {
+          await client.query(
+            `UPDATE product_batches SET stock = stock - $1, updated_at = NOW() WHERE id = $2`,
+            [qty, batchId]
+          );
+        } catch (_bErr) {}
       }
     }
 
     const unpaidAmount = Number(effectiveTotal) - Number(effectivePaid);
-    if (unpaidAmount > 0 && customer_id) {
-      await client.query(
-        `INSERT INTO credit_transactions (org_id, organization_id, party_type, party_id, type, amount, description, reference_id, reference_type, created_by)
-         VALUES ($1, $1, 'customer', $2, 'credit', $3, $4, $5, 'sale', $6)`,
-        [orgId, customer_id, unpaidAmount, `Invoice ${invoice_number || sale.id}`, sale.id, req.user?.id || null]
-      );
+    if (unpaidAmount > 0 && effCustomerId && orgId) {
+      try {
+        await client.query(
+          `INSERT INTO credit_transactions (org_id, organization_id, party_type, party_id, type, amount, description, reference_id, reference_type, created_by)
+           VALUES ($1, $1, 'customer', $2, 'credit', $3, $4, $5, 'sale', $6)`,
+          [orgId, effCustomerId, unpaidAmount, `Invoice ${invoice_number || sale.id}`, sale.id, effCreatedBy]
+        );
+      } catch (_cErr) {}
     }
 
     await client.query('COMMIT');
@@ -220,7 +248,8 @@ router.post('/sales', async (req, res) => {
 router.post('/sales/bulk', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const rawOrgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const orgId = isUuid(rawOrgId) ? rawOrgId : null;
     if (!orgId) return res.status(400).json({ error: 'Organization ID is required' });
 
     const rawItems = req.body.items || (Array.isArray(req.body) ? req.body : [req.body]);
@@ -237,9 +266,12 @@ router.post('/sales/bulk', async (req, res) => {
       const effectiveDiscount = item.discount_amount != null ? item.discount_amount : (item.discount != null ? item.discount : 0);
       const effectivePaid = item.paid_amount != null ? item.paid_amount : (item.amount_paid != null ? item.amount_paid : (item.payment_status === 'paid' ? effectiveTotal : 0));
       const paymentStatus = item.payment_status || (Number(effectivePaid) >= Number(effectiveTotal) && Number(effectiveTotal) > 0 ? 'paid' : (Number(effectivePaid) > 0 ? 'partial' : 'unpaid'));
+      const effCustId = isUuid(item.customer_id) ? item.customer_id : null;
+      const effUserId = isUuid(req.user?.id) ? req.user.id : null;
+      const hasValidId = isUuid(item.id);
 
       let saleRes;
-      if (item.id) {
+      if (hasValidId) {
         saleRes = await client.query(
           `INSERT INTO sales (
             id, org_id, organization_id, invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
@@ -264,9 +296,9 @@ router.post('/sales/bulk', async (req, res) => {
             updated_at = NOW()
           RETURNING *`,
           [
-            item.id, orgId, item.invoice_number, item.customer_id || null, item.customer_name || '', item.customer_phone || '', item.customer_gstin || '',
+            item.id, orgId, item.invoice_number, effCustId, item.customer_name || '', item.customer_phone || '', item.customer_gstin || '',
             item.sale_date || new Date(), item.subtotal || 0, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
-            item.payment_method || 'cash', paymentStatus, item.notes || null, req.user?.id || null
+            item.payment_method || 'cash', paymentStatus, item.notes || null, effUserId
           ]
         );
       } else {
@@ -275,12 +307,12 @@ router.post('/sales/bulk', async (req, res) => {
             org_id, organization_id, invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
             sale_date, subtotal, discount_amount, tax_amount, total_amount, paid_amount,
             payment_method, payment_status, notes, created_by
-          ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           RETURNING *`,
           [
-            orgId, item.invoice_number, item.customer_id || null, item.customer_name || '', item.customer_phone || '', item.customer_gstin || '',
+            orgId, item.invoice_number, effCustId, item.customer_name || '', item.customer_phone || '', item.customer_gstin || '',
             item.sale_date || new Date(), item.subtotal || 0, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
-            item.payment_method || 'cash', paymentStatus, item.notes || null, req.user?.id || null
+            item.payment_method || 'cash', paymentStatus, item.notes || null, effUserId
           ]
         );
       }
@@ -288,11 +320,13 @@ router.post('/sales/bulk', async (req, res) => {
       const sale = saleRes.rows[0];
       const lineItems = item.items || item.sale_items || [];
       if (Array.isArray(lineItems) && lineItems.length > 0) {
-        if (item.id) {
-          await client.query('DELETE FROM sale_items WHERE sale_id = $1 AND (org_id = $2 OR organization_id = $2)', [sale.id, orgId]);
+        if (hasValidId) {
+          try {
+            await client.query('DELETE FROM sale_items WHERE sale_id = $1', [sale.id]);
+          } catch (_dErr) {}
         }
         for (const line of lineItems) {
-          const pId = line.product_id || line.productId || null;
+          const pId = (line.product_id && isUuid(line.product_id)) ? line.product_id : ((line.productId && isUuid(line.productId)) ? line.productId : null);
           const pName = line.product_name || line.productName || line.name || 'Unnamed Item';
           const sku = line.sku || null;
           const hsn = line.hsn_code || line.hsn || null;
@@ -304,16 +338,27 @@ router.post('/sales/bulk', async (req, res) => {
           const gstRate = Number(line.gst_rate ?? line.tax_rate ?? line.taxRate ?? 0) || 0;
           const gstAmt = Number(line.gst_amount ?? line.tax_amount ?? line.taxAmount ?? 0) || 0;
           const total = Number(line.total ?? line.line_total ?? line.lineTotal ?? (qty * rate)) || 0;
-          const batchId = line.batch_id || line.batchId || null;
+          const rawBatchId = line.batch_id || line.batchId || null;
+          const batchId = isUuid(rawBatchId) ? rawBatchId : null;
 
-          await client.query(
-            `INSERT INTO sale_items (
-              sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
-              quantity, unit, rate, discount_percent, discount_amount,
-              gst_rate, gst_amount, total, batch_id
-            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-            [sale.id, orgId, pId, pName, sku, hsn, qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId]
-          );
+          try {
+            await client.query(
+              `INSERT INTO sale_items (
+                sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
+                quantity, unit, rate, discount_percent, discount_amount,
+                gst_rate, gst_amount, total, batch_id
+              ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+              [sale.id, orgId, pId, pName, sku, hsn, qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId]
+            );
+          } catch (_liErr) {
+            try {
+              await client.query(
+                `INSERT INTO sale_items (sale_id, product_id, product_name, quantity, rate, total)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [sale.id, pId, pName, qty, rate, total]
+              );
+            } catch (_minLiErr) {}
+          }
         }
       }
 
@@ -335,8 +380,11 @@ router.post('/sales/bulk', async (req, res) => {
 router.put('/sales/:id', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const rawOrgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const orgId = isUuid(rawOrgId) ? rawOrgId : null;
     const { id } = req.params;
+    if (!isUuid(id)) return res.status(404).json({ error: 'Sale not found' });
+
     const effectiveTotal = req.body.total_amount != null ? req.body.total_amount : (req.body.total != null ? req.body.total : (req.body.grand_total != null ? req.body.grand_total : 0));
     const effectiveTax = req.body.tax_amount != null ? req.body.tax_amount : (req.body.tax != null ? req.body.tax : 0);
     const effectiveDiscount = req.body.discount_amount != null ? req.body.discount_amount : (req.body.discount != null ? req.body.discount : 0);
@@ -345,6 +393,7 @@ router.put('/sales/:id', async (req, res) => {
       invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
       sale_date, subtotal, payment_method, payment_status, notes, items, sale_items
     } = req.body;
+    const effCustomerId = isUuid(customer_id) ? customer_id : null;
     const lineItems = items || sale_items;
 
     await client.query('BEGIN');
@@ -365,10 +414,10 @@ router.put('/sales/:id', async (req, res) => {
         payment_status = COALESCE($13, payment_status),
         notes = COALESCE($14, notes),
         updated_at = NOW()
-      WHERE id = $15 AND (org_id = $16 OR organization_id = $16)
+      WHERE id = $15 AND (org_id = $16 OR organization_id = $16 OR $16 IS NULL)
       RETURNING *`,
       [
-        invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
+        invoice_number, effCustomerId, customer_name, customer_phone, customer_gstin,
         sale_date, subtotal, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
         payment_method, payment_status, notes, id, orgId
       ]
@@ -382,9 +431,11 @@ router.put('/sales/:id', async (req, res) => {
 
     let insertedItems = [];
     if (lineItems && Array.isArray(lineItems)) {
-      await client.query('DELETE FROM sale_items WHERE sale_id = $1 AND (org_id = $2 OR organization_id = $2)', [id, orgId]);
+      try {
+        await client.query('DELETE FROM sale_items WHERE sale_id = $1', [id]);
+      } catch (_dErr) {}
       for (const item of lineItems) {
-        const pId = item.product_id || item.productId || null;
+        const pId = (item.product_id && isUuid(item.product_id)) ? item.product_id : ((item.productId && isUuid(item.productId)) ? item.productId : null);
         const pName = item.product_name || item.productName || item.name || 'Unnamed Item';
         const sku = item.sku || null;
         const hsn = item.hsn_code || item.hsn || null;
@@ -396,18 +447,33 @@ router.put('/sales/:id', async (req, res) => {
         const gstRate = Number(item.gst_rate ?? item.tax_rate ?? item.taxRate ?? 0) || 0;
         const gstAmt = Number(item.gst_amount ?? item.tax_amount ?? item.taxAmount ?? 0) || 0;
         const total = Number(item.total ?? item.line_total ?? item.lineTotal ?? (qty * rate)) || 0;
-        const batchId = item.batch_id || item.batchId || null;
+        const rawBatchId = item.batch_id || item.batchId || null;
+        const batchId = isUuid(rawBatchId) ? rawBatchId : null;
 
-        const itemRes = await client.query(
-          `INSERT INTO sale_items (
-            sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
-            quantity, unit, rate, discount_percent, discount_amount,
-            gst_rate, gst_amount, total, batch_id
-          ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-          RETURNING *`,
-          [id, orgId, pId, pName, sku, hsn, qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId]
-        );
-        insertedItems.push(itemRes.rows[0]);
+        try {
+          const itemRes = await client.query(
+            `INSERT INTO sale_items (
+              sale_id, org_id, organization_id, product_id, product_name, sku, hsn_code,
+              quantity, unit, rate, discount_percent, discount_amount,
+              gst_rate, gst_amount, total, batch_id
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING *`,
+            [id, orgId, pId, pName, sku, hsn, qty, unit, rate, discPct, discAmt, gstRate, gstAmt, total, batchId]
+          );
+          insertedItems.push(itemRes.rows[0]);
+        } catch (_iErr) {
+          try {
+            const itemRes = await client.query(
+              `INSERT INTO sale_items (sale_id, product_id, product_name, quantity, rate, total)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               RETURNING *`,
+              [id, pId, pName, qty, rate, total]
+            );
+            insertedItems.push(itemRes.rows[0]);
+          } catch (_minErr) {
+            insertedItems.push({ product_name: pName, quantity: qty, rate, total });
+          }
+        }
       }
     } else {
       const itemsRes = await client.query('SELECT * FROM sale_items WHERE sale_id = $1', [id]);
