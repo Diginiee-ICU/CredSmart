@@ -13,6 +13,29 @@ const generateTokens = (user, orgId) => {
   return { accessToken, refreshToken };
 };
 
+const getUserPrimaryOrgId = async (userId) => {
+  try {
+    const orgRes = await pool.query(
+      `SELECT COALESCE(org_id, organization_id) AS org_id FROM (
+         SELECT org_id, organization_id, created_at FROM org_memberships WHERE user_id = $1
+         UNION
+         SELECT organization_id AS org_id, organization_id, created_at FROM organization_memberships WHERE user_id = $1
+       ) m WHERE org_id IS NOT NULL ORDER BY created_at ASC LIMIT 1`,
+      [userId]
+    );
+    if (orgRes.rows.length > 0 && orgRes.rows[0].org_id) return orgRes.rows[0].org_id;
+  } catch (_mErr) {
+    try {
+      const fallbackRes = await pool.query(
+        `SELECT COALESCE(org_id, organization_id) AS org_id FROM org_memberships WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      if (fallbackRes.rows.length > 0) return fallbackRes.rows[0].org_id;
+    } catch (_ignored) {}
+  }
+  return null;
+};
+
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
   const client = await pool.connect();
@@ -133,11 +156,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Resolve user's primary organization
-    const orgRes = await pool.query(
-      `SELECT org_id FROM org_memberships WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1`,
-      [user.id]
-    );
-    const orgId = orgRes.rows.length > 0 ? orgRes.rows[0].org_id : null;
+    const orgId = await getUserPrimaryOrgId(user.id);
 
     const { accessToken, refreshToken } = generateTokens(user, orgId);
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -201,11 +220,7 @@ router.post('/refresh', async (req, res) => {
       created_at: row.created_at,
     };
 
-    const orgRes = await pool.query(
-      `SELECT org_id FROM org_memberships WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1`,
-      [user.id]
-    );
-    const orgId = orgRes.rows.length > 0 ? orgRes.rows[0].org_id : null;
+    const orgId = await getUserPrimaryOrgId(user.id);
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, orgId);
     const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);

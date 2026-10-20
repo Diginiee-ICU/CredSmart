@@ -1,9 +1,16 @@
 const express = require('express');
 const pool = require('../db');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
-router.use(authenticate);
+
+// Middleware: allow optional auth for public storefront reading and orders, require auth for tenant settings
+router.use((req, res, next) => {
+  if (req.path.startsWith('/storefront')) {
+    return optionalAuth(req, res, next);
+  }
+  return authenticate(req, res, next);
+});
 
 // ==================== ORGANIZATIONS ====================
 
@@ -300,16 +307,28 @@ router.put('/profiles/:userId', async (req, res) => {
 
 // ==================== STOREFRONT SETTINGS ====================
 
+const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
+
 const getStorefrontHandler = async (req, res) => {
   try {
-    const orgId = req.params.orgId || req.orgId || req.query.org_id || req.query.organization_id;
-    if (!orgId) return res.json(null);
-    const result = await pool.query(
-      'SELECT * FROM storefront_settings WHERE org_id = $1 OR organization_id = $1 LIMIT 1',
-      [orgId]
-    );
+    const target = req.params.orgId || req.params.slug || req.orgId || req.query.org_id || req.query.organization_id || req.query.slug;
+    if (!target) return res.json(null);
+
+    let result;
+    if (isUuid(target)) {
+      result = await pool.query(
+        'SELECT * FROM storefront_settings WHERE org_id = $1 OR organization_id = $1 OR store_slug = $1 LIMIT 1',
+        [target]
+      );
+    } else {
+      result = await pool.query(
+        'SELECT * FROM storefront_settings WHERE store_slug = $1 OR store_name = $1 LIMIT 1',
+        [target]
+      );
+    }
     return res.json(result.rows[0] || null);
   } catch (err) {
+    console.error('Get storefront settings error:', err);
     return res.status(500).json({ error: err.message });
   }
 };
@@ -348,6 +367,137 @@ router.put('/storefront-settings', saveStorefrontHandler);
 router.put('/storefront', saveStorefrontHandler);
 router.patch('/storefront-settings', saveStorefrontHandler);
 router.patch('/storefront', saveStorefrontHandler);
+
+// ==================== STOREFRONT ORDERS ====================
+
+// GET /api/storefront-orders
+const getStorefrontOrdersHandler = async (req, res) => {
+  try {
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    if (!orgId) return res.json([]);
+    const { limit = 50, status } = req.query;
+    let query = 'SELECT * FROM storefront_orders WHERE (org_id = $1 OR organization_id = $1)';
+    const params = [orgId];
+    if (status) {
+      params.push(status);
+      query += ` AND status = $${params.length}`;
+    }
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+    params.push(Number(limit) || 50);
+
+    const result = await pool.query(query, params);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Get storefront orders error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// POST /api/storefront-orders
+const createStorefrontOrderHandler = async (req, res) => {
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const {
+      customer_name,
+      customer_phone,
+      customer_address,
+      items,
+      total_amount = 0,
+      status = 'pending',
+      notes,
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO storefront_orders (org_id, organization_id, customer_name, customer_phone, customer_address, items, total_amount, status, notes)
+       VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [orgId, customer_name, customer_phone, customer_address, JSON.stringify(items || []), total_amount, status, notes]
+    );
+    return res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Create storefront order error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/storefront-orders/:id
+const updateStorefrontOrderHandler = async (req, res) => {
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const { status, notes } = req.body;
+    const result = await pool.query(
+      `UPDATE storefront_orders
+       SET status = COALESCE($1, status), notes = COALESCE($2, notes)
+       WHERE id = $3 AND (org_id = $4 OR organization_id = $4)
+       RETURNING *`,
+      [status, notes, req.params.id, orgId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update storefront order error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+router.get('/storefront-orders', getStorefrontOrdersHandler);
+router.get('/storefront/orders', getStorefrontOrdersHandler);
+router.post('/storefront-orders', createStorefrontOrderHandler);
+router.post('/storefront/orders', createStorefrontOrderHandler);
+router.put('/storefront-orders/:id', updateStorefrontOrderHandler);
+router.put('/storefront/orders/:id', updateStorefrontOrderHandler);
+router.patch('/storefront-orders/:id', updateStorefrontOrderHandler);
+router.patch('/storefront/orders/:id', updateStorefrontOrderHandler);
+
+// ==================== AUDIT / ACTIVITY LOGS ====================
+
+router.get('/audit-logs', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    if (!orgId) return res.json([]);
+    const { limit = 50, offset = 0 } = req.query;
+    const result = await pool.query(
+      `SELECT * FROM activity_logs
+       WHERE (org_id = $1 OR organization_id = $1)
+       ORDER BY created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [orgId, Number(limit) || 50, Number(offset) || 0]
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Get audit-logs error:', err);
+    return res.json([]);
+  }
+});
+
+router.post('/audit-logs', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const {
+      user_id = req.user?.id,
+      action,
+      entity_type,
+      resource_type,
+      entity_id,
+      resource_id,
+      details,
+    } = req.body;
+
+    const effType = entity_type || resource_type || 'system';
+    const effId = entity_id || resource_id || null;
+
+    const result = await pool.query(
+      `INSERT INTO activity_logs (org_id, organization_id, user_id, action, entity_type, entity_id, details)
+       VALUES ($1, $1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [orgId, user_id, action, effType, effId, JSON.stringify(details || {})]
+    );
+    return res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Create audit-log error:', err);
+    return res.status(201).json({ success: true });
+  }
+});
 
 // ==================== LOCATIONS / GODOWNS ====================
 

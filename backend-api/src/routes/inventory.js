@@ -7,17 +7,30 @@ router.use(authenticate);
 
 // ==================== PRODUCT BATCHES ====================
 
-// GET /api/product-batches
+// GET /api/product-batches (supports ?product_id= or ?product_ids=UUID,UUID)
 router.get('/product-batches', async (req, res) => {
   try {
     const orgId = req.orgId || req.query.org_id || req.query.organization_id;
-    const { product_id } = req.query;
+    const { product_id, product_ids } = req.query;
     let query = 'SELECT * FROM product_batches WHERE (org_id = $1 OR organization_id = $1)';
     const params = [orgId];
 
-    if (product_id) {
-      params.push(product_id);
+    const targetIds = [];
+    if (product_id) targetIds.push(String(product_id).trim());
+    if (product_ids) {
+      if (Array.isArray(product_ids)) {
+        targetIds.push(...product_ids.map(s => String(s).trim()));
+      } else {
+        targetIds.push(...String(product_ids).split(',').map(s => s.trim()).filter(Boolean));
+      }
+    }
+
+    if (targetIds.length === 1) {
+      params.push(targetIds[0]);
       query += ` AND product_id = $${params.length}`;
+    } else if (targetIds.length > 1) {
+      params.push(targetIds);
+      query += ` AND product_id = ANY($${params.length}::uuid[])`;
     }
 
     query += ' ORDER BY created_at DESC';
@@ -62,6 +75,99 @@ router.post('/product-batches', async (req, res) => {
     return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Create product-batch error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/product-batches/bulk
+router.post('/product-batches/bulk', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    if (!orgId) return res.status(400).json({ error: 'Organization ID is required' });
+
+    const rawBatches = req.body.batches || req.body.items || (Array.isArray(req.body) ? req.body : []);
+    if (!Array.isArray(rawBatches) || rawBatches.length === 0) {
+      return res.status(200).json({ success: true, count: 0, batches: [] });
+    }
+
+    await client.query('BEGIN');
+    const inserted = [];
+
+    for (const b of rawBatches) {
+      const productId = b.product_id || b.productId;
+      const godownId = b.godown_id || b.location_id || b.locationId || null;
+      const batchNum = b.batch_number || b.batchNumber || '';
+      const expDate = b.expiry_date || b.expiryDate || null;
+      const qty = Number(b.quantity ?? b.stock ?? b.current_stock ?? b.currentStock ?? 0) || 0;
+      const cost = Number(b.purchase_price ?? b.cost_price ?? b.costPrice ?? 0) || 0;
+      const mrpVal = Number(b.mrp ?? 0) || 0;
+      const sellPrice = Number(b.selling_price ?? b.sellingPrice ?? mrpVal) || mrpVal;
+
+      if (b.id) {
+        const resB = await client.query(
+          `INSERT INTO product_batches (
+            id, org_id, organization_id, product_id, godown_id, location_id,
+            batch_number, expiry_date, quantity, stock, purchase_price, cost_price, selling_price, mrp, updated_at
+          ) VALUES ($1, $2, $2, $3, $4, $4, $5, $6, $7, $7, $8, $8, $9, $10, NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            godown_id = EXCLUDED.godown_id,
+            location_id = EXCLUDED.location_id,
+            batch_number = EXCLUDED.batch_number,
+            expiry_date = EXCLUDED.expiry_date,
+            quantity = EXCLUDED.quantity,
+            stock = EXCLUDED.stock,
+            purchase_price = EXCLUDED.purchase_price,
+            cost_price = EXCLUDED.cost_price,
+            selling_price = EXCLUDED.selling_price,
+            mrp = EXCLUDED.mrp,
+            updated_at = NOW()
+          RETURNING *`,
+          [b.id, orgId, productId, godownId, batchNum, expDate, qty, cost, sellPrice, mrpVal]
+        );
+        inserted.push(resB.rows[0]);
+      } else {
+        const resB = await client.query(
+          `INSERT INTO product_batches (
+            org_id, organization_id, product_id, godown_id, location_id,
+            batch_number, expiry_date, quantity, stock, purchase_price, cost_price, selling_price, mrp
+          ) VALUES ($1, $1, $2, $3, $3, $4, $5, $6, $6, $7, $7, $8, $9)
+          RETURNING *`,
+          [orgId, productId, godownId, batchNum, expDate, qty, cost, sellPrice, mrpVal]
+        );
+        inserted.push(resB.rows[0]);
+      }
+    }
+
+    await client.query('COMMIT');
+    return res.status(201).json({ success: true, count: inserted.length, batches: inserted });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Bulk product-batches error:', err);
+    return res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /api/product-batches/bulk-delete
+router.post('/product-batches/bulk-delete', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const productIds = req.body.product_ids || req.body.productIds || [];
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.json({ success: true, deletedCount: 0 });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM product_batches
+       WHERE product_id = ANY($1::uuid[]) AND (org_id = $2 OR organization_id = $2)
+       RETURNING id`,
+      [productIds, orgId]
+    );
+    return res.json({ success: true, deletedCount: result.rowCount });
+  } catch (err) {
+    console.error('Bulk delete product-batches error:', err);
     return res.status(500).json({ error: err.message });
   }
 });

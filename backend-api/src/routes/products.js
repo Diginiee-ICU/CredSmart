@@ -37,6 +37,26 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/products/check-barcode
+router.get('/check-barcode', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    const { barcode, exclude_product_id } = req.query;
+    if (!barcode) return res.json({ isUnique: true });
+
+    let query = 'SELECT id FROM products WHERE (org_id = $1 OR organization_id = $1) AND barcode = $2';
+    const params = [orgId, barcode];
+    if (exclude_product_id) {
+      params.push(exclude_product_id);
+      query += ` AND id != $${params.length}`;
+    }
+    const result = await pool.query(query, params);
+    return res.json({ isUnique: result.rows.length === 0 });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/products/barcode/:barcode
 router.get('/barcode/:barcode', async (req, res) => {
   try {
