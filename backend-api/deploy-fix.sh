@@ -29,12 +29,12 @@ elif [ -f "./add_indexes.sql" ]; then
     echo "✅ ./add_indexes.sql applied"
 fi
 
-echo "Step 3: Rebuilding & Restarting backend-api container..."
+echo "Step 3: Rebuilding & Restarting backend container..."
 cd "$SERVER_DIR"
 if command -v docker-compose &> /dev/null; then
-    docker-compose up -d --build api
+    docker-compose up -d --build api 2>/dev/null || docker-compose up -d --build backend-api 2>/dev/null || docker-compose up -d --build
 else
-    docker compose up -d --build api
+    docker compose up -d --build api 2>/dev/null || docker compose up -d --build backend-api 2>/dev/null || docker compose up -d --build
 fi
 
 echo "Step 4: Waiting for API service warmup..."

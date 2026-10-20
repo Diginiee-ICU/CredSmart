@@ -540,8 +540,28 @@ CREATE TABLE IF NOT EXISTS storefront_settings (
 );
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS tagline TEXT;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS whatsapp_number VARCHAR(50);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(50);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS state VARCHAR(100);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS upi_id VARCHAR(100);
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS minimum_order_amount NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS delivery_charges NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS free_delivery_above NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS enable_home_delivery BOOLEAN DEFAULT TRUE;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS enable_store_pickup BOOLEAN DEFAULT TRUE;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS custom_announcement TEXT;
+ALTER TABLE storefront_settings ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '{}'::jsonb;
 UPDATE storefront_settings SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE storefront_settings SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE storefront_settings SET slug = store_slug WHERE slug IS NULL AND store_slug IS NOT NULL;
+UPDATE storefront_settings SET store_slug = slug WHERE store_slug IS NULL AND slug IS NOT NULL;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON storefront_settings;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON storefront_settings FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();

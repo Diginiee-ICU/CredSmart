@@ -336,23 +336,193 @@ const getStorefrontHandler = async (req, res) => {
 const saveStorefrontHandler = async (req, res) => {
   try {
     const orgId = req.params.orgId || req.orgId || req.body.org_id || req.body.organization_id;
-    const { store_name, store_slug, banner_url, description, is_active = true, theme_color } = req.body;
-    const result = await pool.query(
-      `INSERT INTO storefront_settings (org_id, organization_id, store_name, store_slug, banner_url, description, is_active, theme_color)
-       VALUES ($1, $1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (store_slug)
-       DO UPDATE SET
-         store_name = EXCLUDED.store_name,
-         banner_url = EXCLUDED.banner_url,
-         description = EXCLUDED.description,
-         is_active = EXCLUDED.is_active,
-         theme_color = EXCLUDED.theme_color,
-         updated_at = NOW()
-       RETURNING *`,
-      [orgId, store_name, store_slug || `store-${orgId?.slice(0, 8)}`, banner_url, description, is_active, theme_color]
-    );
-    return res.json(result.rows[0]);
+    if (!orgId) {
+      return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
+    const {
+      store_name,
+      name,
+      store_slug,
+      slug,
+      banner_url,
+      description,
+      is_active,
+      is_enabled,
+      theme_color,
+      whatsapp_number,
+      contact_phone,
+      logo_url,
+      tagline,
+      address,
+      city,
+      state,
+      pincode,
+      upi_id,
+      minimum_order_amount,
+      delivery_charges,
+      free_delivery_above,
+      enable_home_delivery,
+      enable_store_pickup,
+      custom_announcement,
+      social_links,
+    } = req.body;
+
+    const effName = store_name || name || 'My Business Store';
+    const rawSlug = store_slug || slug;
+    const effSlug = (rawSlug && String(rawSlug).trim())
+      ? String(rawSlug).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-')
+      : `store-${String(orgId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}`;
+    const effActive = is_active !== undefined ? Boolean(is_active) : (is_enabled !== undefined ? Boolean(is_enabled) : true);
+
+    // 1. Check if record already exists for this org
+    let existing;
+    try {
+      existing = await pool.query(
+        'SELECT id, store_slug, slug FROM storefront_settings WHERE org_id = $1 OR organization_id = $1 LIMIT 1',
+        [orgId]
+      );
+    } catch (_qErr) {
+      existing = await pool.query(
+        'SELECT id, store_slug FROM storefront_settings WHERE org_id = $1 OR organization_id = $1 LIMIT 1',
+        [orgId]
+      );
+    }
+
+    let row;
+    if (existing.rows.length > 0) {
+      const existingId = existing.rows[0].id;
+      let finalSlug = effSlug;
+      try {
+        const slugCheck = await pool.query(
+          'SELECT id FROM storefront_settings WHERE (store_slug = $1 OR slug = $1) AND id != $2 LIMIT 1',
+          [finalSlug, existingId]
+        );
+        if (slugCheck.rows.length > 0) {
+          finalSlug = `${finalSlug}-${Date.now().toString(36).slice(-4)}`;
+        }
+      } catch (_sErr) {}
+
+      try {
+        // Try full update with all columns
+        const updateRes = await pool.query(
+          `UPDATE storefront_settings SET
+             store_name = COALESCE($1, store_name),
+             store_slug = COALESCE($2, store_slug),
+             slug = COALESCE($2, slug),
+             banner_url = COALESCE($3, banner_url),
+             description = COALESCE($4, description),
+             is_active = COALESCE($5, is_active),
+             is_enabled = COALESCE($5, is_enabled),
+             theme_color = COALESCE($6, theme_color),
+             whatsapp_number = COALESCE($7, whatsapp_number),
+             contact_phone = COALESCE($8, contact_phone),
+             logo_url = COALESCE($9, logo_url),
+             tagline = COALESCE($10, tagline),
+             address = COALESCE($11, address),
+             city = COALESCE($12, city),
+             state = COALESCE($13, state),
+             pincode = COALESCE($14, pincode),
+             upi_id = COALESCE($15, upi_id),
+             minimum_order_amount = COALESCE($16, minimum_order_amount),
+             delivery_charges = COALESCE($17, delivery_charges),
+             free_delivery_above = COALESCE($18, free_delivery_above),
+             enable_home_delivery = COALESCE($19, enable_home_delivery),
+             enable_store_pickup = COALESCE($20, enable_store_pickup),
+             custom_announcement = COALESCE($21, custom_announcement),
+             social_links = COALESCE($22, social_links),
+             updated_at = NOW()
+           WHERE id = $23
+           RETURNING *`,
+          [
+            effName, finalSlug, banner_url, description, effActive, theme_color,
+            whatsapp_number, contact_phone, logo_url, tagline, address, city, state, pincode,
+            upi_id, minimum_order_amount, delivery_charges, free_delivery_above,
+            enable_home_delivery, enable_store_pickup, custom_announcement,
+            social_links ? JSON.stringify(social_links) : null,
+            existingId
+          ]
+        );
+        row = updateRes.rows[0];
+      } catch (colErr) {
+        // Fallback for minimal schema before fix_db.sql is run
+        const fallbackRes = await pool.query(
+          `UPDATE storefront_settings SET
+             store_name = COALESCE($1, store_name),
+             store_slug = COALESCE($2, store_slug),
+             banner_url = COALESCE($3, banner_url),
+             description = COALESCE($4, description),
+             is_active = COALESCE($5, is_active),
+             theme_color = COALESCE($6, theme_color),
+             updated_at = NOW()
+           WHERE id = $7
+           RETURNING *`,
+          [effName, finalSlug, banner_url, description, effActive, theme_color, existingId]
+        );
+        row = fallbackRes.rows[0];
+      }
+    } else {
+      let finalSlug = effSlug;
+      try {
+        const slugCheck = await pool.query(
+          'SELECT id FROM storefront_settings WHERE store_slug = $1 OR slug = $1 LIMIT 1',
+          [finalSlug]
+        );
+        if (slugCheck.rows.length > 0) {
+          finalSlug = `${finalSlug}-${Date.now().toString(36).slice(-4)}`;
+        }
+      } catch (_sErr) {}
+
+      try {
+        // Full insert
+        const insertRes = await pool.query(
+          `INSERT INTO storefront_settings (
+             org_id, organization_id, store_name, store_slug, slug,
+             banner_url, description, is_active, is_enabled, theme_color,
+             whatsapp_number, contact_phone, logo_url, tagline, address, city, state, pincode,
+             upi_id, minimum_order_amount, delivery_charges, free_delivery_above,
+             enable_home_delivery, enable_store_pickup, custom_announcement, social_links
+           ) VALUES (
+             $1, $1, $2, $3, $3,
+             $4, $5, $6, $6, $7,
+             $8, $9, $10, $11, $12, $13, $14, $15,
+             $16, $17, $18, $19,
+             $20, $21, $22, $23
+           ) RETURNING *`,
+          [
+            orgId, effName, finalSlug,
+            banner_url, description, effActive, theme_color,
+            whatsapp_number, contact_phone, logo_url, tagline, address, city, state, pincode,
+            upi_id, minimum_order_amount, delivery_charges, free_delivery_above,
+            enable_home_delivery, enable_store_pickup, custom_announcement,
+            social_links ? JSON.stringify(social_links) : '{}'
+          ]
+        );
+        row = insertRes.rows[0];
+      } catch (colErr) {
+        // Fallback insert with core columns
+        const fallbackInsert = await pool.query(
+          `INSERT INTO storefront_settings (
+             org_id, organization_id, store_name, store_slug, banner_url, description, is_active, theme_color
+           ) VALUES ($1, $1, $2, $3, $4, $5, $6, $7)
+           RETURNING *`,
+          [orgId, effName, finalSlug, banner_url, description, effActive, theme_color]
+        );
+        row = fallbackInsert.rows[0];
+      }
+    }
+
+    const normalized = {
+      ...row,
+      organization_id: row.org_id || row.organization_id || orgId,
+      slug: row.store_slug || row.slug || effSlug,
+      store_slug: row.store_slug || row.slug || effSlug,
+      is_enabled: row.is_active !== undefined ? row.is_active : row.is_enabled,
+      is_active: row.is_active !== undefined ? row.is_active : row.is_enabled,
+    };
+    return res.json(normalized);
   } catch (err) {
+    console.error('Save storefront error:', err);
     return res.status(500).json({ error: err.message });
   }
 };
