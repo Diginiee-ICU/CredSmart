@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { DocumentLineItem } from "@/types/documents";
 import { UnifiedInvoiceRenderer } from "../UnifiedInvoiceRenderer";
+import { calculatePaymentStatusAndBalance } from "@/utils/invoiceCalculations";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -62,6 +63,7 @@ export interface MobileBillPreviewModalProps {
     upi_id?: string;
   };
   amountReceived?: number;
+  markAsFullyPaid?: boolean;
   paymentMethod?: string;
   notes?: string;
   terms?: string;
@@ -87,6 +89,7 @@ export function MobileBillPreviewModal({
   totals,
   storeInfo,
   amountReceived = 0,
+  markAsFullyPaid,
   paymentMethod = "Cash",
   notes,
   terms,
@@ -103,7 +106,14 @@ export function MobileBillPreviewModal({
   );
 
   const grandTotal = totals?.grandTotal || 0;
-  const balanceDue = Math.max(0, grandTotal - (amountReceived || 0));
+  const paymentCalc = calculatePaymentStatusAndBalance({
+    grandTotal,
+    paymentMethod,
+    markAsFullyPaid,
+    amountReceived,
+  });
+  const balanceDue = paymentCalc.balanceDue;
+  const paidAmount = paymentCalc.paidAmount;
 
   const handleDownloadPdf = async () => {
     if (!invoiceContainerRef.current) return;
@@ -279,13 +289,10 @@ export function MobileBillPreviewModal({
                   additionalCharges: totals?.additionalCharges || 0,
                   roundOff: totals?.roundOff || 0,
                   grandTotal: grandTotal,
-                }}
-                paymentInfo={{
-                  status: amountReceived >= grandTotal ? "paid" : amountReceived > 0 ? "partial" : "unpaid",
-                  amountPaid: amountReceived,
+                  paidAmount: paidAmount,
                   balanceDue: balanceDue,
-                  paymentMethod: paymentMethod,
                 }}
+                paymentMethod={paymentMethod}
                 notes={notes}
                 termsAndConditions={terms}
               />

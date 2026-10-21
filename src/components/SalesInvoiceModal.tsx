@@ -61,7 +61,7 @@ import {
 } from "@/utils/suggestionData";
 import { documentsService } from "@/services/documentsService";
 import { cn } from "@/lib/utils";
-import { calculateInvoiceBreakdown } from "@/utils/invoiceCalculations";
+import { calculateInvoiceBreakdown, calculatePaymentStatusAndBalance } from "@/utils/invoiceCalculations";
 import { UnifiedInvoiceRenderer } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { InvoiceFitView } from "@/components/invoices/InvoiceFitView";
 import { AddItemsToBillModal, BillItemOption } from "@/components/invoices/AddItemsToBillModal";
@@ -703,14 +703,19 @@ export function SalesInvoiceModal({
       igstTotal: totals.igstTotal,
       taxTotal: totals.taxTotal,
       roundOff: totals.roundOff,
-      grandTotal: totals.grandTotal,
-      paidAmount: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? totals.grandTotal : amountReceived,
-      balanceDue: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? 0 : Math.max(0, totals.grandTotal - amountReceived),
-      status: (markAsFullyPaid || amountReceived >= totals.grandTotal || (paymentMethod !== "Credit" && amountReceived === 0 && totals.grandTotal > 0))
-        ? "paid"
-        : amountReceived > 0
-        ? "partial"
-        : "unpaid",
+      ...(() => {
+        const payment = calculatePaymentStatusAndBalance({
+          grandTotal: totals.grandTotal,
+          paymentMethod,
+          markAsFullyPaid,
+          amountReceived,
+        });
+        return {
+          paidAmount: payment.paidAmount,
+          balanceDue: payment.balanceDue,
+          status: payment.status,
+        };
+      })(),
       paymentMethod,
       transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
       created_at: editingDoc?.created_at || new Date().toISOString(),
@@ -719,7 +724,7 @@ export function SalesInvoiceModal({
     editingDoc, orgId, docType, fullDocumentNumber, selectedCustomerId, partyName, partyPhone,
     partyGstin, partyAddress, sameAsParty, billingAddress, billingPincode, billingPlaceOfSupply,
     placeOfSupply, docDate, showDueDate, dueDate, recalculatedItems, totals, amountReceived,
-    paymentMethod, vehicleNumber
+    paymentMethod, vehicleNumber, markAsFullyPaid
   ]);
 
   // Mark as fully paid sync
@@ -1054,16 +1059,15 @@ export function SalesInvoiceModal({
       const currentDocId = activeSavedDocId || editingDoc?.id || undefined;
       const isUpdate = Boolean(currentDocId);
 
-      const isCredit = paymentMethod === "Credit";
-      const isFullyPaid = markAsFullyPaid || (!isCredit && (amountReceived >= totals.grandTotal || amountReceived === 0));
-      const finalPaidAmount = isFullyPaid ? totals.grandTotal : amountReceived;
-      const finalBalanceDue = Math.max(0, totals.grandTotal - finalPaidAmount);
-      const finalStatus =
-        finalBalanceDue <= 0.005 || finalPaidAmount >= totals.grandTotal
-          ? "paid"
-          : finalPaidAmount > 0
-          ? "partial"
-          : "unpaid";
+      const payment = calculatePaymentStatusAndBalance({
+        grandTotal: totals.grandTotal,
+        paymentMethod,
+        markAsFullyPaid,
+        amountReceived,
+      });
+      const finalPaidAmount = payment.paidAmount;
+      const finalBalanceDue = payment.balanceDue;
+      const finalStatus = payment.status;
 
       const finalDoc: Omit<BusinessDocument, "id"> & { id?: string } = {
         id: currentDocId,
@@ -1112,8 +1116,8 @@ export function SalesInvoiceModal({
 
       const isMobileView = typeof window !== "undefined" && window.innerWidth < 1024;
 
-      // Toast notification: on desktop show single crisp toast; on mobile suppress toast since full-screen MobileInvoiceSuccessView opens
-      if (!isMobileView) {
+      // Toast notification: on desktop show single crisp toast; on mobile suppress toast when full-screen MobileInvoiceSuccessView opens
+      if (!isMobileView || saveAndNew) {
         if (isUpdate) {
           toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
         } else if (saveAndNew) {
@@ -1133,7 +1137,6 @@ export function SalesInvoiceModal({
       }
       onSaved(saved);
 
-      const isMobileView = typeof window !== "undefined" && window.innerWidth < 1024;
       if (andPrint && !isMobileView) {
         if (onPrintRequest) {
           onPrintRequest(saved);
@@ -1161,6 +1164,7 @@ export function SalesInvoiceModal({
             paymentMethod: saved.paymentMethod,
             notes: saved.notes,
             terms: saved.terms,
+            silent: true,
             items: saved.items.map((it) => ({
               name: it.productName,
               quantity: it.quantity,
@@ -1272,9 +1276,19 @@ export function SalesInvoiceModal({
       taxTotal: totals.taxTotal,
       roundOff: totals.roundOff,
       grandTotal: totals.grandTotal,
-      paidAmount: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? totals.grandTotal : amountReceived,
-      balanceDue: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? 0 : Math.max(0, totals.grandTotal - amountReceived),
-      status: (markAsFullyPaid || amountReceived >= totals.grandTotal || (paymentMethod !== "Credit" && amountReceived === 0 && totals.grandTotal > 0)) ? "paid" : amountReceived > 0 ? "partial" : "unpaid",
+      ...(() => {
+        const payment = calculatePaymentStatusAndBalance({
+          grandTotal: totals.grandTotal,
+          paymentMethod,
+          markAsFullyPaid,
+          amountReceived,
+        });
+        return {
+          paidAmount: payment.paidAmount,
+          balanceDue: payment.balanceDue,
+          status: payment.status,
+        };
+      })(),
       paymentMethod,
       notes: showNotes ? notes : undefined,
       terms,
@@ -1637,6 +1651,7 @@ export function SalesInvoiceModal({
               partyAddress={partyAddress}
               placeOfSupply={placeOfSupply}
               amountReceived={amountReceived}
+              markAsFullyPaid={markAsFullyPaid}
               paymentMethod={paymentMethod}
               notes={notes}
               terms={terms}

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { documentsService } from "@/services/documentsService";
 import { stockService } from "@/services/stockService";
 import { BusinessDocument } from "@/types/documents";
+import { calculatePaymentStatusAndBalance } from "@/utils/invoiceCalculations";
 
 describe("Milestone 1: Core Billing Lifecycle Engine (R1 & R2)", () => {
   const orgId = "org_test_m1";
@@ -166,4 +167,167 @@ describe("Milestone 1: Core Billing Lifecycle Engine (R1 & R2)", () => {
       expect(Number(fallback)).toBeLessThan(1000);
     });
   });
+
+  describe("R1: Default Sales Invoices to 'Paid' Status & Payment Calculations", () => {
+    it("defaults retail sales invoices (Cash, UPI, Card, Net Banking, Cheque) to paid with zero balance due", () => {
+      const methods = ["Cash", "UPI", "Card", "Net Banking", "Cheque"];
+
+      for (const method of methods) {
+        const result = calculatePaymentStatusAndBalance({
+          grandTotal: 1500,
+          paymentMethod: method,
+          markAsFullyPaid: true,
+          amountReceived: 0,
+        });
+
+        expect(result.status).toBe("paid");
+        expect(result.paidAmount).toBe(1500);
+        expect(result.balanceDue).toBe(0);
+      }
+    });
+
+    it("defaults Credit payment method to unpaid with full balance due", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 2500,
+        paymentMethod: "Credit",
+        markAsFullyPaid: false,
+        amountReceived: 0,
+      });
+
+      expect(result.status).toBe("unpaid");
+      expect(result.paidAmount).toBe(0);
+      expect(result.balanceDue).toBe(2500);
+    });
+
+    it("handles explicit partial payments accurately", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1000,
+        paymentMethod: "Cash",
+        markAsFullyPaid: false,
+        amountReceived: 400,
+      });
+
+      expect(result.status).toBe("partial");
+      expect(result.paidAmount).toBe(400);
+      expect(result.balanceDue).toBe(600);
+    });
+
+    it("handles explicit partial payment when markAsFullyPaid is omitted/undefined", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1000,
+        paymentMethod: "Cash",
+        amountReceived: 400,
+      });
+
+      expect(result.status).toBe("partial");
+      expect(result.paidAmount).toBe(400);
+      expect(result.balanceDue).toBe(600);
+    });
+
+    it("handles explicit zero payment on Cash when markAsFullyPaid is explicitly false", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1000,
+        paymentMethod: "Cash",
+        markAsFullyPaid: false,
+        amountReceived: 0,
+      });
+
+      expect(result.status).toBe("unpaid");
+      expect(result.paidAmount).toBe(0);
+      expect(result.balanceDue).toBe(1000);
+    });
+
+    it("marks as paid when amount received equals or exceeds grand total even if markAsFullyPaid is false", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1000,
+        paymentMethod: "UPI",
+        markAsFullyPaid: false,
+        amountReceived: 1000,
+      });
+
+      expect(result.status).toBe("paid");
+      expect(result.paidAmount).toBe(1000);
+      expect(result.balanceDue).toBe(0);
+    });
+
+    it("marks as paid when markAsFullyPaid is explicitly true even for Credit terms", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 3000,
+        paymentMethod: "Credit",
+        markAsFullyPaid: true,
+        amountReceived: 0,
+      });
+
+      expect(result.status).toBe("paid");
+      expect(result.paidAmount).toBe(3000);
+      expect(result.balanceDue).toBe(0);
+    });
+
+    it("defaults to paid for retail methods when markAsFullyPaid is omitted/undefined", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1200,
+        paymentMethod: "Cash",
+      });
+
+      expect(result.status).toBe("paid");
+      expect(result.paidAmount).toBe(1200);
+      expect(result.balanceDue).toBe(0);
+    });
+
+    it("defaults to unpaid for Credit terms when markAsFullyPaid is omitted/undefined", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 1200,
+        paymentMethod: "Credit",
+      });
+
+      expect(result.status).toBe("unpaid");
+      expect(result.paidAmount).toBe(0);
+      expect(result.balanceDue).toBe(1200);
+    });
+
+    it("handles zero grand total gracefully as paid with zero balance", () => {
+      const result = calculatePaymentStatusAndBalance({
+        grandTotal: 0,
+        paymentMethod: "Cash",
+      });
+
+      expect(result.status).toBe("paid");
+      expect(result.paidAmount).toBe(0);
+      expect(result.balanceDue).toBe(0);
+    });
+
+    it("persists sales invoice with default paid status and zero balance due in documentsService", async () => {
+      const cashDoc: Omit<BusinessDocument, "id"> = {
+        organizationId: orgId,
+        docType: "sales_invoice",
+        documentNumber: "INV-PAID-001",
+        partyName: "Cash Walk-in Customer",
+        docDate: "2026-10-21",
+        items: [{ id: "it-1", productName: "Item One", quantity: 2, rate: 250, lineTotal: 500 }],
+        subtotal: 500,
+        discountTotal: 0,
+        taxableTotal: 500,
+        taxTotal: 0,
+        grandTotal: 500,
+        paidAmount: 500,
+        balanceDue: 0,
+        status: "paid",
+        paymentMethod: "Cash",
+        created_at: new Date().toISOString(),
+      };
+
+      const saved = await documentsService.saveDocument(cashDoc);
+      expect(saved.id).toBeDefined();
+      expect(saved.status).toBe("paid");
+      expect(saved.paidAmount).toBe(500);
+      expect(saved.balanceDue).toBe(0);
+
+      const retrieved = documentsService.getLocalDocuments(orgId, "sales_invoice");
+      const found = retrieved.find((d) => d.id === saved.id);
+      expect(found).toBeDefined();
+      expect(found?.status).toBe("paid");
+      expect(found?.balanceDue).toBe(0);
+    });
+  });
 });
+

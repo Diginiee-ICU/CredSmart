@@ -471,5 +471,28 @@ describe("Adversarial Empirical Challenge Suite: MobileInvoiceSuccessView", () =
 
       expect(onEditMock).toHaveBeenCalledTimes(15);
     });
+
+    it("gracefully renders and downloads when items array is undefined or empty", () => {
+      const invoiceWithoutItems = {
+        ...createBaseInvoice(),
+        items: undefined as any,
+      };
+
+      expect(() => {
+        render(
+          <MobileInvoiceSuccessView
+            invoice={invoiceWithoutItems}
+            onClose={onCloseMock}
+            onEdit={onEditMock}
+          />
+        );
+      }).not.toThrow();
+
+      expect(screen.getAllByText("Test Party").length).toBeGreaterThan(0);
+
+      const downloadBtn = screen.getByRole("button", { name: /^Download$/i });
+      expect(() => fireEvent.click(downloadBtn)).not.toThrow();
+      expect(downloadExactInvoicePdf).toHaveBeenCalledTimes(1);
+    });
   });
 });

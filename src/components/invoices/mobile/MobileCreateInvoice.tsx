@@ -471,6 +471,7 @@ export function MobileCreateInvoice(props: MobileCreateInvoiceProps) {
         totals={props.totals}
         storeInfo={props.storeInfo}
         amountReceived={props.amountReceived}
+        markAsFullyPaid={props.markAsFullyPaid}
         paymentMethod={props.paymentMethod}
         notes={notes || props.notes}
         terms={props.terms}

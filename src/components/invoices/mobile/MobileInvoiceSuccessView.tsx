@@ -78,7 +78,7 @@ export function MobileInvoiceSuccessView({
     paymentMethod: invoice.paymentMethod,
     notes: invoice.notes,
     terms: invoice.terms,
-    items: invoice.items.map((it) => ({
+    items: (invoice.items || []).map((it) => ({
       name: it.productName,
       quantity: it.quantity,
       unit: it.unit || "PCS",
@@ -277,9 +277,9 @@ export function MobileInvoiceSuccessView({
             {isSalesType ? "Sales Invoice" : "Purchase Invoice"}
           </span>
           <div className="flex items-center gap-2">
-            {invoice.items.length > 4 && (
+            {(invoice.items || []).length > 4 && (
               <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
-                +{invoice.items.length - 4} more item(s)
+                +{(invoice.items || []).length - 4} more item(s)
               </span>
             )}
             <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
@@ -310,7 +310,7 @@ export function MobileInvoiceSuccessView({
                 address: invoice.partyAddress,
                 gstin: invoice.partyGstin,
               }}
-              items={invoice.items.map((it) => ({
+              items={(invoice.items || []).map((it) => ({
                 name: it.productName,
                 qty: it.quantity,
                 unit: it.unit || "PCS",

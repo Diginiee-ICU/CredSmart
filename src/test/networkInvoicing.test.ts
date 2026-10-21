@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { networkInvoicingService, normalizePhoneNumber } from "@/services/networkInvoicingService";
+import { networkInvoicingService, normalizePhoneNumber, isUuid, isBusinessNameMatch } from "@/services/networkInvoicingService";
 import { BusinessDocument } from "@/types/documents";
 import { OrgData } from "@/hooks/useOrganization";
 import { documentsService } from "@/services/documentsService";
@@ -39,12 +39,22 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
   });
 
   describe("Phone Number Normalization & Discovery", () => {
-    it("correctly normalizes 10-digit Indian phone numbers with country codes and spaces", () => {
+    it("correctly normalizes 10-digit Indian phone numbers with country codes and spaces and validates RFC4122 UUIDs", () => {
       expect(normalizePhoneNumber("+91 98765 43210")).toBe("9876543210");
       expect(normalizePhoneNumber("09876543210")).toBe("9876543210");
       expect(normalizePhoneNumber("98765-43210")).toBe("9876543210");
       expect(normalizePhoneNumber("")).toBe("");
       expect(normalizePhoneNumber(undefined)).toBe("");
+
+      // isUuid validator tests ensuring Postgres 22P02 prevention and database insertion reliability
+      expect(isUuid("123e4567-e89b-12d3-a456-426614174000")).toBe(true);
+      expect(isUuid("550e8400-e29b-41d4-a716-446655440000")).toBe(true);
+      expect(isUuid("a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d")).toBe(true);
+      expect(isUuid("org_seller_person_a")).toBe(false);
+      expect(isUuid("party_match_9876543210")).toBe(false);
+      expect(isUuid("")).toBe(false);
+      expect(isUuid(undefined)).toBe(false);
+      expect(isUuid(null)).toBe(false);
     });
   });
 
@@ -119,6 +129,8 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       expect(networkInvoice).not.toBeNull();
       expect(networkInvoice?.senderOrgName).toBe("Person A Wholesale Supplies");
       expect(networkInvoice?.recipientOrgName).toBe("Person B Supermarket");
+      expect(networkInvoice?.recipientPhone).toBe("9123456789");
+      expect(isUuid(networkInvoice?.id)).toBe(true);
       expect(networkInvoice?.invoiceNumber).toBe("INV-2026-001");
       expect(networkInvoice?.grandTotal).toBe(9121);
       expect(networkInvoice?.status).toBe("pending");
@@ -139,6 +151,7 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
         buyerOrg.gstin
       );
       expect(notifsForB.length).toBe(1);
+      expect(notifsForB[0].recipientPhone).toBe("9123456789");
       expect(notifsForB[0].title).toContain("Sale was Created by Person A Wholesale Supplies on your name");
       expect(notifsForB[0].actionStatus).toBe("pending");
     });
@@ -791,6 +804,71 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
 
       const notifs = await networkInvoicingService.getNotificationsForOrg(targetOrgId);
       expect(notifs.some((n) => n.id === "notif_ingest_1")).toBe(true);
+    });
+
+    it("resiliently approves and rejects invoices when queried with non-UUID invoice numbers and non-UUID org IDs", async () => {
+      const salesDoc: BusinessDocument = {
+        id: "doc_non_uuid_test",
+        organizationId: sellerOrg.id,
+        docType: "sales_invoice",
+        documentNumber: "INV-NON-UUID-999",
+        partyName: buyerOrg.name,
+        partyPhone: buyerOrg.phone,
+        partyGstin: buyerOrg.gstin,
+        docDate: "2026-10-21",
+        items: [
+          {
+            id: "it-nu",
+            productName: "Test Item",
+            quantity: 2,
+            rate: 500,
+            unit: "PCS",
+            taxRate: 0,
+            lineTotal: 1000,
+          },
+        ],
+        subtotal: 1000,
+        discountTotal: 0,
+        taxableTotal: 1000,
+        taxTotal: 0,
+        grandTotal: 1000,
+        status: "unpaid",
+        created_at: new Date().toISOString(),
+      };
+
+      await networkInvoicingService.sendSalesInvoiceToNetwork(salesDoc, sellerOrg, "user_seller_1");
+
+      // Verify reject by invoiceNumber string
+      const rejRes = await networkInvoicingService.rejectNetworkInvoice("INV-NON-UUID-999", buyerOrg, "Price too high");
+      expect(rejRes.success).toBe(true);
+
+      // Verify cancel by non-UUID senderOrgId
+      const cancelValidRes = await networkInvoicingService.cancelNetworkInvoice("INV-NON-UUID-999", sellerOrg.id);
+      expect(cancelValidRes).toBe(true);
+
+      const allInvs = networkInvoicingService.getLocalInvoices();
+      const cancelledInv = allInvs.find((i) => i.invoiceNumber === "INV-NON-UUID-999");
+      expect(cancelledInv?.status).toBe("cancelled");
+
+      // Verify that recipient local notification actionStatus was updated to rejected
+      const notifs = networkInvoicingService.getLocalNotifications();
+      const rejNotif = notifs.find((n) => n.data?.invoiceNumber === "INV-NON-UUID-999");
+      expect(rejNotif?.actionStatus).toBe("rejected");
+    });
+
+    it("prevents false-positive cross-tenant leaks in isBusinessNameMatch by filtering generic business stop words", () => {
+      // Unrelated stores sharing generic business words must NEVER match
+      expect(isBusinessNameMatch("Sharma Wholesale", "Verma Wholesale")).toBe(false);
+      expect(isBusinessNameMatch("Delhi Store", "Mumbai Store")).toBe(false);
+      expect(isBusinessNameMatch("Ramesh Traders", "Suresh Traders")).toBe(false);
+      expect(isBusinessNameMatch("Alpha Enterprises", "Beta Enterprises")).toBe(false);
+      expect(isBusinessNameMatch("Store", "Sharma Store")).toBe(false);
+
+      // Legitimate business name variations must continue to match
+      expect(isBusinessNameMatch("Rudra Sharma", "Rudra")).toBe(true);
+      expect(isBusinessNameMatch("Shree Ganesh Enterprises", "Shree Ganesh Enterprises Pvt Ltd")).toBe(true);
+      expect(isBusinessNameMatch("Ramesh Traders", "Ramesh Traders")).toBe(true);
+      expect(isBusinessNameMatch("Ramesh Traders (India) Pvt Ltd", "Ramesh Traders")).toBe(true);
     });
   });
 });

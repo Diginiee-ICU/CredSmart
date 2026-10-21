@@ -164,3 +164,59 @@ export function calculateInvoiceBreakdown(input: InvoiceCalculationInput) {
     },
   };
 }
+
+export interface PaymentCalculationInput {
+  grandTotal: number;
+  paymentMethod: string;
+  markAsFullyPaid?: boolean;
+  amountReceived?: number;
+}
+
+export interface PaymentCalculationResult {
+  paidAmount: number;
+  balanceDue: number;
+  status: "paid" | "partial" | "unpaid";
+}
+
+/**
+ * Calculates payment status, paidAmount, and balanceDue based on payment method and receipt status.
+ * Retail sales bills (Cash, UPI, Card, Net Banking, Cheque) default to "paid", markAsFullyPaid: true, paidAmount: grandTotal, balanceDue: 0.
+ * Credit invoices default to "unpaid", markAsFullyPaid: false, paidAmount: 0, balanceDue: grandTotal.
+ */
+export function calculatePaymentStatusAndBalance(input: PaymentCalculationInput): PaymentCalculationResult {
+  const isCredit = input.paymentMethod === "Credit";
+  const rawReceived = Number(input.amountReceived) || 0;
+  const grandTotal = Number(input.grandTotal) || 0;
+
+  // Explicit partial payment: when received amount is positive but less than grand total, without explicit markAsFullyPaid override
+  const isExplicitPartial = rawReceived > 0 && rawReceived < grandTotal && input.markAsFullyPaid !== true;
+
+  // Fully paid if:
+  // 1. Explicitly marked as fully paid, OR
+  // 2. Amount received covers or exceeds grand total (when grandTotal > 0), OR
+  // 3. Retail payment method without explicit unmark AND without an explicit partial payment
+  const isFullyPaid =
+    !isExplicitPartial &&
+    (input.markAsFullyPaid === true ||
+      (!isCredit && input.markAsFullyPaid !== false) ||
+      (grandTotal > 0 && rawReceived >= grandTotal));
+
+  if (isFullyPaid) {
+    return {
+      paidAmount: grandTotal,
+      balanceDue: 0,
+      status: "paid",
+    };
+  }
+
+  const paidAmount = Math.min(grandTotal, Math.max(0, rawReceived));
+  const balanceDue = Math.max(0, grandTotal - paidAmount);
+  const status = balanceDue <= 0.005 ? "paid" : paidAmount > 0 ? "partial" : "unpaid";
+
+  return {
+    paidAmount: Number(paidAmount.toFixed(2)),
+    balanceDue: Number(balanceDue.toFixed(2)),
+    status,
+  };
+}
+

@@ -168,13 +168,18 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         // Ingest immediately into local storage
         networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
 
-        const invoiceKey = networkInvoice.id || networkInvoice.invoiceNumber;
         const now = Date.now();
-        const lastNotified = invoiceKey ? handledEventInvoiceIdsRef.current.get(invoiceKey) : undefined;
+        const invNumKey = networkInvoice.invoiceNumber ? networkInvoice.invoiceNumber.trim().toLowerCase() : undefined;
+        const scopedInvKey = networkInvoice.senderOrgId && invNumKey ? `${networkInvoice.senderOrgId}_${invNumKey}` : invNumKey;
+        const lastNotified = (networkInvoice.id && handledEventInvoiceIdsRef.current.get(networkInvoice.id)) ||
+                             (scopedInvKey && handledEventInvoiceIdsRef.current.get(scopedInvKey)) ||
+                             (notification?.id && handledEventInvoiceIdsRef.current.get(notification.id));
         const shouldShowToast = !lastNotified || (now - lastNotified > 10000);
 
-        if (invoiceKey && shouldShowToast) {
-          handledEventInvoiceIdsRef.current.set(invoiceKey, now);
+        if (shouldShowToast) {
+          if (networkInvoice.id) handledEventInvoiceIdsRef.current.set(networkInvoice.id, now);
+          if (scopedInvKey) handledEventInvoiceIdsRef.current.set(scopedInvKey, now);
+          if (notification?.id) handledEventInvoiceIdsRef.current.set(notification.id, now);
           // Prune stale cache entries
           for (const [k, ts] of handledEventInvoiceIdsRef.current.entries()) {
             if (now - ts > 30000) handledEventInvoiceIdsRef.current.delete(k);
@@ -360,12 +365,24 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
                     u.userPhone
                   )
                 ) {
-                  const notifInvoiceKey = mappedNotif.networkInvoiceId;
                   const now = Date.now();
-                  const alreadyNotified = notifInvoiceKey ? handledEventInvoiceIdsRef.current.has(notifInvoiceKey) : false;
+                  const notifSenderId = mappedNotif.data?.senderOrgId ? String(mappedNotif.data.senderOrgId) : "";
+                  const notifInvoiceNumber = mappedNotif.data?.invoiceNumber ? String(mappedNotif.data.invoiceNumber) : undefined;
+                  const notifInvNumKey = notifInvoiceNumber ? notifInvoiceNumber.trim().toLowerCase() : undefined;
+                  const scopedNotifKey = notifSenderId && notifInvNumKey ? `${notifSenderId}_${notifInvNumKey}` : notifInvNumKey;
+                  const lastNotified = (mappedNotif.networkInvoiceId && handledEventInvoiceIdsRef.current.get(mappedNotif.networkInvoiceId)) ||
+                                       (scopedNotifKey && handledEventInvoiceIdsRef.current.get(scopedNotifKey)) ||
+                                       (mappedNotif.id && handledEventInvoiceIdsRef.current.get(mappedNotif.id));
+                  const shouldShowNotif = !lastNotified || (now - lastNotified > 10000);
 
-                  if (!alreadyNotified) {
-                    if (notifInvoiceKey) handledEventInvoiceIdsRef.current.set(notifInvoiceKey, now);
+                  if (shouldShowNotif) {
+                    if (mappedNotif.networkInvoiceId) handledEventInvoiceIdsRef.current.set(mappedNotif.networkInvoiceId, now);
+                    if (scopedNotifKey) handledEventInvoiceIdsRef.current.set(scopedNotifKey, now);
+                    if (mappedNotif.id) handledEventInvoiceIdsRef.current.set(mappedNotif.id, now);
+                    // Prune stale cache entries
+                    for (const [k, ts] of handledEventInvoiceIdsRef.current.entries()) {
+                      if (now - ts > 30000) handledEventInvoiceIdsRef.current.delete(k);
+                    }
                     playChimeAndVibrate();
                     toast.info(mappedNotif.title, {
                       description: mappedNotif.message,

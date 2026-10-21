@@ -42,10 +42,10 @@ export function normalizePhoneNumber(phone?: string | null): string {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
-// Check if string is a valid RFC4122 UUID to prevent Postgres 22P02 errors
+// Check if string is a valid UUID to prevent Postgres 22P02 errors
 export function isUuid(id?: string | null): boolean {
   if (!id || typeof id !== "string") return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
 }
 
 // Managed Singleton Realtime Channel for B2B Network
@@ -138,20 +138,32 @@ function dispatchNetworkEvents(type: string, payload?: unknown) {
 }
 
 
-// Check if a business name matches another business name (exact or normalized substring or word match)
+const GENERIC_BUSINESS_STOP_WORDS = new Set([
+  "pvt", "ltd", "limited", "private", "enterprises", "enterprise",
+  "wholesale", "retail", "retailer", "wholesaler", "supermarket",
+  "store", "stores", "shop", "shops", "trading", "traders", "trader",
+  "services", "service", "company", "corp", "corporation", "llp",
+  "agency", "mart", "supplies", "supply", "holdings", "group", "and", "the"
+]);
+
+// Check if a business name matches another business name (exact or normalized substring or non-generic word match)
 export function isBusinessNameMatch(nameA?: string | null, nameB?: string | null): boolean {
   if (!nameA || !nameB) return false;
   const cleanA = nameA.trim().toLowerCase().replace(/[^\w\s]/g, "");
   const cleanB = nameB.trim().toLowerCase().replace(/[^\w\s]/g, "");
   if (!cleanA || !cleanB) return false;
   if (cleanA === cleanB) return true;
-  // If one name contains the other (for names with length >= 3)
-  if (cleanA.length >= 3 && cleanB.length >= 3) {
-    if (cleanA.includes(cleanB) || cleanB.includes(cleanA)) return true;
+
+  // If one name contains the other (unless shorter name is solely a generic stop word like 'Store' or 'Wholesale')
+  const shorter = cleanA.length <= cleanB.length ? cleanA : cleanB;
+  const longer = cleanA.length > cleanB.length ? cleanA : cleanB;
+  if (shorter.length >= 3 && !GENERIC_BUSINESS_STOP_WORDS.has(shorter)) {
+    if (longer.includes(shorter)) return true;
   }
-  // Check individual words with length >= 3 (e.g. "Rudra Sharma" vs "Rudra")
-  const wordsA = cleanA.split(/\s+/).filter((w) => w.length >= 3);
-  const wordsB = cleanB.split(/\s+/).filter((w) => w.length >= 3);
+
+  // Check individual words with length >= 3, excluding generic business stop words to prevent false-positive cross-tenant leaks
+  const wordsA = cleanA.split(/\s+/).filter((w) => w.length >= 3 && !GENERIC_BUSINESS_STOP_WORDS.has(w));
+  const wordsB = cleanB.split(/\s+/).filter((w) => w.length >= 3 && !GENERIC_BUSINESS_STOP_WORDS.has(w));
   for (const wa of wordsA) {
     for (const wb of wordsB) {
       if (wa === wb) return true;
@@ -548,7 +560,7 @@ export const networkInvoicingService = {
           clauses.push(`email.ilike.${cleanEmail}`);
         }
         if (cleanName && cleanName.length >= 4) {
-          const sanitizedName = cleanName.replace(/[,%]/g, "");
+          const sanitizedName = cleanName.replace(/[,%()]/g, "");
           clauses.push(`name.ilike.%${sanitizedName}%`);
         }
         if (clauses.length === 0) return null;
@@ -704,7 +716,7 @@ export const networkInvoicingService = {
 
       recipientOrgId: recipientOrgId,
       recipientOrgName: recipientOrgName,
-      recipientPhone: salesDoc.partyPhone || connectedRecipient?.phone || undefined,
+      recipientPhone: cleanPhone || normalizePhoneNumber(salesDoc.partyPhone) || undefined,
       recipientEmail: salesDoc.partyEmail || connectedRecipient?.email || undefined,
       recipientGstin: salesDoc.partyGstin || connectedRecipient?.gstin || undefined,
       recipientAddress: salesDoc.partyAddress || connectedRecipient?.address || undefined,
@@ -790,7 +802,7 @@ export const networkInvoicingService = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       recipientOrgId: targetRecipientOrgId,
       recipientOrgName: recipientOrgName,
-      recipientPhone: salesDoc.partyPhone || connectedRecipient?.phone || undefined,
+      recipientPhone: cleanPhone || normalizePhoneNumber(salesDoc.partyPhone) || undefined,
       recipientGstin: salesDoc.partyGstin || connectedRecipient?.gstin || undefined,
       type: "sale_invoice_received",
       category: "inward",
@@ -810,7 +822,7 @@ export const networkInvoicingService = {
         senderOrgGstin: senderOrg.gstin,
         senderOrgPhone: senderOrg.phone,
         recipientPartyName: salesDoc.partyName,
-        recipientPhone: salesDoc.partyPhone,
+        recipientPhone: cleanPhone || normalizePhoneNumber(salesDoc.partyPhone) || undefined,
         recipientGstin: salesDoc.partyGstin,
         invoiceNumber: salesDoc.documentNumber,
         grandTotal: salesDoc.grandTotal,
@@ -827,6 +839,9 @@ export const networkInvoicingService = {
       const notifPayload = {
         id: generateSafeUuid(),
         recipient_org_id: validRecipientOrgId,
+        recipient_org_name: recipientOrgName || notification.recipientOrgName || null,
+        recipient_phone: cleanPhone || (notification.recipientPhone ? normalizePhoneNumber(notification.recipientPhone) : null),
+        recipient_gstin: cleanGstin || notification.recipientGstin || null,
         type: notification.type,
         title: notification.title,
         message: notification.message,
@@ -938,7 +953,11 @@ export const networkInvoicingService = {
 
     // Merge with Supabase network_invoices
     try {
-      const orClauses = [`recipient_org_id.eq.${orgId}`, `sender_org_id.eq.${orgId}`];
+      const orClauses: string[] = [];
+      if (isUuid(orgId)) {
+        orClauses.push(`recipient_org_id.eq.${orgId}`);
+        orClauses.push(`sender_org_id.eq.${orgId}`);
+      }
       if (cleanPhone && cleanPhone.length >= 10) {
         orClauses.push(`recipient_phone.eq.${cleanPhone}`);
         orClauses.push(`recipient_phone.ilike.%${cleanPhone.slice(-10)}%`);
@@ -946,38 +965,40 @@ export const networkInvoicingService = {
       if (cleanGstin && cleanGstin.length >= 15) {
         orClauses.push(`recipient_gstin.ilike.${cleanGstin}`);
       }
-      if (orgName && orgName.trim().length >= 4) {
-        const safeName = orgName.trim().replace(/[,%]/g, "");
+      if (orgName && orgName.trim().length >= 3) {
+        const safeName = orgName.trim().replace(/[,%()]/g, "");
         orClauses.push(`recipient_org_name.ilike.%${safeName}%`);
       }
 
-      const dbRes = await safeDbCall(async () => {
-        return supabase
-          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-          .select("*")
-          .or(orClauses.join(","))
-          .order("created_at", { ascending: false });
-      });
+      if (orClauses.length > 0) {
+        const dbRes = await safeDbCall(async () => {
+          return supabase
+            .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .select("*")
+            .or(orClauses.join(","))
+            .order("created_at", { ascending: false });
+        });
 
-      const dbInvoices = dbRes?.data;
-      const error = dbRes?.error;
+        const dbInvoices = dbRes?.data;
+        const error = dbRes?.error;
 
-      if (!error && dbInvoices && Array.isArray(dbInvoices)) {
-        for (const row of dbInvoices as any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-          const mapped = this.mapDbRowToNetworkInvoice(row);
+        if (!error && dbInvoices && Array.isArray(dbInvoices)) {
+          for (const row of dbInvoices as any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            const mapped = this.mapDbRowToNetworkInvoice(row);
 
-          if (
-            (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) &&
-            !matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)
-          ) {
-            matchedLocal.push(mapped);
-            if (mapped.senderOrgId !== orgId && (!row.recipient_org_id || row.recipient_org_id !== orgId)) {
-              safeDbCall(() =>
-                supabase
-                  .from("network_invoices" as any)
-                  .update({ recipient_org_id: orgId } as any)
-                  .eq("id", row.id)
-              );
+            if (
+              (mapped.senderOrgId === orgId || isInvoiceForOrg(mapped, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) &&
+              !matchedLocal.some((i) => i.id === mapped.id || i.invoiceNumber === mapped.invoiceNumber)
+            ) {
+              matchedLocal.push(mapped);
+              if (mapped.senderOrgId !== orgId && (!row.recipient_org_id || row.recipient_org_id !== orgId) && isUuid(orgId)) {
+                safeDbCall(() =>
+                  supabase
+                    .from("network_invoices" as any)
+                    .update({ recipient_org_id: orgId } as any)
+                    .eq("id", row.id)
+                );
+              }
             }
           }
         }
@@ -1144,7 +1165,10 @@ export const networkInvoicingService = {
 
     try {
       // 1. Primary safe DB fetch by recipient_org_id (and recipient_user_id if available)
-      const orClauses = [`recipient_org_id.eq.${orgId}`];
+      const orClauses: string[] = [];
+      if (isUuid(orgId)) {
+        orClauses.push(`recipient_org_id.eq.${orgId}`);
+      }
       if (cleanPhone && cleanPhone.length >= 10) {
         orClauses.push(`recipient_phone.eq.${cleanPhone}`);
         orClauses.push(`recipient_phone.ilike.%${cleanPhone.slice(-10)}%`);
@@ -1152,50 +1176,52 @@ export const networkInvoicingService = {
       if (cleanGstin && cleanGstin.length >= 15) {
         orClauses.push(`recipient_gstin.ilike.${cleanGstin}`);
       }
-      if (orgName && orgName.trim().length >= 4) {
-        const safeName = orgName.trim().replace(/[,%]/g, "");
+      if (orgName && orgName.trim().length >= 3) {
+        const safeName = orgName.trim().replace(/[,%()]/g, "");
         orClauses.push(`recipient_org_name.ilike.%${safeName}%`);
       }
 
-      const dbRes = await safeDbCall(async () => {
-        return supabase
-          .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
-          .select("*")
-          .or(orClauses.join(","))
-          .order("created_at", { ascending: false });
-      });
+      if (orClauses.length > 0) {
+        const dbRes = await safeDbCall(async () => {
+          return supabase
+            .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+            .select("*")
+            .or(orClauses.join(","))
+            .order("created_at", { ascending: false });
+        });
 
-      const dbNotifications = dbRes?.data;
-      if (dbNotifications && Array.isArray(dbNotifications)) {
-        for (const row of dbNotifications as any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
-          if (!matched.some((notification) => notification.id === row.id)) {
-            const mappedNotif: NetworkNotification = {
-              id: row.id,
-              recipientOrgId: row.recipient_org_id || orgId,
-              recipientOrgName: row.recipient_org_name || orgName,
-              recipientPhone: row.recipient_phone,
-              recipientGstin: row.recipient_gstin,
-              recipientUserId: row.recipient_user_id,
-              type: row.type,
-              category: row.type?.startsWith("sale_invoice_") ? "inward" : "system",
-              title: row.title,
-              message: row.message,
-              status: row.status,
-              actionStatus: row.action_status,
-              networkInvoiceId: row.network_invoice_id,
-              data: row.data || undefined,
-              created_at: row.created_at,
-            };
-            if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) {
-              matched.push(mappedNotif);
-              // Auto-heal DB row recipient_org_id if it was null or placeholder
-              if (!row.recipient_org_id || row.recipient_org_id !== orgId) {
-                safeDbCall(() =>
-                  supabase
-                    .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
-                    .update({ recipient_org_id: orgId } as any)
-                    .eq("id", row.id)
-                );
+        const dbNotifications = dbRes?.data;
+        if (dbNotifications && Array.isArray(dbNotifications)) {
+          for (const row of dbNotifications as any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+            if (!matched.some((notification) => notification.id === row.id)) {
+              const mappedNotif: NetworkNotification = {
+                id: row.id,
+                recipientOrgId: row.recipient_org_id || orgId,
+                recipientOrgName: row.recipient_org_name || orgName,
+                recipientPhone: row.recipient_phone,
+                recipientGstin: row.recipient_gstin,
+                recipientUserId: row.recipient_user_id,
+                type: row.type,
+                category: row.type?.startsWith("sale_invoice_") ? "inward" : "system",
+                title: row.title,
+                message: row.message,
+                status: row.status,
+                actionStatus: row.action_status,
+                networkInvoiceId: row.network_invoice_id,
+                data: row.data || undefined,
+                created_at: row.created_at,
+              };
+              if (isNotificationForOrg(mappedNotif, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone)) {
+                matched.push(mappedNotif);
+                // Auto-heal DB row recipient_org_id if it was null or placeholder
+                if ((!row.recipient_org_id || row.recipient_org_id !== orgId) && isUuid(orgId)) {
+                  safeDbCall(() =>
+                    supabase
+                      .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+                      .update({ recipient_org_id: orgId } as any)
+                      .eq("id", row.id)
+                  );
+                }
               }
             }
           }
@@ -1294,11 +1320,11 @@ export const networkInvoicingService = {
       // Direct DB lookup fallback
       if (invoiceIndex === -1) {
         const directRes = await safeDbCall(async () => {
-          return supabase
-            .from("network_invoices" as any)
-            .select("*")
-            .or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`)
-            .maybeSingle();
+          const query = supabase.from("network_invoices" as any).select("*");
+          if (isUuid(networkInvoiceId)) {
+            return query.or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`).maybeSingle();
+          }
+          return query.eq("invoice_number", networkInvoiceId).maybeSingle();
         });
 
         if (directRes?.data) {
@@ -1559,22 +1585,26 @@ export const networkInvoicingService = {
 
       // Update in Supabase network_invoices table
       await safeDbCall(() => {
-        return supabase
-          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+        const targetId = isUuid(networkInvoiceId) ? networkInvoiceId : isUuid(inv.id) ? inv.id : null;
+        let query = supabase
+          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({
             status: "approved",
             purchase_invoice_id: savedPurchaseDoc.id,
             purchase_invoice_number: savedPurchaseDoc.documentNumber,
             approved_at: nowIso,
             updated_at: nowIso,
-          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-          .eq("id", networkInvoiceId);
+          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */);
+        if (targetId) {
+          return query.eq("id", targetId);
+        }
+        return query.eq("invoice_number", inv.invoiceNumber);
       });
 
       // 8. Update Recipient Notification actionStatus to 'approved'
       const allNotifs = this.getLocalNotifications();
       const updatedNotifs = allNotifs.map((n) => {
-        if (n.networkInvoiceId === networkInvoiceId) {
+        if (n.networkInvoiceId === networkInvoiceId || n.networkInvoiceId === inv.id) {
           return {
             ...n,
             status: "read" as const,
@@ -1585,12 +1615,19 @@ export const networkInvoicingService = {
         return n;
       });
 
-      await safeDbCall(() =>
-        supabase
+      await safeDbCall(() => {
+        const targetNotifInvId = isUuid(networkInvoiceId) ? networkInvoiceId : isUuid(inv.id) ? inv.id : null;
+        if (targetNotifInvId) {
+          return supabase
+            .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+            .update({ status: "read", action_status: "approved" })
+            .eq("network_invoice_id", targetNotifInvId);
+        }
+        return supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({ status: "read", action_status: "approved" })
-          .eq("network_invoice_id", networkInvoiceId)
-      );
+          .eq("data->>invoiceNumber", inv.invoiceNumber);
+      });
 
       // 9. Add Confirmation Notification for Person A (Sender)
       const senderConfirmationNotif: NetworkNotification = {
@@ -1621,13 +1658,16 @@ export const networkInvoicingService = {
       await safeDbCall(() =>
         supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
           id: generateSafeUuid(),
-          recipient_org_id: inv.senderOrgId,
+          recipient_org_id: isUuid(inv.senderOrgId) ? inv.senderOrgId : null,
+          recipient_org_name: inv.senderOrgName || null,
+          recipient_phone: normalizePhoneNumber(inv.senderOrgPhone) || null,
+          recipient_gstin: inv.senderOrgGstin || null,
           type: senderConfirmationNotif.type,
           title: senderConfirmationNotif.title,
           message: senderConfirmationNotif.message,
           status: senderConfirmationNotif.status,
           action_status: senderConfirmationNotif.actionStatus,
-          network_invoice_id: inv.id,
+          network_invoice_id: isUuid(inv.id) ? inv.id : null,
           data: senderConfirmationNotif.data,
           created_at: nowIso,
         } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
@@ -1679,11 +1719,11 @@ export const networkInvoicingService = {
       // Direct DB lookup fallback
       if (invoiceIndex === -1) {
         const directRes = await safeDbCall(async () => {
-          return supabase
-            .from("network_invoices" as any)
-            .select("*")
-            .or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`)
-            .maybeSingle();
+          const query = supabase.from("network_invoices" as any).select("*");
+          if (isUuid(networkInvoiceId)) {
+            return query.or(`id.eq.${networkInvoiceId},invoice_number.eq.${networkInvoiceId}`).maybeSingle();
+          }
+          return query.eq("invoice_number", networkInvoiceId).maybeSingle();
         });
 
         if (directRes?.data) {
@@ -1710,21 +1750,25 @@ export const networkInvoicingService = {
 
       // Update in Supabase
       await safeDbCall(() => {
-        return supabase
-          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+        const targetId = isUuid(networkInvoiceId) ? networkInvoiceId : isUuid(inv.id) ? inv.id : null;
+        let query = supabase
+          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({
             status: "rejected",
             rejection_reason: inv.rejectionReason,
             rejected_at: nowIso,
             updated_at: nowIso,
-          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-          .eq("id", networkInvoiceId);
+          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */);
+        if (targetId) {
+          return query.eq("id", targetId);
+        }
+        return query.eq("invoice_number", inv.invoiceNumber);
       }, 600);
 
       // Update recipient notifications
       const allNotifs = this.getLocalNotifications();
       const updatedNotifs = allNotifs.map((n) => {
-        if (n.networkInvoiceId === networkInvoiceId) {
+        if (n.networkInvoiceId === networkInvoiceId || n.networkInvoiceId === inv.id) {
           return {
             ...n,
             status: "read" as const,
@@ -1735,12 +1779,19 @@ export const networkInvoicingService = {
         return n;
       });
 
-      await safeDbCall(() =>
-        supabase
+      await safeDbCall(() => {
+        const targetNotifInvId = isUuid(networkInvoiceId) ? networkInvoiceId : isUuid(inv.id) ? inv.id : null;
+        if (targetNotifInvId) {
+          return supabase
+            .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
+            .update({ status: "read", action_status: "rejected" })
+            .eq("network_invoice_id", targetNotifInvId);
+        }
+        return supabase
           .from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({ status: "read", action_status: "rejected" })
-          .eq("network_invoice_id", networkInvoiceId)
-      );
+          .eq("data->>invoiceNumber", inv.invoiceNumber);
+      });
 
       // Notify Person A (Sender) about the rejection
       const senderRejectNotif: NetworkNotification = {
@@ -1770,13 +1821,16 @@ export const networkInvoicingService = {
       await safeDbCall(() =>
         supabase.from("network_notifications" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).insert({
           id: generateSafeUuid(),
-          recipient_org_id: inv.senderOrgId,
+          recipient_org_id: isUuid(inv.senderOrgId) ? inv.senderOrgId : null,
+          recipient_org_name: inv.senderOrgName || null,
+          recipient_phone: normalizePhoneNumber(inv.senderOrgPhone) || null,
+          recipient_gstin: inv.senderOrgGstin || null,
           type: senderRejectNotif.type,
           title: senderRejectNotif.title,
           message: senderRejectNotif.message,
           status: senderRejectNotif.status,
           action_status: senderRejectNotif.actionStatus,
-          network_invoice_id: inv.id,
+          network_invoice_id: isUuid(inv.id) ? inv.id : null,
           data: senderRejectNotif.data,
           created_at: nowIso,
         } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
@@ -1848,14 +1902,18 @@ export const networkInvoicingService = {
 
       // Update Supabase network_invoices table
       await safeDbCall(() => {
-        return supabase
-          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
+        let query = supabase
+          .from("network_invoices" as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .update({
             status: "cancelled",
             updated_at: nowIso,
-          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) // eslint-disable-line @typescript-eslint/no-explicit-any
-          .eq("sender_org_id", senderOrgId)
+          } as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)
           .eq("invoice_number", invoiceNumber);
+
+        if (isUuid(senderOrgId)) {
+          query = query.eq("sender_org_id", senderOrgId);
+        }
+        return query;
       });
 
       // Update Supabase network_notifications table
