@@ -1627,16 +1627,28 @@ export default function RoleManagement(): React.ReactElement {
               </p>
             </div>
 
-            {/* Staff Search Input */}
-            <div className="relative max-w-xs w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <Input
-                type="text"
-                placeholder="Search staff by name or role..."
-                value={staffSearchQuery}
-                onChange={(e) => setStaffSearchQuery(e.target.value)}
-                className="pl-8.5 h-9 text-xs rounded-xl border-slate-200"
-              />
+            {/* Staff Search Input & Add Staff Button */}
+            <div className="flex items-center gap-2 max-w-sm w-full">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder="Search staff by name or role..."
+                  value={staffSearchQuery}
+                  onChange={(e) => setStaffSearchQuery(e.target.value)}
+                  className="pl-8.5 h-9 text-xs rounded-xl border-slate-200"
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={() => openAddStaffModal()}
+                disabled={!isSuperAdminOrOwner}
+                size="sm"
+                className="h-9 px-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs gap-1.5 shrink-0"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-blue-400" />
+                <span>Add Staff</span>
+              </Button>
             </div>
           </div>
 
@@ -1671,24 +1683,17 @@ export default function RoleManagement(): React.ReactElement {
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[11px] text-slate-500">Assigned CRM Role:</span>
                           {assignedRole ? (
-                            <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                              style={{
-                                backgroundColor: `${assignedRole.color}15`,
-                                color: assignedRole.color,
-                                borderColor: `${assignedRole.color}40`,
-                                borderWidth: 1,
-                              }}
-                            >
-                              {isStaffSuper ? (
-                                <Crown className="w-3 h-3 text-amber-500 fill-amber-400" />
-                              ) : (
-                                <Shield className="w-3 h-3" />
-                              )}
-                              <span>{assignedRole.name}</span>
-                            </span>
+                            <CRMRolePill
+                              name={assignedRole.name}
+                              color={assignedRole.color}
+                              isSuperAdmin={isStaffSuper}
+                              icon={ICON_MAP[assignedRole.icon] || Shield}
+                              size="sm"
+                            />
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-mono">None</span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200">
+                              No CRM Access
+                            </span>
                           )}
                         </div>
                       </div>
