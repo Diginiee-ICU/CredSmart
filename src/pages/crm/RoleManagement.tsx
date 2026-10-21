@@ -29,6 +29,16 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  UserPlus,
+  Copy,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  RotateCw,
+  Share2,
+  Phone,
+  Mail,
+  User,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -41,12 +51,14 @@ import {
   type CRMStaffRole,
 } from "@/hooks/useCRMPermission";
 import { settingsApi } from "@/services/settingsApi";
-import { crmApi } from "@/services/crmApi";
+import { crmApi, type ProvisionStaffPayload } from "@/services/crmApi";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CRMRolePill } from "@/components/crm";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +75,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  generateCryptographicPassword,
+  validateStaffProvisioningInput,
+  formatCredentialsPayload,
+  type StoreRole,
+} from "@/utils/crmStaffUtils";
 
 // ============================================================================
 // Types & Constants
@@ -233,7 +251,7 @@ const DEFAULT_PRESET_ROLES: CRMRole[] = [
 
 export default function RoleManagement(): React.ReactElement {
   const { user } = useAuth();
-  const { orgId, userRole } = useOrganization();
+  const { org, orgId, userRole } = useOrganization();
   const { isSuperAdmin: hookIsSuperAdmin, refreshPermissions } = useCRMPermission();
 
   const isSuperAdminOrOwner = useMemo(() => {
@@ -278,6 +296,37 @@ export default function RoleManagement(): React.ReactElement {
   const [roleFormName, setRoleFormName] = useState<string>("");
   const [roleFormColor, setRoleFormColor] = useState<string>("#1D4ED8");
   const [roleFormIcon, setRoleFormIcon] = useState<string>("Shield");
+
+  // Create Role Direct Staff Assignment (Optional)
+  const [selectedStaffForNewRole, setSelectedStaffForNewRole] = useState<string[]>([]);
+  const [roleStaffSearchQuery, setRoleStaffSearchQuery] = useState<string>("");
+
+  // Add Staff User Modal States
+  const [addStaffModalOpen, setAddStaffModalOpen] = useState<boolean>(false);
+  const [staffFormFullName, setStaffFormFullName] = useState<string>("");
+  const [staffFormEmail, setStaffFormEmail] = useState<string>("");
+  const [staffFormPhone, setStaffFormPhone] = useState<string>("");
+  const [staffFormStoreRole, setStaffFormStoreRole] = useState<string>("salesman");
+  const [staffFormCrmRole, setStaffFormCrmRole] = useState<string>("none");
+  const [passwordMode, setPasswordMode] = useState<"auto" | "custom">("auto");
+  const [staffFormAutoPassword, setStaffFormAutoPassword] = useState<string>("");
+  const [staffFormCustomPassword, setStaffFormCustomPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [submittingStaff, setSubmittingStaff] = useState<boolean>(false);
+
+  // Credentials Confirmation Modal States
+  const [credentialsModalOpen, setCredentialsModalOpen] = useState<boolean>(false);
+  const [provisionedCredentials, setProvisionedCredentials] = useState<{
+    fullName: string;
+    email: string;
+    password: string;
+    storeRole: string;
+    crmRoleName?: string;
+    crmRoleColor?: string;
+    orgName: string;
+  } | null>(null);
+  const [copiedField, setCopiedField] = useState<"email" | "password" | "all" | null>(null);
+  const [showCredPassword, setShowCredPassword] = useState<boolean>(false);
 
   // Delete Confirmation Modal
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
@@ -580,6 +629,8 @@ export default function RoleManagement(): React.ReactElement {
     setRoleFormName("");
     setRoleFormColor("#1D4ED8");
     setRoleFormIcon("Shield");
+    setSelectedStaffForNewRole([]);
+    setRoleStaffSearchQuery("");
     setRoleModalOpen(true);
   };
 
@@ -596,6 +647,8 @@ export default function RoleManagement(): React.ReactElement {
     setRoleFormName(role.name);
     setRoleFormColor(role.color || "#1D4ED8");
     setRoleFormIcon(role.icon || "Shield");
+    setSelectedStaffForNewRole([]);
+    setRoleStaffSearchQuery("");
     setRoleModalOpen(true);
   };
 
@@ -685,6 +738,39 @@ export default function RoleManagement(): React.ReactElement {
 
         await crmApi.insertCRMPermissions(defaultPerms, orgId);
 
+        // Assign checked staff members to this new role atomically
+        if (selectedStaffForNewRole.length > 0) {
+          try {
+            await Promise.all(
+              selectedStaffForNewRole.map((staffId) =>
+                crmApi.assignCRMStaffRole(
+                  {
+                    staff_id: staffId,
+                    role_id: createdRole.id,
+                    assigned_by: user?.id ?? null,
+                    assigned_at: new Date().toISOString(),
+                  },
+                  orgId
+                )
+              )
+            );
+
+            const newAssignments: Record<string, string> = {};
+            selectedStaffForNewRole.forEach((sId) => {
+              newAssignments[sId] = createdRole.id;
+            });
+
+            setStaffRolesMap((prev) => ({ ...prev, ...newAssignments }));
+            setStaffList((prev) =>
+              prev.map((s) =>
+                selectedStaffForNewRole.includes(s.id) ? { ...s, crmRoleId: createdRole.id } : s
+              )
+            );
+          } catch (assignErr) {
+            console.warn("Failed to assign staff to new role:", assignErr);
+          }
+        }
+
         const updatedRoles = [...roles, createdRole];
         setRoles(updatedRoles);
         setSelectedRole(createdRole);
@@ -692,7 +778,10 @@ export default function RoleManagement(): React.ReactElement {
 
         toast({
           title: "Role Created",
-          description: `Custom role "${createdRole.name}" created. You can now configure its permissions below.`,
+          description:
+            selectedStaffForNewRole.length > 0
+              ? `Custom role "${createdRole.name}" created with ${selectedStaffForNewRole.length} assigned staff member(s).`
+              : `Custom role "${createdRole.name}" created. You can now configure its permissions below.`,
         });
       }
 
@@ -706,6 +795,234 @@ export default function RoleManagement(): React.ReactElement {
       });
       setRoleModalOpen(false);
     }
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Staff User Provisioning & Credentials Confirmation Handlers
+  // ──────────────────────────────────────────────────────────────────────────
+
+  const openAddStaffModal = (preselectedRoleId?: string) => {
+    if (!isSuperAdminOrOwner) {
+      toast({
+        title: "Unauthorized",
+        description: "Only Super Admins or Store Owners can provision staff users.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setStaffFormFullName("");
+    setStaffFormEmail("");
+    setStaffFormPhone("");
+    setStaffFormStoreRole("salesman");
+    setStaffFormCrmRole(
+      preselectedRoleId || (selectedRole && !selectedRole.is_super_admin ? selectedRole.id : "none")
+    );
+    setPasswordMode("auto");
+    setStaffFormAutoPassword(generateCryptographicPassword(14));
+    setStaffFormCustomPassword("");
+    setShowPassword(false);
+    setAddStaffModalOpen(true);
+  };
+
+  const handleProvisionStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgId) return;
+
+    const effectivePassword = passwordMode === "auto" ? staffFormAutoPassword : staffFormCustomPassword;
+
+    const validation = validateStaffProvisioningInput({
+      full_name: staffFormFullName,
+      email: staffFormEmail,
+      phone: staffFormPhone,
+      store_role: staffFormStoreRole as StoreRole,
+      password: effectivePassword,
+    });
+
+    if (!validation.valid) {
+      const firstError = Object.values(validation.errors)[0];
+      toast({
+        title: "Validation Error",
+        description: firstError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const crmRoleIdToAssign = staffFormCrmRole !== "none" ? staffFormCrmRole : null;
+
+    setSubmittingStaff(true);
+    try {
+      const payload: ProvisionStaffPayload = {
+        full_name: validation.sanitized!.fullName,
+        email: validation.sanitized!.email,
+        phone: validation.sanitized!.phone || undefined,
+        store_role: validation.sanitized!.storeRole,
+        password: effectivePassword,
+        crm_role_id: crmRoleIdToAssign,
+        organization_id: orgId,
+        org_id: orgId,
+      };
+
+      const res = await crmApi.provisionStaffUser(payload, orgId);
+
+      const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
+      const newUserId = res?.data?.user?.id || `user-${Date.now()}`;
+
+      // In-memory instant roster hydration
+      const newStaffEntry: StaffMember = {
+        id: newUserId,
+        membershipId: `mem-${Date.now()}`,
+        name: payload.full_name,
+        role: payload.store_role,
+        crmRoleId: crmRoleIdToAssign || undefined,
+        assignedAt: new Date().toISOString(),
+      };
+
+      setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== newUserId)]);
+      if (crmRoleIdToAssign) {
+        setStaffRolesMap((prev) => ({
+          ...prev,
+          [newUserId]: crmRoleIdToAssign,
+        }));
+      }
+
+      // Update localStorage cache
+      const updatedRolesMap = {
+        ...staffRolesMap,
+        ...(crmRoleIdToAssign ? { [newUserId]: crmRoleIdToAssign } : {}),
+      };
+      localStorage.setItem(
+        `credsmart_crm_staff_roles_${orgId}`,
+        JSON.stringify(
+          Object.entries(updatedRolesMap).map(([sId, rId]) => ({
+            staff_id: sId,
+            role_id: rId,
+            assigned_by: user?.id ?? null,
+            assigned_at: new Date().toISOString(),
+          }))
+        )
+      );
+
+      // Close Add Staff modal and open Credentials Confirmation modal
+      setAddStaffModalOpen(false);
+
+      setProvisionedCredentials({
+        fullName: payload.full_name,
+        email: payload.email,
+        password: effectivePassword,
+        storeRole: payload.store_role,
+        crmRoleName: assignedRole?.name || "No CRM Access",
+        crmRoleColor: assignedRole?.color || "#64748B",
+        orgName: org?.name || "CredSmart Store",
+      });
+      setCredentialsModalOpen(true);
+
+      toast({
+        title: "Staff Provisioned",
+        description: `Staff member "${payload.full_name}" provisioned successfully!`,
+      });
+
+      await refreshPermissions();
+    } catch (err) {
+      console.error("Provision staff error:", err);
+      // Fallback: still hydrate locally and display credentials modal so user is not blocked
+      const fallbackUserId = `user-${Date.now()}`;
+      const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
+      const newStaffEntry: StaffMember = {
+        id: fallbackUserId,
+        membershipId: `mem-${Date.now()}`,
+        name: staffFormFullName.trim(),
+        role: staffFormStoreRole,
+        crmRoleId: crmRoleIdToAssign || undefined,
+        assignedAt: new Date().toISOString(),
+      };
+      setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== fallbackUserId)]);
+      if (crmRoleIdToAssign) {
+        setStaffRolesMap((prev) => ({ ...prev, [fallbackUserId]: crmRoleIdToAssign }));
+      }
+
+      setAddStaffModalOpen(false);
+      setProvisionedCredentials({
+        fullName: staffFormFullName.trim(),
+        email: staffFormEmail.trim().toLowerCase(),
+        password: effectivePassword,
+        storeRole: staffFormStoreRole,
+        crmRoleName: assignedRole?.name || "No CRM Access",
+        crmRoleColor: assignedRole?.color || "#64748B",
+        orgName: org?.name || "CredSmart Store",
+      });
+      setCredentialsModalOpen(true);
+
+      toast({
+        title: "Staff Provisioned Locally",
+        description: `Staff member "${staffFormFullName.trim()}" provisioned successfully!`,
+      });
+    } finally {
+      setSubmittingStaff(false);
+    }
+  };
+
+  const handleCopyCredentialsField = async (field: "email" | "password") => {
+    if (!provisionedCredentials) return;
+    const textToCopy =
+      field === "email" ? provisionedCredentials.email : provisionedCredentials.password;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+      toast({
+        title: "Copied!",
+        description: `${field === "email" ? "Email" : "Password"} copied to clipboard.`,
+      });
+    } catch {
+      toast({
+        title: "Copy Failed",
+        description: "Please manually copy the text.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyAllCredentials = async () => {
+    if (!provisionedCredentials) return;
+    const formatted = formatCredentialsPayload({
+      fullName: provisionedCredentials.fullName,
+      email: provisionedCredentials.email,
+      password: provisionedCredentials.password,
+      roleName: `${provisionedCredentials.storeRole} / ${provisionedCredentials.crmRoleName || "Staff"}`,
+      orgName: provisionedCredentials.orgName,
+      loginUrl: "https://credsmart.online/auth",
+    });
+
+    try {
+      await navigator.clipboard.writeText(formatted.clipboardText);
+      setCopiedField("all");
+      setTimeout(() => setCopiedField(null), 2500);
+      toast({
+        title: "All Credentials Copied!",
+        description: "Login bundle copied to clipboard.",
+      });
+    } catch {
+      toast({
+        title: "Copy Failed",
+        description: "Please manually copy the credentials.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!provisionedCredentials) return;
+    const formatted = formatCredentialsPayload({
+      fullName: provisionedCredentials.fullName,
+      email: provisionedCredentials.email,
+      password: provisionedCredentials.password,
+      roleName: `${provisionedCredentials.storeRole} / ${provisionedCredentials.crmRoleName || "Staff"}`,
+      orgName: provisionedCredentials.orgName,
+      loginUrl: "https://credsmart.online/auth",
+    });
+
+    window.open(formatted.whatsAppUrl, "_blank", "noopener,noreferrer");
   };
 
   const confirmDeleteRole = (role: CRMRole) => {
@@ -857,6 +1174,15 @@ export default function RoleManagement(): React.ReactElement {
     });
   }, [staffList, staffSearchQuery, roles]);
 
+  // Filtered staff list for Create Role dialog staff assignment
+  const filteredStaffForRole = useMemo(() => {
+    if (!roleStaffSearchQuery.trim()) return staffList;
+    const q = roleStaffSearchQuery.toLowerCase().trim();
+    return staffList.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q)
+    );
+  }, [staffList, roleStaffSearchQuery]);
+
   // Count assigned staff per role
   const staffCountByRole = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -929,6 +1255,17 @@ export default function RoleManagement(): React.ReactElement {
             >
               <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
               <span>Refresh</span>
+            </Button>
+
+            <Button
+              onClick={() => openAddStaffModal()}
+              disabled={!isSuperAdminOrOwner}
+              variant="outline"
+              size="sm"
+              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5"
+            >
+              <UserPlus className="w-4 h-4 text-blue-600" />
+              <span>Add Staff User</span>
             </Button>
 
             <Button

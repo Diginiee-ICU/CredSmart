@@ -1,21 +1,31 @@
-# Dispatch: Reviewer 2 for Milestone 1 (Database Schema Alignment)
+# Reviewer 2 Dispatch: M1 Database Schema & Migration Parity
 
-Read:
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `fix_db.sql` and `backend-api/fix_db.sql`
-- `src/test/fixDbSchema.test.ts`
+## Mission
+Review Milestone 1 database migrations and schema parity.
 
-Review Tasks:
-1. Objectively and adversarially review `fix_db.sql` and `backend-api/fix_db.sql`.
-2. Inspect trigger logic for `sync_org_id_and_organization_id()`.
-3. Verify that `org_memberships` and `organization_memberships` cross-sync cleanly.
-4. Run tests: `cmd /c npx vitest run src/test/fixDbSchema.test.ts`
-5. Run typecheck: `cmd /c npx tsc --noEmit`.
+## Review Criteria
+1. Migration `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`:
+   - Idempotency: `IF NOT EXISTS` for table, columns, indexes.
+   - Dual organization columns (`org_id` and `organization_id`) and trigger `trg_sync_org_ids`.
+   - Normalization of legacy `'pending'` and `'medium'`.
+2. Parity check:
+   - Verify byte-for-byte parity between root `fix_db.sql` and `backend-api/fix_db.sql`.
+   - Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
+3. TypeScript compiler check:
+   - Run `cmd /c npx tsc --noEmit`.
 
-Deliverable:
-Write review report to `.agents/teamwork/reviewer_m1_2/handoff.md` with explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+Verdict: APPROVE or REQUEST_CHANGES.
+Write report to `.agents/teamwork/reviewer_m1_2/handoff.md`.
 
 
-## 2026-10-20T11:22:07Z
-You are Reviewer 2 for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Review `fix_db.sql` and `backend-api/fix_db.sql` objectively and adversarially. Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`. Write your review report to `.agents/teamwork/reviewer_m1_2/handoff.md` with verdict APPROVE or REQUEST_CHANGES. Send a message when done.
+## 2026-10-21T18:37:28Z
+You are Reviewer 2 for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
+
+Review database migrations (`supabase/migrations/20261021180000_create_crm_staff_tasks.sql`), byte-for-byte parity of `fix_db.sql` and `backend-api/fix_db.sql`, run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`, and run `cmd /c npx tsc --noEmit`.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md` with explicit verdict: APPROVE or REQUEST_CHANGES.
+Send message back to parent when done.

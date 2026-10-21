@@ -3,6 +3,7 @@ import {
   apiGet,
   apiPost,
   apiPut,
+  apiPatch,
   apiDelete,
   type ApiResponse,
 } from "@/lib/apiClient";
@@ -163,6 +164,94 @@ export interface CRMSalaryAdjustment {
   created_by?: string | null;
   created_at?: string;
   [key: string]: unknown;
+}
+
+export interface ProvisionStaffPayload {
+  full_name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  store_role?: string;
+  role?: string;
+  crm_role_id?: string | null;
+  organization_id?: string;
+  org_id?: string;
+}
+
+export interface ProvisionStaffResponse {
+  success: boolean;
+  message?: string;
+  user: {
+    id: string;
+    email: string;
+    full_name: string;
+    phone: string;
+    store_role: string;
+    crm_role_id?: string | null;
+    crm_role_name?: string | null;
+    crm_role_color?: string | null;
+    crm_role_icon?: string | null;
+  };
+  credentials: {
+    email: string;
+    password: string;
+  };
+}
+
+export type CRMTaskStatus = "todo" | "in_progress" | "review" | "done";
+export type CRMTaskPriority = "urgent" | "high" | "normal" | "low";
+
+export interface CRMTask {
+  id: string;
+  org_id: string;
+  organization_id?: string;
+  title: string;
+  description: string;
+  priority: CRMTaskPriority;
+  status: CRMTaskStatus;
+  assigned_to?: string | null;
+  assignee_id?: string | null;
+  assignee_name?: string | null;
+  assignee_email?: string | null;
+  assignee_avatar_url?: string | null;
+  assigned_by?: string | null;
+  creator_name?: string | null;
+  due_date?: string | null;
+  requires_proof: boolean;
+  proof_required?: boolean;
+  proof_notes?: string | null;
+  completed_at?: string | null;
+  approved_by?: string | null;
+  approver_name?: string | null;
+  approved_at?: string | null;
+  review_feedback?: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CRMTaskFilters {
+  status?: CRMTaskStatus | CRMTaskStatus[] | string;
+  priority?: CRMTaskPriority | CRMTaskPriority[] | string;
+  assigned_to?: string;
+  assignee_id?: string;
+  search?: string;
+  organization_id?: string;
+  org_id?: string;
+}
+
+export interface CreateCRMTaskPayload {
+  title: string;
+  description?: string;
+  priority?: CRMTaskPriority;
+  status?: CRMTaskStatus;
+  assigned_to?: string | null;
+  assignee_id?: string | null;
+  due_date?: string | null;
+  requires_proof?: boolean;
+  proof_required?: boolean;
+  proof_notes?: string | null;
+  organization_id?: string;
+  org_id?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -573,6 +662,102 @@ export async function getCRMDashboardCounts(orgId: string): Promise<ApiResponse<
 export const upsertCRMAttendance = recordCRMAttendance;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CRM STAFF PROVISIONING & TASKS API
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function provisionStaffUser(
+  payload: ProvisionStaffPayload,
+  orgId?: string
+): Promise<ApiResponse<ProvisionStaffResponse>> {
+  const effectiveOrg = payload.organization_id || payload.org_id || orgId;
+  return apiPost<ProvisionStaffResponse>(
+    "/crm/staff/provision",
+    { ...payload, organization_id: effectiveOrg, org_id: effectiveOrg },
+    { organizationId: effectiveOrg }
+  );
+}
+
+export async function getCRMTasks(
+  orgId: string,
+  filters?: CRMTaskFilters
+): Promise<ApiResponse<CRMTask[]>> {
+  const params: Record<string, string> = {
+    organization_id: orgId,
+  };
+
+  if (filters?.status) {
+    params.status = Array.isArray(filters.status) ? filters.status.join(",") : filters.status;
+  }
+  if (filters?.priority) {
+    params.priority = Array.isArray(filters.priority) ? filters.priority.join(",") : filters.priority;
+  }
+  const assignedTo = filters?.assigned_to || filters?.assignee_id;
+  if (assignedTo) {
+    params.assigned_to = assignedTo;
+  }
+  if (filters?.search && filters.search.trim()) {
+    params.search = filters.search.trim();
+  }
+
+  return apiGet<CRMTask[]>("/crm/tasks", params, { organizationId: orgId });
+}
+
+export async function createCRMTask(
+  payload: CreateCRMTaskPayload,
+  orgId?: string
+): Promise<ApiResponse<CRMTask>> {
+  const effectiveOrg = payload.organization_id || payload.org_id || orgId;
+  return apiPost<CRMTask>(
+    "/crm/tasks",
+    { ...payload, organization_id: effectiveOrg, org_id: effectiveOrg },
+    { organizationId: effectiveOrg }
+  );
+}
+
+export async function updateCRMTask(
+  id: string,
+  payload: Partial<CreateCRMTaskPayload> & {
+    review_feedback?: string | null;
+    completed_at?: string | null;
+    approved_by?: string | null;
+    status?: CRMTaskStatus;
+  },
+  orgId?: string
+): Promise<ApiResponse<CRMTask>> {
+  const effectiveOrg = payload.organization_id || payload.org_id || orgId;
+  return apiPatch<CRMTask>(
+    `/crm/tasks/${id}`,
+    { ...payload, organization_id: effectiveOrg, org_id: effectiveOrg },
+    { organizationId: effectiveOrg }
+  );
+}
+
+export async function transitionCRMTaskStatus(
+  id: string,
+  status: CRMTaskStatus,
+  details?: { proof_notes?: string; review_feedback?: string; orgId?: string }
+): Promise<ApiResponse<CRMTask>> {
+  return apiPatch<CRMTask>(
+    `/crm/tasks/${id}`,
+    {
+      status,
+      ...(details?.proof_notes !== undefined ? { proof_notes: details.proof_notes } : {}),
+      ...(details?.review_feedback !== undefined ? { review_feedback: details.review_feedback } : {}),
+    },
+    { organizationId: details?.orgId }
+  );
+}
+
+export async function deleteCRMTask(
+  id: string,
+  orgId?: string
+): Promise<ApiResponse<{ success: boolean }>> {
+  return apiDelete<{ success: boolean }>(`/crm/tasks/${id}`, {
+    organizationId: orgId,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CENTRAL CRM API NAMESPACE
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -587,6 +772,12 @@ export const crmApi = {
   getCRMStaffRoles,
   assignCRMStaffRole,
   deleteCRMStaffRole,
+  provisionStaffUser,
+  getCRMTasks,
+  createCRMTask,
+  updateCRMTask,
+  transitionCRMTaskStatus,
+  deleteCRMTask,
   getCRMGeolocations,
   createCRMGeolocation,
   updateCRMGeolocation,

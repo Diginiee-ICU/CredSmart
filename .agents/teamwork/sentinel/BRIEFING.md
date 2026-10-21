@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T10:55:00Z
+# BRIEFING — 2026-10-21T17:45:00Z
 
 ## Mission
-Comprehensive, production-grade redesign of the core CredSmart application across both Desktop and Mobile viewports (Dashboard, Sales, Purchases, Items/Inventory, Parties, and the full CRM suite) into a unified, clean, high-density Stripe/Linear aesthetic with crisp typography, hairline borders, and high contrast, while strictly keeping the Create Invoice flow 100% untouched.
+Implement production-grade staff user provisioning & instant role assignment in CRM Role Management and complete the full-stack Enterprise Task Management system for multi-tenant company workflows.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -36,6 +36,10 @@ Comprehensive, production-grade redesign of the core CredSmart application acros
 - Active Victory Auditor (SWE Light Invoicing & Sync): 224543fa-a8c9-4a5c-b919-39ff50376951
 - Active Orchestrator (Core Redesign): 2a5bd82c-5175-47f3-a02b-3ee793555f5a
 - Victory Auditor (Core Redesign): [to be spawned on victory claim]
+- Active Orchestrator (Staff Provisioning & Enterprise Tasks): 0257415d-4ccf-41a8-aff2-818a11322a27
+- Victory Auditor (Staff Provisioning & Enterprise Tasks): [to be spawned on victory claim]
+- Active Orchestrator (Staff Provisioning & Enterprise Tasks Gen 2): c838af97-21de-4616-9188-f0f8dfa904c9
+- Victory Auditor (Staff Provisioning & Enterprise Tasks Gen 2): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -60,17 +64,17 @@ Comprehensive, production-grade redesign of the core CredSmart application acros
 - Strict exclusion: Create Invoice flow (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) must remain 100% untouched and functional
 
 ## User Context
-- **Last user request**: Comprehensive redesign of core CredSmart across Desktop & Mobile (Dashboard, Sales, Purchases, Items, Parties, CRM suite) with Stripe/Linear aesthetic while strictly excluding Create Invoice flow.
+- **Last user request**: Staff user provisioning & instant role assignment in CRM Role Management and full-stack Enterprise Task Management system.
 - **Pending clarifications**: none
-- **Delivered results**: Previous tasks complete. Core Redesign underway.
+- **Delivered results**: In progress.
 
 ## Project Status
 - **Phase**: in progress
-- **Routing Decision**: General path -> teamwork_preview_orchestrator (multi-page comprehensive redesign across Desktop & Mobile)
-- **Active Orchestrator ID**: 2a5bd82c-5175-47f3-a02b-3ee793555f5a
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_core_redesign
-- **Cron 1 (Reporting)**: task-30 (active)
-- **Cron 2 (Liveness)**: task-32 (active)
+- **Routing Decision**: General path -> teamwork_preview_orchestrator
+- **Active Orchestrator ID**: c838af97-21de-4616-9188-f0f8dfa904c9
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_tasks_gen2
+- **Cron 1 (Reporting)**: task-41 (active)
+- **Cron 2 (Liveness)**: task-43 (active)
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -81,4 +85,4 @@ Comprehensive, production-grade redesign of the core CredSmart application acros
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_core_redesign\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_tasks_gen2\DISPATCH.md — Orchestrator dispatch instructions

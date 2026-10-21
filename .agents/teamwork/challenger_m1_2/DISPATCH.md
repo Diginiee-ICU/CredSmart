@@ -1,19 +1,28 @@
-# Dispatch: Challenger 2 for Milestone 1 (Database Schema Alignment)
+# Challenger 2 Dispatch: Full Regression & Zero Build Error Verification
 
-Read:
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `fix_db.sql` and `backend-api/fix_db.sql`
-- `src/test/fixDbSchema.test.ts`
+## Mission
+Adversarially challenge system integrity and verify zero regression across existing features and test suites.
 
-Tasks:
-1. Verify stress scenarios:
-   - Does `fix_db.sql` preserve existing records and not drop any tables/columns?
-   - Are table names and column types strictly consistent between `fix_db.sql` and `backend-api` query parameters?
-   - Run verification tests.
+## Challenge Tasks
+1. Execute full CRM test suites: `cmd /c npx vitest run crmStaff crmTask crmBackendApiM1`.
+2. Execute database schema integrity test: `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
+3. Check TypeScript compilation: `cmd /c npx tsc --noEmit`.
+4. Verify Create Invoice flows remain untouched:
+   - Check `git diff --name-only` or file status on `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/AddItemModal.tsx`, `src/components/invoices/mobile/SelectPartyModal.tsx`, `src/components/invoices/mobile/EditItemModal.tsx`.
+   - Confirm zero changes to these files.
 
-Deliverable:
-Write report to `.agents/teamwork/challenger_m1_2/handoff.md` with explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+Verdict: APPROVE or REJECT.
+Write report to `.agents/teamwork/challenger_m1_2/handoff.md`.
 
-## 2026-10-20T11:22:08Z
-You are Challenger 2 for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Stress-test edge cases in schema alignment. Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`. Write your report to `.agents/teamwork/challenger_m1_2/handoff.md` with verdict APPROVE or REQUEST_CHANGES. Send a message when done.
+
+## 2026-10-21T18:37:29Z
+You are Challenger 2 for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
+
+Adversarially verify zero regression, run full test suites (`cmd /c npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts`), check `cmd /c npx tsc --noEmit`, and verify Create Invoice flow files are 100% untouched.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md` with explicit verdict: APPROVE or REJECT.
+Send message back to parent when done.

@@ -1,102 +1,142 @@
-# Project: Frontend Supabase Table Query Migration to Dedicated Backend API
+# Project: CredSmart Enterprise CRM Staff Provisioning & Task Management
 
 ## Architecture
-- **Dedicated Backend API Base URL**: `https://api.credsmart.online/api`
-- **Centralized Client Layer**: `src/lib/apiClient.ts`
-  - Encapsulates standard `fetch()` calls.
-  - Automatically retrieves active Supabase session token via `supabase.auth.getSession()`.
-  - Attaches `Authorization: Bearer <session.access_token>`.
-  - Attaches `x-organization-id` header when organization context is available.
-  - Handles token refresh transparently on 401 Unauthorized via `supabase.auth.refreshSession()`.
-  - Normalizes responses into `{ data: T | null, error: ApiError | null }`, preserving exact shape parity for frontend consumers.
-- **Migration Scope**: Eliminate all direct `supabase.from(...)` table query calls across 265 application files and 33 tables. Supabase Storage (`supabase.storage.from`) and Supabase Realtime Channels (`supabase.channel`) are preserved or abstracted.
+- **Multi-Tenant Staff Provisioning**:
+  - Atomic backend registration via `POST /api/crm/staff/provision` running in a PostgreSQL transaction (`BEGIN ... COMMIT`).
+  - Passwords hashed using bcrypt (10 rounds).
+  - Simultaneous creation of user record in `public.users`, tenant membership in `public.org_memberships`, and CRM role assignment in `public.crm_staff_assignments` and `public.crm_staff_roles`.
+  - Seamless authentication via `/api/auth/login` with immediate JWT token generation.
+- **Staff User Provisioning & Instant Role UI**:
+  - "Add Staff User" modal in `src/pages/crm/RoleManagement.tsx` with cryptographic auto-password generator (`window.crypto.getRandomValues`, 14 chars) and custom password toggle.
+  - Ephemeral "Credentials Confirmation Modal" with 1-click clipboard copy triggers and preformatted communication template.
+  - "Create Role" dialog enhancement allowing simultaneous assignment of existing or new staff.
+  - In-memory hydration of `staffList` and `staffRolesMap` for zero-refresh roster updates.
+- **Enterprise Task Management System**:
+  - Persistent PostgreSQL storage in `public.staff_tasks` with multi-tenant organization isolation.
+  - Backend API in `backend-api/src/routes/crm.js`: `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`.
+  - Full lifecycle state machine:
+    - `todo` -> `in_progress` (started by assignee)
+    - `in_progress` -> `review` (requires submitting proof notes)
+    - `review` -> `done` (approved by manager/owner, records `completed_at` and `approved_by`)
+    - `review` -> `in_progress` (manager revision request with revision notes)
+  - Interactive dual views: Kanban Board and filterable Data Table.
+  - Assignee picker populated with real organization staff fetched from backend.
+  - Accurate KPI metrics calculation (Total, In Progress, Review, Completed, Completion Rate).
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Centralized API Client | Core HTTP wrapper with base URL, token injection, error normalization, retry logic | M1 | survey |
-| 2 | Auth Token Interceptor | Automatic JWT retrieval from active session & Bearer propagation | M1 | survey |
-| 3 | Products & Inventory Query Migration | Migrate products and product_batches queries to `/api/products/*` | M2 | survey |
-| 4 | Batch Management & Stock Adjustments | Stock adjust, batch lookup, and barcode queries to `/api/product-batches/*` | M2 | survey |
-| 5 | Customers & Debtors Migration | Customer listing, CRUD, search, and selection queries to `/api/customers/*` | M3 | survey |
-| 6 | Suppliers & Creditors Migration | Supplier listing, CRUD, search, and purchase integration to `/api/suppliers/*` | M3 | survey |
-| 7 | Party Khata & Credit Transactions | Ledger balance queries, opening balances, and payments to `/api/credit-transactions/*` | M3 | survey |
-| 8 | Bank & Cash Accounts Migration | Bank accounts and cash ledgers migration to `/api/bank-accounts/*` | M3 | survey |
-| 9 | Sales Invoices & Line Items | Sales creation, in-place edit, history, and line items to `/api/sales/*` | M4 | survey |
-| 10 | Purchase Invoices & Line Items | Purchase orders, drafts, line items, and status updates to `/api/purchases/*` | M4 | survey |
-| 11 | Returns, Notes & Expenses | Sales/purchase returns and operating expenses to `/api/returns/*`, `/api/expenses/*` | M4 | survey |
-| 12 | Organizations & Memberships | Tenant creation, organization switching, and staff roles to `/api/organizations/*` | M5 | survey |
-| 13 | Profiles & Staff Invitations | User profiles, invitations, godowns, and audit logs to `/api/settings/*` | M5 | survey |
-| 14 | CRM Modules Migration | CRM Roles, Attendance/Geofence, and Payroll queries to `/api/crm/*` | M5 | survey |
-| 15 | Static Grep & Build Acceptance | AST/Grep scan verifying 0 table queries and clean build | M6 | survey |
+| 1 | Idempotent PostgreSQL Migration | Update `staff_tasks` with proof, review, and approval columns | M1 | survey |
+| 2 | Backend Staff Provisioning Endpoint | `POST /api/crm/staff/provision` with bcrypt hashing and atomic org membership + CRM role | M1 | survey |
+| 3 | Backend Staff Listing & Tasks API | `GET /api/crm/staff`, `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id` | M1 | survey |
+| 4 | Frontend CRM API Service Methods | `src/services/crmApi.ts` methods for staff provisioning and full tasks CRUD/lifecycle | M1 | survey |
+| 5 | "Add Staff User" Modal in RoleManagement | Full name, email, phone, role selector, 14-char secure auto-generator, custom toggle | M2 | survey |
+| 6 | Credentials Confirmation Modal | Post-creation dialog displaying email & plaintext password with 1-click copy & WhatsApp template | M2 | survey |
+| 7 | Create Role Direct Staff Assignment | "Create Role" dialog enhancement with searchable staff checklist for instant assignment | M2 | survey |
+| 8 | Instant Staff Roster & Role Badges | Immediate in-memory update of `staffList`, `staffRolesMap`, and `CRMRolePill` badges | M2 | survey |
+| 9 | Tasks API Wiring & Assignee Picker | `Tasks.tsx` wired to `crmApi.getCRMTasks` and real organization staff assignee dropdown | M3 | survey |
+| 10 | Interactive Kanban & Table Views | Dual views with column counts, search, priority badges, and status actions | M3 | survey |
+| 11 | Proof Notes Submission Dialog | Dialog/drawer prompting for proof notes when transitioning from `in_progress` to `review` | M3 | survey |
+| 12 | Manager Approval & Revision Request | Actions for managers to approve (`done` with timestamp) or request revision with notes | M3 | survey |
+| 13 | Real-Time Task KPI Metrics | Accurate cards for Total, In Progress, Review, Completed, and Completion Rate % | M3 | survey |
+| 14 | E2E Testing Suite (Tiers 1-4) | Comprehensive test suite verifying all features, boundary cases, and full lifecycle | M4 | survey |
+| 15 | Adversarial Coverage Hardening (Tier 5) | White-box stress testing, zero TypeScript compile errors (`tsc --noEmit`), and clean audit | M4 | survey |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: Centralized API Client & Auth Interceptor | `src/lib/apiClient.ts`, token propagation, error normalization, tests | none | DONE |
-| 2 | M2: Products & Inventory Domain Migration | `products`, `product_batches` queries across 21 files | M1 | DONE |
-| 3 | M3: Customers, Suppliers & Parties Migration | `customers`, `suppliers`, `credit_transactions`, `bank_accounts` across 11 files | M1 | DONE |
-| 4 | M4: Invoices, Sales, Purchases & Expenses | `sales`, `sale_items`, `purchase_invoices`, `expenses`, `returns` across 12 files | M1 | DONE |
-| 5 | M5: Settings, Organizations & CRM Migration | `organizations`, `profiles`, `staff_invitations`, `crm_*` across 15 files | M1 | DONE |
-| 6 | M6: E2E Verification & Final Audit | Automated static grep scan, `npm run build`, full regression audit | M2, M3, M4, M5 | DONE |
+| 1 | M1: PostgreSQL Schema & Express Backend Integration | `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, `fix_db.sql`, `backend-api/src/routes/crm.js`, `src/services/crmApi.ts` | none | DONE |
+| 2 | M2: Staff User Provisioning & Instant Role Assignment UI | `src/pages/crm/RoleManagement.tsx`, Add Staff Modal, Credentials Modal, Create Role Staff Assignment | M1 | IN_PROGRESS |
+| 3 | M3: Full-Stack Enterprise Task Management | `src/pages/crm/Tasks.tsx`, Kanban/Table views, lifecycle transitions, proof submission, manager approvals, metrics | M1, M2 | PLANNED |
+| 4 | M4: E2E Verification, Clean Build & Adversarial Hardening | E2E test suite passing, `tsc --noEmit` exits 0, Forensic Integrity Audit CLEAN | M1, M2, M3 | PLANNED |
 
 ## Interface Contracts
 
-### Client ↔ Dedicated Backend API
-- **Base URL**: `https://api.credsmart.online/api`
-- **Headers**:
-  - `Content-Type: application/json`
-  - `Authorization: Bearer <Supabase_JWT>`
-  - `x-organization-id: <active_org_uuid>`
-- **Response Shape**:
-  ```typescript
-  export interface ApiResponse<T> {
-    data: T | null;
-    error: {
-      message: string;
-      code?: string;
-      status?: number;
-    } | null;
+### Backend API: `POST /api/crm/staff/provision`
+- **Request Body**:
+  ```json
+  {
+    "full_name": "string",
+    "email": "string",
+    "phone": "string (optional)",
+    "password": "string",
+    "store_role": "salesman | cashier | manager | staff",
+    "crm_role_id": "UUID (optional)"
+  }
+  ```
+- **Response** (HTTP 201):
+  ```json
+  {
+    "user": {
+      "id": "UUID",
+      "email": "string",
+      "full_name": "string",
+      "phone": "string",
+      "store_role": "string",
+      "crm_role_id": "UUID | null",
+      "crm_role_name": "string | null",
+      "crm_role_color": "string | null"
+    },
+    "credentials": {
+      "email": "string",
+      "password": "string"
+    }
   }
   ```
 
-### Products Domain ↔ API Client (`src/services/productsApi.ts`)
-- `getProducts(orgId: string): Promise<ApiResponse<ProductCatalogOption[]>>`
-- `getProductById(id: string): Promise<ApiResponse<ProductCatalogOption>>`
-- `createProduct(payload: SaveProductPayload): Promise<ApiResponse<ProductCatalogOption>>`
-- `updateProduct(id: string, payload: Partial<SaveProductPayload>): Promise<ApiResponse<ProductCatalogOption>>`
-- `deleteProduct(id: string, orgId?: string): Promise<ApiResponse<{ success: boolean }>>`
-- `bulkImport(items: SaveProductPayload[], strategy?: string, orgId?: string): Promise<ApiResponse<{ inserted: number; updated: number }>>`
-- `adjustStock(params: { productId: string; batchId?: string; adjustType: "add" | "reduce" | "set"; quantity: number; reason?: string; orgId?: string }): Promise<ApiResponse<{ batch: ProductBatch; totalStock: number }>>`
+### Backend API: `GET /api/crm/tasks`
+- **Query Params**: `status`, `priority`, `assigned_to`
+- **Response** (HTTP 200):
+  ```json
+  [
+    {
+      "id": "UUID",
+      "org_id": "UUID",
+      "title": "string",
+      "description": "string",
+      "assigned_to": "UUID",
+      "assigned_to_name": "string",
+      "assigned_to_avatar": "string",
+      "assigned_by": "UUID",
+      "creator_name": "string",
+      "due_date": "YYYY-MM-DD",
+      "status": "todo | in_progress | review | done",
+      "priority": "urgent | high | normal | low",
+      "requires_proof": true,
+      "proof_notes": "string | null",
+      "completed_at": "TIMESTAMPTZ | null",
+      "approved_by": "UUID | null",
+      "approver_name": "string | null",
+      "review_feedback": "string | null",
+      "created_at": "TIMESTAMPTZ",
+      "updated_at": "TIMESTAMPTZ"
+    }
+  ]
+  ```
 
-### Parties Domain ↔ API Client (`src/services/partiesApi.ts`)
-- `getCustomers(orgId: string, options?: { include_balance?: boolean }): Promise<ApiResponse<Customer[]>>`
-- `saveCustomer(customer: Partial<Customer>): Promise<ApiResponse<Customer>>`
-- `deleteCustomer(id: string): Promise<ApiResponse<{ success: boolean }>>`
-- `getSuppliers(orgId: string, options?: { include_balance?: boolean }): Promise<ApiResponse<Supplier[]>>`
-- `saveSupplier(supplier: Partial<Supplier>): Promise<ApiResponse<Supplier>>`
-- `deleteSupplier(id: string): Promise<ApiResponse<{ success: boolean }>>`
-- `getCreditTransactions(params: { orgId: string; partyId?: string; partyType?: string }): Promise<ApiResponse<CreditTransaction[]>>`
-- `recordCreditTransaction(transaction: Partial<CreditTransaction>): Promise<ApiResponse<CreditTransaction>>`
-
-### Invoices Domain ↔ API Client (`src/services/invoicesApi.ts`)
-- `getSales(orgId: string): Promise<ApiResponse<SalesRecord[]>>`
-- `saveSale(saleData: CreateSalePayload): Promise<ApiResponse<SalesRecord>>`
-- `updateSale(id: string, saleData: UpdateSalePayload): Promise<ApiResponse<SalesRecord>>`
-- `deleteSale(id: string): Promise<ApiResponse<{ success: boolean }>>`
-- `getNextSequence(orgId: string, prefix?: string): Promise<ApiResponse<{ nextSequence: string; fullNumber: string }>>`
-- `getPurchases(orgId: string): Promise<ApiResponse<PurchaseInvoiceRecord[]>>`
-- `savePurchase(purchaseData: CreatePurchasePayload): Promise<ApiResponse<PurchaseInvoiceRecord>>`
-- `deletePurchase(id: string): Promise<ApiResponse<{ success: boolean }>>`
-- `getExpenses(orgId: string): Promise<ApiResponse<ExpenseRecord[]>>`
-- `saveExpense(expenseData: CreateExpensePayload): Promise<ApiResponse<ExpenseRecord>>`
-- `deleteExpense(id: string): Promise<ApiResponse<{ success: boolean }>>`
+### Backend API: `PATCH /api/crm/tasks/:id`
+- **Request Body**:
+  ```json
+  {
+    "status": "todo | in_progress | review | done",
+    "proof_notes": "string (optional)",
+    "review_feedback": "string (optional)",
+    "title": "string (optional)",
+    "description": "string (optional)",
+    "priority": "string (optional)",
+    "due_date": "string (optional)",
+    "assigned_to": "string (optional)"
+  }
+  ```
+- **Response** (HTTP 200): Enriched task object.
 
 ## Code Layout
-- `src/lib/apiClient.ts` — Core HTTP fetch client with token injector & error normalizer
-- `src/services/productsApi.ts` — Products, batches, and inventory API service
-- `src/services/partiesApi.ts` — Customers, suppliers, khata, and bank accounts API service
-- `src/services/invoicesApi.ts` — Sales, purchases, expenses, and returns API service
-- `src/services/settingsApi.ts` — Organizations, memberships, staff, and CRM API service
-- `src/test/apiClient.test.ts` — API client unit tests
-- `src/test/e2eApiMigration.test.ts` — E2E validation test suite
+- `backend-api/src/routes/crm.js` — Staff provisioning and task management Express routes
+- `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` — Idempotent migration for `staff_tasks`
+- `fix_db.sql` — Server target database alignment script
+- `src/services/crmApi.ts` — Frontend CRM API service methods
+- `src/pages/crm/RoleManagement.tsx` — Staff provisioning, credentials confirmation & role assignment UI
+- `src/pages/crm/Tasks.tsx` — Enterprise Kanban & Table task management view
+- `src/test/crmStaffProvisioning.test.ts` — Staff provisioning unit & lifecycle tests
+- `src/test/crmTaskLifecycle.test.ts` — Task state machine & transitions tests
+- `src/test/crmStaffTasksIntegration.test.tsx` — Full integration tests with UI and mock API

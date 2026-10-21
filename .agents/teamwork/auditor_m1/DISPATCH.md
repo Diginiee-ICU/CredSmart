@@ -1,21 +1,34 @@
-# Dispatch: Forensic Auditor for Milestone 1 (Database Schema Alignment)
+# Forensic Auditor Dispatch: Milestone 1 Integrity Audit
 
-Read:
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `fix_db.sql` and `backend-api/fix_db.sql`
-- `src/test/fixDbSchema.test.ts`
+## Mission
+Perform comprehensive forensic integrity audit on Milestone 1 deliverables.
 
-Auditing Tasks:
-1. Forensic integrity analysis:
-   - Check whether `fix_db.sql` is genuine SQL code or a placeholder.
-   - Check whether `src/test/fixDbSchema.test.ts` tests real logic or contains hardcoded/vacuous assertions.
-   - Verify that all 42 tables and triggers are genuinely parsed and tested.
-   - Run `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
+## Audit Checks
+1. Genuine Implementation Audit:
+   - Verify `backend-api/src/routes/crm.js` contains authentic, genuine logic for `POST /api/crm/staff/provision`, `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`.
+   - Ensure NO mock bypassing, test result hardcoding, fake facade returns, or cheat strings.
+   - Verify bcrypt hashing is genuinely computed with bcryptjs.
+   - Verify PostgreSQL transaction handling with `pool.connect()`, `BEGIN`, `COMMIT`, `ROLLBACK`.
+2. Migration Authenticity:
+   - Check `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` and `fix_db.sql`.
+   - Verify genuine SQL DDL statements and trigger definitions.
+3. Client Service Authenticity:
+   - Check `src/services/crmApi.ts` for real API call implementations via `apiClient`.
+4. Binary Verdict:
+   - CLEAN or INTEGRITY VIOLATION.
+   - Note: Any cheating or fake implementation results in immediate INTEGRITY VIOLATION.
 
-Deliverable:
-Write report to `.agents/teamwork/auditor_m1/handoff.md` with explicit verdict: `CLEAN` or `INTEGRITY VIOLATION`.
+Write report to `.agents/teamwork/auditor_m1/handoff.md`.
 
 
-## 2026-10-20T11:22:09Z
-You are Forensic Auditor for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Conduct forensic integrity verification on `fix_db.sql`, `backend-api/fix_db.sql`, and `src/test/fixDbSchema.test.ts`. Verify implementations are genuine and test assertions are authentic. Run tests. Write report to `.agents/teamwork/auditor_m1/handoff.md` with verdict CLEAN or INTEGRITY VIOLATION. Send a message when done.
+## 2026-10-21T18:37:29Z
+You are the Forensic Auditor for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
+
+Perform forensic integrity audit: inspect `backend-api/src/routes/crm.js`, `src/services/crmApi.ts`, `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, and `fix_db.sql`. Check for genuine logic, genuine bcrypt hashing, genuine SQL queries, and zero cheating/facade/mock bypassing.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md` with explicit binary verdict: CLEAN or INTEGRITY VIOLATION.
+Send message back to parent when done.

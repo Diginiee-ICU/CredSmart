@@ -848,8 +848,11 @@ CREATE TABLE IF NOT EXISTS crm_staff_assignments (
 );
 ALTER TABLE crm_staff_assignments ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE crm_staff_assignments ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE crm_staff_assignments ADD COLUMN IF NOT EXISTS user_id UUID;
 UPDATE crm_staff_assignments SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE crm_staff_assignments SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE crm_staff_assignments SET user_id = staff_id WHERE user_id IS NULL AND staff_id IS NOT NULL;
+UPDATE crm_staff_assignments SET staff_id = user_id WHERE staff_id IS NULL AND user_id IS NOT NULL;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON crm_staff_assignments;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON crm_staff_assignments FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
@@ -1068,19 +1071,51 @@ CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON customer_tickets FOR 
 CREATE TABLE IF NOT EXISTS staff_tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR(255) NOT NULL,
-  description TEXT,
+  description TEXT DEFAULT '',
   assigned_to UUID,
-  due_date DATE,
-  status VARCHAR(50) DEFAULT 'pending',
-  priority VARCHAR(50) DEFAULT 'medium',
+  assigned_by UUID,
   created_by UUID,
+  due_date DATE,
+  status VARCHAR(50) DEFAULT 'todo',
+  priority VARCHAR(50) DEFAULT 'normal',
+  requires_proof BOOLEAN DEFAULT FALSE,
+  proof_required BOOLEAN DEFAULT FALSE,
+  proof_notes TEXT,
+  completed_at TIMESTAMPTZ,
+  approved_by UUID,
+  approved_at TIMESTAMPTZ,
+  review_feedback TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS assigned_to UUID;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS assigned_by UUID;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS due_date DATE;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'todo';
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS priority VARCHAR(50) DEFAULT 'normal';
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS requires_proof BOOLEAN DEFAULT FALSE;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS proof_required BOOLEAN DEFAULT FALSE;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS proof_notes TEXT;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS approved_by UUID;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS review_feedback TEXT;
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE staff_tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
 UPDATE staff_tasks SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE staff_tasks SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE staff_tasks SET assigned_by = created_by WHERE assigned_by IS NULL AND created_by IS NOT NULL;
+UPDATE staff_tasks SET created_by = assigned_by WHERE created_by IS NULL AND assigned_by IS NOT NULL;
+UPDATE staff_tasks SET requires_proof = proof_required WHERE requires_proof IS NULL AND proof_required IS NOT NULL;
+UPDATE staff_tasks SET proof_required = requires_proof WHERE proof_required IS NULL AND requires_proof IS NOT NULL;
+UPDATE staff_tasks SET status = 'todo' WHERE status = 'pending' OR status IS NULL;
+UPDATE staff_tasks SET priority = 'normal' WHERE priority = 'medium' OR priority IS NULL;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON staff_tasks;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON staff_tasks FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
@@ -1174,6 +1209,11 @@ CREATE INDEX IF NOT EXISTS idx_customer_tickets_org_id ON customer_tickets(org_i
 CREATE INDEX IF NOT EXISTS idx_customer_tickets_organization_id ON customer_tickets(organization_id);
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_org_id ON staff_tasks(org_id);
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_organization_id ON staff_tasks(organization_id);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_assigned_to ON staff_tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_status ON staff_tasks(org_id, status);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_priority ON staff_tasks(org_id, priority);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_due_date ON staff_tasks(org_id, due_date);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_created_at ON staff_tasks(org_id, created_at DESC);
 
 -- High-throughput composite & filter indexes
 -- Products: Barcode, SKU, Name, CreatedAt

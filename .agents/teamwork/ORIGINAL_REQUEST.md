@@ -1021,3 +1021,38 @@ Complete overhaul of all CRM modules with high-density design:
 - [ ] `tsc --noEmit` exits with 0 errors across the entire repository.
 - [ ] All existing test suites pass cleanly.
 - [ ] Mobile viewports (`< 768px`) maintain 44px minimum hit targets and zero horizontal scroll overflow.
+
+
+## 2026-10-21T17:42:42Z
+
+Implement production-grade staff user provisioning & instant role assignment in CRM Role Management and complete the full-stack Enterprise Task Management system for multi-tenant company workflows.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. CRM Role Management: Staff User Provisioning & Instant Role Assignment
+Company owners and super-admins must be able to provision new staff user credentials (full name, email, generated/custom password, phone, store role) directly from the Role Management dashboard. The creation process must atomically register the user, establish organization membership, and assign the selected CRM role. In addition, when creating a custom role, owners must be able to assign existing or newly created staff to that role in a single unified interaction. After user creation, a credentials summary dialog must provide one-click copying of the login details.
+
+### R2. Enterprise CRM Task Management System
+The Task Management module must operate with persistent database storage connected to the Ubuntu backend API (`/api/crm/tasks`). Support task creation with title, description, priority (urgent, high, normal, low), due date, proof requirements, and assignment to real organization staff. Provide interactive Kanban and Table views with complete lifecycle state transitions (`todo` -> `in_progress` -> `review` -> `done`), submission of proof notes when completing work, and manager approval or change requests.
+
+### R3. Backend API & PostgreSQL Schema Integration
+All staff provisioning and task lifecycle operations must run through authenticated Express endpoints in `backend-api/src/routes/crm.js` backed by PostgreSQL (`staff_tasks`, `users`, `org_memberships`, `crm_staff_assignments`), enforcing organization isolation, password hashing with bcrypt, and role-based permissions.
+
+## Acceptance Criteria
+
+### Staff Provisioning & Role Assignment
+- [ ] Company owner can click "Add Staff User" in Role Management, auto-generate or enter a password, fill details, and create the user account with an immediate CRM role assignment.
+- [ ] A credentials confirmation modal displays the created email and plaintext password with a copy button.
+- [ ] The newly created user appears immediately in the staff list with their assigned role badge and can authenticate via `/api/auth/login`.
+- [ ] In the "Create Role" dialog, the owner can optionally select existing staff or create a new user to assign the custom role upon creation.
+
+### Enterprise Task System
+- [ ] Tasks are fetched from and written to PostgreSQL table `staff_tasks` via `GET /api/crm/tasks` and `POST /api/crm/tasks`.
+- [ ] Creating a task allows selecting assignees from real organization members fetched from the backend.
+- [ ] Staff can transition task status from To Do to In Progress, and from In Progress to Review with proof notes.
+- [ ] Owners/managers can approve tasks in Review to transition them to Done (recording completed_at and approved_by) or request revisions.
+- [ ] Task metrics (Total, In Progress, Review, Completed, Completion Rate) calculate accurately from backend data.
+- [ ] Frontend build passes cleanly (`npm run build`) with zero TypeScript errors.

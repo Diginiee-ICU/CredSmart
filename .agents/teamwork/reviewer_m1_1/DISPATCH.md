@@ -1,22 +1,34 @@
-# Dispatch: Reviewer 1 for Milestone 1 (Database Schema Alignment)
+# Reviewer 1 Dispatch: M1 Backend Routes & Security
 
-Read:
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-20T10:39:14Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `fix_db.sql` and `backend-api/fix_db.sql`
-- `src/test/fixDbSchema.test.ts`
+## Mission
+Review Milestone 1 implementation in `backend-api/src/routes/crm.js` and `src/services/crmApi.ts`.
 
-Review Tasks:
-1. Examine `fix_db.sql` for correctness, completeness, robustness, and idempotency.
-2. Verify that all 42 tables have dual column definitions and triggers.
-3. Verify that `customers` and `suppliers` have all 20 required fields with safe defaults.
-4. Verify performance indexes and PostgreSQL 16 compatibility.
-5. Run the test suite: `cmd /c npx vitest run src/test/fixDbSchema.test.ts`
-6. Run `cmd /c npx tsc --noEmit`.
+## Review Criteria
+1. Backend `POST /api/crm/staff/provision`:
+   - Proper transaction handling (`BEGIN`, `COMMIT`, `ROLLBACK`).
+   - Bcrypt hashing with salt rounds >= 10.
+   - Atomicity: inserts into `users`, `org_memberships`, and CRM role assignments.
+   - Verification that user can log in immediately via `/api/auth/login`.
+2. Backend Task endpoints (`GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`, `DELETE /api/crm/tasks/:id`):
+   - Tenant isolation: strictly query and update where `org_id = $1`.
+   - Lifecycle state machine transitions and metadata updates (`completed_at`, `approved_by`, `proof_notes`, `review_feedback`).
+3. Frontend API client in `src/services/crmApi.ts`:
+   - TypeScript typing, no `any` types, correct endpoint URLs and payloads.
+4. Protected route preservation:
+   - Ensure Create Invoice flows (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc.) are completely untouched.
 
-Deliverable:
-Write review report to `.agents/teamwork/reviewer_m1_1/handoff.md` with explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+Verdict: APPROVE or REQUEST_CHANGES.
+Write report to `.agents/teamwork/reviewer_m1_1/handoff.md`.
 
 
-## 2026-10-20T11:22:06Z
-You are Reviewer 1 for Milestone 1. Your working directory is `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1`. Read `DISPATCH.md` in your directory and `ORIGINAL_REQUEST.md`. Inspect `fix_db.sql`, `backend-api/fix_db.sql`, and `src/test/fixDbSchema.test.ts`. Run the tests via `cmd /c npx vitest run src/test/fixDbSchema.test.ts` and `cmd /c npx tsc --noEmit`. Write your review report to `.agents/teamwork/reviewer_m1_1/handoff.md` with verdict APPROVE or REQUEST_CHANGES. Send a message when done.
+## 2026-10-21T18:37:27Z
+You are Reviewer 1 for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
+
+Review backend routes in `backend-api/src/routes/crm.js`, security, bcrypt hashing, transaction handling, tenant isolation, and `src/services/crmApi.ts`.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit verdict: APPROVE or REQUEST_CHANGES.
+Send message back to parent when done.
