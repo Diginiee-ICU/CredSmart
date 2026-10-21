@@ -13,7 +13,7 @@ import {
   RotateCw,
   Sparkles,
   Layers,
-  Award,
+  Wallet,
 } from "lucide-react";
 import { settingsApi } from "@/services/settingsApi";
 import { crmApi } from "@/services/crmApi";
@@ -203,7 +203,7 @@ export default function CRMDashboard(): React.ReactElement {
       title: "Salary & Payroll",
       description: "Automated wage calculation, advances, deductions, and pay slips",
       url: ROUTE_PATHS.crmSalary,
-      icon: Award,
+      icon: Wallet,
       badge: "Phase 2",
       accentColor: "#10B981",
       bgLight: "bg-emerald-50/70",
