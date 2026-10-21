@@ -844,6 +844,11 @@ export default function Attendance(): React.ReactElement {
       );
       await persistAttendance(updatedList);
 
+      toast({
+        title: "Clocked Out Successfully ✓",
+        description: `Session complete. Total time: ${formatMinutesToHM(durationMinutes)}${overtimeMinutes > 0 ? ` (${formatMinutesToHM(overtimeMinutes)} overtime)` : ""}.`,
+      });
+
       // 3. Update via Supabase & crmApi
       try {
         await supabase
@@ -854,7 +859,7 @@ export default function Attendance(): React.ReactElement {
       }
 
       try {
-        await crmApi.updateCRMAttendance(
+        crmApi.updateCRMAttendance(
           todayRecord?.id || `${effectiveOrgId}-${effectiveUserId}-${todayDateStr}`,
           {
             clock_out: nowIso,
@@ -867,15 +872,10 @@ export default function Attendance(): React.ReactElement {
             updated_at: nowIso,
           },
           effectiveOrgId
-        );
+        ).catch(() => {});
       } catch (err) {
         console.warn("API update on clock out failed, maintaining locally:", err);
       }
-
-      toast({
-        title: "Clocked Out Successfully ✓",
-        description: `Session complete. Total time: ${formatMinutesToHM(durationMinutes)}${overtimeMinutes > 0 ? ` (${formatMinutesToHM(overtimeMinutes)} overtime)` : ""}.`,
-      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to record clock-out.";
       toast({
