@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { BusinessDocument } from "@/types/documents";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
+import { UnifiedInvoiceRenderer } from "../UnifiedInvoiceRenderer";
+import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
 
 interface MobileInvoiceSuccessViewProps {
   invoice: BusinessDocument;
@@ -47,9 +49,11 @@ export function MobileInvoiceSuccessView({
   onGenerateEwayBill,
   storeInfo,
 }: MobileInvoiceSuccessViewProps) {
-  const [promoBannerVisible, setPromoBannerVisible] = React.useState(true);
+  const [promoBannerVisible, setPromoBannerVisible] = React.useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = React.useState(false);
+
+  const invoiceSettings = React.useMemo(() => loadInvoiceSettings(), []);
 
   const buildPdfPayload = () => ({
     invoiceNumber: invoice.documentNumber,
@@ -189,106 +193,15 @@ export function MobileInvoiceSuccessView({
         </div>
       </div>
 
-      {/* ── 2. Promo Banner (dismissible) ── */}
-      {promoBannerVisible && (
-        <div className="bg-white px-4 py-3 border-b border-slate-200 shrink-0">
-          <div className="flex justify-between items-start">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-bold text-[14px] text-slate-900">Celebrate New Theme(s)</span>
-              <span className="text-[12px] text-slate-500">New exclusive theme styling available</span>
-            </div>
-            <button onClick={() => setPromoBannerVisible(false)} className="text-slate-400 p-0.5 active:opacity-60">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <button className="mt-3 bg-slate-900 text-white rounded-md px-6 py-1.5 text-[12px] font-medium w-max active:opacity-80">
-            Explore Now
-          </button>
-        </div>
-      )}
-
-      {/* ── 3. PDF Preview Container ── */}
-      <div className="p-5 bg-slate-100 flex items-center justify-center shrink-0">
-        <div className="bg-white shadow-sm border border-slate-200 w-full aspect-[1/1.4] rounded-sm p-4 flex flex-col relative overflow-hidden">
-          {/* Mini invoice skeleton with real data */}
-          <div className="w-full flex justify-between border-b border-slate-200 pb-2 mb-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">
-                {isSalesType ? "Sales Invoice" : "Purchase Invoice"}
-              </span>
-              <span className="text-[7px] text-slate-400">#{invoice.documentNumber}</span>
-            </div>
-            <div className="text-right">
-              <span className="text-[7px] text-slate-400 block">Date</span>
-              <span className="text-[8px] font-medium text-slate-600">{invoice.docDate}</span>
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <span className="text-[7px] text-slate-400 uppercase tracking-wider">Bill To</span>
-            <p className="text-[9px] font-medium text-slate-700 mt-0.5">{invoice.partyName || "Cash Sale"}</p>
-            {invoice.partyPhone && <p className="text-[7px] text-slate-400">{invoice.partyPhone}</p>}
-          </div>
-
-          {/* Items table skeleton */}
-          <div className="w-full border border-slate-200 rounded-sm mb-3 flex-1 min-h-0 overflow-hidden">
-            <div className="bg-slate-50 px-1.5 py-1 border-b border-slate-200 flex gap-1">
-              <span className="text-[6px] font-bold text-slate-500 flex-1">Item</span>
-              <span className="text-[6px] font-bold text-slate-500 w-6 text-center">Qty</span>
-              <span className="text-[6px] font-bold text-slate-500 w-10 text-right">Amount</span>
-            </div>
-            {invoice.items.slice(0, 4).map((item, i) => (
-              <div key={i} className="flex gap-1 px-1.5 py-0.5 border-b border-slate-100">
-                <span className="text-[7px] text-slate-600 flex-1 truncate">{item.productName}</span>
-                <span className="text-[7px] text-slate-500 w-6 text-center">{item.quantity}</span>
-                <span className="text-[7px] text-slate-600 w-10 text-right">₹{item.lineTotal.toLocaleString("en-IN")}</span>
-              </div>
-            ))}
-            {invoice.items.length > 4 && (
-              <div className="px-1.5 py-0.5 text-[6px] text-slate-400 text-center">
-                +{invoice.items.length - 4} more item(s)
-              </div>
-            )}
-          </div>
-
-          {/* Footer totals */}
-          <div className="mt-auto flex justify-end border-t border-slate-200 pt-1.5">
-            <div className="flex flex-col gap-0.5 items-end">
-              {invoice.taxTotal > 0 && (
-                <div className="flex gap-3">
-                  <span className="text-[7px] text-slate-400">Tax</span>
-                  <span className="text-[7px] text-slate-600">₹{invoice.taxTotal.toLocaleString("en-IN")}</span>
-                </div>
-              )}
-              <div className="flex gap-3">
-                <span className="text-[8px] font-bold text-slate-700">Total</span>
-                <span className="text-[8px] font-bold text-slate-900">₹{invoice.grandTotal.toLocaleString("en-IN")}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4. Remove Logo Banner ── */}
-      <div className="bg-white px-4 py-3 border-b border-slate-200 flex justify-between items-center shrink-0 active:bg-slate-50 cursor-pointer">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 bg-slate-100 rounded flex items-center justify-center border border-slate-200">
-            <span className="text-[10px] text-slate-400 font-bold">✕</span>
-          </div>
-          <span className="text-[13px] text-slate-700 font-medium">Remove app logo</span>
-        </div>
-        <ChevronRight className="w-4 h-4 text-slate-400" />
-      </div>
-
-      {/* ── 5. Activity Summary ── */}
-      <div className="bg-white p-4 shrink-0">
+      {/* ── 2. Activity Summary (Above the Fold) ── */}
+      <div className="bg-white p-4 shrink-0 border-b border-slate-200">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-slate-400" />
             <span className="text-[12px] text-slate-500 font-medium">Last Activity</span>
           </div>
-          <span className="text-[18px] font-bold text-slate-900">
-            ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          <span className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+            ₹{invoice.grandTotal === 0 ? "0" : Number(invoice.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </span>
         </div>
 
@@ -321,40 +234,109 @@ export function MobileInvoiceSuccessView({
         </div>
       </div>
 
-      {/* ── 6. Action Buttons Row ── */}
-      <div className="bg-white flex justify-around px-2 sm:px-4 py-5 border-t border-slate-100 shrink-0">
+      {/* ── 3. Action Buttons Row (Above the Fold - 5 Buttons) ── */}
+      <div className="bg-white flex justify-around px-2 sm:px-4 py-4 border-b border-slate-200 shrink-0 shadow-xs">
         {onEdit && (
-          <button onClick={onEdit} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+          <button onClick={onEdit} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60 cursor-pointer">
             <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
               <Edit2 className="w-5 h-5" />
             </div>
             <span className="text-[11px] font-semibold text-slate-700">Edit</span>
           </button>
         )}
-        <button onClick={handlePrint} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+        <button onClick={handlePrint} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60 cursor-pointer">
           <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
             <Printer className="w-5 h-5" />
           </div>
           <span className="text-[11px] font-semibold text-slate-700">Print</span>
         </button>
-        <button onClick={handleDownload} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+        <button onClick={handleDownload} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60 cursor-pointer">
           <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
             <Download className="w-5 h-5" />
           </div>
           <span className="text-[11px] font-semibold text-slate-700">Download</span>
         </button>
-        <button onClick={handleShare} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+        <button onClick={handleShare} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60 cursor-pointer">
           <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
             <Share2 className="w-5 h-5" />
           </div>
           <span className="text-[11px] font-semibold text-slate-700">Share</span>
         </button>
-        <button onClick={onGenerateEwayBill} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60">
+        <button onClick={onGenerateEwayBill} className="flex flex-col items-center gap-2 min-w-[56px] active:opacity-60 cursor-pointer">
           <div className="w-12 h-12 rounded-full border-2 border-indigo-200 flex items-center justify-center text-indigo-600 bg-indigo-50/60">
             <FileText className="w-5 h-5" />
           </div>
           <span className="text-[11px] font-semibold text-slate-700">E-Way Bill</span>
         </button>
+      </div>
+
+      {/* ── 4. Actual Rendered Invoice Preview (Selected Theme & Styling) ── */}
+      <div className="p-3 sm:p-4 flex-1">
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Official Invoice Preview
+          </span>
+          <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
+            Theme: {invoiceSettings.themeId || "Classic"}
+          </span>
+        </div>
+        <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-x-auto p-2 sm:p-4">
+          <div className="min-w-[650px] p-2 bg-white text-slate-900">
+            <UnifiedInvoiceRenderer
+              docType={invoice.docType as any}
+              invoiceNumber={invoice.documentNumber}
+              referenceNumber={invoice.referenceNumber}
+              date={invoice.docDate}
+              dueDate={invoice.dueDate}
+              time={new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+              placeOfSupply={invoice.placeOfSupply}
+              storeInfo={{
+                name: storeInfo?.name || "CredSmart Store",
+                phone: storeInfo?.phone || "",
+                email: storeInfo?.email || "",
+                address: storeInfo?.address || "",
+                gstin: storeInfo?.gstin || "",
+              }}
+              partyInfo={{
+                name: invoice.partyName || "Cash Sale",
+                phone: invoice.partyPhone,
+                address: invoice.partyAddress,
+                gstin: invoice.partyGstin,
+              }}
+              items={invoice.items.map((it) => ({
+                name: it.productName,
+                qty: it.quantity,
+                unit: it.unit || "PCS",
+                altUnit: it.altUnit,
+                altQty: it.altQty,
+                altUnitConversion: it.altUnitConversion,
+                rate: it.rate,
+                total: it.lineTotal,
+                hsn: it.hsn,
+                taxRate: it.taxRate,
+                batchNo: it.batchNumber,
+                expDate: it.expiryDate,
+              }))}
+              totals={{
+                subtotal: invoice.subtotal,
+                discountTotal: invoice.discountTotal,
+                taxableAmount: invoice.taxableTotal,
+                cgst: invoice.cgstTotal,
+                sgst: invoice.sgstTotal,
+                igst: invoice.igstTotal,
+                taxTotal: invoice.taxTotal,
+                roundOff: invoice.roundOff,
+                grandTotal: invoice.grandTotal,
+                paidAmount: invoice.paidAmount,
+                balanceDue: invoice.balanceDue,
+              }}
+              paymentMethod={invoice.paymentMethod}
+              notes={invoice.notes}
+              terms={invoice.terms}
+              settings={invoiceSettings}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Spacer for sticky footer */}

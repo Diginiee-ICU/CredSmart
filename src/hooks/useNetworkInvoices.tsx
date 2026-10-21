@@ -111,6 +111,9 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   const userRef = useRef({ userName, userEmail, userPhone });
   userRef.current = { userName, userEmail, userPhone };
 
+  // Deduplication cache to prevent duplicate alerts across multiple transports (DOM, BroadcastChannel, Realtime, CDC)
+  const handledEventInvoiceIdsRef = useRef<Map<string, number>>(new Map());
+
   const loadData = useCallback(async () => {
     const currentOrg = orgRef.current;
     if (!orgId || !currentOrg) {
@@ -165,22 +168,35 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         // Ingest immediately into local storage
         networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
 
-        // Play pleasant sound chime & haptic feedback
-        playChimeAndVibrate();
+        const invoiceKey = networkInvoice.id || networkInvoice.invoiceNumber;
+        const now = Date.now();
+        const lastNotified = invoiceKey ? handledEventInvoiceIdsRef.current.get(invoiceKey) : undefined;
+        const shouldShowToast = !lastNotified || (now - lastNotified > 10000);
 
-        // Show real-time actionable toast notification
-        toast.info(`⚡ New Sales Invoice on your name!`, {
-          description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
-          duration: 9000,
-          action: {
-            label: "Review & Inward",
-            onClick: () => {
-              window.dispatchEvent(
-                new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
-              );
+        if (invoiceKey && shouldShowToast) {
+          handledEventInvoiceIdsRef.current.set(invoiceKey, now);
+          // Prune stale cache entries
+          for (const [k, ts] of handledEventInvoiceIdsRef.current.entries()) {
+            if (now - ts > 30000) handledEventInvoiceIdsRef.current.delete(k);
+          }
+
+          // Play pleasant sound chime & haptic feedback
+          playChimeAndVibrate();
+
+          // Show real-time actionable toast notification
+          toast.info(`⚡ New Sales Invoice on your name!`, {
+            description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+            duration: 9000,
+            action: {
+              label: "Review & Inward",
+              onClick: () => {
+                window.dispatchEvent(
+                  new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
+                );
+              },
             },
-          },
-        });
+          });
+        }
 
         loadData();
       }
@@ -344,11 +360,18 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
                     u.userPhone
                   )
                 ) {
-                  playChimeAndVibrate();
-                  toast.info(mappedNotif.title, {
-                    description: mappedNotif.message,
-                    duration: 9000,
-                  });
+                  const notifInvoiceKey = mappedNotif.networkInvoiceId;
+                  const now = Date.now();
+                  const alreadyNotified = notifInvoiceKey ? handledEventInvoiceIdsRef.current.has(notifInvoiceKey) : false;
+
+                  if (!alreadyNotified) {
+                    if (notifInvoiceKey) handledEventInvoiceIdsRef.current.set(notifInvoiceKey, now);
+                    playChimeAndVibrate();
+                    toast.info(mappedNotif.title, {
+                      description: mappedNotif.message,
+                      duration: 9000,
+                    });
+                  }
                 }
               }
             }

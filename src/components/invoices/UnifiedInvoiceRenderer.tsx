@@ -987,7 +987,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             <div className="flex justify-between items-center text-slate-600 pt-0.5">
               <span>Amount received ({paymentMethod || "Cash"})</span>
               <span className="font-mono font-bold text-slate-900">
-                ₹{paidAmountVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹ {paidAmountVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
 

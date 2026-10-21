@@ -382,7 +382,7 @@ export function SalesInvoiceModal({
 
   const [amountReceived, setAmountReceived] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [markAsFullyPaid, setMarkAsFullyPaid] = useState(false);
+  const [markAsFullyPaid, setMarkAsFullyPaid] = useState(true);
 
   // Loading & Saving
   const [saving, setSaving] = useState(false);
@@ -537,7 +537,9 @@ export function SalesInvoiceModal({
         });
         setItems(loadedItems);
         setPaymentMethod(editingDoc.paymentMethod || "Cash");
-        setAmountReceived(editingDoc.paidAmount || 0);
+        const docPaid = editingDoc.paidAmount ?? (editingDoc.status === "paid" ? editingDoc.grandTotal : 0);
+        setAmountReceived(docPaid);
+        setMarkAsFullyPaid(editingDoc.status === "paid" || docPaid >= (editingDoc.grandTotal ?? 0));
         setNotes(editingDoc.notes || "");
         if (editingDoc.notes) setShowNotes(true);
         setTerms(editingDoc.terms || "1. Goods once sold will not be taken back or exchanged.\n2. All disputes are subject to local jurisdiction only.");
@@ -591,7 +593,7 @@ export function SalesInvoiceModal({
         setOverallDiscountValue(0);
         setItems([createNewRow("row-1")]);
         setAmountReceived(0);
-        setMarkAsFullyPaid(false);
+        setMarkAsFullyPaid(true);
         setPaymentMethod("Cash");
       }
     }
@@ -702,9 +704,13 @@ export function SalesInvoiceModal({
       taxTotal: totals.taxTotal,
       roundOff: totals.roundOff,
       grandTotal: totals.grandTotal,
-      paidAmount: amountReceived,
-      balanceDue: Math.max(0, totals.grandTotal - amountReceived),
-      status: "unpaid",
+      paidAmount: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? totals.grandTotal : amountReceived,
+      balanceDue: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? 0 : Math.max(0, totals.grandTotal - amountReceived),
+      status: (markAsFullyPaid || amountReceived >= totals.grandTotal || (paymentMethod !== "Credit" && amountReceived === 0 && totals.grandTotal > 0))
+        ? "paid"
+        : amountReceived > 0
+        ? "partial"
+        : "unpaid",
       paymentMethod,
       transportDetails: vehicleNumber.trim() ? { vehicleNumber: vehicleNumber.trim() } : undefined,
       created_at: editingDoc?.created_at || new Date().toISOString(),
@@ -1048,6 +1054,17 @@ export function SalesInvoiceModal({
       const currentDocId = activeSavedDocId || editingDoc?.id || undefined;
       const isUpdate = Boolean(currentDocId);
 
+      const isCredit = paymentMethod === "Credit";
+      const isFullyPaid = markAsFullyPaid || (!isCredit && (amountReceived >= totals.grandTotal || amountReceived === 0));
+      const finalPaidAmount = isFullyPaid ? totals.grandTotal : amountReceived;
+      const finalBalanceDue = Math.max(0, totals.grandTotal - finalPaidAmount);
+      const finalStatus =
+        finalBalanceDue <= 0.005 || finalPaidAmount >= totals.grandTotal
+          ? "paid"
+          : finalPaidAmount > 0
+          ? "partial"
+          : "unpaid";
+
       const finalDoc: Omit<BusinessDocument, "id"> & { id?: string } = {
         id: currentDocId,
         organizationId: orgId,
@@ -1076,14 +1093,9 @@ export function SalesInvoiceModal({
         taxTotal: totals.taxTotal,
         roundOff: totals.roundOff,
         grandTotal: totals.grandTotal,
-        paidAmount: amountReceived,
-        balanceDue: Math.max(0, totals.grandTotal - amountReceived),
-        status:
-          amountReceived >= totals.grandTotal
-            ? "paid"
-            : amountReceived > 0
-            ? "partial"
-            : "unpaid",
+        paidAmount: finalPaidAmount,
+        balanceDue: finalBalanceDue,
+        status: finalStatus,
         paymentMethod,
         notes: showNotes ? notes : undefined,
         terms,
@@ -1098,27 +1110,23 @@ export function SalesInvoiceModal({
       const saved = await documentsService.saveDocument(finalDoc, user?.id);
       setActiveSavedDocId(saved.id);
 
-      // Toast notification and auto-share with CredSmart network buyer
-      if (isUpdate) {
-        toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
-      } else if (saveAndNew) {
-        toast.success(`Invoice #${saved.documentNumber} created! Ready for next bill.`);
-      } else {
-        toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+      const isMobileView = typeof window !== "undefined" && window.innerWidth < 1024;
+
+      // Toast notification: on desktop show single crisp toast; on mobile suppress toast since full-screen MobileInvoiceSuccessView opens
+      if (!isMobileView) {
+        if (isUpdate) {
+          toast.success(`Invoice #${fullDocumentNumber} updated successfully!`);
+        } else if (saveAndNew) {
+          toast.success(`Invoice #${saved.documentNumber} created! Ready for next bill.`);
+        } else {
+          toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
+        }
       }
 
-      // Background network invoice dispatch: non-blocking to keep bill generation sub-500ms
+      // Background network invoice dispatch: silent background sync (eliminate annoying secondary toast popups)
       if (docType === "sales_invoice") {
         networkInvoicingService
           .sendSalesInvoiceToNetwork(saved, org, user?.id)
-          .then((netInvoice) => {
-            if (netInvoice) {
-              toast.success(
-                `⚡ Sales Invoice #${fullDocumentNumber} shared with ${netInvoice.recipientOrgName}!`,
-                { duration: 4000 }
-              );
-            }
-          })
           .catch((netErr) => {
             console.warn("Network dispatch notice:", netErr);
           });
@@ -1193,7 +1201,7 @@ export function SalesInvoiceModal({
         setShowBillingAddress(false);
         setItems([createNewRow("row-1")]);
         setAmountReceived(0);
-        setMarkAsFullyPaid(false);
+        setMarkAsFullyPaid(true);
         setNotes("");
         setShowNotes(false);
         setEwayBillNo("");
@@ -1264,9 +1272,9 @@ export function SalesInvoiceModal({
       taxTotal: totals.taxTotal,
       roundOff: totals.roundOff,
       grandTotal: totals.grandTotal,
-      paidAmount: amountReceived,
-      balanceDue: Math.max(0, totals.grandTotal - amountReceived),
-      status: amountReceived >= totals.grandTotal ? "paid" : amountReceived > 0 ? "partial" : "unpaid",
+      paidAmount: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? totals.grandTotal : amountReceived,
+      balanceDue: (markAsFullyPaid || (paymentMethod !== "Credit" && amountReceived === 0)) ? 0 : Math.max(0, totals.grandTotal - amountReceived),
+      status: (markAsFullyPaid || amountReceived >= totals.grandTotal || (paymentMethod !== "Credit" && amountReceived === 0 && totals.grandTotal > 0)) ? "paid" : amountReceived > 0 ? "partial" : "unpaid",
       paymentMethod,
       notes: showNotes ? notes : undefined,
       terms,
@@ -2998,7 +3006,19 @@ export function SalesInvoiceModal({
                         />
                       </div>
 
-                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <Select 
+                        value={paymentMethod} 
+                        onValueChange={(val) => {
+                          setPaymentMethod(val);
+                          if (val === "Credit") {
+                            setMarkAsFullyPaid(false);
+                            setAmountReceived(0);
+                          } else {
+                            setMarkAsFullyPaid(true);
+                            setAmountReceived(totals.grandTotal);
+                          }
+                        }}
+                      >
                         <SelectTrigger className="h-8 text-xs w-28 shrink-0">
                           <SelectValue />
                         </SelectTrigger>

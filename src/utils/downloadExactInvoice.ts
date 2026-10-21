@@ -65,6 +65,7 @@ export interface ExactInvoicePayload {
     expDate?: string;
     mrp?: number;
   }>;
+  silent?: boolean;
 }
 
 /**
@@ -73,10 +74,12 @@ export interface ExactInvoicePayload {
  */
 export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Promise<void> {
   const toastId = "download-exact-invoice";
-  toast({
-    title: "⏳ Generating PDF…",
-    description: "Preparing your invoice, please wait a moment.",
-  });
+  if (!payload.silent) {
+    toast({
+      title: "⏳ Generating PDF…",
+      description: "Preparing your invoice, please wait a moment.",
+    });
+  }
 
   try {
     const settings = loadInvoiceSettings();
@@ -212,10 +215,12 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
           const safeInvoiceNumber = (payload.invoiceNumber || "invoice").replace(/[/\\:*?"<>|]/g, "-");
           pdf.save(`Invoice-${safeInvoiceNumber}.pdf`);
 
-          toast({
-            title: "✅ Invoice Downloaded",
-            description: `Invoice-${safeInvoiceNumber}.pdf saved successfully.`,
-          });
+          if (!payload.silent) {
+            toast({
+              title: "✅ Invoice Downloaded",
+              description: `Invoice-${safeInvoiceNumber}.pdf saved successfully.`,
+            });
+          }
         } catch (err) {
           console.error("PDF generation error:", err);
           toast({
