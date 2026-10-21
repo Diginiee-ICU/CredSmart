@@ -25,6 +25,10 @@ import {
   ArrowUp,
   Wallet,
   Search,
+  ShoppingCart,
+  Package,
+  X,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -73,7 +77,7 @@ interface TransactionRow {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { orgId } = useOrganization();
+  const { org, orgId } = useOrganization();
   const { toast } = useToast();
 
   const [toCollect, setToCollect] = useState(0);
@@ -84,6 +88,35 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
   const [chartTimeframe, setChartTimeframe] = useState("This Month");
+  const [dismissedMobileTallyBanner, setDismissedMobileTallyBanner] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("credsmart_dismissed_mobile_tally_banner") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [isDismissingTallyBanner, setIsDismissingTallyBanner] = useState(false);
+
+  const handleDismissMobileTallyBanner = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDismissingTallyBanner(true);
+    try {
+      localStorage.setItem("credsmart_dismissed_mobile_tally_banner", "true");
+    } catch {
+      // safe fallback
+    }
+    setTimeout(() => {
+      setDismissedMobileTallyBanner(true);
+    }, 150);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
 
   // Raw Historical Data for Real-Time Analytics
   const [salesHistory, setSalesHistory] = useState<{ id: string; total: number; created_at: string }[]>([]);
@@ -91,6 +124,18 @@ export default function Dashboard() {
     { id: string; party_type: string; amount: number; type: string; created_at: string }[]
   >([]);
   const [purchaseDocs, setPurchaseDocs] = useState<{ id: string; grandTotal: number; date: string }[]>([]);
+
+  const { todaySalesTotal, todaySalesCount } = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todaySales = salesHistory.filter(
+      (s) => s.created_at && s.created_at.slice(0, 10) === todayStr
+    );
+    const sum = todaySales.reduce((acc, s) => acc + (s.total || 0), 0);
+    return {
+      todaySalesTotal: sum,
+      todaySalesCount: todaySales.length,
+    };
+  }, [salesHistory]);
 
   // Direct Module States (Opens directly instead of navigating)
   const [showSalesInvoiceModal, setShowSalesInvoiceModal] = useState(false);
@@ -579,164 +624,334 @@ export default function Dashboard() {
     return (
     <div className="flex-1 w-full min-w-0 h-full overflow-y-auto p-3 sm:p-5 lg:p-6 space-y-4 font-sans select-none scrollbar-thin">
       {/* =========================================================================
-          1. MOBILE VIEW ONLY (< 768px)
+          1. MOBILE VIEW ONLY (< 768px) - Clean High-Density Retail Minimal (Stripe / Shopify POS)
           ========================================================================= */}
-      <div className="block md:hidden space-y-4 pb-28 pt-1">
-        {/* Mobile Title */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-2.5">
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
-              Dashboard
+      <div className="block md:hidden space-y-3.5 pb-24 pt-1">
+        {/* Dynamic Store Greeting & Live Sync Status */}
+        <div className="flex items-center justify-between gap-3 px-0.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
+                {getGreeting()}
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                LIVE
+              </span>
+            </div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight truncate mt-0.5">
+              {org?.name || "CredSmart Business"}
             </h1>
-            <button
-              onClick={handleRefresh}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-600 dark:text-slate-400 transition-all cursor-pointer active:scale-95 shadow-2xs"
-              title="Refresh"
-            >
-              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin text-blue-600")} />
-            </button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">
-            Commercial financial metrics, receivables, payables, and live invoice feed
-          </p>
-        </div>
 
-        {/* TALLY 1-CLICK AUTO IMPORT HERO ACTION */}
-        <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-transparent flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                Auto Search Tally Folder &amp; Import Data
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 uppercase">
-                  1-Click Auto Add
-                </span>
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                Automatically scan Windows drives for your Tally company data and import items, customers, and vouchers instantly.
-              </p>
-            </div>
-          </div>
-          <Button
+          <button
             type="button"
-            onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-            className="w-full sm:w-auto shrink-0 gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all border border-emerald-400/40"
+            onClick={handleRefresh}
+            className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all cursor-pointer active:scale-90 flex items-center justify-center shrink-0 shadow-2xs touch-manipulation"
+            title="Refresh Financial Data"
+            aria-label="Refresh Financial Data"
           >
-            <Search className="w-4 h-4 stroke-[2.5]" />
-            <span>Open Auto Import</span>
-          </Button>
+            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin text-amber-500")} />
+          </button>
         </div>
 
-        {/* FINANCIAL LEDGER SUMMARY Section Header */}
-        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-mono font-bold tracking-wider uppercase pt-1">
-          <span>FINANCIAL LEDGER SUMMARY</span>
-          <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-            <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
-          </div>
-        </div>
-
-        {/* 3 Large 3D Metric Cards */}
-        <div className="space-y-3.5">
-          {/* Card 1: TO COLLECT */}
+        {/* COMPACT TALLY 1-CLICK AUTO IMPORT BANNER (DISMISSIBLE WITH LOCALSTORAGE PERSISTENCE) */}
+        {!dismissedMobileTallyBanner && (
           <div
-            onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
+            className={cn(
+              "p-3 rounded-2xl border border-emerald-500/30 dark:border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent shadow-2xs relative transition-all duration-200",
+              isDismissingTallyBanner && "opacity-0 scale-95 pointer-events-none"
+            )}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-3xl shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
-
-            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                  <ArrowDownLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono truncate">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">
+                      Tally &amp; Excel Import
+                    </span>
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 uppercase tracking-tight font-mono">
+                      Fast
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                    Import ledgers &amp; stock items
+                  </span>
+                </div>
+              </div>
+
+              {/* Thumb-friendly Close Button (>= 44x44px touch target) */}
+              <button
+                type="button"
+                onClick={handleDismissMobileTallyBanner}
+                aria-label="Close banner"
+                className="min-w-[44px] min-h-[44px] w-11 h-11 -mr-2.5 -mt-2 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 active:scale-90 transition-all shrink-0 cursor-pointer touch-manipulation"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+              className="w-full mt-2.5 min-h-[44px] h-10 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-transform cursor-pointer touch-manipulation"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Import Data</span>
+            </Button>
+          </div>
+        )}
+
+        {/* HIGH-DENSITY 2x2 FINANCIAL METRIC GRID (CLEAN MODERN STRIPE / SQUARE RETAIL) */}
+        <div>
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-mono font-bold tracking-wider uppercase mb-2 px-0.5">
+            <span>FINANCIAL OVERVIEW</span>
+            <span>{lastUpdate || formatCurrentTime()}</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Card 1: TO COLLECT */}
+            <div
+              onClick={() => navigate(ROUTE_PATHS.parties)}
+              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-600" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono">
                   TO COLLECT
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600 transition-colors shrink-0" />
+                <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <ArrowDownLeft className="w-3 h-3 stroke-[2.5]" />
+                </div>
               </div>
-
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
+              <div
+                title={`₹ ${toCollect.toLocaleString("en-IN")}`}
+                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+              >
                 ₹ <span className="tabular-nums">{toCollect.toLocaleString("en-IN")}</span>
               </div>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
-                Outstanding customer credit ledger balances
-              </p>
+              <div className="mt-1">
+                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
+                  Receivable
+                </span>
+              </div>
             </div>
 
-            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
-              <Wallet3DGraphic className="w-24 h-24" />
-            </div>
-          </div>
-
-          {/* Card 2: TO PAY */}
-          <div
-            onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-3xl shadow-[0_0_12px_rgba(249,115,22,0.6)]" />
-
-            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
-                  <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                </div>
-                <span className="text-xs font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono truncate">
+            {/* Card 2: TO PAY */}
+            <div
+              onClick={() => navigate(ROUTE_PATHS.purchases)}
+              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-600" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono">
                   TO PAY
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-600 transition-colors shrink-0" />
+                <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                  <ArrowUpRight className="w-3 h-3 stroke-[2.5]" />
+                </div>
               </div>
-
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
+              <div
+                title={`₹ ${toPay.toLocaleString("en-IN")}`}
+                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+              >
                 ₹ <span className="tabular-nums">{toPay.toLocaleString("en-IN")}</span>
               </div>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
-                Pending supplier invoices &amp; outward dues
-              </p>
+              <div className="mt-1">
+                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono">
+                  Payable
+                </span>
+              </div>
             </div>
 
-            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
-              <Invoice3DGraphic className="w-24 h-24" />
-            </div>
-          </div>
-
-          {/* Card 3: CASH & BANK */}
-          <div
-            onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="glass-card-3d p-5 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden group hover-3d-glow"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-yellow-300 via-amber-400 to-yellow-600 rounded-l-3xl shadow-[0_0_12px_rgba(234,179,8,0.6)]" />
-
-            <div className="space-y-1.5 flex-1 pr-2 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                  <Landmark className="w-3.5 h-3.5 stroke-[2.5]" />
-                </div>
-                <span className="text-xs font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono truncate">
+            {/* Card 3: CASH & BANK */}
+            <div
+              onClick={() => navigate(ROUTE_PATHS.cashBank)}
+              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-yellow-400 to-amber-500" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
                   CASH &amp; BANK
                 </span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600 transition-colors shrink-0" />
+                <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Landmark className="w-3 h-3 stroke-[2.5]" />
+                </div>
               </div>
-
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight pt-1 truncate">
+              <div
+                title={`₹ ${cashBankBalance.toLocaleString("en-IN")}`}
+                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+              >
                 ₹ <span className="tabular-nums">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
-                Total reconciled liquidity across accounts
-              </p>
+              <div className="mt-1">
+                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono">
+                  Liquidity
+                </span>
+              </div>
             </div>
 
-            <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
-              <Bank3DGraphic className="w-24 h-24" />
+            {/* Card 4: TODAY'S SALES */}
+            <div
+              onClick={() => navigate(ROUTE_PATHS.sales)}
+              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 to-teal-500" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+                  TODAY&apos;S SALES
+                </span>
+                <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+              <div
+                title={`₹ ${todaySalesTotal.toLocaleString("en-IN")}`}
+                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+              >
+                ₹ <span className="tabular-nums">{todaySalesTotal.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="mt-1">
+                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+                  {todaySalesCount} Bill{todaySalesCount === 1 ? "" : "s"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* QUICK ACTIONS removed for mobile to declutter */}
+        {/* HORIZONTAL SWIPEABLE QUICK ACTION STRIP */}
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
+            QUICK ACTIONS
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-0.5 px-0.5 touch-pan-x">
+            <button
+              type="button"
+              onClick={() => setShowSalesInvoiceModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Sale Bill</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.checkout)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
+            >
+              <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ POS Billing</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCreateItemModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
+            >
+              <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>+ Item</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCreatePartyModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
+            >
+              <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>+ Customer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.sales)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
+            >
+              <span className="text-xs leading-none">📊</span>
+              <span>Day Book</span>
+            </button>
+          </div>
+        </div>
+
+        {/* RECENT ACTIVITY LIST */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono font-bold tracking-wider uppercase px-0.5">
+            <span className="text-slate-500 dark:text-slate-400 text-[10px]">RECENT ACTIVITY</span>
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.sales)}
+              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer min-h-[44px] flex items-center"
+            >
+              View All →
+            </button>
+          </div>
+
+          {latestTransactions.length === 0 ? (
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center">
+              <FileText className="w-7 h-7 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No Transactions Yet</p>
+              <span className="text-[10px] text-slate-400">Bills will appear here</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {latestTransactions.slice(0, 5).map((txn) => {
+                const displayName = (txn.partyName || "").trim() || "Walk-in Customer";
+                const initials = displayName
+                  .split(" ")
+                  .map((p) => p[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase() || "WC";
+
+                return (
+                  <div
+                    key={txn.id}
+                    onClick={() => navigate(ROUTE_PATHS.sales)}
+                    className="p-3 min-h-[56px] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center justify-center shrink-0 font-mono">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {displayName}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                          <span>{txn.txnNo}</span>
+                          <span>•</span>
+                          <span>{txn.date}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                        ₹ {Number(txn.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </div>
+                      <span
+                        className={cn(
+                          "inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full font-mono mt-0.5",
+                          txn.status === "PAID"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            : txn.status === "PENDING"
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                        )}
+                      >
+                        {txn.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* =========================================================================

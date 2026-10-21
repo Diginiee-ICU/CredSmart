@@ -188,16 +188,17 @@ export function AppSidebar({
   };
 
   // ─── Mobile: Bottom Navigation Dock ───────────────────────────────────────
-    const isDashboardActive = isRouteActive(ROUTE_PATHS.dashboard) || location.pathname === "/";
-    const isPosActive = isRouteActive(ROUTE_PATHS.checkout) || isRouteActive(ROUTE_PATHS.pos);
-    const isSalesActive = isRouteActive(ROUTE_PATHS.sales) || isRouteActive(ROUTE_PATHS.salesHistory);
-    const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
+  const isDashboardActive = isRouteActive(ROUTE_PATHS.dashboard) || location.pathname === "/";
+  const isPosActive = isRouteActive(ROUTE_PATHS.checkout) || isRouteActive(ROUTE_PATHS.pos);
+  const isSalesActive = isRouteActive(ROUTE_PATHS.sales) || isRouteActive(ROUTE_PATHS.salesHistory);
+  const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
+  const isPurchasesActive = isRouteActive(ROUTE_PATHS.purchases);
 
   return (
     <>
       {isMobile && (
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-2xl border-t border-slate-200/80 shadow-[0_-12px_40px_rgba(0,0,0,0.06)] px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800/90 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 pt-1.5 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
           aria-label="Mobile Bottom Navigation"
         >
           {/* Home */}
@@ -205,15 +206,15 @@ export function AppSidebar({
             to={ROUTE_PATHS.dashboard}
             end
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isDashboardActive ? "text-amber-600 font-bold" : "text-slate-400 hover:text-slate-600"
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isDashboardActive ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isDashboardActive
-                  ? "bg-amber-100/50 border-amber-300 text-amber-600 shadow-[0_0_16px_rgba(251,191,36,0.2)] scale-105"
+                  ? "bg-amber-100/60 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -226,15 +227,15 @@ export function AppSidebar({
           <NavLink
             to={ROUTE_PATHS.sales}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isSalesActive ? "text-indigo-600 font-bold" : "text-slate-400 hover:text-slate-600"
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isSalesActive ? "text-indigo-600 dark:text-indigo-400 font-bold" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isSalesActive
-                  ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-[0_0_16px_rgba(99,102,241,0.15)] scale-105"
+                  ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -243,22 +244,22 @@ export function AppSidebar({
             <span className="text-[10px] tracking-tight">Sales</span>
           </NavLink>
 
-          {/* Center Elevated 3D POS Billing Button */}
+          {/* Center Elevated POS Billing Button */}
           <NavLink
             to={ROUTE_PATHS.checkout}
-            className="flex flex-col items-center justify-center -mt-6 px-1.5 z-10 active:scale-90 transition-transform duration-150 cursor-pointer group hover-3d-glow"
+            className="flex flex-col items-center justify-center -mt-5 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
           >
             <div
               className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center ring-4 ring-white shadow-2xl transition-all duration-200",
+                "w-[52px] h-[52px] rounded-2xl flex items-center justify-center ring-4 ring-white dark:ring-slate-900 shadow-xl transition-all duration-200",
                 isPosActive
-                  ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-white shadow-[0_8px_25px_rgba(245,158,11,0.4)] scale-105"
-                  : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_6px_25px_rgba(79,70,229,0.35)] group-hover:brightness-110"
+                  ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-amber-500/30 scale-105"
+                  : "bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-indigo-500/30 hover:scale-105"
               )}
             >
-              <ShoppingCart className="w-6 h-6 fill-current" />
+              <ShoppingCart className="w-6 h-6 stroke-[2.2]" />
             </div>
-            <span className={cn("text-[10px] mt-1 font-bold", isPosActive ? "text-amber-600" : "text-slate-800")}>
+            <span className={cn("text-[10px] mt-1 font-bold tracking-tight", isPosActive ? "text-amber-600 dark:text-amber-400" : "text-indigo-600 dark:text-indigo-400")}>
               POS Billing
             </span>
           </NavLink>
@@ -267,15 +268,15 @@ export function AppSidebar({
           <NavLink
             to={ROUTE_PATHS.items}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer",
-              isItemsActive ? "text-emerald-600 font-bold" : "text-slate-400 hover:text-slate-600"
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isItemsActive ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
                 isItemsActive
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-[0_0_16px_rgba(16,185,129,0.15)] scale-105"
+                  ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >
@@ -288,15 +289,15 @@ export function AppSidebar({
           <NavLink
             to={ROUTE_PATHS.purchases}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-90 cursor-pointer hover-3d-glow",
-              isRouteActive(ROUTE_PATHS.purchases) ? "text-rose-600 font-bold" : "text-slate-400 hover:text-slate-600"
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isPurchasesActive ? "text-rose-600 dark:text-rose-400 font-bold" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             )}
           >
             <div
               className={cn(
                 "p-1.5 rounded-xl border transition-all duration-200",
-                isRouteActive(ROUTE_PATHS.purchases)
-                  ? "bg-rose-50 border-rose-200 text-rose-600 shadow-[0_0_16px_rgba(225,29,72,0.15)] scale-105"
+                isPurchasesActive
+                  ? "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 shadow-[0_0_12px_rgba(225,29,72,0.15)] scale-105"
                   : "bg-transparent border-transparent"
               )}
             >

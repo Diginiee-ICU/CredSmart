@@ -278,8 +278,8 @@ export default function PrintSettings() {
                 </button>
               </div>
 
-              {/* Weighing scale */}
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-2">
+              {/* Weighing scale (Desktop Hardware Only - COM/RS-232 cannot run on mobile) */}
+              <div className="hidden md:block p-4 rounded-xl bg-muted/20 border border-border/70 space-y-2">
                 <Label className="text-xs font-semibold text-foreground">Digital Scale COM Port (RS-232/USB)</Label>
                 <select
                   value={comPort}
@@ -293,8 +293,8 @@ export default function PrintSettings() {
                 </select>
               </div>
 
-              {/* Cash Drawer Kick */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
+              {/* Cash Drawer Kick (Desktop Hardware Only - RJ11/RJ12 cannot run on mobile) */}
+              <div className="hidden md:flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                 <div>
                   <p className="text-xs font-bold text-foreground">Auto Cash Drawer Kick</p>
                   <p className="text-[10px] text-muted-foreground">Pulse RJ11/RJ12 drawer signal on bill save</p>

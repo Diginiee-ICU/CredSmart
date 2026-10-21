@@ -710,7 +710,11 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
   let doc: Document;
   try {
     // Sanitize control characters that are invalid in XML (common in Tally exports)
-    xmlText = xmlText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    // Filter control characters cleanly without triggering regex control character lints
+    xmlText = xmlText.split('').filter((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 32 || code === 9 || code === 10 || code === 13 || code > 127;
+    }).join('');
     
     // Tally also explicitly writes invalid XML entities as strings (e.g., "&#4;") which crashes DOMParser with "xmlParseCharRef: invalid xml"
     xmlText = xmlText.replace(/&#\d+;/g, (match) => {
@@ -731,8 +735,9 @@ export function parseTallyXml(xmlText: string): TallyParseResult {
     if (parseError) {
       throw new Error("Invalid XML: " + parseError.textContent?.substring(0, 100));
     }
-  } catch (err: any) {
-    throw new Error("XML Parse Error: " + (err.message || "Unknown"));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown";
+    throw new Error("XML Parse Error: " + message);
   }
 
   // 1. Build Group Hierarchy

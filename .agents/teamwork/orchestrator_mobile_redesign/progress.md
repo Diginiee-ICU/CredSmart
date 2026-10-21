@@ -1,16 +1,21 @@
 # Orchestrator Progress: CredSmart Mobile View Redesign
 
 ## Current Status
-Last visited: 2026-10-21T00:27:30Z
+Last visited: 2026-10-21T00:30:20Z
 
 - [x] Initialized DISPATCH.md, BRIEFING.md, plan.md, and progress.md
 - [x] Started heartbeat cron (task-20)
-- [ ] Phase 0: Survey full scope with 3 parallel Explorers / Spec Miners
-  - [x] Explorer 1 (9a468527-6c2a-4615-b61a-93ef89256c60): Global App Shell & Navigation (DONE, report in explorer_survey_shell/handoff.md)
-  - [x] Explorer 2 (7312e4aa-6c4c-4121-aef2-23bc26f335f3): Dashboard Experience & Financial Ledger (DONE, report in explorer_survey_dashboard/handoff.md)
-  - [ ] Explorer 3 (0e18f7a0-df7f-4f1f-a5d3-0a6160f5ea0d): POS Billing, Invoices & Catalog Views (synthesizing handoff.md)
-- [ ] Synthesize Survey findings into PROJECT.md § Feature Inventory
-- [ ] Dispatch Milestones & E2E Testing Track
+- [x] Phase 0: Survey full scope with 3 parallel Explorers / Spec Miners
+  - [x] Explorer 1: Global App Shell & Navigation (DONE, report in explorer_survey_shell/handoff.md)
+  - [x] Explorer 2: Dashboard Experience & Financial Ledger (DONE, report in explorer_survey_dashboard/handoff.md)
+  - [x] Explorer 3: POS Billing, Invoices & Catalog Views (DONE, report in spec_miner_survey_pos_catalog/handoff.md)
+- [x] Synthesized Survey findings into PROJECT.md § Feature Inventory (18 features, 5 milestones)
+- [ ] Milestone 1: Mobile Shell & Floating Bottom Navigation Dock (in-progress, worker_m1_shell active)
+- [ ] Dual-Track E2E Test Suite (in-progress, test_writer_mobile_e2e active)
+- [ ] Milestone 2: Clean High-Density Mobile Dashboard & Financial Ledger (planned)
+- [ ] Milestone 3: POS Billing Touch Layout & 3-Stage Workflow (planned)
+- [ ] Milestone 4: Inventory & Sales Mobile Touch Polish (planned)
+- [ ] Milestone 5: Dual-Track E2E Test Suite & Adversarial Hardening (planned)
 - [ ] Verify 100% desktop invariance and zero tsc errors
 - [ ] Run all Vitest test suites and verify 100% pass rate
 - [ ] Final Forensic Integrity Audit & Sentinel handoff
@@ -18,7 +23,12 @@ Last visited: 2026-10-21T00:27:30Z
 ## Iteration Status
 Current iteration: 1 / 32
 
-## Active Subagents
-1. `9a468527-6c2a-4615-b61a-93ef89256c60` — explorer_survey_shell (state: completed)
-2. `7312e4aa-6c4c-4121-aef2-23bc26f335f3` — explorer_survey_dashboard (state: completed)
-3. `0e18f7a0-df7f-4f1f-a5d3-0a6160f5ea0d` — spec_miner_survey_pos_catalog (state: synthesizing report)
+## Milestone Status Table
+| Milestone | Description | Status | Active Agents |
+|-----------|-------------|--------|---------------|
+| M1 | Mobile Shell & Floating Navigation Dock | IN_PROGRESS | worker_m1_shell (`aef7aaf5-e879-4700-a423-b3bbc080be2b`) |
+| E2E | Opaque-Box E2E Test Suite Track | IN_PROGRESS | test_writer_mobile_e2e (`511efbc3-aa86-492c-8a1d-056b76ab8e99`) |
+| M2 | Clean High-Density Mobile Dashboard | PLANNED | - |
+| M3 | POS Billing Touch Layout & 3-Stage Workflow | PLANNED | - |
+| M4 | Inventory & Sales Mobile Touch Polish | PLANNED | - |
+| M5 | Adversarial Coverage Hardening | PLANNED | - |

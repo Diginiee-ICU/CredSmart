@@ -2221,7 +2221,7 @@ export default function TallyImport() {
             type="button"
             disabled={isParsing}
             onClick={handleAutoSearchTally}
-            className="gap-2 text-xs font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all px-4 py-2 rounded-xl shrink-0 border border-emerald-400/40"
+            className="hidden md:inline-flex gap-2 text-xs font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all px-4 py-2 rounded-xl shrink-0 border border-emerald-400/40"
           >
             <Search className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Auto Search Tally &amp; Auto Add Data</span>
@@ -2241,8 +2241,8 @@ export default function TallyImport() {
 
       {/* Main Content Body */}
       <div className="flex-1 max-w-7xl w-full min-w-0 mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
-        {/* ── 1-CLICK NATIVE AUTO-SEARCH HERO BANNER ────────────────────── */}
-        <div className="p-5 sm:p-7 rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-card to-teal-500/10 shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
+        {/* ── 1-CLICK NATIVE AUTO-SEARCH HERO BANNER (DESKTOP ONLY - LOCAL DRIVES CANNOT BE SCANNED ON MOBILE) ────────────────────── */}
+        <div className="hidden md:flex p-5 sm:p-7 rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-card to-teal-500/10 shadow-lg relative overflow-hidden flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40">
@@ -3021,7 +3021,7 @@ export default function TallyImport() {
               <Button
                 type="button"
                 disabled={isParsing}
-                className="gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs px-6 py-3 rounded-2xl shadow-lg shadow-emerald-500/30 cursor-pointer active:scale-95 transition-all border border-emerald-400/30 ring-2 ring-emerald-500/20"
+                className="hidden md:inline-flex gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs px-6 py-3 rounded-2xl shadow-lg shadow-emerald-500/30 cursor-pointer active:scale-95 transition-all border border-emerald-400/30 ring-2 ring-emerald-500/20"
                 onClick={handleAutoSearchTally}
               >
                 <Search className="w-4 h-4 stroke-[2.5]" />

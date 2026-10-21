@@ -497,7 +497,7 @@ export function TallyImportModal({
                     <Button
                       type="button"
                       variant="outline"
-                      className="gap-2 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold px-5 cursor-pointer shadow-xs"
+                      className="hidden md:inline-flex gap-2 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold px-5 cursor-pointer shadow-xs"
                       onClick={(e) => { e.stopPropagation(); onAutoSearch(); }}
                     >
                       <Search className="w-4 h-4" />
