@@ -1776,7 +1776,7 @@ export default function RoleManagement(): React.ReactElement {
       {/* MODAL: CREATE / EDIT CUSTOM ROLE */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               {editingRole ? `Edit Role: ${editingRole.name}` : "Create Custom CRM Role"}
@@ -1856,6 +1856,117 @@ export default function RoleManagement(): React.ReactElement {
               </div>
             </div>
 
+            {/* Assign Staff Members (Optional) */}
+            {!editingRole && (
+              <div className="space-y-2 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Assign Staff Members (Optional)</span>
+                    </label>
+                    <p className="text-[11px] text-slate-500">
+                      Select team members to immediately assign this new role upon creation.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setRoleModalOpen(false);
+                      openAddStaffModal();
+                    }}
+                    className="h-7 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 rounded-lg font-semibold gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add New Staff</span>
+                  </Button>
+                </div>
+
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="text"
+                    placeholder="Filter staff by name..."
+                    value={roleStaffSearchQuery}
+                    onChange={(e) => setRoleStaffSearchQuery(e.target.value)}
+                    className="pl-8 h-8 text-xs rounded-xl border-slate-200"
+                  />
+                </div>
+
+                <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/40 p-1">
+                  {filteredStaffForRole.length === 0 ? (
+                    <div className="text-center py-4 text-[11px] text-slate-400">
+                      No staff members found
+                    </div>
+                  ) : (
+                    filteredStaffForRole.map((staff) => {
+                      const isChecked = selectedStaffForNewRole.includes(staff.id);
+                      const currentRoleId = staffRolesMap[staff.id] || staff.crmRoleId;
+                      const currentRole = roles.find((r) => r.id === currentRoleId);
+
+                      return (
+                        <label
+                          key={staff.id}
+                          className="flex items-center justify-between p-2 hover:bg-white rounded-lg cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedStaffForNewRole((prev) => [...prev, staff.id]);
+                                } else {
+                                  setSelectedStaffForNewRole((prev) =>
+                                    prev.filter((id) => id !== staff.id)
+                                  );
+                                }
+                              }}
+                            />
+                            <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                              {staff.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-slate-900 leading-none">
+                                {staff.name}
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                Store: {staff.role}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            {currentRole ? (
+                              <span className="text-slate-600 font-medium">
+                                Current: {currentRole.name}
+                              </span>
+                            ) : (
+                              "No CRM Role"
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+
+                {selectedStaffForNewRole.length > 0 && (
+                  <div className="text-[11px] font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60 flex items-center justify-between">
+                    <span>{selectedStaffForNewRole.length} staff member(s) selected</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStaffForNewRole([])}
+                      className="text-[10px] text-blue-600 hover:underline font-bold"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Live Preview Pill */}
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
               <span className="text-xs text-slate-500 font-medium">Preview Pill:</span>
@@ -1929,6 +2040,447 @@ export default function RoleManagement(): React.ReactElement {
               className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold"
             >
               Confirm Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* MODAL: ADD STAFF USER */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <Dialog open={addStaffModalOpen} onOpenChange={setAddStaffModalOpen}>
+        <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-slate-900">
+                  Provision New Staff User
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  Create staff credentials, define store operations permissions, and assign custom CRM access.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleProvisionStaff} className="space-y-4 pt-2">
+            {/* Full Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <span>Full Name</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Sharma"
+                  value={staffFormFullName}
+                  onChange={(e) => setStaffFormFullName(e.target.value)}
+                  className="pl-9 h-9 text-xs rounded-xl border-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Email Address */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <span>Email Address (Login Username)</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  type="email"
+                  required
+                  placeholder="e.g. rahul@company.com"
+                  value={staffFormEmail}
+                  onChange={(e) => setStaffFormEmail(e.target.value)}
+                  className="pl-9 h-9 text-xs rounded-xl border-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Phone Number */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">
+                Phone Number (Optional)
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  type="tel"
+                  placeholder="e.g. +91 98765 43210 (10 digits)"
+                  value={staffFormPhone}
+                  onChange={(e) => setStaffFormPhone(e.target.value)}
+                  className="pl-9 h-9 text-xs rounded-xl border-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Store / ERP Role */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <span>Store / ERP Role</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <Select value={staffFormStoreRole} onValueChange={setStaffFormStoreRole}>
+                <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200">
+                  <SelectValue placeholder="Select Store Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="salesman">Salesman (POS &amp; Sales Checkout)</SelectItem>
+                  <SelectItem value="cashier">Cashier (Billing &amp; Cash Counter)</SelectItem>
+                  <SelectItem value="manager">Store Manager (Operations &amp; Stock)</SelectItem>
+                  <SelectItem value="staff">Staff Associate (General)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Assigned CRM Role */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <span>Assigned CRM Role</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <Select value={staffFormCrmRole} onValueChange={setStaffFormCrmRole}>
+                <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200">
+                  <SelectValue placeholder="Select CRM Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-slate-400">None (No CRM Access)</span>
+                  </SelectItem>
+                  {roles.map((r) => {
+                    const RoleIcon = ICON_MAP[r.icon] || Shield;
+                    return (
+                      <SelectItem key={r.id} value={r.id}>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: r.color }}
+                          />
+                          <RoleIcon className="w-3.5 h-3.5 text-slate-500" />
+                          <span className="font-medium">{r.name}</span>
+                          {r.is_super_admin && (
+                            <span className="text-[10px] text-amber-600 font-bold ml-1">
+                              (Super Admin)
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Password Configuration */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Password Configuration</span>
+                </label>
+                <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setPasswordMode("auto")}
+                    className={cn(
+                      "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
+                      passwordMode === "auto"
+                        ? "bg-white text-blue-700 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    )}
+                  >
+                    Auto-Generate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPasswordMode("custom")}
+                    className={cn(
+                      "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
+                      passwordMode === "custom"
+                        ? "bg-white text-blue-700 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    )}
+                  >
+                    Custom
+                  </button>
+                </div>
+              </div>
+
+              {passwordMode === "auto" ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        readOnly
+                        value={staffFormAutoPassword}
+                        className="h-9 font-mono text-xs font-bold text-blue-800 bg-blue-50/50 border-blue-200 tracking-wider pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
+                        title={showPassword ? "Hide password" : "Reveal password"}
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStaffFormAutoPassword(generateCryptographicPassword(14))}
+                      className="h-9 px-3 rounded-xl border-slate-200 text-xs text-slate-700 hover:bg-slate-50 gap-1.5"
+                      title="Regenerate secure password"
+                    >
+                      <RotateCw className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Regenerate</span>
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Cryptographic 14-char high-entropy password (A-Z, a-z, 0-9, symbols)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      placeholder="Enter minimum 6 character password"
+                      value={staffFormCustomPassword}
+                      onChange={(e) => setStaffFormCustomPassword(e.target.value)}
+                      className="h-9 text-xs rounded-xl border-slate-200 pr-10 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
+                      title={showPassword ? "Hide password" : "Reveal password"}
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Staff member will be prompted to change this upon initial login.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="pt-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddStaffModalOpen(false)}
+                className="rounded-xl border-slate-200 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submittingStaff}
+                size="sm"
+                className="rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold gap-1.5 shadow-xs"
+              >
+                {submittingStaff ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Provisioning...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Provision Staff User</span>
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* MODAL: CREDENTIALS CONFIRMATION */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <Dialog open={credentialsModalOpen} onOpenChange={setCredentialsModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <div className="flex flex-col items-center text-center pt-2">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-2 shadow-xs">
+                <CheckCircle2 className="w-6 h-6 stroke-[2.2]" />
+              </div>
+              <DialogTitle className="text-base font-black text-slate-900 tracking-tight">
+                Staff Credentials Generated
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 mt-1 max-w-sm">
+                User account has been activated. Provide these credentials to the staff member to sign in.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {provisionedCredentials && (
+            <div className="space-y-3.5 pt-2">
+              {/* Identity Header Pod */}
+              <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
+                    {provisionedCredentials.fullName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 leading-none">
+                      {provisionedCredentials.fullName}
+                    </h4>
+                    <span className="text-[10px] text-slate-500 font-mono mt-0.5 inline-block">
+                      Store: {provisionedCredentials.storeRole}
+                    </span>
+                  </div>
+                </div>
+                <CRMRolePill
+                  name={provisionedCredentials.crmRoleName || "Staff"}
+                  color={provisionedCredentials.crmRoleColor || "#1D4ED8"}
+                  size="sm"
+                />
+              </div>
+
+              {/* Login Email Field */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                  LOGIN EMAIL
+                </span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    readOnly
+                    value={provisionedCredentials.email}
+                    className="h-9 font-mono text-xs font-medium text-slate-800 bg-white border-slate-200"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCredentialsField("email")}
+                    className="h-9 px-3 rounded-xl border-slate-200 text-xs shrink-0 gap-1.5"
+                    title="Copy Email"
+                  >
+                    {copiedField === "email" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Temporary Password Field */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                  TEMPORARY PASSWORD
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type={showCredPassword ? "text" : "password"}
+                      readOnly
+                      value={provisionedCredentials.password}
+                      className="h-9 font-mono text-xs font-bold text-blue-700 bg-blue-50/50 border-blue-200 pr-9 tracking-wider"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCredPassword(!showCredPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
+                      title={showCredPassword ? "Hide password" : "Show password"}
+                    >
+                      {showCredPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCredentialsField("password")}
+                    className="h-9 px-3 rounded-xl border-slate-200 text-xs shrink-0 gap-1.5"
+                    title="Copy Password"
+                  >
+                    {copiedField === "password" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Action Buttons: Copy All Bundle & WhatsApp Share */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <Button
+                  type="button"
+                  onClick={handleCopyAllCredentials}
+                  className="w-full h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs gap-1.5"
+                >
+                  {copiedField === "all" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Copied Bundle!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy All Details</span>
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={handleShareWhatsApp}
+                  variant="outline"
+                  className="w-full h-9 rounded-xl border-emerald-300 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs shadow-xs gap-1.5"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Share via WhatsApp</span>
+                </Button>
+              </div>
+
+              {/* Security Warning Callout */}
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 flex items-start gap-2.5 text-xs text-amber-800">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  These credentials will not be displayed again. Please share them securely with the staff member.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              onClick={() => setCredentialsModalOpen(false)}
+              className="w-full rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold h-9 shadow-xs"
+            >
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
