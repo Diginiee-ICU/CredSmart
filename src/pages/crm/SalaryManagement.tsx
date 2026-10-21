@@ -306,7 +306,7 @@ export default function SalaryManagement(): React.ReactElement {
         }
       } catch {}
 
-      if (!profiles) {
+      if (!profiles && !profErr) {
         try {
           const res = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
           if (res.data) {
@@ -352,7 +352,7 @@ export default function SalaryManagement(): React.ReactElement {
         }
       } catch {}
 
-      if (!runs) {
+      if (!runs && !runsErr) {
         try {
           const res = await crmApi.getCRMPayrollRuns(effectiveOrgId);
           if (res.data) {
@@ -392,7 +392,7 @@ export default function SalaryManagement(): React.ReactElement {
         }
       } catch {}
 
-      if (!slips) {
+      if (!slips && !slipsErr) {
         try {
           const res = await crmApi.getCRMPayslips(effectiveOrgId);
           if (res.data) {
@@ -438,7 +438,7 @@ export default function SalaryManagement(): React.ReactElement {
         }
       } catch {}
 
-      if (!adjs) {
+      if (!adjs && !adjErr) {
         try {
           const res = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
           if (res.data) {
@@ -656,12 +656,28 @@ export default function SalaryManagement(): React.ReactElement {
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = await crmApi.upsertCRMSalaryProfile(payload, effectiveOrgId);
+    let saveError: any = null;
+    try {
+      const { error } = await supabase.from("crm_salary_profiles").upsert(payload);
+      if (error) saveError = error;
+    } catch (err) {
+      saveError = err;
+    }
 
-    if (error) {
+    if (saveError) {
+      try {
+        const res = await crmApi.upsertCRMSalaryProfile(payload, effectiveOrgId);
+        if (res.error) saveError = res.error;
+        else saveError = null;
+      } catch (err: any) {
+        saveError = err;
+      }
+    }
+
+    if (saveError) {
       toast({
         title: "Save Failed",
-        description: error.message || "Failed to persist salary profile.",
+        description: saveError.message || "Failed to persist salary profile.",
         variant: "destructive",
       });
       return;
@@ -782,8 +798,13 @@ export default function SalaryManagement(): React.ReactElement {
       updated_at: new Date().toISOString(),
     };
 
-    // Upsert run via crmApi
-    await crmApi.upsertCRMPayrollRun(runPayload, effectiveOrgId);
+    // Upsert run via dual-layer
+    try {
+      await supabase.from("crm_payroll_runs").upsert(runPayload);
+    } catch {}
+    try {
+      await crmApi.upsertCRMPayrollRun(runPayload, effectiveOrgId);
+    } catch {}
 
     // Upsert payslips
     const profileMap = new Map(salaryProfiles.map((p) => [p.staff_id, p]));
@@ -835,7 +856,12 @@ export default function SalaryManagement(): React.ReactElement {
       };
     });
 
-    await crmApi.upsertCRMPayslips(payslipRows, effectiveOrgId);
+    try {
+      await supabase.from("crm_payslips").upsert(payslipRows);
+    } catch {}
+    try {
+      await crmApi.upsertCRMPayslips(payslipRows, effectiveOrgId);
+    } catch {}
 
     // Update local state
     setPayrollRuns((prev) => {
@@ -862,17 +888,33 @@ export default function SalaryManagement(): React.ReactElement {
   const handleMarkAsDisbursed = async () => {
     if (!currentRun || currentRun.status !== "locked" || !canApprove) return;
 
-    await crmApi.updateCRMPayrollRun(
-      selectedMonth,
-      { status: "disbursed", updated_at: new Date().toISOString() },
-      effectiveOrgId
-    );
+    try {
+      await supabase
+        .from("crm_payroll_runs")
+        .update({ status: "disbursed", updated_at: new Date().toISOString() })
+        .eq("month_year", selectedMonth);
+    } catch {}
+    try {
+      await crmApi.updateCRMPayrollRun(
+        selectedMonth,
+        { status: "disbursed", updated_at: new Date().toISOString() },
+        effectiveOrgId
+      );
+    } catch {}
 
-    await crmApi.updateCRMPayslips(
-      { monthYear: selectedMonth },
-      { payment_status: "paid", paid_at: new Date().toISOString() },
-      effectiveOrgId
-    );
+    try {
+      await supabase
+        .from("crm_payslips")
+        .update({ payment_status: "paid", paid_at: new Date().toISOString() })
+        .eq("month_year", selectedMonth);
+    } catch {}
+    try {
+      await crmApi.updateCRMPayslips(
+        { monthYear: selectedMonth },
+        { payment_status: "paid", paid_at: new Date().toISOString() },
+        effectiveOrgId
+      );
+    } catch {}
 
     // Update local state
     setPayrollRuns((prev) =>
@@ -942,11 +984,28 @@ export default function SalaryManagement(): React.ReactElement {
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await crmApi.createCRMSalaryAdjustment(payload, effectiveOrgId);
-    if (error) {
+    let adjError: any = null;
+    try {
+      const { error } = await supabase.from("crm_salary_adjustments").insert(payload);
+      if (error) adjError = error;
+    } catch (err) {
+      adjError = err;
+    }
+
+    if (adjError) {
+      try {
+        const res = await crmApi.createCRMSalaryAdjustment(payload, effectiveOrgId);
+        if (res.error) adjError = res.error;
+        else adjError = null;
+      } catch (err: any) {
+        adjError = err;
+      }
+    }
+
+    if (adjError) {
       toast({
         title: "Failed to Record Adjustment",
-        description: error.message || "Could not save adjustment.",
+        description: adjError.message || "Could not save adjustment.",
         variant: "destructive",
       });
       return;
@@ -963,15 +1022,27 @@ export default function SalaryManagement(): React.ReactElement {
 
   const handleApproveAdjustment = async (id: string) => {
     if (!canApprove) return;
-    await crmApi.updateCRMSalaryAdjustment(
-      id,
-      {
-        status: "approved",
-        approved_by: effectiveUserId,
-        approved_at: new Date().toISOString(),
-      },
-      effectiveOrgId
-    );
+    try {
+      await supabase
+        .from("crm_salary_adjustments")
+        .update({
+          status: "approved",
+          approved_by: effectiveUserId,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+    } catch {}
+    try {
+      await crmApi.updateCRMSalaryAdjustment(
+        id,
+        {
+          status: "approved",
+          approved_by: effectiveUserId,
+          approved_at: new Date().toISOString(),
+        },
+        effectiveOrgId
+      );
+    } catch {}
 
     setAdjustments((prev) =>
       prev.map((a) =>
@@ -994,15 +1065,27 @@ export default function SalaryManagement(): React.ReactElement {
 
   const handleRejectAdjustment = async (id: string) => {
     if (!canApprove) return;
-    await crmApi.updateCRMSalaryAdjustment(
-      id,
-      {
-        status: "rejected",
-        approved_by: effectiveUserId,
-        approved_at: new Date().toISOString(),
-      },
-      effectiveOrgId
-    );
+    try {
+      await supabase
+        .from("crm_salary_adjustments")
+        .update({
+          status: "rejected",
+          approved_by: effectiveUserId,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+    } catch {}
+    try {
+      await crmApi.updateCRMSalaryAdjustment(
+        id,
+        {
+          status: "rejected",
+          approved_by: effectiveUserId,
+          approved_at: new Date().toISOString(),
+        },
+        effectiveOrgId
+      );
+    } catch {}
 
     setAdjustments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "rejected" } : a))
