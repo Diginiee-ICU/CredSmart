@@ -1208,6 +1208,11 @@ export default function Attendance(): React.ReactElement {
         updated_at: nowIso,
       };
 
+      const filtered = attendanceRecords.filter(
+        (a) => !(a.staff_id === req.staff_id && a.date === req.date)
+      );
+      await persistAttendance([updatedAttendance, ...filtered]);
+
       try {
         await supabase
           .from("crm_attendance")
@@ -1253,12 +1258,10 @@ export default function Attendance(): React.ReactElement {
       } catch (err) {
         console.warn("API upsert on regularise approval failed:", err);
       }
-
-      const filtered = attendanceRecords.filter(
-        (a) => !(a.staff_id === req.staff_id && a.date === req.date)
-      );
-      await persistAttendance([updatedAttendance, ...filtered]);
     }
+
+    const nextRequests = requests.map((r) => (r.id === req.id ? updatedRequest : r));
+    await persistRequests(nextRequests);
 
     try {
       await supabase
@@ -1290,9 +1293,6 @@ export default function Attendance(): React.ReactElement {
     } catch (err) {
       console.warn("API request review update failed:", err);
     }
-
-    const nextRequests = requests.map((r) => (r.id === req.id ? updatedRequest : r));
-    await persistRequests(nextRequests);
 
     toast({
       title: decision === "approved" ? "Request Approved ✓" : "Request Rejected",
