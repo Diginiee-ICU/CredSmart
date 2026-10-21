@@ -132,39 +132,51 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
 
       // 1. Fetch user's assigned staff role junctions
       let staffRolesData: CRMStaffRole[] | null = null;
+      let staffRolesSuccess = false;
       try {
-        const res = await crmApi.getCRMStaffRoles(orgId, user.id);
-        if (!res.error && res.data) {
-          staffRolesData = res.data;
+        const { data, error } = await supabase
+          .from("crm_staff_roles")
+          .select("staff_id, role_id, assigned_by, assigned_at")
+          .eq("staff_id", user.id);
+        if (!error && data) {
+          staffRolesData = data as CRMStaffRole[];
+          staffRolesSuccess = true;
         }
-      } catch {}
+      } catch (err) {
+        throw err;
+      }
 
-      if (!staffRolesData) {
+      if (!staffRolesSuccess) {
         try {
-          const { data } = await supabase
-            .from("crm_staff_roles")
-            .select("staff_id, role_id, assigned_by, assigned_at")
-            .eq("staff_id", user.id);
-          if (data) staffRolesData = data as CRMStaffRole[];
+          const res = await crmApi.getCRMStaffRoles(orgId, user.id);
+          if (!res.error && res.data) {
+            staffRolesData = res.data;
+          }
         } catch {}
       }
 
       // Also fetch all org roles to resolve names and check if user has org super_admin role
       let orgRolesData: CRMRole[] | null = null;
+      let orgRolesSuccess = false;
       try {
-        const res = await crmApi.getCRMRoles(orgId);
-        if (!res.error && res.data) {
-          orgRolesData = res.data;
+        const { data, error } = await supabase
+          .from("crm_roles")
+          .select("id, org_id, name, color, icon, is_super_admin, created_at")
+          .eq("org_id", orgId);
+        if (!error && data) {
+          orgRolesData = data as CRMRole[];
+          orgRolesSuccess = true;
         }
-      } catch {}
+      } catch (err) {
+        throw err;
+      }
 
-      if (!orgRolesData) {
+      if (!orgRolesSuccess) {
         try {
-          const { data } = await supabase
-            .from("crm_roles")
-            .select("id, org_id, name, color, icon, is_super_admin, created_at")
-            .eq("org_id", orgId);
-          if (data) orgRolesData = data as CRMRole[];
+          const res = await crmApi.getCRMRoles(orgId);
+          if (!res.error && res.data) {
+            orgRolesData = res.data;
+          }
         } catch {}
       }
 
@@ -208,20 +220,26 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
       let resolvedPermissions: CRMPermission[] = [];
 
       if (resolvedRoleIds.length > 0) {
+        let permsSuccess = false;
         try {
-          const res = await crmApi.getCRMPermissions();
-          if (!res.error && res.data) {
-            resolvedPermissions = res.data as unknown as CRMPermission[];
+          const { data, error } = await supabase
+            .from("crm_permissions")
+            .select("id, role_id, module, action, allowed")
+            .in("role_id", resolvedRoleIds);
+          if (!error && data) {
+            resolvedPermissions = data as unknown as CRMPermission[];
+            permsSuccess = true;
           }
-        } catch {}
+        } catch (err) {
+          throw err;
+        }
 
-        if (resolvedPermissions.length === 0) {
+        if (!permsSuccess) {
           try {
-            const { data } = await supabase
-              .from("crm_permissions")
-              .select("id, role_id, module, action, allowed")
-              .in("role_id", resolvedRoleIds);
-            if (data) resolvedPermissions = data as unknown as CRMPermission[];
+            const res = await crmApi.getCRMPermissions();
+            if (!res.error && res.data) {
+              resolvedPermissions = res.data as unknown as CRMPermission[];
+            }
           } catch {}
         }
       }

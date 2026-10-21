@@ -1641,7 +1641,7 @@ export default function Attendance(): React.ReactElement {
                       )}
                       {gpsStatus === "inside" && (
                         <CRMBadge variant="success" size="sm" dot>
-                          Live GPS Lock ✓
+                          Within Geofence ✓
                         </CRMBadge>
                       )}
                       {gpsStatus === "outside" && (
