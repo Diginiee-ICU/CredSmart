@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T00:18:00Z
+# BRIEFING — 2026-10-21T00:28:00Z
 
 ## Mission
-Survey and map CredSmart's existing POS billing (`src/pages/POS.tsx`), invoice creation (`src/components/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`), and catalog/inventory (`src/pages/Inventory.tsx`, `src/pages/Sales.tsx`) to document mobile touch ergonomics, components, data contracts, and Vitest test suites.
+Survey and map CredSmart's existing POS billing (`src/pages/POSBilling.tsx`), invoice creation (`src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`), and catalog/inventory (`src/pages/Inventory.tsx`, `src/pages/Items.tsx`, `src/pages/Sales.tsx`) to document mobile touch ergonomics, components, data contracts, and Vitest test suites.
 
 ## 🔒 My Identity
 - Archetype: spec_miner
@@ -22,13 +22,13 @@ Survey and map CredSmart's existing POS billing (`src/pages/POS.tsx`), invoice c
 
 ## Current Parent
 - Conversation ID: 92c8e148-9d89-47d7-9329-5f4887fd7091
-- Updated: not yet
+- Updated: 2026-10-21T00:28:00Z
 
 ## Task Summary
 - **What to build**: Specification & Survey report mapping POS, Mobile Invoice creation, Catalog/Inventory mobile touch ergonomics, data flows, and test suites.
 - **Success criteria**: Detailed, evidence-based answers to all 5 survey questions with exact file lines, code quotes, props, data contracts, and edge cases.
-- **Interface contracts**: `PROJECT.md` / `ORIGINAL_REQUEST.md` (R1-R5) / `mobile-erp-redesign` skill.
-- **Code layout**: Read-only exploration of `src/pages/POS.tsx`, `src/pages/Sales.tsx`, `src/pages/Inventory.tsx`, `src/components/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/test/*`.
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (R1-R5) / `mobile-erp-redesign` skill / `mobile-invoice-redesign` skill.
+- **Code layout**: Read-only exploration completed across `src/pages/POSBilling.tsx`, `src/pages/Sales.tsx`, `src/pages/Inventory.tsx`, `src/pages/Items.tsx`, `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`, and `src/test/*`.
 
 ## Loaded Skills
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\mobile-erp-redesign\SKILL.md`
@@ -39,8 +39,12 @@ Survey and map CredSmart's existing POS billing (`src/pages/POS.tsx`), invoice c
   - **Core methodology**: Mobile-exclusive invoice creation layout, metadata card, party bottom-sheet modal, add items modal, sticky total & action footer.
 
 ## Key Decisions Made
-- Prioritizing exact code examination across all 5 target files and test suites.
-- Ensuring every survey question is answered with verifiable file citations.
+- Confirmed POS file is `src/pages/POSBilling.tsx` (not `POS.tsx`).
+- Confirmed `MobileCreateInvoice.tsx` is located at `src/components/invoices/mobile/MobileCreateInvoice.tsx`.
+- Identified that POS currently has only 2 mobile stages (`cart` and `checkout`) instead of the required 3 stages (`Catalog/Scan`, `Cart`, `Payment/Checkout`).
+- Identified missing safe-area padding in `Inventory.tsx`.
+- Identified that `POSBilling.tsx` switches at `lg` (1024px) while others switch at `md` (768px).
+- Confirmed 0 dedicated unit tests exist for `POSBilling.tsx`, but robust test suites exist for `MobileInvoiceSuccessView` (5 suites) and `billingLifecycleEngine` (2 suites).
 
 ## Artifact Index
 - `DISPATCH.md` — Incoming task instructions
