@@ -27,6 +27,8 @@ import {
   X,
   AlertCircle,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -250,6 +252,22 @@ export default function RoleManagement(): React.ReactElement {
   const [selectedRole, setSelectedRole] = useState<CRMRole | null>(DEFAULT_PRESET_ROLES[0]);
   const [matrixState, setMatrixState] = useState<Record<string, boolean>>({});
   const [matrixDirty, setMatrixDirty] = useState<boolean>(false);
+
+  // Mobile Accordion state for CRM modules
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    CRM_MODULES.forEach((m) => {
+      init[m.id] = true;
+    });
+    return init;
+  });
+
+  const toggleModuleAccordion = (modId: string) => {
+    setExpandedModules((prev) => ({
+      ...prev,
+      [modId]: !prev[modId],
+    }));
+  };
 
   // Search filter for staff assignment
   const [staffSearchQuery, setStaffSearchQuery] = useState<string>("");
@@ -1162,57 +1180,95 @@ export default function RoleManagement(): React.ReactElement {
               )}
             </div>
 
-            {/* Matrix Module Rows */}
-            <div className="p-5 divide-y divide-slate-100">
-              {CRM_MODULES.map((mod) => (
-                <div key={mod.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
-                        {mod.label}
-                      </h4>
-                      <p className="text-[11px] text-slate-500">{mod.description}</p>
-                    </div>
-                  </div>
+            {/* Matrix Module Rows with Mobile Accordion Support */}
+            <div className="p-4 sm:p-5 divide-y divide-slate-100">
+              {CRM_MODULES.map((mod) => {
+                const modAllowedCount = mod.actions.filter((act) =>
+                  selectedRole.is_super_admin ? true : Boolean(matrixState[`${mod.id}:${act.id}`])
+                ).length;
+                const isExpanded = expandedModules[mod.id] ?? true;
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {mod.actions.map((act) => {
-                      const key = `${mod.id}:${act.id}`;
-                      const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
-
-                      return (
-                        <div
-                          key={act.id}
-                          onClick={() => !selectedRole.is_super_admin && handleToggleAction(mod.id, act.id)}
-                          className={cn(
-                            "rounded-xl border p-3 flex items-center justify-between gap-3 transition-colors",
-                            selectedRole.is_super_admin
-                              ? "bg-slate-50/70 border-slate-200/80 cursor-default"
-                              : "bg-white border-slate-200 hover:border-slate-300 cursor-pointer",
-                            isAllowed && "border-blue-200 bg-blue-50/20"
-                          )}
-                        >
-                          <div className="space-y-0.5">
-                            <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-                              {act.label}
-                            </span>
-                            <p className="text-[10px] text-slate-500 leading-tight">
-                              {act.description}
-                            </p>
-                          </div>
-
-                          <Switch
-                            checked={isAllowed}
-                            disabled={selectedRole.is_super_admin || !isSuperAdminOrOwner}
-                            onCheckedChange={() => handleToggleAction(mod.id, act.id)}
-                            className="shrink-0"
-                          />
+                return (
+                  <div key={mod.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
+                    <div
+                      onClick={() => toggleModuleAccordion(mod.id)}
+                      className="flex items-center justify-between gap-2 p-1.5 -mx-1.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer select-none"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                            {mod.label}
+                          </h4>
+                          <span
+                            className={cn(
+                              "text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full border",
+                              modAllowedCount === mod.actions.length
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : modAllowedCount > 0
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-slate-100 text-slate-500 border-slate-200"
+                            )}
+                          >
+                            {modAllowedCount} / {mod.actions.length} Enabled
+                          </span>
                         </div>
-                      );
-                    })}
+                        <p className="text-[11px] text-slate-500 mt-0.5">{mod.description}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0"
+                        title={isExpanded ? "Collapse Module" : "Expand Module"}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                        {mod.actions.map((act) => {
+                          const key = `${mod.id}:${act.id}`;
+                          const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
+
+                          return (
+                            <div
+                              key={act.id}
+                              onClick={() => !selectedRole.is_super_admin && handleToggleAction(mod.id, act.id)}
+                              className={cn(
+                                "rounded-xl border p-3 flex items-center justify-between gap-3 transition-colors",
+                                selectedRole.is_super_admin
+                                  ? "bg-slate-50/70 border-slate-200/80 cursor-default"
+                                  : "bg-white border-slate-200 hover:border-slate-300 cursor-pointer",
+                                isAllowed && "border-blue-200 bg-blue-50/20"
+                              )}
+                            >
+                              <div className="space-y-0.5">
+                                <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                                  {act.label}
+                                </span>
+                                <p className="text-[10px] text-slate-500 leading-tight">
+                                  {act.description}
+                                </p>
+                              </div>
+
+                              <Switch
+                                checked={isAllowed}
+                                disabled={selectedRole.is_super_admin || !isSuperAdminOrOwner}
+                                onCheckedChange={() => handleToggleAction(mod.id, act.id)}
+                                className="shrink-0"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

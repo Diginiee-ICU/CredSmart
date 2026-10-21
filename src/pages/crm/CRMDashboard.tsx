@@ -13,9 +13,11 @@ import {
   RotateCw,
   Sparkles,
   Layers,
+  Award,
 } from "lucide-react";
 import { settingsApi } from "@/services/settingsApi";
 import { crmApi } from "@/services/crmApi";
+import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { ROUTE_PATHS } from "@/config/routes";
 import {
@@ -62,53 +64,96 @@ export default function CRMDashboard(): React.ReactElement {
   });
 
   const fetchCRMStats = useCallback(async () => {
-    try {
-      const activeOrgId = orgId || "";
+    if (!orgId) {
+      setStats({
+        staffCount: 1,
+        todayAttendance: 0,
+        pendingTasks: 0,
+        unreadBroadcasts: 0,
+        upcomingMeetings: 0,
+      });
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
 
-      // 1. Staff count: query organization_memberships via settingsApi
+    try {
+      const activeOrgId = orgId;
+      const today = new Date().toISOString().split("T")[0];
+
+      // 1. Staff count: query organization_memberships
       let staff = 1;
       try {
-        if (activeOrgId) {
-          const { data, error } = await settingsApi.getMemberships(activeOrgId);
-          if (!error && data && data.length > 0) {
-            staff = data.length;
-          }
+        const { count, error, data } = await supabase
+          .from("organization_memberships")
+          .select("id", { count: "exact" })
+          .eq("organization_id", activeOrgId)
+          .eq("status", "active");
+        if (!error) {
+          const num = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+          staff = Math.max(1, num);
         }
       } catch {
-        // Fallback to default of 1 for active store owner
         staff = 1;
       }
 
-      // 2. Today's attendance: query crm_attendance via crmApi
+      // 2. Today's attendance: query crm_attendance
       let attendance = 0;
       try {
-        if (activeOrgId) {
-          const today = new Date().toISOString().split("T")[0];
-          const { data, error } = await crmApi.getCRMAttendance(activeOrgId, { date: today });
-          if (!error && data) {
-            attendance = data.length;
-          }
+        const { count, error, data } = await supabase
+          .from("crm_attendance")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .eq("date", today);
+        if (!error) {
+          attendance = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
         }
       } catch {
         attendance = 0;
       }
 
-      // 3-5. Tasks, Broadcasts, Meetings: query via crmApi.getCRMDashboardCounts
+      // 3. Pending tasks: query crm_tasks
       let tasks = 0;
-      let broadcasts = 0;
-      let meetings = 0;
       try {
-        if (activeOrgId) {
-          const { data } = await crmApi.getCRMDashboardCounts(activeOrgId);
-          if (data) {
-            tasks = typeof data.tasks === "number" ? data.tasks : 0;
-            broadcasts = typeof data.broadcasts === "number" ? data.broadcasts : 0;
-            meetings = typeof data.meetings === "number" ? data.meetings : 0;
-          }
+        const { count, error, data } = await supabase
+          .from("crm_tasks")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .neq("status", "done");
+        if (!error) {
+          tasks = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
         }
       } catch {
         tasks = 0;
+      }
+
+      // 4. Broadcasts: query crm_broadcasts
+      let broadcasts = 0;
+      try {
+        const { count, error, data } = await supabase
+          .from("crm_broadcasts")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .eq("is_active", true);
+        if (!error) {
+          broadcasts = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+        }
+      } catch {
         broadcasts = 0;
+      }
+
+      // 5. Meetings: query crm_meetings
+      let meetings = 0;
+      try {
+        const { count, error, data } = await supabase
+          .from("crm_meetings")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .gte("scheduled_at", new Date().toISOString());
+        if (!error) {
+          meetings = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+        }
+      } catch {
         meetings = 0;
       }
 

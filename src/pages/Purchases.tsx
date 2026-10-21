@@ -36,6 +36,8 @@ import {
   X,
   Upload,
   Loader2,
+  CreditCard,
+  Check,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,7 +70,7 @@ import { SalesSettingsModal } from "@/components/SalesSettingsModal";
 import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 import { MobileScanModal } from "@/components/MobileScanModal";
 import { ReceiptModal, ReceiptData } from "@/components/ReceiptModal";
-import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
+import { shareInvoicePdfToWhatsApp } from "@/utils/whatsappPdfShare";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { UniversalDocType } from "@/components/invoices/UnifiedInvoiceRenderer";
 
@@ -320,6 +322,32 @@ export default function Purchases() {
     }
   };
 
+  const handleDuplicate = (doc: BusinessDocument) => {
+    const duplicated: BusinessDocument = {
+      ...doc,
+      id: "",
+      documentNumber: "",
+      docDate: new Date().toISOString().split("T")[0],
+    };
+    setEditingDoc(duplicated);
+    setCreateModalOpen(true);
+  };
+
+  const handleTogglePaymentStatus = async (doc: BusinessDocument, newStatus: "paid" | "unpaid" | "partial") => {
+    if (!orgId) return;
+    const paidAmount = newStatus === "paid" ? doc.grandTotal : 0;
+    const balanceDue = newStatus === "paid" ? 0 : doc.grandTotal;
+    const updatedDoc: BusinessDocument = {
+      ...doc,
+      status: newStatus,
+      paidAmount,
+      balanceDue,
+    };
+    await documentsService.saveDocument(updatedDoc, user?.id);
+    toast.success(`Bill ${doc.documentNumber} marked as ${newStatus.toUpperCase()}`);
+    loadDocuments();
+  };
+
   const handleOpenReceipt = (doc: BusinessDocument) => {
     const receipt: ReceiptData = {
       docType: doc.docType || "purchase_invoice",
@@ -393,10 +421,73 @@ export default function Purchases() {
     return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? "s" : ""}`;
   };
 
+  const renderStatusBadge = (status: string, interactive = false, doc?: BusinessDocument) => {
+    let badgeClass = "bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+    let dotClass = "bg-slate-400";
+    let label = status;
+
+    if (status === "paid" || status === "received") {
+      badgeClass = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60";
+      dotClass = "bg-emerald-500";
+      label = "Paid";
+    } else if (status === "partial") {
+      badgeClass = "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60";
+      dotClass = "bg-amber-500";
+      label = "Partial";
+    } else if (status === "unpaid") {
+      badgeClass = "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60";
+      dotClass = "bg-rose-500";
+      label = "Unpaid";
+    }
+
+    const content = (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border uppercase tracking-wider select-none shrink-0",
+          badgeClass,
+          interactive && "cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+        )}
+      >
+        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotClass)} />
+        <span>{label}</span>
+      </span>
+    );
+
+    if (interactive && doc) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="inline-flex focus:outline-hidden">
+              {content}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-36 text-xs">
+            <DropdownMenuItem
+              onClick={() => handleTogglePaymentStatus(doc, "paid")}
+              className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Mark as Paid
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleTogglePaymentStatus(doc, "unpaid")}
+              className="font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              Mark as Unpaid
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return content;
+  };
+
   return (
     <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden font-sans">
-      {/* Sub-document Tabs Navigation Bar - Frosted Glass Ribbon */}
-      <div className="w-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
+      {/* Sub-document Tabs Navigation Ribbon - Stripe / Linear hairline */}
+      <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
         <div className="flex items-center gap-1.5 min-w-max">
           {PURCHASE_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -406,10 +497,10 @@ export default function Purchases() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98]",
                   isActive
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-md shadow-orange-500/20 border border-amber-400"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -420,15 +511,15 @@ export default function Purchases() {
         </div>
       </div>
 
-      {/* Main Container - Fitted to Screen */}
-      <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-4 space-y-3 max-w-7xl w-full mx-auto overflow-hidden">
+      {/* Main Container */}
+      <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-5 space-y-3 max-w-7xl w-full mx-auto overflow-hidden">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-sans">
               {activeTabMeta.label}
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               <span>GSTR-2 ITC READY</span>
             </span>
@@ -441,11 +532,11 @@ export default function Purchases() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-foreground hover:bg-muted/80 shadow-2xs rounded-xl"
+                  className="h-8.5 px-3 text-xs font-medium gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-2xs rounded-lg"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Reports</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
+                  <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -468,21 +559,21 @@ export default function Purchases() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Settings Cog with Red Dot */}
+            {/* Settings Cog */}
             <button
               onClick={() => setSettingsModalOpen(true)}
-              className="relative p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+              className="p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer relative"
               title="Purchase Preferences"
               aria-label="Purchase Preferences"
             >
               <Settings className="w-3.5 h-3.5" />
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
             </button>
 
             {/* Keyboard Shortcuts Button */}
             <button
               onClick={() => setShortcutsModalOpen(true)}
-              className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+              className="p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer"
               title="Keyboard Shortcuts"
               aria-label="Keyboard Shortcuts"
             >
@@ -492,144 +583,208 @@ export default function Purchases() {
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* PENDING INWARD INVOICES (AUTO-SYNC APPROVAL BANNER) */}
-        {/* Rendered on all pages & sub-pages in Purchase Hub */}
+        {/* B2B AUTO-SYNC INWARD BANNER — Sleek hairline with emerald/teal line */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <PendingInwardBanner onActionComplete={loadDocuments} />
+        <PendingInwardBanner
+          className="!rounded-xl !border-slate-200/80 dark:!border-slate-800 !bg-white dark:!bg-slate-900 !p-3 sm:!p-3.5 !shadow-2xs relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-[2px] before:bg-gradient-to-r before:from-emerald-500 before:via-teal-500 before:to-emerald-600"
+          onActionComplete={loadDocuments}
+        />
 
-        {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
-        <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* KPI METRIC STRIP — Stripe / Linear Hairline Cards */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3.5 shrink-0">
+          {/* Card 1: Total Purchases */}
           <div
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              "rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group select-none active:scale-[0.99]",
               statusFilter === "all"
-                ? "ring-1.5 ring-amber-500/50 bg-amber-500/10 border-amber-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-amber-500/40 border-amber-500/50 bg-amber-50/10 dark:bg-amber-950/15"
+                : "hover:border-slate-300 dark:hover:border-slate-700"
             )}
           >
-            <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">
-              Purchases
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-500" />
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider truncate">
+                  Purchases
+                </span>
+              </div>
+              <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400 font-medium">All Bills</span>
             </div>
-            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
+            <div>
+              <div className="text-xs sm:text-lg lg:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate">
+                ₹ <span className="tabular-nums font-bold">{metrics.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                Total inward bills &amp; vendor orders
+              </p>
             </div>
           </div>
 
+          {/* Card 2: Paid Out */}
           <div
             onClick={() => setStatusFilter("paid")}
             className={cn(
-              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              "rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group select-none active:scale-[0.99]",
               statusFilter === "paid"
-                ? "ring-1.5 ring-emerald-500/50 bg-emerald-500/10 border-emerald-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-emerald-500/40 border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-950/15"
+                : "hover:border-slate-300 dark:hover:border-slate-700"
             )}
           >
-            <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
-              Paid Out
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider truncate">
+                  Paid Out
+                </span>
+              </div>
+              <span className="hidden sm:inline-block text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400 font-medium">Cleared</span>
             </div>
-            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
+            <div>
+              <div className="text-xs sm:text-lg lg:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate">
+                ₹ <span className="tabular-nums font-bold">{metrics.paidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                Supplier payments cleared &amp; settled
+              </p>
             </div>
           </div>
 
+          {/* Card 3: Vendor Payables */}
           <div
             onClick={() => setStatusFilter("unpaid")}
             className={cn(
-              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden",
+              "rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group select-none active:scale-[0.99]",
               statusFilter === "unpaid"
-                ? "ring-1.5 ring-rose-500/50 bg-rose-500/10 border-rose-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-rose-500/40 border-rose-500/50 bg-rose-50/10 dark:bg-rose-950/15"
+                : "hover:border-slate-300 dark:hover:border-slate-700"
             )}
           >
-            <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">
-              Payables
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-rose-500 to-red-600" />
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                  <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider truncate">
+                  Payables
+                </span>
+              </div>
+              <span className="hidden sm:inline-block text-[10px] font-mono text-rose-600/80 dark:text-rose-400 font-medium">Pending</span>
             </div>
-            <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
-              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
+            <div>
+              <div className="text-xs sm:text-lg lg:text-xl font-bold text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate">
+                ₹ <span className="tabular-nums font-bold">{metrics.unpaidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                Outstanding supplier balances due
+              </p>
             </div>
           </div>
         </div>
 
-        {/* 3 Frosted 3D Glass Metric Cards (Tablet / Desktop) */}
-        <div className="hidden sm:grid sm:grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
-          {/* Total Purchases */}
-          <div
-            onClick={() => setStatusFilter("all")}
-            className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
-              statusFilter === "all"
-                ? "ring-2 ring-amber-500/40 bg-amber-50/30 dark:bg-amber-950/30"
-                : "hover:scale-[1.01]"
-            )}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
-              <Truck className="w-3.5 h-3.5" />
-              <span>Total Purchases</span>
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* FILTERS & ACTIONS BAR */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 p-2 sm:p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs shrink-0">
+          {/* Quick Filter Tabs for Vendor Payments */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("all");
+                  if (activeTab === "purchase_order") setActiveTab("purchase_invoice");
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                  statusFilter === "all" && activeTab !== "purchase_order"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("paid");
+                  if (activeTab === "purchase_order") setActiveTab("purchase_invoice");
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1",
+                  statusFilter === "paid" && activeTab !== "purchase_order"
+                    ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Paid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("unpaid");
+                  if (activeTab === "purchase_order") setActiveTab("purchase_invoice");
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1",
+                  statusFilter === "unpaid" && activeTab !== "purchase_order"
+                    ? "bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>Unpaid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("purchase_order");
+                  setStatusFilter("all");
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1",
+                  activeTab === "purchase_order"
+                    ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
+                )}
+              >
+                <FileText className="w-3 h-3" />
+                <span>Purchase Orders</span>
+              </button>
             </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.totalAmount.toLocaleString("en-IN")}
-            </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inward bills & vendor orders</p>
           </div>
 
-          {/* Paid */}
-          <div
-            onClick={() => setStatusFilter("paid")}
-            className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
-              statusFilter === "paid"
-                ? "ring-2 ring-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/30"
-                : "hover:scale-[1.01]"
-            )}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Paid Out</span>
-            </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.paidAmount.toLocaleString("en-IN")}
-            </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier payments cleared</p>
-          </div>
-
-          {/* Unpaid */}
-          <div
-            onClick={() => setStatusFilter("unpaid")}
-            className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
-              statusFilter === "unpaid"
-                ? "ring-2 ring-rose-500/40 bg-rose-50/30 dark:bg-rose-950/30"
-                : "hover:scale-[1.01]"
-            )}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Vendor Payables</span>
-            </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {metrics.unpaidAmount.toLocaleString("en-IN")}
-            </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending supplier bills</p>
-          </div>
-        </div>
-
-        {/* Filter Bar - Frosted Glass Container */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 p-2 sm:p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
-          {/* Left: Search & Date Picker */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 max-w-xl">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[140px]">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          {/* Search, Date Picker & Create Trigger */}
+          <div className="flex items-center gap-2 flex-1 justify-end flex-wrap sm:flex-nowrap">
+            {/* Clean Search Input with Clear Button */}
+            <div className="relative flex-1 min-w-[150px] max-w-sm">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by bill #, supplier..."
-                className="pl-7 sm:pl-8 h-8 sm:h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl"
+                className="pl-8 pr-7 h-8.5 text-xs bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg focus:ring-1 focus:ring-amber-500"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {/* Date Range Selector */}
@@ -638,13 +793,13 @@ export default function Purchases() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 sm:h-9 px-2 sm:px-3 text-[11px] sm:text-xs font-medium border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-lg sm:rounded-xl gap-1 sm:gap-1.5 shadow-xs shrink-0"
+                  className="h-8.5 px-2.5 text-xs font-medium border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg gap-1.5 shadow-2xs shrink-0"
                 >
-                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <CalendarIcon className="w-3.5 h-3.5 text-slate-500" />
                   <span>{selectedPreset}</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-auto p-3">
+              <PopoverContent align="end" className="w-auto p-3">
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-1.5">
                     {DATE_PRESETS.map((p) => (
@@ -667,16 +822,14 @@ export default function Purchases() {
                 </div>
               </PopoverContent>
             </Popover>
-          </div>
 
-          {/* Right: Glowing Create Purchase Invoice Button */}
-          <div className="flex items-center gap-2 shrink-0">
+            {/* Primary Create Button */}
             <button
               onClick={() => {
                 setEditingDoc(null);
                 setCreateModalOpen(true);
               }}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="h-8.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -684,17 +837,51 @@ export default function Purchases() {
           </div>
         </div>
 
-        {/* Transactions Table Card / Mobile Stream - 3D Glass Container */}
-        <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
-          {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2 pb-36 space-y-2 scrollbar-thin overscroll-y-contain">
-            {filteredDocuments.length === 0 ? (
+        {/* Bulk Selection Ribbon */}
+        {selectedDocIds.size > 0 && (
+          <div className="flex items-center justify-between px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs shrink-0">
+            <span className="font-bold text-amber-700 dark:text-amber-300 font-mono">
+              {selectedDocIds.size} Bill{selectedDocIds.size > 1 ? "s" : ""} Selected
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="h-7 text-xs font-semibold gap-1 rounded-lg border-amber-400 text-amber-700"
+              >
+                <Download className="w-3 h-3" />
+                <span>Export Selected</span>
+              </Button>
+              <button
+                type="button"
+                onClick={() => setSelectedDocIds(new Set())}
+                className="text-xs text-slate-500 hover:text-slate-900 underline ml-2 cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* TRANSACTIONS TABLE / MOBILE STREAM CONTAINER */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs flex flex-col justify-between">
+          {/* MOBILE VIEW: High-Density Touch Card Stream (< md) */}
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-24 space-y-2.5 scrollbar-thin overscroll-y-contain">
+            {loading ? (
+              <div className="py-16 text-center space-y-2">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" />
+                <p className="text-xs text-slate-500 font-mono">Loading purchase bills...</p>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
               <div className="py-12 text-center space-y-2.5">
-                <div className="w-12 h-12 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto border border-slate-200/80 dark:border-slate-700">
                   <Truck className="w-6 h-6 stroke-[1.5]" />
                 </div>
-                <p className="text-xs font-bold text-foreground">No Purchases Found</p>
-                <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">No Purchases Found</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
                   No records match current filter. Tap below to record your first {activeTabMeta.label.replace(/s$/, "")}.
                 </p>
                 <Button
@@ -703,7 +890,7 @@ export default function Purchases() {
                     setCreateModalOpen(true);
                   }}
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 mt-1 gap-1.5 shadow-xs"
+                  className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 mt-1 gap-1.5 shadow-2xs rounded-lg"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -716,31 +903,21 @@ export default function Purchases() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-2.5 rounded-xl border transition-all bg-card/95 space-y-1.5 shadow-2xs active:scale-[0.99]",
+                      "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2 shadow-2xs active:scale-[0.99]",
                       isSelected
-                        ? "border-amber-500 ring-1.5 ring-amber-500/30 bg-amber-50/20"
-                        : "border-border/80 hover:border-border"
+                        ? "border-amber-500 ring-1.5 ring-amber-500/30 bg-amber-50/10"
+                        : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     )}
                   >
                     {/* Line 1: Voucher Number + Status + Grand Total */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-mono font-bold text-xs bg-muted/90 px-1.5 py-0.5 rounded border border-border/60 text-foreground truncate">
+                        <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-slate-700 text-slate-900 dark:text-white truncate">
                           {doc.documentNumber}
                         </span>
-                        <span
-                          className={cn(
-                            "px-1.5 py-0.2 rounded-full text-[9px] font-bold uppercase shrink-0",
-                            (doc.status === "paid" || doc.status === "received") && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                            doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                            doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                            doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
-                          )}
-                        >
-                          {doc.status}
-                        </span>
+                        {renderStatusBadge(doc.status, true, doc)}
                         {(doc.notes?.includes("Auto-imported from Sales Invoice") || doc.referenceNumber?.startsWith("INV")) && (
-                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded-full shrink-0">
+                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded-md shrink-0">
                             <Sparkles className="w-2 h-2 text-emerald-500" />
                             Sync
                           </span>
@@ -748,134 +925,150 @@ export default function Purchases() {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-black font-mono text-foreground">
+                        <span className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                           ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     </div>
 
-                    {/* Line 2: Supplier Name + Date + Quick Actions */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                    {/* Line 2: Supplier Name + Date + Due */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs text-foreground truncate">{doc.partyName}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.2">
+                        <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{doc.partyName}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           <span>{doc.docDate}</span>
                           <span>•</span>
-                          <span className={doc.status === "unpaid" ? "text-rose-500 font-semibold" : ""}>{calculateDueInText(doc)}</span>
+                          <span className={doc.status === "unpaid" ? "text-rose-600 font-semibold" : ""}>{calculateDueInText(doc)}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
-                        {/* Print */}
+                      {/* 1-Tap Record Payment Trigger (if unpaid/partial) */}
+                      {doc.status !== "paid" && (
                         <button
-                          onClick={() => handleOpenReceipt(doc)}
-                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all cursor-pointer"
-                          title="Print Receipt"
+                          type="button"
+                          onClick={() => handleTogglePaymentStatus(doc, "paid")}
+                          className="min-h-[44px] px-3.5 rounded-md border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 cursor-pointer"
+                          title="Record Payment"
                         >
-                          <Printer className="w-3.5 h-3.5" />
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>Pay Now</span>
                         </button>
+                      )}
+                    </div>
 
-                        {/* Download PDF */}
-                        <button
-                          onClick={() => {
-                            downloadExactInvoicePdf({
-                              invoiceNumber: doc.documentNumber,
-                              docType: doc.docType as UniversalDocType,
-                              customerName: doc.partyName,
-                              customerPhone: doc.partyPhone,
-                              storeName: org?.name || "CredSmart Store",
-                              storePhone: org?.phone,
-                              totalAmount: doc.grandTotal,
-                              subtotal: doc.subtotal,
-                              discountAmount: doc.discountTotal ?? 0,
-                              tax: doc.taxTotal ?? 0,
-                              date: doc.docDate,
-                              isEstimate: false,
-                              items: doc.items.map((it) => ({
-                                name: it.productName,
-                                quantity: it.quantity,
-                                unit: it.unit,
-                                altUnit: it.altUnit,
-                                altQty: it.altQty,
-                                altUnitConversion: it.altUnitConversion,
-                                rate: it.rate,
-                                total: it.lineTotal,
-                                hsn: it.hsn,
-                                taxRate: it.taxRate,
-                                batchNo: it.batchNumber,
-                                expDate: it.expiryDate,
-                              })),
-                            });
-                          }}
-                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-amber-600 dark:text-amber-400 active:scale-95 transition-all cursor-pointer"
-                          title="Download PDF"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
+                    {/* Line 3: Quick Touch Actions */}
+                    <div className="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                      {/* Print */}
+                      <button
+                        onClick={() => handleOpenReceipt(doc)}
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        title="Print Receipt"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                      </button>
 
-                        {/* WhatsApp */}
-                        <button
-                          onClick={() => {
-                            shareInvoicePdfToWhatsApp({
-                              invoiceNumber: doc.documentNumber,
-                              customerName: doc.partyName,
-                              customerPhone: doc.partyPhone,
-                              storeName: "CredSmart Store",
-                              totalAmount: doc.grandTotal,
-                              date: doc.docDate,
-                              isEstimate: false,
-                              items: doc.items.map((it) => ({
-                                name: it.productName,
-                                quantity: it.quantity,
-                                unit: it.unit,
-                                altUnit: it.altUnit,
-                                altQty: it.altQty,
-                                altUnitConversion: it.altUnitConversion,
-                                rate: it.rate,
-                                total: it.lineTotal,
-                                hsn: it.hsn,
-                                taxRate: it.taxRate,
-                                batchNo: it.batchNumber,
-                                expDate: it.expiryDate,
-                              })),
-                            });
-                          }}
-                          className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer"
-                          title="WhatsApp Share"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Download PDF */}
+                      <button
+                        onClick={() => {
+                          downloadExactInvoicePdf({
+                            invoiceNumber: doc.documentNumber,
+                            docType: doc.docType as UniversalDocType,
+                            customerName: doc.partyName,
+                            customerPhone: doc.partyPhone,
+                            storeName: org?.name || "CredSmart Store",
+                            storePhone: org?.phone,
+                            totalAmount: doc.grandTotal,
+                            subtotal: doc.subtotal,
+                            discountAmount: doc.discountTotal ?? 0,
+                            tax: doc.taxTotal ?? 0,
+                            date: doc.docDate,
+                            isEstimate: false,
+                            items: doc.items.map((it) => ({
+                              name: it.productName,
+                              quantity: it.quantity,
+                              unit: it.unit,
+                              altUnit: it.altUnit,
+                              altQty: it.altQty,
+                              altUnitConversion: it.altUnitConversion,
+                              rate: it.rate,
+                              total: it.lineTotal,
+                              hsn: it.hsn,
+                              taxRate: it.taxRate,
+                              batchNo: it.batchNumber,
+                              expDate: it.expiryDate,
+                            })),
+                          });
+                        }}
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        title="Download PDF"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
 
-                        {/* More Menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground active:scale-95 transition-all cursor-pointer">
-                              <MoreVertical className="w-3.5 h-3.5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingDoc(doc);
-                                setCreateModalOpen(true);
-                              }}
-                            >
-                              Edit Voucher
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(doc)}>
-                              Duplicate Voucher
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(doc.id)}
-                              className="text-rose-600 dark:text-rose-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                              Delete Voucher
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      {/* WhatsApp */}
+                      <button
+                        onClick={() => {
+                          shareInvoicePdfToWhatsApp({
+                            invoiceNumber: doc.documentNumber,
+                            customerName: doc.partyName,
+                            customerPhone: doc.partyPhone,
+                            storeName: "CredSmart Store",
+                            totalAmount: doc.grandTotal,
+                            date: doc.docDate,
+                            isEstimate: false,
+                            items: doc.items.map((it) => ({
+                              name: it.productName,
+                              quantity: it.quantity,
+                              unit: it.unit,
+                              altUnit: it.altUnit,
+                              altQty: it.altQty,
+                              altUnitConversion: it.altUnitConversion,
+                              rate: it.rate,
+                              total: it.lineTotal,
+                              hsn: it.hsn,
+                              taxRate: it.taxRate,
+                              batchNo: it.batchNumber,
+                              expDate: it.expiryDate,
+                            })),
+                          });
+                        }}
+                        className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        title="WhatsApp Share"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* More Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center">
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 text-xs">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingDoc(doc);
+                              setCreateModalOpen(true);
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
+                            Edit Voucher
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicate(doc)}>
+                            <Plus className="w-3.5 h-3.5 mr-1.5" />
+                            Duplicate Voucher
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteDocument(doc)}
+                            className="text-rose-600 dark:text-rose-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                            Delete Voucher
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );
@@ -884,7 +1077,7 @@ export default function Purchases() {
           </div>
 
           {/* Mobile Pagination */}
-          <div className="md:hidden">
+          <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 p-2">
             <PaginationBar
               page={page}
               totalPages={totalPages}
@@ -899,12 +1092,12 @@ export default function Purchases() {
             />
           </div>
 
-          {/* DESKTOP VIEW: Untouched Desktop Data Table (Visible on md: and above) */}
+          {/* DESKTOP VIEW: High-Density Stripe/Linear Table (md: and above) */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
-            <table className="w-full text-left text-xs border-collapse min-w-[640px]">
-              <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
-                <tr className="text-slate-700 dark:text-slate-300 font-semibold border-b border-border text-[10px] sm:text-[11px] uppercase tracking-wider font-mono">
-                  <th className="py-2.5 px-3 w-10">
+            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+              <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 text-[10.5px] uppercase font-mono tracking-wider z-10">
+                <tr>
+                  <th className="py-2.5 px-3 w-10 text-center">
                     <input
                       type="checkbox"
                       checked={
@@ -912,7 +1105,7 @@ export default function Purchases() {
                         selectedDocIds.size === filteredDocuments.length
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded border-border"
+                      className="rounded border-slate-300 dark:border-slate-700"
                     />
                   </th>
                   <th
@@ -920,63 +1113,72 @@ export default function Purchases() {
                       setSortField("docDate");
                       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                     }}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none"
                   >
                     <div className="flex items-center gap-1">
                       <span>Date</span>
-                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3 px-3">Purchase Invoice Number</th>
-                  <th className="py-3 px-3">Party Name</th>
-                  <th className="py-3 px-3">Due In</th>
+                  <th className="py-2.5 px-3">Bill / Invoice #</th>
+                  <th className="py-2.5 px-3">Supplier Name</th>
+                  <th className="py-2.5 px-3">Due In</th>
                   <th
                     onClick={() => {
                       setSortField("grandTotal");
                       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                     }}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none text-right"
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-end gap-1">
                       <span>Amount</span>
-                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 w-16 text-right">Actions</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 w-28 text-right">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-border/60">
-                {paginatedDocs.length > 0 ? (
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="py-20 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+                        <p className="text-xs font-mono text-slate-500">Loading purchase ledger...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedDocs.length > 0 ? (
                   paginatedDocs.map((doc) => {
                     const isSelected = selectedDocIds.has(doc.id);
                     return (
                       <tr
                         key={doc.id}
                         className={cn(
-                          "hover:bg-muted/30 transition-colors group",
-                          isSelected && "bg-indigo-50/30 dark:bg-indigo-950/20"
+                          "py-2.5 px-3 border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group",
+                          isSelected && "bg-amber-50/30 dark:bg-amber-950/20"
                         )}
                       >
-                        <td className="py-3 px-4">
+                        <td className="py-2.5 px-3 text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleToggleSelect(doc.id)}
-                            className="rounded border-border"
+                            className="rounded border-slate-300 dark:border-slate-700"
                           />
                         </td>
-                        <td className="py-3 px-3 font-mono text-muted-foreground">
+                        <td className="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
                           {doc.docDate}
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-mono font-semibold text-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50 text-[11px]">
+                            <span className="font-mono font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-[11px]">
                               {doc.documentNumber}
                             </span>
                             {doc.referenceNumber && (
-                              <span className="text-[10px] text-muted-foreground font-mono">
+                              <span className="text-[10px] text-slate-400 font-mono">
                                 (Ref: {doc.referenceNumber})
                               </span>
                             )}
@@ -988,58 +1190,71 @@ export default function Purchases() {
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3">
                           <div>
-                            <span className="font-semibold text-foreground">{doc.partyName}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{doc.partyName}</span>
                             {doc.partyPhone && (
-                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                                 {doc.partyPhone}
                               </p>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3">
                           <span
                             className={cn(
                               "text-[11px] font-medium",
                               doc.status === "paid"
-                                ? "text-emerald-600 dark:text-emerald-400"
+                                ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                                 : calculateDueInText(doc).includes("Overdue")
                                 ? "text-rose-600 font-semibold"
-                                : "text-muted-foreground"
+                                : "text-slate-500 dark:text-slate-400"
                             )}
                           >
                             {calculateDueInText(doc)}
                           </span>
                         </td>
-                        <td className="py-3 px-3 font-mono font-bold text-foreground">
-                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                          ₹ {doc.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td className="py-3 px-3">
-                          <span
-                            className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize",
-                              (doc.status === "paid" || doc.status === "received") && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                              doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                              doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
-                            )}
-                          >
-                            {doc.status}
-                          </span>
+                        <td className="py-2.5 px-3">
+                          {renderStatusBadge(doc.status, true, doc)}
                         </td>
-                        <td className="py-3 px-3 text-right">
+                        <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {/* 1-tap Record Payment Trigger (if unpaid/partial) */}
+                            {doc.status !== "paid" && (
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePaymentStatus(doc, "paid")}
+                                className="h-6 px-1.5 rounded border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold hover:bg-emerald-100 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                                title="1-Tap Record Payment"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Pay</span>
+                              </button>
+                            )}
+
+                            {/* View / Print Bill */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReceipt(doc)}
+                              className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors cursor-pointer"
+                              title="View & Print Bill"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                  className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors cursor-pointer"
                                 >
                                   <MoreVertical className="w-3.5 h-3.5" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuContent align="end" className="w-48 text-xs">
                                 <DropdownMenuItem
                                   onClick={() => handleOpenReceipt(doc)}
                                   className="gap-2"
@@ -1057,9 +1272,79 @@ export default function Purchases() {
                                   <Eye className="w-3.5 h-3.5" />
                                   <span>Edit Bill</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
+                                <DropdownMenuItem
+                                  onClick={() => handleDuplicate(doc)}
+                                  className="gap-2"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Duplicate Bill</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    downloadExactInvoicePdf({
+                                      invoiceNumber: doc.documentNumber,
+                                      docType: doc.docType as UniversalDocType,
+                                      customerName: doc.partyName,
+                                      customerPhone: doc.partyPhone,
+                                      storeName: org?.name || "CredSmart Store",
+                                      storePhone: org?.phone,
+                                      totalAmount: doc.grandTotal,
+                                      subtotal: doc.subtotal,
+                                      discountAmount: doc.discountTotal ?? 0,
+                                      tax: doc.taxTotal ?? 0,
+                                      date: doc.docDate,
+                                      isEstimate: false,
+                                      items: doc.items.map((it) => ({
+                                        name: it.productName,
+                                        quantity: it.quantity,
+                                        unit: it.unit,
+                                        altUnit: it.altUnit,
+                                        altQty: it.altQty,
+                                        altUnitConversion: it.altUnitConversion,
+                                        rate: it.rate,
+                                        total: it.lineTotal,
+                                        hsn: it.hsn,
+                                        taxRate: it.taxRate,
+                                        batchNo: it.batchNumber,
+                                        expDate: it.expiryDate,
+                                      })),
+                                    });
+                                  }}
+                                  className="gap-2"
+                                >
                                   <Download className="w-3.5 h-3.5" />
-                                  <span>Download CSV</span>
+                                  <span>Download PDF</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    shareInvoicePdfToWhatsApp({
+                                      invoiceNumber: doc.documentNumber,
+                                      customerName: doc.partyName,
+                                      customerPhone: doc.partyPhone,
+                                      storeName: "CredSmart Store",
+                                      totalAmount: doc.grandTotal,
+                                      date: doc.docDate,
+                                      isEstimate: false,
+                                      items: doc.items.map((it) => ({
+                                        name: it.productName,
+                                        quantity: it.quantity,
+                                        unit: it.unit,
+                                        altUnit: it.altUnit,
+                                        altQty: it.altQty,
+                                        altUnitConversion: it.altUnitConversion,
+                                        rate: it.rate,
+                                        total: it.lineTotal,
+                                        hsn: it.hsn,
+                                        taxRate: it.taxRate,
+                                        batchNo: it.batchNumber,
+                                        expDate: it.expiryDate,
+                                      })),
+                                    });
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>Share WhatsApp</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -1067,7 +1352,7 @@ export default function Purchases() {
                                   className="gap-2 text-rose-600"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Delete</span>
+                                  <span>Delete Bill</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1077,15 +1362,17 @@ export default function Purchases() {
                     );
                   })
                 ) : (
-                  // Empty State matching Capture5.PNG
                   <tr>
                     <td colSpan={8} className="py-20 text-center">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400">
-                          <Truck className="w-8 h-8 stroke-current" />
+                        <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-200/80 dark:border-slate-700">
+                          <Truck className="w-7 h-7 stroke-[1.5]" />
                         </div>
-                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                          No Transactions Matching the current filter
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          No Transactions Matching the Current Filter
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Create an inward bill or change the date range preset.
                         </p>
                         <Button
                           onClick={() => {
@@ -1093,10 +1380,10 @@ export default function Purchases() {
                             setCreateModalOpen(true);
                           }}
                           size="sm"
-                          className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs gap-1 mt-1"
+                          className="text-xs font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs gap-1.5 mt-1 rounded-lg"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          Create Purchase Invoice
+                          <span>Create Purchase Invoice</span>
                         </Button>
                       </div>
                     </td>
@@ -1106,7 +1393,7 @@ export default function Purchases() {
             </table>
 
             {/* Desktop Pagination */}
-            <div className="hidden md:block">
+            <div className="hidden md:block border-t border-slate-200/80 dark:border-slate-800 p-2">
               <PaginationBar
                 page={page}
                 totalPages={totalPages}
@@ -1127,11 +1414,11 @@ export default function Purchases() {
       {/* Floating Help (?) Button */}
       <button
         onClick={() => setShortcutsModalOpen(true)}
-        className="fixed bottom-5 right-5 w-10 h-10 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xl hover:scale-105 transition-all z-30 font-bold"
+        className="fixed bottom-5 right-5 w-9 h-9 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-30 font-bold border border-slate-200/50 dark:border-slate-800"
         title="Help & Shortcuts"
         aria-label="Help & Shortcuts"
       >
-        <span className="text-base font-semibold">?</span>
+        <span className="text-sm font-semibold">?</span>
       </button>
 
       {/* Purchase Invoice Modal */}
@@ -1181,7 +1468,6 @@ export default function Purchases() {
           }}
         />
       )}
-
     </div>
   );
 }

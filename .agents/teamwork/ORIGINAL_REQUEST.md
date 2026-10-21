@@ -928,3 +928,96 @@ Resolve network invoice delivery failures between independent organizations. In 
 - [ ] Cross-organization lookup finds external organizations in Supabase by phone or GSTIN.
 - [ ] `networkInvoicing.test.ts` passes 13/13 tests cleanly.
 - [ ] TypeScript validation (`tsc --noEmit`) passes with 0 errors across the codebase.
+
+
+## 2026-10-21T10:52:12Z
+
+# Teamwork Project Prompt
+
+Comprehensive, production-grade redesign of the core CredSmart application across both Desktop and Mobile viewports (Dashboard, Sales, Purchases, Items/Inventory, Parties, and the full CRM suite) into a unified, clean, high-density Stripe/Linear aesthetic with crisp typography, hairline borders, and high contrast, while strictly keeping the Create Invoice flow 100% untouched.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. Executive ERP Dashboard (`src/pages/Dashboard.tsx`)
+Redesign the primary store dashboard for both desktop and mobile viewports:
+- **High-Density Metric Grid**: High-contrast cards for `TO COLLECT`, `TO PAY`, `CASH & BANK`, and `TODAY'S SALES` with monospaced Indian Rupee (`₹`) numerals, trend indicators, and color accents (Cyan/Blue, Orange/Rose, Amber/Gold, Emerald).
+- **Dismissible Tally Banner**: Compact, hairline-bordered banner with an explicit close button and 1-tap scan action.
+- **Quick Action Bar**: Sleek pills for frequent operations (`+ Sale Bill`, `+ New Item`, `+ Customer`, `Day Book`, `Barcode Scan`).
+- **Recent Ledger Feed**: High-density transaction list displaying customer name, invoice #, relative date, payment status chip, and bold total.
+
+### R2. Sales & Invoicing Hub (`src/pages/Sales.tsx`)
+Overhaul the Sales transactions interface across desktop and mobile:
+- **Desktop View**: High-density data table with sortable columns, custom date range filter, quick status tabs (`All`, `Paid`, `Unpaid / Due`, `Quotations`, `Returns`), search bar, and inline action icons (PDF download, WhatsApp share, edit, delete).
+- **Mobile View**: High-density touch card stream with bold amounts, clickable payment status badges, and quick-action bottom sheet.
+
+### R3. Purchases & Supplier Ledger (`src/pages/Purchases.tsx`)
+Redesign the Purchases ledger to match the unified Stripe/Linear standard:
+- **Bills Overview**: High-density table on desktop and compact cards on mobile featuring supplier name, bill number, bill date, payment status badge, and total payable amount.
+- **Filters & Actions**: Quick filter tabs for pending vendor payments, fast search, and 1-tap record payment trigger.
+
+### R4. Items & Inventory Catalog (`src/pages/Items.tsx`)
+Modernize the inventory and product catalog:
+- **Catalog Density**: Crisp product rows/cards showing item name, SKU/Barcode, current stock with color-coded status badges (`In Stock`, `Low Stock`, `Out of Stock`), selling price, and purchase price.
+- **Quick Operations**: 1-tap barcode scanner trigger, category filter chips, search input with clear button, and swift stock adjustment drawer.
+
+### R5. Parties Directory & Balances (`src/pages/Parties.tsx`)
+Redesign the Customers & Suppliers ledger interface:
+- **Balance Directionality**: Clear, high-contrast visual distinction between Receivables ("To Collect" in Emerald/Blue) and Payables ("To Pay" in Rose/Amber).
+- **Communication Actions**: Direct 1-tap WhatsApp and phone call triggers on party rows/cards.
+- **Category Tabs**: Seamless switching between `Customers`, `Suppliers`, and combined views.
+
+### R6. Full CRM Suite (`src/pages/crm/*` & `src/App.tsx`)
+Complete overhaul of all CRM modules with high-density design:
+- **CRM Dashboard** (`CRMDashboard.tsx`): Command center with staff metrics, live attendance count, and 8-module quick navigation grid.
+- **Attendance & Geofencing** (`Attendance.tsx`): 1-tap mobile punch card with GPS coordinate lock, geofence status badge, elapsed work timer, and desktop attendance roster with PDF/CSV export.
+- **Roles & RBAC Matrix** (`RoleManagement.tsx`): User-defined role cards and Linear-style granular permission matrix with mobile accordion support.
+- **Salary & Payroll Engine** (`SalaryManagement.tsx`): 4-tab workflow (Profiles, Payroll Run, Advances, Payslips) and route fix in `src/App.tsx` line 247.
+- **Sub-Modules**: Dedicated views for Tasks (`/crm/tasks`), Broadcasts (`/crm/broadcasts`), Meet (`/crm/meet`), AI Assistant (`/crm/ai`), and Support (`/crm/support`).
+
+### R7. STRICT EXCLUSION & PRESERVATION: Create Invoice Flow Protected
+- **Do NOT touch or alter the Create Invoice flow**:
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+  - `src/components/SalesInvoiceModal.tsx`
+  - `src/components/invoices/mobile/AddItemModal.tsx`
+  - `src/components/invoices/mobile/SelectPartyModal.tsx`
+  - `src/components/invoices/mobile/EditItemModal.tsx`
+  - All existing invoice creation logic, modals, calculations, and inputs must remain **100% untouched and functional**.
+
+## Verification Resources
+- Existing automated test suites:
+  - `src/test/mobileDashboardRedesign.test.tsx`
+  - `src/test/MobileInvoiceSuccessView.test.tsx`
+  - `src/test/billingLifecycleEngine.test.ts`
+  - `src/test/networkInvoicing.test.ts`
+  - `src/test/crm*.test.*`
+- Automated checks:
+  - Full TypeScript validation: `node node_modules/typescript/bin/tsc --noEmit`
+  - Vitest test suite runs across billing, CRM, and dashboard
+
+## Acceptance Criteria
+
+### Executive Dashboard & Core ERP Pages
+- [ ] Dashboard displays high-density metric cards, dismissible Tally banner, quick actions, and recent activity on both desktop and mobile.
+- [ ] Sales page renders high-density data table on desktop and card stream on mobile with responsive filtering (`All`, `Paid`, `Unpaid`, `Quotes`).
+- [ ] Purchases page renders supplier bills with clear payment status and balance due across both viewports.
+- [ ] Items page displays inventory with stock badges, pricing, and category filters without horizontal clipping.
+- [ ] Parties page clearly distinguishes "To Collect" from "To Pay" with 1-tap WhatsApp and call buttons.
+
+### CRM Command Center & Subsystems
+- [ ] CRM Dashboard provides 1-tap navigation to all 8 CRM modules with active staff and attendance statistics.
+- [ ] Attendance module features 1-touch mobile punch card with GPS status and full desktop roster.
+- [ ] Role Management provides clean permission toggle matrix on desktop and responsive accordion on mobile.
+- [ ] `src/App.tsx` routes `/crm/salary` to `<SalaryManagement />` with all 4 payroll tabs operating properly.
+- [ ] Tasks, Broadcasts, Meet, AI Assistant, and Support render dedicated clean views.
+
+### Protected Areas (Zero Regression)
+- [ ] `MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, and all bill creation modals remain completely untouched.
+- [ ] Existing invoice creation, saving, printing, and tax calculations work with zero regressions.
+
+### Code Health
+- [ ] `tsc --noEmit` exits with 0 errors across the entire repository.
+- [ ] All existing test suites pass cleanly.
+- [ ] Mobile viewports (`< 768px`) maintain 44px minimum hit targets and zero horizontal scroll overflow.

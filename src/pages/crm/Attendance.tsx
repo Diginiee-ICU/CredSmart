@@ -1632,7 +1632,7 @@ export default function Attendance(): React.ReactElement {
                     </button>
                   </div>
 
-                  <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-2">
+                  <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
                     <div className="flex items-center justify-between">
                       {gpsStatus === "acquiring" && (
                         <CRMBadge variant="warning" size="sm" dot>
@@ -1641,7 +1641,7 @@ export default function Attendance(): React.ReactElement {
                       )}
                       {gpsStatus === "inside" && (
                         <CRMBadge variant="success" size="sm" dot>
-                          Within Geofence ✓
+                          Live GPS Lock ✓
                         </CRMBadge>
                       )}
                       {gpsStatus === "outside" && (

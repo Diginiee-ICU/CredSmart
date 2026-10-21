@@ -108,7 +108,7 @@ export function PaginationBar({
             onClick={() => onPageChange(1)}
             disabled={!hasPrev}
             className={cn(
-              "p-1.5 rounded-lg transition-colors",
+              "min-w-[44px] min-h-[44px] flex items-center justify-center p-1.5 rounded-lg transition-colors",
               hasPrev
                 ? "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 : "text-slate-300 dark:text-slate-600 cursor-not-allowed",
@@ -124,7 +124,7 @@ export function PaginationBar({
           onClick={() => onPageChange(page - 1)}
           disabled={!hasPrev}
           className={cn(
-            "p-1.5 rounded-lg transition-colors",
+            "min-w-[44px] min-h-[44px] flex items-center justify-center p-1.5 rounded-lg transition-colors",
             hasPrev
               ? "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               : "text-slate-300 dark:text-slate-600 cursor-not-allowed",
@@ -175,7 +175,7 @@ export function PaginationBar({
           onClick={() => onPageChange(page + 1)}
           disabled={!hasNext}
           className={cn(
-            "p-1.5 rounded-lg transition-colors",
+            "min-w-[44px] min-h-[44px] flex items-center justify-center p-1.5 rounded-lg transition-colors",
             hasNext
               ? "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               : "text-slate-300 dark:text-slate-600 cursor-not-allowed",
@@ -191,7 +191,7 @@ export function PaginationBar({
             onClick={() => onPageChange(totalPages)}
             disabled={!hasNext}
             className={cn(
-              "p-1.5 rounded-lg transition-colors",
+              "min-w-[44px] min-h-[44px] flex items-center justify-center p-1.5 rounded-lg transition-colors",
               hasNext
                 ? "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 : "text-slate-300 dark:text-slate-600 cursor-not-allowed",

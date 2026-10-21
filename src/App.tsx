@@ -66,6 +66,12 @@ import PublicStorefront from "@/pages/public/PublicStorefront";
 import CRMDashboard from "@/pages/crm/CRMDashboard";
 import RoleManagement from "@/pages/crm/RoleManagement";
 import Attendance from "@/pages/crm/Attendance";
+import SalaryManagement from "@/pages/crm/SalaryManagement";
+import Tasks from "@/pages/crm/Tasks";
+import Broadcasts from "@/pages/crm/Broadcasts";
+import Meet from "@/pages/crm/Meet";
+import AIAssistant from "@/pages/crm/AIAssistant";
+import Support from "@/pages/crm/Support";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -244,12 +250,13 @@ const App = () => (
                     <Route path={ROUTE_PATHS.crm} element={<CRMDashboard />} />
                     <Route path={ROUTE_PATHS.crmRoles} element={<RoleManagement />} />
                     <Route path={ROUTE_PATHS.crmAttendance} element={<Attendance />} />
-                    <Route path={ROUTE_PATHS.crmSalary} element={<CRMDashboard />} />
-                    <Route path={ROUTE_PATHS.crmTasks} element={<CRMDashboard />} />
-                    <Route path={ROUTE_PATHS.crmMeet} element={<CRMDashboard />} />
-                    <Route path={ROUTE_PATHS.crmBroadcasts} element={<CRMDashboard />} />
-                    <Route path={ROUTE_PATHS.crmAiAssistant} element={<CRMDashboard />} />
-                    <Route path={ROUTE_PATHS.crmSupport} element={<CRMDashboard />} />
+                    <Route path={ROUTE_PATHS.crmSalary} element={<SalaryManagement />} />
+                    <Route path={ROUTE_PATHS.crmTasks} element={<Tasks />} />
+                    <Route path={ROUTE_PATHS.crmMeet} element={<Meet />} />
+                    <Route path={ROUTE_PATHS.crmBroadcasts} element={<Broadcasts />} />
+                    <Route path={ROUTE_PATHS.crmAiAssistant} element={<AIAssistant />} />
+                    <Route path="/crm/ai" element={<AIAssistant />} />
+                    <Route path={ROUTE_PATHS.crmSupport} element={<Support />} />
 
                     {/* Restricted to Managers & Owners & Super Admin */}
                     <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>

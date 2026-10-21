@@ -53,12 +53,6 @@ import { ReceiptData } from "@/pages/Sales";
 import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { CreateItemModal } from "@/components/items/CreateItemModal";
 import { CreatePartyModal } from "@/components/parties/CreatePartyModal";
-import {
-  Wallet3DGraphic,
-  Invoice3DGraphic,
-  Bank3DGraphic,
-  CredsmartLogo,
-} from "@/components/ui/Liquid3DCardGraphics";
 import { documentsService } from "@/services/documentsService";
 import { notifyStockUpdated } from "@/services/stockService";
 import { productsApi } from "@/services/productsApi";
@@ -659,7 +653,7 @@ export default function Dashboard() {
         {!dismissedMobileTallyBanner && (
           <div
             className={cn(
-              "p-3 rounded-2xl border border-emerald-500/30 dark:border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent shadow-2xs relative transition-all duration-200",
+              "p-3 rounded-xl border border-emerald-500/30 dark:border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent shadow-2xs relative transition-all duration-200",
               isDismissingTallyBanner && "opacity-0 scale-95 pointer-events-none"
             )}
           >
@@ -716,7 +710,7 @@ export default function Dashboard() {
             {/* Card 1: TO COLLECT */}
             <div
               onClick={() => navigate(ROUTE_PATHS.parties)}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-600" />
               <div className="flex items-center justify-between mb-1">
@@ -729,9 +723,9 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${toCollect.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
-                ₹ <span className="tabular-nums">{toCollect.toLocaleString("en-IN")}</span>
+                ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
                 <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
@@ -743,7 +737,7 @@ export default function Dashboard() {
             {/* Card 2: TO PAY */}
             <div
               onClick={() => navigate(ROUTE_PATHS.purchases)}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-600" />
               <div className="flex items-center justify-between mb-1">
@@ -756,9 +750,9 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${toPay.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
-                ₹ <span className="tabular-nums">{toPay.toLocaleString("en-IN")}</span>
+                ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
                 <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono">
@@ -770,7 +764,7 @@ export default function Dashboard() {
             {/* Card 3: CASH & BANK */}
             <div
               onClick={() => navigate(ROUTE_PATHS.cashBank)}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-yellow-400 to-amber-500" />
               <div className="flex items-center justify-between mb-1">
@@ -783,9 +777,9 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${cashBankBalance.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
-                ₹ <span className="tabular-nums">{cashBankBalance.toLocaleString("en-IN")}</span>
+                ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
                 <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono">
@@ -797,7 +791,7 @@ export default function Dashboard() {
             {/* Card 4: TODAY'S SALES */}
             <div
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 to-teal-500" />
               <div className="flex items-center justify-between mb-1">
@@ -805,14 +799,14 @@ export default function Dashboard() {
                   TODAY&apos;S SALES
                 </span>
                 <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="w-3 h-3 stroke-[2.5]" />
+                  <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
               </div>
               <div
                 title={`₹ ${todaySalesTotal.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
-                ₹ <span className="tabular-nums">{todaySalesTotal.toLocaleString("en-IN")}</span>
+                ₹ <span className="tabular-nums font-bold">{todaySalesTotal.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
                 <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
@@ -890,7 +884,7 @@ export default function Dashboard() {
           </div>
 
           {latestTransactions.length === 0 ? (
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center">
+            <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center">
               <FileText className="w-7 h-7 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No Transactions Yet</p>
               <span className="text-[10px] text-slate-400">Bills will appear here</span>
@@ -911,7 +905,7 @@ export default function Dashboard() {
                   <div
                     key={txn.id}
                     onClick={() => navigate(ROUTE_PATHS.sales)}
-                    className="p-3 min-h-[56px] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
+                    className="p-3 min-h-[56px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center justify-center shrink-0 font-mono">
@@ -931,19 +925,29 @@ export default function Dashboard() {
 
                     <div className="text-right shrink-0">
                       <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
-                        ₹ {Number(txn.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        ₹ <span className="tabular-nums font-bold">{Number(txn.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                       </div>
                       <span
                         className={cn(
-                          "inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full font-mono mt-0.5",
+                          "inline-flex items-center gap-1 text-[9px] font-bold font-mono px-2 py-0.5 rounded-md mt-0.5 border",
                           txn.status === "PAID"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
                             : txn.status === "PENDING"
-                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60"
                         )}
                       >
-                        {txn.status}
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full shrink-0",
+                            txn.status === "PAID"
+                              ? "bg-emerald-500"
+                              : txn.status === "PENDING"
+                              ? "bg-amber-500"
+                              : "bg-rose-500"
+                          )}
+                        />
+                        <span>{txn.status}</span>
                       </span>
                     </div>
                   </div>
@@ -955,7 +959,7 @@ export default function Dashboard() {
       </div>
 
       {/* =========================================================================
-          2. DESKTOP VIEW ONLY (>= 768px) - 100% Matching Reference Images 1 & 4
+          2. DESKTOP VIEW ONLY (>= 768px) - High-Density Stripe/Linear Aesthetic
           ========================================================================= */}
       <div className="hidden md:flex flex-col space-y-4">
         {/* Status Bar: LIVE RECONCILED + Last Sync + Action Icons */}
@@ -969,23 +973,23 @@ export default function Dashboard() {
               <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
               <button
                 onClick={handleRefresh}
-                className="p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer hover-3d-glow"
+                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 title="Refresh metrics"
               >
                 <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-blue-600")} />
               </button>
             </div>
           </div>
-
         </div>
 
-        {/* 4 Frosted Liquid Glass Metric Cards (Matching Image 1 & 4) */}
+        {/* 4 High-Density Stripe/Linear Metric Cards */}
         <div className="grid grid-cols-4 gap-3.5">
           {/* Card 1: TO COLLECT */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-600" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -995,12 +999,12 @@ export default function Dashboard() {
                   TO COLLECT
                 </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 hover:text-blue-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                ₹ <span className="tabular-nums">{toCollect.toLocaleString("en-IN")}</span>
+              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+                ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
                 Outstanding customer credit ledger balance.
@@ -1011,8 +1015,9 @@ export default function Dashboard() {
           {/* Card 2: TO PAY */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-600" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-orange-500/15 flex items-center justify-center text-orange-600 dark:text-orange-400">
@@ -1022,12 +1027,12 @@ export default function Dashboard() {
                   TO PAY
                 </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 hover:text-orange-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors" />
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                ₹ <span className="tabular-nums">{toPay.toLocaleString("en-IN")}</span>
+              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+                ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
                 Pending supplier invoices &amp; outstanding dues.
@@ -1038,8 +1043,9 @@ export default function Dashboard() {
           {/* Card 3: CASH & BANK */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-yellow-400 to-amber-500" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -1049,12 +1055,12 @@ export default function Dashboard() {
                   CASH &amp; BANK
                 </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 hover:text-amber-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition-colors" />
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                ₹ <span className="tabular-nums">{cashBankBalance.toLocaleString("en-IN")}</span>
+              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+                ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
                 Total reconciled liquidity across accounts.
@@ -1065,23 +1071,24 @@ export default function Dashboard() {
           {/* Card 4: TOTAL SALES (MTD) */}
           <div
             onClick={() => navigate(ROUTE_PATHS.sales)}
-            className="glass-card-3d p-4 hover:-translate-y-1 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between hover-3d-glow"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 to-teal-500" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
-                <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono tracking-wider">
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-wider">
                   TOTAL SALES (MTD)
                 </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 hover:text-blue-600 transition-colors" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                ₹ <span className="tabular-nums">{totalMtdSales.toLocaleString("en-IN")}</span>
+              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+                ₹ <span className="tabular-nums font-bold">{totalMtdSales.toLocaleString("en-IN")}</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
                 Total sales for this month.
@@ -1090,12 +1097,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Middle Row: Spline Area Chart + Latest Invoices Table (Matching Image 1 & 4) */}
+        {/* Middle Row: Spline Area Chart + Latest Invoices Table */}
         <div className="grid grid-cols-2 gap-4">
           {/* Left Column: FINANCIAL LEDGER SUMMARY Spline Chart */}
-          <div className="glass-card-3d glass-panel hover-3d-glow p-4 flex flex-col justify-between">
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-4 flex flex-col justify-between">
             <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100 dark:border-slate-800/80">
                 <div className="flex items-center gap-2">
                   <Receipt className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono">
@@ -1126,7 +1133,7 @@ export default function Dashboard() {
                   <select
                     value={chartTimeframe}
                     onChange={(e) => setChartTimeframe(e.target.value)}
-                    className="text-xs font-semibold bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs hover-3d-glow focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="7 Days">7 Days</option>
                     <option value="This Month">This Month</option>
@@ -1202,38 +1209,38 @@ export default function Dashboard() {
             </div>
 
             {/* Bottom Summary Metric Pills */}
-            <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-200/70 dark:border-slate-800">
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover-3d-glow min-w-0">
-                <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
+            <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <TrendingUp className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">Period Sales</p>
-                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{periodSalesTotal.toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 hover-3d-glow min-w-0">
-                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Collect</p>
-                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{toCollect.toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-orange-500/10 border border-orange-500/20 hover-3d-glow min-w-0">
-                <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-sm shrink-0">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-xs shrink-0">
                   <ArrowUp className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Pay</p>
-                  <p className="text-xs font-black text-slate-900 dark:text-white font-mono truncate">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{toPay.toLocaleString("en-IN")}
                   </p>
                 </div>
@@ -1241,10 +1248,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Column: LATEST INVOICES & TRANSACTIONS Table (Matching Image 1 & 4) */}
-          <div className="glass-card-3d glass-panel hover-3d-glow p-4 flex flex-col justify-between">
+          {/* Right Column: LATEST INVOICES & TRANSACTIONS Table */}
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-4 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100 dark:border-slate-800/80">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono">
@@ -1253,7 +1260,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={() => navigate(ROUTE_PATHS.sales)}
-                  className="px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer hover-3d-glow"
+                  className="px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors shadow-2xs cursor-pointer"
                 >
                   View All
                 </button>
@@ -1272,21 +1279,21 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => setShowSalesInvoiceModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white rounded-xl glowing-btn-blue shadow-md active:scale-95 cursor-pointer hover-3d-glow"
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-xs active:scale-95 cursor-pointer transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                     <span>Create Sales Invoice</span>
                   </button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-800">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800 font-mono text-[10px] uppercase">
-                        <th className="py-2 px-2">Invoice No.</th>
-                        <th className="py-2 px-2">Party / Customer</th>
-                        <th className="py-2 px-2 text-right">Amount</th>
-                        <th className="py-2 px-2 text-center">Status</th>
+                      <tr className="bg-slate-50/90 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800 font-mono text-[10px] uppercase sticky top-0">
+                        <th className="py-2.5 px-3">Invoice No.</th>
+                        <th className="py-2.5 px-3">Party / Customer</th>
+                        <th className="py-2.5 px-3 text-right">Amount</th>
+                        <th className="py-2.5 px-3 text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-sans">
@@ -1294,31 +1301,34 @@ export default function Dashboard() {
                         <tr
                           key={row.id}
                           onClick={() => navigate(ROUTE_PATHS.sales)}
-                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer hover-3d-glow"
+                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
                         >
-                          <td className="py-2.5 px-2 font-mono font-semibold text-blue-600 dark:text-blue-400 text-xs">
+                          <td className="py-2.5 px-3 font-mono font-semibold text-blue-600 dark:text-blue-400 text-xs">
                             {row.txnNo}
                           </td>
-                          <td className="py-2.5 px-2 font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[140px]">
+                          <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[140px]">
                             {row.partyName}
                           </td>
-                          <td className="py-2.5 px-2 text-right font-mono font-bold text-slate-900 dark:text-white text-xs">
-                            ₹ {row.amount.toLocaleString("en-IN")}
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white text-xs">
+                            ₹ <span className="tabular-nums font-bold">{row.amount.toLocaleString("en-IN")}</span>
                           </td>
-                          <td className="py-2.5 px-2 text-center">
+                          <td className="py-2.5 px-3 text-center">
                             {row.status === "PAID" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold font-mono">
-                                <span>◆</span> PAID
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 text-[10px] font-bold font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                <span>PAID</span>
                               </span>
                             )}
                             {row.status === "PENDING" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold font-mono">
-                                <span>◆</span> PENDING
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 text-[10px] font-bold font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                <span>PENDING</span>
                               </span>
                             )}
                             {row.status === "OVERDUE" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-[10px] font-bold font-mono">
-                                <span>◆</span> OVERDUE
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 text-[10px] font-bold font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                                <span>OVERDUE</span>
                               </span>
                             )}
                           </td>
@@ -1332,9 +1342,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Bottom Card: INSTITUTIONAL CHECKLIST (Matching Image 1 & 4) */}
-        <div className="glass-card-3d p-4">
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+        {/* Bottom Card: INSTITUTIONAL CHECKLIST */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-4">
+          <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100 dark:border-slate-800/80">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono">
@@ -1349,7 +1359,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-5 gap-3 text-xs">
             {/* 1. KYC Verified */}
-            <div className="p-3 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
@@ -1360,7 +1370,7 @@ export default function Dashboard() {
             </div>
 
             {/* 2. Bank Linked */}
-            <div className="p-3 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <Landmark className="w-4 h-4" />
               </div>
@@ -1371,7 +1381,7 @@ export default function Dashboard() {
             </div>
 
             {/* 3. GST Verified */}
-            <div className="p-3 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
@@ -1382,7 +1392,7 @@ export default function Dashboard() {
             </div>
 
             {/* 4. Credit Safe */}
-            <div className="p-3 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
@@ -1393,7 +1403,7 @@ export default function Dashboard() {
             </div>
 
             {/* 5. Data Secure */}
-            <div className="p-3 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <Lock className="w-4 h-4" />
               </div>

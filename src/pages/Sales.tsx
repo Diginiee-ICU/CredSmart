@@ -32,6 +32,7 @@ import {
   Eye,
   Sparkles,
   Layers,
+  X,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,6 +80,8 @@ import { EwayBillRecord } from "@/types/ewayBill";
 import { SalesReturnModal } from "@/components/returns/SalesReturnModal";
 import { UniversalDocType } from "@/components/invoices/UnifiedInvoiceRenderer";
 
+export type { ReceiptData };
+
 const TABS: { id: SalesDocumentType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "sales_invoice", label: "Sales Invoices", icon: Receipt },
   { id: "quotation", label: "Quotation / Estimate", icon: FileText },
@@ -123,9 +126,18 @@ export default function Sales() {
     to: new Date(),
   });
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<"docDate" | "grandTotal">("docDate");
+  const [sortField, setSortField] = useState<"docDate" | "grandTotal" | "documentNumber" | "partyName" | "status">("docDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+
+  const handleSort = (field: "docDate" | "grandTotal" | "documentNumber" | "partyName" | "status") => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("desc");
+    }
+  };
 
   const handleDatePresetChange = (preset: string) => {
     setSelectedPreset(preset);
@@ -269,13 +281,21 @@ export default function Sales() {
         return true;
       })
       .sort((a, b) => {
+        let cmp = 0;
         if (sortField === "docDate") {
-          const timeA = new Date(a.docDate).getTime();
-          const timeB = new Date(b.docDate).getTime();
-          return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
-        } else {
-          return sortOrder === "asc" ? a.grandTotal - b.grandTotal : b.grandTotal - a.grandTotal;
+          const timeA = new Date(a.docDate).getTime() || 0;
+          const timeB = new Date(b.docDate).getTime() || 0;
+          cmp = timeA - timeB;
+        } else if (sortField === "grandTotal") {
+          cmp = (Number(a.grandTotal) || 0) - (Number(b.grandTotal) || 0);
+        } else if (sortField === "documentNumber") {
+          cmp = (a.documentNumber || "").localeCompare(b.documentNumber || "");
+        } else if (sortField === "partyName") {
+          cmp = (a.partyName || "").localeCompare(b.partyName || "");
+        } else if (sortField === "status") {
+          cmp = (a.status || "").localeCompare(b.status || "");
         }
+        return sortOrder === "asc" ? cmp : -cmp;
       });
   }, [documents, searchQuery, statusFilter, dateRange, sortField, sortOrder]);
 
@@ -360,6 +380,81 @@ export default function Sales() {
     await documentsService.saveDocument(updatedDoc, user?.id);
     toast.success(`Invoice ${doc.documentNumber} marked as ${newStatus.toUpperCase()}`);
     loadDocuments();
+  };
+
+  const handleDuplicate = (doc: BusinessDocument) => {
+    const duplicated: BusinessDocument = {
+      ...doc,
+      id: "",
+      documentNumber: "",
+      docDate: new Date().toISOString().split("T")[0],
+      dueDate: undefined,
+      status: "paid",
+      paidAmount: doc.grandTotal,
+      balanceDue: 0,
+      createdAt: undefined,
+      updatedAt: undefined,
+    };
+    setEditingDoc(duplicated);
+    setCreateModalOpen(true);
+  };
+
+  const handleDownloadPdf = (doc: BusinessDocument) => {
+    downloadExactInvoicePdf({
+      invoiceNumber: doc.documentNumber,
+      docType: doc.docType as UniversalDocType,
+      customerName: doc.partyName,
+      customerPhone: doc.partyPhone,
+      storeName: org?.name || "CredSmart Store",
+      storePhone: org?.phone,
+      totalAmount: doc.grandTotal,
+      subtotal: doc.subtotal,
+      discountAmount: doc.discountTotal ?? 0,
+      tax: doc.taxTotal ?? 0,
+      date: doc.docDate,
+      isEstimate: doc.docType === "quotation",
+      items: doc.items.map((it) => ({
+        name: it.productName,
+        quantity: it.quantity,
+        unit: it.unit,
+        altUnit: it.altUnit,
+        altQty: it.altQty,
+        altUnitConversion: it.altUnitConversion,
+        rate: it.rate,
+        total: it.lineTotal,
+        hsn: it.hsn,
+        taxRate: it.taxRate,
+        batchNo: it.batchNumber,
+        expDate: it.expiryDate,
+      })),
+    });
+  };
+
+  const handleWhatsAppShare = (doc: BusinessDocument) => {
+    shareInvoicePdfToWhatsApp({
+      invoiceNumber: doc.documentNumber,
+      customerName: doc.partyName,
+      customerPhone: doc.partyPhone,
+      storeName: org?.name || "CredSmart Store",
+      storePhone: org?.phone,
+      totalAmount: doc.grandTotal,
+      date: doc.docDate,
+      isEstimate: doc.docType === "quotation",
+      items: doc.items.map((it) => ({
+        name: it.productName,
+        quantity: it.quantity,
+        unit: it.unit,
+        altUnit: it.altUnit,
+        altQty: it.altQty,
+        altUnitConversion: it.altUnitConversion,
+        rate: it.rate,
+        total: it.lineTotal,
+        hsn: it.hsn,
+        taxRate: it.taxRate,
+        batchNo: it.batchNumber,
+        expDate: it.expiryDate,
+      })),
+    });
   };
 
   const handleOpenReceipt = (doc: BusinessDocument) => {
@@ -459,8 +554,8 @@ export default function Sales() {
 
   return (
     <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden font-sans">
-      {/* Sub-document Tabs Navigation Bar - Frosted Glass Ribbon */}
-      <div className="w-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
+      {/* Sub-document Tabs Navigation Bar - Hairline Stripe/Linear Ribbon */}
+      <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
         <div className="flex items-center gap-1.5 min-w-max">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -470,10 +565,10 @@ export default function Sales() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative cursor-pointer active:scale-95",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-95",
                   isActive
-                    ? "bg-blue-600 dark:bg-blue-600 text-white shadow-md shadow-blue-500/25 border border-blue-500"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -489,11 +584,11 @@ export default function Sales() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
               {activeTabMeta.label}
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-[10.5px] font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>LIVE GST SYNC</span>
             </span>
           </div>
@@ -505,11 +600,11 @@ export default function Sales() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-foreground hover:bg-muted/80 shadow-2xs rounded-xl"
+                  className="h-8 px-2.5 text-xs font-medium gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-2xs rounded-lg"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Reports</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
+                  <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -532,21 +627,21 @@ export default function Sales() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Settings Cog with Red Notification Dot */}
+            {/* Settings Cog with Notification Dot */}
             <button
               onClick={() => setSettingsModalOpen(true)}
-              className="relative p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+              className="relative p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer"
               title="Sales & Invoicing Preferences"
               aria-label="Sales Preferences"
             >
               <Settings className="w-3.5 h-3.5" />
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
             </button>
 
             {/* Keyboard Shortcuts Button */}
             <button
               onClick={() => setShortcutsModalOpen(true)}
-              className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+              className="p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer"
               title="Keyboard Shortcuts"
               aria-label="Keyboard Shortcuts"
             >
@@ -558,178 +653,183 @@ export default function Sales() {
         {/* Mobile Compact 4-Col KPI Mini Strip (Mobile Only) */}
         <div className="grid grid-cols-4 sm:hidden gap-1.5 shrink-0">
           <div
-            onClick={() => setStatusFilter("all")}
+            onClick={() => setStatusFilter(statusFilter === "all" ? "all" : "all")}
             className={cn(
-              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-white dark:bg-slate-900 text-center shadow-2xs active:scale-95",
               statusFilter === "all"
-                ? "ring-1.5 ring-blue-500/50 bg-blue-500/10 border-blue-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-slate-900 dark:ring-white border-slate-900 dark:border-white bg-slate-50 dark:bg-slate-800/50"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
+            <div className="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               Volume
             </div>
-            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN")}
+            <div className="text-xs font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight truncate mt-0.5">
+              ₹{Number(metrics.totalAmount ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
           </div>
 
           <div
-            onClick={() => setStatusFilter("paid")}
+            onClick={() => setStatusFilter(statusFilter === "paid" ? "all" : "paid")}
             className={cn(
-              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-white dark:bg-slate-900 text-center shadow-2xs active:scale-95",
               statusFilter === "paid"
-                ? "ring-1.5 ring-emerald-500/50 bg-emerald-500/10 border-emerald-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-emerald-600 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[8.5px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
+            <div className="text-[9px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
               Settled
             </div>
-            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN")}
+            <div className="text-xs font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400 tracking-tight truncate mt-0.5">
+              ₹{Number(metrics.paidAmount ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
           </div>
 
           <div
-            onClick={() => setStatusFilter("unpaid")}
+            onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
             className={cn(
-              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-white dark:bg-slate-900 text-center shadow-2xs active:scale-95",
               statusFilter === "unpaid"
-                ? "ring-1.5 ring-rose-500/50 bg-rose-500/10 border-rose-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-rose-600 border-rose-600 bg-rose-50/50 dark:bg-rose-950/30"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">
-              Dues
+            <div className="text-[9px] font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400 truncate">
+              Receivables
             </div>
-            <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
-              ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN")}
+            <div className="text-xs font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
+              ₹{Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
           </div>
 
           <div
-            onClick={() => setStatusFilter("cancelled")}
+            onClick={() => setStatusFilter(statusFilter === "cancelled" ? "all" : "cancelled")}
             className={cn(
-              "p-1.5 rounded-xl border transition-all cursor-pointer select-none bg-card/90 relative overflow-hidden text-center",
+              "p-2 rounded-xl border transition-all cursor-pointer select-none bg-white dark:bg-slate-900 text-center shadow-2xs active:scale-95",
               statusFilter === "cancelled"
-                ? "ring-1.5 ring-slate-500/50 bg-slate-500/10 border-slate-500/40"
-                : "border-border/70"
+                ? "ring-1.5 ring-slate-600 border-slate-600 bg-slate-100 dark:bg-slate-800"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[8.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono truncate">
-              Void
+            <div className="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Voided
             </div>
-            <div className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
-              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN")}` : "—"}
+            <div className="text-xs font-bold font-mono tabular-nums text-slate-700 dark:text-slate-300 tracking-tight truncate mt-0.5">
+              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
             </div>
           </div>
         </div>
 
-        {/* Metric Cards - 3D Glass Cards (Tablet / Desktop) */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 shrink-0">
+        {/* Metric Cards - Hairline Stripe/Linear KPI Cards (Tablet / Desktop) */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
           {/* Total Volume */}
           <div
-            onClick={() => setStatusFilter("all")}
+            onClick={() => setStatusFilter(statusFilter === "all" ? "all" : "all")}
             className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "p-3.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs flex flex-col justify-between cursor-pointer transition-all select-none hover:border-slate-300 dark:hover:border-slate-700",
               statusFilter === "all"
-                ? "ring-2 ring-blue-500/40 bg-blue-50/30 dark:bg-blue-950/30"
-                : "hover:scale-[1.01]"
+                ? "ring-1.5 ring-slate-900 dark:ring-white border-slate-900 dark:border-white bg-slate-50/50 dark:bg-slate-800/30"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 font-mono uppercase tracking-wider truncate">
-              <Receipt className="w-3.5 h-3.5 shrink-0" />
-              <span>Total Volume</span>
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="font-semibold">Total Volume</span>
+              <Receipt className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN")}
+            <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+              ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">All outward documents</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">All outward documents</p>
           </div>
 
-          {/* Paid */}
+          {/* Settled */}
           <div
-            onClick={() => setStatusFilter("paid")}
+            onClick={() => setStatusFilter(statusFilter === "paid" ? "all" : "paid")}
             className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "p-3.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs flex flex-col justify-between cursor-pointer transition-all select-none hover:border-slate-300 dark:hover:border-slate-700",
               statusFilter === "paid"
-                ? "ring-2 ring-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/30"
-                : "hover:scale-[1.01]"
+                ? "ring-1.5 ring-emerald-600 border-emerald-600 bg-emerald-50/30 dark:bg-emerald-950/20"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider truncate">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Settled</span>
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <span className="font-semibold">Settled</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN")}
+            <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+              ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cash / UPI / Bank cleared</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Cash / UPI / Bank cleared</p>
           </div>
 
-          {/* Unpaid */}
+          {/* Receivables */}
           <div
-            onClick={() => setStatusFilter("unpaid")}
+            onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
             className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "p-3.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs flex flex-col justify-between cursor-pointer transition-all select-none hover:border-slate-300 dark:hover:border-slate-700",
               statusFilter === "unpaid"
-                ? "ring-2 ring-rose-500/40 bg-rose-50/30 dark:bg-rose-950/30"
-                : "hover:scale-[1.01]"
+                ? "ring-1.5 ring-rose-600 border-rose-600 bg-rose-50/30 dark:bg-rose-950/20"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-rose-500 to-red-600 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase tracking-wider truncate">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-              <span>Receivables</span>
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400">
+              <span className="font-semibold">Receivables</span>
+              <AlertCircle className="w-4 h-4 text-rose-500" />
             </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN")}
+            <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight">
+              ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Pending customer credit</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pending customer credit</p>
           </div>
 
-          {/* Cancelled */}
+          {/* Voided */}
           <div
-            onClick={() => setStatusFilter("cancelled")}
+            onClick={() => setStatusFilter(statusFilter === "cancelled" ? "all" : "cancelled")}
             className={cn(
-              "glass-card-3d p-2.5 sm:p-3.5 transition-all cursor-pointer relative overflow-hidden group select-none",
+              "p-3.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs flex flex-col justify-between cursor-pointer transition-all select-none hover:border-slate-300 dark:hover:border-slate-700",
               statusFilter === "cancelled"
-                ? "ring-2 ring-slate-500/40 bg-slate-50/30 dark:bg-slate-900/30"
-                : "hover:scale-[1.01]"
+                ? "ring-1.5 ring-slate-600 border-slate-600 bg-slate-50/50 dark:bg-slate-800/30"
+                : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-400 via-slate-500 to-slate-700 rounded-l-2xl shadow-[0_0_8px_rgba(100,116,139,0.5)]" />
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider truncate">
-              <XCircle className="w-3.5 h-3.5 shrink-0" />
-              <span>Voided</span>
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="font-semibold">Voided</span>
+              <XCircle className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="mt-0.5 sm:mt-1 text-sm sm:text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight truncate">
-              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹ ${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN")}` : "—"}
+            <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+              {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹ ${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cancelled vouchers</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Cancelled vouchers</p>
           </div>
         </div>
 
-        {/* Filter Bar - Frosted Glass Container */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 p-2 sm:p-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 glass-panel">
-          <div className="flex flex-1 items-center gap-1.5 sm:gap-2 flex-wrap">
+        {/* Filter Bar - Hairline Stripe/Linear Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs shrink-0">
+          <div className="flex flex-1 items-center gap-2 flex-wrap">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[140px] max-w-sm">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <div className="relative flex-1 min-w-[150px] max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <Input
-                placeholder="Search by party, phone, invoice..."
+                placeholder="Search party, phone, invoice..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-7 sm:pl-8 h-8 sm:h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl"
+                className="pl-8 pr-7 h-8.5 text-xs bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 dark:focus-visible:ring-white"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             {/* Date Range Preset Selector */}
             <Select value={selectedPreset} onValueChange={handleDatePresetChange}>
-              <SelectTrigger className="h-8 sm:h-9 w-[110px] sm:w-[140px] text-[11px] sm:text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl">
+              <SelectTrigger className="h-8.5 w-[115px] sm:w-[135px] text-xs bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent>
@@ -743,7 +843,7 @@ export default function Sales() {
 
             {/* Status Filter Selector */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 sm:h-9 w-[95px] sm:w-[120px] text-[11px] sm:text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl">
+              <SelectTrigger className="h-8.5 w-[100px] sm:w-[120px] text-xs bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -754,21 +854,44 @@ export default function Sales() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Quick Status Filter Tabs on Large Screens */}
+            <div className="hidden xl:flex items-center gap-1 border-l border-slate-200/80 dark:border-slate-800 pl-2">
+              {[
+                { id: "all", label: "All" },
+                { id: "paid", label: "Paid" },
+                { id: "unpaid", label: "Unpaid / Due" },
+                { id: "partially_paid", label: "Partial" },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  onClick={() => setStatusFilter(pill.id)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer",
+                    statusFilter === pill.id
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                  )}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Bulk Actions Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 sm:h-9 px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold gap-1.5 border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-lg sm:rounded-xl shadow-xs"
+                  className="h-8.5 px-2.5 text-xs font-medium gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg shadow-2xs"
                 >
-                  <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Layers className="w-3.5 h-3.5 text-slate-400" />
                   <span className="hidden sm:inline">Bulk Actions</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -802,10 +925,10 @@ export default function Sales() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Glowing Create Sales Invoice Button */}
+            {/* High-Contrast Create Sales Invoice Button */}
             <button
               onClick={handleOpenCreateDoc}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 h-8.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -813,23 +936,23 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Transactions Table Card / Mobile Card Stream - 3D Glass Container */}
-        <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
+        {/* Transactions Table Card / Mobile Card Stream Container */}
+        <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2 pb-36 space-y-2 scrollbar-thin overscroll-y-contain">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-3 pb-36 space-y-2.5 scrollbar-thin overscroll-y-contain">
             {filteredDocuments.length === 0 ? (
               <div className="py-12 text-center space-y-2.5">
-                <div className="w-12 h-12 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mx-auto">
                   <FileText className="w-6 h-6 stroke-[1.5]" />
                 </div>
-                <p className="text-xs font-bold text-foreground">No Transactions Found</p>
-                <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">No Transactions Found</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
                   No records match current filter. Tap below to create your first {activeTabMeta.label.replace(/s$/, "")}.
                 </p>
                 <Button
                   onClick={handleOpenCreateDoc}
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 mt-1 gap-1.5 shadow-xs"
+                  className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-xs font-semibold px-3 py-1.5 mt-1 gap-1.5 shadow-2xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -842,50 +965,65 @@ export default function Sales() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-2.5 rounded-xl border transition-all bg-card/95 space-y-1.5 shadow-2xs active:scale-[0.99]",
+                      "p-3.5 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2.5 shadow-2xs",
                       isSelected
-                        ? "border-indigo-500 ring-1.5 ring-indigo-500/30 bg-indigo-50/20"
-                        : "border-border/80 hover:border-border"
+                        ? "border-blue-500 ring-1 ring-blue-500/30 bg-blue-50/10 dark:bg-blue-950/20"
+                        : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     )}
                   >
                     {/* Line 1: Invoice Number + Status Badge + Grand Total */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-mono font-bold text-xs bg-muted/90 px-1.5 py-0.5 rounded border border-border/60 text-foreground truncate">
+                        <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 text-slate-900 dark:text-white truncate">
                           {doc.documentNumber}
                         </span>
+                        {/* Micro-dot Status Pill with >=44px touch target */}
                         <button
                           type="button"
                           onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
                           title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
-                          className={cn(
-                            "px-1.5 py-0.2 rounded-full text-[9px] font-bold capitalize cursor-pointer transition-all active:scale-95 shrink-0",
-                            doc.status === "paid" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                            doc.status === "partial" && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                            doc.status === "unpaid" && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                            doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
-                            doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
-                          )}
+                          className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center p-1 -m-1 cursor-pointer active:scale-95 transition-transform"
                         >
-                          {doc.status}
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border",
+                              doc.status === "paid" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60",
+                              doc.status === "partial" && "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60",
+                              doc.status === "unpaid" && "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",
+                              doc.status === "draft" && "bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+                              doc.status === "cancelled" && "bg-slate-100 text-slate-500 line-through border-slate-200"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                doc.status === "paid" && "bg-emerald-500",
+                                doc.status === "partial" && "bg-amber-500",
+                                doc.status === "unpaid" && "bg-rose-500",
+                                doc.status === "draft" && "bg-slate-400",
+                                doc.status === "cancelled" && "bg-slate-400"
+                              )}
+                            />
+                            <span className="capitalize">{doc.status}</span>
+                          </span>
                         </button>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-black font-mono text-foreground">
-                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        <span className="text-sm sm:text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     </div>
 
                     {/* Line 2: Customer Name + Date + Quick Actions */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs text-foreground truncate">{doc.partyName}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.2">
+                        <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{doc.partyName}</p>
+                        <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           <span>{doc.docDate}</span>
                           <span>•</span>
-                          <span className={doc.status === "unpaid" ? "text-rose-500 font-semibold" : ""}>{calculateDueInText(doc)}</span>
+                          <span className={doc.status === "unpaid" ? "text-rose-600 font-semibold" : ""}>{calculateDueInText(doc)}</span>
                         </div>
                       </div>
 
@@ -893,89 +1031,41 @@ export default function Sales() {
                         {/* Print */}
                         <button
                           onClick={() => handleOpenReceipt(doc)}
-                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all cursor-pointer"
+                          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
                           title="Print Invoice"
+                          aria-label="Print Invoice"
                         >
-                          <Printer className="w-3.5 h-3.5" />
+                          <Printer className="w-4 h-4" />
                         </button>
 
                         {/* Download PDF */}
                         <button
-                          onClick={() => {
-                            downloadExactInvoicePdf({
-                              invoiceNumber: doc.documentNumber,
-                              docType: doc.docType as UniversalDocType,
-                              customerName: doc.partyName,
-                              customerPhone: doc.partyPhone,
-                              storeName: org?.name || "CredSmart Store",
-                              storePhone: org?.phone,
-                              totalAmount: doc.grandTotal,
-                              subtotal: doc.subtotal,
-                              discountAmount: doc.discountTotal ?? 0,
-                              tax: doc.taxTotal ?? 0,
-                              date: doc.docDate,
-                              isEstimate: doc.docType === "quotation",
-                              items: doc.items.map((it) => ({
-                                name: it.productName,
-                                quantity: it.quantity,
-                                unit: it.unit,
-                                altUnit: it.altUnit,
-                                altQty: it.altQty,
-                                altUnitConversion: it.altUnitConversion,
-                                rate: it.rate,
-                                total: it.lineTotal,
-                                hsn: it.hsn,
-                                taxRate: it.taxRate,
-                                batchNo: it.batchNumber,
-                                expDate: it.expiryDate,
-                              })),
-                            });
-                          }}
-                          className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-amber-600 dark:text-amber-400 active:scale-95 transition-all cursor-pointer"
+                          onClick={() => handleDownloadPdf(doc)}
+                          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
                           title="Download PDF"
+                          aria-label="Download PDF"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          <Download className="w-4 h-4" />
                         </button>
 
                         {/* WhatsApp */}
                         <button
-                          onClick={() => {
-                            shareInvoicePdfToWhatsApp({
-                              invoiceNumber: doc.documentNumber,
-                              customerName: doc.partyName,
-                              customerPhone: doc.partyPhone,
-                              storeName: org?.name || "CredSmart Store",
-                              storePhone: org?.phone,
-                              totalAmount: doc.grandTotal,
-                              date: doc.docDate,
-                              isEstimate: doc.docType === "quotation",
-                              items: doc.items.map((it) => ({
-                                name: it.productName,
-                                quantity: it.quantity,
-                                unit: it.unit,
-                                altUnit: it.altUnit,
-                                altQty: it.altQty,
-                                altUnitConversion: it.altUnitConversion,
-                                rate: it.rate,
-                                total: it.lineTotal,
-                                hsn: it.hsn,
-                                taxRate: it.taxRate,
-                                batchNo: it.batchNumber,
-                                expDate: it.expiryDate,
-                              })),
-                            });
-                          }}
-                          className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer"
+                          onClick={() => handleWhatsAppShare(doc)}
+                          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
                           title="WhatsApp Share"
+                          aria-label="WhatsApp Share"
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Share2 className="w-4 h-4" />
                         </button>
 
                         {/* More Options Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground active:scale-95 transition-all cursor-pointer">
-                              <MoreVertical className="w-3.5 h-3.5" />
+                            <button
+                              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                              aria-label="More Options"
+                            >
+                              <MoreVertical className="w-4 h-4" />
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52">
@@ -983,7 +1073,7 @@ export default function Sales() {
                               onClick={() => handleOpenReceipt(doc)}
                               className="gap-2 font-semibold"
                             >
-                              <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                              <Printer className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                               <span>View / Print Receipt</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -1057,7 +1147,7 @@ export default function Sales() {
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDelete(doc.id)}
+                              onClick={() => handleDeleteDocument(doc)}
                               className="gap-2 text-rose-600 dark:text-rose-400 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1074,7 +1164,7 @@ export default function Sales() {
           </div>
 
           {/* Mobile Pagination */}
-          <div className="md:hidden">
+          <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
             <PaginationBar
               page={page}
               totalPages={totalPages}
@@ -1089,11 +1179,11 @@ export default function Sales() {
             />
           </div>
 
-          {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+          {/* DESKTOP VIEW: High-Density Stripe/Linear Data Table (Visible on md: and above) */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse min-w-[640px]">
-              <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs z-10">
-                <tr className="text-slate-700 dark:text-slate-300 font-semibold border-b border-border text-[10px] sm:text-[11px] uppercase tracking-wider font-mono">
+              <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-[10.5px] uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400 z-10">
+                <tr>
                   <th className="py-2.5 px-3 w-10">
                     <input
                       type="checkbox"
@@ -1102,46 +1192,62 @@ export default function Sales() {
                         selectedDocIds.size === filteredDocuments.length
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded border-border"
+                      className="rounded border-slate-300 dark:border-slate-700 text-slate-900 focus:ring-slate-900 cursor-pointer"
                     />
                   </th>
                   <th
-                    onClick={() => {
-                      setSortField("docDate");
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    }}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                    onClick={() => handleSort("docDate")}
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
                   >
                     <div className="flex items-center gap-1">
                       <span>Date</span>
-                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                      <ArrowUpDown className={cn("w-3 h-3", sortField === "docDate" ? "text-slate-900 dark:text-white" : "text-slate-400")} />
                     </div>
                   </th>
-                  <th className="py-3 px-3">
-                    {activeTab === "sales_return" || activeTab === "credit_note" ? "Return Number" : "Invoice Number"}
+                  <th
+                    onClick={() => handleSort("documentNumber")}
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>{activeTab === "sales_return" || activeTab === "credit_note" ? "Return Number" : "Invoice Number"}</span>
+                      <ArrowUpDown className={cn("w-3 h-3", sortField === "documentNumber" ? "text-slate-900 dark:text-white" : "text-slate-400")} />
+                    </div>
                   </th>
-                  <th className="py-3 px-3">Party Name</th>
-                  <th className="py-3 px-3">
+                  <th
+                    onClick={() => handleSort("partyName")}
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Party Name</span>
+                      <ArrowUpDown className={cn("w-3 h-3", sortField === "partyName" ? "text-slate-900 dark:text-white" : "text-slate-400")} />
+                    </div>
+                  </th>
+                  <th className="py-2.5 px-3">
                     {activeTab === "sales_return" || activeTab === "credit_note" ? "Return Details" : "Due In"}
                   </th>
                   <th
-                    onClick={() => {
-                      setSortField("grandTotal");
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    }}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground select-none"
+                    onClick={() => handleSort("grandTotal")}
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
                   >
                     <div className="flex items-center gap-1">
                       <span>Amount</span>
-                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                      <ArrowUpDown className={cn("w-3 h-3", sortField === "grandTotal" ? "text-slate-900 dark:text-white" : "text-slate-400")} />
                     </div>
                   </th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 w-16 text-right">Actions</th>
+                  <th
+                    onClick={() => handleSort("status")}
+                    className="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Status</span>
+                      <ArrowUpDown className={cn("w-3 h-3", sortField === "status" ? "text-slate-900 dark:text-white" : "text-slate-400")} />
+                    </div>
+                  </th>
+                  <th className="py-2.5 px-3 w-40 text-right">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-border/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {paginatedDocs.length > 0 ? (
                   paginatedDocs.map((doc) => {
                     const isSelected = selectedDocIds.has(doc.id);
@@ -1149,45 +1255,45 @@ export default function Sales() {
                       <tr
                         key={doc.id}
                         className={cn(
-                          "hover:bg-muted/30 transition-colors group",
-                          isSelected && "bg-indigo-50/30 dark:bg-indigo-950/20"
+                          "py-2.5 px-3 border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group",
+                          isSelected && "bg-blue-50/20 dark:bg-blue-950/20"
                         )}
                       >
-                        <td className="py-3 px-4">
+                        <td className="py-2.5 px-3">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleToggleSelect(doc.id)}
-                            className="rounded border-border"
+                            className="rounded border-slate-300 dark:border-slate-700 text-slate-900 focus:ring-slate-900 cursor-pointer"
                           />
                         </td>
-                        <td className="py-3 px-3 font-mono text-muted-foreground">
+                        <td className="py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {doc.docDate}
                         </td>
-                        <td className="py-3 px-3">
-                          <span className="font-mono font-semibold text-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50 text-[11px]">
+                        <td className="py-2.5 px-3">
+                          <span className="font-mono font-semibold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-[11px] whitespace-nowrap">
                             {doc.documentNumber}
                           </span>
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3">
                           <div>
-                            <span className="font-semibold text-foreground">{doc.partyName}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{doc.partyName}</span>
                             {doc.partyPhone && (
-                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                 {doc.partyPhone}
                               </p>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3 whitespace-nowrap">
                           {activeTab === "sales_return" || activeTab === "credit_note" ? (
                             <div className="space-y-0.5">
-                              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
                                 <RotateCcw className="w-2.5 h-2.5 shrink-0" />
                                 <span className="truncate max-w-[140px]">{doc.returnReason || "Sales Return"}</span>
                               </span>
                               {doc.originalInvoiceNumber && (
-                                <p className="text-[10px] text-muted-foreground font-mono">
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                                   Ref: {doc.originalInvoiceNumber}
                                 </p>
                               )}
@@ -1200,122 +1306,77 @@ export default function Sales() {
                                   ? "text-emerald-600 dark:text-emerald-400"
                                   : calculateDueInText(doc).includes("Overdue")
                                   ? "text-rose-600 font-semibold"
-                                  : "text-muted-foreground"
+                                  : "text-slate-500 dark:text-slate-400"
                               )}
                             >
                               {calculateDueInText(doc)}
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-3 font-mono font-bold text-foreground">
-                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        <td className="py-2.5 px-3 font-mono tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                          ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          {/* Micro-dot Status Pill Button */}
                           <button
                             type="button"
                             onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
                             title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
                             className={cn(
-                              "px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xs",
-                              doc.status === "paid" && "bg-emerald-100 hover:bg-emerald-200 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800",
-                              doc.status === "partial" && "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800",
-                              doc.status === "unpaid" && "bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800",
-                              doc.status === "draft" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300",
-                              doc.status === "cancelled" && "bg-gray-100 text-gray-500 line-through"
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border cursor-pointer active:scale-95 transition-all shadow-2xs",
+                              doc.status === "paid" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100",
+                              doc.status === "partial" && "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100",
+                              doc.status === "unpaid" && "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-100",
+                              doc.status === "draft" && "bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100",
+                              doc.status === "cancelled" && "bg-slate-100 text-slate-500 line-through border-slate-200 hover:bg-slate-200"
                             )}
                           >
-                            {doc.status}
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                doc.status === "paid" && "bg-emerald-500",
+                                doc.status === "partial" && "bg-amber-500",
+                                doc.status === "unpaid" && "bg-rose-500",
+                                doc.status === "draft" && "bg-slate-400",
+                                doc.status === "cancelled" && "bg-slate-400"
+                              )}
+                            />
+                            <span className="capitalize">{doc.status}</span>
                           </button>
                         </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* 1. Print Receipt - always visible indigo */}
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            {/* 1. Print Receipt */}
                             <button
                               type="button"
                               onClick={() => handleOpenReceipt(doc)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
+                              className="p-1.5 rounded-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer shadow-2xs"
                               title="Print / View Receipt"
+                              aria-label="Print Invoice"
                             >
-                              <Printer className="w-3 h-3 shrink-0" />
-                              <span>Print</span>
+                              <Printer className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* 2. Download PDF - always visible amber */}
+                            {/* 2. Download PDF */}
                             <button
                               type="button"
-                              onClick={() => {
-                                downloadExactInvoicePdf({
-                                  invoiceNumber: doc.documentNumber,
-                                  docType: doc.docType as UniversalDocType,
-                                  customerName: doc.partyName,
-                                  customerPhone: doc.partyPhone,
-                                  storeName: org?.name || "CredSmart Store",
-                                  storePhone: org?.phone,
-                                  totalAmount: doc.grandTotal,
-                                  subtotal: doc.subtotal,
-                                  discountAmount: doc.discountTotal ?? 0,
-                                  tax: doc.taxTotal ?? 0,
-                                  date: doc.docDate,
-                                  isEstimate: doc.docType === "quotation",
-                                  items: doc.items.map((it) => ({
-                                    name: it.productName,
-                                    quantity: it.quantity,
-                                    unit: it.unit,
-                                    altUnit: it.altUnit,
-                                    altQty: it.altQty,
-                                    altUnitConversion: it.altUnitConversion,
-                                    rate: it.rate,
-                                    total: it.lineTotal,
-                                    hsn: it.hsn,
-                                    taxRate: it.taxRate,
-                                    batchNo: it.batchNumber,
-                                    expDate: it.expiryDate,
-                                  })),
-                                });
-                              }}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
+                              onClick={() => handleDownloadPdf(doc)}
+                              className="p-1.5 rounded-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer shadow-2xs"
                               title="Download PDF"
+                              aria-label="Download PDF"
                             >
-                              <Download className="w-3 h-3 shrink-0" />
-                              <span>PDF</span>
+                              <Download className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* 3. WhatsApp PDF Share - always visible emerald */}
+                            {/* 3. WhatsApp Share */}
                             <button
                               type="button"
-                              onClick={() => {
-                                shareInvoicePdfToWhatsApp({
-                                  invoiceNumber: doc.documentNumber,
-                                  customerName: doc.partyName,
-                                  customerPhone: doc.partyPhone,
-                                  storeName: org?.name || "CredSmart Store",
-                                  storePhone: org?.phone,
-                                  totalAmount: doc.grandTotal,
-                                  date: doc.docDate,
-                                  isEstimate: doc.docType === "quotation",
-                                  items: doc.items.map((it) => ({
-                                    name: it.productName,
-                                    quantity: it.quantity,
-                                    unit: it.unit,
-                                    altUnit: it.altUnit,
-                                    altQty: it.altQty,
-                                    altUnitConversion: it.altUnitConversion,
-                                    rate: it.rate,
-                                    total: it.lineTotal,
-                                    hsn: it.hsn,
-                                    taxRate: it.taxRate,
-                                    batchNo: it.batchNumber,
-                                    expDate: it.expiryDate,
-                                  })),
-                                });
-                              }}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer text-[11px] font-semibold"
+                              onClick={() => handleWhatsAppShare(doc)}
+                              className="p-1.5 rounded-md border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer shadow-2xs"
                               title="Share PDF to WhatsApp"
+                              aria-label="Share PDF to WhatsApp"
                             >
-                              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current shrink-0" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                              </svg>
-                              <span>WA</span>
+                              <Share2 className="w-3.5 h-3.5" />
                             </button>
 
                             {/* 4. Dropdown Menu */}
@@ -1323,14 +1384,15 @@ export default function Sales() {
                               <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer shadow-2xs"
+                                  aria-label="More actions"
                                 >
                                   <MoreVertical className="w-3.5 h-3.5" />
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-52">
                                 <DropdownMenuItem onClick={() => handleOpenReceipt(doc)} className="gap-2 font-semibold">
-                                  <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                                  <Printer className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                                   <span>View / Print Receipt</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleOpenEway(doc)} className="gap-2 font-semibold text-indigo-600 dark:text-indigo-400">
@@ -1338,68 +1400,14 @@ export default function Sales() {
                                   <span>Generate / View E-Way Bill</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    downloadExactInvoicePdf({
-                                      invoiceNumber: doc.documentNumber,
-                                      docType: doc.docType as UniversalDocType,
-                                      customerName: doc.partyName,
-                                      customerPhone: doc.partyPhone,
-                                      storeName: org?.name || "CredSmart Store",
-                                      storePhone: org?.phone,
-                                      totalAmount: doc.grandTotal,
-                                      subtotal: doc.subtotal,
-                                      discountAmount: doc.discountTotal ?? 0,
-                                      tax: doc.taxTotal ?? 0,
-                                      date: doc.docDate,
-                                      isEstimate: doc.docType === "quotation",
-                                      items: doc.items.map((it) => ({
-                                        name: it.productName,
-                                        quantity: it.quantity,
-                                        unit: it.unit,
-                                        altUnit: it.altUnit,
-                                        altQty: it.altQty,
-                                        altUnitConversion: it.altUnitConversion,
-                                        rate: it.rate,
-                                        total: it.lineTotal,
-                                        hsn: it.hsn,
-                                        taxRate: it.taxRate,
-                                        batchNo: it.batchNumber,
-                                        expDate: it.expiryDate,
-                                      })),
-                                    });
-                                  }}
+                                  onClick={() => handleDownloadPdf(doc)}
                                   className="gap-2 font-semibold text-amber-600 dark:text-amber-400 cursor-pointer"
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                   <span>Download PDF</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    shareInvoicePdfToWhatsApp({
-                                      invoiceNumber: doc.documentNumber,
-                                      customerName: doc.partyName,
-                                      customerPhone: doc.partyPhone,
-                                      storeName: org?.name || "CredSmart Store",
-                                      storePhone: org?.phone,
-                                      totalAmount: doc.grandTotal,
-                                      date: doc.docDate,
-                                      isEstimate: doc.docType === "quotation",
-                                      items: doc.items.map((it) => ({
-                                        name: it.productName,
-                                        quantity: it.quantity,
-                                        unit: it.unit,
-                                        altUnit: it.altUnit,
-                                        altQty: it.altQty,
-                                        altUnitConversion: it.altUnitConversion,
-                                        rate: it.rate,
-                                        total: it.lineTotal,
-                                        hsn: it.hsn,
-                                        taxRate: it.taxRate,
-                                        batchNo: it.batchNumber,
-                                        expDate: it.expiryDate,
-                                      })),
-                                    });
-                                  }}
+                                  onClick={() => handleWhatsAppShare(doc)}
                                   className="gap-2 font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
                                 >
                                   <Share2 className="w-3.5 h-3.5" />
@@ -1454,12 +1462,20 @@ export default function Sales() {
                                       setEditingDoc(doc);
                                       setCreateModalOpen(true);
                                     }}
-                                    className="gap-2 font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
+                                    className="gap-2 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                     <span>Edit Document</span>
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem
+                                  onClick={() => handleDuplicate(doc)}
+                                  className="gap-2"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Duplicate Invoice</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteDocument(doc)}
                                   className="gap-2 text-rose-600 cursor-pointer"
@@ -1475,34 +1491,19 @@ export default function Sales() {
                     );
                   })
                 ) : (
-                  // Empty State matching Capture4.PNG exactly
                   <tr>
                     <td colSpan={8} className="py-20 text-center">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
-                        {/* Empty Icon matching Capture4.PNG */}
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400">
-                          <svg
-                            className="w-10 h-10 stroke-current"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="8" y1="13" x2="16" y2="13" />
-                            <line x1="8" y1="17" x2="12" y2="17" />
-                            <path d="M16 17l4 4m0-4l-4 4" />
-                          </svg>
+                        <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400">
+                          <FileText className="w-7 h-7 stroke-[1.5]" />
                         </div>
-                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                           No Transactions Matching the current filter
                         </p>
                         <Button
                           onClick={handleOpenCreateDoc}
                           size="sm"
-                          className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs gap-1 mt-1"
+                          className="text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-2xs gap-1.5 mt-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -1515,7 +1516,7 @@ export default function Sales() {
             </table>
 
             {/* Desktop Pagination */}
-            <div className="hidden md:block">
+            <div className="hidden md:block border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
               <PaginationBar
                 page={page}
                 totalPages={totalPages}
@@ -1533,14 +1534,14 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Floating Help (?) Button at bottom right matching Capture4 */}
+      {/* Floating Help (?) Button at bottom right */}
       <button
         onClick={() => setShortcutsModalOpen(true)}
-        className="fixed bottom-5 right-5 w-10 h-10 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xl hover:scale-105 transition-all z-30 font-bold"
+        className="fixed bottom-5 right-5 w-9 h-9 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-all z-30 font-bold border border-slate-700/50 cursor-pointer"
         title="Help & Shortcuts"
         aria-label="Help & Shortcuts"
       >
-        <span className="text-base font-semibold">?</span>
+        <span className="text-sm font-semibold">?</span>
       </button>
 
       {/* Sales Invoice & Document Creation Modal */}

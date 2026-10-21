@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T10:05:00Z
+# BRIEFING — 2026-10-21T10:55:00Z
 
 ## Mission
-Production-grade resolution, architectural hardening, and verification of four core invoicing & sync systems in CredSmart: B2B network synchronization, notification de-duplication, default paid invoice status, and mobile invoice success theme rendering.
+Comprehensive, production-grade redesign of the core CredSmart application across both Desktop and Mobile viewports (Dashboard, Sales, Purchases, Items/Inventory, Parties, and the full CRM suite) into a unified, clean, high-density Stripe/Linear aesthetic with crisp typography, hairline borders, and high contrast, while strictly keeping the Create Invoice flow 100% untouched.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -34,6 +34,8 @@ Production-grade resolution, architectural hardening, and verification of four c
 - Active Orchestrator (SWE Light Invoicing & Sync): 6f66cc7c-6e8b-4015-9fe1-c76bd83f96b0
 - Victory Auditor (SWE Light Invoicing & Sync): [to be spawned on victory claim]
 - Active Victory Auditor (SWE Light Invoicing & Sync): 224543fa-a8c9-4a5c-b919-39ff50376951
+- Active Orchestrator (Core Redesign): 2a5bd82c-5175-47f3-a02b-3ee793555f5a
+- Victory Auditor (Core Redesign): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -55,30 +57,28 @@ Production-grade resolution, architectural hardening, and verification of four c
 - 44x44px minimum touch targets and bottom thumb zone optimization
 - Zero TypeScript compiler errors (`tsc --noEmit`)
 - All Vitest test suites must pass without regression
+- Strict exclusion: Create Invoice flow (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) must remain 100% untouched and functional
 
 ## User Context
-- **Last user request**: Production-grade resolution, architectural hardening, and verification of four core invoicing & sync systems (R1 default paid, R2 mobile invoice success, R3 notification deduplication, R4 B2B network sync).
+- **Last user request**: Comprehensive redesign of core CredSmart across Desktop & Mobile (Dashboard, Sales, Purchases, Items, Parties, CRM suite) with Stripe/Linear aesthetic while strictly excluding Create Invoice flow.
 - **Pending clarifications**: none
-- **Delivered results**: Complete. VICTORY CONFIRMED.
+- **Delivered results**: Previous tasks complete. Core Redesign underway.
 
 ## Project Status
-- **Phase**: complete
-- **Routing Decision**: SWE Light path -> teamwork_preview_swe
-- **Active Orchestrator ID**: 6f66cc7c-6e8b-4015-9fe1-c76bd83f96b0 (killed on completion)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_1
-- **Cron 1 (Reporting)**: task-26 (killed)
-- **Cron 2 (Liveness)**: task-28 (killed)
+- **Phase**: in progress
+- **Routing Decision**: General path -> teamwork_preview_orchestrator (multi-page comprehensive redesign across Desktop & Mobile)
+- **Active Orchestrator ID**: 2a5bd82c-5175-47f3-a02b-3ee793555f5a
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_core_redesign
+- **Cron 1 (Reporting)**: task-30 (active)
+- **Cron 2 (Liveness)**: task-32 (active)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
-- **Auditor ID**: 224543fa-a8c9-4a5c-b919-39ff50376951 (killed on completion)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe
+- **Triggered**: no
+- **Verdict**: pending
+- **Auditor ID**: [none]
+- **Working Directory**: [none]
 - **Retry count**: 0
-- **Auditor Report**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe\handoff.md
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_1\DISPATCH.md — SWE Light orchestrator dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe\DISPATCH.md — Victory Auditor dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe\handoff.md — Victory Auditor handoff & report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_core_redesign\DISPATCH.md — Orchestrator dispatch instructions

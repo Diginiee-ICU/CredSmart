@@ -11,6 +11,8 @@ import {
   Search,
   Plus,
   ArrowUpDown,
+  ArrowDownLeft,
+  ArrowUpRight,
   MoreVertical,
   Phone,
   MessageSquare,
@@ -105,6 +107,7 @@ export default function Parties() {
   // Search & Filter
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [partyTab, setPartyTab] = useState<"all" | "customer" | "supplier" | "to_collect" | "to_pay">("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Sorting
@@ -612,6 +615,12 @@ export default function Parties() {
   const filteredParties = useMemo(() => {
     return parties
       .filter((party) => {
+        // Party Type / Balance Tab filter
+        if (partyTab === "customer" && party.partyType !== "customer" && party.partyType !== "both") return false;
+        if (partyTab === "supplier" && party.partyType !== "supplier" && party.partyType !== "both") return false;
+        if (partyTab === "to_collect" && party.balance <= 0) return false;
+        if (partyTab === "to_pay" && party.balance >= 0) return false;
+
         // Category / Type filter
         if (categoryFilter === "customer" && party.partyType !== "customer") return false;
         if (categoryFilter === "supplier" && party.partyType !== "supplier") return false;
@@ -628,7 +637,7 @@ export default function Parties() {
           categoryFilter !== "to_pay" &&
           categoryFilter !== "zero_balance"
         ) {
-          if (party.category.toLowerCase() !== categoryFilter.toLowerCase()) return false;
+          if (party.category?.toLowerCase() !== categoryFilter.toLowerCase()) return false;
         }
 
         // Search text
@@ -657,7 +666,7 @@ export default function Parties() {
         }
         return 0;
       });
-  }, [parties, categoryFilter, search, sortField, sortDirection]);
+  }, [parties, partyTab, categoryFilter, search, sortField, sortDirection]);
 
   // ── Pagination ──────────────────────────────────────────────────────────────
   const {
@@ -701,25 +710,25 @@ setSortDirection("asc");
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden">
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2.5 overflow-hidden bg-slate-50/40 dark:bg-slate-950/40">
       {/* ------------------------------------------------------------- */}
-      {/* HEADER: Parties, [SharedLedger Portal], [Reports v], [Settings], [Keyboard] */}
+      {/* HEADER: Parties Directory, [Reconcile], [SharedLedger], [Reports], [Settings], [Keyboard] */}
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <Users2 className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-slate-900 text-white dark:bg-slate-800 dark:text-blue-400 border border-slate-800 dark:border-slate-700 shadow-2xs">
+              <Users2 className="w-4.5 h-4.5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Parties</h1>
-                <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Parties Directory</h1>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
                   {parties.length} Total
-                </Badge>
+                </span>
               </div>
-              <p className="hidden sm:block text-[11px] text-muted-foreground truncate">
-                Manage customers, suppliers, balances, and real-time SharedLedger synchronization
+              <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                Customer & Supplier ledgers, directional balance tracking, and real-time reconciliation
               </p>
             </div>
           </div>
@@ -733,10 +742,10 @@ setSortDirection("asc");
               }}
               variant="outline"
               size="sm"
-              className="h-7 gap-1 text-[11px] font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2 rounded-lg"
+              className="h-7.5 gap-1 text-[11px] font-bold border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 rounded-lg active:scale-95 shadow-2xs"
             >
-              <ShieldCheck className="w-3 h-3 text-emerald-600" />
-              <span>{auditResult?.integrityScore ?? 100}%</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="font-mono">{auditResult?.integrityScore ?? 100}%</span>
             </Button>
           </div>
         </div>
@@ -751,13 +760,13 @@ setSortDirection("asc");
             }}
             variant="outline"
             size="sm"
-            className="h-8 gap-1 text-xs font-bold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 shadow-2xs px-2.5"
+            className="h-8 gap-1.5 text-xs font-bold border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 dark:text-emerald-300 shadow-2xs px-2.5 rounded-lg"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Reconcile</span>
-            <Badge className="bg-emerald-600 text-white text-[9px] px-1 py-0 h-3.5 uppercase">
+            <span>Reconcile Hub</span>
+            <span className="bg-emerald-600 text-white text-[9px] font-mono px-1.5 py-0.2 rounded font-bold">
               {auditResult?.integrityScore ?? 100}%
-            </Badge>
+            </span>
           </Button>
 
           {/* SharedLedger Portal Button */}
@@ -767,20 +776,20 @@ setSortDirection("asc");
               setShowSharedLedgerModal(true);
             }}
             size="sm"
-            className="h-8 gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-xs font-bold text-xs px-2.5"
+            className="h-8 gap-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-700/60 shadow-2xs font-bold text-xs px-2.5 rounded-lg"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-3.5 h-3.5 text-emerald-400" />
             <span>SharedLedger</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </Button>
 
           {/* Reports Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs font-semibold px-2.5">
-                <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold px-2.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg shadow-2xs text-slate-700 dark:text-slate-300">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Reports</span>
-                <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
+                <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -865,7 +874,7 @@ setSortDirection("asc");
             variant="outline"
             size="sm"
             onClick={() => setShowSettingsModal(true)}
-            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 p-0 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg shadow-2xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
             title="Party Settings"
           >
             <Settings className="w-3.5 h-3.5" />
@@ -876,7 +885,7 @@ setSortDirection("asc");
             variant="outline"
             size="sm"
             onClick={() => setShowKeyboardModal(true)}
-            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 p-0 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg shadow-2xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
             title="Keyboard Shortcuts (Alt+K)"
           >
             <Keyboard className="w-3.5 h-3.5" />
@@ -885,85 +894,186 @@ setSortDirection("asc");
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* METRIC CARDS: All Parties count, To Collect (green), To Pay (red) */}
+      {/* METRIC CARDS: Total Parties, To Collect (Dr), To Pay (Cr) */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <div className="space-y-0.5 min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
               Total Parties
             </span>
-            <p className="text-sm sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalPartiesCount}</p>
-            <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
-              <span>{parties.filter((p) => p.partyType === "customer").length} Cust</span>
-              <span>·</span>
-              <span>{parties.filter((p) => p.partyType === "supplier").length} Supp</span>
+            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0 hidden sm:flex">
+              <Users2 className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 hidden sm:flex">
-            <Users2 className="w-4 h-4" />
+          <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight mt-0.5">
+            {totalPartiesCount}
+          </p>
+          <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+            <span>{parties.filter((p) => p.partyType === "customer").length} Cust</span>
+            <span>·</span>
+            <span>{parties.filter((p) => p.partyType === "supplier").length} Supp</span>
           </div>
         </div>
 
-        {/* Card 2: To Collect (Green) */}
-        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-          <div className="space-y-0.5 min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
-              To Collect
+        {/* Card 2: To Collect (Dr) Emerald */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-emerald-500">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
+              To Collect (Dr)
             </span>
-            <p className="text-sm sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight truncate">
-              ₹ {toCollectTotal.toLocaleString("en-IN")}
-            </p>
-            <p className="hidden sm:block text-[10px] text-emerald-700/80 dark:text-emerald-400/80 font-medium">
-              From {parties.filter((p) => p.balance > 0).length} customer ledgers
-            </p>
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0 hidden sm:flex">
+              <ArrowDownLeft className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0 hidden sm:flex">
-            <CreditCard className="w-4 h-4" />
-          </div>
+          <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight truncate mt-0.5">
+            ₹ {toCollectTotal.toLocaleString("en-IN")}
+          </p>
+          <p className="hidden sm:block text-[10px] text-emerald-700/80 dark:text-emerald-400/80 font-mono mt-0.5">
+            From {parties.filter((p) => p.balance > 0).length} customer ledgers
+          </p>
         </div>
 
-        {/* Card 3: To Pay (Red) */}
-        <div className="glass-card-3d p-2.5 sm:p-3.5 flex items-center justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-          <div className="space-y-0.5 min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
-              To Pay
+        {/* Card 3: To Pay (Cr) Rose */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-rose-500">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+              To Pay (Cr)
             </span>
-            <p className="text-sm sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate">
-              ₹ {toPayTotal.toLocaleString("en-IN")}
-            </p>
-            <p className="hidden sm:block text-[10px] text-rose-700/80 dark:text-rose-400/80 font-medium">
-              To {parties.filter((p) => p.balance < 0).length} supplier bills
-            </p>
+            <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 shrink-0 hidden sm:flex">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="p-2 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0 hidden sm:flex">
-            <CreditCard className="w-4 h-4" />
-          </div>
+          <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
+            ₹ {toPayTotal.toLocaleString("en-IN")}
+          </p>
+          <p className="hidden sm:block text-[10px] text-rose-700/80 dark:text-rose-400/80 font-mono mt-0.5">
+            To {parties.filter((p) => p.balance < 0).length} supplier bills
+          </p>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* FILTER & SEARCH BAR - Frosted Glass Container */}
+      {/* CATEGORY TABS & QUICK FILTERS BAR (Requirement 3) */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => setPartyTab("all")}
+          className={cn(
+            "h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border",
+            partyTab === "all"
+              ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-2xs font-bold"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+          )}
+        >
+          <span>All Parties</span>
+          <span className={cn(
+            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            partyTab === "all" ? "bg-white/20 dark:bg-slate-900/20" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+          )}>
+            {parties.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPartyTab("customer")}
+          className={cn(
+            "h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border",
+            partyTab === "customer"
+              ? "bg-emerald-600 text-white border-transparent shadow-2xs font-bold"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+          )}
+        >
+          <span>Customers</span>
+          <span className={cn(
+            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            partyTab === "customer" ? "bg-emerald-700/60 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+          )}>
+            {parties.filter((p) => p.partyType === "customer" || p.partyType === "both").length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPartyTab("supplier")}
+          className={cn(
+            "h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border",
+            partyTab === "supplier"
+              ? "bg-purple-600 text-white border-transparent shadow-2xs font-bold"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+          )}
+        >
+          <span>Suppliers</span>
+          <span className={cn(
+            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            partyTab === "supplier" ? "bg-purple-700/60 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+          )}>
+            {parties.filter((p) => p.partyType === "supplier" || p.partyType === "both").length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPartyTab("to_collect")}
+          className={cn(
+            "h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border",
+            partyTab === "to_collect"
+              ? "bg-emerald-600 text-white border-transparent shadow-2xs font-bold"
+              : "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-50/50"
+          )}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span>To Collect (Dr)</span>
+          <span className={cn(
+            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            partyTab === "to_collect" ? "bg-emerald-700/60 text-white" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+          )}>
+            {parties.filter((p) => p.balance > 0).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPartyTab("to_pay")}
+          className={cn(
+            "h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border",
+            partyTab === "to_pay"
+              ? "bg-rose-600 text-white border-transparent shadow-2xs font-bold"
+              : "bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 border-rose-200/80 dark:border-rose-800/60 hover:bg-rose-50/50"
+          )}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+          <span>To Pay (Cr)</span>
+          <span className={cn(
+            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            partyTab === "to_pay" ? "bg-rose-700/60 text-white" : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
+          )}>
+            {parties.filter((p) => p.balance < 0).length}
+          </span>
+        </button>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* FILTER & SEARCH BAR - Hairline Container */}
+      {/* ------------------------------------------------------------- */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-2.5 shadow-2xs shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           {/* Search input */}
           <div className="relative flex-1 min-w-[180px]">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Search by party name, phone, GSTIN..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
+              className="pl-8 h-8.5 text-xs bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-500"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -973,11 +1083,11 @@ setSortDirection("asc");
           {/* Categories Dropdown Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 px-3 gap-1.5 text-xs justify-between font-semibold border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 rounded-xl shrink-0">
+              <Button variant="outline" size="sm" className="h-8.5 px-2.5 gap-1.5 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300">
                 <span className="truncate max-w-[85px] sm:max-w-[130px]">
                   {categoryFilter === "all" ? "Categories" : categoryFilter}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -994,41 +1104,40 @@ setSortDirection("asc");
           {/* Import Data from Tally / Excel Button */}
           <button
             onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 font-bold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 hover-3d-glow"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
             title="Import Full Data from Tally or Excel"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span className="hidden sm:inline">Import Data</span>
           </button>
 
-          {/* Bulk Upload Parties Button - 3D Tactile Emerald/Teal Gradient */}
+          {/* Bulk Upload Parties Button */}
           <button
             onClick={() => {
               setExcelModalTab("excel");
               setShowExcelUploadModal(true);
             }}
-            className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-600 text-white font-bold text-xs shadow-[0_4px_14px_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.5)] border border-emerald-400/40 active:scale-95 transition-all duration-200 cursor-pointer shrink-0 overflow-hidden group"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
             title="Bulk Upload Parties from Excel / CSV"
           >
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200 group-hover:scale-110 transition-transform" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Bulk Parties</span>
           </button>
 
-          {/* Glowing Create Party Button */}
+          {/* Create Party Button */}
           <button
             onClick={() => {
               setEditingParty(null);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Create Party</span>
           </button>
         </div>
 
-        {/* Bulk Action Dropdown (shows on desktop or when items selected) */}
+        {/* Bulk Action Dropdown */}
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-1.5 shrink-0">
             <DropdownMenu>
@@ -1036,18 +1145,18 @@ setSortDirection("asc");
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 gap-1.5 text-xs font-semibold w-full sm:w-auto border-slate-200 dark:border-slate-700 rounded-xl"
+                  className="h-8.5 gap-1.5 text-xs font-semibold w-full sm:w-auto border-slate-200/80 dark:border-slate-700 rounded-lg"
                 >
                   <span>Bulk Action ({selectedIds.size})</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem onClick={handleBulkExport} className="text-xs">
-                  <Download className="w-3.5 h-3.5 mr-2" />
+                <DropdownMenuItem onClick={handleBulkExport} className="text-xs cursor-pointer font-medium">
+                  <Download className="w-3.5 h-3.5 mr-2 text-slate-500" />
                   Download CSV Statement
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleBulkDelete} className="text-xs text-rose-600">
+                <DropdownMenuItem onClick={handleBulkDelete} className="text-xs cursor-pointer text-rose-600 dark:text-rose-400 font-medium">
                   <Trash2 className="w-3.5 h-3.5 mr-2" />
                   Delete Selected ({selectedIds.size})
                 </DropdownMenuItem>
@@ -1064,9 +1173,9 @@ setSortDirection("asc");
             setExcelModalTab("software");
             setShowExcelUploadModal(true);
           }}
-          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95"
         >
-          <RotateCcw className="w-3 h-3" />
+          <RotateCcw className="w-3 h-3 text-indigo-500" />
           <span>Import from Vyapar / Tally / My Bill Book</span>
         </button>
 
@@ -1075,29 +1184,29 @@ setSortDirection("asc");
             handleRunAudit();
             setShowReconciliationModal(true);
           }}
-          className="h-7.5 px-3 text-[11px] font-bold gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95 sm:hidden"
+          className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shrink-0 cursor-pointer shadow-2xs flex items-center transition-all active:scale-95 sm:hidden"
         >
-          <ShieldCheck className="w-3 h-3" />
+          <ShieldCheck className="w-3 h-3 text-emerald-600" />
           <span>SharedLedger & Reconcile</span>
         </button>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* PARTIES TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
+      {/* PARTIES TABLE / MOBILE CARDS STREAM - High-Density Surface */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-card shadow-2xs flex flex-col glass-panel">
-        {/* MOBILE VIEW: High-Touch Party Cards (Visible on screens < md) */}
+      <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">
+        {/* MOBILE VIEW: High-Density Touch Cards (screens < md) */}
         <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
           {loading ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <div className="py-12 text-center text-slate-400">
+              <div className="w-6 h-6 border-2 border-slate-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               Loading parties...
             </div>
           ) : filteredParties.length === 0 ? (
             <div className="py-16 text-center space-y-3">
-              <Users2 className="w-10 h-10 mx-auto text-muted-foreground/50" />
-              <p className="text-sm font-semibold text-foreground">No parties found</p>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <Users2 className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">No parties found</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                 {search ? `No records match "${search}".` : "Create your first party to manage ledgers and billing."}
               </p>
               <Button
@@ -1106,7 +1215,7 @@ setSortDirection("asc");
                   setEditingParty(null);
                   setShowCreateModal(true);
                 }}
-                className="gap-1.5"
+                className="gap-1.5 rounded-lg text-xs"
               >
                 <Plus className="w-4 h-4" />
                 Create New Party
@@ -1122,13 +1231,15 @@ setSortDirection("asc");
                 <div
                   key={party.id}
                   className={cn(
-                    "p-3.5 rounded-2xl border transition-all bg-card space-y-3 shadow-2xs active:scale-[0.99]",
-                    isSelected ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border"
+                    "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2.5 shadow-2xs active:scale-[0.99]",
+                    isSelected
+                      ? "border-blue-500 ring-1 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20"
+                      : "border-slate-200/80 dark:border-slate-800"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm flex items-center justify-center border border-primary/20 shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center border border-slate-200/80 dark:border-slate-700/60 shrink-0">
                         {party.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -1142,72 +1253,94 @@ setSortDirection("asc");
                                 setShowSharedLedgerModal(true);
                               }
                             }}
-                            className="font-bold text-sm text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                            className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors truncate"
                           >
                             {party.name}
                           </h4>
                           {party.sharedLedgerEnabled && (
-                            <Zap className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500 shrink-0" />
+                            <Zap className="w-3 h-3 text-emerald-500 fill-emerald-500 shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                          <span className="bg-muted px-1.5 py-0.2 rounded text-[10px] font-medium uppercase font-mono">
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded text-[9.5px] font-mono">
                             {party.category || "General"}
                           </span>
                           <span>•</span>
                           <span className="truncate">{party.city || party.state || "India"}</span>
+                          <span>•</span>
+                          <span className={cn(
+                            "font-bold font-mono uppercase text-[9px]",
+                            isCustomer ? "text-emerald-600 dark:text-emerald-400" : isSupplier ? "text-purple-600 dark:text-purple-400" : "text-blue-600 dark:text-blue-400"
+                          )}>
+                            {party.partyType}
+                          </span>
                         </div>
                       </div>
                     </div>
 
+                    {/* Directional Balance Badge (Mobile) */}
                     <div className="text-right shrink-0">
-                      <span
-                        className={cn(
-                          "font-mono font-bold text-sm",
-                          party.balance > 0
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : party.balance < 0
-                            ? "text-rose-600 dark:text-rose-400"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {party.balance > 0
-                          ? `+ ₹ ${party.balance.toLocaleString("en-IN")}`
-                          : party.balance < 0
-                          ? `- ₹ ${Math.abs(party.balance).toLocaleString("en-IN")}`
-                          : "₹ 0.00"}
-                      </span>
-                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                        {party.balance > 0 ? "To Collect" : party.balance < 0 ? "To Pay" : "Settled"}
-                      </p>
+                      {party.balance > 0 ? (
+                        <div className="flex flex-col items-end">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-bold tabular-nums bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            Dr · ₹{party.balance.toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[9.5px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                            To Collect
+                          </span>
+                        </div>
+                      ) : party.balance < 0 ? (
+                        <div className="flex flex-col items-end">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-bold tabular-nums bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                            Cr · ₹{Math.abs(party.balance).toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[9.5px] font-semibold text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+                            To Pay
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium tabular-nums bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                          ₹0.00 · Settled
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Mobile Quick Action Strip */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                  {/* Mobile Quick Action Strip (Touch Ergonomics ≥44px Target) */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60">
                     <div className="flex items-center gap-1.5">
-                      {party.phone && (
+                      {party.phone ? (
                         <>
                           <a
                             href={`tel:${party.phone}`}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground text-[11px] font-medium"
+                            className="flex items-center gap-1.5 min-h-[44px] h-11 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-[11px] font-semibold active:scale-95 transition-transform"
+                            title="Call Party"
                           >
-                            <Phone className="w-3.5 h-3.5" />
+                            <Phone className="w-3.5 h-3.5 text-slate-500" />
                             <span>Call</span>
                           </a>
                           <button
                             type="button"
                             onClick={() => {
                               const clean = party.phone?.replace(/[^0-9]/g, "");
-                              const text = `Hello ${party.name}, your account balance on CredSmart is ₹${Math.abs(party.balance).toLocaleString("en-IN")}.`;
+                              const text = party.balance > 0
+                                ? `Hello ${party.name}, your outstanding receivable on CredSmart is ₹${party.balance.toLocaleString("en-IN")} (Dr). Kindly arrange the payment at your earliest convenience.`
+                                : party.balance < 0
+                                ? `Hello ${party.name}, your payable balance on CredSmart is ₹${Math.abs(party.balance).toLocaleString("en-IN")} (Cr).`
+                                : `Hello ${party.name}, your account on CredSmart is fully settled (₹0.00).`;
                               window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(text)}`, "_blank");
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-medium"
+                            className="flex items-center gap-1.5 min-h-[44px] h-11 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold active:scale-95 transition-transform"
+                            title="Chat on WhatsApp"
                           >
-                            <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                            <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                             <span>WhatsApp</span>
                           </button>
                         </>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">No phone number</span>
                       )}
                     </div>
 
@@ -1217,18 +1350,18 @@ setSortDirection("asc");
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/customers/${party.id}/ledger`)}
-                          className="h-7 px-2.5 text-[11px] font-semibold"
+                          className="min-h-[44px] h-11 px-3 flex items-center text-[11px] font-semibold rounded-lg border-slate-200/80 dark:border-slate-700"
                         >
                           Ledger
                         </Button>
                       )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                            <MoreVertical className="w-3.5 h-3.5" />
+                          <Button variant="ghost" size="sm" className="min-w-[44px] min-h-[44px] w-11 h-11 p-0 rounded-lg flex items-center justify-center">
+                            <MoreVertical className="w-3.5 h-3.5 text-slate-500" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
                             onClick={() => {
                               setEditingParty(party);
@@ -1236,7 +1369,7 @@ setSortDirection("asc");
                             }}
                             className="text-xs cursor-pointer"
                           >
-                            <Edit className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                            <Edit className="w-3.5 h-3.5 mr-2 text-slate-500" />
                             Edit Details
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -1244,15 +1377,32 @@ setSortDirection("asc");
                               setSharedLedgerSelectedParty(party);
                               setShowSharedLedgerModal(true);
                             }}
-                            className="text-xs cursor-pointer text-emerald-600"
+                            className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-medium"
                           >
                             <Share2 className="w-3.5 h-3.5 mr-2" />
-                            SharedLedger
+                            SharedLedger Portal
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const partyTxns = rawCreditTransactions.filter(
+                                (t) => (t.party_id || t.partyId) === party.id
+                              );
+                              const res = reconcilePartyLedger(party, partyTxns);
+                              if (res.isReconciled) {
+                                toast.success(`Reconciled: "${party.name}" ledger verified with 0 discrepancy.`);
+                              } else {
+                                toast.warning(`Discrepancy: "${party.name}" has variance ₹${Math.abs(res.variance).toLocaleString("en-IN")}.`);
+                              }
+                            }}
+                            className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-medium"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 mr-2" />
+                            Verify & Reconcile
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleDeleteParty(party)}
-                            className="text-xs cursor-pointer text-rose-600"
+                            className="text-xs cursor-pointer text-rose-600 dark:text-rose-400 font-medium"
                           >
                             <Trash2 className="w-3.5 h-3.5 mr-2" />
                             Delete Party
@@ -1268,7 +1418,7 @@ setSortDirection("asc");
         </div>
 
         {/* Mobile Pagination */}
-        <div className="md:hidden">
+        <div className="md:hidden border-t border-slate-100 dark:border-slate-800">
           <PaginationBar
             page={partiesPage}
             totalPages={partiesTotalPages}
@@ -1283,62 +1433,62 @@ setSortDirection("asc");
           />
         </div>
 
-        {/* DESKTOP VIEW: Untouched Data Table (Visible on md: and above) */}
+        {/* DESKTOP VIEW: High-Density 36px Data Table (md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
-          <table className="w-full text-xs text-left min-w-[640px]">
-            <thead className="sticky top-0 bg-muted/80 backdrop-blur-xs border-b border-border text-muted-foreground font-bold uppercase tracking-wider text-[10px] sm:text-[11px] z-10">
+          <table className="w-full text-xs text-left min-w-[680px]">
+            <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-mono text-[10.5px] uppercase tracking-wider z-10 select-none">
               <tr>
-                <th className="px-3 py-2.5 w-10 text-center">
+                <th className="px-3 py-2 w-10 text-center">
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className="p-0.5 rounded hover:bg-muted text-foreground"
+                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                   >
                     {selectedIds.size > 0 && selectedIds.size === filteredParties.length ? (
-                      <CheckSquare className="w-3.5 h-3.5 text-primary" />
+                      <CheckSquare className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     ) : (
-                      <Square className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Square className="w-3.5 h-3.5 text-slate-400" />
                     )}
                   </button>
                 </th>
                 <th
                   onClick={() => handleSort("name")}
-                  className="px-4 py-3.5 cursor-pointer hover:text-foreground select-none"
+                  className="px-3 py-2 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Party Name</span>
-                    <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
+                    <ArrowUpDown className="w-3 h-3 opacity-60" />
                   </div>
                 </th>
-                <th className="px-4 py-3.5">Category</th>
-                <th className="px-4 py-3.5">Mobile Number</th>
-                <th className="px-4 py-3.5">Party Type</th>
+                <th className="px-3 py-2">Category</th>
+                <th className="px-3 py-2">Mobile & Communications</th>
+                <th className="px-3 py-2">Type</th>
                 <th
                   onClick={() => handleSort("balance")}
-                  className="px-4 py-3.5 cursor-pointer hover:text-foreground select-none text-right"
+                  className="px-3 py-2 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors text-right"
                 >
                   <div className="flex items-center justify-end gap-1.5">
-                    <span>Balance (₹)</span>
-                    <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
+                    <span>Balance (Dr / Cr)</span>
+                    <ArrowUpDown className="w-3 h-3 opacity-60" />
                   </div>
                 </th>
-                <th className="px-4 py-3.5 text-center w-16 sticky right-0 bg-muted/80 backdrop-blur-xs z-10 border-l border-border/50">Actions</th>
+                <th className="px-3 py-2 text-center w-14 sticky right-0 bg-slate-50/95 dark:bg-slate-900/95 border-l border-slate-200/80 dark:border-slate-800 z-10">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-sans">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="w-6 h-6 border-2 border-slate-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Loading parties...
                   </td>
                 </tr>
               ) : filteredParties.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-muted-foreground space-y-3">
-                    <Users2 className="w-10 h-10 mx-auto text-muted-foreground/50" />
-                    <p className="text-sm font-semibold text-foreground">No parties found</p>
-                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  <td colSpan={7} className="py-16 text-center text-slate-400 space-y-3">
+                    <Users2 className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">No parties found</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                       {search
                         ? `No records match your search "${search}". Try clearing filters.`
                         : "Start by creating your first customer or supplier to manage ledgers and billing."}
@@ -1349,7 +1499,7 @@ setSortDirection("asc");
                         setEditingParty(null);
                         setShowCreateModal(true);
                       }}
-                      className="gap-1.5"
+                      className="gap-1.5 rounded-lg text-xs"
                     >
                       <Plus className="w-4 h-4" />
                       Create New Party
@@ -1367,29 +1517,29 @@ setSortDirection("asc");
                     <tr
                       key={party.id}
                       className={cn(
-                        "hover:bg-muted/30 transition-colors group",
-                        isSelected && "bg-primary/5"
+                        "hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group",
+                        isSelected && "bg-blue-50/40 dark:bg-blue-950/20"
                       )}
                     >
                       {/* Checkbox */}
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-3 py-2 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleSelect(party.id)}
-                          className="p-1 rounded hover:bg-muted text-foreground"
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-primary" />
+                            <CheckSquare className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                           ) : (
-                            <Square className="w-4 h-4 text-muted-foreground" />
+                            <Square className="w-3.5 h-3.5 text-slate-400" />
                           )}
                         </button>
                       </td>
 
                       {/* Party Name */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-xs flex items-center justify-center border border-primary/20 shrink-0">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center border border-slate-200/80 dark:border-slate-700/60 shrink-0">
                             {party.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
@@ -1403,7 +1553,7 @@ setSortDirection("asc");
                                     setShowSharedLedgerModal(true);
                                   }
                                 }}
-                                className="font-bold text-foreground hover:text-primary cursor-pointer transition-colors truncate"
+                                className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors truncate"
                               >
                                 {party.name}
                               </span>
@@ -1413,13 +1563,13 @@ setSortDirection("asc");
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                               {party.tradeName && party.tradeName !== party.name && (
                                 <span>{party.tradeName} ·</span>
                               )}
                               <span>{party.city || party.state || "India"}</span>
                               {party.gstin && (
-                                <span className="font-mono text-muted-foreground/80">
+                                <span className="font-mono text-slate-400 dark:text-slate-500">
                                   · GST: {party.gstin}
                                 </span>
                               )}
@@ -1429,95 +1579,100 @@ setSortDirection("asc");
                       </td>
 
                       {/* Category */}
-                      <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
                           {party.category || "General"}
                         </span>
                       </td>
 
-                      {/* Mobile Number */}
-                      <td className="px-4 py-3.5 font-mono">
+                      {/* Mobile Number & 1-tap Communication Actions */}
+                      <td className="px-3 py-2 font-mono">
                         {party.phone ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-foreground font-medium">{party.phone}</span>
+                            <span className="text-slate-900 dark:text-slate-100 font-medium tabular-nums">{party.phone}</span>
                             <button
                               type="button"
                               onClick={() => {
                                 const clean = party.phone?.replace(/[^0-9]/g, "");
-                                window.open(`https://wa.me/91${clean}`, "_blank");
+                                const text = party.balance > 0
+                                  ? `Hello ${party.name}, your outstanding receivable on CredSmart is ₹${party.balance.toLocaleString("en-IN")} (Dr). Kindly arrange the payment at your earliest convenience.`
+                                  : party.balance < 0
+                                  ? `Hello ${party.name}, your payable balance on CredSmart is ₹${Math.abs(party.balance).toLocaleString("en-IN")} (Cr).`
+                                  : `Hello ${party.name}, your account on CredSmart is fully settled (₹0.00).`;
+                                window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(text)}`, "_blank");
                               }}
                               title="Chat on WhatsApp"
-                              className="p-1 rounded text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                              className="p-1 rounded-md text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/40 transition-colors cursor-pointer"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
                             </button>
                             <a
                               href={`tel:${party.phone}`}
                               title="Call Party"
-                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                              className="p-1 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/40 transition-colors"
                             >
                               <Phone className="w-3.5 h-3.5" />
                             </a>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-slate-400 dark:text-slate-600">—</span>
                         )}
                       </td>
 
                       {/* Party Type Badge */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2">
                         {isCustomer && (
-                          <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[10px] uppercase font-bold">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 uppercase">
                             Customer
-                          </Badge>
+                          </span>
                         )}
                         {isSupplier && (
-                          <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20 text-[10px] uppercase font-bold">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 uppercase">
                             Supplier
-                          </Badge>
+                          </span>
                         )}
                         {isBoth && (
-                          <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-[10px] uppercase font-bold">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 uppercase">
                             Both
-                          </Badge>
+                          </span>
                         )}
                       </td>
 
-                      {/* Balance (Sortable) */}
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="space-y-0.5">
-                          <span
-                            className={cn(
-                              "font-mono font-bold text-sm",
-                              party.balance > 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : party.balance < 0
-                                ? "text-rose-600 dark:text-rose-400"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {party.balance > 0
-                              ? `+ ₹ ${party.balance.toLocaleString("en-IN")}`
-                              : party.balance < 0
-                              ? `- ₹ ${Math.abs(party.balance).toLocaleString("en-IN")}`
-                              : "₹ 0.00"}
+                      {/* Directional Balance (Sortable) */}
+                      <td className="px-3 py-2 text-right">
+                        {party.balance > 0 ? (
+                          <div className="inline-flex flex-col items-end">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-bold tabular-nums bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                              Dr · ₹{party.balance.toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[9.5px] font-medium text-emerald-600/90 dark:text-emerald-400/90 font-mono">
+                              To Collect
+                            </span>
+                          </div>
+                        ) : party.balance < 0 ? (
+                          <div className="inline-flex flex-col items-end">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-bold tabular-nums bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/60">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                              Cr · ₹{Math.abs(party.balance).toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[9.5px] font-medium text-rose-600/90 dark:text-rose-400/90 font-mono">
+                              To Pay
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium tabular-nums bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                            ₹0.00 · Settled
                           </span>
-                          <p className="text-[10px] text-muted-foreground">
-                            {party.balance > 0
-                              ? "To Collect (Dr)"
-                              : party.balance < 0
-                              ? "To Pay (Cr)"
-                              : "Settled"}
-                          </p>
-                        </div>
+                        )}
                       </td>
 
                       {/* Actions Menu */}
-                      <td className="px-4 py-3.5 text-center sticky right-0 bg-background group-hover:bg-muted/30 transition-colors z-10 border-l border-border/50">
+                      <td className="px-3 py-2 text-center sticky right-0 bg-white group-hover:bg-slate-50/70 dark:bg-slate-900 dark:group-hover:bg-slate-800/40 transition-colors z-10 border-l border-slate-100 dark:border-slate-800/60">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
+                              <MoreVertical className="w-3.5 h-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
@@ -1530,7 +1685,7 @@ setSortDirection("asc");
                               }}
                               className="text-xs cursor-pointer"
                             >
-                              <Edit className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                              <Edit className="w-3.5 h-3.5 mr-2 text-slate-500" />
                               Edit Party Details
                             </DropdownMenuItem>
 
@@ -1539,7 +1694,7 @@ setSortDirection("asc");
                                 setSharedLedgerSelectedParty(party);
                                 setShowSharedLedgerModal(true);
                               }}
-                              className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400"
+                              className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-medium"
                             >
                               <Share2 className="w-3.5 h-3.5 mr-2" />
                               SharedLedger Portal
@@ -1550,7 +1705,7 @@ setSortDirection("asc");
                                 onClick={() => navigate(`/customers/${party.id}/ledger`)}
                                 className="text-xs cursor-pointer"
                               >
-                                <FileText className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                                <FileText className="w-3.5 h-3.5 mr-2 text-slate-500" />
                                 View Full Ledger
                               </DropdownMenuItem>
                             )}
@@ -1565,7 +1720,7 @@ setSortDirection("asc");
                               }}
                               className="text-xs cursor-pointer font-medium"
                             >
-                              <Download className="w-3.5 h-3.5 mr-2 text-primary" />
+                              <Download className="w-3.5 h-3.5 mr-2 text-blue-600" />
                               Download Statement (CSV)
                             </DropdownMenuItem>
 
@@ -1599,16 +1754,16 @@ setSortDirection("asc");
                               <DropdownMenuItem
                                 onClick={() => {
                                   const clean = party.phone?.replace(/[^0-9]/g, "");
-                                  const text = `Hello ${party.name}, your current account balance on CredSmart is ₹${Math.abs(
-                                    party.balance
-                                  ).toLocaleString("en-IN")} (${
-                                    party.balance >= 0 ? "Due" : "Advance"
-                                  }).`;
+                                  const text = party.balance > 0
+                                    ? `Hello ${party.name}, your outstanding receivable on CredSmart is ₹${party.balance.toLocaleString("en-IN")} (Dr). Kindly arrange the payment at your earliest convenience.`
+                                    : party.balance < 0
+                                    ? `Hello ${party.name}, your payable balance on CredSmart is ₹${Math.abs(party.balance).toLocaleString("en-IN")} (Cr).`
+                                    : `Hello ${party.name}, your account on CredSmart is fully settled (₹0.00).`;
                                   window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(text)}`, "_blank");
                                 }}
-                                className="text-xs cursor-pointer"
+                                className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400"
                               >
-                                <MessageSquare className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                                <MessageSquare className="w-3.5 h-3.5 mr-2" />
                                 Send WhatsApp Reminder
                               </DropdownMenuItem>
                             )}
@@ -1616,7 +1771,7 @@ setSortDirection("asc");
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteParty(party)}
-                              className="text-xs cursor-pointer text-rose-600 dark:text-rose-400"
+                              className="text-xs cursor-pointer text-rose-600 dark:text-rose-400 font-medium"
                             >
                               <Trash2 className="w-3.5 h-3.5 mr-2" />
                               Delete Party
@@ -1633,7 +1788,7 @@ setSortDirection("asc");
         </div>
 
         {/* Desktop Pagination */}
-        <div className="hidden md:block">
+        <div className="hidden md:block border-t border-slate-100 dark:border-slate-800">
           <PaginationBar
             page={partiesPage}
             totalPages={partiesTotalPages}
@@ -1649,14 +1804,14 @@ setSortDirection("asc");
         </div>
 
         {/* Table Footer summary */}
-        <div className="p-4 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="p-3 sm:px-4 sm:py-2.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/60 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
           <span>
-            Showing <strong className="text-foreground">{partiesTotalItems === 0 ? 0 : `${partiesStartIndex}–${partiesEndIndex}`}</strong> of{" "}
+            Showing <strong className="text-slate-900 dark:text-white">{partiesTotalItems === 0 ? 0 : `${partiesStartIndex}–${partiesEndIndex}`}</strong> of{" "}
             {parties.length} parties
           </span>
           <div className="flex items-center gap-4">
             <span>
-              Selected: <strong className="text-foreground">{selectedIds.size}</strong>
+              Selected: <strong className="text-slate-900 dark:text-white">{selectedIds.size}</strong>
             </span>
             <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
               Net Collectible: ₹ {toCollectTotal.toLocaleString("en-IN")}

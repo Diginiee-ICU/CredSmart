@@ -193,10 +193,12 @@ export async function apiClient<T>(
   // 4. Attach Supabase JWT Bearer Token
   if (!skipAuth && !requestHeaders.has("Authorization")) {
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token;
-      if (token) {
-        requestHeaders.set("Authorization", `Bearer ${token}`);
+      if (supabase?.auth?.getSession) {
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token;
+        if (token) {
+          requestHeaders.set("Authorization", `Bearer ${token}`);
+        }
       }
     } catch (authErr) {
       console.warn("apiClient: Failed to retrieve active session token:", authErr);
@@ -254,23 +256,25 @@ export async function apiClient<T>(
     // 7. Transparent 401 Unauthorized Session Refresh & Single Retry
     if (response.status === 401 && !skipAuth) {
       try {
-        const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-        const newToken = refreshData?.session?.access_token;
-        if (!refreshErr && newToken) {
-          requestHeaders.set("Authorization", `Bearer ${newToken}`);
-          try {
-            response = await execute(`Bearer ${newToken}`);
-          } catch (retryErr: unknown) {
-            const message = retryErr instanceof Error ? retryErr.message : "Network retry failed";
-            return {
-              data: null,
-              error: {
-                message,
-                code: "NETWORK_ERROR",
-                status: 0,
-                details: retryErr,
-              },
-            };
+        if (supabase?.auth?.refreshSession) {
+          const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+          const newToken = refreshData?.session?.access_token;
+          if (!refreshErr && newToken) {
+            requestHeaders.set("Authorization", `Bearer ${newToken}`);
+            try {
+              response = await execute(`Bearer ${newToken}`);
+            } catch (retryErr: unknown) {
+              const message = retryErr instanceof Error ? retryErr.message : "Network retry failed";
+              return {
+                data: null,
+                error: {
+                  message,
+                  code: "NETWORK_ERROR",
+                  status: 0,
+                  details: retryErr,
+                },
+              };
+            }
           }
         }
       } catch (refreshErr) {
