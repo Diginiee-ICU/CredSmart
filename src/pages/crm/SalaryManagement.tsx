@@ -32,6 +32,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useCRMPermission } from "@/hooks/useCRMPermission";
 import { settingsApi } from "@/services/settingsApi";
 import { crmApi } from "@/services/crmApi";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -264,7 +265,20 @@ export default function SalaryManagement(): React.ReactElement {
     try {
       // 1. Fetch Staff Directory
       const dirMap: Record<string, StaffDirectoryMember> = {};
-      const { data: staffData } = await settingsApi.getProfiles();
+      let staffData: Record<string, unknown>[] | null = null;
+      try {
+        const { data, error } = await supabase.from("profiles").select("*");
+        if (!error && data && data.length > 0) {
+          staffData = data as Record<string, unknown>[];
+        }
+      } catch {}
+
+      if (!staffData) {
+        try {
+          const res = await settingsApi.getProfiles();
+          if (res.data) staffData = res.data;
+        } catch {}
+      }
 
       if (staffData && staffData.length > 0) {
         staffData.forEach((s: Record<string, unknown>) => {
@@ -278,7 +292,33 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 2. Fetch Salary Profiles
-      const { data: profiles, error: profErr } = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
+      let profiles: CrmSalaryProfile[] | null = null;
+      let profErr: any = null;
+      try {
+        const { data, error } = await supabase
+          .from("crm_salary_profiles")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          profiles = data as unknown as CrmSalaryProfile[];
+        } else if (error) {
+          profErr = error;
+        }
+      } catch {}
+
+      if (!profiles) {
+        try {
+          const res = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
+          if (res.data) {
+            profiles = res.data;
+            profErr = null;
+          } else if (res.error) {
+            profErr = res.error;
+          }
+        } catch (err: any) {
+          profErr = err;
+        }
+      }
 
       if (profErr) {
         toast({
@@ -298,7 +338,33 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 3. Fetch Payroll Runs
-      const { data: runs, error: runsErr } = await crmApi.getCRMPayrollRuns(effectiveOrgId);
+      let runs: CrmPayrollRun[] | null = null;
+      let runsErr: any = null;
+      try {
+        const { data, error } = await supabase
+          .from("crm_payroll_runs")
+          .select("*")
+          .order("month_year", { ascending: false });
+        if (!error && data) {
+          runs = data as unknown as CrmPayrollRun[];
+        } else if (error) {
+          runsErr = error;
+        }
+      } catch {}
+
+      if (!runs) {
+        try {
+          const res = await crmApi.getCRMPayrollRuns(effectiveOrgId);
+          if (res.data) {
+            runs = res.data;
+            runsErr = null;
+          } else if (res.error) {
+            runsErr = res.error;
+          }
+        } catch (err: any) {
+          runsErr = err;
+        }
+      }
 
       if (runsErr) {
         toast({
@@ -312,7 +378,33 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 4. Fetch Payslips
-      const { data: slips, error: slipsErr } = await crmApi.getCRMPayslips(effectiveOrgId);
+      let slips: CrmPayslip[] | null = null;
+      let slipsErr: any = null;
+      try {
+        const { data, error } = await supabase
+          .from("crm_payslips")
+          .select("*")
+          .order("month_year", { ascending: false });
+        if (!error && data) {
+          slips = data as unknown as CrmPayslip[];
+        } else if (error) {
+          slipsErr = error;
+        }
+      } catch {}
+
+      if (!slips) {
+        try {
+          const res = await crmApi.getCRMPayslips(effectiveOrgId);
+          if (res.data) {
+            slips = res.data;
+            slipsErr = null;
+          } else if (res.error) {
+            slipsErr = res.error;
+          }
+        } catch (err: any) {
+          slipsErr = err;
+        }
+      }
 
       if (slipsErr) {
         toast({
@@ -332,7 +424,33 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 5. Fetch Salary Adjustments
-      const { data: adjs, error: adjErr } = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
+      let adjs: CrmSalaryAdjustment[] | null = null;
+      let adjErr: any = null;
+      try {
+        const { data, error } = await supabase
+          .from("crm_salary_adjustments")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          adjs = data as unknown as CrmSalaryAdjustment[];
+        } else if (error) {
+          adjErr = error;
+        }
+      } catch {}
+
+      if (!adjs) {
+        try {
+          const res = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
+          if (res.data) {
+            adjs = res.data;
+            adjErr = null;
+          } else if (res.error) {
+            adjErr = res.error;
+          }
+        } catch (err: any) {
+          adjErr = err;
+        }
+      }
 
       if (adjErr) {
         toast({
@@ -350,9 +468,22 @@ export default function SalaryManagement(): React.ReactElement {
       }
 
       // 6. Fetch Attendance Records for Calculations
-      const { data: attData } = await crmApi.getCRMAttendance(effectiveOrgId);
+      let attData: CrmAttendanceRecord[] | null = null;
+      try {
+        const { data, error } = await supabase.from("crm_attendance").select("*");
+        if (!error && data) {
+          attData = data as unknown as CrmAttendanceRecord[];
+        }
+      } catch {}
+
+      if (!attData) {
+        try {
+          const res = await crmApi.getCRMAttendance(effectiveOrgId);
+          if (res.data) attData = res.data as CrmAttendanceRecord[];
+        } catch {}
+      }
       if (attData) {
-        setAttendanceRecords(attData as CrmAttendanceRecord[]);
+        setAttendanceRecords(attData);
       }
     } catch (err: unknown) {
       console.warn("Salary data load warning:", err);
