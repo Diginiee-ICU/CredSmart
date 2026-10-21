@@ -47,8 +47,8 @@
 |---|------|-------|-------------|--------|
 | 1 | M1: PostgreSQL Schema & Express Backend Integration | `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, `fix_db.sql`, `backend-api/src/routes/crm.js`, `src/services/crmApi.ts` | none | DONE |
 | 2 | M2: Staff User Provisioning & Instant Role Assignment UI | `src/pages/crm/RoleManagement.tsx`, Add Staff Modal, Credentials Modal, Create Role Staff Assignment | M1 | DONE |
-| 3 | M3: Full-Stack Enterprise Task Management | `src/pages/crm/Tasks.tsx`, Kanban/Table views, lifecycle transitions, proof submission, manager approvals, metrics | M1, M2 | IN_PROGRESS |
-| 4 | M4: E2E Verification, Clean Build & Adversarial Hardening | E2E test suite passing, `tsc --noEmit` exits 0, Forensic Integrity Audit CLEAN | M1, M2, M3 | PLANNED |
+| 3 | M3: Full-Stack Enterprise Task Management | `src/pages/crm/Tasks.tsx`, Kanban/Table views, lifecycle transitions, proof submission, manager approvals, metrics | M1, M2 | DONE |
+| 4 | M4: E2E Verification, Clean Build & Adversarial Hardening | E2E test suite passing, `tsc --noEmit` exits 0, Forensic Integrity Audit CLEAN | M1, M2, M3 | DONE |
 
 ## Interface Contracts
 

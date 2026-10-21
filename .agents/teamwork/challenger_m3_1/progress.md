@@ -1,18 +1,24 @@
 # Challenger M3-1 Progress
 
-**Last visited**: 2026-10-18T11:58:00Z
+**Last visited**: 2026-10-21T20:00:00Z
 **Status**: Completed
 **Verdict**: APPROVE
 
 ## Steps Completed:
-1. Received dispatch instructions for Phase 3 M3 UI states and permission verification.
-2. Inspected `ORIGINAL_REQUEST.md`, `worker_m3_1/handoff.md`, and `src/pages/crm/SalaryManagement.tsx`.
-3. Executed `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx` (26/26 tests passed).
-4. Executed `cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx` (17/17 tests passed).
-5. Executed `cmd /c npx tsc --noEmit` (exited with code 0, 0 errors).
-6. Empirically verified all challenge criteria:
-   - Unauthorized user behavior: restricted fallback rendered, toast fired, DOM scrubbed of confidential data.
-   - Non-approver user behavior: generate/lock/disburse payroll buttons disabled; adjustment approve/reject buttons hidden and handler guarded.
-   - Empty state rendering across Tab 1, Tab 3, Tab 4.
-   - Toast error handling on database query failures and drawer input validation errors.
-7. Authored handoff report with verdict APPROVE.
+1. Received dispatch instructions for Milestone 3 Task Management adversarial challenge.
+2. Read `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z) and `PROJECT.md`.
+3. Read `worker_m3_tasks/handoff.md`, `src/pages/crm/Tasks.tsx`, and existing task test suites.
+4. Formulated and authored dedicated adversarial stress test suite in `src/test/crmTasksChallengerM3.test.tsx` covering all 7 targeted edge cases.
+5. Executed empirical test verification:
+   - `src/test/crmTasksChallengerM3.test.tsx` (14/14 tests passed).
+   - Full suite: `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTasksChallengerM3.test.tsx` (65/65 tests passed across 4 files).
+   - TypeScript static check: `cmd /c npx tsc --noEmit` (exited with code 0).
+6. Confirmed edge cases and security boundaries:
+   - Blank & whitespace title rejection.
+   - Empty proof notes rejection on proof-required tasks.
+   - Empty revision feedback rejection.
+   - 0-task KPI calculations (completion rate 0% without NaN or division by zero).
+   - Special regex character safety in search filter.
+   - RBAC gating blocking unauthorized non-managers from approving tasks or requesting revisions.
+   - Overdue highlighting logic (`due_date < today && status !== 'done'`).
+7. Wrote final handoff report with explicit verdict APPROVE.

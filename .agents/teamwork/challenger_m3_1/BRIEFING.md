@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T11:57:00Z
+# BRIEFING — 2026-10-21T20:00:00Z
 
 ## Mission
-Adversarially challenge UI states & permissions for CredSmart Phase 3 Milestone M3: Salary Management & Payroll Engine (`src/pages/crm/SalaryManagement.tsx`).
+Adversarially challenge Milestone 3 Task Management implementation in `src/pages/crm/Tasks.tsx`, focusing on edge cases, boundary conditions, form validation, state machine integrity, and unauthorized manager actions.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -12,40 +12,44 @@ Adversarially challenge UI states & permissions for CredSmart Phase 3 Milestone 
 - Instance: 1 of 1
 - Phase 3 Parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
 - Phase 3 Milestone: CRM Phase 3 Milestone M3: Salary Management UI & Payroll Engine
+- Enterprise CRM Tasks Parent: c838af97-21de-4616-9188-f0f8dfa904c9
+- Enterprise CRM Tasks Milestone: Milestone 3: Full-Stack Enterprise Task Management
+- Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Empirically verify every claim and test case by executing tests
 - Place metadata only in .agents/teamwork/challenger_m3_1/
+- Adversarially challenge Milestone 3 task management edge cases: empty titles, empty proof notes rejection, empty revision notes rejection, 0-task KPI calculations, special regex characters in search filter, overdue date highlighting, and unauthorized manager actions.
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T11:47:40Z
+- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
+- Updated: 2026-10-21T19:50:06Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagement.test.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`
-- **Interface contracts**: Phase 3 Milestone M3 Salary Management UI specifications
+- **Files to review**: `src/pages/crm/Tasks.tsx`, `src/test/crmTasksView.test.tsx`, `src/test/crmStaffTasksIntegration.test.tsx`, `src/test/crmTaskLifecycle.test.ts`, `src/test/crmTasksChallengerM3.test.tsx`
+- **Interface contracts**: `PROJECT.md` § Feature 9-13, Backend API `GET /api/crm/tasks`, `PATCH /api/crm/tasks/:id`
 - **Review criteria**:
-  1. Unauthorized user behavior (without `salary:view` permission -> restricted fallback `SalaryAccessRestrictedFallback`).
-  2. Non-approver user behavior (without `salary:approve` -> cannot lock payroll, generate payroll, or approve/reject adjustments).
-  3. Empty state rendering across Tab 1 (Profiles), Tab 3 (Adjustments), Tab 4 (My Payslips).
-  4. Toast error handling on Supabase errors and form validation errors.
-  5. Vitest test suite execution and TypeScript compilation (`tsc --noEmit`).
+  1. Form Validation & Edge Cases: blank/whitespace-only titles, empty proof notes rejection with warning toast, empty revision notes rejection, 0-task KPI metrics calculations (no NaN / division by zero), special regex characters in search filter without runtime crash.
+  2. State Machine Integrity: unauthorized non-managers blocked from approving tasks or requesting revisions; overdue tasks highlighting logic (`due_date < today && status !== 'done'`).
+  3. Verification: test suites passing, TypeScript type safety (`tsc --noEmit`).
 
 ## Key Decisions Made
-- Executed `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx` -> 26/26 tests passed.
-- Executed `cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx` -> 17/17 tests passed.
-- Executed `cmd /c npx tsc --noEmit` -> 0 errors.
-- Verified all permission gates, fallbacks, empty states, and toast handlers.
+- Created and executed adversarial test suite `src/test/crmTasksChallengerM3.test.tsx` (14/14 tests passing).
+- Executed full test verification: `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTasksChallengerM3.test.tsx` (65/65 tests passing across 4 files).
+- Verified static typing: `cmd /c npx tsc --noEmit` exited with code 0.
+- Confirmed all 7 challenge hypotheses empirically.
 - Final verdict: APPROVE.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - H1: User lacking `salary:view` cannot see confidential salary data and is presented with `SalaryAccessRestrictedFallback` and a destructive toast -> CONFIRMED.
-  - H2: Super admin bypasses view restriction and can access salary module -> CONFIRMED.
-  - H3: Staff lacking `salary:approve` cannot generate or lock payroll (buttons disabled) and cannot approve/reject adjustments (buttons hidden and handler guarded) -> CONFIRMED.
-  - H4: Empty states render cleanly on all tabs with appropriate informative messages -> CONFIRMED.
-  - H5: Query failures trigger error toasts; form validation blocks invalid inputs (missing staff, negative base salary, invalid percentage ranges) -> CONFIRMED.
+  - H1: Submitting empty or whitespace-only title is rejected by validation -> CONFIRMED (native HTML5 required + trimmedTitle validation blocks and fires toast).
+  - H2: Submitting empty proof notes on proof-required task is rejected with warning toast -> CONFIRMED (modal remains open, no status transition).
+  - H3: Submitting empty revision feedback is rejected with warning toast -> CONFIRMED (modal remains open, no status transition).
+  - H4: When 0 tasks are loaded, KPI metrics calculate completionRate as 0% without NaN or division by zero -> CONFIRMED.
+  - H5: Search filter with special regex characters (`[`, `*`, `+`, `?`, `\`, `^`, `$`, `(`, `)`) does not throw RegExp syntax error or crash UI -> CONFIRMED (uses string `.includes()` safely).
+  - H6: Unauthorized non-managers cannot approve tasks or request revisions in Kanban or Table view -> CONFIRMED (RBAC gates buttons out of DOM).
+  - H7: Overdue tasks (`due_date < today && status !== 'done'`) trigger overdue counter badge and red warning styling, while completed tasks in past date are not counted as overdue -> CONFIRMED.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.
 
@@ -57,3 +61,4 @@ Adversarially challenge UI states & permissions for CredSmart Phase 3 Milestone 
 - .agents/teamwork/challenger_m3_1/DISPATCH.md — incoming instructions
 - .agents/teamwork/challenger_m3_1/progress.md — liveness & step tracking
 - .agents/teamwork/challenger_m3_1/handoff.md — final handoff report
+- src/test/crmTasksChallengerM3.test.tsx — empirical adversarial stress test suite

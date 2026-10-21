@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T12:00:00Z
+# BRIEFING — 2026-10-21T19:50:06Z
 
 ## Mission
-Review and adversarial critique of CredSmart Phase 3: Salary Management & Payroll Engine (Admin Workflow & RBAC Gating Review).
+Review and adversarial critique of CredSmart Enterprise CRM Staff Provisioning & Task Management: Milestone 3 — Task lifecycle state transitions (`todo` -> `in_progress` -> `review` -> `done`, and revision loop `review` -> `in_progress`), proof notes validation, manager approval permissions and timestamps, manager revision notes, and real-time KPI metrics in `src/pages/crm/Tasks.tsx`.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -12,6 +12,8 @@ Review and adversarial critique of CredSmart Phase 3: Salary Management & Payrol
 - Instance: reviewer_m3_2
 - Milestone (Current): CredSmart CRM Phase 3: Salary Management & Payroll Engine (Admin Workflow & RBAC Review)
 - Parent (Current): caf7924e-19e5-4a1d-ae03-b43c66838dd3
+- Milestone (Current - M3 Tasks): CredSmart Enterprise CRM Staff Provisioning & Task Management — Milestone 3 Reviewer 2
+- Parent (Current - M3 Tasks): c838af97-21de-4616-9188-f0f8dfa904c9
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -19,25 +21,33 @@ Review and adversarial critique of CredSmart Phase 3: Salary Management & Payrol
 - Execute independent tests and verify claims with direct evidence
 - Issue APPROVE or REQUEST_CHANGES verdict
 - Scrutinize `useCRMPermission('salary', 'approve')` gating for payroll generation, locking, disbursement, and advance approval
+- Review task lifecycle state transitions (todo -> in_progress -> review -> done, review -> in_progress)
+- Scrutinize proof notes requirement validation, manager approval permissions, timestamps, manager revision notes, and KPI metrics in src/pages/crm/Tasks.tsx
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T11:47:39Z
+- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
+- Updated: 2026-10-21T19:50:06Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`, `src/test/crmSalaryManagement.test.tsx`, `worker_m3_1/handoff.md`
-- **Interface contracts**: `ORIGINAL_REQUEST.md`, `crm-rbac-skill`, `crm-attendance-skill`
-- **Review criteria**: Correctness, completeness, RBAC gating (`salary:approve`, `salary:view`), payroll calculation engine integration, summary totals KPI bar, lock/disburse flow, advance review workflow, missing profile warnings, mobile/desktop responsiveness, error handling.
+- **Files to review**: `src/pages/crm/Tasks.tsx`, `src/services/crmApi.ts`, `backend-api/src/routes/crm.js`, `src/test/crmTask*.ts*`, `src/test/crmTasksView.test.tsx`, `worker_m3_tasks/handoff.md`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z)
+- **Review criteria**:
+  1. Lifecycle State Transitions (`todo` -> `in_progress` -> `review` -> `done`, and revision loop `review` -> `in_progress`).
+  2. Proof notes requirement validation (`requires_proof` guard).
+  3. Manager approval permissions, approver name, and `completed_at` timestamps.
+  4. Manager revision notes (`review_feedback`) and amber visual callout.
+  5. Real-time KPI metrics calculation and overdue detection.
+  6. Verification commands: `cmd /c npx vitest run crmTask` and `cmd /c npx tsc --noEmit`.
 
 ## Key Decisions Made
-- Executed unit & admin test suite (`crmSalaryManagementAdmin.test.tsx`: 17/17 passed).
-- Executed UI interaction test suite (`crmSalaryManagement.test.tsx`: 26/26 passed).
-- Executed RBAC permission test suite (`crmPermissionRbac.test.ts`: 26/26 passed).
-- Executed static typecheck (`tsc --noEmit`: 0 errors).
-- Audited implementation in `src/pages/crm/SalaryManagement.tsx` (2,166 lines) and `src/utils/crmPayrollUtils.ts` (390 lines).
+- Executed unit and state machine test suite (`cmd /c npx vitest run crmTask`: 39/39 passed across `crmTaskLifecycle.test.ts` and `crmTasksView.test.tsx`).
+- Executed static typecheck (`cmd /c npx tsc --noEmit`: 0 errors).
+- Audited implementation in `src/pages/crm/Tasks.tsx`, `src/services/crmApi.ts`, and `backend-api/src/routes/crm.js`.
 - Confirmed zero integrity violations (no dummy facades, no hardcoded values).
-- Verified `useCRMPermission('salary', 'approve')` gating across Generate Payroll, Lock Payroll, Mark as Disbursed, and Advance Approve/Reject actions.
-- Verified missing profile detection and warning toasts.
+- Verified `requires_proof` guard in `<SubmitProofDialog>` and empty notes rejection toast.
+- Verified manager revision request dialog validation and amber callout rendering in "In Progress" swimlane.
+- Verified `canApprove` permission gating for manager sign-off and approval timestamps.
+- Verified KPI metrics calculation (Total, In Progress, Review, Completed, Completion Rate % with zero-guard, Overdue badge).
 - Determined verdict: APPROVE.
 
 ## Artifact Index
@@ -47,16 +57,16 @@ Review and adversarial critique of CredSmart Phase 3: Salary Management & Payrol
 - `handoff.md` — Final review report and verdict
 
 ## Review Checklist
-- **Items reviewed**: `src/pages/crm/SalaryManagement.tsx`, `src/test/crmSalaryManagementAdmin.test.tsx`, `src/test/crmSalaryManagement.test.tsx`, `src/utils/crmPayrollUtils.ts`
+- **Items reviewed**: `src/pages/crm/Tasks.tsx`, `src/services/crmApi.ts`, `backend-api/src/routes/crm.js`, `src/test/crmTaskLifecycle.test.ts`, `src/test/crmTasksView.test.tsx`
 - **Verdict**: APPROVE
-- **Unverified claims**: None (all claims empirically verified via test runs and direct code inspection)
+- **Unverified claims**: None (all claims empirically verified via test execution and code analysis).
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Privilege escalation: Can an unauthorized user trigger generation, locking, or disbursement? Verified gated at button state and handler function levels.
-  - Locked state bypass: Can a user recalculate a locked or disbursed payroll run? Verified prevented with error toast and disabled button state.
-  - Advance deduction exceeding net pay: Handled safely with `Math.max(0, net)`.
-  - Unconfigured staff profiles: Identified safely, warning alert and toast displayed, excluded without null exceptions.
-  - Month switching: Scheduled working days dynamically computed, previous preview cleared.
-- **Vulnerabilities found**: None critical/major. Minor observation: Unrecovered advance amount when advance exceeds gross pay is not automatically carried forward across multiple months (acceptable for Phase 3 scope).
-- **Untested angles**: Hardware-level Supabase outages (handled via offline localStorage hydration cache).
+  - Empty proof submission: Rejection verified.
+  - Empty revision request: Rejection verified.
+  - Unauthorized manager approval: Gating verified via `canApprove`.
+  - Zero tasks division: Guard verified.
+  - Overdue completed tasks: Correctly excluded.
+  - Revision feedback loop: Banner rendering and resubmission verified.
+- **Vulnerabilities found**: None critical/major. Minor observation: Unmocked network fetch in tests without proper unmount cancellation can log an unhandled rejection if torn down before settling (documented in caveats).

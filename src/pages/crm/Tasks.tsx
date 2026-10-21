@@ -1,25 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   CheckSquare,
   Plus,
   Search,
-  Filter,
   Clock,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Calendar,
   User,
-  ArrowRight,
-  MoreVertical,
-  Layers,
-  Sparkles,
-  ChevronRight,
-  X,
   FileCheck,
-  Tag,
   Kanban,
   Table as TableIcon,
+  RotateCw,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useCRMPermission } from "@/hooks/useCRMPermission";
@@ -53,24 +46,38 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { crmApi, type CRMTaskPriority, type CRMTaskStatus } from "@/services/crmApi";
 
-export type TaskPriority = "urgent" | "high" | "normal" | "low";
-export type TaskStatus = "todo" | "in_progress" | "review" | "done";
+export type TaskPriority = CRMTaskPriority;
+export type TaskStatus = CRMTaskStatus;
 
 export interface CRMTask {
   id: string;
   org_id: string;
+  organization_id?: string;
   title: string;
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
   assignee_name: string;
   assignee_id?: string;
+  assigned_to?: string;
   due_date: string;
   created_at: string;
   completed_at?: string;
+  approved_by?: string;
+  approver_name?: string;
   requires_proof?: boolean;
   proof_notes?: string;
+  review_feedback?: string;
+}
+
+export interface StaffOption {
+  id: string;
+  name: string;
+  role?: string;
+  crmRole?: string;
+  crmRoleColor?: string;
 }
 
 const INITIAL_TASKS: CRMTask[] = [
@@ -122,6 +129,7 @@ const INITIAL_TASKS: CRMTask[] = [
     due_date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
     created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
     completed_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    approver_name: "Store Manager",
     requires_proof: false,
   },
 ];
@@ -134,6 +142,7 @@ export default function Tasks(): React.ReactElement {
   const canApprove = isSuperAdmin || hasPermission("tasks", "approve");
 
   const storageKey = `credsmart_crm_tasks_${orgId || "default"}`;
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const [tasks, setTasks] = useState<CRMTask[]>(() => {
     try {
@@ -145,18 +154,26 @@ export default function Tasks(): React.ReactElement {
     return INITIAL_TASKS;
   });
 
+  const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Modal States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeTaskForProof, setActiveTaskForProof] = useState<CRMTask | null>(null);
   const [proofText, setProofText] = useState("");
+  const [activeTaskForRevision, setActiveTaskForRevision] = useState<CRMTask | null>(null);
+  const [revisionText, setRevisionText] = useState("");
 
   // New task form state
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newPriority, setNewPriority] = useState<TaskPriority>("normal");
-  const [newAssignee, setNewAssignee] = useState("");
+  const [newAssigneeName, setNewAssigneeName] = useState("");
+  const [newAssigneeId, setNewAssigneeId] = useState<string | undefined>(undefined);
+  const [, setNewAssigneeRole] = useState<string | undefined>(undefined);
   const [newDueDate, setNewDueDate] = useState(
     new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
@@ -169,6 +186,78 @@ export default function Tasks(): React.ReactElement {
     }
   }, [tasks, storageKey, orgId]);
 
+  // Fetch staff and tasks from backend
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsRefreshing(true);
+
+    // 1. Fetch Real Staff Members
+    try {
+      const staffRes =
+        typeof (crmApi as unknown as { getCRMStaff?: (id: string) => Promise<{ data?: unknown[] }> }).getCRMStaff === "function"
+          ? await (crmApi as unknown as { getCRMStaff: (id: string) => Promise<{ data?: unknown[] }> }).getCRMStaff(orgId)
+          : await crmApi.getCRMStaffRoles(orgId);
+
+      if (staffRes?.data && Array.isArray(staffRes.data)) {
+        const staffParsed: StaffOption[] = staffRes.data.map((item: unknown) => {
+          const rec = item as Record<string, unknown>;
+          return {
+            id: String(rec.id || rec.user_id || rec.staff_id || ""),
+            name: String(rec.full_name || rec.name || rec.email || "Staff Member"),
+            role: rec.store_role ? String(rec.store_role) : rec.role ? String(rec.role) : undefined,
+            crmRole: rec.crm_role_name ? String(rec.crm_role_name) : rec.role_name ? String(rec.role_name) : undefined,
+            crmRoleColor: rec.crm_role_color ? String(rec.crm_role_color) : undefined,
+          };
+        }).filter((s) => Boolean(s.id));
+
+        if (staffParsed.length > 0) {
+          setStaffList(staffParsed);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch CRM staff members:", err);
+    }
+
+    // 2. Fetch Tasks from Live API
+    try {
+      const res = await crmApi.getCRMTasks(orgId);
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        const mappedTasks: CRMTask[] = res.data.map((t) => {
+          const raw = t as unknown as Record<string, unknown>;
+          return {
+            id: String(t.id),
+            org_id: t.org_id || orgId,
+            title: t.title,
+            description: t.description || "",
+            priority: (t.priority as TaskPriority) || "normal",
+            status: (t.status as TaskStatus) || "todo",
+            assignee_name: String(t.assignee_name || raw.assigned_to_name || "Unassigned"),
+            assignee_id: t.assigned_to || t.assignee_id || undefined,
+            assigned_to: t.assigned_to || t.assignee_id || undefined,
+            due_date: t.due_date || "",
+            created_at: t.created_at || new Date().toISOString(),
+            completed_at: t.completed_at || undefined,
+            approved_by: t.approved_by || undefined,
+            approver_name: t.approver_name || undefined,
+            requires_proof: t.requires_proof ?? Boolean(raw.proof_required ?? true),
+            proof_notes: t.proof_notes || undefined,
+            review_feedback: t.review_feedback || undefined,
+          };
+        });
+        setTasks(mappedTasks);
+        localStorage.setItem(storageKey, JSON.stringify(mappedTasks));
+      }
+    } catch (err) {
+      console.warn("getCRMTasks network error, falling back to cached tasks:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [orgId, storageKey]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   // Metrics
   const metrics = useMemo(() => {
     const total = tasks.length;
@@ -176,8 +265,9 @@ export default function Tasks(): React.ReactElement {
     const review = tasks.filter((t) => t.status === "review").length;
     const done = tasks.filter((t) => t.status === "done").length;
     const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
-    return { total, inProgress, review, done, completionRate };
-  }, [tasks]);
+    const overdue = tasks.filter((t) => t.status !== "done" && Boolean(t.due_date && t.due_date < todayStr)).length;
+    return { total, inProgress, review, done, completionRate, overdue };
+  }, [tasks, todayStr]);
 
   // Filtered tasks
   const filteredTasks = useMemo(() => {
@@ -192,39 +282,88 @@ export default function Tasks(): React.ReactElement {
   }, [tasks, searchQuery, priorityFilter]);
 
   // Status transitions
-  const handleMoveStatus = (taskId: string, nextStatus: TaskStatus) => {
+  const handleMoveStatus = async (taskId: string, nextStatus: TaskStatus) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const now = new Date().toISOString();
+    const updatedTask: CRMTask = {
+      ...task,
+      status: nextStatus,
+      completed_at: nextStatus === "done" ? now : task.completed_at,
+      review_feedback: nextStatus === "in_progress" && task.status === "todo" ? undefined : task.review_feedback,
+    };
+
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+
+    toast({
+      title: "Task Status Updated",
+      description: `Task marked as ${nextStatus.replace("_", " ")}.`,
+    });
+
+    try {
+      await crmApi.transitionCRMTaskStatus(taskId, nextStatus, { orgId });
+    } catch (err) {
+      console.warn("Backend transition notice:", err);
+    }
+  };
+
+  const handleApproveTask = async (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const now = new Date().toISOString();
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId
           ? {
               ...t,
-              status: nextStatus,
-              completed_at: nextStatus === "done" ? new Date().toISOString() : undefined,
+              status: "done",
+              completed_at: now,
+              approved_by: "manager",
+              approver_name: "Store Manager",
             }
           : t
       )
     );
+
     toast({
-      title: "Task Status Updated",
-      description: `Task marked as ${nextStatus.replace("_", " ")}.`,
+      title: "Task Approved",
+      description: "Task marked as completed and signed off.",
     });
+
+    try {
+      await crmApi.transitionCRMTaskStatus(taskId, "done", { orgId });
+    } catch (err) {
+      console.warn("Backend approval notice:", err);
+    }
   };
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) {
+    const trimmedTitle = newTitle.trim();
+    if (!trimmedTitle) {
       toast({ title: "Validation Error", description: "Title is required", variant: "destructive" });
       return;
     }
+    if (trimmedTitle.length < 3) {
+      toast({ title: "Validation Error", description: "Title must be at least 3 characters", variant: "destructive" });
+      return;
+    }
+
+    const finalAssigneeName = newAssigneeName.trim() || "Unassigned";
+    const tempId = `task-${Date.now()}`;
 
     const created: CRMTask = {
-      id: `task-${Date.now()}`,
+      id: tempId,
       org_id: orgId || "",
-      title: newTitle.trim(),
+      title: trimmedTitle,
       description: newDescription.trim(),
       priority: newPriority,
       status: "todo",
-      assignee_name: newAssignee.trim() || "Unassigned",
+      assignee_name: finalAssigneeName,
+      assignee_id: newAssigneeId,
+      assigned_to: newAssigneeId,
       due_date: newDueDate,
       created_at: new Date().toISOString(),
       requires_proof: newRequiresProof,
@@ -234,32 +373,132 @@ export default function Tasks(): React.ReactElement {
     setIsCreateOpen(false);
     setNewTitle("");
     setNewDescription("");
-    setNewAssignee("");
+    setNewAssigneeName("");
+    setNewAssigneeId(undefined);
+    setNewAssigneeRole(undefined);
+
     toast({
       title: "Task Created",
       description: `"${created.title}" assigned to ${created.assignee_name}.`,
     });
+
+    try {
+      const res = await crmApi.createCRMTask(
+        {
+          title: created.title,
+          description: created.description,
+          priority: created.priority,
+          status: "todo",
+          due_date: created.due_date,
+          requires_proof: created.requires_proof,
+          assigned_to: created.assigned_to,
+          assignee_id: created.assignee_id,
+        },
+        orgId
+      );
+
+      if (res?.data && res.data.id) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === tempId ? { ...t, ...res.data, id: res.data.id } : t))
+        );
+      }
+    } catch (err) {
+      console.warn("Backend task creation notice:", err);
+    }
   };
 
-  const handleSubmitProof = () => {
+  const handleSubmitProof = async () => {
     if (!activeTaskForProof) return;
+    const trimmed = proofText.trim();
+    if (activeTaskForProof.requires_proof && !trimmed) {
+      toast({
+        title: "Validation Error",
+        description: "Please describe your work or proof before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const finalNotes = trimmed || "Work completed and submitted for manager approval.";
+    const taskId = activeTaskForProof.id;
+
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === activeTaskForProof.id
+        t.id === taskId
           ? {
               ...t,
               status: "review",
-              proof_notes: proofText.trim() || "Work completed and submitted for manager approval.",
+              proof_notes: finalNotes,
             }
           : t
       )
     );
+
     setActiveTaskForProof(null);
     setProofText("");
+
     toast({
       title: "Submitted for Review",
       description: "Manager will verify proof of work.",
     });
+
+    try {
+      await crmApi.transitionCRMTaskStatus(taskId, "review", {
+        proof_notes: finalNotes,
+        orgId,
+      });
+    } catch (err) {
+      console.warn("Backend proof submit notice:", err);
+    }
+  };
+
+  const handleOpenRevision = (task: CRMTask) => {
+    setActiveTaskForRevision(task);
+    setRevisionText("");
+  };
+
+  const handleSubmitRevision = async () => {
+    if (!activeTaskForRevision) return;
+    const trimmed = revisionText.trim();
+    if (!trimmed) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter revision notes before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const taskId = activeTaskForRevision.id;
+
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              status: "in_progress",
+              review_feedback: trimmed,
+            }
+          : t
+      )
+    );
+
+    setActiveTaskForRevision(null);
+    setRevisionText("");
+
+    toast({
+      title: "Revision Requested",
+      description: "Task returned to In Progress with feedback.",
+    });
+
+    try {
+      await crmApi.transitionCRMTaskStatus(taskId, "in_progress", {
+        review_feedback: trimmed,
+        orgId,
+      });
+    } catch (err) {
+      console.warn("Backend revision request notice:", err);
+    }
   };
 
   const getPriorityBadge = (p: TaskPriority) => {
@@ -293,11 +532,27 @@ export default function Tasks(): React.ReactElement {
       key: "title",
       header: "Task",
       accessor: (row) => (
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           <div className="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">
             {row.title}
           </div>
-          <div className="text-[11px] text-slate-500 line-clamp-1">{row.description}</div>
+          {row.description && (
+            <div className="text-[11px] text-slate-500 line-clamp-1">{row.description}</div>
+          )}
+          <div className="flex items-center gap-1.5 pt-0.5">
+            {row.requires_proof && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                <FileCheck className="w-2.5 h-2.5" />
+                Proof Required
+              </span>
+            )}
+            {row.review_feedback && row.status === "in_progress" && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                <AlertCircle className="w-2.5 h-2.5" />
+                Revision
+              </span>
+            )}
+          </div>
         </div>
       ),
       sortable: true,
@@ -320,7 +575,7 @@ export default function Tasks(): React.ReactElement {
       accessor: (row) => (
         <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
           <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-            {row.assignee_name.charAt(0)}
+            {row.assignee_name ? row.assignee_name.charAt(0).toUpperCase() : "U"}
           </div>
           <span>{row.assignee_name}</span>
         </div>
@@ -330,26 +585,52 @@ export default function Tasks(): React.ReactElement {
     {
       key: "due_date",
       header: "Due Date",
+      accessor: (row) => {
+        const overdue = row.status !== "done" && Boolean(row.due_date && row.due_date < todayStr);
+        return (
+          <span
+            className={cn(
+              "font-mono text-xs tabular-nums",
+              overdue
+                ? "text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1"
+                : "text-slate-600 dark:text-slate-400"
+            )}
+          >
+            {overdue && <AlertTriangle className="w-3 h-3 text-rose-500" />}
+            {row.due_date || "—"}
+          </span>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: "requires_proof",
+      header: "Proof Required",
       accessor: (row) => (
-        <span className="font-mono text-xs tabular-nums text-slate-600 dark:text-slate-400">
-          {row.due_date}
+        <span className="text-xs">
+          {row.requires_proof ? (
+            <span className="text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
+              <FileCheck className="w-3.5 h-3.5" /> Yes
+            </span>
+          ) : (
+            <span className="text-slate-400">No</span>
+          )}
         </span>
       ),
-      sortable: true,
     },
     {
       key: "actions",
       header: "Actions",
       accessor: (row) => (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {row.status === "todo" && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleMoveStatus(row.id, "in_progress")}
-              className="h-7 text-xs px-2"
+              className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50"
             >
-              Start
+              Start Job
             </Button>
           )}
           {row.status === "in_progress" && (
@@ -359,23 +640,44 @@ export default function Tasks(): React.ReactElement {
               onClick={() => {
                 if (row.requires_proof) {
                   setActiveTaskForProof(row);
+                  setProofText("");
                 } else {
-                  handleMoveStatus(row.id, "done");
+                  handleMoveStatus(row.id, "review");
                 }
               }}
-              className="h-7 text-xs px-2 text-blue-600 border-blue-200"
+              className="h-7 text-xs px-2 text-amber-600 border-amber-200 hover:bg-amber-50"
             >
-              Submit
+              Submit Proof
             </Button>
           )}
-          {row.status === "review" && canApprove && (
-            <Button
-              size="sm"
-              onClick={() => handleMoveStatus(row.id, "done")}
-              className="h-7 text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              Approve
-            </Button>
+          {row.status === "review" && (
+            <div className="flex items-center gap-1">
+              {canApprove && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenRevision(row)}
+                    className="h-7 text-xs px-2 text-amber-700 border-amber-300 hover:bg-amber-50"
+                  >
+                    Request Revision
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleApproveTask(row.id)}
+                    className="h-7 text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                  >
+                    Approve ✓
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          {row.status === "done" && (
+            <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Done</span>
+            </div>
           )}
         </div>
       ),
@@ -417,10 +719,28 @@ export default function Tasks(): React.ReactElement {
                   <CRMBadge variant="success" size="sm" dot>
                     Kanban Ready
                   </CRMBadge>
+                  {metrics.overdue > 0 && (
+                    <CRMBadge variant="error" size="sm">
+                      {metrics.overdue} Overdue
+                    </CRMBadge>
+                  )}
                 </div>
               }
               actions={
                 <div className="flex items-center gap-2">
+                  {/* Refresh Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadData}
+                    disabled={isRefreshing}
+                    className="h-9 px-2.5 text-xs border-slate-200 dark:border-slate-800"
+                    title="Refresh Tasks"
+                  >
+                    <RotateCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+                  </Button>
+
                   {/* View toggle */}
                   <div className="inline-flex items-center p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
                     <button
@@ -570,74 +890,143 @@ export default function Tasks(): React.ReactElement {
                           No tasks
                         </div>
                       ) : (
-                        colTasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all space-y-2.5"
-                          >
-                            <div className="flex items-start justify-between gap-1.5">
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
-                                {task.title}
-                              </h4>
-                              {getPriorityBadge(task.priority)}
-                            </div>
+                        colTasks.map((task) => {
+                          const isOverdue =
+                            task.status !== "done" &&
+                            Boolean(task.due_date && task.due_date < todayStr);
 
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                              {task.description}
-                            </p>
-
-                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                              <div className="flex items-center gap-1">
-                                <User className="w-3 h-3 text-slate-400" />
-                                <span className="font-medium truncate max-w-[90px]">{task.assignee_name}</span>
+                          return (
+                            <div
+                              key={task.id}
+                              className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all space-y-2.5"
+                            >
+                              <div className="flex items-start justify-between gap-1.5">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                                  {task.title}
+                                </h4>
+                                {getPriorityBadge(task.priority)}
                               </div>
-                              <div className="flex items-center gap-1 font-mono tabular-nums text-slate-400">
-                                <Calendar className="w-3 h-3" />
-                                <span>{task.due_date}</span>
+
+                              {task.description && (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                  {task.description}
+                                </p>
+                              )}
+
+                              {/* Proof Required Badge */}
+                              {task.requires_proof && (
+                                <div className="flex items-center gap-1">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                    <FileCheck className="w-3 h-3 text-indigo-500" />
+                                    Requires Proof
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Revision Feedback Alert Banner */}
+                              {task.review_feedback && task.status === "in_progress" && (
+                                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
+                                  <div className="flex items-center gap-1 font-semibold">
+                                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                                    <span>Revision Requested:</span>
+                                  </div>
+                                  <p className="leading-snug">{task.review_feedback}</p>
+                                </div>
+                              )}
+
+                              {/* Submitted Proof Notes Display */}
+                              {task.proof_notes && (
+                                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200 text-[10px] uppercase tracking-wider block">
+                                    Submitted Proof:
+                                  </span>
+                                  <p className="leading-snug line-clamp-3">{task.proof_notes}</p>
+                                </div>
+                              )}
+
+                              {/* Completed Timestamp & Approver */}
+                              {task.status === "done" && (
+                                <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span>
+                                    Completed
+                                    {task.completed_at ? ` ${new Date(task.completed_at).toLocaleDateString()}` : ""}
+                                    {task.approver_name ? ` • Approved by ${task.approver_name}` : ""}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+                                <div className="flex items-center gap-1.5 truncate max-w-[120px]">
+                                  <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-700 dark:text-slate-300">
+                                    {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : "U"}
+                                  </div>
+                                  <span className="font-medium truncate">{task.assignee_name}</span>
+                                </div>
+                                <div
+                                  className={cn(
+                                    "flex items-center gap-1 font-mono tabular-nums text-[10px]",
+                                    isOverdue ? "text-rose-600 font-bold" : "text-slate-400"
+                                  )}
+                                >
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{task.due_date || "—"}</span>
+                                </div>
+                              </div>
+
+                              {/* Card action buttons */}
+                              <div className="pt-1 flex items-center justify-end gap-1.5 flex-wrap">
+                                {task.status === "todo" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleMoveStatus(task.id, "in_progress")}
+                                    className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-blue-600 hover:bg-blue-50 font-semibold"
+                                  >
+                                    Start Job →
+                                  </Button>
+                                )}
+                                {task.status === "in_progress" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (task.requires_proof) {
+                                        setActiveTaskForProof(task);
+                                        setProofText("");
+                                      } else {
+                                        handleMoveStatus(task.id, "review");
+                                      }
+                                    }}
+                                    className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-semibold"
+                                  >
+                                    Submit Proof
+                                  </Button>
+                                )}
+                                {task.status === "review" && canApprove && (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleOpenRevision(task)}
+                                      className="min-h-[44px] h-11 px-2.5 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-medium"
+                                    >
+                                      Request Revision
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleApproveTask(task.id)}
+                                      className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-emerald-600 hover:bg-emerald-50 font-bold"
+                                    >
+                                      Approve ✓
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
-
-                            {/* Card action buttons */}
-                            <div className="pt-1 flex items-center justify-end gap-1.5">
-                              {task.status === "todo" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleMoveStatus(task.id, "in_progress")}
-                                  className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-blue-600 hover:bg-blue-50"
-                                >
-                                  Start Job →
-                                </Button>
-                              )}
-                              {task.status === "in_progress" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (task.requires_proof) {
-                                      setActiveTaskForProof(task);
-                                    } else {
-                                      handleMoveStatus(task.id, "done");
-                                    }
-                                  }}
-                                  className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-amber-600 hover:bg-amber-50"
-                                >
-                                  Submit Proof
-                                </Button>
-                              )}
-                              {task.status === "review" && canApprove && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleMoveStatus(task.id, "done")}
-                                  className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-emerald-600 hover:bg-emerald-50 font-bold"
-                                >
-                                  Approve ✓
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -658,7 +1047,7 @@ export default function Tasks(): React.ReactElement {
           )}
         </main>
 
-        {/* Modal: Create Task Drawer */}
+        {/* Modal: Create Task Dialog */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -726,13 +1115,72 @@ export default function Tasks(): React.ReactElement {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Assignee
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Assignee
+                  </label>
+                  {staffList.length > 0 && (
+                    <span className="text-[10px] text-slate-400">
+                      {staffList.length} staff member{staffList.length > 1 ? "s" : ""} available
+                    </span>
+                  )}
+                </div>
+
+                {staffList.length > 0 && (
+                  <Select
+                    value={newAssigneeId || ""}
+                    onValueChange={(val) => {
+                      setNewAssigneeId(val);
+                      const s = staffList.find((item) => item.id === val);
+                      if (s) {
+                        setNewAssigneeName(s.name);
+                        setNewAssigneeRole(s.role);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="text-xs h-9 mb-1">
+                      <SelectValue placeholder="Select staff member..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {staffList.map((staff) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold flex items-center justify-center">
+                              {staff.name.charAt(0)}
+                            </div>
+                            <span className="font-medium">{staff.name}</span>
+                            {staff.role && (
+                              <span className="text-[10px] text-slate-400">({staff.role})</span>
+                            )}
+                            {staff.crmRole && (
+                              <span
+                                className="text-[9px] px-1.5 py-0.2 rounded font-semibold text-white ml-auto"
+                                style={{ backgroundColor: staff.crmRoleColor || "#1D4ED8" }}
+                              >
+                                {staff.crmRole}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
                 <Input
                   placeholder="Staff member name..."
-                  value={newAssignee}
-                  onChange={(e) => setNewAssignee(e.target.value)}
+                  value={newAssigneeName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewAssigneeName(val);
+                    const matched = staffList.find(
+                      (s) => s.name.toLowerCase() === val.toLowerCase() || s.id === val
+                    );
+                    if (matched) {
+                      setNewAssigneeId(matched.id);
+                      setNewAssigneeRole(matched.role);
+                    }
+                  }}
                   className="text-xs h-9"
                 />
               </div>
@@ -800,6 +1248,45 @@ export default function Tasks(): React.ReactElement {
                   className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                 >
                   Submit for Review
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal: Manager Revision Request */}
+        <Dialog open={Boolean(activeTaskForRevision)} onOpenChange={(open) => !open && setActiveTaskForRevision(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Request Revision</DialogTitle>
+              <DialogDescription className="text-xs">
+                Provide feedback notes detailing required revisions for "{activeTaskForRevision?.title}".
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 pt-2">
+              <Textarea
+                placeholder="Enter revision instructions or corrections needed..."
+                value={revisionText}
+                onChange={(e) => setRevisionText(e.target.value)}
+                className="text-xs min-h-[90px]"
+              />
+
+              <DialogFooter className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTaskForRevision(null)}
+                  className="text-xs h-9"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmitRevision}
+                  className="text-xs h-9 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                >
+                  Send Revision Request
                 </Button>
               </DialogFooter>
             </div>

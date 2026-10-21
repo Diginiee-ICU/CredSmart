@@ -1,120 +1,93 @@
-# Forensic Integrity Audit Report: CRM Phase 2 Milestone 3 (Attendance UI & Clock-In Hub)
+# Forensic Audit Report: Milestone 3 — Full-Stack Enterprise Task Management
 
-**Auditor**: `auditor_m3`  
-**Timestamp**: 2026-10-17T10:47:00Z  
-**Target Milestone**: CRM Phase 2 Milestone 3: Attendance UI & Clock-In Hub  
-**Working Directory**: `.agents/teamwork/auditor_m3`  
-**Recipient**: `1beca3ca-d4b2-4508-99a0-6c9d39936bfb` (orchestrator_crm_phase2)  
-**Binary Verdict**: **CLEAN**
-
----
-
-## Forensic Audit Summary
-
-**Work Product**: `src/pages/crm/Attendance.tsx`, `src/test/crmAttendance.test.tsx`  
-**Profile**: General Project (CRM RBAC / Phase 2)  
+**Work Product**: `src/pages/crm/Tasks.tsx` & `src/test/crmTasksView.test.tsx`  
+**Profile**: General Project (Integrity Mode: Development)  
 **Verdict**: **CLEAN**
-
-### Phase Results
-- **Phase 1: Source Code Static Analysis**: **PASS** — Zero mock bypasses, fake clock tickers, or stubbed action handlers in production code.
-- **Phase 2: Geolocation Engine Integration**: **PASS** — Proper integration with `src/utils/crmGeoUtils.ts` (`getCurrentPosition`, `findNearestGeofence`, `calculateHaversineDistance`, `isWithinGeofence`).
-- **Phase 3: Database & Resilience Verification**: **PASS** — Authentic Supabase client queries & mutations across `crm_attendance`, `crm_geolocations`, `crm_attendance_requests`, with synchronous localStorage resilience fallbacks.
-- **Phase 4: TypeScript Typecheck Verification**: **PASS** — `cmd /c npx tsc --noEmit` exited with code 0 (0 type errors).
-- **Phase 5: Unit Test Execution**: **PASS** — `npm.cmd test -- src/test/crmAttendance.test.tsx --run` exited with code 0 (15 passed out of 15).
 
 ---
 
 ## 1. Observation
 
-1. **Static Analysis of `src/pages/crm/Attendance.tsx`**:
-   - `src/pages/crm/Attendance.tsx` is a 2,386-line production React component.
-   - Genuine CRM Design System usage:
-     - `CRMPageHeader`: Configured at line 1455 with title "Attendance & Geolocation Hub", breadcrumbs (`Home` → `CRM` → `Attendance`), live badge (`<CRMBadge variant="success" size="sm" dot>`), and actions (Sync GPS, CSV export, PDF export, Add Geofence).
-     - `CRMCard`: Rendered at lines 1614, 1770, 1895, 1945, 2030 (`variant="brand"`, `variant="elevated"`, `variant="default"`).
-     - `CRMBadge`: Semantic variants applied at lines 1349, 1386, 1393, 1399, 1464, 1659, 1664, 1669, 1674, 1679, 1975, 1980, 2064, 2069, 2074.
-     - `CRMDataTable`: Rendered at line 1924 with search filter, sortable columns, and paginated display.
-     - `CRMStatCard`: 4 KPI cards rendered at lines 1516-1548 ("Present Today", "Geo-Verified", "Manual / Regularised", "Office Geofences").
-     - `CRMPermissionGate`: Top-level gate wrapping entire component at line 1436 requiring `module="attendance"` and `action="view"`.
-     - `CRMRolePill`: Rendered at line 1314 displaying custom staff role color and super-admin badge.
+### 1.1 Source Code Analysis (`src/pages/crm/Tasks.tsx`)
+- **Backend API Integration**:
+  - `Tasks.tsx` lines 190–255: `loadData` dynamically queries `crmApi.getCRMStaffRoles(orgId)` (or `crmApi.getCRMStaff(orgId)`) to populate staff options, and queries `crmApi.getCRMTasks(orgId)` to populate live tasks from the server.
+  - Line 305: `crmApi.transitionCRMTaskStatus(taskId, nextStatus, { orgId })` called when transitioning status (`todo` -> `in_progress`).
+  - Line 336: `crmApi.transitionCRMTaskStatus(taskId, "done", { orgId })` called upon manager task approval.
+  - Line 386: `crmApi.createCRMTask(payload, orgId)` called when submitting the `<CreateTaskDialog>` form, receiving `res.data.id` to replace the temporary optimistic ID.
+  - Line 446: `crmApi.transitionCRMTaskStatus(taskId, "review", { proof_notes: finalNotes, orgId })` called upon proof submission.
+  - Line 495: `crmApi.transitionCRMTaskStatus(taskId, "in_progress", { review_feedback: trimmed, orgId })` called when a manager requests revisions.
+- **Offline / Network Resilience**:
+  - `Tasks.tsx` lines 147–155: Initial state reads from browser `localStorage.getItem(storageKey)` where `storageKey = 'credsmart_crm_tasks_${orgId || "default"}'`.
+  - Lines 183–187: Synchronizes task state to `localStorage` on any state update.
+  - Lines 250–252: Catches network rejections on `getCRMTasks` without crashing, preserving cached tasks.
+- **Genuine State Machine & Validation Logic**:
+  - `handleCreateTask` (lines 342–408): Enforces title presence and minimum length of 3 characters (`if (trimmedTitle.length < 3)` triggers destructive toast).
+  - `handleSubmitProof` (lines 410–453): Enforces non-empty proof description when `task.requires_proof` is true (`if (activeTaskForProof.requires_proof && !trimmed)` triggers destructive toast).
+  - `handleSubmitRevision` (lines 460–502): Enforces non-empty revision notes (`if (!trimmed)` triggers destructive toast), returning task to `in_progress` with `review_feedback`.
+  - Task card rendering (lines 927–936): Renders an amber revision alert banner when `task.review_feedback && task.status === "in_progress"`.
+- **Anti-Cheating & Mock Bypass Scrutiny**:
+  - Grep scan for `process.env` in `src/pages/crm/Tasks.tsx`: 0 matches.
+  - Grep scan for `mock` in `src/pages/crm/Tasks.tsx`: 0 matches.
+  - Grep scan for `bypass` in `src/pages/crm/Tasks.tsx`: 0 matches.
+  - Grep scan for `any` in `src/pages/crm/Tasks.tsx`: 0 matches (100% strictly typed).
+- **Dynamic KPI Metrics Calculation**:
+  - `Tasks.tsx` lines 262–270: `metrics` is a pure `useMemo` computing `total`, `inProgress`, `review`, `done`, `completionRate`, and `overdue` dynamically from `tasks` and current date `todayStr`. No hardcoded stats.
 
-2. **Geolocation Engine Integration (`crmGeoUtils.ts`)**:
-   - Lines 73-80 import `calculateHaversineDistance`, `isWithinGeofence`, `findNearestGeofence`, and `getCurrentPosition`.
-   - `getCurrentPosition` is invoked with high accuracy at lines 304, 559, 692, and 807.
-   - `findNearestGeofence` is invoked at lines 311, 582, and 716 to identify nearest office boundary and compute distance via Haversine great-circle formula.
-   - Lines 585-618 assign `verification_method = isInside ? "geo_verified" : "manual"` with exact distance in meters and telemetry coordinates.
+### 1.2 Test Suite Analysis (`src/test/crmTasksView.test.tsx`)
+- 6 comprehensive tests asserting genuine DOM structure and event handling:
+  1. `fetches organization staff members on mount and displays them in create task dialog`
+  2. `opens manager revision request dialog, rejects empty feedback, and transitions task to in_progress with feedback`
+  3. `renders Table view with complete action buttons matching Kanban lifecycle`
+  4. `validates proof notes are non-empty when proof is required`
+  5. `populates tasks from crmApi.getCRMTasks and updates localStorage cache`
+  6. `computes overdue tasks and displays overdue pill badge in header`
+- No hardcoded test results, facade assertions, or trivial tautologies.
 
-3. **Active Timers & Digital Clock**:
-   - Lines 266-271: `setInterval` runs every 1000ms updating `currentTime` with clean `clearInterval` unmount.
-   - Lines 281-297: `computeElapsed` calculates `diffSecs = Math.max(0, Math.floor((now - clockInTime) / 1000))` and ticks every 1000ms while active session is running.
-   - Zero hardcoded mock bypasses or static fake values.
+### 1.3 Invariance of Protected Invoice Files
+Verified file system timestamps (`Get-Item ... | Select-Object Name, LastWriteTime`):
+- `src/components/invoices/mobile/MobileCreateInvoice.tsx`: `21-10-2026 14:14:18` (Untouched)
+- `src/components/SalesInvoiceModal.tsx`: `21-10-2026 15:07:50` (Untouched)
+- `src/components/invoices/mobile/AddItemModal.tsx`: `14-10-2026 00:26:14` (Untouched)
+- `src/components/invoices/mobile/SelectPartyModal.tsx`: `14-10-2026 00:26:14` (Untouched)
+- `src/components/invoices/mobile/EditItemModal.tsx`: `14-10-2026 00:26:14` (Untouched)
 
-4. **Database & Resilience Operations**:
-   - `crm_geolocations`:
-     - Select: line 343 (`order("created_at")`)
-     - Update: line 868 (`eq("id", updated.id)`)
-     - Insert: line 898 (`insert(...)`)
-     - Delete: line 922 (`delete().eq("id", id)`)
-   - `crm_attendance`:
-     - Select: line 386 (`order("date")`)
-     - Upsert: line 623 (`upsert(..., { onConflict: "org_id, staff_id, date" })`)
-     - Update: line 734 (`update(...).eq("org_id").eq("staff_id").eq("date")`)
-   - `crm_attendance_requests`:
-     - Select: line 414 (`order("created_at")`)
-     - Insert: line 979 (`insert(...)`)
-     - Update: line 1089 (`update(...).eq("id", req.id)`)
-   - Synchronous lazy initializers at lines 167-221 read from `localStorage` (`credsmart_crm_geolocations_*`, `credsmart_crm_attendance_*`, `credsmart_crm_attendance_requests_*`) and fallback safely to default office HQ.
-
-5. **Empirical Independent Verification Outputs**:
-   - `cmd /c npx tsc --noEmit`:
-     ```
-     Exited with code 0.
-     Stdout: (empty)
-     Stderr: (empty)
-     ```
-   - `npm.cmd test -- src/test/crmAttendance.test.tsx --run`:
-     ```
-     ✓ src/test/crmAttendance.test.tsx (15 tests) 23351ms
-     Test Files  1 passed (1)
-          Tests  15 passed (15)
-     ```
-   - Dependent suites: `npm.cmd test -- src/test/crmGeoUtils.test.ts src/test/crmDashboardResilience.test.tsx src/test/crmPermissionGate.test.tsx --run`:
-     ```
-     Test Files  3 passed (3)
-          Tests  56 passed (56)
-     ```
+### 1.4 Empirical Command Execution
+- **Vitest Task Test Suites**:
+  - Command: `cmd /c "npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTaskLifecycle.test.ts"`
+  - Result: Exit code 0, 3 test files passed, 51/51 tests passed.
+- **Vitest Staff Provisioning Suites**:
+  - Command: `cmd /c "npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx"`
+  - Result: Exit code 0, 2 test files passed, 36/36 tests passed.
+- **TypeScript Strict Compilation**:
+  - Command: `cmd /c "npx tsc --noEmit"`
+  - Result: Exit code 0, 0 compiler errors.
+- **Production Bundle Build**:
+  - Command: `cmd /c "npm run build"`
+  - Result: Exit code 0, built cleanly in 2m 43s.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Premise 1 (Authentic Implementation)**:
-   - Inspection of `src/pages/crm/Attendance.tsx` confirms genuine React hooks (`useState`, `useEffect`, `useMemo`, `useCallback`), complete interactive dialogs, real CSV/PDF generation, and error handling. No dummy functions or facade returns were detected.
-
-2. **Premise 2 (Zero Prohibited Patterns)**:
-   - Searches for test-only mock flags (`NODE_ENV`, hardcoded pass values) yielded 0 matches in production code. The component interacts directly with the production Supabase client and browser Geolocation APIs.
-
-3. **Premise 3 (Specification Compliance)**:
-   - The component satisfies all specifications in `ORIGINAL_REQUEST.md` (section `## 2026-10-17T08:52:11Z` R3):
-     - Staff Clock-In / Clock-Out pod with live digital clock, shift info, and touch-optimized buttons (Emerald `#10B981` Clock In, Orange `#FF6A00` Clock Out).
-     - Live GPS status indicator ("Acquiring GPS...", "Within Geofence ✓", "Outside Geofence ⚠️").
-     - Distance radar visualizer with concentric circles and distance readout.
-     - Work timer showing elapsed time for today's active session.
-     - Daily Attendance Table using `CRMDataTable` with date filter, status filter, and staff search.
-     - Geofence Management Modal with "Use My Current Location" button.
-     - Regularisation approval workflow with manager approval/rejection.
-     - Gated by `CRMPermissionGate` and `useCRMPermission("attendance", "view")`.
-
-4. **Premise 4 (Empirical Execution)**:
-   - Compilation and all 15 unit tests pass cleanly without errors or regressions.
-
-5. **Deductive Conclusion**:
-   - The work product is authentic, robust, and free of integrity violations.
+1. **Compliance with Ground-Truth Constraints**:
+   - `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z) defines Integrity Mode as `development`, requiring authentic implementation without hardcoded test outcomes, dummy facades, or fabricated logs.
+   - Observations in 1.1 confirm that `Tasks.tsx` connects to real API endpoints in `crmApi.ts`, which interface with the backend Express router (`backend-api/src/routes/crm.js`) backing PostgreSQL table `staff_tasks`.
+2. **State Machine Integrity**:
+   - Observation 1.1 demonstrates that status transitions are strictly validated: empty proof notes on proof-required tasks are blocked; empty revision feedback on manager revisions is blocked; title length validation is enforced.
+   - All state transitions update local state, trigger user notifications, and make backend API calls.
+3. **Absence of Cheating or Mocks in Production**:
+   - Grep scans in 1.1 reveal zero instances of `process.env.NODE_ENV`, `mock`, `bypass`, or `any` in `src/pages/crm/Tasks.tsx`.
+   - The component operates authentically in both browser and test environments, using standard React hooks and standard DOM events.
+4. **Desktop & Invoice Preservation**:
+   - Observation 1.3 shows that all 5 protected invoicing files have LastWriteTime timestamps prior to Milestone 3 implementation.
+5. **Empirical Validation**:
+   - Observation 1.4 confirms that all 51 task lifecycle and UI tests, all 36 staff provisioning tests, the full TypeScript compiler (`tsc --noEmit`), and the production build (`npm run build`) execute cleanly with zero errors.
 
 ---
 
 ## 3. Caveats
 
-- As noted by `worker_m3`, connecting `ROUTE_PATHS.crmAttendance` to `<Attendance />` in `src/App.tsx` and updating `src/test/crmShellRoutes.test.ts` is scheduled for Milestone 5 / worker_m5 according to orchestrator dispatch boundaries. This does not impair the functionality or audit of Milestone 3.
+- In headless test runners lacking a live Express server, network requests via `fetch` / `apiClient` fail gracefully and activate the built-in `localStorage` fallback; this was verified to be authentic application error-handling rather than test-specific conditional branching.
 - No other caveats.
 
 ---
@@ -123,32 +96,29 @@
 
 **Verdict: CLEAN**
 
-Milestone 3 (Attendance UI & Clock-In Hub) passes all forensic checks. The implementation is authentic, adheres strictly to CredSmart design tokens, integrates seamlessly with `crmGeoUtils.ts` and Supabase schemas, and compiles and tests with 100% pass rates.
+Milestone 3 (Full-Stack Enterprise Task Management) adheres 100% to all specifications in `ORIGINAL_REQUEST.md` and `PROJECT.md`. The implementation in `src/pages/crm/Tasks.tsx` is authentic, production-grade, strictly typed with zero `any` types, free of mock bypasses, verified by 51 passing tests, passes `tsc --noEmit`, and leaves all invoice creation flows completely untouched.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce this verification:
+To independently re-verify this audit, run the following commands from repository root:
 
-1. **Verify TypeScript compilation**:
-   ```cmd
-   cmd /c npx tsc --noEmit
-   ```
-   *Expected*: Exit code 0, 0 errors.
+```powershell
+# 1. Verify task unit, lifecycle, and view integration test suites
+cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTaskLifecycle.test.ts
 
-2. **Run Attendance test suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmAttendance.test.tsx --run
-   ```
-   *Expected*: 15 passed, 0 failed.
+# 2. Verify staff provisioning and UI tests
+cmd /c npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx
 
-3. **Run Geolocation engine tests**:
-   ```cmd
-   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
-   ```
-   *Expected*: 33 passed, 0 failed.
+# 3. Verify TypeScript strict compiler
+cmd /c npx tsc --noEmit
 
-4. **Inspect source files**:
-   - `src/pages/crm/Attendance.tsx`
-   - `src/test/crmAttendance.test.tsx`
+# 4. Verify production build
+cmd /c npm run build
+```
+
+Invalidation conditions:
+- Any failure in `crmTasksView.test.tsx` or `crmStaffTasksIntegration.test.tsx`.
+- Introduction of `any` types or `process.env.NODE_ENV` bypass branches in `src/pages/crm/Tasks.tsx`.
+- Modifications to any protected invoice modal files.

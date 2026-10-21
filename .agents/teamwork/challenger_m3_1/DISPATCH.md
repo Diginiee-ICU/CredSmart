@@ -1,26 +1,36 @@
-# Task Assignment: Challenger M3-1 (Adversarial UI State & Error Stress Challenge)
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1
-Target: Milestone M3 Empirical Challenge
-Challenge:
-1. Empirically verify empty states, network failure fallback toasts, invalid month formats, and unauthorized user UI states.
-2. Verify that unauthorized staff without `salary:approve` cannot lock payroll or approve advances.
-3. Run `cmd /c npx vitest run src/test/crmSalaryManagement*.test.tsx`.
-Report APPROVE or REJECT in handoff.md.
+# Dispatch: Challenger 1 (Milestone 3 — Stress & Boundary Testing)
+
+## Working Directory
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1`
+
+## Task
+Adversarially challenge the Milestone 3 Task Management implementation in `src/pages/crm/Tasks.tsx`.
+
+## Key Stress Tests
+1. **Form Validation & Edge Cases**:
+   - Test blank or whitespace-only task title (must be blocked).
+   - Test empty proof notes submission when `requires_proof = true` (must be blocked with toast warning).
+   - Test empty revision feedback submission (must be blocked).
+   - Test KPI metrics calculation with 0 tasks (must return 0% completion rate without NaN or division by zero).
+   - Test search filter with special regex characters (`[`, `*`, `+`, `?`, etc.) to ensure no runtime crashes.
+2. **State Machine Integrity**:
+   - Verify unauthorized non-managers cannot approve tasks or request revisions.
+   - Verify overdue tasks highlighting logic (`due_date < today && status !== 'done'`).
+3. **Verification**:
+   - Run `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx`.
+
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md` with explicit verdict: **APPROVE** or **REJECT**.
 
 
-## 2026-10-18T11:47:40Z
-You are Challenger M3-1 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1.
-Task assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\DISPATCH.md.
-Read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_1\handoff.md
-- src/pages/crm/SalaryManagement.tsx
+## 2026-10-21T19:50:06Z
+You are Challenger 1 for Milestone 3 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
 
-Adversarially challenge UI states & permissions:
-- Verify unauthorized user behavior (without view permission -> restricted fallback).
-- Verify non-approver user behavior (cannot lock payroll or approve adjustments).
-- Verify empty state rendering and toast error handling.
-- Run cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx
-Write your verdict (APPROVE or REJECT) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md.
-Send a message back to caller with your verdict and handoff path.
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1
+
+Adversarially challenge Milestone 3 task management edge cases: empty titles, empty proof notes rejection, empty revision notes rejection, 0-task KPI calculations, special regex characters in search filter, overdue date highlighting, and unauthorized manager actions.
+Run verification commands: `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx`.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md` with explicit verdict: APPROVE or REJECT.
+Send message back to parent when done.

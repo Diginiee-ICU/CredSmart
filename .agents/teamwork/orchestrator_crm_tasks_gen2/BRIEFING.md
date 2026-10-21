@@ -66,19 +66,25 @@ Implement production-grade staff user provisioning & instant role assignment in 
 | challenger_m2_1 | teamwork_preview_challenger | M2 Challenger Stress | completed | c00826db-10ab-4591-941c-b920e6fd6fba |
 | challenger_m2_2 | teamwork_preview_challenger | M2 Challenger Regression | completed | 4592e430-f90a-42d1-acbe-e551b8ac94da |
 | auditor_m2 | teamwork_preview_auditor | M2 Forensic Auditor | completed | d5467dc1-2220-4705-a60a-185e78886d10 |
-| worker_m2_rem | teamwork_preview_worker | M2 Remediation | completed | 6d4d75e0-6840-4602-91d7-3646156a0f09 |
-| worker_m3 | teamwork_preview_worker | M3 Full-Stack Tasks UI | in-progress | 8097ce24-f93f-4329-a0eb-bef327b20883 |
+| worker_m3 | teamwork_preview_worker | M3 Full-Stack Tasks UI | completed | 8097ce24-f93f-4329-a0eb-bef327b20883 |
+| reviewer_m3_1 | teamwork_preview_reviewer | M3 Reviewer UI & Views | completed | d3ebb85e-1ebc-4cd0-92db-e85f326568f9 |
+| reviewer_m3_2 | teamwork_preview_reviewer | M3 Reviewer Lifecycle & Rules | completed | b87de203-643a-468f-972c-971932ab8951 |
+| challenger_m3_1 | teamwork_preview_challenger | M3 Challenger Stress | completed | ccff3974-646f-4cea-98f6-da03db3a99e1 |
+| challenger_m3_2 | teamwork_preview_challenger | M3 Challenger Regression | completed | 4a0f1197-9215-4461-b8e6-1c7e018b70d2 |
+| auditor_m3 | teamwork_preview_auditor | M3 Forensic Auditor | completed | 3a9113fd-ac27-4576-9032-28ef9e34d2fa |
+| challenger_m4_final | teamwork_preview_challenger | M4 Final E2E Challenger | completed | 6af5b4f6-0a12-4ccc-ba71-bbe314993177 |
+| auditor_m4_victory | teamwork_preview_auditor | M4 Forensic Victory Auditor | completed | b537ae52-a148-4adf-933d-12802772c3b1 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 18 / 128
-- Pending subagents: 8097ce24-f93f-4329-a0eb-bef327b20883
+- Spawn count: 25 / 128
+- Pending subagents: none
 - Predecessor: orchestrator_crm_tasks
 - Successor: none
 
 ## Active Timers
 - Heartbeat cron: task-347 (*/10 * * * *)
-- Safety timer: task-415 (worker_m3: 8097ce24-f93f-4329-a0eb-bef327b20883)
+- Safety timer: task-436 (worker_m3: 8097ce24-f93f-4329-a0eb-bef327b20883)
 
 ## Artifact Index
 - ORIGINAL_REQUEST.md — Authoritative user requirements

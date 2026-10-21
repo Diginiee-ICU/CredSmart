@@ -1,136 +1,138 @@
-# Empirical Challenge Report: Challenger M3-1 (Salary Management UI & Permissions)
-
-- **Challenger**: `challenger_m3_1` (Roles: critic, specialist)
-- **Target Milestone**: Milestone M3 — Salary Management UI Page & Admin Workflow Verification
-- **Target File**: `src/pages/crm/SalaryManagement.tsx`
-- **Associated Test Suites**:
-  - `src/test/crmSalaryManagement.test.tsx`
-  - `src/test/crmSalaryManagementAdmin.test.tsx`
-- **Parent Orchestrator ID**: `caf7924e-19e5-4a1d-ae03-b43c66838dd3`
-- **Date**: 2026-10-18T11:58:30Z
-- **Verdict**: **APPROVE**
-
----
+# Milestone 3 Challenger 1 Handoff Report: Adversarial Stress & Boundary Testing
 
 ## 1. Observation
 
-### 1.1 Empirical Test Suite Execution Results
-
-1. **General UI & Interaction Test Suite (`src/test/crmSalaryManagement.test.tsx`)**:
-   - Command: `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx`
-   - Result:
-     ```
-     ✓ src/test/crmSalaryManagement.test.tsx (26 tests) 15184ms
-     Test Files  1 passed (1)
-          Tests  26 passed (26)
-       Duration  105.03s
-     ```
-
-2. **Admin Workflow & Lifecycle Test Suite (`src/test/crmSalaryManagementAdmin.test.tsx`)**:
-   - Command: `cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx`
-   - Result:
-     ```
-     ✓ src/test/crmSalaryManagementAdmin.test.tsx (17 tests) 63078ms
-     Test Files  1 passed (1)
-          Tests  17 passed (17)
-       Duration  178.04s
-     ```
-
-3. **TypeScript Static Typecheck (`tsc --noEmit`)**:
-   - Command: `cmd /c npx tsc --noEmit`
-   - Result: Exited with code 0 (zero compiler errors, strict mode compliant, zero `any` types).
-
-### 1.2 Adversarial UI State & Permission Verifications
-
-1. **Unauthorized User Behavior (`salary:view` Gating)**:
-   - In `src/pages/crm/SalaryManagement.tsx`:
-     - Line 155: `const { hasPermission, isSuperAdmin, loading: permissionLoading } = useCRMPermission("salary", "view");`
-     - Lines 962-966: Top-level page container wrapped in:
-       ```tsx
-       <CRMPermissionGate
-         module="salary"
-         action="view"
-         fallback={<SalaryAccessRestrictedFallback />}
-       >
-       ```
-     - Lines 122-146: `SalaryAccessRestrictedFallback` renders `ShieldAlert` icon, `"Access Restricted"`, descriptive guidance, and a `"Go Back"` button.
-     - Tests 8 & 9 in `src/test/crmSalaryManagement.test.tsx` confirm that unauthorized users without `salary:view` (and non-super-admins) receive a `"Not Authorized"` toast and `SalaryAccessRestrictedFallback`, with zero salary data leaked into the DOM.
-     - Test 10 confirms that super admins bypass this check.
-
-2. **Non-Approver User Behavior (`salary:approve` Gating)**:
-   - In `src/pages/crm/SalaryManagement.tsx`:
-     - Line 158: `const canApprove = isSuperAdmin || hasPermission("salary", "approve");`
-     - Lines 1343, 1354, 1364: In Tab 2 (Payroll Run):
-       - "Generate Payroll" button is `disabled={isCurrentRunLocked || !canApprove}`.
-       - "Lock Payroll" button is `disabled={isCurrentRunLocked || !canApprove || (!hasGeneratedPreview && currentMonthPayslips.length === 0)}`.
-       - "Mark as Disbursed" button is `disabled={!currentRun || currentRun.status !== "locked" || !canApprove}`.
-     - Lines 620, 747: Action handlers `handleLockPayroll` and `handleMarkAsDisbursed` explicitly enforce `if (!canApprove) return;`.
-     - Lines 1671, 1735: In Tab 3 (Advances & Deductions), Approve and Reject buttons are only rendered when `canApprove && a.status === "pending"`.
-     - Lines 847, 877: Action handlers `handleApproveAdjustment` and `handleRejectAdjustment` strictly guard `if (!canApprove) return;`.
-     - Tests 5, 6, 14 in `src/test/crmSalaryManagementAdmin.test.tsx` confirm that non-approvers have buttons disabled or hidden, and cannot perform approvals or payroll locks.
-
-3. **Empty State Rendering**:
-   - In `src/pages/crm/SalaryManagement.tsx`:
-     - Tab 1 (Salary Profiles, line 1242): `CRMDataTable` renders `emptyMessage="No salary profiles configured yet."`. Mobile card view (line 1249) displays `"No salary profiles configured yet."`. (Verified in test 15 of `crmSalaryManagement.test.tsx`).
-     - Tab 3 (Advances & Deductions, lines 1703, 1711): `CRMDataTable` renders `emptyMessage="No advances or adjustments recorded."`. Mobile view renders fallback card. (Verified in test 17 of `crmSalaryManagement.test.tsx`).
-     - Tab 4 (My Payslips, lines 1769-1777): Renders dashed bordered card with `FileText` icon and `"No payslips available"`. (Verified in test 16 of `crmSalaryManagement.test.tsx`).
-
-4. **Toast Error Handling & Input Validation**:
-   - Lines 285-290, 308-313, 325-330, 348-353: Failed queries for profiles, payroll runs, payslips, or adjustments emit explicit destructive toasts (e.g. `"Error Loading Salary Profiles"`).
-   - Lines 372-376: Unexpected exceptions in `loadSalaryData` emit `"Error Loading Data"` destructive toast.
-   - Lines 524, 532, 541: Profile Drawer rejects missing staff, negative base amounts, and invalid PF/ESI ranges (>100% or <0%) with descriptive validation toasts.
-   - Lines 791, 801: Advance Drawer rejects missing staff or non-positive amounts with validation toasts.
-   - Lines 587-594: `handleGeneratePayroll` detects active staff without configured salary profiles, displays an amber notice banner in Tab 2, and emits a `"Warning: Missing Profiles"` toast.
-   - Verified empirically in tests 13, 14, 21, 22, 23 of `crmSalaryManagement.test.tsx` and test 17 of `crmSalaryManagementAdmin.test.tsx`.
-
-5. **Currency Formatting**:
-   - Lines 101-116: `formatIndianCurrency` properly formats amounts using `en-IN` locale (`₹50,000.00`, `₹1,00,000.00`), clamps non-finite/null/empty values safely to `₹0.00`, and preserves negative signs (`-₹X.XX`). (Verified in tests 18 and 19 of `crmSalaryManagement.test.tsx`).
-
----
+- **Implementation Inspected**: `src/pages/crm/Tasks.tsx`
+  - **Form Validation & Edge Cases**:
+    - Lines 344-352:
+      ```typescript
+      const trimmedTitle = newTitle.trim();
+      if (!trimmedTitle) {
+        toast({ title: "Validation Error", description: "Title is required", variant: "destructive" });
+        return;
+      }
+      if (trimmedTitle.length < 3) {
+        toast({ title: "Validation Error", description: "Title must be at least 3 characters", variant: "destructive" });
+        return;
+      }
+      ```
+      Input also carries native HTML5 `required` attribute at Line 1066.
+    - Lines 412-420:
+      ```typescript
+      const trimmed = proofText.trim();
+      if (activeTaskForProof.requires_proof && !trimmed) {
+        toast({
+          title: "Validation Error",
+          description: "Please describe your work or proof before submitting",
+          variant: "destructive",
+        });
+        return;
+      }
+      ```
+    - Lines 462-470:
+      ```typescript
+      const trimmed = revisionText.trim();
+      if (!trimmed) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter revision notes before submitting",
+          variant: "destructive",
+        });
+        return;
+      }
+      ```
+    - Lines 262-270:
+      ```typescript
+      const metrics = useMemo(() => {
+        const total = tasks.length;
+        const inProgress = tasks.filter((t) => t.status === "in_progress").length;
+        const review = tasks.filter((t) => t.status === "review").length;
+        const done = tasks.filter((t) => t.status === "done").length;
+        const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
+        const overdue = tasks.filter((t) => t.status !== "done" && Boolean(t.due_date && t.due_date < todayStr)).length;
+        return { total, inProgress, review, done, completionRate, overdue };
+      }, [tasks, todayStr]);
+      ```
+    - Lines 273-282:
+      ```typescript
+      const filteredTasks = useMemo(() => {
+        return tasks.filter((t) => {
+          const matchSearch =
+            t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.assignee_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.description.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchPriority = priorityFilter === "all" ? true : t.priority === priorityFilter;
+          return matchSearch && matchPriority;
+        });
+      }, [tasks, searchQuery, priorityFilter]);
+      ```
+    - Lines 141-143, 654-675, 1006-1025:
+      `canApprove = isSuperAdmin || hasPermission("tasks", "approve");`
+      Both Kanban and Table views strictly guard "Approve ✓" and "Request Revision" behind `canApprove`.
+    - Overdue Calculation:
+      Kanban Line 894-896: `const isOverdue = task.status !== "done" && Boolean(task.due_date && task.due_date < todayStr);`
+      Table Line 589: `const overdue = row.status !== "done" && Boolean(row.due_date && row.due_date < todayStr);`
+- **Adversarial Test Suite Authored**: `src/test/crmTasksChallengerM3.test.tsx` (14 comprehensive stress tests).
+- **Test Executions**:
+  - `cmd /c npx vitest run src/test/crmTasksChallengerM3.test.tsx` -> 14 passed (14).
+  - `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTasksChallengerM3.test.tsx` -> 4 test files passed, 65 tests passed (65).
+  - `cmd /c npx tsc --noEmit` -> Exited with code 0 (zero TypeScript errors).
 
 ## 2. Logic Chain
 
-1. **Permission Gating Consistency**:
-   - Both top-level viewing (`salary:view`) and granular administration (`salary:approve`) are guarded at two separate layers: the React UI layer (component gating / button disabling / conditional rendering) and the action handler layer (`if (!canApprove) return;`). This defense-in-depth prevents unauthorized actions even if button DOM attributes are manipulated.
-2. **State Fallbacks & Empty State Resilience**:
-   - For all 4 tabs, when query returns empty arrays or when offline caches are empty, dedicated empty states render clearly without throwing runtime null pointer exceptions.
-   - Form inputs validate boundary conditions (empty strings, non-numeric values, negative numbers, percentages outside 0–100%) and prevent corrupt records from reaching Supabase.
-3. **Empirical Reproduction & Independent Verification**:
-   - 43 distinct unit and integration test specifications across 2 test files were executed synchronously in the environment. All 43 passed without failures or regressions.
-   - TypeScript compilation verified 0 syntax, structural, or type errors.
-
----
+1. **Title Validation (Whitespace & Min Length)**:
+   - When a user submits a blank or whitespace-only title (`""`, `"   "`, `"\t\n"`), `trimmedTitle` evaluates to `""`.
+   - The validation fires `toast({ title: "Validation Error", description: "Title is required", variant: "destructive" })` and halts execution (`return`).
+   - If length is less than 3 (`"ab"`), it fires `toast({ title: "Validation Error", description: "Title must be at least 3 characters", variant: "destructive" })`.
+   - In both cases, modal stays open and `crmApi.createCRMTask` is never called. Confirmed by `crmTasksChallengerM3.test.tsx`.
+2. **Proof Submission Rejection**:
+   - When a task has `requires_proof = true`, `handleSubmitProof` inspects `proofText.trim()`.
+   - If empty or whitespace-only, a destructive warning toast `"Please describe your work or proof before submitting"` is rendered, the modal remains open, and no API transition is dispatched.
+   - Confirmed by `crmTasksChallengerM3.test.tsx`.
+3. **Manager Revision Notes Rejection**:
+   - When requesting revision on a task in `review`, `handleSubmitRevision` checks `revisionText.trim()`.
+   - If empty or whitespace-only, a destructive warning toast `"Please enter revision notes before submitting"` is displayed, modal remains open, and the task stays in `review`.
+   - If valid, the task transitions to `in_progress`, receives `review_feedback`, and displays an amber revision callout banner. Confirmed by tests.
+4. **0-Task KPI Metric Resilience**:
+   - With an empty task list (`tasks = []`), `total === 0`.
+   - The expression `total > 0 ? Math.round((done / total) * 100) : 0` evaluates safely to `0` rather than `NaN` or `Infinity`.
+   - All 4 Kanban columns show "No tasks" without throwing runtime exceptions.
+5. **Special Regex Characters in Search Filter**:
+   - The filtering logic uses string `.includes()` on normalized lowercase strings rather than dynamic `new RegExp(...)`.
+   - Stress-tested with `[`, `]`, `*`, `+`, `?`, `\`, `^`, `$`, `(`, `)`, `{`, `}`, `|`, `.*`, and `([a-z]+)`.
+   - Zero RegExp syntax errors occur; component handles literal symbol searches (e.g. matching `[` or `(A+)`) cleanly.
+6. **State Machine & RBAC Gating**:
+   - Non-manager users without `tasks:approve` cannot see or click "Approve ✓" or "Request Revision" in either Kanban board or Data Table views.
+   - Super-admins unconditionally bypass and retain approval/revision capabilities.
+7. **Overdue Highlighting Logic**:
+   - Tasks with past due dates (`due_date < todayStr`) and active statuses (`todo`, `in_progress`, `review`) trigger the overdue warning pill in the header and red font styling with alert triangles.
+   - Completed tasks (`status === 'done'`) with past due dates are excluded from overdue calculations.
 
 ## 3. Caveats
 
-- **No Caveats**: All 4 tabs, mobile cards, desktop tables, RBAC gates, empty states, error handling, and test suites are fully verified and working in production quality.
-
----
+- No caveats. All 7 stress and boundary testing criteria specified in the dispatch were empirically executed, verified, and passed with 100% success rate.
+- No implementation code in `src/pages/crm/Tasks.tsx` or protected invoice files was altered; tests were placed strictly in `src/test/`.
 
 ## 4. Conclusion
 
 **Verdict: APPROVE**
 
-Milestone M3 deliverables are verified and approved:
-- `src/pages/crm/SalaryManagement.tsx` is robust, well-gated, handles all edge cases and empty states, and meets all design and functional criteria.
-- 43/43 tests pass across `src/test/crmSalaryManagement.test.tsx` and `src/test/crmSalaryManagementAdmin.test.tsx`.
-- `tsc --noEmit` passes with 0 errors.
-
----
+Milestone 3 Task Management implementation in `src/pages/crm/Tasks.tsx` is robust, resilient to boundary conditions, properly protected against invalid inputs, safe against regex injection in search filters, defensively guarded against division by zero in KPI calculations, and strictly compliant with CredSmart RBAC permissions.
 
 ## 5. Verification Method
 
-To independently reproduce this verification:
+To independently verify all claims:
 
-1. **Run General Salary Management UI Tests (26 tests)**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx
-   ```
-2. **Run Admin & Lifecycle Workflow Tests (17 tests)**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmSalaryManagementAdmin.test.tsx
-   ```
-3. **Run TypeScript Static Typecheck**:
-   ```powershell
-   cmd /c npx tsc --noEmit
-   ```
+```powershell
+cmd /c npx vitest run src/test/crmTasksChallengerM3.test.tsx
+cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx
+cmd /c npx tsc --noEmit
+```
+
+- **Files to inspect**:
+  - `src/pages/crm/Tasks.tsx`
+  - `src/test/crmTasksChallengerM3.test.tsx`
+- **Invalidation Conditions**:
+  - Any test failure in `crmTasksChallengerM3.test.tsx`.
+  - Non-zero exit code on `tsc --noEmit`.
+  - Unhandled exception when searching special characters.
