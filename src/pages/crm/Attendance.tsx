@@ -43,6 +43,7 @@ import {
 } from "@/hooks/useCRMPermission";
 import { settingsApi } from "@/services/settingsApi";
 import { crmApi } from "@/services/crmApi";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -345,13 +346,25 @@ export default function Attendance(): React.ReactElement {
       // Load Geofences
       let loadedGeofences: CRMGeolocation[] = [];
       try {
-        const { data, error } = await crmApi.getCRMGeolocations(effectiveOrgId);
-
+        const { data, error } = await supabase
+          .from("crm_geolocations")
+          .select("*")
+          .eq("org_id", effectiveOrgId)
+          .order("created_at", { ascending: true });
         if (!error && data && data.length > 0) {
           loadedGeofences = data as unknown as CRMGeolocation[];
         }
-      } catch (err) {
-        console.warn("Failed to fetch geofences from API, checking local storage:", err);
+      } catch {}
+
+      if (loadedGeofences.length === 0) {
+        try {
+          const { data, error } = await crmApi.getCRMGeolocations(effectiveOrgId);
+          if (!error && data && data.length > 0) {
+            loadedGeofences = data as unknown as CRMGeolocation[];
+          }
+        } catch (err) {
+          console.warn("Failed to fetch geofences from API, checking local storage:", err);
+        }
       }
 
       if (loadedGeofences.length === 0) {
@@ -384,13 +397,25 @@ export default function Attendance(): React.ReactElement {
       // Load Attendance Records
       let loadedAttendance: CRMAttendanceRecord[] = [];
       try {
-        const { data, error } = await crmApi.getCRMAttendance(effectiveOrgId);
-
+        const { data, error } = await supabase
+          .from("crm_attendance")
+          .select("*")
+          .eq("org_id", effectiveOrgId)
+          .order("date", { ascending: false });
         if (!error && data) {
           loadedAttendance = data as unknown as CRMAttendanceRecord[];
         }
-      } catch (err) {
-        console.warn("Failed to fetch attendance from API, checking local storage:", err);
+      } catch {}
+
+      if (loadedAttendance.length === 0) {
+        try {
+          const { data, error } = await crmApi.getCRMAttendance(effectiveOrgId);
+          if (!error && data) {
+            loadedAttendance = data as unknown as CRMAttendanceRecord[];
+          }
+        } catch (err) {
+          console.warn("Failed to fetch attendance from API, checking local storage:", err);
+        }
       }
 
       if (loadedAttendance.length === 0) {
@@ -408,13 +433,25 @@ export default function Attendance(): React.ReactElement {
       // Load Regularisation Requests
       let loadedRequests: CRMAttendanceRequest[] = [];
       try {
-        const { data, error } = await crmApi.getCRMAttendanceRequests(effectiveOrgId);
-
+        const { data, error } = await supabase
+          .from("crm_attendance_requests")
+          .select("*")
+          .eq("org_id", effectiveOrgId)
+          .order("created_at", { ascending: false });
         if (!error && data) {
           loadedRequests = data as unknown as CRMAttendanceRequest[];
         }
-      } catch (err) {
-        console.warn("Failed to fetch attendance requests from API:", err);
+      } catch {}
+
+      if (loadedRequests.length === 0) {
+        try {
+          const { data, error } = await crmApi.getCRMAttendanceRequests(effectiveOrgId);
+          if (!error && data) {
+            loadedRequests = data as unknown as CRMAttendanceRequest[];
+          }
+        } catch (err) {
+          console.warn("Failed to fetch attendance requests from API:", err);
+        }
       }
 
       if (loadedRequests.length === 0) {
@@ -432,25 +469,72 @@ export default function Attendance(): React.ReactElement {
       // Load Profiles & Roles for Directory
       const profilesMap: Record<string, StaffProfileInfo> = {};
       try {
-        const { data: members } = await settingsApi.getMemberships(effectiveOrgId);
+        let members: any[] | null = null;
+        try {
+          const { data } = await supabase
+            .from("organization_memberships")
+            .select("id, user_id, role")
+            .eq("organization_id", effectiveOrgId);
+          if (data && data.length > 0) members = data;
+        } catch {}
+
+        if (!members) {
+          const res = await settingsApi.getMemberships(effectiveOrgId);
+          if (res.data) members = res.data;
+        }
 
         if (members && members.length > 0) {
-          const userIds = members.map((m) => m.user_id);
-          const { data: profiles } = await settingsApi.getProfiles({ ids: userIds });
+          const userIds = members.map((m: any) => m.user_id);
+          let profiles: any[] | null = null;
+          try {
+            const { data } = await supabase
+              .from("profiles")
+              .select("id, full_name, email")
+              .in("id", userIds);
+            if (data) profiles = data;
+          } catch {}
 
-          const { data: staffRoles } = await crmApi.getCRMStaffRoles(effectiveOrgId);
+          if (!profiles) {
+            const res = await settingsApi.getProfiles({ ids: userIds });
+            if (res.data) profiles = res.data;
+          }
 
-          const { data: crmRoles } = await crmApi.getCRMRoles(effectiveOrgId);
+          let staffRoles: any[] | null = null;
+          try {
+            const { data } = await supabase
+              .from("crm_staff_roles")
+              .select("staff_id, role_id");
+            if (data) staffRoles = data;
+          } catch {}
+
+          if (!staffRoles) {
+            const res = await crmApi.getCRMStaffRoles(effectiveOrgId);
+            if (res.data) staffRoles = res.data;
+          }
+
+          let crmRoles: any[] | null = null;
+          try {
+            const { data } = await supabase
+              .from("crm_roles")
+              .select("id, name, color, is_super_admin")
+              .eq("org_id", effectiveOrgId);
+            if (data) crmRoles = data;
+          } catch {}
+
+          if (!crmRoles) {
+            const res = await crmApi.getCRMRoles(effectiveOrgId);
+            if (res.data) crmRoles = res.data;
+          }
 
           if (crmRoles && crmRoles.length > 0) {
-            const names = crmRoles.map((r) => r.name).filter(Boolean);
+            const names = crmRoles.map((r: any) => r.name).filter(Boolean);
             setCrmRoleNames((prev) => Array.from(new Set([...prev, ...names])));
           }
 
-          const roleMap = new Map((crmRoles || []).map((r) => [r.id, r]));
-          const staffRoleMap = new Map((staffRoles || []).map((sr) => [sr.staff_id, sr.role_id]));
+          const roleMap = new Map((crmRoles || []).map((r: any) => [r.id, r]));
+          const staffRoleMap = new Map((staffRoles || []).map((sr: any) => [sr.staff_id, sr.role_id]));
 
-          (profiles || []).forEach((p) => {
+          (profiles || []).forEach((p: any) => {
             const assignedRoleId = staffRoleMap.get(p.id);
             const assignedRole = assignedRoleId ? roleMap.get(assignedRoleId) : null;
             profilesMap[p.id] = {
@@ -636,28 +720,35 @@ export default function Attendance(): React.ReactElement {
         updated_at: nowIso,
       };
 
-      // 3. Upsert via crmApi
+      // 3. Upsert via Supabase & crmApi
+      const attendancePayload = {
+        org_id: effectiveOrgId,
+        staff_id: effectiveUserId,
+        date: todayDateStr,
+        clock_in: nowIso,
+        clock_in_latitude: coords.latitude,
+        clock_in_longitude: coords.longitude,
+        clock_in_accuracy: coords.accuracy,
+        clock_in_location_id: nearest?.geofence.id || null,
+        status: "present" as AttendanceStatus,
+        verification_method: verificationMethod,
+        is_within_geofence: isInside,
+        distance_from_office_meters: distanceMeters,
+        work_duration_minutes: 0,
+        overtime_minutes: 0,
+        notes: newRecord.notes,
+      };
+
       try {
-        await crmApi.recordCRMAttendance(
-          {
-            org_id: effectiveOrgId,
-            staff_id: effectiveUserId,
-            date: todayDateStr,
-            clock_in: nowIso,
-            clock_in_latitude: coords.latitude,
-            clock_in_longitude: coords.longitude,
-            clock_in_accuracy: coords.accuracy,
-            clock_in_location_id: nearest?.geofence.id || null,
-            status: "present",
-            verification_method: verificationMethod,
-            is_within_geofence: isInside,
-            distance_from_office_meters: distanceMeters,
-            work_duration_minutes: 0,
-            overtime_minutes: 0,
-            notes: newRecord.notes,
-          },
-          effectiveOrgId
-        );
+        await supabase
+          .from("crm_attendance")
+          .upsert(attendancePayload, { onConflict: "org_id, staff_id, date" });
+      } catch (err) {
+        console.warn("Supabase attendance record failed:", err);
+      }
+
+      try {
+        await crmApi.recordCRMAttendance(attendancePayload, effectiveOrgId);
       } catch (err) {
         console.warn("API attendance record failed, maintaining locally:", err);
       }
@@ -745,7 +836,15 @@ export default function Attendance(): React.ReactElement {
         updated_at: nowIso,
       };
 
-      // 2. Update via crmApi
+      // 2. Update via Supabase & crmApi
+      try {
+        await supabase
+          .from("crm_attendance")
+          .upsert(updatedRecord, { onConflict: "org_id, staff_id, date" });
+      } catch (err) {
+        console.warn("Supabase attendance clock-out failed:", err);
+      }
+
       try {
         await crmApi.updateCRMAttendance(
           todayRecord?.id || `${effectiveOrgId}-${effectiveUserId}-${todayDateStr}`,
@@ -912,6 +1011,20 @@ export default function Attendance(): React.ReactElement {
       };
 
       try {
+        await supabase.from("crm_geolocations").insert({
+          id: newGeo.id,
+          org_id: effectiveOrgId,
+          name: newGeo.name,
+          latitude: newGeo.latitude,
+          longitude: newGeo.longitude,
+          radius_meters: newGeo.radius_meters,
+          is_active: newGeo.is_active,
+        });
+      } catch (err) {
+        console.warn("Supabase geofence insert failed:", err);
+      }
+
+      try {
         await crmApi.createCRMGeolocation(
           {
             id: newGeo.id,
@@ -938,6 +1051,9 @@ export default function Attendance(): React.ReactElement {
   };
 
   const handleDeleteGeofence = async (id: string, name: string) => {
+    try {
+      await supabase.from("crm_geolocations").delete().eq("id", id);
+    } catch {}
     try {
       await crmApi.deleteCRMGeolocation(id, effectiveOrgId);
     } catch (err) {
@@ -994,6 +1110,21 @@ export default function Attendance(): React.ReactElement {
       created_at: nowIso,
       updated_at: nowIso,
     };
+
+    try {
+      await supabase.from("crm_attendance_requests").insert({
+        id: newRequest.id,
+        org_id: effectiveOrgId,
+        staff_id: effectiveUserId,
+        attendance_id: newRequest.attendance_id,
+        date: newRequest.date,
+        requested_clock_in: clockInIso,
+        requested_clock_out: clockOutIso,
+        requested_status: newRequest.requested_status,
+        reason: newRequest.reason,
+        status: "pending",
+      });
+    } catch {}
 
     try {
       await crmApi.createCRMAttendanceRequest(
@@ -1078,6 +1209,30 @@ export default function Attendance(): React.ReactElement {
       };
 
       try {
+        await supabase
+          .from("crm_attendance")
+          .upsert(
+            {
+              org_id: effectiveOrgId,
+              staff_id: req.staff_id,
+              date: req.date,
+              clock_in: req.requested_clock_in,
+              clock_out: req.requested_clock_out,
+              status: req.requested_status,
+              verification_method: "regularized",
+              is_within_geofence: true,
+              distance_from_office_meters: 0,
+              work_duration_minutes: durationMins,
+              overtime_minutes: overtimeMins,
+              notes: updatedAttendance.notes,
+            },
+            { onConflict: "org_id, staff_id, date" }
+          );
+      } catch (err) {
+        console.warn("Supabase upsert on regularise approval failed:", err);
+      }
+
+      try {
         await crmApi.recordCRMAttendance(
           {
             org_id: effectiveOrgId,
@@ -1103,6 +1258,21 @@ export default function Attendance(): React.ReactElement {
         (a) => !(a.staff_id === req.staff_id && a.date === req.date)
       );
       await persistAttendance([updatedAttendance, ...filtered]);
+    }
+
+    try {
+      await supabase
+        .from("crm_attendance_requests")
+        .update({
+          status: decision,
+          reviewer_id: effectiveUserId,
+          reviewer_notes: updatedRequest.reviewer_notes,
+          reviewed_at: nowIso,
+          updated_at: nowIso,
+        })
+        .eq("id", req.id);
+    } catch (err) {
+      console.warn("Supabase request review update failed:", err);
     }
 
     try {
