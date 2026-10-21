@@ -20,6 +20,7 @@ import { BusinessDocument } from "@/types/documents";
 import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { UnifiedInvoiceRenderer } from "../UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
+import { MobileInvoiceFitViewer } from "./MobileInvoiceFitViewer";
 
 interface MobileInvoiceSuccessViewProps {
   invoice: BusinessDocument;
@@ -270,25 +271,24 @@ export function MobileInvoiceSuccessView({
         </button>
       </div>
 
-      {/* ── 4. Actual Rendered Invoice Preview (Selected Theme & Styling) ── */}
+      {/* ── 4. Actual Rendered Invoice Preview (Fitted to Mobile Screen) ── */}
       <div className="p-3 sm:p-4 flex-1">
-        <div className="mb-2.5 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-            {isSalesType ? "Sales Invoice" : "Purchase Invoice"}
-          </span>
-          <div className="flex items-center gap-2">
-            {(invoice.items || []).length > 4 && (
-              <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
-                +{(invoice.items || []).length - 4} more item(s)
+        <MobileInvoiceFitViewer
+          title={isSalesType ? "Sales Invoice" : "Purchase Invoice"}
+          badge={
+            <div className="flex items-center gap-2">
+              {(invoice.items || []).length > 4 && (
+                <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
+                  +{(invoice.items || []).length - 4} more item(s)
+                </span>
+              )}
+              <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
+                Theme: {invoiceSettings.themeId || "Classic"}
               </span>
-            )}
-            <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
-              Theme: {invoiceSettings.themeId || "Classic"}
-            </span>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-x-auto p-2 sm:p-4">
-          <div className="min-w-[650px] p-2 bg-white text-slate-900">
+            </div>
+          }
+        >
+          <div className="p-1 sm:p-2 bg-white text-slate-900">
             <UnifiedInvoiceRenderer
               docType={invoice.docType as any}
               invoiceNumber={invoice.documentNumber}
@@ -343,7 +343,7 @@ export function MobileInvoiceSuccessView({
               settings={invoiceSettings}
             />
           </div>
-        </div>
+        </MobileInvoiceFitViewer>
       </div>
 
       {/* Spacer for sticky footer */}
