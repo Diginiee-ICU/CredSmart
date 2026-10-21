@@ -726,6 +726,18 @@ export default function Attendance(): React.ReactElement {
       );
       await persistAttendance([newRecord, ...filtered]);
 
+      if (isInside) {
+        toast({
+          title: "Clocked In Successfully ✓",
+          description: `Geo-verified (${distanceMeters}m from ${nearest?.geofence.name})`,
+        });
+      } else {
+        toast({
+          title: "Clocked In (Outside Geofence) ⚠️",
+          description: `Recorded as manual verification (${distanceMeters ?? "unknown"}m from nearest office).`,
+        });
+      }
+
       // 4. Upsert via Supabase & crmApi
       const attendancePayload = {
         org_id: effectiveOrgId,
@@ -754,21 +766,9 @@ export default function Attendance(): React.ReactElement {
       }
 
       try {
-        await crmApi.recordCRMAttendance(attendancePayload, effectiveOrgId);
+        crmApi.recordCRMAttendance(attendancePayload, effectiveOrgId).catch(() => {});
       } catch (err) {
         console.warn("API attendance record failed, maintaining locally:", err);
-      }
-
-      if (isInside) {
-        toast({
-          title: "Clocked In Successfully ✓",
-          description: `Geo-verified (${distanceMeters}m from ${nearest?.geofence.name})`,
-        });
-      } else {
-        toast({
-          title: "Clocked In (Outside Geofence) ⚠️",
-          description: `Recorded as manual verification (${distanceMeters ?? "unknown"}m from nearest office).`,
-        });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to capture GPS position.";
