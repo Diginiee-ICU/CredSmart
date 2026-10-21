@@ -1,35 +1,26 @@
-# Sentinel Handoff — Production Fixes Launch
+# Sentinel Handoff: Mobile Redesign Dispatch
 
 ## Observation
-- Received critical production issues request:
-  1. Data persistence failures across products, customers/parties, invoices.
-  2. 500 column `org_id` schema errors.
-  3. Visibility & caching hydration issues in tables and list views.
-  4. Bill generation hangs (> several seconds) due to synchronous PDF rendering and unbatched network round-trips.
-  5. Deployment script requirements for server container restart and database schema migration.
-- Appended verbatim user prompt to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`.
+- Received user request to perform a complete from-scratch mobile view redesign of CredSmart ERP & POS application following a Clean High-Density Retail Minimal (Stripe / Shopify POS) aesthetic while strictly preserving 100% desktop invariance.
+- Appended verbatim request to `ORIGINAL_REQUEST.md`.
+- Evaluated task per Routing Decision Table: routed to General path (`teamwork_preview_orchestrator`).
 
 ## Logic Chain
-- Per Routing Decision Table:
-  - Not a document review (no paper/manuscript attached for assessment).
-  - Not a math/proof task.
-  - Multi-faceted across database, backend routes, frontend components, and deployment scripts (not a single small self-contained light change).
-  - Selected General path -> `teamwork_preview_orchestrator`.
-- Created working directory `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix` and `DISPATCH.md`.
-- Spawned `teamwork_preview_orchestrator` (conversation ID: `47768107-cdc6-46b5-a415-7ea52564fffb`).
-- Scheduled Cron 1 (Progress Reporting, `*/8 * * * *`, task ID `task-22`).
-- Scheduled Cron 2 (Liveness Check, `*/10 * * * *`, task ID `task-24`).
+- Created dispatch instructions at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_redesign\DISPATCH.md`.
+- Invoked `teamwork_preview_orchestrator` (conversation ID: `92c8e148-9d89-47d7-9329-5f4887fd7091`) with working directory `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_redesign` and reference to authoritative skill `mobile-erp-redesign`.
+- Initialized monitoring crons:
+  - Reporting Cron: `task-34` (`*/8 * * * *`)
+  - Liveness Check Cron: `task-36` (`*/10 * * * *`)
+- Updated `BRIEFING.md` preserving all append-only sections.
 
 ## Caveats
-- Production database fixes require PostgreSQL 16 compatibility and bidirectional `org_id` / `organization_id` column safety.
-- Bill generation performance requires decoupling client-side PDF rendering from save flows and batching invoice line item creation.
-- Victory audit is strictly blocking before completion can be reported.
+- Orchestrator is executing in the background and will spawn specialized explorer, worker, and reviewer subagents.
+- Completion claim from the orchestrator must trigger independent verification via `teamwork_preview_victory_auditor` prior to notifying completion.
 
 ## Conclusion
-- Orchestrator `47768107-cdc6-46b5-a415-7ea52564fffb` dispatched and monitoring crons active.
-- Sentinel standing by for progress reports and victory claims.
+- Mobile Redesign Orchestrator active and running.
+- Monitoring crons active and tracking progress.
 
 ## Verification Method
-- Active tasks verified: `task-22` and `task-24` running.
-- Subagent spawned with active conversation ID.
-- `BRIEFING.md` and `ORIGINAL_REQUEST.md` verified up-to-date.
+- Active tasks verified: `task-34`, `task-36`.
+- Orchestrator conversation: `92c8e148-9d89-47d7-9329-5f4887fd7091`.

@@ -1,26 +1,22 @@
-# Dispatch: Explorer Survey Shell & Navigation
+## 2026-10-21T00:16:32Z
+[Message] timestamp=2026-10-21T00:16:32Z sender=92c8e148-9d89-47d7-9329-5f4887fd7091 priority=MESSAGE_PRIORITY_HIGH content=You are explorer_survey_shell.
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_shell
 
-## Identity
-- **Agent Type**: `teamwork_preview_explorer`
-- **Role**: Codebase Researcher - Shell & Navigation
-- **Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_shell`
-- **Orchestrator Conversation ID**: `f65e7324-0a80-4f4b-bb4c-bc82b84e3cdd`
+Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the request dated 2026-10-21T00:05:26Z).
+Read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_redesign\DISPATCH.md.
+Read authoritative skill at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\mobile-erp-redesign\SKILL.md.
 
-## Mission & Instructions
-Read `ORIGINAL_REQUEST.md` at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`.
-Investigate the authoritative sources for CredSmart's navigation, routing, and app shell:
-1. `src/components/AppSidebar.tsx`
-2. `src/components/AppLayout.tsx`
-3. `src/App.tsx`
-4. `src/components/routes.ts`
-5. `src/hooks/useAuth.tsx` or auth wrapper components.
+Objective:
+Investigate CredSmart's existing global app shell, navigation architecture, and mobile layout wrappers (src/components/AppLayout.tsx, src/components/AppSidebar.tsx, any mobile navigation/headers in src/components/, safe area insets in index.html / index.css, route definitions in src/App.tsx).
 
-Examine:
-- How sidebar navigation is currently structured for desktop and mobile.
-- How sub-navigation / collapsible menus or dropdowns are handled.
-- How active route highlighting works.
-- How routes are defined, protected, and rendered in `src/App.tsx` and `src/components/routes.ts`.
-- Exactly what modifications are needed to add the CRM tab with sub-navigation for 8 placeholder items (Dashboard, Attendance, Salary, Tasks, Meet, Broadcasts, AI Assistant, Support) and route `/crm` mapping to `src/pages/crm/CRMDashboard.tsx`.
-- How mobile responsive hamburger / drawer handles sidebar items.
+Survey Questions to Answer:
+1. How is mobile vs desktop currently separated in AppLayout.tsx, AppSidebar.tsx, and related shell components?
+2. How to implement the Top Mobile Header (store name/switcher, live cloud sync status pill, instant search trigger, notification center bell with unread badge, profile avatar)? What existing contexts/hooks provide store name, sync state, notifications, and user avatar?
+3. How to implement the Floating Bottom Navigation Dock with 5 native-feeling touch tabs (Home/Dashboard, Sales/Invoices, POS Billing center elevated pill, Items/Inventory, Purchases/Suppliers)? What icons, routes, and active tab highlights are best suited?
+4. What exact viewport padding and safe area inset styles are required (pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))])?
+5. What desktop elements must be preserved with 100% invariance (hidden md:flex, hidden md:block, etc.)?
 
-Produce a detailed report in `handoff.md` in your working directory and notify orchestrator via `send_message`.
+Scope Boundaries:
+- Read-only investigation! NEVER modify application source code files.
+- Produce handoff report at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_shell\handoff.md.
+- Send message back to orchestrator when complete.

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-20T10:42:00Z
+# BRIEFING — 2026-10-21T00:15:00Z
 
 ## Mission
-Resolve critical production issues: live database schema alignment (fix_db.sql), backend route completion & contract parity (invoices.js, settings.js, parties.js), lightning-fast bill generation (< 500ms), list visibility & frontend cache hydration, and automated server deployment script (deploy-fix.sh).
+Complete from-scratch mobile view redesign of CredSmart ERP & POS application following a Clean High-Density Retail Minimal (Stripe / Shopify POS) aesthetic. Redesign global mobile shell, floating bottom navigation dock, Dashboard, Tally import banner, 2x2 financial ledger cards, quick actions, POS billing touch layout, invoice lists, and inventory cards, strictly preserving 100% desktop invariance.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -29,6 +29,8 @@ Resolve critical production issues: live database schema alignment (fix_db.sql),
 - Victory Auditor (API Migration): 4817e639-ade5-4c21-a49e-d1eba94e20bb
 - Active Orchestrator (Production Fixes): 47768107-cdc6-46b5-a415-7ea52564fffb
 - Victory Auditor (Production Fixes): [to be spawned on victory claim]
+- Active Orchestrator (Mobile Redesign): 92c8e148-9d89-47d7-9329-5f4887fd7091
+- Victory Auditor (Mobile Redesign): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -44,19 +46,25 @@ Resolve critical production issues: live database schema alignment (fix_db.sql),
 - `cmd /c npx` for all CLI commands (PowerShell execution policy)
 - Ensure PostgreSQL 16 compatibility and 0 data loss
 - Decouple PDF generation from bill generation UI thread (< 500ms)
+- 100% desktop invariance: all desktop views/tables/modals/shortcuts (`hidden md:flex`, `hidden md:block`, etc.) remain 100% untouched and functional
+- Mobile redesign strictly isolated to mobile breakpoints (`block md:hidden` or `isMobile`)
+- Safe area inset handling with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+- 44x44px minimum touch targets and bottom thumb zone optimization
+- Zero TypeScript compiler errors (`tsc --noEmit`)
+- All Vitest test suites must pass without regression
 
 ## User Context
-- **Last user request**: Resolve critical production issues (data storage failure across products/customers/invoices, 500 column org_id errors, missing list visibility, slow bill generation, fix_db.sql, backend route completion, and deploy-fix.sh).
+- **Last user request**: Complete from-scratch mobile view redesign of CredSmart ERP & POS application following a Clean High-Density Retail Minimal (Stripe / Shopify POS) aesthetic.
 - **Pending clarifications**: none
 - **Delivered results**: In progress
 
 ## Project Status
 - **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 47768107-cdc6-46b5-a415-7ea52564fffb
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix
-- **Cron 1 (Reporting)**: task-22 (*/8 * * * *)
-- **Cron 2 (Liveness)**: task-24 (*/10 * * * *)
+- **Active Orchestrator ID**: 92c8e148-9d89-47d7-9329-5f4887fd7091
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_redesign
+- **Cron 1 (Reporting)**: task-34 (*/8 * * * *)
+- **Cron 2 (Liveness)**: task-36 (*/10 * * * *)
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -66,4 +74,4 @@ Resolve critical production issues: live database schema alignment (fix_db.sql),
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_prod_fix\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_redesign\DISPATCH.md — Orchestrator dispatch instructions

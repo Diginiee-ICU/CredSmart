@@ -1,12 +1,12 @@
-# Progress: Explorer Survey Shell & Navigation
+# Progress Log - Explorer Survey Shell
 
-Last visited: 2026-10-17T00:37:00Z
+Last visited: 2026-10-21T00:17:30Z
+Status: Investigating AppLayout.tsx, AppSidebar.tsx, index.html, index.css, App.tsx, and related context providers.
 
-- [x] Initialized BRIEFING.md and progress.md
-- [x] Investigate `src/App.tsx` and routing structure
-- [x] Investigate `src/config/routes.ts` vs `src/components/routes.ts`
-- [x] Investigate `src/components/AppSidebar.tsx` (desktop & mobile nav schema, active states, collapsible/sub-nav)
-- [x] Investigate `src/components/AppLayout.tsx` (header, mobile menu toggle, drawer/sheet, responsive containers, getPageMeta)
-- [x] Investigate Auth wrapper / guard mechanism (`useAuth.tsx`, `ProtectedRoutes`, `RoleProtectedRoute`)
-- [x] Synthesize findings and detail exact implementation plan for CRM tab, sub-nav (8 placeholder items), `/crm` route, and role management routes
-- [x] Write `handoff.md` and notify orchestrator
+- [x] Initialized DISPATCH.md, BRIEFING.md, and progress.md
+- [ ] Read ORIGINAL_REQUEST.md and orchestrator DISPATCH.md
+- [ ] Read authoritative mobile-erp-redesign skill
+- [ ] Inspect AppLayout.tsx, AppSidebar.tsx, App.tsx, index.html, index.css
+- [ ] Survey existing context providers (Store, Auth, Sync, Notifications, etc.)
+- [ ] Investigate bottom navigation dock & top mobile header requirements
+- [ ] Produce comprehensive handoff.md report
