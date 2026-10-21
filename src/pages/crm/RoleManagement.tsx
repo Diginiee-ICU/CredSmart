@@ -346,7 +346,7 @@ export default function RoleManagement(): React.ReactElement {
 
       if (rolesErr) console.warn("RoleManagement: crm_roles notice:", rolesErr.message);
 
-      let resolvedRoles: CRMRole[] = (dbRoles ? [...dbRoles] : []).sort((a, b) =>
+      let resolvedRoles: CRMRole[] = (Array.isArray(dbRoles) ? [...dbRoles] : []).sort((a, b) =>
         (a.created_at || "").localeCompare(b.created_at || "")
       );
 
@@ -379,7 +379,7 @@ export default function RoleManagement(): React.ReactElement {
         const { data: dbPerms, error: permsErr } = await crmApi.getCRMPermissions({ roleIds });
 
         if (permsErr) console.warn("RoleManagement: crm_permissions notice:", permsErr.message);
-        permsData = dbPerms ?? [];
+        permsData = Array.isArray(dbPerms) ? dbPerms : [];
       }
       setAllPermissions(permsData);
 
@@ -388,7 +388,7 @@ export default function RoleManagement(): React.ReactElement {
 
       if (membersErr) console.warn("RoleManagement: memberships notice:", membersErr.message);
 
-      const memberRows = (membersData ? [...membersData] : []).sort((a, b) =>
+      const memberRows = (Array.isArray(membersData) ? [...membersData] : []).sort((a, b) =>
         (a.created_at ?? "").localeCompare(b.created_at ?? "")
       );
       const userIds = memberRows.map((m) => m.user_id);
@@ -398,7 +398,7 @@ export default function RoleManagement(): React.ReactElement {
       if (userIds.length > 0) {
         const { data: profilesData } = await settingsApi.getProfiles({ ids: userIds });
 
-        if (profilesData) {
+        if (Array.isArray(profilesData)) {
           profilesData.forEach((p) => {
             if (p.full_name) profileMap[p.id] = p.full_name;
           });
@@ -411,7 +411,7 @@ export default function RoleManagement(): React.ReactElement {
       if (srErr) console.warn("RoleManagement: crm_staff_roles notice:", srErr.message);
 
       const assignmentMap: Record<string, string> = {};
-      (staffRolesData ?? []).forEach((sr: CRMStaffRole) => {
+      (Array.isArray(staffRolesData) ? staffRolesData : []).forEach((sr: CRMStaffRole) => {
         assignmentMap[sr.staff_id] = sr.role_id;
       });
 

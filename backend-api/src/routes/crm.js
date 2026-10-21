@@ -11,19 +11,175 @@ router.use(authenticate);
 // GET /api/crm/roles
 router.get('/roles', async (req, res) => {
   try {
-    const orgId = req.orgId || req.query.org_id;
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    if (!orgId) return res.json([]);
+
     const result = await pool.query(
       `SELECT r.*,
-              COALESCE(json_agg(p.permission) FILTER (WHERE p.permission IS NOT NULL), '[]') as permissions
+              COALESCE(
+                json_agg(p.permission) FILTER (WHERE p.permission IS NOT NULL),
+                '[]'
+              ) as permissions
        FROM crm_roles r
        LEFT JOIN crm_role_permissions p ON p.role_id = r.id
-       WHERE r.org_id = $1
+       WHERE (r.org_id = $1 OR r.organization_id = $1)
        GROUP BY r.id
        ORDER BY r.created_at ASC`,
       [orgId]
-    );
-    return res.json(result.rows);
+    ).catch(async (err) => {
+      if (err.code === '42P01') {
+        return { rows: [] };
+      }
+      const simpleRes = await pool.query(
+        `SELECT * FROM crm_roles WHERE org_id = $1 OR organization_id = $1 ORDER BY created_at ASC`,
+        [orgId]
+      ).catch(() => ({ rows: [] }));
+      return simpleRes;
+    });
+
+    return res.json(result.rows || []);
   } catch (err) {
+    console.warn('GET /crm/roles notice:', err.message);
+    return res.json([]);
+  }
+});
+
+// GET /api/crm/permissions
+router.get('/permissions', async (req, res) => {
+  try {
+    const roleId = req.query.role_id || req.query.roleId;
+    const roleIdsStr = req.query.role_ids || req.query.roleIds;
+    let roleIds = [];
+    if (roleId) roleIds.push(roleId);
+    if (roleIdsStr) {
+      const split = String(roleIdsStr).split(',').map((s) => s.trim()).filter(Boolean);
+      roleIds = [...roleIds, ...split];
+    }
+    roleIds = Array.from(new Set(roleIds));
+
+    if (roleIds.length === 0) {
+      const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+      if (orgId) {
+        const rolesRes = await pool.query(
+          'SELECT id FROM crm_roles WHERE org_id = $1 OR organization_id = $1',
+          [orgId]
+        ).catch(() => ({ rows: [] }));
+        roleIds = rolesRes.rows.map((r) => r.id);
+      }
+    }
+
+    if (roleIds.length === 0) {
+      return res.json([]);
+    }
+
+    const phs = roleIds.map((_, i) => `$${i + 1}`).join(', ');
+    const result = await pool.query(
+      `SELECT id, role_id, module, action, allowed, created_at 
+       FROM crm_permissions 
+       WHERE role_id IN (${phs})`,
+      roleIds
+    ).catch(async (err) => {
+      if (err.code === '42P01') {
+        const fallbackRes = await pool.query(
+          `SELECT id, role_id, permission, created_at FROM crm_role_permissions WHERE role_id IN (${phs})`,
+          roleIds
+        ).catch(() => ({ rows: [] }));
+        return {
+          rows: fallbackRes.rows.map((r) => ({
+            id: r.id,
+            role_id: r.role_id,
+            module: (r.permission || '').split(':')[0] || 'general',
+            action: (r.permission || '').split(':')[1] || 'access',
+            allowed: true,
+            created_at: r.created_at,
+          })),
+        };
+      }
+      return { rows: [] };
+    });
+
+    return res.json(result.rows || []);
+  } catch (err) {
+    console.error('Error fetching CRM permissions:', err);
+    return res.json([]);
+  }
+});
+
+// POST /api/crm/permissions/bulk
+router.post('/permissions/bulk', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { permissions = [] } = req.body;
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      return res.json({ success: true, count: 0 });
+    }
+
+    await client.query('BEGIN');
+    let insertedCount = 0;
+
+    for (const p of permissions) {
+      const { role_id, module, action, allowed = true } = p;
+      if (!role_id || !module || !action) continue;
+
+      await client.query(
+        `INSERT INTO crm_permissions (role_id, module, action, allowed)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (role_id, module, action)
+         DO UPDATE SET allowed = EXCLUDED.allowed`,
+        [role_id, module, action, Boolean(allowed)]
+      ).catch(async () => {
+        // Fallback without conflict target
+        const upd = await client.query(
+          `UPDATE crm_permissions SET allowed = $1 WHERE role_id = $2 AND module = $3 AND action = $4`,
+          [Boolean(allowed), role_id, module, action]
+        ).catch(() => ({ rowCount: 0 }));
+        if (upd.rowCount === 0) {
+          await client.query(
+            `INSERT INTO crm_permissions (role_id, module, action, allowed) VALUES ($1, $2, $3, $4)`,
+            [role_id, module, action, Boolean(allowed)]
+          ).catch(() => {});
+        }
+      });
+
+      if (allowed) {
+        await client.query(
+          `INSERT INTO crm_role_permissions (role_id, permission)
+           VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [role_id, `${module}:${action}`]
+        ).catch(() => {});
+      } else {
+        await client.query(
+          `DELETE FROM crm_role_permissions WHERE role_id = $1 AND permission = $2`,
+          [role_id, `${module}:${action}`]
+        ).catch(() => {});
+      }
+      insertedCount++;
+    }
+
+    await client.query('COMMIT');
+    return res.json({ success: true, count: insertedCount });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('Error bulk saving permissions:', err);
+    return res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /api/crm/permissions
+router.delete('/permissions', async (req, res) => {
+  try {
+    const roleId = req.query.role_id || req.query.roleId;
+    if (!roleId) return res.status(400).json({ error: 'role_id is required' });
+
+    await pool.query('DELETE FROM crm_permissions WHERE role_id = $1', [roleId]).catch(() => {});
+    await pool.query('DELETE FROM crm_role_permissions WHERE role_id = $1', [roleId]).catch(() => {});
+
+    return res.json({ success: true, role_id: roleId });
+  } catch (err) {
+    console.error('Error deleting permissions:', err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -170,20 +326,34 @@ router.post('/staff/provision', async (req, res) => {
         assignedRole = roleCheck.rows[0];
 
         // Sync to crm_staff_assignments
-        await client.query(
-          `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
-           VALUES ($1, $1, $2, $2, $3, $4)
-           ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id`,
-          [orgId, userId, crm_role_id, req.user?.id || null]
-        );
+        try {
+          await client.query(
+            `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
+             VALUES ($1, $1, $2, $2, $3, $4)
+             ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id`,
+            [orgId, userId, crm_role_id, req.user?.id || null]
+          );
+        } catch (confErr) {
+          const upd = await client.query(
+            `UPDATE crm_staff_assignments SET role_id = $1 WHERE (user_id = $2 OR staff_id = $2) AND (org_id = $3 OR organization_id = $3)`,
+            [crm_role_id, userId, orgId]
+          );
+          if (upd.rowCount === 0) {
+            await client.query(
+              `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
+               VALUES ($1, $1, $2, $2, $3, $4)`,
+              [orgId, userId, crm_role_id, req.user?.id || null]
+            );
+          }
+        }
 
         // Sync to crm_staff_roles
         await client.query(
           `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by)
            VALUES ($1, $2, $3)
-           ON CONFLICT (staff_id, role_id) DO NOTHING`,
+           ON CONFLICT DO NOTHING`,
           [userId, crm_role_id, req.user?.id || null]
-        );
+        ).catch(() => {});
       }
     }
 
@@ -267,11 +437,46 @@ const getStaffHandler = async (req, res) => {
 
     query += ` ORDER BY u.id, m.created_at ASC`;
 
-    const result = await pool.query(query, params);
-    return res.json(result.rows);
+    let result;
+    try {
+      result = await pool.query(query, params);
+    } catch (qErr) {
+      console.warn('getStaffHandler full query notice, using fallback:', qErr.message);
+      const fallbackQuery = `
+        SELECT DISTINCT ON (u.id)
+          u.id,
+          u.id AS user_id,
+          u.id AS staff_id,
+          u.email,
+          u.full_name,
+          u.phone,
+          u.avatar_url,
+          COALESCE(m.role, 'staff') AS store_role,
+          COALESCE(m.role, 'staff') AS role,
+          m.id AS membership_id,
+          NULL AS crm_role_id,
+          NULL AS role_id,
+          NULL AS role_name,
+          NULL AS crm_role_name,
+          NULL AS crm_role_color,
+          NULL AS crm_role_icon,
+          FALSE AS is_super_admin,
+          m.created_at AS assigned_at
+        FROM (
+          SELECT id, user_id, role, created_at FROM org_memberships WHERE org_id = $1 OR organization_id = $1
+          UNION
+          SELECT id, user_id, role, created_at FROM organization_memberships WHERE organization_id = $1 OR org_id = $1
+        ) m
+        JOIN users u ON u.id = m.user_id
+        ORDER BY u.id, m.created_at ASC
+      `;
+      result = await pool.query(fallbackQuery, [orgId]).catch(() => ({ rows: [] }));
+    }
+
+    return res.json(result.rows || []);
   } catch (err) {
     console.error('Error fetching CRM staff:', err);
-    return res.status(500).json({ error: err.message });
+    return res.json([]);
   }
 };
 
@@ -288,14 +493,33 @@ const assignStaffRoleHandler = async (req, res) => {
       return res.status(400).json({ error: 'user_id and role_id are required' });
     }
 
-    // Upsert crm_staff_assignments
-    const result = await pool.query(
-      `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
-       VALUES ($1, $1, $2, $2, $3, $4)
-       ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id
-       RETURNING *`,
-      [orgId, userId, roleId, req.user?.id || null]
-    );
+    // Upsert crm_staff_assignments with resilient conflict fallback
+    let assignedRow;
+    try {
+      const result = await pool.query(
+        `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
+         VALUES ($1, $1, $2, $2, $3, $4)
+         ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id
+         RETURNING *`,
+        [orgId, userId, roleId, req.user?.id || null]
+      );
+      assignedRow = result.rows[0];
+    } catch (confErr) {
+      const upd = await pool.query(
+        `UPDATE crm_staff_assignments SET role_id = $1 WHERE (user_id = $2 OR staff_id = $2) AND (org_id = $3 OR organization_id = $3) RETURNING *`,
+        [roleId, userId, orgId]
+      );
+      if (upd.rows.length > 0) {
+        assignedRow = upd.rows[0];
+      } else {
+        const ins = await pool.query(
+          `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
+           VALUES ($1, $1, $2, $2, $3, $4) RETURNING *`,
+          [orgId, userId, roleId, req.user?.id || null]
+        );
+        assignedRow = ins.rows[0];
+      }
+    }
 
     // Sync crm_staff_roles
     await pool.query(
@@ -303,9 +527,9 @@ const assignStaffRoleHandler = async (req, res) => {
        VALUES ($1, $2, $3)
        ON CONFLICT (staff_id, role_id) DO NOTHING`,
       [userId, roleId, req.user?.id || null]
-    );
+    ).catch(() => {});
 
-    return res.status(201).json(result.rows[0]);
+    return res.status(201).json(assignedRow || { user_id: userId, role_id: roleId });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

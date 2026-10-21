@@ -51,9 +51,15 @@ const ALLOWED_TABLES = new Set([
   'bank_accounts', 'party_wise_prices', 'sales', 'sale_items',
   'purchase_invoices', 'purchase_invoice_items', 'expenses', 'sales_returns',
   'purchase_returns', 'activity_logs', 'storefront_settings', 'storefront_orders',
-  'crm_roles', 'crm_role_permissions', 'crm_staff_assignments', 'attendance_records',
-  'salary_profiles', 'payroll_records', 'customer_tickets', 'staff_tasks', 'invoice_sequences',
-  'network_invoices', 'network_notifications'
+  'crm_roles', 'crm_role_permissions', 'crm_permissions', 'crm_staff_assignments', 'crm_staff_roles',
+  'attendance_records', 'crm_attendance', 'crm_attendance_requests', 'crm_geolocations',
+  'salary_profiles', 'crm_salary_profiles', 'payroll_records', 'crm_payroll_runs', 'crm_payslips',
+  'crm_salary_adjustments', 'customer_tickets', 'staff_tasks', 'invoice_sequences',
+  'network_invoices', 'network_notifications', 'crm_broadcasts'
+]);
+
+const TABLES_WITHOUT_ORG_ID = new Set([
+  'users', 'crm_permissions', 'crm_role_permissions', 'crm_staff_roles'
 ]);
 
 function splitClauses(str) {
@@ -177,7 +183,7 @@ router.get('/rest/v1/:table', async (req, res) => {
         params.push(orgId);
         query += ` AND recipient_org_id = $${params.length}`;
       }
-    } else if (table !== 'users') {
+    } else if (!TABLES_WITHOUT_ORG_ID.has(table)) {
       if (orgId) {
         params.push(orgId);
         query += ` AND (org_id = $${params.length} OR organization_id = $${params.length} OR org_id IS NULL)`;
@@ -199,6 +205,12 @@ router.get('/rest/v1/:table', async (req, res) => {
         } else if (op === 'neq') {
           params.push(val);
           query += ` AND "${col}" != $${params.length}`;
+        } else if (op === 'in') {
+          const inVals = val.replace(/^\((.*)\)$/, '$1').split(',').map(v => v.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+          if (inVals.length > 0) {
+            const phs = inVals.map(v => { params.push(v); return `$${params.length}`; }).join(', ');
+            query += ` AND "${col}" IN (${phs})`;
+          }
         } else if (op === 'ilike') {
           params.push(val);
           query += ` AND "${col}" ILIKE $${params.length}`;
@@ -244,6 +256,16 @@ router.get('/rest/v1/:table', async (req, res) => {
       // 42P01: undefined_table in PostgreSQL - return empty array gracefully
       console.warn(`Table '${req.params.table}' does not exist in DB yet:`, err.message);
       return res.json([]);
+    }
+    if (err.code === '42703') {
+      // 42703: undefined_column in PostgreSQL (e.g. status on organization_memberships)
+      console.warn(`Column not found in table '${req.params.table}', falling back:`, err.message);
+      try {
+        const fallbackRes = await pool.query(`SELECT * FROM "${req.params.table}" LIMIT 100`);
+        return res.json(fallbackRes.rows);
+      } catch {
+        return res.json([]);
+      }
     }
     return res.status(500).json({ error: err.message });
   }

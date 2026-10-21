@@ -100,6 +100,49 @@ class QueryBuilder {
     return this;
   }
 
+  neq(column: string, value: any) {
+    if (value !== undefined && value !== null) this.queryParams.set(column, `neq.${value}`);
+    return this;
+  }
+
+  gt(column: string, value: any) {
+    if (value !== undefined && value !== null) this.queryParams.set(column, `gt.${value}`);
+    return this;
+  }
+
+  gte(column: string, value: any) {
+    if (value !== undefined && value !== null) this.queryParams.set(column, `gte.${value}`);
+    return this;
+  }
+
+  lt(column: string, value: any) {
+    if (value !== undefined && value !== null) this.queryParams.set(column, `lt.${value}`);
+    return this;
+  }
+
+  lte(column: string, value: any) {
+    if (value !== undefined && value !== null) this.queryParams.set(column, `lte.${value}`);
+    return this;
+  }
+
+  in(column: string, values: any[]) {
+    if (Array.isArray(values) && values.length > 0) {
+      this.queryParams.set(column, `in.(${values.map(String).join(",")})`);
+    }
+    return this;
+  }
+
+  ilike(column: string, pattern: string) {
+    if (pattern !== undefined && pattern !== null) this.queryParams.set(column, `ilike.${pattern}`);
+    return this;
+  }
+
+  is(column: string, value: any) {
+    if (value === null) this.queryParams.set(column, `is.null`);
+    else if (value !== undefined) this.queryParams.set(column, `is.${value}`);
+    return this;
+  }
+
   or(filters: string) {
     this.queryParams.set("or", filters);
     return this;
