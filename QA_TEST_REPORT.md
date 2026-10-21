@@ -1,153 +1,116 @@
-# CredSmart Ultra High Master-Level QA Test Report (Final Verification)
+# Comprehensive QA & Test Audit Report (Production Failure Analysis & Full CRM Audit)
 
-**Report Date**: August 30, 2026  
-**Application Name**: CredSmart (B2B/B2C GST Billing, POS & Multi-Store ERP Suite)  
-**Overall Application Health Score**: **100 / 100 (Production Certified)**  
-**Audit Scope**: Full Codebase Re-Audit (`src/config/routes.ts`, `src/App.tsx`, 25+ Application Pages, 8 Public SEO Pages, 50+ Custom Components, Type Definitions, Database Integration, and Automated Test Suites)
+**Audit Date**: October 22, 2026  
+**Application Name**: CredSmart (B2B/B2C GST Billing, POS & Multi-Tenant ERP & CRM Suite)  
+**Total Pages Audited**: 32 Pages (including 8 CRM Submodules)  
+**Total Issues Identified**: 10 Critical Production Runtime & Backend API Issues  
+**Overall Application Status**: ⚠️ **Critical Blockers in CRM & REST Passthrough Layer**
 
 ---
 
 ## 1. Executive Summary
 
-CredSmart is a high-performance, enterprise-grade GST Billing, POS, and Multi-Store ERP application built with React 18, Vite, Tailwind CSS, TypeScript, and Supabase.
+During production deployment on the Ubuntu Linux server and Vercel frontend, critical runtime errors were encountered on the **CRM Role Management**, **Attendance**, **Broadcasts**, and **Staff Provisioning** workflows. 
 
-Following the Cycle 1 defect discovery, the **QA Master Fixer Agent** orchestrated surgical, zero-collateral code repairs across all affected modules. A full **Cycle 2 Re-Audit & Verification** was subsequently executed across all 28 registered routes, role access guards, interactive buttons, modal workflows, calculation algorithms, data models, and CSS/layout states.
+An exhaustive forensic analysis revealed three core root causes:
+1. **Frontend Supabase Shim Defect (`src/integrations/supabase/client.ts`)**: The custom `QueryBuilder` lacks standard PostgREST chain methods such as `.in(column, values)`. When `useCRMPermission.ts` calls `.in("role_id", roleIds)`, JavaScript throws an uncaught `TypeError: cr.from(...).select(...).in is not a function`, crashing permission hydration across all CRM views.
+2. **Missing CRM Endpoints & Permitted Tables (`backend-api`)**:
+   - `GET /api/crm/permissions` and `POST /api/crm/permissions/bulk` are not implemented in `backend-api/src/routes/crm.js`, producing HTTP 404 Route Not Found errors.
+   - Tables `crm_attendance`, `crm_broadcasts`, `crm_staff_roles`, and `crm_permissions` are absent from `ALLOWED_TABLES` in `backend-api/src/routes/rpc.js`, returning HTTP 400 Bad Request on all REST passthrough calls.
+3. **Database Schema & Unhandled Exception Mismatches (`PostgreSQL & crm.js`)**:
+   - `organization_memberships` queries attempt to filter by `status = 'active'`, but the column `status` does not exist in the database table, causing PostgreSQL to abort with HTTP 500.
+   - `POST /api/crm/staff/provision` and `POST /api/crm/staff-roles` use `ON CONFLICT (user_id, org_id)` on `crm_staff_assignments`, but the table on the server lacks a unique index on those columns, causing PostgreSQL to raise `ERROR: there is no unique or exclusion constraint matching the ON CONFLICT specification`.
+   - In `src/pages/crm/RoleManagement.tsx`, API error responses are unhandled and passed directly to `.forEach()`, triggering uncaught `TypeError: Mr.forEach is not a function`.
 
-### Key Quality Metrics
-- **TypeScript Static Compilation (`tsc --noEmit`)**: **0 Errors / 0 Warnings**
-- **Automated Vitest Test Suite (`vitest run`)**: **20 / 20 Tests Passed** (100% passing across unit conversion, bill calculations, and B2B network invoicing)
-- **Runtime Defect Count**: **0 Active Bugs** (All 11 reported issues completely resolved)
-- **Collateral / Side-Effect Impact**: **0 Regressions**
-
----
-
-## 2. Complete Route Audit & Role Access Matrix
-
-All 28 routes registered in `src/config/routes.ts` and `src/App.tsx` were audited against the 10 system roles defined in `RoleProtectedRoute`:
-`store_owner`, `super_admin`, `admin`, `partner`, `manager`, `stock_manager`, `accountant`, `salesman`, `cashier`, `delivery_boy`.
-
-| Route Path | Page Component | Access Control | Role Access Scope | Route Status | Notes |
-| :--- | :--- | :--- | :--- | :---: | :--- |
-| `/` | `Landing.tsx` | Public | All | ✅ Active | SEO-optimized public landing page |
-| `/auth` | `Auth.tsx` | Public (Guest) | Unauthenticated | ✅ Active | Login & OTP registration |
-| `/dashboard` | `Dashboard.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | Real-time KPIs, receivables & payables |
-| `/checkout` | `POSBilling.tsx` | Protected | All roles (Primary for Cashier) | ✅ Active | High-speed POS terminal |
-| `/sales` | `Sales.tsx` | Protected | Owner, Admin, Partner, Manager, Salesman, Accountant, Delivery | ✅ Active | Tax invoices, proforma, challans |
-| `/sales-history`| `SalesHistory.tsx`| Protected | Owner, Admin, Partner, Manager, Salesman, Accountant | ✅ Active | Sales register, reprint & export |
-| `/purchases` | `Purchases.tsx` | Protected | Owner, Admin, Partner, Manager, Stock Mgr, Accountant | ✅ Active | Inward bills & POs |
-| `/purchase-returns`| `PurchaseReturns.tsx`| Protected | Owner, Admin, Partner, Manager, Stock Mgr, Accountant | ✅ Active | Debit notes & vendor returns |
-| `/godown` | `Godown.tsx` | Protected | Owner, Admin, Partner, Manager, Stock Mgr | ✅ Active | Warehouse & stock transfers |
-| `/items` | `Items.tsx` | Protected | Owner, Admin, Partner, Manager, Stock Mgr, Salesman, Accountant | ✅ Active | Catalog & pricing |
-| `/inventory` | `Inventory.tsx` | Protected | Owner, Admin, Partner, Manager, Stock Mgr, Accountant | ✅ Active | Batches & stock hub |
-| `/customers` | `Customers.tsx` | Protected | Owner, Admin, Partner, Manager, Salesman, Accountant, Delivery | ✅ Active | Customer khata & balance |
-| `/suppliers` | `Suppliers.tsx` | Protected | Owner, Admin, Partner, Manager, Stock Mgr, Accountant | ✅ Active | Vendor directory & balance |
-| `/parties` | `Parties.tsx` | Protected | Redirects to `/customers` | ✅ Active | Unified route alias |
-| `/customer-ledger/:id` | `CustomerLedger.tsx` | Protected | Owner, Admin, Partner, Manager, Salesman, Accountant | ✅ Active | PDF statement & WhatsApp reminders |
-| `/barcode` | `BarcodeGenerator.tsx`| Protected | Owner, Admin, Partner, Manager, Stock Mgr | ✅ Active | Thermal sticker designer |
-| `/analytics` | `Analytics.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | Business charts & P&L |
-| `/reports` | `Reports.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | GSTR-1, GSTR-3B & CA bundle |
-| `/cash-bank` | `CashAndBank.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | Bank accounts & cash in hand |
-| `/einvoicing` | `EInvoicing.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | NIC IRP portal & QR codes |
-| `/automated-bills`| `AutomatedBills.tsx`| Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | Recurring subscription engine |
-| `/expenses` | `Expenses.tsx` | Protected | Owner, Admin, Partner, Manager, Accountant | ✅ Active | Petty cash & store expenses |
-| `/vendor-discovery`| `VendorDiscovery.tsx`| Protected | Owner, Admin, Partner, Manager, Stock Mgr, Accountant | ✅ Active | MCA 3.2M+ company directory |
-| `/staff` | `Staff.tsx` | Protected | Admin, Owner, Partner, Manager | ✅ Active | Granular 14-feature RBAC matrix |
-| `/activity-log` | `ActivityLog.tsx` | Protected | Admin, Owner, Partner, Manager | ✅ Active | Immutable audit trail |
-| `/settings` | `BusinessSettings.tsx`| Protected | Admin, Owner, Partner, Manager | ✅ Active | Master company profile |
-| `/settings/invoice`| `InvoiceSettings.tsx`| Protected | Admin, Owner, Partner, Manager | ✅ Active | Live GST theme customizer |
-| `/settings/print` | `PrintSettings.tsx` | Protected | Admin, Owner, Partner, Manager | ✅ Active | ESC/POS hardware & thermal layout |
-| `/settings/reminders`| N/A | Missing | Admin, Owner, Partner, Manager | ⚠️ **Missing Route** | Defined in `ROUTE_PATHS`, hits 404 |
-| `/settings/ca-sharing`| N/A | Missing | Admin, Owner, Partner, Manager | ⚠️ **Missing Route** | Defined in `ROUTE_PATHS`, hits 404 |
-| `/settings/pricing`| N/A | Missing | Admin, Owner, Partner, Manager | ⚠️ **Missing Route** | Defined in `ROUTE_PATHS`, hits 404 |
-| `/settings/refer` | N/A | Missing | Admin, Owner, Partner, Manager | ⚠️ **Missing Route** | Defined in `ROUTE_PATHS`, hits 404 |
-| `/settings/help` | N/A | Missing | Admin, Owner, Partner, Manager | ⚠️ **Missing Route** | Defined in `ROUTE_PATHS`, hits 404 |
-| `*` | `NotFound.tsx` | Public | All | ✅ Active | 404 catch-all with return links |
+All other core billing, POS, and inventory flows remain intact.
 
 ---
 
-## 3. Page-by-Page Detailed Audit Findings
+## 2. Forensic Audit of Production Console Errors
 
-### 3.1. `src/pages/Customers.tsx`
-- **Fatal Runtime Bug**: Lines 594, 597, and 606 reference `filter === f.id` and `setFilter(f.id)`. However, the declared React state hook is `const [creditFilter, setCreditFilter] = useState<string>("all")`. Clicking any Customer credit filter button throws an uncaught `ReferenceError: setFilter is not defined` and crashes the UI.
-- **Fix Recommendation**: Replace `filter` and `setFilter` with `creditFilter` and `setCreditFilter`.
+### Issue 1: Missing Method `.in()` in `QueryBuilder`
+- **Location**: `src/integrations/supabase/client.ts` & `src/hooks/useCRMPermission.ts:228`
+- **Error**: `TypeError: cr.from(...).select(...).in is not a function`
+- **Category**: Type 5 (Logic, State & Runtime Bugs)
+- **Root Cause**: `useCRMPermission` expects Supabase's `.in("role_id", roleIds)` method on `supabase.from(...)`. The shimmed `QueryBuilder` only implemented `.eq()`, `.or()`, `.order()`, and `.limit()`.
+- **Impact**: Permissions fail to load for any logged-in user, defaulting to read-only or breaking permission-gated CRM modules.
 
-### 3.2. `src/pages/Suppliers.tsx`
-- **Fatal Runtime Bug**: Lines 702 and 842 render `<ShoppingBag className="w-3.5 h-3.5" />` in both Desktop table rows and Mobile touch cards. However, `ShoppingBag` is never imported from `lucide-react`.
-- **Fix Recommendation**: Add `ShoppingBag` to the `lucide-react` import statement on line 18.
+### Issue 2: Missing CRM Permission Endpoints (HTTP 404)
+- **Location**: `backend-api/src/routes/crm.js`
+- **Endpoints**: `GET /api/crm/permissions?role_ids=...`, `POST /api/crm/permissions/bulk`, `DELETE /api/crm/permissions`
+- **Error**: `Failed to load resource: the server responded with a status of 404 (Route not found)`
+- **Category**: Type 1 (Routing & API Endpoints)
+- **Root Cause**: `src/services/crmApi.ts` requests these routes directly, but `backend-api/src/routes/crm.js` did not register handlers for permissions CRUD.
+- **Impact**: Role permissions cannot be fetched or persisted from `RoleManagement.tsx`.
 
-### 3.3. `src/pages/CustomerLedger.tsx`
-- **Fatal Runtime Bug**: Line 247 binds `onClick={handleExportCSV}` to the "Export CSV" button. However, the function defined in the file (Line 140) is named `handleDownloadCSV`. Clicking the button immediately throws `ReferenceError: handleExportCSV is not defined`.
-- **Fix Recommendation**: Update the button handler to `onClick={handleDownloadCSV}`.
+### Issue 3: REST Passthrough Table Whitelist Rejection (HTTP 400)
+- **Location**: `backend-api/src/routes/rpc.js` (`ALLOWED_TABLES`)
+- **Tables Rebuffed**: `crm_attendance`, `crm_broadcasts`, `crm_staff_roles`, `crm_permissions`
+- **Error**: `Failed to load resource: the server responded with a status of 400 (Table 'crm_...' not accessible via REST passthrough)`
+- **Category**: Type 5 (Logic, State & Runtime Bugs)
+- **Root Cause**: `ALLOWED_TABLES` contains `attendance_records` and `crm_staff_assignments`, but the frontend queries `crm_attendance`, `crm_broadcasts`, and `crm_staff_roles`.
+- **Impact**: Dashboard widgets for Today's Attendance and Broadcasts fail to load; permission and role lookup fallback fails.
 
-### 3.4. `src/pages/Items.tsx`
-- **Fatal Runtime Bug**: In the Mobile 3-dot action dropdown (Lines 1033–1034), clicking "Generate Barcode" calls `setSelectedProductForBarcode(item)` and `setShowBarcodeModal(true)`. Neither state variable exists in `Items.tsx`.
-- **Fix Recommendation**: Update the mobile action to navigate directly to the Barcode Generator route (`navigate(ROUTE_PATHS.barcode, { state: { prefilledItem: item } })`).
+### Issue 4: Missing `status` Column on `organization_memberships` (HTTP 500)
+- **Location**: `backend-api/src/routes/rpc.js` & PostgreSQL database
+- **Query**: `GET /rest/v1/organization_memberships?select=id&organization_id=...&status=active`
+- **Error**: `Failed to load resource: the server responded with a status of 500 (column "status" does not exist)`
+- **Category**: Type 6 (Type Safety & Database Validation)
+- **Root Cause**: Table `organization_memberships` was created without a `status` column. `rpc.js` constructs `AND "status" = $2`, which aborts in PostgreSQL.
+- **Impact**: Membership verification fails across multiple protected app views.
 
-### 3.5. `src/pages/Purchases.tsx`
-- **Fatal Runtime Bug**: Line 548 renders `<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />` during B2B network invoice inward approval. `Loader2` is not imported from `lucide-react`.
-- **Logic Bug in PDF Invoicing**: Lines 808 and 877 pass `discountAmount: doc.discountAmount` and `tax: doc.taxAmount` to `downloadExactInvoicePdf`. In `src/types/documents.ts`, `BusinessDocument` properties are named `discountTotal` and `taxTotal`. As a result, `undefined` is passed to the PDF generation engine.
-- **Fix Recommendation**:
-  1. Import `Loader2` from `lucide-react`.
-  2. Update property references to `discountAmount: doc.discountTotal ?? 0` and `tax: doc.taxTotal ?? 0`.
+### Issue 5: Missing Unique Constraint for `ON CONFLICT (user_id, org_id)` (HTTP 500)
+- **Location**: `backend-api/src/routes/crm.js` lines 176 & 295, and `fix_db.sql`
+- **Error**: `POST /api/crm/staff/provision` & `POST /api/crm/staff-roles` fail with status 500
+- **Category**: Type 6 (Type Safety & Database Validation)
+- **Root Cause**: `INSERT INTO crm_staff_assignments ... ON CONFLICT (user_id, org_id)` requires an explicit unique index on `(user_id, org_id)`. The migration table definition in `fix_db.sql` did not specify this constraint.
+- **Impact**: Provisioning new staff members and assigning roles fails on the backend.
 
-### 3.6. `src/pages/Sales.tsx`
-- **Logic Bug in PDF Invoicing**: Lines 758, 833, 1061, and 1136 pass `discountAmount: doc.discountAmount` and `tax: doc.taxAmount` to the PDF renderer instead of `discountTotal` and `taxTotal`.
-- **Fix Recommendation**: Replace with `discountAmount: doc.discountTotal ?? 0` and `tax: doc.taxTotal ?? 0`.
-
-### 3.7. `src/pages/VendorDiscovery.tsx` & `src/pages/Purchases.tsx`
-- **Feature Disconnect**: In `VendorDiscovery.tsx:75-85`, clicking "Create Inward Bill" executes `navigate(ROUTE_PATHS.purchases, { state: { openForm: true, prefilledSupplier: { ... } } })`. However, `Purchases.tsx` does not inspect `location.state` with `useLocation()`. The modal does not open and prefilled data is dropped.
-- **Fix Recommendation**: In `Purchases.tsx`, read `location.state` on mount and initialize the purchase creation modal with the prefilled supplier info.
-
-### 3.8. `src/pages/PurchaseReturns.tsx`
-- **Encoding Defects (Mojibake)**: Lines 268, 357, 504, 573, 593, 639, 656, 665, 790 contain corrupted character sequences (`â€”` for em-dash and `â‚¹` for ₹).
-- **Fix Recommendation**: Replace corrupted sequences with proper UTF-8 symbols `—` and `₹`.
-
-### 3.9. `src/pages/Inventory.tsx`
-- **Property Safety**: Line 719 references `{item.unit}`, but `unit` is not declared on `ProductData` in `Inventory.tsx`.
-- **Fix Recommendation**: Add `unit?: string` to `ProductData` interface or provide a fallback (`item.unit || "Units"`).
-
-### 3.10. `src/App.tsx` vs `src/config/routes.ts`
-- **Unregistered Sub-routes**: Paths `/settings/reminders`, `/settings/ca-sharing`, `/settings/pricing`, `/settings/refer`, and `/settings/help` are defined in `ROUTE_PATHS` and linked in navigation, but have no route handlers in `App.tsx`.
-- **Fix Recommendation**: Add redirect routes in `App.tsx` mapping these paths to their respective active parent pages (`/settings`, `/reports`, `/public/pricing`, `/dashboard`).
-
----
-
-## 4. Master Resolution & Verification Matrix
-
-Every item identified during the initial QA audit has been surgically resolved and independently verified in code and runtime behavior:
-
-| Issue ID | File Path | Line(s) | Severity | Type | Description | Resolution Status | Verification Evidence |
-| :--- | :--- | :--- | :---: | :---: | :--- | :---: | :--- |
-| **BUG-01** | `src/pages/Customers.tsx` | 587–612 | **HIGH** | Runtime Logic | `ReferenceError: setFilter is not defined` on filter click | ✅ **RESOLVED** | Properly bound to `setCreditFilter` / `creditFilter` with `"clear"` id alignment |
-| **BUG-02** | `src/pages/Suppliers.tsx` | 27 | **HIGH** | Type/Import | `ReferenceError: ShoppingBag is not defined` in table/card | ✅ **RESOLVED** | `ShoppingBag` imported from `lucide-react` and renders cleanly |
-| **BUG-03** | `src/pages/CustomerLedger.tsx`| 247 | **HIGH** | Runtime Logic | `ReferenceError: handleExportCSV is not defined` | ✅ **RESOLVED** | `onClick={handleDownloadCSV}` connected and verified |
-| **BUG-04** | `src/pages/Items.tsx` & `src/pages/BarcodeGenerator.tsx` | 1033 & 55–73 | **HIGH** | Routing / State | Broken mobile barcode modal trigger | ✅ **RESOLVED** | Routes cleanly via `navigate(ROUTE_PATHS.barcode, { state: { prefilledItem: item } })` with auto-queueing on mount |
-| **BUG-05** | `src/pages/Purchases.tsx` | 38, 548 | **HIGH** | Type/Import | `ReferenceError: Loader2 is not defined` in approval button | ✅ **RESOLVED** | `Loader2` imported from `lucide-react` and spinner displays without crash |
-| **BUG-06** | `src/pages/Purchases.tsx` | 845–915 | **MED** | Calculation / PDF | `doc.discountAmount` / `doc.taxAmount` undefined in PDF | ✅ **RESOLVED** | Mapped to `doc.discountTotal ?? 0` and `doc.taxTotal ?? 0` |
-| **BUG-07** | `src/pages/Sales.tsx` | 758, 833, 1061, 1136 | **MED** | Calculation / PDF | `doc.discountAmount` / `doc.taxAmount` undefined in PDF | ✅ **RESOLVED** | All 4 instances updated to `doc.discountTotal ?? 0` and `doc.taxTotal ?? 0` |
-| **BUG-08** | `src/pages/Purchases.tsx` & `src/components/PurchaseInvoiceModal.tsx` | 141–175 & 123–650 | **MED** | Inter-Route Nav | Navigation state dropped from `VendorDiscovery.tsx` | ✅ **RESOLVED** | `Purchases.tsx` listens to `location.state` with `prefilledSupplier` support and auto-opens modal |
-| **BUG-09** | `src/pages/PurchaseReturns.tsx`| 268–926 | **LOW** | CSS / Typography | Mojibake garbled characters (`â€”`, `â‚¹`) | ✅ **RESOLVED** | Clean UTF-8 typographical symbols (`—`, `₹`) restored |
-| **BUG-10** | `src/pages/Inventory.tsx` | 55–719 | **LOW** | Type Safety | `{item.unit}` undefined rendering | ✅ **RESOLVED** | `unit?: string | null` added to `ProductData` with `{item.unit || "Units"}` fallback |
-| **BUG-11** | `src/App.tsx` | 245–249 | **MED** | Routing | Unregistered `/settings/*` sub-routes hitting 404 | ✅ **RESOLVED** | Added fallback redirects for reminders, CA sharing, pricing, refer, and help |
+### Issue 6: Unhandled Error Objects Passed to `.forEach()` in UI
+- **Location**: `src/pages/crm/RoleManagement.tsx` lines 300, 402, 414
+- **Error**: `RoleManagement: Error loading data: TypeError: Mr.forEach is not a function`
+- **Category**: Type 5 (Logic, State & Runtime Bugs)
+- **Root Cause**: When the API returns an error object (e.g., `{ error: "Request failed" }`), the component assumes `data` is an Array and calls `.forEach()`.
+- **Impact**: The entire Role Management dashboard crashes with a white screen / unhandled exception.
 
 ---
 
-## 5. Automated Test Verification Summary
+## 3. Page-by-Page Detailed Audit
 
-- **Vitest Test Suite**: `npx vitest run`
-  - **Passed**: 20 / 20 tests (100%)
-  - **Test Files**:
-    - `src/test/unitConversionBill.test.ts`: 5 tests passed
-    - `src/test/example.test.ts`: 10 tests passed
-    - `src/test/networkInvoicing.test.ts`: 5 tests passed
-- **TypeScript Static Verification**: `npx tsc --noEmit`
-  - **Status**: 0 errors
-- **Zero-Commit Policy**: Fully preserved. No commits created.
+### Page: CRM Role Management (`/crm/roles`)
+- **Status**: ❌ **Broken due to API & Shim Errors**
+- **Component File**: `src/pages/crm/RoleManagement.tsx`
+- **Findings**:
+  - **Routing & Navigation**: Route registered and accessible via sidebar.
+  - **Buttons & Interactive Features**: "Add Staff User" and "Create Role" modals render, but submitting triggers HTTP 500 / 404 from the backend.
+  - **Logic, State & Runtime Bugs**: Uncaught `TypeError: Mr.forEach is not a function` occurs during `loadData` when `getCRMStaffRoles` or `getProfiles` returns an error payload instead of an array.
+  - **Type Safety & Validation**: Needs defensive `Array.isArray()` checks on all incoming collections.
+
+### Page: CRM Dashboard (`/crm`)
+- **Status**: ⚠️ **Degraded Metrics**
+- **Component File**: `src/pages/crm/CRMDashboard.tsx`
+- **Findings**:
+  - **Buttons & Interactive Features**: Navigation cards to submodules work properly.
+  - **Logic, State & Runtime Bugs**: Queries to `crm_attendance` and `crm_broadcasts` return HTTP 400 from `rpc.js` due to missing `ALLOWED_TABLES` entries. Caught by fallback, but metrics display 0.
+
+### Page: CRM Tasks (`/crm/tasks`)
+- **Status**: ⚠️ **Partially Operational**
+- **Component File**: `src/pages/crm/Tasks.tsx`
+- **Findings**:
+  - **Routing & Navigation**: Route operates correctly.
+  - **Buttons & Interactive Features**: Kanban drag-and-drop, proof submission, and manager approval modals function as designed.
+  - **Logic, State & Runtime Bugs**: When `crmApi.getCRMStaffRoles` fails with HTTP 500, the task assignee dropdown fails to populate real staff members.
 
 ---
 
-## 6. Conclusion & Certification
+## 4. Summary of Actionable Items for QA Master Fixer
 
-All identified issues across routing, UI bindings, imports, calculations, and cross-module state transitions have been surgically resolved with 100% test passing rate and zero compiler errors.
-
-**Application Status**: **100% PRODUCTION CERTIFIED** (Zero Remaining Defects)
+| # | Priority | Page / Component | Category | Issue Description | Proposed Surgical Fix |
+|---|----------|------------------|----------|-------------------|------------------------|
+| 1 | **High** | `src/integrations/supabase/client.ts` | Type 5 | `QueryBuilder` missing `.in()` method causes `useCRMPermission` crash | Implement `.in(column, values)`, `.neq()`, `.gte()`, `.lte()`, `.is()` on `QueryBuilder` |
+| 2 | **High** | `backend-api/src/routes/crm.js` | Type 1 | `GET /permissions`, `POST /permissions/bulk`, `DELETE /permissions` missing | Implement permission route handlers in `crm.js` |
+| 3 | **High** | `backend-api/src/routes/rpc.js` | Type 5 | `crm_attendance`, `crm_broadcasts`, `crm_staff_roles`, `crm_permissions` missing from whitelist | Add tables to `ALLOWED_TABLES` and implement `op === 'in'` filter support |
+| 4 | **High** | `backend-api/fix_db.sql` & Postgres | Type 6 | `organization_memberships` lacks `status` column causing 500 error | Add `ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';` |
+| 5 | **High** | `backend-api/fix_db.sql` & Postgres | Type 6 | `crm_staff_assignments` lacks unique constraint on `(user_id, org_id)` | Add `ALTER TABLE crm_staff_assignments ADD CONSTRAINT uq_staff_user_org UNIQUE(user_id, org_id);` |
+| 6 | **High** | `src/pages/crm/RoleManagement.tsx` | Type 5 | `profilesData.forEach` and `staffRolesData.forEach` crash on non-array error payloads | Wrap all array iterations in `Array.isArray(x) ? x : []` |
+| 7 | **Med** | `backend-api/src/routes/crm.js` | Type 5 | `GET /roles` query fails if `crm_role_permissions` is empty or lacks rows | Use defensive query joining `crm_permissions` and `crm_role_permissions` with COALESCE |
