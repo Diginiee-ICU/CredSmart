@@ -720,7 +720,13 @@ export default function Attendance(): React.ReactElement {
         updated_at: nowIso,
       };
 
-      // 3. Upsert via Supabase & crmApi
+      // 3. Update local state immediately (Optimistic UI)
+      const filtered = attendanceRecords.filter(
+        (r) => !(r.staff_id === effectiveUserId && r.date === todayDateStr)
+      );
+      await persistAttendance([newRecord, ...filtered]);
+
+      // 4. Upsert via Supabase & crmApi
       const attendancePayload = {
         org_id: effectiveOrgId,
         staff_id: effectiveUserId,
@@ -752,12 +758,6 @@ export default function Attendance(): React.ReactElement {
       } catch (err) {
         console.warn("API attendance record failed, maintaining locally:", err);
       }
-
-      // 4. Update local state
-      const filtered = attendanceRecords.filter(
-        (r) => !(r.staff_id === effectiveUserId && r.date === todayDateStr)
-      );
-      await persistAttendance([newRecord, ...filtered]);
 
       if (isInside) {
         toast({
@@ -836,7 +836,15 @@ export default function Attendance(): React.ReactElement {
         updated_at: nowIso,
       };
 
-      // 2. Update via Supabase & crmApi
+      // 2. Update local state immediately (Optimistic UI)
+      const updatedList = attendanceRecords.map((r) =>
+        r.id === todayRecord.id || (r.staff_id === effectiveUserId && r.date === todayDateStr)
+          ? updatedRecord
+          : r
+      );
+      await persistAttendance(updatedList);
+
+      // 3. Update via Supabase & crmApi
       try {
         await supabase
           .from("crm_attendance")
@@ -863,14 +871,6 @@ export default function Attendance(): React.ReactElement {
       } catch (err) {
         console.warn("API update on clock out failed, maintaining locally:", err);
       }
-
-      // 3. Update local state
-      const updatedList = attendanceRecords.map((r) =>
-        r.id === todayRecord.id || (r.staff_id === effectiveUserId && r.date === todayDateStr)
-          ? updatedRecord
-          : r
-      );
-      await persistAttendance(updatedList);
 
       toast({
         title: "Clocked Out Successfully ✓",
@@ -1111,6 +1111,13 @@ export default function Attendance(): React.ReactElement {
       updated_at: nowIso,
     };
 
+    await persistRequests([newRequest, ...requests]);
+    setIsRequestModalOpen(false);
+    toast({
+      title: "Request Submitted ✓",
+      description: "Your attendance regularisation request is pending manager review.",
+    });
+
     try {
       await supabase.from("crm_attendance_requests").insert({
         id: newRequest.id,
@@ -1145,13 +1152,6 @@ export default function Attendance(): React.ReactElement {
     } catch (err) {
       console.warn("API regularisation insert failed:", err);
     }
-
-    await persistRequests([newRequest, ...requests]);
-    setIsRequestModalOpen(false);
-    toast({
-      title: "Request Submitted ✓",
-      description: "Your attendance regularisation request is pending manager review.",
-    });
   };
 
   const handleReviewRequest = async (
