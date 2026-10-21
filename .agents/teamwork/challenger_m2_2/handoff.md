@@ -1,148 +1,154 @@
-# Milestone M2 Challenger Report: AST / Grep Compliance Verification
+# Handoff Report — Challenger 2 (Milestone 2 Regression & Invariance Verification)
 
-**Challenger Agent**: `challenger_m2_2`  
-**Milestone**: M2 — Products & Inventory Domain Query Migration  
-**Artifacts under Test**:  
-- Project Specification: `PROJECT.md`  
-- Frontend Application Codebase: `src/`  
-- Migration E2E Suite: `src/test/e2eApiMigration.test.ts`  
-- Independent Challenger AST Suite: `src/test/m2GrepAstChallenger.test.ts`  
-**Gate Verdict**: **APPROVE**  
-**Date**: 2026-10-18T19:11:00Z  
+**Verdict**: **APPROVE**  
+**Date**: 2026-10-21T19:24:00Z  
+**Agent**: `challenger_m2_2` (Empirical Challenger)  
+**Parent Agent**: `c838af97-21de-4616-9188-f0f8dfa904c9`  
+**Milestone**: M2 (Staff User Provisioning & Instant Role Assignment)  
 
 ---
 
 ## 1. Observation
 
-Direct empirical observations, tool executions, and file inspection outputs:
+### Observation 1.1: Zero Invariance Violations in Create Invoice Flow
+Inspected Git status, working tree diff, and commit history for all 5 protected invoice files using Git binary (`$env:LOCALAPPDATA\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe`):
+1. `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+2. `src/components/SalesInvoiceModal.tsx`
+3. `src/components/invoices/mobile/AddItemModal.tsx`
+4. `src/components/invoices/mobile/SelectPartyModal.tsx`
+5. `src/components/invoices/mobile/EditItemModal.tsx`
 
-### 1.1 Direct Ripgrep / Static Scans for Table Queries
-- Scanned all non-test TypeScript/TSX source files across `src/` for queries targeting `products` and `product_batches`:
-  - Query: `\.from\(\s*["'`]products["'`]\s*\)`
-    * Application files (`src/` excluding `src/test/`): **0 matches**
-    * Test files: Found only in `src/test/tallyE2E.test.ts` (mockDb) and `src/test/e2eApiMigration.test.ts` (sample strings inside scanner unit tests).
-  - Query: `\.from\(\s*["'`]product_batches["'`]\s*\)`
-    * Application files (`src/` excluding `src/test/`): **0 matches**
-    * Test files: Found only in `src/test/tallyE2E.test.ts` (mockDb) and `src/test/e2eApiMigration.test.ts` (scanner switch-case branch).
-  - Storage bucket preservation:
-    * `src/components/storefront/StorefrontCatalogTab.tsx`: Preserves `supabase.storage.from("store-logos")` for binary logo asset uploads while containing zero table queries for `products`.
+Commands executed:
+```powershell
+& "$env:LOCALAPPDATA\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" status --porcelain src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
+# Result: Exit code 0, 0 output lines (completely clean working tree)
 
-### 1.2 Verification of 21 Migrated M2 Application Files
-Each of the 21 target files identified in the M2 migration scope was checked for `productsApi` consumption and zero `supabase.from("products" | "product_batches")` calls:
-1. `src/context/ProductsContext.tsx` — Consumes `productsApi.getProducts`, zero direct table queries.
-2. `src/pages/Items.tsx` — Consumes `productsApi`, zero direct table queries.
-3. `src/pages/ItemMaster.tsx` — Consumes `productsApi`, zero direct table queries.
-4. `src/pages/Inventory.tsx` — Consumes `productsApi`, zero direct table queries.
-5. `src/services/stockService.ts` — Consumes `productsApi`, zero direct table queries.
-6. `src/pages/POSBilling.tsx` — Consumes `productsApi`, zero direct table queries.
-7. `src/pages/BarcodeGenerator.tsx` — Consumes `productsApi`, zero direct table queries.
-8. `src/pages/PurchaseReturns.tsx` — Consumes `productsApi`, zero direct table queries.
-9. `src/components/storefront/StorefrontCatalogTab.tsx` — Consumes `productsApi`, zero direct table queries.
-10. `src/services/storefrontService.ts` — Consumes `productsApi`, zero direct table queries.
-11. `src/utils/offlineQueue.ts` — Consumes `productsApi`, zero direct table queries.
-12. `src/components/items/QuickCreateItemModal.tsx` — Consumes `productsApi`, zero direct table queries.
-13. `src/components/PurchaseInvoiceForm.tsx` — Consumes `productsApi`, zero direct table queries.
-14. `src/components/AppLayout.tsx` — Consumes `productsApi`, zero direct table queries.
-15. `src/pages/Dashboard.tsx` — Consumes `productsApi`, zero direct table queries.
-16. `src/hooks/useOrganization.tsx` — Consumes `productsApi`, zero direct table queries.
-17. `src/pages/Auth.tsx` — Consumes `productsApi`, zero direct table queries.
-18. `src/services/documentsService.ts` — Consumes `productsApi`, zero direct table queries.
-19. `src/services/networkInvoicingService.ts` — Consumes `productsApi`, zero direct table queries.
-20. `src/services/autoSyncService.ts` — Consumes `productsApi`, zero direct table queries.
-21. `src/pages/TallyImport.tsx` — Consumes `productsApi`, zero direct table queries.
+& "$env:LOCALAPPDATA\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff HEAD -- src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
+# Result: Exit code 0, 0 diff lines (identical to HEAD)
 
-### 1.3 Execution of Verification Test Suites & Static Check
-1. **TypeScript Typecheck**:
-   - Command: `cmd /c npx tsc --noEmit`
-   - Result: Exited with code 0 (0 errors).
-2. **E2E Migration Test Suite**:
-   - Command: `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/e2eApiMigration.test.ts (43 tests) 2027ms
-     Test Files  1 passed (1)
-          Tests  43 passed (43)
-     ```
-3. **Independent Challenger AST Test Suite**:
-   - Implemented in: `src/test/m2GrepAstChallenger.test.ts`
-   - Command: `cmd /c npx vitest run src/test/m2GrepAstChallenger.test.ts`
-   - Output verbatim:
-     ```
-     ✓ src/test/m2GrepAstChallenger.test.ts (7 tests) 598ms
-     Test Files  1 passed (1)
-          Tests  7 passed (7)
-     ```
-4. **Combined Test Verification**:
-   - Command: `cmd /c npx vitest run src/test/e2eApiMigration.test.ts src/test/m2GrepAstChallenger.test.ts`
-   - Output: 2 passed test files, 50 passed tests (100% pass rate).
-5. **API Client Unit Suite**:
-   - Command: `cmd /c npx vitest run src/test/apiClient.test.ts`
-   - Output: 53 passed tests out of 53.
+& "$env:LOCALAPPDATA\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff d585f15..HEAD -- src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
+# Result: Exit code 0, 0 diff lines (no changes since commit d585f15)
+```
+All 5 files are 100% untouched.
+
+---
+
+### Observation 1.2: TypeScript Compilation (`tsc --noEmit`)
+Executed full codebase TypeScript static analysis:
+```cmd
+cmd /c "npx tsc --noEmit"
+```
+Output:
+```
+Exit code: 0
+Stdout: (empty)
+Stderr: (empty)
+```
+Zero compilation or type errors across the entire CredSmart repository.
+
+---
+
+### Observation 1.3: Vitest Test Suite Execution
+Executed all requested CRM and schema test suites:
+- `crmStaff`: `crmStaffProvisioning.test.ts`, `crmStaffProvisioningUI.test.tsx`, `crmStaffProvisioningStress.test.tsx`, `crmStaffTasksIntegration.test.tsx`
+- `crmTask`: `crmTaskLifecycle.test.ts`, `crmStaffTasksIntegration.test.tsx`
+- `crmBackendApiM1`: `crmBackendApiM1.test.ts`
+- `src/test/fixDbSchema.test.ts`: `fixDbSchema.test.ts`
+
+Command executed:
+```cmd
+cmd /c "npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts --test-timeout=20000"
+```
+Output:
+```
+ ✓ src/test/fixDbSchema.test.ts (398 tests) 645ms
+ ✓ src/test/crmStaffTasksIntegration.test.tsx (12 tests) 10458ms
+ ✓ src/test/crmStaffProvisioning.test.ts (29 tests) 144ms
+ ✓ src/test/crmTaskLifecycle.test.ts (33 tests) 40ms
+ ✓ src/test/crmBackendApiM1.test.ts (10 tests) 38ms
+ ✓ src/test/crmStaffProvisioningUI.test.tsx (6 tests) 25028ms
+ ✓ src/test/crmStaffProvisioningStress.test.tsx (35 tests) 14444ms
+
+ Test Files  7 passed (7)
+      Tests  523 passed (523)
+   Start at  00:49:42
+   Duration  42.43s
+Exit code: 0
+```
+All 523 tests across all 7 test files pass with 100% success rate.
+
+---
+
+### Observation 1.4: Empirical Isolation & Timeout Dynamics
+When running Vitest concurrently with default timeout (`5000ms`), `RoleManagement.tsx` (2491 lines, rendering Radix dialogs, select dropdowns, and full permissions table in jsdom on Windows) exhibited rendering overhead:
+- `M2.UI.3`: 5.2s
+- `M2.UI.4`: 7.4s
+Providing `--test-timeout=20000` or explicit per-test timeout parameters allowed all tests to pass deterministically.
 
 ---
 
 ## 2. Logic Chain
 
-1. **AST & Grep Completeness (Observation 1.1 & 1.2)**:
-   - Application code across all 267 production `.ts` and `.tsx` source files in `src/` was traversed recursively.
-   - Both single-line and multi-line regex patterns matching `(?:supabase|client|\bdb)\s*\.?\s*from\s*\(\s*["'`]\s*(products|product_batches)\s*["'`]\s*\)` were evaluated against every file.
-   - Result is 0 violations. This proves that all direct Supabase client queries for the `products` and `product_batches` database tables have been eliminated from application code.
+1. **Invariance Verification**:
+   - Step 1: The dispatch mandated zero changes to `MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, and `EditItemModal.tsx`.
+   - Step 2: Running `git status --porcelain`, `git diff HEAD`, and `git diff d585f15..HEAD` produced 0 lines of output (Observation 1.1).
+   - Conclusion: The Create Invoice flow is 100% preserved and untouched.
 
-2. **Integration with Centralized API Layer (Observation 1.2 & 1.3)**:
-   - `src/services/productsApi.ts` interfaces directly with `apiClient`, `apiGet`, `apiPost`, `apiPut`, and `apiDelete`.
-   - Inspection confirms `productsApi.ts` does not contain recursive direct table queries.
-   - All 21 target files consume `productsApi` methods (`getProducts`, `getProductById`, `createProduct`, `updateProduct`, `deleteProduct`, `bulkImport`, `adjustStock`, `getBatches`, `createBatch`, `updateBatch`, `deleteBatch`, `bulkUpsertBatches`, `checkBarcodeUnique`).
+2. **Compilation Integrity**:
+   - Step 1: `cmd /c npx tsc --noEmit` validates all types and imports across the project.
+   - Step 2: The execution exited with code 0 and zero diagnostic errors (Observation 1.2).
+   - Conclusion: Milestone 2 code adheres strictly to TypeScript strict-mode typing contracts.
 
-3. **Compiler and Behavioral Parity (Observation 1.3)**:
-   - `tsc --noEmit` verifies strict compile-time type safety with zero type errors across all migrated call sites and signatures.
-   - `vitest run src/test/e2eApiMigration.test.ts` validates Tier 1 (features 1–10), Tier 2 (boundary & corner cases), Tier 3 (cross-domain contract parity), and Tier 4 (static AST grep scanner).
-   - `vitest run src/test/m2GrepAstChallenger.test.ts` provides adversarial verification with 7 dedicated assertion steps.
+3. **Regression & Adversarial Validation**:
+   - Step 1: `fixDbSchema.test.ts` verifies baseline database migration integrity across 398 tests (Observation 1.3).
+   - Step 2: `crmBackendApiM1.test.ts`, `crmTaskLifecycle.test.ts`, and `crmStaffTasksIntegration.test.tsx` verify backend contracts and task state machines across 55 tests.
+   - Step 3: `crmStaffProvisioning.test.ts`, `crmStaffProvisioningUI.test.tsx`, and `crmStaffProvisioningStress.test.tsx` verify staff provisioning, cryptographic entropy (500 samples), input validation, clipboard copying, and UI workflows across 70 tests.
+   - Step 4: Total test count of 523 tests passed cleanly with 0 failures (Observation 1.3).
+   - Conclusion: Zero regressions introduced across CRM and database subsystems.
 
 ---
 
 ## 3. Caveats
 
-- Direct Supabase table queries for unmigrated domains (`customers`, `suppliers`, `credit_transactions`, `sales`, `purchase_invoices`, `organizations`, `crm_*`) remain present in application code, as scheduled for subsequent Milestones (M3, M4, M5).
-- Storage bucket access via `supabase.storage.from("store-logos")` in `StorefrontCatalogTab.tsx` is preserved as intended for binary file handling.
+1. **JSDOM React Testing Library Timeout**:
+   Because `RoleManagement.tsx` is an extensive, full-featured enterprise management interface (2491 lines) containing numerous Radix UI portals, selects, and permission tables, rendering the full component inside jsdom in Windows environments takes between 3 to 7 seconds per test. When running full test suites in parallel, `--test-timeout=20000` is necessary to avoid false-positive Vitest timeout errors. For future test additions, setting `it(..., async () => {}, 15000)` explicitly on UI tests is recommended.
+2. **Review-Only Role**:
+   In accordance with the review-only constraint, no source code files were edited during this challenge run.
 
 ---
 
 ## 4. Conclusion
 
-**Gate Verdict**: **APPROVE**
+**Verdict: APPROVE**
 
-Milestone 2 (M2: Products & Inventory Domain Query Migration) satisfies all acceptance criteria:
-1. **0 direct table queries** exist for `products` or `product_batches` across all production application code files in `src/`.
-2. All 21 target files are properly integrated with `src/services/productsApi.ts`.
-3. `cmd /c npx vitest run src/test/e2eApiMigration.test.ts` passes 43/43 tests (100%).
-4. `cmd /c npx tsc --noEmit` exits with code 0 (zero errors).
-5. Independent challenger test harness `src/test/m2GrepAstChallenger.test.ts` passes 7/7 tests (100%).
+The Milestone 2 implementation for CredSmart Enterprise CRM Staff Provisioning & Instant Role Assignment satisfies all requirements:
+1. **Protected Create Invoice flows**: 100% untouched and invariant.
+2. **TypeScript Compilation**: 0 errors (`tsc --noEmit` code 0).
+3. **Test Suites**: 523/523 tests pass across 7 suites (`fixDbSchema`, `crmStaffProvisioning`, `crmStaffProvisioningUI`, `crmStaffProvisioningStress`, `crmStaffTasksIntegration`, `crmTaskLifecycle`, `crmBackendApiM1`).
+4. **Adversarial Integrity**: Confirmed cryptographic password generation, safe credentials display, rapid-fire interaction handling, and robust input validation.
+
+Gate status for Milestone 2: **READY TO ADVANCE TO MILESTONE 3**.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce and verify this verdict:
+To independently reproduce and verify this verdict, execute the following commands from the project root:
 
-1. **Run E2E Migration Test Suite**:
+1. **Verify protected Create Invoice files are 100% untouched**:
    ```powershell
-   cmd /c npx vitest run src/test/e2eApiMigration.test.ts
+   & "$env:LOCALAPPDATA\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff HEAD -- src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
    ```
-   *Expected*: 43 tests pass (100% pass rate).
+   *Expected output*: Empty (0 diff lines).
 
-2. **Run Challenger AST & Grep Scan Suite**:
-   ```powershell
-   cmd /c npx vitest run src/test/m2GrepAstChallenger.test.ts
+2. **Verify TypeScript compilation**:
+   ```cmd
+   cmd /c "npx tsc --noEmit"
    ```
-   *Expected*: 7 tests pass (100% pass rate).
+   *Expected output*: Exit code 0, no errors.
 
-3. **Run TypeScript Strict Compiler Check**:
-   ```powershell
-   cmd /c npx tsc --noEmit
+3. **Verify full CRM & schema test suites**:
+   ```cmd
+   cmd /c "npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts --test-timeout=20000"
    ```
-   *Expected*: Exits with code 0 and zero compilation errors.
-
-4. **Invalidation Conditions**:
-   - Any match for `supabase.from("products")` or `supabase.from("product_batches")` in any non-test file under `src/`.
-   - Any test failure in `e2eApiMigration.test.ts` or `m2GrepAstChallenger.test.ts`.
-   - Any type error in `tsc --noEmit`.
+   *Expected output*: 7 test files passed, 523 tests passed, exit code 0.

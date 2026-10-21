@@ -1,225 +1,214 @@
-# Forensic Integrity Audit Report: CRM Phase 2 Milestone 2 — Geo Location Calculation Engine & Utilities
+# Forensic Audit Report — Milestone 2: Staff User Provisioning & Instant Role Assignment UI
 
-**Work Product**: `src/utils/crmGeoUtils.ts` and `src/test/crmGeoUtils.test.ts`  
-**Profile**: General Project (Integrity Mode: Benchmark)  
-**Verdict**: **CLEAN**  
-
----
-
-## Forensic Audit Summary
-
-| Check # | Forensic Verification Check | Result | Details |
-|:---:|---|:---:|---|
-| **1** | Static Analysis (Hardcoded Lookups & Dummy Facades) | **PASS** | No hardcoded coordinate lookups, dummy returns, or mock bypasses in calculation functions. |
-| **2** | Genuine Haversine Trigonometric Formula & Constants | **PASS** | Uses `EARTH_RADIUS_METERS = 6371000`, radian conversion, antimeridian normalization, numerical clamping `Math.min(1, Math.max(0, a))`, and angular distance $c = 2\operatorname{atan2}(\sqrt{a}, \sqrt{1-a})$. |
-| **3** | Test Integrity (Non-Self-Certifying / No Mocking of Calculation Engine) | **PASS** | `src/test/crmGeoUtils.test.ts` invokes real calculation functions directly against theoretical and physical benchmarks without mocking `calculateHaversineDistance`. |
-| **4** | Empirical TypeScript Compilation (`tsc --noEmit`) | **PASS** | `cmd /c npx tsc --noEmit` exited with code 0 and 0 errors. |
-| **5** | Empirical Test Suite Execution (`crmGeoUtils.test.ts`) | **PASS** | `npm.cmd test -- src/test/crmGeoUtils.test.ts --run` passed 33/33 tests in 75ms. |
-| **6** | Full CRM Test Suite Regression Check | **PASS** | `npm.cmd test -- crm --run` passed 264/264 tests across 11 test suites. |
+**Work Product**: Milestone 2 Deliverables (`src/pages/crm/RoleManagement.tsx`, `src/utils/crmStaffUtils.ts`, and Create Invoice flow preservation)  
+**Auditor**: Forensic Auditor (`auditor_m2`)  
+**Parent Agent**: `c838af97-21de-4616-9188-f0f8dfa904c9`  
+**Execution Timestamp**: 2026-10-21T19:25:00Z  
+**Profile**: General Project  
+**Integrity Mode**: Development Mode (derived directly from `ORIGINAL_REQUEST.md` 2026-10-21T17:42:42Z)  
+**Verdict**: **CLEAN**
 
 ---
 
 ## 1. Observation
 
-### 1.1 Direct Source Code Inspection (`src/utils/crmGeoUtils.ts`)
-1. **Mathematical Constants & Coordinate Bounding**:
-   - `src/utils/crmGeoUtils.ts:12`:
-     ```ts
-     export const EARTH_RADIUS_METERS = 6371000;
+Direct empirical observations, static AST checks, tool commands, and execution outputs:
+
+### 1.1 Source Code Architecture & Forensic Inspection
+
+1. **Staff Provisioning Utilities (`src/utils/crmStaffUtils.ts`)**:
+   - `validateStaffProvisioningInput` (lines 34–105):
+     - Implements real full name validation enforcing `2 <= fullName.length <= 100`.
+     - Implements RFC 5322 regex validation (`/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/`) and prevents consecutive dots or leading/trailing dots.
+     - Implements phone sanitization normalizing Indian 10-digit mobile numbers (stripping leading `+91` or `0`) and validating 10 numeric digits.
+     - Implements store role validation against `["salesman", "cashier", "manager", "staff"]`.
+     - Enforces minimum 6 characters for explicit manual passwords.
+     - Zero hardcoded test return values; returns dynamic `{ valid, errors, sanitized }`.
+   - `generateCryptographicPassword` (lines 111–160):
+     - Strictly checks `if (length < 8) throw new Error(...)`.
+     - Resolves `cryptoObj` via `typeof window !== "undefined" && window.crypto ? window.crypto : globalThis.crypto`.
+     - Pulls random values using `cryptoObj.getRandomValues(new Uint32Array(1))` and `cryptoObj.getRandomValues(new Uint32Array(remainingLength))`.
+     - Excludes ambiguous visual characters (`I, O, l, 0, 1`).
+     - Guarantees at least 1 uppercase, 1 lowercase, 1 digit, and 1 symbol.
+     - Runs a true cryptographic Fisher-Yates shuffle using `cryptoObj.getRandomValues(new Uint32Array(result.length))`.
+     - **Zero occurrences of `Math.random`**.
+   - `formatCredentialsPayload` (lines 165–211):
+     - Dynamically formats structured `clipboardText` with org name, staff name, role, email, password, login URL, and security notice.
+     - Generates URL-encoded WhatsApp template via `https://wa.me/?text=${encodeURIComponent(whatsAppText)}`.
+     - Generates masked password with exact bullet count matching password length.
+   - `hydrateStaffRoster` (lines 216–240):
+     - Pure functional updater prepending new user to `staffList` and updating `staffRolesMap`.
+
+2. **Role Management Page (`src/pages/crm/RoleManagement.tsx`)**:
+   - **Header & Action Triggers**:
+     - Lines 1260–1270: "Add Staff User" button in Section 1 header actions, gated by `isSuperAdminOrOwner`.
+     - Lines 1642–1652: "Add Staff" button in Section 3 ("Staff CRM Role Assignments") header, gated by `isSuperAdminOrOwner`.
+   - **Modal 1: "Provision New Staff User"** (lines 2051–2311):
+     - Managed by `addStaffModalOpen` state.
+     - Fields: Full Name (`staffFormFullName`), Email (`staffFormEmail`), Phone (`staffFormPhone`), Store Role (`staffFormStoreRole`), Assigned CRM Role (`staffFormCrmRole`).
+     - Password Configuration tab switcher: "Auto-Generate" (14-char high-entropy cryptographic password) vs "Custom" (manual entry with min 6 chars requirement).
+     - "Regenerate" button bound to `setStaffFormAutoPassword(generateCryptographicPassword(14))`.
+     - Eye toggle icon (`showPassword`) toggles password visibility.
+     - Form submit calls `handleProvisionStaff` (lines 827–963):
+       - Validates input via `validateStaffProvisioningInput`.
+       - Dispatches `crmApi.provisionStaffUser(payload, orgId)`.
+       - Updates `staffList` and `staffRolesMap` in memory immediately.
+       - Persists updated roles to `localStorage.setItem('credsmart_crm_staff_roles_${orgId}', ...)`.
+       - Closes Add Staff modal and opens Credentials Confirmation modal.
+       - Gracefully handles offline/network errors by hydrating local state and presenting credentials without blocking the admin.
+   - **Modal 2: "Staff Credentials Generated"** (lines 2316–2487):
+     - Managed by `credentialsModalOpen` state.
+     - Displays staff identity pod with avatar initials, full name, store role, and assigned `CRMRolePill` badge.
+     - Monospace read-only Login Email input with 1-click Copy button (`handleCopyCredentialsField("email")`).
+     - Monospace read-only Temporary Password input with reveal toggle (`Eye`/`EyeOff`) and 1-click Copy button (`handleCopyCredentialsField("password")`).
+     - "Copy All Details" button calling `handleCopyAllCredentials` with `navigator.clipboard.writeText`.
+     - "Share via WhatsApp" button calling `handleShareWhatsApp` with `window.open(formatted.whatsAppUrl, "_blank", "noopener,noreferrer")`.
+     - Security warning callout: *"These credentials will not be displayed again. Please share them securely with the staff member."*
+   - **Modal 3: "Create Custom Role" Staff Assignment** (lines 1850–1968):
+     - "Assign Staff Members (Optional)" section with searchable staff checklist (`filteredStaffForRole`).
+     - Checkbox selection state tracked in `selectedStaffForNewRole`.
+     - In `handleSaveRole` (lines 741–772): Atomically invokes `Promise.all(selectedStaffForNewRole.map(staffId => crmApi.assignCRMStaffRole(...)))`, updating `staffRolesMap` and `staffList` in memory instantly.
+   - **Section 3 Roster Rendering** (lines 1656–1700):
+     - Renders staff list with initials avatar, full name, store role badge, and assigned `CRMRolePill` with custom role color, icon, and Super Admin badge.
+
+3. **Invariance Audit (Create Invoice Flow Preservation)**:
+   - Ground-truth constraint from `ORIGINAL_REQUEST.md` (2026-10-21T10:52:12Z & 2026-10-21T17:42:42Z):
+     * `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+     * `src/components/SalesInvoiceModal.tsx`
+     * `src/components/invoices/mobile/AddItemModal.tsx`
+     * `src/components/invoices/mobile/SelectPartyModal.tsx`
+     * `src/components/invoices/mobile/EditItemModal.tsx`
+   - Empirical verification command executed:
+     ```powershell
+     git diff da3b49a..HEAD -- src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/
      ```
-   - `src/utils/crmGeoUtils.ts:39-50`:
-     ```ts
-     export function isValidCoordinate(lat: number, lon: number): boolean {
-       return (
-         typeof lat === "number" &&
-         typeof lon === "number" &&
-         Number.isFinite(lat) &&
-         Number.isFinite(lon) &&
-         lat >= -90 &&
-         lat <= 90 &&
-         lon >= -180 &&
-         lon <= 180
-       );
-     }
+     *Output*: Empty (0 lines added, 0 lines deleted).
+   - Unstaged working copy verification:
+     ```powershell
+     git diff -- src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/
      ```
-     Guarantees WGS-84 coordinate bounding ($\text{lat} \in [-90, 90]$, $\text{lon} \in [-180, 180]$) and rejects non-finite numbers before any trigonometric computation.
+     *Output*: Empty (0 lines added, 0 lines deleted).
+   - **Result**: The Create Invoice flow is 100% untouched and preserved.
 
-2. **Haversine Distance Implementation**:
-   - `src/utils/crmGeoUtils.ts:62-108`:
-     ```ts
-     export function calculateHaversineDistance(
-       lat1: number,
-       lon1: number,
-       lat2: number,
-       lon2: number
-     ): number {
-       if (!isValidCoordinate(lat1, lon1) || !isValidCoordinate(lat2, lon2)) {
-         throw new RangeError(
-           `Invalid coordinate bounding: latitude must be between -90 and 90, longitude must be between -180 and 180. Received: [${lat1}, ${lon1}], [${lat2}, ${lon2}]`
-         );
-       }
+### 1.2 Build & Test Suite Execution Outputs
 
-       // Fast path: identical coordinates or both points at the same geographic pole yield exact 0 distance
-       if (
-         (lat1 === lat2 && lon1 === lon2) ||
-         (Math.abs(lat1) === 90 && lat1 === lat2)
-       ) {
-         return 0;
-       }
+1. **Static Typecheck**:
+   ```powershell
+   cmd /c npx tsc --noEmit
+   ```
+   *Exit code*: 0.  
+   *Output*: Zero errors across all TypeScript and TSX files.
 
-       const toRad = (deg: number) => (deg * Math.PI) / 180;
+2. **Unit Test Suite (`src/test/crmStaffProvisioning.test.ts`)**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmStaffProvisioning.test.ts
+   ```
+   *Exit code*: 0.  
+   *Output*: 1 passed test file, 29/29 tests passed in 205ms.
 
-       // Normalize longitude difference to [-180, +180] for shortest arc across antimeridian
-       let diffLonDeg = (lon2 - lon1) % 360;
-       if (diffLonDeg > 180) diffLonDeg -= 360;
-       if (diffLonDeg < -180) diffLonDeg += 360;
+3. **UI Interaction Test Suite (`src/test/crmStaffProvisioningUI.test.tsx`)**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmStaffProvisioningUI.test.tsx
+   ```
+   *Exit code*: 0.  
+   *Output*: 1 passed test file, 6/6 tests passed in 13.93s:
+   - `M2.UI.1 — renders 'Add Staff User' button in header actions and 'Add Staff' in Section 3`: PASS
+   - `M2.UI.2 — opens 'Add Staff User' modal with 14-char cryptographic password auto-generated`: PASS
+   - `M2.UI.3 — switches password mode between Auto-Generate and Custom entry`: PASS
+   - `M2.UI.4 — provisions staff member, immediately updates roster in-memory with CRMRolePill, and opens Credentials Confirmation modal`: PASS
+   - `M2.UI.5 — Create Custom Role modal displays 'Assign Staff Members (Optional)' checklist and assigns role upon creation`: PASS
+   - `M2.UI.6 — filters staff members in Section 3 dynamically using search query`: PASS
 
-       const dLat = toRad(lat2 - lat1);
-       const dLon = toRad(diffLonDeg);
+4. **Integration Test Suite (`src/test/crmStaffTasksIntegration.test.tsx`)**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmStaffTasksIntegration.test.tsx
+   ```
+   *Exit code*: 0.  
+   *Output*: 1 passed test file, 12/12 tests passed in 3.83s.
 
-       const phi1 = toRad(lat1);
-       const phi2 = toRad(lat2);
-
-       const sinHalfDLat = Math.sin(dLat / 2);
-       const sinHalfDLon = Math.sin(dLon / 2);
-
-       // Haversine formula: a = sin^2(dLat/2) + cos(phi1)*cos(phi2)*sin^2(dLon/2)
-       const a =
-         sinHalfDLat * sinHalfDLat +
-         Math.cos(phi1) * Math.cos(phi2) * sinHalfDLon * sinHalfDLon;
-
-       // Numerically clamp a to [0, 1] to prevent NaN from floating-point inaccuracies
-       const clampedA = Math.min(1, Math.max(0, a));
-       const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
-
-       return EARTH_RADIUS_METERS * c;
-     }
-     ```
-     No lookup tables, no mock branches, and no dummy shortcuts. Antimeridian crossing is normalized to the shortest arc $[-180, 180]$, and $a$ is clamped to $[0, 1]$ to protect against float inaccuracies yielding `NaN` on antipodes.
-
-3. **Geofence Matching & Nearest Office Calculation**:
-   - `src/utils/crmGeoUtils.ts:120-133`: `isWithinGeofence` verifies that `radiusMeters >= 0` and calls `calculateHaversineDistance(userLat, userLon, officeLat, officeLon) <= radiusMeters`.
-   - `src/utils/crmGeoUtils.ts:143-184`: `findNearestGeofence` handles non-array / empty inputs safely (returns `null`), filters for active geofences (`geofence.is_active === true`), iterates over all geofences to identify the minimum distance, and returns `NearestGeofenceResult`.
-
-4. **Browser Geolocation API Wrapper & Mocking Harness**:
-   - `src/utils/crmGeoUtils.ts:193-242`: `getCurrentPosition` wraps `navigator.geolocation.getCurrentPosition` in a Promise, handles unsupported environments, and parses error codes 1 (`PERMISSION_DENIED`), 2 (`POSITION_UNAVAILABLE`), and 3 (`TIMEOUT`) with user-friendly messages while retaining the error `code`.
-   - `src/utils/crmGeoUtils.ts:248-429`: Testing mock helpers (`mockGeolocationPosition`, `mockGeolocationError`, `mockGeolocationUnsupported`, `resetGeolocationMock`) allow clean, isolated test simulation without polluting the global environment.
-
-### 1.2 Direct Test Suite Inspection (`src/test/crmGeoUtils.test.ts`)
-1. No mocking of `calculateHaversineDistance`, `isWithinGeofence`, or `findNearestGeofence`.
-2. Tests directly execute the engine against real geographical coordinates:
-   - London to Paris: asserts between $340,000$ and $348,000$ meters ($\approx 343,556$ m).
-   - New York to London: asserts between $5,500,000$ and $5,650,000$ meters ($\approx 5,570,222$ m).
-   - 1-degree equatorial arc: asserts close to $\frac{6371000 \times \pi}{180} \approx 111,194.9$ m.
-   - Antimeridian crossing: points at $(0, 179.5)$ and $(0, -179.5)$ assert close to 1-degree arc ($\approx 111.19$ km), proving it does not traverse the 359-degree back-arc.
-   - Poles and antipodal points: $(90, 0)$ to $(-90, 0)$ asserts close to half Earth's circumference ($20,015,086.8$ m).
-   - Symmetry: $d(A, B) = d(B, A)$ verified to 5 decimal places.
-
-### 1.3 Tool Execution & Empirical Evidence
-
-1. **TypeScript Type Check**:
-   - Command: `cmd /c npx tsc --noEmit`
-   - Exit Code: `0`
-   - Stdout/Stderr: Empty (0 errors)
-
-2. **Unit Test Suite**:
-   - Command: `npm.cmd test -- src/test/crmGeoUtils.test.ts --run`
-   - Exit Code: `0`
-   - Output:
-     ```
-     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
-
-     ✓ src/test/crmGeoUtils.test.ts (33 tests) 75ms
-
-     Test Files  1 passed (1)
-          Tests  33 passed (33)
-       Duration  9.40s
-     ```
-
-3. **Full CRM Test Suite (Regression & Peer Verification)**:
-   - Command: `npm.cmd test -- crm --run`
-   - Exit Code: `0`
-   - Output:
-     ```
-     Test Files  11 passed (11)
-          Tests  264 passed (264)
-       Duration  35.17s
-     ```
-   - Passed test suites include:
-     - `src/test/crmGeoUtils.test.ts` (33 tests)
-     - `src/test/crmGeoUtilsAdversarial.test.ts` (22 tests)
-     - `src/test/crmGeoUtilsMathematicalStressOracle.test.ts` (26 tests)
-     - `src/test/crmAttendanceMigrationStress.test.ts` (31 tests)
-     - `src/test/crmDashboardResilience.test.tsx` (15 tests)
-     - `src/test/crmPermissionGate.test.tsx` (8 tests)
-     - `src/test/crmShellRoutes.test.ts` (22 tests)
-     - `src/test/crmShellNavigation.audit.test.ts` (8 tests)
-     - `src/test/crmAttendanceTypes.challenger.test.ts` (18 tests)
+5. **Adversarial Stress Suite (`src/test/crmStaffProvisioningStress.test.tsx`)**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx src/test/crmStaffProvisioningStress.test.tsx --testTimeout 15000
+   ```
+   *Exit code*: 0.  
+   *Output*: 3 passed test files, 70/70 tests passed.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Integrity Mode Conformance**:
-   - Under Benchmark Mode (`ORIGINAL_REQUEST.md:310`), the implementation must be genuine, written without shortcuts or hardcoded test returns, and using standard mathematical principles.
-   - Observation 1.1.2 confirms that `calculateHaversineDistance` uses genuine trigonometric mathematics ($\sin$, $\cos$, $\operatorname{atan2}$, $\sqrt{}$), adhering strictly to the Haversine great-circle formula.
-2. **Mathematical Accuracy & Edge Case Robustness**:
-   - Observation 1.1.2 confirms that identical points and polar convergence cases return exact 0 distance, preventing floating-point epsilon artifacts.
-   - Observation 1.1.2 confirms that antimeridian longitude differences are normalized to $[-180, 180]$, preventing erroneous 359-degree calculations.
-   - Clamping $a \in [0, 1]$ eliminates floating-point rounding overflow where $a = 1.0000000000000002$ would otherwise produce `NaN` in $\sqrt{1 - a}$.
-   - Independent verification against multiple mathematical oracles (Spherical Vincenty formula, 3D Cartesian Chord-to-Arc, and Vector Cross/Dot Product in `crmGeoUtilsMathematicalStressOracle.test.ts`) validated distance computations within sub-millimeter tolerances.
-3. **No Facade or Dummy Implementation**:
-   - Observation 1.1.3 confirms that `isWithinGeofence` and `findNearestGeofence` rely directly on real distance calculations.
-   - Observation 1.1.4 confirms that `getCurrentPosition` cleanly wraps browser geolocation and correctly handles all W3C error codes.
-4. **Authentic Verification**:
-   - Observation 1.2 confirms that test suites do not mock the calculation engine. The test suite exercises real inputs and asserts true mathematical properties.
-   - Observation 1.3 demonstrates 100% test pass rate and clean compilation across all 11 CRM suites (264 tests).
+1. **Mode-Agnostic Phase 1 Investigation**:
+   - Analyzed `src/utils/crmStaffUtils.ts` and `src/pages/crm/RoleManagement.tsx` for all prohibited patterns across Development, Demo, and Benchmark modes.
+   - Identified no hardcoded test result strings or dummy responses.
+   - Identified no facade implementations: forms contain real state hooks, real validation, real event handlers, real clipboard copy calls, real localStorage sync, and real API dispatches.
+   - Identified no fabricated verification outputs or pre-populated result files.
+   - Verified that cryptographic password generation uses authentic Web Crypto primitives (`window.crypto.getRandomValues`).
+
+2. **Mode-Specific Phase 2 Evaluation**:
+   - Mode from `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z): **Development Mode**.
+   - Under Development Mode:
+     * Code reuse, library usage, and React ecosystem tools (Radix UI, Lucide icons, shadcn components) are fully permitted.
+     * Hardcoded test results: NONE FOUND (Pass).
+     * Dummy/facade implementations: NONE FOUND (Pass).
+     * Fabricated outputs: NONE FOUND (Pass).
+
+3. **Ground-Truth Invariance Constraint Evaluation**:
+   - `ORIGINAL_REQUEST.md` strictly mandates: *"Do NOT touch or alter the Create Invoice flow (MobileCreateInvoice.tsx, SalesInvoiceModal.tsx, AddItemModal.tsx, SelectPartyModal.tsx, EditItemModal.tsx)"*.
+   - Git diff inspection against base commit `da3b49a` and unstaged index confirmed zero lines modified across all Create Invoice files.
+   - Invariance constraint is 100% satisfied.
+
+4. **Static and Behavioral Verification**:
+   - `tsc --noEmit` verifies strict TypeScript compilation with 0 diagnostic errors.
+   - Automated unit, UI, and integration test suites execute cleanly with 100% pass rates (29/29 unit tests, 6/6 UI tests, 12/12 integration tests).
 
 ---
 
 ## 3. Caveats
 
-- **No Caveats**: The mathematical calculation engine is self-contained, deterministic, and independently validated across extreme edge cases (poles, antipodes, antimeridian, identical coordinates, invalid ranges). Browser-dependent hardware GPS noise is handled via testing mock utilities and will be validated in real browser environments during Milestone 3 UI integration.
+- In headless test environments (`jsdom`), running heavy concurrent suites alongside component tests requires an extended timeout (`--testTimeout 15000`) due to CPU load during multi-hundred sample cryptographic entropy generation and Radix UI layout calculations.
+- Disarming the credentials modal triggers a 2.5-second `setTimeout` to reset `copiedField`. In headless tests torn down immediately after assertion, an unhandled timer warning may be logged by React if test cleanup does not wait for timer completion; this does not affect production browser operation or application correctness.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: CLEAN**
+**Verdict**: **CLEAN**
 
-Milestone 2 work products (`src/utils/crmGeoUtils.ts` and `src/test/crmGeoUtils.test.ts`) satisfy all forensic integrity criteria:
-- **No hardcoded results or dummy facades**.
-- **Accurate Haversine trigonometric calculation** with true constants ($R = 6,371,000$ m).
-- **Comprehensive test suite** with 100% genuine assertions and zero calculation engine mocking.
-- **Zero compiler errors** (`tsc --noEmit` code 0).
-- **Zero test failures** (33/33 unit tests, 264/264 total CRM tests passed).
-
-The work product is approved without integrity violations.
+Milestone 2 (Staff User Provisioning & Instant Role Assignment UI) implements all required functionality authentically and robustly:
+1. Genuine Web Crypto password generation (`window.crypto.getRandomValues`) with Fisher-Yates shuffle.
+2. Authentic, interactive modal forms for staff provisioning, credentials confirmation, and role assignment.
+3. Functional 1-click clipboard copy triggers and WhatsApp communication templates.
+4. Immediate in-memory roster hydration with dynamic `CRMRolePill` role badges.
+5. 100% preservation of protected Create Invoice flows (0 regressions, 0 modified lines).
+6. 0 TypeScript compiler errors (`tsc --noEmit`).
+7. 100% test pass rate across all Milestone 2 test suites.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce this forensic audit:
+To independently reproduce and verify this verdict:
 
-1. Inspect source files:
-   - `src/utils/crmGeoUtils.ts`
-   - `src/test/crmGeoUtils.test.ts`
-2. Run TypeScript compiler:
-   ```cmd
+1. **Verify TypeScript Compilation**:
+   ```powershell
    cmd /c npx tsc --noEmit
    ```
-3. Run Milestone 2 unit tests:
-   ```cmd
-   npm.cmd test -- src/test/crmGeoUtils.test.ts --run
-   ```
-4. Run full CRM regression suite:
-   ```cmd
-   npm.cmd test -- crm --run
-   ```
+   *Expected*: Code 0, zero diagnostic errors.
 
-**Invalidation Conditions**:
-- Any hardcoding of return values for specific coordinate pairs.
-- Alteration of `EARTH_RADIUS_METERS` to an unscientific value.
-- Introduction of `vi.mock("@/utils/crmGeoUtils")` inside calculation test suites.
-- Any TypeScript diagnostic error or test failure.
+2. **Verify Milestone 2 Test Suites**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx src/test/crmStaffTasksIntegration.test.tsx
+   ```
+   *Expected*: All 47 tests pass (100% pass rate).
+
+3. **Verify Create Invoice Flows Unaltered**:
+   ```powershell
+   git diff da3b49a..HEAD -- src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/
+   ```
+   *Expected*: Zero diff output (100% untouched).
+
+4. **Invalidation Conditions**:
+   - Any modification to `SalesInvoiceModal.tsx` or `src/components/invoices/mobile/*`.
+   - Any hardcoded return values in `crmStaffUtils.ts`.
+   - Any use of `Math.random()` in `generateCryptographicPassword`.
+   - Any failure in `tsc --noEmit` or `vitest run crmStaff`.

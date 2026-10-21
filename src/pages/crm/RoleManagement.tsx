@@ -1160,27 +1160,29 @@ export default function RoleManagement(): React.ReactElement {
     handleAssignRole(staffId, "none");
   };
 
-  // Filtered staff list
+  // Filtered staff list (handles regex special characters safely via .toLowerCase().includes)
   const filteredStaff = useMemo(() => {
-    if (!staffSearchQuery.trim()) return staffList;
+    if (!staffSearchQuery || !staffSearchQuery.trim()) return staffList;
     const q = staffSearchQuery.toLowerCase().trim();
     return staffList.filter((s) => {
-      const assignedRole = roles.find((r) => r.id === s.crmRoleId);
-      return (
-        s.name.toLowerCase().includes(q) ||
-        s.role.toLowerCase().includes(q) ||
-        (assignedRole && assignedRole.name.toLowerCase().includes(q))
-      );
+      const assignedRoleId = staffRolesMap[s.id] || s.crmRoleId;
+      const assignedRole = roles.find((r) => r.id === assignedRoleId);
+      const name = (s.name || "").toLowerCase();
+      const role = (s.role || "").toLowerCase();
+      const crmRoleName = (assignedRole?.name || "").toLowerCase();
+      return name.includes(q) || role.includes(q) || crmRoleName.includes(q);
     });
-  }, [staffList, staffSearchQuery, roles]);
+  }, [staffList, staffSearchQuery, roles, staffRolesMap]);
 
   // Filtered staff list for Create Role dialog staff assignment
   const filteredStaffForRole = useMemo(() => {
-    if (!roleStaffSearchQuery.trim()) return staffList;
+    if (!roleStaffSearchQuery || !roleStaffSearchQuery.trim()) return staffList;
     const q = roleStaffSearchQuery.toLowerCase().trim();
-    return staffList.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q)
-    );
+    return staffList.filter((s) => {
+      const name = (s.name || "").toLowerCase();
+      const role = (s.role || "").toLowerCase();
+      return name.includes(q) || role.includes(q);
+    });
   }, [staffList, roleStaffSearchQuery]);
 
   // Count assigned staff per role

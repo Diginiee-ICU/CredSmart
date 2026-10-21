@@ -1,26 +1,31 @@
-## 2026-10-18T19:03:49Z
-You are reviewer_m2_2. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
+# Reviewer 2 Dispatch: Milestone 2 UI Review (Role Assignment & Parity)
 
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+## Mission
+Review Milestone 2 custom role assignment and integration parity.
 
-Artifacts to Review:
-- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
-- Products API Service: src/services/productsApi.ts
-- Worker M2 Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+## Review Criteria
+1. "Create Custom Role" Dialog Enhancement:
+   - Searchable checklist of staff members inside modal.
+   - Assigns role to selected staff upon creation via `crmApi.assignCRMStaffRole`.
+2. Role Badges & Permissions:
+   - Verified that `CRMRolePill` correctly displays custom color tinting and super-admin crown.
+   - Gated with appropriate permissions (`isSuperAdminOrOwner`).
+3. Compiler & Test Verification:
+   - Run `cmd /c npx tsc --noEmit` to confirm zero TypeScript errors.
+   - Run `cmd /c npx vitest run crmStaff crmShellRoutes`.
 
-Review Scope:
-1. Adversarially challenge the Products & Inventory migration:
-   - Check for regressions in batch-level calculations, pricing overrides, and barcode duplication lookups.
-   - Verify stock adjustments in `stockService.ts` and `Inventory.tsx` handle negative adjustments and zero stock properly.
-   - Verify bulk import and bulk delete error handling.
-2. Run verification commands:
-   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
-   - `cmd /c npx tsc --noEmit`
-3. Render an explicit gate verdict: APPROVE or REQUEST_CHANGES.
+Verdict: APPROVE or REQUEST_CHANGES.
+Write report to `.agents/teamwork/reviewer_m2_2/handoff.md`.
 
-Write your report to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\handoff.md
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+
+## 2026-10-21T19:06:52Z
+[Message] timestamp=2026-10-21T19:06:52Z sender=c838af97-21de-4616-9188-f0f8dfa904c9 priority=MESSAGE_PRIORITY_HIGH content=You are Reviewer 2 for Milestone 2 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+
+MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
+Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\DISPATCH.md.
+
+Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2
+
+Review custom role creation direct staff assignment, CRMRolePill rendering, role badges, and run `cmd /c npx tsc --noEmit` and `cmd /c npx vitest run crmStaff`.
+Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_2\handoff.md` with explicit verdict: APPROVE or REQUEST_CHANGES.
+Send message back to parent when done.

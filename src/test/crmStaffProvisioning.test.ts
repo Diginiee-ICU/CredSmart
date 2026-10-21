@@ -79,10 +79,11 @@ export function validateStaffProvisioningInput(input: Partial<ProvisionStaffInpu
 
   // 2. Email Validation (RFC 5322 Compliant Subset)
   const email = (input.email || "").trim().toLowerCase();
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  const emailRegex =
+    /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!email) {
     errors.email = "Email is required";
-  } else if (!emailRegex.test(email) || email.includes("..") || email.startsWith(".") || email.endsWith(".")) {
+  } else if (!emailRegex.test(email) || email.includes("..") || email.includes("@.")) {
     errors.email = "Invalid email address format";
   }
 
@@ -329,6 +330,8 @@ describe("CRM Staff User Provisioning & Instant Role Assignment", () => {
         "email@example@example.com",
         "email@example..com",
         "email..test@example.com",
+        "trailingdot.@domain.com",
+        "user@domain.c",
       ];
 
       invalidEmails.forEach((email) => {

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-18T19:14:00Z
+# BRIEFING — 2026-10-21T19:20:00Z
 
 ## Mission
-Objective review and adversarial challenge of Milestone 2 (Products & Inventory API Migration) work product submitted by worker_m2.
+Objective review and adversarial challenge of Milestone 2 (Staff User Provisioning & Instant Role Assignment UI) in `src/pages/crm/RoleManagement.tsx` and `src/utils/crmStaffUtils.ts`.
 
 ## 🔒 My Identity
 - Archetype: reviewer_m2_1
@@ -10,69 +10,81 @@ Objective review and adversarial challenge of Milestone 2 (Products & Inventory 
 - Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
 - Milestone: M2 (Products & Inventory API Migration)
 - Instance: 1 of 1
+- Appended Identity (2026-10-21):
+  - Current Parent: c838af97-21de-4616-9188-f0f8dfa904c9
+  - Project: CredSmart Enterprise CRM Staff Provisioning & Task Management
+  - Milestone: M2 (Staff User Provisioning & Instant Role Assignment UI)
+  - Instance: 1 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Actively check for integrity violations (hardcoded test data, fake/facade logic, skipped requirements, self-certification)
 - Verify claims independently by inspecting code and running builds/tests
 - Issue explicit verdict: APPROVE or REQUEST_CHANGES
+- Appended Constraints (2026-10-21):
+  - Must strictly preserve protected Create Invoice flows (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc.)
+  - Verify 14-char cryptographic password generation with `window.crypto.getRandomValues` and character distribution
+  - Verify Add Staff User modal, Credentials Confirmation modal, and in-memory roster hydration
 
 ## Current Parent
-- Conversation ID: 73ee3452-ffda-43b4-83da-c3ca2006c47f
-- Updated: 2026-10-18T19:03:48Z
+- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
+- Updated: 2026-10-21T19:06:52Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/services/productsApi.ts`
-  - `src/context/ProductsContext.tsx`
-  - `src/pages/Items.tsx`
-  - `src/pages/ItemMaster.tsx`
-  - `src/pages/Inventory.tsx`
-  - `src/services/stockService.ts`
-  - `.agents/teamwork/worker_m2/handoff.md`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/utils/crmStaffUtils.ts`
+  - `src/test/crmStaffProvisioningUI.test.tsx`
+  - `src/test/crmStaffProvisioning.test.ts`
+  - `src/test/crmStaffTasksIntegration.test.tsx`
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (preservation check)
+  - `src/components/SalesInvoiceModal.tsx` (preservation check)
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z)
 - **Review criteria**:
-  - Full implementation of all product/batch CRUD and adjustment methods
-  - Parity of return types (`ProductCatalogOption`, `ProductBatch`) matching frontend component expectations
-  - Preservation of `localStorage` caching (`credsmart_cached_products_${orgId}`) in `ProductsContext.tsx`
-  - Toast notifications and loading state integrity across `Items.tsx`, `ItemMaster.tsx`, and `Inventory.tsx`
-  - Integrity of tests in `src/test/e2eApiMigration.test.ts`
-  - TypeScript compilation clean (`tsc --noEmit`)
+  - Add Staff User modal fields & validation
+  - Cryptographic password generation (14 chars, `window.crypto.getRandomValues`, uppercase, lowercase, numbers, symbols)
+  - Form submission calling `crmApi.provisionStaffUser`
+  - Credentials Confirmation modal displaying email & plaintext password
+  - 1-click clipboard copy triggers and WhatsApp sharing template
+  - Zero-refresh in-memory roster hydration with `CRMRolePill` badge
+  - Protected invoice flows untouched
 
 ## Key Decisions Made
-- Executed automated test suite `src/test/e2eApiMigration.test.ts` (43/43 tests passed).
-- Executed `tsc --noEmit` (0 errors).
-- Authored independent adversarial challenge suite `src/test/productsApi.m2ReviewerChallenge.test.ts` (16/16 tests passed).
-- Verified zero direct table queries for `products` and `product_batches` across entire production codebase.
-- Rendered Gate Verdict: APPROVE.
+- Executed unit and UI test suite for staff provisioning: 29/29 tests passed in `crmStaffProvisioning.test.ts`, 6/6 tests passed in `crmStaffProvisioningUI.test.tsx`, 12/12 tests passed in `crmStaffTasksIntegration.test.tsx`.
+- Executed TypeScript static verification: `npx tsc --noEmit` exited with code 0 (zero errors).
+- Executed invoice test regression verification: 41/41 tests passed in `billingLifecycleEngine.test.ts` and `MobileInvoiceSuccessView.test.tsx`.
+- Conducted forensic integrity audit: verified genuine implementation of CSPRNG password generation, Fisher-Yates shuffle, real form handling, and clipboard/WhatsApp integration. Zero facade/mock shortcuts detected.
+- Verified protected invoice flows are 100% untouched.
+- Rendered Verdict: APPROVE.
 
 ## Artifact Index
 - `.agents/teamwork/reviewer_m2_1/DISPATCH.md` — Inbound instruction
 - `.agents/teamwork/reviewer_m2_1/BRIEFING.md` — Working memory and state
 - `.agents/teamwork/reviewer_m2_1/progress.md` — Heartbeat and step tracking
-- `src/test/productsApi.m2ReviewerChallenge.test.ts` — Independent reviewer challenger suite
-- `.agents/teamwork/reviewer_m2_1/handoff.md` — Final review and challenge report
+- `.agents/teamwork/reviewer_m2_1/handoff.md` — Comprehensive review and challenge report
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/services/productsApi.ts` (verified)
-  - `src/context/ProductsContext.tsx` (verified)
-  - `src/pages/Items.tsx` (verified)
-  - `src/pages/ItemMaster.tsx` (verified)
-  - `src/pages/Inventory.tsx` (verified)
-  - `src/services/stockService.ts` (verified)
-  - `src/test/e2eApiMigration.test.ts` (verified)
+  - `src/pages/crm/RoleManagement.tsx` (verified)
+  - `src/utils/crmStaffUtils.ts` (verified)
+  - `src/test/crmStaffProvisioning.test.ts` (verified)
+  - `src/test/crmStaffProvisioningUI.test.tsx` (verified)
+  - `src/test/crmStaffTasksIntegration.test.tsx` (verified)
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (verified untouched)
+  - `src/components/SalesInvoiceModal.tsx` (verified untouched)
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims verified independently.
+- **Unverified claims**: None. All claims independently verified through inspection, compilation, and test execution.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - CRUD & batch endpoint signatures and URL resolution
-  - Dual casing compatibility on ProductBatch interface
-  - Fallback UUID generation preventing Postgres 22P02 errors
-  - Offline localStorage caching in ProductsContext
-  - Error envelope handling vs try/catch expectations in stockService
+  - CSPRNG entropy and character set distribution (uppercase, lowercase, digits, symbols)
+  - Boundary conditions for full name (unicode, accents, 2-char minimum, 100-char maximum, XSS/SQL injection prevention)
+  - Phone normalization matrix (+91 prefix, leading zero, hyphens, parentheses, whitespace)
+  - Modal form error handling and clipboard permission rejection fallbacks
+  - WhatsApp template URL encoding and `noopener,noreferrer` tab safety
+  - Zero-refresh roster hydration with `CRMRolePill` rendering
+  - Invoice flow preservation and zero regression
 - **Vulnerabilities found**:
-  - `stockService.ts`: `apiClient` returns `{ data: null, error }` instead of throwing on network errors; code wrapping calls in `try/catch` without checking `if (error)` can silently miss error fallback triggers.
-  - Legacy test `tallyE2E.test.ts` mocked `supabase.from("products")` directly, which broke when `autoSyncService.ts` migrated to `productsApi`.
-- **Untested angles**: Cross-domain queries (`customers`, `sales`) which are scoped for M3-M5.
+  - Minor: JSDOM rendering execution time for complex nested Radix UI Dialog + Select components on Windows can exceed Vitest's default 5000ms test runner timeout; resolved by running with appropriate test timeout (e.g. `--test-timeout=20000`).
+  - Minor: Negligible theoretical modulo bias in `getRandomChar` (1 in 2^32), standard for browser-level password generators.
+- **Untested angles**: Hardware failure during clipboard write (handled gracefully via try/catch toast).

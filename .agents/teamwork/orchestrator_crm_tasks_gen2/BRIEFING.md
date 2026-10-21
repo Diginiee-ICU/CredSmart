@@ -60,18 +60,25 @@ Implement production-grade staff user provisioning & instant role assignment in 
 | challenger_m1_1 | teamwork_preview_challenger | M1 Challenger Stress | completed | 826cb396-6dea-48f1-9897-2af181671d0e |
 | challenger_m1_2 | teamwork_preview_challenger | M1 Challenger Regression | completed | 2f265044-dc18-44bf-bf43-26d10522fcb1 |
 | auditor_m1 | teamwork_preview_auditor | M1 Forensic Auditor | completed | 8e2de306-038a-4f09-8ab7-1b6a3f13961e |
-| worker_m2 | teamwork_preview_worker | M2 Staff Provisioning UI | in-progress | 752083ed-1430-4f1a-8abe-b162cc5454f7 |
+| worker_m2 | teamwork_preview_worker | M2 Staff Provisioning UI | completed | 752083ed-1430-4f1a-8abe-b162cc5454f7 |
+| reviewer_m2_1 | teamwork_preview_reviewer | M2 Reviewer UI | completed | 5ca636e0-2735-4c86-a686-bec8668a36f7 |
+| reviewer_m2_2 | teamwork_preview_reviewer | M2 Reviewer RoleAssign | completed | 8eb2d7aa-efd9-4a62-9ab7-fdf9f1dc1fcc |
+| challenger_m2_1 | teamwork_preview_challenger | M2 Challenger Stress | completed | c00826db-10ab-4591-941c-b920e6fd6fba |
+| challenger_m2_2 | teamwork_preview_challenger | M2 Challenger Regression | completed | 4592e430-f90a-42d1-acbe-e551b8ac94da |
+| auditor_m2 | teamwork_preview_auditor | M2 Forensic Auditor | completed | d5467dc1-2220-4705-a60a-185e78886d10 |
+| worker_m2_rem | teamwork_preview_worker | M2 Remediation | completed | 6d4d75e0-6840-4602-91d7-3646156a0f09 |
+| worker_m3 | teamwork_preview_worker | M3 Full-Stack Tasks UI | in-progress | 8097ce24-f93f-4329-a0eb-bef327b20883 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 11 / 16
-- Pending subagents: 752083ed-1430-4f1a-8abe-b162cc5454f7
+- Spawn count: 18 / 128
+- Pending subagents: 8097ce24-f93f-4329-a0eb-bef327b20883
 - Predecessor: orchestrator_crm_tasks
-- Successor: not yet spawned
+- Successor: none
 
 ## Active Timers
-- Heartbeat cron: task-38 (*/10 * * * *)
-- Safety timer: none
+- Heartbeat cron: task-347 (*/10 * * * *)
+- Safety timer: task-415 (worker_m3: 8097ce24-f93f-4329-a0eb-bef327b20883)
 
 ## Artifact Index
 - ORIGINAL_REQUEST.md — Authoritative user requirements
