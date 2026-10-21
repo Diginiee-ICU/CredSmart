@@ -42,6 +42,12 @@ export function normalizePhoneNumber(phone?: string | null): string {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
+// Check if string is a valid RFC4122 UUID to prevent Postgres 22P02 errors
+export function isUuid(id?: string | null): boolean {
+  if (!id || typeof id !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
+}
+
 // Managed Singleton Realtime Channel for B2B Network
 let b2bRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -525,6 +531,53 @@ export const networkInvoicingService = {
       console.warn("Supabase organization lookup notice:", err);
     }
 
+    // 4. Query Supabase organizations table directly (cross-user platform directory)
+    try {
+      const orgQueryRes = await safeDbCall(async () => {
+        const clauses: string[] = [];
+        if (criteria.orgId && isUuid(criteria.orgId)) {
+          clauses.push(`id.eq.${criteria.orgId}`);
+        }
+        if (cleanGstin && cleanGstin.length >= 15) {
+          clauses.push(`gstin.ilike.${cleanGstin}`);
+        }
+        if (cleanPhone && cleanPhone.length >= 10) {
+          clauses.push(`phone.ilike.%${cleanPhone.slice(-10)}%`);
+        }
+        if (cleanEmail && cleanEmail.includes("@")) {
+          clauses.push(`email.ilike.${cleanEmail}`);
+        }
+        if (cleanName && cleanName.length >= 4) {
+          const sanitizedName = cleanName.replace(/[,%]/g, "");
+          clauses.push(`name.ilike.%${sanitizedName}%`);
+        }
+        if (clauses.length === 0) return null;
+
+        return supabase
+          .from("organizations")
+          .select("id, name, phone, email, gstin, address, business_type")
+          .or(clauses.join(","))
+          .limit(1)
+          .maybeSingle();
+      });
+
+      if (orgQueryRes?.data) {
+        const found = orgQueryRes.data as any;
+        return {
+          id: found.id,
+          name: found.name,
+          phone: found.phone || undefined,
+          email: found.email || undefined,
+          gstin: found.gstin || undefined,
+          address: found.address || undefined,
+          businessType: found.business_type || undefined,
+          isRegisteredOnPlatform: true,
+        };
+      }
+    } catch (err) {
+      console.warn("Cross-organization Supabase lookup notice:", err);
+    }
+
     return null;
   },
 
@@ -697,9 +750,9 @@ export const networkInvoicingService = {
         sender_user_id: isUuid(userId) ? userId : null,
         recipient_org_id: isRecipientUuid ? recipientOrgId : null,
         recipient_org_name: recipientOrgName,
-        recipient_phone: networkInvoice.recipientPhone || "",
+        recipient_phone: cleanPhone || networkInvoice.recipientPhone || "",
         recipient_email: networkInvoice.recipientEmail || "",
-        recipient_gstin: networkInvoice.recipientGstin || "",
+        recipient_gstin: cleanGstin || networkInvoice.recipientGstin || "",
         recipient_address: networkInvoice.recipientAddress || "",
         invoice_number: salesDoc.documentNumber,
         doc_date: networkInvoice.docDate,
@@ -888,9 +941,14 @@ export const networkInvoicingService = {
       const orClauses = [`recipient_org_id.eq.${orgId}`, `sender_org_id.eq.${orgId}`];
       if (cleanPhone && cleanPhone.length >= 10) {
         orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+        orClauses.push(`recipient_phone.ilike.%${cleanPhone.slice(-10)}%`);
       }
       if (cleanGstin && cleanGstin.length >= 15) {
-        orClauses.push(`recipient_gstin.eq.${cleanGstin}`);
+        orClauses.push(`recipient_gstin.ilike.${cleanGstin}`);
+      }
+      if (orgName && orgName.trim().length >= 4) {
+        const safeName = orgName.trim().replace(/[,%]/g, "");
+        orClauses.push(`recipient_org_name.ilike.%${safeName}%`);
       }
 
       const dbRes = await safeDbCall(async () => {
@@ -1064,6 +1122,8 @@ export const networkInvoicingService = {
     if (!orgId) return [];
 
     const localNotifs = this.getLocalNotifications();
+    const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
+    const cleanGstin = (orgGstin || "").toUpperCase().trim();
 
     // Match notifications for this org using robust isNotificationForOrg
     const matched = localNotifs.filter((n) => {
@@ -1085,6 +1145,17 @@ export const networkInvoicingService = {
     try {
       // 1. Primary safe DB fetch by recipient_org_id (and recipient_user_id if available)
       const orClauses = [`recipient_org_id.eq.${orgId}`];
+      if (cleanPhone && cleanPhone.length >= 10) {
+        orClauses.push(`recipient_phone.eq.${cleanPhone}`);
+        orClauses.push(`recipient_phone.ilike.%${cleanPhone.slice(-10)}%`);
+      }
+      if (cleanGstin && cleanGstin.length >= 15) {
+        orClauses.push(`recipient_gstin.ilike.${cleanGstin}`);
+      }
+      if (orgName && orgName.trim().length >= 4) {
+        const safeName = orgName.trim().replace(/[,%]/g, "");
+        orClauses.push(`recipient_org_name.ilike.%${safeName}%`);
+      }
 
       const dbRes = await safeDbCall(async () => {
         return supabase

@@ -274,11 +274,18 @@ export function MobileInvoiceSuccessView({
       <div className="p-3 sm:p-4 flex-1">
         <div className="mb-2.5 flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-            Official Invoice Preview
+            {isSalesType ? "Sales Invoice" : "Purchase Invoice"}
           </span>
-          <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
-            Theme: {invoiceSettings.themeId || "Classic"}
-          </span>
+          <div className="flex items-center gap-2">
+            {invoice.items.length > 4 && (
+              <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
+                +{invoice.items.length - 4} more item(s)
+              </span>
+            )}
+            <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded px-2 py-0.5">
+              Theme: {invoiceSettings.themeId || "Classic"}
+            </span>
+          </div>
         </div>
         <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-x-auto p-2 sm:p-4">
           <div className="min-w-[650px] p-2 bg-white text-slate-900">
