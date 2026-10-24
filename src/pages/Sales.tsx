@@ -937,9 +937,9 @@ export default function Sales() {
         </div>
 
         {/* Transactions Table Card / Mobile Card Stream Container */}
-        <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-3 pb-36 space-y-2.5 scrollbar-thin overscroll-y-contain">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
             {filteredDocuments.length === 0 ? (
               <div className="py-12 text-center space-y-2.5">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mx-auto">
@@ -965,10 +965,10 @@ export default function Sales() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-3.5 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2.5 shadow-2xs",
+                      "px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2",
                       isSelected
-                        ? "border-blue-500 ring-1 ring-blue-500/30 bg-blue-50/10 dark:bg-blue-950/20"
-                        : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                        ? "bg-blue-50/30 dark:bg-blue-950/20"
+                        : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                     )}
                   >
                     {/* Line 1: Invoice Number + Status Badge + Grand Total */}
