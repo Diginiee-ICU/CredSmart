@@ -1071,6 +1071,7 @@ export default function Inventory() {
               {products.length === 0
                 ? "Your inventory is currently empty. Add products from the Items page to start tracking stock."
                 : "No products matched your search or category filter. Try clearing filters."}
+            </p>
   
             {search && (
               <Button variant="outline" size="sm" onClick={() => setSearch("")} className="mt-4 text-xs">

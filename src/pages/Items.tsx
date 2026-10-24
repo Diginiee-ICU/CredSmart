@@ -1030,6 +1030,7 @@ return (
               <p className="text-xs font-bold text-slate-900 dark:text-white">No inventory items found</p>
               <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
                 {search ? `No items match "${search}".` : "Create your first product or import from product library."}
+              </p>
   
               <Button
                 size="sm"
@@ -1275,6 +1276,7 @@ return (
                       {search
                         ? `No items match "${search}". Try searching another name or barcode.`
                         : "Start by creating your first product or import from our pre-built product library."}
+                    </p>
         
                     <div className="flex items-center justify-center gap-2 pt-2">
                       <Button
@@ -1391,6 +1393,7 @@ return (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                               <QrCode className="w-3 h-3 text-slate-400" />
                               <span>{item.barcode}</span>
+                            </p>
                 
                           ) : null}
                         </div>
@@ -1436,6 +1439,7 @@ return (
                         {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
                           <p className="text-[11px] text-slate-400 line-through tabular-nums">
                             MRP ₹{Number(item.mrp || 0).toLocaleString("en-IN")}
+                          </p>
               
                         )}
                       </td>
@@ -1447,6 +1451,7 @@ return (
                         </span>
                         <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
                           Margin: ₹ {Math.max(0, (Number(item.sellingPrice) || 0) - (Number(item.purchasePrice) || 0)).toLocaleString("en-IN")}
+                        </p>
             
                       </td>
 
@@ -1608,6 +1613,7 @@ return (
                 </DialogTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   {adjustingItem?.name} {adjustingItem?.sku ? `(${adjustingItem.sku})` : ""}
+                </p>
     
               </div>
             </div>
