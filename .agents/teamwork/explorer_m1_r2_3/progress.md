@@ -1,14 +1,14 @@
 # Progress — explorer_m1_r2_3
 
-Last visited: 2026-10-17T09:30:30Z
+Last visited: 2026-10-23T23:06:00Z
 
 ## Status
 - [x] Initialized DISPATCH.md and BRIEFING.md
-- [ ] Inspect ORIGINAL_REQUEST.md (specifically ## 2026-10-17T08:52:11Z)
-- [ ] Inspect orchestrator_crm_phase2/DISPATCH.md
-- [ ] Inspect challenger_m1_1/handoff.md
-- [ ] Inspect src/test/crmAttendanceMigrationStress.test.ts
-- [ ] Inspect relevant migrations (Phase 2 Milestone 1 attendance migration)
-- [ ] Synthesize findings on what tests currently exist, why challenger failed, what CHECK constraints are needed, and exact test updates required
-- [ ] Write analysis.md and handoff.md
-- [ ] Send message to orchestrator
+- [x] Investigate `src/config/routes.ts`: `filterNavRoutesForRole`, `RESTRICTED_ROUTES_FOR_CASHIER`, and route definitions
+- [x] Investigate `src/components/AppSidebar.tsx`: sidebar structure, role filtering, submenu rendering, and empty category checks
+- [x] Investigate `src/components/AppLayout.tsx`: header actions, suite switcher, top-level nav, and layout wrappers
+- [x] Investigate mobile navigation dock: dock items, role filtering for cashiers, touch targets
+- [x] Analyze behavior when all CRM subroutes and settings subroutes are added to `RESTRICTED_ROUTES_FOR_CASHIER`
+- [x] Formulate concrete recommendations for Milestone 2 navigation decoupling
+- [x] Write comprehensive handoff.md following 5-component protocol
+- [ ] Send report to parent via send_message

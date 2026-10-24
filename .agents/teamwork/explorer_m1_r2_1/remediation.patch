@@ -1,0 +1,96 @@
+--- a/src/config/routes.ts
++++ b/src/config/routes.ts
+@@ -158,6 +158,12 @@ export const RESTRICTED_ROUTES_FOR_CASHIER: ReadonlySet<string> = new Set([
+   ROUTE_PATHS.businessSettings,
+   ROUTE_PATHS.invoiceSettings,
+   ROUTE_PATHS.printSettings,
++  ROUTE_PATHS.settingsReminders,
++  ROUTE_PATHS.settingsCaSharing,
++  ROUTE_PATHS.settingsPricing,
++  ROUTE_PATHS.settingsRefer,
++  ROUTE_PATHS.settingsHelp,
++  ROUTE_PATHS.tallyImport,
+   ROUTE_PATHS.staff,
+   ROUTE_PATHS.activityLog,
+   ROUTE_PATHS.crm,
++  ROUTE_PATHS.crmDashboard,
++  ROUTE_PATHS.crmAttendance,
++  ROUTE_PATHS.crmSalary,
++  ROUTE_PATHS.crmTasks,
++  ROUTE_PATHS.crmMeet,
++  ROUTE_PATHS.crmBroadcasts,
++  ROUTE_PATHS.crmAiAssistant,
++  ROUTE_PATHS.crmSupport,
+   ROUTE_PATHS.crmRoles,
+   // Legacy paths for robust backwards compatibility
+   "/dashboard",
+@@ -178,6 +184,12 @@ export const RESTRICTED_ROUTES_FOR_CASHIER: ReadonlySet<string> = new Set([
+   "/settings/business",
+   "/settings/invoice",
+   "/settings/print",
++  "/settings/reminders",
++  "/settings/ca-sharing",
++  "/settings/pricing",
++  "/settings/refer",
++  "/settings/help",
++  "/tally-import",
+   "/staff",
+   "/activity-log",
+ ]);
+@@ -376,6 +388,8 @@ export function isRouteAllowedForRole(
+ 
+   // Cashier
+   if (role === "cashier") {
++    if (url.startsWith("/crm")) return false;
++    if (url.startsWith("/billing/settings") || url === "/billing/settings") return false;
+     return !RESTRICTED_ROUTES_FOR_CASHIER.has(url);
+   }
+ 
+--- a/src/test/challengerM1_2DecoupleAudit.test.ts
++++ b/src/test/challengerM1_2DecoupleAudit.test.ts
+@@ -138,15 +138,31 @@ describe("Challenger M1.2 Adversarial Route & RBAC Verification Suite", () => {
+-    it("AUDIT GAP: cashier is blocked from /crm & /crm/roles but permitted on /crm subroutes in isRouteAllowedForRole", () => {
+-      // Empirical proof of gap:
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crm, "cashier")).toBe(false);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmRoles, "cashier")).toBe(false);
+-      // These return true because RESTRICTED_ROUTES_FOR_CASHIER lacks the remaining CRM routes:
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmAttendance, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmSalary, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmTasks, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmMeet, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmBroadcasts, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmAiAssistant, "cashier")).toBe(true);
+-      expect(isRouteAllowedForRole(ROUTE_PATHS.crmSupport, "cashier")).toBe(true);
+-    });
++    it("strictly blocks cashier from all CRM subroutes in isRouteAllowedForRole", () => {
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crm, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmDashboard, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmRoles, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmAttendance, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmSalary, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmTasks, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmMeet, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmBroadcasts, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmAiAssistant, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.crmSupport, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/crm/attendance", "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/crm/salary", "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/crm/tasks", "cashier")).toBe(false);
++    });
++
++    it("strictly blocks cashier from all settings subroutes in isRouteAllowedForRole", () => {
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settings, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.businessSettings, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.invoiceSettings, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.printSettings, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settingsReminders, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settingsCaSharing, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settingsPricing, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settingsRefer, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.settingsHelp, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole(ROUTE_PATHS.tallyImport, "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/billing/settings/reminders", "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/settings/reminders", "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/settings/ca-sharing", "cashier")).toBe(false);
++      expect(isRouteAllowedForRole("/settings/refer", "cashier")).toBe(false);
++    });

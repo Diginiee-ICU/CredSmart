@@ -1,18 +1,47 @@
-## 2026-10-17T09:59:34Z
+# Dispatch: Reviewer M1 (Iteration 2.1) — Cashier RBAC Remediation & Route Isolation Review
 
-[Message] timestamp=2026-10-17T09:59:34Z sender=1beca3ca-d4b2-4508-99a0-6c9d39936bfb priority=MESSAGE_PRIORITY_HIGH content=You are reviewer_m1_r2_1 for CRM Phase 2 Milestone 1 Iteration 2.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_r2_1
+## Mission
+Independently review the remediation implemented by Worker M1 R2 (`worker_m1_r2`) in `src/config/routes.ts` and `src/test/challengerM1_2DecoupleAudit.test.ts`.
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read worker_m1_r2's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md.
+## Source of Truth & Context
+- Authoritative User Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (timestamp 2026-10-23T21:58:59Z)
+- Project Scope: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
+- Test Readiness: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_READY.md`
+- Worker M1 R2 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md`
 
-Review Tasks:
-1. Review the hardened migration supabase/migrations/20261017010000_create_crm_attendance_tables.sql:
-   - Verify CHECK constraints on crm_attendance (status, verification_method) and crm_attendance_requests (status, requested_status).
-   - Verify INTEGER NOT NULL DEFAULT 0 on work_duration_minutes and overtime_minutes.
-2. Review src/integrations/supabase/types.ts and src/types/crmAttendance.ts:
-   - Verify nullability alignment (work_duration_minutes: number, overtime_minutes: number).
-3. Run verification: cmd /c npx tsc --noEmit.
-4. Output your verdict: APPROVE or REQUEST_CHANGES.
+## Your Working Directory
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_r2_1`
 
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_r2_1\handoff.md and report your verdict.
+## Specific Review Tasks
+1. Verify `src/config/routes.ts`: check `RESTRICTED_ROUTES_FOR_CASHIER` and `isRouteAllowedForRole`.
+2. Ensure cashier is strictly blocked from all CRM subroutes and settings subroutes.
+3. Ensure other roles (`owner`, `admin`, `manager`, `staff`) continue to function without unintended regressions.
+4. Execute verification commands:
+   - `cmd /c npx tsc --noEmit`
+   - `cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmShellRoutes.test.ts src/test/e2e/decoupleRoutes.test.ts`
+5. Render a clear verdict: `APPROVE` or `REQUEST_CHANGES`.
+
+## Handoff Requirements
+Write your review report to `handoff.md` in your working directory. State your verdict clearly. Notify parent via `send_message`.
+
+
+## 2026-10-23T23:29:33Z
+You are reviewer_m1_r2_1.
+Your working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_r2_1
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+
+Read your dispatch file: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_r2_1\DISPATCH.md
+Read the authoritative user request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (see timestamp 2026-10-23T21:58:59Z)
+Read PROJECT.md: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+Read Worker M1 R2 Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md
+
+Review files:
+- `src/config/routes.ts`
+- `src/test/challengerM1_2DecoupleAudit.test.ts`
+
+Run verification commands:
+- `cmd /c npx tsc --noEmit`
+- `cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmShellRoutes.test.ts src/test/e2e/decoupleRoutes.test.ts`
+
+Render verdict: APPROVE or REQUEST_CHANGES.
+Write report to handoff.md and notify parent via send_message.

@@ -1,187 +1,194 @@
-# Forensic Audit Report — CRM Phase 2 Milestone 1: Database Migration & TypeScript Types (Iteration 2)
+# Forensic Audit Report: Milestone 1 Iteration 2 (Decoupled Routes & Cashier RBAC Boundary Remediation)
 
-**Auditor**: `auditor_m1_r2`  
-**Roles**: critic, specialist, auditor  
-**Target Milestone**: CRM Phase 2 Milestone 1: Attendance Database Migration & TypeScript Types  
-**Date**: 2026-10-17  
-**Work Products Audited**:
-- `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
-- `src/integrations/supabase/types.ts`
-- `src/types/crmAttendance.ts`
-- `src/test/crmAttendanceMigrationStress.test.ts`
+**Work Product**: Milestone 1 Iteration 2 Implementation (`src/config/routes.ts`, `src/components/routing/LegacyRedirect.tsx`, `src/App.tsx`, `src/test/challengerM1_2DecoupleAudit.test.ts`, Protected Invoicing Files)  
+**Auditor**: `auditor_m1_r2` (Forensic Integrity Auditor)  
 **Profile**: General Project  
-**Integrity Mode**: Benchmark  
+**Date**: 2026-10-23T23:38:30Z  
 **Verdict**: **CLEAN**
 
 ---
 
 ### Phase Results
-- **Hardcoded test results detection**: PASS — No embedded expected strings, PASS/FAIL dummies, or cheating in source or tests.
-- **Facade implementation detection**: PASS — Full DDL specifications, comprehensive table columns, constraints, triggers, and RLS policies; complete TypeScript interfaces with zero `any` or placeholder returns.
-- **Fabricated verification outputs detection**: PASS — No pre-populated logs or attestation files exist in the project.
-- **PostgreSQL DDL & CHECK constraint validity**: PASS — Valid PostgreSQL syntax for table definitions, default values, foreign keys, triggers, and inline `CHECK (status IN (...))` and `CHECK (verification_method IN (...))` constraints.
-- **Type synchronization & nullability alignment**: PASS — `work_duration_minutes` and `overtime_minutes` are `INTEGER NOT NULL DEFAULT 0` in SQL, `number` in `src/integrations/supabase/types.ts` Row, and `number` in `src/types/crmAttendance.ts`.
-- **TypeScript compilation (`tsc --noEmit`)**: PASS — Exited with code 0 (zero errors).
-- **ESLint verification**: PASS — Exited with code 0 on modified files.
-- **Empirical test execution**: PASS — 75/75 tests passed across `crmAttendanceMigrationStress.test.ts` (31), `crmAttendanceTypes.challenger.test.ts` (18), and `crmPermissionRbac.test.ts` (26).
+- **Phase 1: Source Code & Integrity Inspection**: PASS — Zero mock bypasses, zero facade returns, zero hardcoded test pass values. Genuine Set membership and prefix-based denial defense-in-depth implemented.
+- **Phase 2: Invariance of Protected Files**: PASS — All 5 protected invoice files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) remain 100% untampered (empty git diff, zero modifications).
+- **Phase 3: Static Analysis & Type Safety (`tsc --noEmit`)**: PASS — Exit code 0, 0 compiler errors across the entire codebase.
+- **Phase 4: Behavioral Test Verification (Vitest)**: PASS — Exit code 0, 142/142 tests passing across `decoupleRoutes.test.ts`, `challengerM1_2DecoupleAudit.test.ts`, and `crmShellRoutes.test.ts`. 199/199 tests passing across all 7 relevant decouple/CRM test suites.
+- **Phase 5: Code Quality & Lint Validation**: PASS — Target files `src/config/routes.ts`, `src/components/routing/LegacyRedirect.tsx`, and `src/test/challengerM1_2DecoupleAudit.test.ts` pass ESLint with 0 errors and 0 warnings.
 
 ---
 
 ## 1. Observation
 
-1. **SQL Migration (`supabase/migrations/20261017010000_create_crm_attendance_tables.sql`)**:
-   - Enclosed in atomic transaction block: `BEGIN;` (line 1) to `COMMIT;` (line 181).
-   - Table `public.crm_geolocations` (lines 15–24):
-     `id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY`, `org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`, `name TEXT NOT NULL`, `latitude DOUBLE PRECISION NOT NULL`, `longitude DOUBLE PRECISION NOT NULL`, `radius_meters INTEGER NOT NULL DEFAULT 150`, `is_active BOOLEAN NOT NULL DEFAULT true`, `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`.
-   - Indexes on `crm_geolocations`: `idx_crm_geolocations_org`, `idx_crm_geolocations_active` (lines 26–27).
-   - Table `public.crm_attendance` (lines 32–57):
-     - `status TEXT NOT NULL DEFAULT 'present' CHECK (status IN ('present', 'absent', 'half_day', 'on_leave'))` (line 47)
-     - `verification_method TEXT NOT NULL DEFAULT 'geo_verified' CHECK (verification_method IN ('geo_verified', 'manual', 'regularized'))` (line 48)
-     - `is_within_geofence BOOLEAN NOT NULL DEFAULT true` (line 49)
-     - `distance_from_office_meters DOUBLE PRECISION` (line 50)
-     - `work_duration_minutes INTEGER NOT NULL DEFAULT 0` (line 51)
-     - `overtime_minutes INTEGER NOT NULL DEFAULT 0` (line 52)
-     - `CONSTRAINT uq_crm_attendance_staff_date UNIQUE (org_id, staff_id, date)` (line 56)
-     - Foreign keys with `ON DELETE CASCADE` on `org_id` and `staff_id`, and `ON DELETE SET NULL` on `clock_in_location_id` and `clock_out_location_id`.
-   - Indexes on `crm_attendance`: `idx_crm_attendance_org_date`, `idx_crm_attendance_staff_date`, `idx_crm_attendance_status`, `idx_crm_attendance_clock_in_loc`, `idx_crm_attendance_clock_out_loc` (lines 59–63).
-   - Trigger `update_crm_attendance_updated_at` before update executing `public.update_updated_at()` (lines 66–70).
-   - Table `public.crm_attendance_requests` (lines 75–91):
-     - `requested_status TEXT NOT NULL DEFAULT 'present' CHECK (requested_status IN ('present', 'absent', 'half_day', 'on_leave'))` (line 83)
-     - `reason TEXT NOT NULL` (line 84)
-     - `status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected'))` (line 85)
-     - `attendance_id UUID REFERENCES public.crm_attendance(id) ON DELETE CASCADE` (line 79)
-     - `reviewer_id UUID REFERENCES auth.users(id) ON DELETE SET NULL` (line 86)
-   - Trigger `update_crm_attendance_requests_updated_at` (lines 99–103).
-   - Row Level Security explicitly enabled on all 3 tables with 12 idempotent CRUD policies (lines 108–180) enforcing `(auth.role() = 'authenticated' AND has_org_access(org_id))`.
+### 1.1 Git Workspace & Modified File Inspection
+Using Git at `C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe`, direct inspection of repository status and diff reveals:
+- **Modified in `src/`**:
+  - `src/config/routes.ts`
+  - `src/App.tsx`
+- **Untracked in `src/`**:
+  - `src/components/routing/LegacyRedirect.tsx`
+  - `src/test/challengerM1_2DecoupleAudit.test.ts`
+  - `src/test/challengerM1Decouple.test.tsx`
+  - `src/test/e2e/decoupleRoutes.test.ts`
+  - `src/test/e2e/decoupleOnboarding.test.ts`
+  - `src/test/e2e/decoupleEntry.test.ts`
 
-2. **Supabase Database Types (`src/integrations/supabase/types.ts`)**:
-   - `crm_attendance` (lines 105–204):
-     - `Row`: `work_duration_minutes: number`, `overtime_minutes: number` (lines 124, 129)
-     - `Insert`: `work_duration_minutes?: number`, `overtime_minutes?: number` (lines 149, 154)
-     - `Update`: `work_duration_minutes?: number`, `overtime_minutes?: number` (lines 174, 179)
-     - `Relationships`: `crm_attendance_clock_in_location_id_fkey`, `crm_attendance_clock_out_location_id_fkey`, `crm_attendance_org_id_fkey`
-   - `crm_attendance_requests` (lines 205–273): Complete `Row`, `Insert`, `Update`, `Relationships`.
-   - `crm_geolocations` (lines 274–314): Complete `Row`, `Insert`, `Update`, `Relationships`.
+### 1.2 Inspection of Protected Invoicing Files
+Git diff and porcelain status executed directly against the 5 protected files:
+```bash
+git status --porcelain src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
+```
+**Output**:
+```text
+(empty output - 0 files modified, 0 untracked)
+```
+`git diff --stat` likewise produces zero output. All 5 files are verified bit-for-bit invariant.
 
-3. **Domain Types (`src/types/crmAttendance.ts`)**:
-   - Strict union literals:
-     - `export type AttendanceStatus = "present" | "absent" | "half_day" | "on_leave";` (line 7)
-     - `export type AttendanceVerificationMethod = "geo_verified" | "manual" | "regularized";` (line 9)
-     - `export type AttendanceRequestStatus = "pending" | "approved" | "rejected";` (line 11)
-   - Domain interfaces:
-     - `CRMGeolocation` (lines 13–22)
-     - `CRMAttendanceRecord` (lines 24–50) with `work_duration_minutes: number;`, `overtime_minutes: number;`
-     - `CRMAttendanceRequest` (lines 52–69) with `requested_status: AttendanceStatus;`, `status: AttendanceRequestStatus;`
+### 1.3 Inspection of Cashier RBAC Boundary Implementation
+In `src/config/routes.ts`:
+1. `RESTRICTED_ROUTES_FOR_CASHIER` (lines 143–203) includes:
+   - Canonical CRM routes: `crm`, `crmDashboard`, `crmAttendance`, `crmSalary`, `crmTasks`, `crmMeet`, `crmBroadcasts`, `crmAiAssistant`, `crmSupport`, `crmRoles`.
+   - Settings subroutes: `settingsReminders`, `settingsCaSharing`, `settingsPricing`, `settingsRefer`, `settingsHelp`, `tallyImport`.
+   - Legacy paths: `/dashboard`, `/purchases`, `/discovery`, `/suppliers`, `/purchase-returns`, `/analytics`, `/reports`, `/cash-bank`, `/e-invoicing`, `/automated-bills`, `/expenses`, `/barcode`, `/settings`, `/settings/business`, `/settings/invoice`, `/settings/print`, `/settings/reminders`, `/settings/ca-sharing`, `/settings/pricing`, `/settings/refer`, `/settings/help`, `/tally-import`, `/staff`, `/activity-log`.
+2. `isRouteAllowedForRole` (lines 396–402):
+   ```typescript
+   // Cashier
+   if (role === "cashier") {
+     if (url.startsWith("/crm")) return false;
+     if (url.startsWith("/billing/settings") || url === "/billing/settings") return false;
+     return !RESTRICTED_ROUTES_FOR_CASHIER.has(url);
+   }
+   ```
+3. Prior to role checks, lines 247 executes `normalizeRouteForRbac(rawUrl)`, converting legacy paths like `/sales` -> `/billing/sales` and `/customers/123/ledger` -> `/billing/customers/123/ledger`.
+4. Prior to role checks, lines 249–255 evaluate explicit `customPermissions` (e.g. `{ crm: true }`), preserving granular custom capability overrides as required by RBAC specifications.
 
-4. **Empirical Stress Test Suite (`src/test/crmAttendanceMigrationStress.test.ts`)**:
-   - 31 automated tests verifying SQL syntax, balanced parentheses, quotes, DDL statements, table columns, constraints, idempotency, default values, CHECK constraints (lines 280–314), duration nullability (lines 317–320), domain exports, and RLS policies.
-   - All tests inspect actual filesystem files without mocks or bypasses.
+### 1.4 Tool Commands and Verbatim Results
 
-5. **Empirical Tool Execution & Results**:
-   - `cmd /c npx tsc --noEmit`
-     - Exit code: `0`
-     - Errors: 0
-   - `cmd /c npx eslint src/types/crmAttendance.ts src/test/crmAttendanceMigrationStress.test.ts`
-     - Exit code: `0`
-     - Errors: 0
-   - `npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run`
-     - Output: `✓ src/test/crmAttendanceMigrationStress.test.ts (31 tests) 51ms | Tests 31 passed (31)`
-     - Exit code: `0`
-   - `npm.cmd test -- src/test/crmAttendanceTypes.challenger.test.ts --run`
-     - Output: `✓ src/test/crmAttendanceTypes.challenger.test.ts (18 tests) 28ms | Tests 18 passed (18)`
-     - Exit code: `0`
-   - `npm.cmd test -- src/test/crmPermissionRbac.test.ts --run`
-     - Output: `✓ src/test/crmPermissionRbac.test.ts (26 tests) 3054ms | Tests 26 passed (26)`
-     - Exit code: `0`
+#### Command 1: TypeScript Compilation
+```bash
+cmd /c npx tsc --noEmit
+```
+**Exit Code**: 0  
+**Verbatim Output**:
+```text
+(0 errors, clean exit)
+```
+
+#### Command 2: Mandated Vitest Test Suites
+```bash
+cmd /c npx vitest run src/test/e2e/decoupleRoutes.test.ts src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmShellRoutes.test.ts
+```
+**Exit Code**: 0  
+**Verbatim Output**:
+```text
+ ✓ src/test/e2e/decoupleRoutes.test.ts (68 tests) 315ms
+ ✓ src/test/challengerM1_2DecoupleAudit.test.ts (52 tests) 550ms
+ ✓ src/test/crmShellRoutes.test.ts (22 tests) 1463ms
+
+ Test Files  3 passed (3)
+      Tests  142 passed (142)
+   Duration  14.36s
+```
+
+#### Command 3: Full Decouple Regression Matrix
+```bash
+cmd /c npx vitest run src/test/challengerM1Decouple.test.tsx src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmShellNavigation.audit.test.ts src/test/crmChallengerM1_2.test.ts
+```
+**Exit Code**: 0  
+**Verbatim Output**:
+```text
+ ✓ src/test/crmShellNavigation.audit.test.ts (8 tests) 73ms
+ ✓ src/test/challengerM1Decouple.test.tsx (28 tests) 1563ms
+ ✓ src/test/crmChallengerM1_2.test.ts (11 tests) 139ms
+ ✓ src/test/crmAttendanceRouteWiringChallenge.test.tsx (10 tests) 929ms
+
+ Test Files  4 passed (4)
+      Tests  57 passed (57)
+   Duration  54.12s
+```
+
+#### Command 4: ESLint Validation on Target Work Product
+```bash
+cmd /c npx eslint src/config/routes.ts src/components/routing/LegacyRedirect.tsx src/test/challengerM1_2DecoupleAudit.test.ts
+```
+**Exit Code**: 0  
+**Verbatim Output**:
+```text
+(0 problems: 0 errors, 0 warnings)
+```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Integrity & Authenticity Assessment (Step 1)**:
-   - Evaluated all target files against the Integrity Forensics prohibited patterns (hardcoded test results, facade implementations, pre-populated artifacts, self-certifying tests, execution delegation).
-   - Direct inspection confirms that `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` contains real, production-ready PostgreSQL DDL with proper constraints and RLS security.
-   - `src/integrations/supabase/types.ts` and `src/types/crmAttendance.ts` contain complete, strictly typed TypeScript models without any `any` types, stubs, or placeholder returns.
-   - Zero pre-populated test fixtures or fabricated logs exist.
-   - *Deduction*: No integrity violations exist.
-
-2. **Remediation Verification of CHECK Constraints (Step 2)**:
-   - In Iteration 1 review, the lack of SQL CHECK constraints on status columns was flagged.
-   - Direct inspection (Observation 1) confirms:
-     - `crm_attendance.status` is guarded by `CHECK (status IN ('present', 'absent', 'half_day', 'on_leave'))`.
-     - `crm_attendance.verification_method` is guarded by `CHECK (verification_method IN ('geo_verified', 'manual', 'regularized'))`.
-     - `crm_attendance_requests.requested_status` is guarded by `CHECK (requested_status IN ('present', 'absent', 'half_day', 'on_leave'))`.
-     - `crm_attendance_requests.status` is guarded by `CHECK (status IN ('pending', 'approved', 'rejected'))`.
-   - All default values (`'present'`, `'geo_verified'`, `'pending'`) match valid values in the CHECK constraint set.
-   - *Deduction*: Schema enforces valid states directly at the PostgreSQL layer.
-
-3. **Remediation Verification of Duration Fields Nullability (Step 3)**:
-   - In Iteration 1, `work_duration_minutes` and `overtime_minutes` allowed `NULL` in SQL but were non-nullable numbers in `CRMAttendanceRecord`.
-   - In Iteration 2:
-     - SQL defines `work_duration_minutes INTEGER NOT NULL DEFAULT 0` and `overtime_minutes INTEGER NOT NULL DEFAULT 0`.
-     - Supabase types define `work_duration_minutes: number` and `overtime_minutes: number` in `Row`, and optional `number` in `Insert`/`Update`.
-     - Domain types define `work_duration_minutes: number;` and `overtime_minutes: number;` in `CRMAttendanceRecord`.
-   - *Deduction*: Complete nullability alignment is achieved across SQL, database types, and domain models, preventing runtime `null` propagation in downstream payroll or reporting calculations.
-
-4. **Empirical Verification of Build and Test Suites (Step 4)**:
-   - Executed `tsc --noEmit`: 0 compilation errors across the entire codebase.
-   - Executed ESLint: 0 errors on modified files.
-   - Executed all 3 relevant Vitest suites: 75/75 tests passed with zero failures.
-   - *Deduction*: The work products are syntactically and functionally valid, with zero regressions.
+1. **Premise 1 (Policy Specification)**:
+   In `ORIGINAL_REQUEST.md` (timestamp 2026-10-23T21:58:59Z) and `PROJECT.md`, POS & Billing (`/billing/*`) and CRM (`/crm/*`) must be decoupled with zero collateral regression. Cashiers must remain strictly constrained to POS billing operations and blocked from CRM subroutes, financial records, and administrative settings.
+2. **Premise 2 (Empirical Inspection of Solution Architecture)**:
+   In `src/config/routes.ts`, `isRouteAllowedForRole` implements defense-in-depth:
+   - Layer 1: Strict prefix guards `url.startsWith("/crm")` and `url.startsWith("/billing/settings")` unconditionally reject cashier access to any CRM submodule or store settings route, dynamic path, or query string.
+   - Layer 2: Explicit Set inclusion in `RESTRICTED_ROUTES_FOR_CASHIER` prevents bypass via any legacy alias or un-prefixed identifier.
+   - Layer 3: Legacy URL normalization maps 36 legacy routes to `/billing/*` paths before evaluating role restrictions.
+3. **Premise 3 (Integrity Forensics Check)**:
+   No mock bypasses, hardcoded boolean returns, fake test stubs, or facades exist:
+   - `LegacyRedirect.tsx` genuinely evaluates `useLocation()` and `useParams()`, substituting dynamic parameters and query strings.
+   - `challengerM1_2DecoupleAudit.test.ts` executes real assertions against route configuration functions, AST source files, and navigation array structures.
+4. **Premise 4 (Protected Invoicing Verification)**:
+   Direct verification using git porcelain status confirms that all 5 protected invoice files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) have not been touched or modified in any manner.
+5. **Premise 5 (Empirical Execution)**:
+   Independent execution of `tsc --noEmit` and all 7 Vitest test suites yields 100% passes (199/199 tests passing, 0 compiler errors).
+6. **Deductive Conclusion**:
+   The work product satisfies all forensic integrity criteria under Development Mode. Binary verdict is CLEAN.
 
 ---
 
 ## 3. Caveats
 
-1. **Remote Cloud Database Execution**: The migration file `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` is committed and ready for execution via Supabase CLI (`supabase db push`) or SQL console in remote staging/production environments. It has not been applied to a live remote database cluster during this local audit.
-2. **Upcoming Milestone Dependencies**: Milestone 1 provides the foundational relational schema and TypeScript types. Milestone 2 will implement the Haversine calculation engine (`crmGeoUtils.ts`), and Milestone 3 will implement the user interface (`Attendance.tsx`).
+1. **Pre-existing ESLint Warning in `src/App.tsx`**:
+   `src/App.tsx` line 215 contains an `(window as any)` cast (`Unexpected any. Specify a different type @typescript-eslint/no-explicit-any`). Forensic git blame inspection confirms this line predated Milestone 1 Iteration 2 work and was not introduced by the current worker.
+2. **Custom Permission Precedence**:
+   In `src/config/routes.ts`, explicit custom permissions (passed via `customPermissions` argument) are evaluated before role-based fallbacks. Therefore, an administrative override granting `{ crm: true }` will permit a cashier access to CRM routes. This is expected RBAC behavior per `crm-rbac-skill`.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: CLEAN**
-
-All remediation requirements for CRM Phase 2 Milestone 1 Iteration 2 have been verified with complete forensic rigor:
-1. All four CHECK constraints are present, syntactically valid in PostgreSQL, and match TypeScript union types.
-2. `work_duration_minutes` and `overtime_minutes` are non-nullable integers with default `0` in SQL and `number` in TypeScript types.
-3. Zero TypeScript compiler errors (`tsc --noEmit`).
-4. Zero ESLint errors.
-5. All 75 tests pass cleanly across migration stress tests, challenger type tests, and RBAC regression suites.
-6. Zero integrity violations, fake stubs, or bypasses detected.
+Milestone 1 Iteration 2 work product is **AUTHENTIC, ROBUST, and CLEAN**.
+- No mock stubs, shortcuts, or integrity violations exist.
+- Cashier route gating strictly denies access to CRM subroutes and settings.
+- All 5 protected invoice files are completely untouched.
+- TypeScript compilation and all 199 tests pass with 100% success.
+- Binary verdict: **CLEAN**.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify these findings, run the following commands:
+To independently verify this verdict:
 
-1. **TypeScript Typecheck**:
-   ```cmd
+1. **Confirm Invoicing Files Untouched**:
+   ```bash
+   git status --porcelain src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/SalesInvoiceModal.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx
+   ```
+   *Expected*: Empty stdout (0 modifications).
+
+2. **Run TypeScript Compiler**:
+   ```bash
    cmd /c npx tsc --noEmit
    ```
-   *Expected outcome*: Exits with code 0 (zero errors).
+   *Expected*: Exit code 0, 0 errors.
 
-2. **Migration Stress Test Suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run
+3. **Run Target Vitest Suites**:
+   ```bash
+   cmd /c npx vitest run src/test/e2e/decoupleRoutes.test.ts src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmShellRoutes.test.ts
    ```
-   *Expected outcome*: 31 passed (100% pass rate).
+   *Expected*: 3 passed test files, 142 passed tests.
 
-3. **Challenger Types Test Suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmAttendanceTypes.challenger.test.ts --run
+4. **Run Full Decouple Regression Matrix**:
+   ```bash
+   cmd /c npx vitest run src/test/challengerM1Decouple.test.tsx src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmShellNavigation.audit.test.ts src/test/crmChallengerM1_2.test.ts
    ```
-   *Expected outcome*: 18 passed (100% pass rate).
+   *Expected*: 4 passed test files, 57 passed tests.
 
-4. **CRM RBAC Regression Test Suite**:
-   ```cmd
-   npm.cmd test -- src/test/crmPermissionRbac.test.ts --run
-   ```
-   *Expected outcome*: 26 passed (100% pass rate).
-
-5. **Direct File Inspection**:
-   - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` (lines 47–52, 83–85)
-   - `src/integrations/supabase/types.ts` (lines 124, 129, 149, 154, 174, 179)
-   - `src/types/crmAttendance.ts` (lines 7–11, 45–46)
-   - `src/test/crmAttendanceMigrationStress.test.ts` (lines 280–320, 353–366)
+5. **Invalidation Conditions**:
+   - `isRouteAllowedForRole("/crm/attendance", "cashier") === true`
+   - `isRouteAllowedForRole("/billing/settings/reminders", "cashier") === true`
+   - Any diff detected in protected invoicing files.

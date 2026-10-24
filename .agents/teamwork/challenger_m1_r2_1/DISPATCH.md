@@ -1,17 +1,41 @@
-## 2026-10-17T09:59:36Z
-You are challenger_m1_r2_1 for CRM Phase 2 Milestone 1 Iteration 2.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_r2_1
+# Dispatch: Challenger M1 (Iteration 2.1) — Empirical Route & Parameter Stress Test
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read challenger_m1_1's original issues at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md and worker_m1_r2's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md.
+## Mission
+Adversarially challenge and stress-test the decoupled route architecture and universal legacy redirection engine.
 
-Challenge Tasks:
-Empirically verify whether the 4 issues found in Iteration 1 have been 100% resolved:
-- ISSUE-M1-01: CHECK constraint on crm_attendance.status
-- ISSUE-M1-02: CHECK constraint on crm_attendance.verification_method
-- ISSUE-M1-03: CHECK constraints on crm_attendance_requests.status and requested_status
-- ISSUE-M1-04: NOT NULL DEFAULT 0 on duration columns and matching TypeScript types
-Run: npm.cmd test -- src/test/crmAttendanceMigrationStress.test.ts --run and npm.cmd test -- src/test/crmAttendanceTypes.challenger.test.ts --run.
-Output your verdict: CONFIRMED or ISSUES_FOUND.
+## Source of Truth & Context
+- Authoritative User Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (timestamp 2026-10-23T21:58:59Z)
+- Project Scope: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
+- Test Readiness: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_READY.md`
+- Worker M1 R2 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md`
 
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_r2_1\handoff.md and send a completion message.
+## Your Working Directory
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_r2_1`
+
+## Specific Challenger Tasks
+1. Execute adversarial route tests:
+   - Dynamic parameters, multi-segment wildcards, and complex queries.
+   - Run: `cmd /c npx vitest run src/test/challengerM1Decouple.test.tsx src/test/e2e/decoupleRoutes.test.ts`
+2. Check for memory leaks or infinite redirect loops.
+3. Render empirical verdict: `APPROVE` or `REQUEST_CHANGES`.
+
+## Handoff Requirements
+Write your report to `handoff.md` in your working directory. State your verdict clearly. Notify parent via `send_message`.
+
+
+## 2026-10-23T23:29:33Z
+You are challenger_m1_r2_1.
+Your working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_r2_1
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+
+Read your dispatch file: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_r2_1\DISPATCH.md
+Read the authoritative user request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (see timestamp 2026-10-23T21:58:59Z)
+Read PROJECT.md: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+Read Worker M1 R2 Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\handoff.md
+
+Adversarially challenge route parameters, multi-segment wildcards, and complex queries.
+Run empirical tests:
+- `cmd /c npx vitest run src/test/challengerM1Decouple.test.tsx src/test/e2e/decoupleRoutes.test.ts`
+
+Render verdict: APPROVE or REQUEST_CHANGES.
+Write report to handoff.md and notify parent via send_message.

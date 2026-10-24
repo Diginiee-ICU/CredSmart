@@ -76,6 +76,7 @@ export interface PendingOnboardingData {
   ifsc?: string;
   accountHolder?: string;
   upiId?: string;
+  suitePreference?: "billing" | "crm" | "both";
   scrapedProducts: Array<{
     name: string;
     barcode: string;

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T10:00:00Z
+# BRIEFING — 2026-10-23T23:38:00Z
 
 ## Mission
-Review and adversarially stress-test CRM Phase 2 Milestone 1 Iteration 2 work done by worker_m1_r2, checking integrity, regression test suites, and stress tests.
+Independently review system regression status and protected file invariance following cashier route gating remediation by worker_m1_r2, verify vitest suites, inspect for integrity violations, and render verdict.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -10,48 +10,60 @@ Review and adversarially stress-test CRM Phase 2 Milestone 1 Iteration 2 work do
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 1 Iteration 2
 - Instance: 2 of 2 (reviewer_m1_r2_2)
+- Re-dispatch Parent: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Re-dispatch Milestone: Dual Portal Decoupling M1 Iteration 2.2 (Cashier Route Gating Remediation Review)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Reviewer AND adversarial critic: check for integrity violations (hardcoded test results, facade implementations, shortcuts, fabricated verification, self-certifying work)
 - Verdict must be APPROVE or REQUEST_CHANGES
+- Verify 5 protected invoice files remain 100% untouched
+- Verify regression status across billing, CRM, and decoupling suites
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T09:59:35Z
+- Conversation ID: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Updated: 2026-10-23T23:29:33Z
 
 ## Review Scope
 - **Files to review**:
-  - worker_m1_r2 handoff report
-  - ORIGINAL_REQUEST.md (## 2026-10-17T08:52:11Z)
-  - src/test/crmPermissionRbac.test.ts
-  - src/test/crmAttendanceMigrationStress.test.ts
-  - Modified code / migration files / services touched in Iteration 2
-- **Interface contracts**: crm-rbac-skill / PROJECT.md / ORIGINAL_REQUEST.md
-- **Review criteria**: correctness, integrity, test passes, zero regressions, stress test coverage
+  - `src/config/routes.ts`
+  - `src/test/challengerM1_2DecoupleAudit.test.ts`
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (invariance check)
+  - `src/components/SalesInvoiceModal.tsx` (invariance check)
+  - `src/components/invoices/mobile/AddItemModal.tsx` (invariance check)
+  - `src/components/invoices/mobile/SelectPartyModal.tsx` (invariance check)
+  - `src/components/invoices/mobile/EditItemModal.tsx` (invariance check)
+  - `worker_m1_r2/handoff.md`
+- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md (§ 2026-10-23T21:58:59Z)
+- **Review criteria**: Correctness, integrity, zero regressions, protected file invariance
 
 ## Key Decisions Made
-- Initializing review pipeline
+- Verified 5 protected invoice files are 100% untouched (git status & git diff empty).
+- Independently ran all required test suites: 100% passed (250 tests across 9 files).
+- Verified TypeScript compilation (`tsc --noEmit`) passes with 0 errors.
+- Verified ESLint passes with 0 errors/warnings on modified files.
+- Confirmed zero integrity violations, dummy implementations, or hardcoded facades.
+- Verdict rendered: APPROVE.
 
 ## Review Checklist
 - **Items reviewed**:
-  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`
-  - `src/integrations/supabase/types.ts`
-  - `src/types/crmAttendance.ts`
-  - `src/test/crmAttendanceMigrationStress.test.ts`
-  - `src/test/crmAttendanceTypes.challenger.test.ts`
-  - `worker_m1_r2/handoff.md`
+  - Protected files git status & diff: 100% untouched
+  - `worker_m1_r2/handoff.md`: examined and verified
+  - `src/config/routes.ts`: examined and verified
+  - `src/test/challengerM1_2DecoupleAudit.test.ts`: examined and verified
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All 31 stress tests, 26 RBAC tests, 18 challenger type tests, and tsc verified independently.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Unrestricted text in `status` and `verification_method` bypassed at DB layer: Verified mitigated by SQL `CHECK (status IN (...))` and `CHECK (verification_method IN (...))`
-  - Inconsistent nullability between DB duration fields (`number | null`) and domain model (`number`): Verified resolved by `INTEGER NOT NULL DEFAULT 0` and updating `types.ts` to `number`
-  - Idempotency collision on multiple script executions: Verified all tables use `IF NOT EXISTS`, indexes use `IF NOT EXISTS`, triggers use `DROP TRIGGER IF EXISTS`, policies use `DROP POLICY IF EXISTS`
-  - Cross-tenant data leaks: Verified all 3 tables enforce RLS `auth.role() = 'authenticated' AND has_org_access(org_id)` across all CRUD actions
-- **Vulnerabilities found**: 0 integrity violations, 0 regressions, all 4 previous issues completely remediated.
-- **Untested angles**: Live Supabase cloud migration execution (pending deployment environment)
+  - Cashier bypass via unlisted CRM or Settings subroutes: checked `url.startsWith("/crm")` and `url.startsWith("/billing/settings")`
+  - Invariance violation on 5 protected invoice files: verified 100% untouched via git status and diff
+  - Regression in billing lifecycle, mobile success view, CRM, or route decoupling: 250 tests passed cleanly
+  - Custom permissions override vs cashier defaults: precedence verified
+- **Vulnerabilities found**: 0 vulnerabilities, 0 integrity violations
+- **Untested angles**: None within M1 scope
 
 ## Artifact Index
-- handoff.md — Final review report
+- handoff.md — Review & Challenger Report
+- progress.md — Liveness heartbeat
+- DISPATCH.md — Incoming parent dispatches

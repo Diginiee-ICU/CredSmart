@@ -1,13 +1,15 @@
-# BRIEFING — 2026-10-21T17:45:00Z
+# BRIEFING — 2026-10-23T22:00:00Z
 
 ## Mission
-Implement production-grade staff user provisioning & instant role assignment in CRM Role Management and complete the full-stack Enterprise Task Management system for multi-tenant company workflows.
+Architecturally and visually decouple CredSmart into two distinct core product offerings: (1) CredSmart POS & Billing (`/billing/*`) and (2) CredSmart CRM (`/crm/*`), providing route-isolated portals, dedicated navigation shells, independent sidebars, separate onboarding entry points, and an intuitive top-level Suite Switcher, while preserving 100% backwards compatibility and sharing a unified authentication and organization layer.
 
 ## 🔒 My Identity
 - Archetype: sentinel
+- Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\sentinel
+- Orchestrator: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Victory Auditor: [to be spawned on victory claim]
 - Working directory: c:/Users/Rudra/Desktop/Git/CredSmart/.agents/teamwork/sentinel
 - Orchestrator: 14c6a959-d68e-4859-bb68-805bb9f6c60d
-- Victory Auditor: [to be spawned on victory claim]
 - Current working directory: c:\Users\bishn\Documents\GitHub\CredSmart\.agents\teamwork\sentinel
 - Active Orchestrator: 9233a9f6-554b-4b0a-8c55-0f1b3272d0ec
 - Victory Auditor: 5241a514-2a29-49fc-a631-9cfade7a2e21
@@ -40,6 +42,8 @@ Implement production-grade staff user provisioning & instant role assignment in 
 - Victory Auditor (Staff Provisioning & Enterprise Tasks): [to be spawned on victory claim]
 - Active Orchestrator (Staff Provisioning & Enterprise Tasks Gen 2): c838af97-21de-4616-9188-f0f8dfa904c9
 - Victory Auditor (Staff Provisioning & Enterprise Tasks Gen 2): [to be spawned on victory claim]
+- Active Orchestrator (Decouple Portals): 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Victory Auditor (Decouple Portals): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -64,28 +68,27 @@ Implement production-grade staff user provisioning & instant role assignment in 
 - Strict exclusion: Create Invoice flow (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) must remain 100% untouched and functional
 
 ## User Context
-- **Last user request**: Staff user provisioning & instant role assignment in CRM Role Management and full-stack Enterprise Task Management system.
+- **Last user request**: Decouple CredSmart into POS & Billing (`/billing/*`) and CRM (`/crm/*`) portals with dedicated navigation shells, Suite Switcher, dual onboarding, and complete backward compatibility.
 - **Pending clarifications**: none
-- **Delivered results**: Staff user provisioning with instant role assignment & full-stack Enterprise CRM Task Management completed, tested (647/647 passing tests), and verified.
+- **Delivered results**: In progress under Project Orchestrator `8ac6491a-275d-4c1c-b664-961cd66511b1`.
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress (Milestone 1 DONE; Milestone 2 Navigation Shells & Suite Switcher active)
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: c838af97-21de-4616-9188-f0f8dfa904c9 (completed, cleaned up)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_tasks_gen2
-- **Cron 1 (Reporting)**: task-41 (cancelled)
-- **Cron 2 (Liveness)**: task-43 (cancelled)
+- **Active Orchestrator ID**: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_decouple
+- **Cron 1 (Reporting)**: task-22
+- **Cron 2 (Liveness)**: task-24
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
-- **Auditor ID**: 0bf79d10-6a8b-4bf3-a857-09a388178105 (completed, cleaned up)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_crm_tasks
+- **Triggered**: no
+- **Verdict**: pending
+- **Auditor ID**: [to be spawned on victory claim]
+- **Working Directory**: [TBD]
 - **Retry count**: 0
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_tasks_gen2\DISPATCH.md — Orchestrator dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_crm_tasks\DISPATCH.md — Victory Auditor dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_crm_tasks\handoff.md — Victory Auditor forensic report
-
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_decouple\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Authoritative project scope and feature inventory
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_INFRA.md — Opaque-box test strategy across Tiers 1-4

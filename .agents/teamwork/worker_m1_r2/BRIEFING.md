@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T10:00:00Z
+# BRIEFING — 2026-10-23T23:28:00Z
 
 ## Mission
-Execute CRM Phase 2 Milestone 1 Iteration 2 Remediation: apply SQL CHECK constraints and NOT NULL defaults to crm_attendance and crm_attendance_requests, align Supabase and domain TypeScript types, update migration stress tests, and verify compiler and test suite clean passes.
+Apply surgical RBAC route gating remediation to `src/config/routes.ts` and update `src/test/challengerM1_2DecoupleAudit.test.ts` to strictly block cashier access to all CRM subroutes and settings subroutes.
 
 ## 🔒 My Identity
 - Archetype: implementer
@@ -9,6 +9,8 @@ Execute CRM Phase 2 Milestone 1 Iteration 2 Remediation: apply SQL CHECK constra
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 1 (Iteration 2 Remediation)
+- Iteration 2 Parent: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Current Sub-Task: Cashier Route Gating Decoupling Remediation
 
 ## 🔒 Key Constraints
 - Genuine implementation only; no shortcuts, no hardcoded test assertions, no dummy facades.
@@ -19,27 +21,22 @@ Execute CRM Phase 2 Milestone 1 Iteration 2 Remediation: apply SQL CHECK constra
   - src/test/crmAttendanceMigrationStress.test.ts
 - Verify with `cmd /c npx tsc --noEmit` and all relevant vitest test suites.
 - Output handoff report to `.agents/teamwork/worker_m1_r2/handoff.md` and notify parent via `send_message`.
+- [2026-10-23 Task Constraints]: Exclusive write ownership: `src/config/routes.ts` and `src/test/challengerM1_2DecoupleAudit.test.ts`. Zero modifications to protected invoicing files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`).
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T09:49:08Z
+- Conversation ID: 8ac6491a-275d-4c1c-b664-961cd66511b1
+- Updated: 2026-10-23T23:18:38Z
 
 ## Task Summary
-- **What to build**: Add CHECK constraints and NOT NULL on duration fields in migration SQL; update Supabase types for crm_attendance to make work_duration_minutes and overtime_minutes number (non-nullable in Row, optional number in Insert/Update); align types in crmAttendance.ts; update crmAttendanceMigrationStress.test.ts to test for presence of CHECK constraints; verify with tsc and tests.
-- **Success criteria**: Zero tsc errors, 100% test pass rate across test suites.
-- **Interface contracts**: supabase/migrations/20261017010000_create_crm_attendance_tables.sql, src/integrations/supabase/types.ts, src/types/crmAttendance.ts.
-- **Code layout**: Migrations in supabase/migrations/, types in src/types/ and src/integrations/supabase/, tests in src/test/.
+- **What to build**: Add missing CRM subroutes (`crmDashboard`, `crmAttendance`, `crmSalary`, `crmTasks`, `crmMeet`, `crmBroadcasts`, `crmAiAssistant`, `crmSupport`, `crmRoles`) and settings subroutes (`settingsReminders`, `settingsCaSharing`, `settingsPricing`, `settingsRefer`, `settingsHelp`, `tallyImport`, plus legacy paths) to `RESTRICTED_ROUTES_FOR_CASHIER`. Add prefix denials for `url.startsWith("/crm")` and `url.startsWith("/billing/settings") || url === "/billing/settings"` in `isRouteAllowedForRole` for `role === "cashier"`. Update test suite in `challengerM1_2DecoupleAudit.test.ts` to assert that cashiers are blocked (`toBe(false)`) from all CRM subroutes and settings subroutes.
+- **Success criteria**: Zero tsc errors, 100% test pass rate across test suites (`challengerM1_2DecoupleAudit.test.ts`, `crmShellRoutes.test.ts`, `decoupleRoutes.test.ts`).
+- **Interface contracts**: `src/config/routes.ts` (`RESTRICTED_ROUTES_FOR_CASHIER`, `isRouteAllowedForRole`).
+- **Code layout**: `src/config/routes.ts`, `src/test/challengerM1_2DecoupleAudit.test.ts`.
 
 ## Key Decisions Made
-- [Iteration 2]: Added CHECK constraints to column definitions in migration SQL:
-  - `status TEXT NOT NULL DEFAULT 'present' CHECK (status IN ('present', 'absent', 'half_day', 'on_leave'))`
-  - `verification_method TEXT NOT NULL DEFAULT 'geo_verified' CHECK (verification_method IN ('geo_verified', 'manual', 'regularized'))`
-  - `work_duration_minutes INTEGER NOT NULL DEFAULT 0`
-  - `overtime_minutes INTEGER NOT NULL DEFAULT 0`
-  - `requested_status TEXT NOT NULL DEFAULT 'present' CHECK (requested_status IN ('present', 'absent', 'half_day', 'on_leave'))`
-  - `status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected'))`
-- [Types Alignment]: Updated `src/integrations/supabase/types.ts` `crm_attendance` table definitions: Row uses non-nullable `number` for duration fields; Insert and Update use optional `number`.
-- [Stress Test Update]: Updated `src/test/crmAttendanceMigrationStress.test.ts` to assert that all CHECK constraints and NOT NULL definitions are present, passing 31/31 tests.
+- [Set Enumeration]: Added canonical and legacy CRM and settings paths to `RESTRICTED_ROUTES_FOR_CASHIER` to satisfy any direct Set membership lookups.
+- [Prefix Boundary Gating]: In `isRouteAllowedForRole`, added defense-in-depth prefix checks (`if (url.startsWith("/crm")) return false;`, `if (url.startsWith("/billing/settings") || url === "/billing/settings") return false;`) after customPermissions evaluation, ensuring deep links, parameters, and query strings are strictly blocked for cashiers while custom permissions overrides remain supported.
+- [Eslint Compliance]: Removed explicit `as any` casts in `challengerM1_2DecoupleAudit.test.ts` and replaced with `as unknown as string`, achieving clean eslint pass.
 
 ## Artifact Index
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_r2\DISPATCH.md` — Assigned task instructions
@@ -49,18 +46,22 @@ Execute CRM Phase 2 Milestone 1 Iteration 2 Remediation: apply SQL CHECK constra
 
 ## Change Tracker
 - **Files modified**:
-  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql`: added CHECK constraints on status, verification_method, requested_status, and request status, plus NOT NULL on duration fields.
-  - `src/integrations/supabase/types.ts`: updated crm_attendance Row, Insert, and Update types for work_duration_minutes and overtime_minutes to number.
-  - `src/test/crmAttendanceMigrationStress.test.ts`: updated CHECK constraint and nullability tests to assert presence and validity.
+  - `src/config/routes.ts`: Extended `RESTRICTED_ROUTES_FOR_CASHIER` with missing CRM and settings routes and legacy paths; added prefix boundary checks in `isRouteAllowedForRole` for `role === "cashier"`.
+  - `src/test/challengerM1_2DecoupleAudit.test.ts`: Updated cashier verification tests to assert strict false for all CRM subroutes and settings subroutes; resolved eslint any violations.
 - **Build status**: `cmd /c npx tsc --noEmit` PASS (0 errors).
 - **Pending issues**: None.
 
 ## Quality Status
-- **Build/test result**: All 4 verification suites pass (tsc: 0 errors; stress: 31/31 passed; challenger: 18/18 passed; rbac: 26/26 passed).
-- **Lint status**: clean
-- **Tests added/modified**: `src/test/crmAttendanceMigrationStress.test.ts` updated to assert presence of CHECK constraints and nullability alignment.
+- **Build/test result**: All verification suites pass:
+  - `cmd /c npx tsc --noEmit`: PASS (0 errors)
+  - `vitest run src/test/challengerM1_2DecoupleAudit.test.ts`: PASS (52/52 tests)
+  - `vitest run src/test/crmShellRoutes.test.ts src/test/e2e/decoupleRoutes.test.ts`: PASS (90/90 tests)
+  - `vitest run src/test/crmShellNavigation.audit.test.ts src/test/crmChallengerM1_2.test.ts`: PASS (19/19 tests)
+  - `vitest run src/test/challengerM1Decouple.test.tsx src/test/crmAttendanceRouteWiringChallenge.test.tsx`: PASS (38/38 tests)
+- **Lint status**: `npx eslint src/config/routes.ts src/test/challengerM1_2DecoupleAudit.test.ts` PASS (0 problems)
+- **Tests added/modified**: Updated and expanded cashier gating verification tests in `src/test/challengerM1_2DecoupleAudit.test.ts`.
 
 ## Loaded Skills
 - **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
 - **Local copy**: not required (direct reference)
-- **Core methodology**: RBAC schema, permissions model, and migration patterns for CredSmart CRM
+- **Core methodology**: RBAC schema, permissions model, and route isolation for CredSmart CRM

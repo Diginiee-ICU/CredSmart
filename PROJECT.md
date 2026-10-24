@@ -1,142 +1,121 @@
-# Project: CredSmart Enterprise CRM Staff Provisioning & Task Management
+# Project: CredSmart Dual Portal Decoupling (POS & Billing vs CRM)
 
 ## Architecture
-- **Multi-Tenant Staff Provisioning**:
-  - Atomic backend registration via `POST /api/crm/staff/provision` running in a PostgreSQL transaction (`BEGIN ... COMMIT`).
-  - Passwords hashed using bcrypt (10 rounds).
-  - Simultaneous creation of user record in `public.users`, tenant membership in `public.org_memberships`, and CRM role assignment in `public.crm_staff_assignments` and `public.crm_staff_roles`.
-  - Seamless authentication via `/api/auth/login` with immediate JWT token generation.
-- **Staff User Provisioning & Instant Role UI**:
-  - "Add Staff User" modal in `src/pages/crm/RoleManagement.tsx` with cryptographic auto-password generator (`window.crypto.getRandomValues`, 14 chars) and custom password toggle.
-  - Ephemeral "Credentials Confirmation Modal" with 1-click clipboard copy triggers and preformatted communication template.
-  - "Create Role" dialog enhancement allowing simultaneous assignment of existing or new staff.
-  - In-memory hydration of `staffList` and `staffRolesMap` for zero-refresh roster updates.
-- **Enterprise Task Management System**:
-  - Persistent PostgreSQL storage in `public.staff_tasks` with multi-tenant organization isolation.
-  - Backend API in `backend-api/src/routes/crm.js`: `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`.
-  - Full lifecycle state machine:
-    - `todo` -> `in_progress` (started by assignee)
-    - `in_progress` -> `review` (requires submitting proof notes)
-    - `review` -> `done` (approved by manager/owner, records `completed_at` and `approved_by`)
-    - `review` -> `in_progress` (manager revision request with revision notes)
-  - Interactive dual views: Kanban Board and filterable Data Table.
-  - Assignee picker populated with real organization staff fetched from backend.
-  - Accurate KPI metrics calculation (Total, In Progress, Review, Completed, Completion Rate).
+Architecturally and visually decouple CredSmart into two distinct core product portals:
+1. **CredSmart POS & Billing (`/billing/*`)**: Tailored strictly for retail, billing, point-of-sale, inventory, customer/supplier ledgers, GST compliance, and store accounting.
+2. **CredSmart CRM (`/crm/*`)**: Tailored strictly for workforce operations, attendance, biometric geofencing, salary/payroll, task management, custom roles/RBAC, meetings, broadcasts, AI assistant, and helpdesk support.
+
+### System Topology
+- **Unified Authentication & Organization Layer**:
+  - Shared Supabase auth session, JWT tokens, and multi-tenant organization context (`useOrganization`, `useAuth`).
+  - Cashier role protection: Cashiers remain strictly constrained to POS billing operations.
+- **Route Isolation & Redirection Engine**:
+  - `src/config/routes.ts`: Centralized `ROUTE_PATHS`, `BILLING_NAV_ROUTES`, `CRM_NAV_ROUTES`, and backwards-compatible `MAIN_NAV_ROUTES`.
+  - `src/App.tsx`: Clean route separation with `/billing/*` and `/crm/*` tree, plus universal `LegacyRedirect` component preserving query params and dynamic path parameters.
+- **Navigation Shells & Suite Switcher**:
+  - `src/components/SuiteSwitcher.tsx`: Interactive app launcher in top header displaying active suite badge, persisting to `localStorage` (`credsmart_active_suite`), and emitting `credsmart:suite_changed` window events.
+  - `src/components/AppLayout.tsx`: Suite-aware header, branding, subtitle, quick-action buttons, and sidebar state.
+  - `src/components/AppSidebar.tsx`: Dedicated popovers/sidebars for Billing vs CRM; adaptive mobile bottom navigation docks tailored to the active suite.
+- **Onboarding & Entry Routing**:
+  - `src/pages/Auth.tsx`: Step 2 onboarding suite selection ("POS & Billing", "CRM", "Both").
+  - `src/App.tsx` (`resolvePostLoginRoute` / `HomeRoute`): Intelligent entry resolution for `/` and `/app` directing users to their preferred or last-active suite, while preserving direct deep-links.
+
+---
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Idempotent PostgreSQL Migration | Update `staff_tasks` with proof, review, and approval columns | M1 | survey |
-| 2 | Backend Staff Provisioning Endpoint | `POST /api/crm/staff/provision` with bcrypt hashing and atomic org membership + CRM role | M1 | survey |
-| 3 | Backend Staff Listing & Tasks API | `GET /api/crm/staff`, `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id` | M1 | survey |
-| 4 | Frontend CRM API Service Methods | `src/services/crmApi.ts` methods for staff provisioning and full tasks CRUD/lifecycle | M1 | survey |
-| 5 | "Add Staff User" Modal in RoleManagement | Full name, email, phone, role selector, 14-char secure auto-generator, custom toggle | M2 | survey |
-| 6 | Credentials Confirmation Modal | Post-creation dialog displaying email & plaintext password with 1-click copy & WhatsApp template | M2 | survey |
-| 7 | Create Role Direct Staff Assignment | "Create Role" dialog enhancement with searchable staff checklist for instant assignment | M2 | survey |
-| 8 | Instant Staff Roster & Role Badges | Immediate in-memory update of `staffList`, `staffRolesMap`, and `CRMRolePill` badges | M2 | survey |
-| 9 | Tasks API Wiring & Assignee Picker | `Tasks.tsx` wired to `crmApi.getCRMTasks` and real organization staff assignee dropdown | M3 | survey |
-| 10 | Interactive Kanban & Table Views | Dual views with column counts, search, priority badges, and status actions | M3 | survey |
-| 11 | Proof Notes Submission Dialog | Dialog/drawer prompting for proof notes when transitioning from `in_progress` to `review` | M3 | survey |
-| 12 | Manager Approval & Revision Request | Actions for managers to approve (`done` with timestamp) or request revision with notes | M3 | survey |
-| 13 | Real-Time Task KPI Metrics | Accurate cards for Total, In Progress, Review, Completed, and Completion Rate % | M3 | survey |
-| 14 | E2E Testing Suite (Tiers 1-4) | Comprehensive test suite verifying all features, boundary cases, and full lifecycle | M4 | survey |
-| 15 | Adversarial Coverage Hardening (Tier 5) | White-box stress testing, zero TypeScript compile errors (`tsc --noEmit`), and clean audit | M4 | survey |
+| 1 | Route Isolation `/billing/*` | Dedicated route tree for all retail, POS, inventory, sales, purchases, reports, and billing tools | M1 | ORIGINAL_REQUEST §R1 |
+| 2 | Route Isolation `/crm/*` | Dedicated route tree for all CRM submodules (dashboard, attendance, payroll, tasks, roles, etc.) | M1 | ORIGINAL_REQUEST §R1 |
+| 3 | Universal Legacy Redirections | 35 legacy paths (`/pos`, `/sales`, `/items`, `/inventory`, `/customers`, etc.) seamlessly redirected to `/billing/*` with query/param preservation | M1 | ORIGINAL_REQUEST §R1 |
+| 4 | Centralized Route Config Parity | Update `ROUTE_PATHS` while maintaining `MAIN_NAV_ROUTES` and regex compatibility with existing test suites | M1 | Survey (Routes Explorer) |
+| 5 | Dedicated POS & Billing Navigation | `BILLING_NAV_ROUTES` containing strictly retail/ERP items and 0 CRM clutter | M2 | ORIGINAL_REQUEST §R2 |
+| 6 | Dedicated CRM Navigation | `CRM_NAV_ROUTES` containing strictly workforce/CRM items and 0 billing clutter | M2 | ORIGINAL_REQUEST §R2 |
+| 7 | Top-Level Interactive Suite Switcher | Interactive component in top header displaying active suite badge with instant switching | M2 | ORIGINAL_REQUEST §R2 |
+| 8 | Suite State Persistence | `localStorage` persistence (`credsmart_active_suite`) with cross-tab/window event synchronization | M2 | ORIGINAL_REQUEST §R2 |
+| 9 | Adaptive Mobile Navigation Dock | Bottom touch dock dynamically rendering POS tabs vs CRM tabs with 44px hit targets and safe-area insets | M2 | ORIGINAL_REQUEST §R2 |
+| 10 | Dual Portal Onboarding Preference | New organization onboarding UI to select primary operational hub ("POS & Billing", "CRM", "Both") | M3 | ORIGINAL_REQUEST §R3 |
+| 11 | Intelligent Entry Routing (`/`, `/app`) | Post-login and root routing to preferred or last-active suite while respecting cashier roles | M3 | ORIGINAL_REQUEST §R3 |
+| 12 | Deep-Link Preservation | Direct URLs to `/billing/*` and `/crm/*` resolve directly without unwanted redirects | M3 | ORIGINAL_REQUEST §R3 |
+| 13 | Comprehensive E2E Test Suite | Tiers 1-4 opaque-box test suite verifying all features, boundary cases, cross-portal navigation, and real-world workflows | E2E Testing Track | Architecture Specification |
+| 14 | 100% E2E Pass & Zero Collateral Verification | Passing full E2E suite, zero regressions in existing tests, `tsc --noEmit` code 0, `npm run build` code 0 | M4 (Final Milestone) | ORIGINAL_REQUEST §R4 |
+| 15 | Adversarial Coverage Hardening (Tier 5) & Forensic Audit | White-box adversarial testing and forensic integrity verification confirming zero mock/hardcode shortcuts | M4 (Final Milestone) | Orchestration Standard |
+
+---
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: PostgreSQL Schema & Express Backend Integration | `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, `fix_db.sql`, `backend-api/src/routes/crm.js`, `src/services/crmApi.ts` | none | DONE |
-| 2 | M2: Staff User Provisioning & Instant Role Assignment UI | `src/pages/crm/RoleManagement.tsx`, Add Staff Modal, Credentials Modal, Create Role Staff Assignment | M1 | DONE |
-| 3 | M3: Full-Stack Enterprise Task Management | `src/pages/crm/Tasks.tsx`, Kanban/Table views, lifecycle transitions, proof submission, manager approvals, metrics | M1, M2 | DONE |
-| 4 | M4: E2E Verification, Clean Build & Adversarial Hardening | E2E test suite passing, `tsc --noEmit` exits 0, Forensic Integrity Audit CLEAN | M1, M2, M3 | DONE |
+| M1 | Route Architecture & Isolation | `src/config/routes.ts`, `src/App.tsx`, legacy redirect engine, URL parameter & search param preservation | None | **DONE** |
+| M2 | Navigation Shells & Suite Switcher | `SuiteSwitcher.tsx`, `AppLayout.tsx`, `AppSidebar.tsx`, dedicated sidebars, adaptive mobile bottom dock | M1 | **IN_PROGRESS** |
+| M3 | Dual Onboarding & Entry Routing | `src/pages/Auth.tsx`, suite preference selection, `resolvePostLoginRoute`, deep link handling for `/` and `/app` | M1, M2 | PLANNED |
+| M4 | Final Milestone & Verification | 100% E2E test pass (Tiers 1-4), Tier 5 adversarial tests, full `tsc --noEmit`, Vitest pass, `npm run build`, forensic audit | M1, M2, M3, E2E Track | PLANNED |
+| E2E | E2E Testing Track | Independent opaque-box test harness and test suites across Tiers 1-4, publishing `TEST_READY.md` | M1 (Route contracts) | **DONE** |
+
+---
 
 ## Interface Contracts
 
-### Backend API: `POST /api/crm/staff/provision`
-- **Request Body**:
-  ```json
-  {
-    "full_name": "string",
-    "email": "string",
-    "phone": "string (optional)",
-    "password": "string",
-    "store_role": "salesman | cashier | manager | staff",
-    "crm_role_id": "UUID (optional)"
-  }
-  ```
-- **Response** (HTTP 201):
-  ```json
-  {
-    "user": {
-      "id": "UUID",
-      "email": "string",
-      "full_name": "string",
-      "phone": "string",
-      "store_role": "string",
-      "crm_role_id": "UUID | null",
-      "crm_role_name": "string | null",
-      "crm_role_color": "string | null"
-    },
-    "credentials": {
-      "email": "string",
-      "password": "string"
-    }
-  }
+### Suite Switcher & State Management
+- `localStorage` key: `"credsmart_active_suite"` (`"billing"` | `"crm"`)
+- `localStorage` key: `"credsmart_suite_preference"` (`"billing"` | `"crm"` | `"both"`)
+- Custom Window Event: `window.dispatchEvent(new CustomEvent("credsmart:suite_changed", { detail: { suite: "billing" | "crm" } }))`
+- Hook: `useActiveSuite()`:
+  ```typescript
+  export type ActiveSuite = "billing" | "crm";
+  export function useActiveSuite(): {
+    activeSuite: ActiveSuite;
+    setActiveSuite: (suite: ActiveSuite) => void;
+    switchSuite: (suite: ActiveSuite) => void;
+    isBilling: boolean;
+    isCrm: boolean;
+  };
   ```
 
-### Backend API: `GET /api/crm/tasks`
-- **Query Params**: `status`, `priority`, `assigned_to`
-- **Response** (HTTP 200):
-  ```json
-  [
-    {
-      "id": "UUID",
-      "org_id": "UUID",
-      "title": "string",
-      "description": "string",
-      "assigned_to": "UUID",
-      "assigned_to_name": "string",
-      "assigned_to_avatar": "string",
-      "assigned_by": "UUID",
-      "creator_name": "string",
-      "due_date": "YYYY-MM-DD",
-      "status": "todo | in_progress | review | done",
-      "priority": "urgent | high | normal | low",
-      "requires_proof": true,
-      "proof_notes": "string | null",
-      "completed_at": "TIMESTAMPTZ | null",
-      "approved_by": "UUID | null",
-      "approver_name": "string | null",
-      "review_feedback": "string | null",
-      "created_at": "TIMESTAMPTZ",
-      "updated_at": "TIMESTAMPTZ"
-    }
-  ]
-  ```
+### Route Paths Contract (`src/config/routes.ts`)
+- POS & Billing Portal:
+  - Root: `/billing`
+  - Dashboard: `/billing/dashboard`
+  - POS Checkout: `/billing/checkout`
+  - Sales: `/billing/sales`
+  - Purchases: `/billing/purchases`
+  - Items / Catalog: `/billing/items`
+  - Parties / Customers: `/billing/parties`
+  - Other modules: `/billing/inventory`, `/billing/godown`, `/billing/barcode`, `/billing/cash-bank`, `/billing/expenses`, etc.
+- CRM Portal:
+  - Root / Command Center: `/crm` or `/crm/dashboard`
+  - Attendance: `/crm/attendance`
+  - Salary / Payroll: `/crm/salary`
+  - Tasks: `/crm/tasks`
+  - Roles & RBAC: `/crm/roles`
+  - Meetings: `/crm/meet`
+  - Broadcasts: `/crm/broadcasts`
+  - AI Assistant: `/crm/ai-assistant`
+  - Support: `/crm/support`
+- Legacy Redirects:
+  - `/pos` -> `/billing/checkout`
+  - `/dashboard` -> `/billing/dashboard`
+  - `/sales` -> `/billing/sales`
+  - `/purchases` -> `/billing/purchases`
+  - `/items` -> `/billing/items`
+  - `/customers` -> `/billing/customers`
+  - `/inventory` -> `/billing/inventory`
+  - `/suppliers` -> `/billing/suppliers`
+  - etc. (36 total paths)
 
-### Backend API: `PATCH /api/crm/tasks/:id`
-- **Request Body**:
-  ```json
-  {
-    "status": "todo | in_progress | review | done",
-    "proof_notes": "string (optional)",
-    "review_feedback": "string (optional)",
-    "title": "string (optional)",
-    "description": "string (optional)",
-    "priority": "string (optional)",
-    "due_date": "string (optional)",
-    "assigned_to": "string (optional)"
-  }
-  ```
-- **Response** (HTTP 200): Enriched task object.
+---
 
-## Code Layout
-- `backend-api/src/routes/crm.js` — Staff provisioning and task management Express routes
-- `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` — Idempotent migration for `staff_tasks`
-- `fix_db.sql` — Server target database alignment script
-- `src/services/crmApi.ts` — Frontend CRM API service methods
-- `src/pages/crm/RoleManagement.tsx` — Staff provisioning, credentials confirmation & role assignment UI
-- `src/pages/crm/Tasks.tsx` — Enterprise Kanban & Table task management view
-- `src/test/crmStaffProvisioning.test.ts` — Staff provisioning unit & lifecycle tests
-- `src/test/crmTaskLifecycle.test.ts` — Task state machine & transitions tests
-- `src/test/crmStaffTasksIntegration.test.tsx` — Full integration tests with UI and mock API
+## Code Layout & File Boundaries
+- `src/config/routes.ts`: Owned exclusively by Milestone 1 Worker.
+- `src/App.tsx`: Owned by Milestone 1 Worker for route trees and legacy redirects; Milestone 3 Worker for entry routing.
+- `src/components/SuiteSwitcher.tsx`: Owned by Milestone 2 Worker.
+- `src/components/AppLayout.tsx`: Owned by Milestone 2 Worker.
+- `src/components/AppSidebar.tsx`: Owned by Milestone 2 Worker.
+- `src/pages/Auth.tsx`: Owned by Milestone 3 Worker.
+- `src/test/e2e/*`: Owned exclusively by E2E Testing Track.
+- **Strictly Protected (DO NOT TOUCH)**:
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+  - `src/components/SalesInvoiceModal.tsx`
+  - `src/components/invoices/mobile/AddItemModal.tsx`
+  - `src/components/invoices/mobile/SelectPartyModal.tsx`
+  - `src/components/invoices/mobile/EditItemModal.tsx`

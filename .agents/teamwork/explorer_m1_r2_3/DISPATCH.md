@@ -1,13 +1,26 @@
-## 2026-10-17T09:29:23Z
-You are explorer_m1_r2_3 for CRM Phase 2 Milestone 1 Iteration 2.
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_r2_3
+# Dispatch: Explorer M1 (Retry 2.3) — Shell & Navigation Cashier Filtering Audit
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
-Also read challenger_m1_1's failure handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md and inspect src/test/crmAttendanceMigrationStress.test.ts.
+## Mission
+Audit navigation shells (`src/components/AppSidebar.tsx`, `src/components/AppLayout.tsx`, mobile dock) under cashier role constraints when CRM subroutes are blocked, ensuring clean menu rendering, zero broken links, and zero runtime errors.
 
-Task:
-Analyze the stress test suite src/test/crmAttendanceMigrationStress.test.ts.
-Identify what tests in crmAttendanceMigrationStress.test.ts will need to be updated so that once CHECK constraints are added, the test suite asserts their presence and confirms they pass 100%.
+## Source of Truth & Evidence
+- Challenger 2 Full Evidence Report: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_decouple_2\handoff.md`
+- Gate Status: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_decouple\GATE_STATUS.md`
+- Project Scope: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
 
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_r2_3\analysis.md and deliver handoff.md. Then send a brief message back.
+## Your Working Directory
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_r2_3`
+
+## Specific Investigation Tasks
+1. Inspect `src/components/AppSidebar.tsx`: analyze how `filterNavRoutesForRole` filters navigation items for `cashier`.
+2. Confirm that when all CRM subroutes and settings subroutes are added to `RESTRICTED_ROUTES_FOR_CASHIER`, the cashier sidebar renders only allowed billing items (POS, items, sales, customers) without rendering empty menu categories or broken headers.
+3. Verify that the mobile bottom dock for cashiers contains strictly POS checkout, sales, and allowed tools.
+4. Prepare specific recommendations for Milestone 2 navigation decoupling.
+
+## Handoff Requirements
+Write report to `handoff.md` in your working directory and notify parent via `send_message`.
+
+
+## 2026-10-23T22:57:47Z
+Audit navigation shells and sidebars (`AppSidebar.tsx`, `AppLayout.tsx`, mobile dock) under cashier role constraints when CRM subroutes are blocked, ensuring clean menu rendering and preparing recommendations for Milestone 2.
+Write report to handoff.md and report completion back to parent via send_message.

@@ -1056,3 +1056,51 @@ All staff provisioning and task lifecycle operations must run through authentica
 - [ ] Owners/managers can approve tasks in Review to transition them to Done (recording completed_at and approved_by) or request revisions.
 - [ ] Task metrics (Total, In Progress, Review, Completed, Completion Rate) calculate accurately from backend data.
 - [ ] Frontend build passes cleanly (`npm run build`) with zero TypeScript errors.
+
+
+## 2026-10-23T21:58:59Z
+
+Architecturally and visually decouple CredSmart into two distinct core product offerings: (1) CredSmart POS & Billing (`/billing/*`) and (2) CredSmart CRM (`/crm/*`), providing route-isolated portals, dedicated navigation shells, independent sidebars, separate onboarding entry points, and an intuitive top-level Suite Switcher, while preserving 100% backwards compatibility and sharing a unified authentication and organization layer.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. Route Architecture & Isolation: POS & Billing (`/billing/*`) and CRM (`/crm/*`)
+Restructure application routing so that POS & Billing features live strictly under `/billing/*` (dashboard, POS terminal, sales, purchases, inventory, godown, barcode, parties, accounting, e-invoicing, reports, settings) and CRM features live strictly under `/crm/*` (dashboard, attendance, salary/payroll, tasks, role management, meetings, broadcasts, AI assistant, support). Ensure all legacy routes (e.g. `/pos`, `/sales`, `/items`, `/dashboard`) seamlessly redirect to their new `/billing/*` destinations with zero broken links.
+
+### R2. Dedicated Navigation Shells & Suite Switcher
+Create dedicated layout shells for each product portal:
+- A dedicated POS & Billing sidebar containing only billing, inventory, POS, and accounting tools.
+- A dedicated CRM sidebar containing only CRM submodules (attendance, tasks, salary, staff roles, broadcasts, meet, etc.).
+- A high-visibility Suite Switcher / App Launcher in the top navigation header enabling instant switching between "CredSmart POS & Billing" and "CredSmart CRM", with badge indicators and state persistence (`credsmart_active_suite`).
+
+### R3. Dual Portal Onboarding & Post-Login Entry Routing
+Enhance post-authentication routing and onboarding so business owners can designate their primary operational hub ("POS & Billing" vs "CRM" vs "Both"). The app automatically directs users to their chosen or last-active suite upon login, with direct deep-linking support for each portal.
+
+### R4. Zero-Collateral Code Integrity & Verification
+All existing POS billing algorithms, thermal invoice printing, GST calculation engines, modal workflows, and CRM database synchronization must remain completely invariant. Verify with full TypeScript compilation (`tsc --noEmit`), automated test suites, and clean production build (`npm run build`).
+
+## Acceptance Criteria
+
+### Route Isolation & Redirection
+- [ ] Navigating to `/billing` loads the dedicated POS & Billing portal and dashboard.
+- [ ] Navigating to `/crm` loads the dedicated CRM portal and command center.
+- [ ] Legacy routes (e.g., `/pos`, `/sales`, `/inventory`, `/customers`, `/dashboard`) automatically redirect to `/billing/*` without 404s.
+- [ ] Mobile bottom navigation and quick-create drawers dynamically adapt depending on whether the user is in POS & Billing or CRM.
+
+### Navigation Shells & Suite Switcher
+- [ ] POS & Billing sidebar displays only billing, inventory, sales, purchases, reports, and store settings (no CRM clutter).
+- [ ] CRM sidebar displays only CRM submodules: Dashboard, Attendance, Tasks, Payroll, Roles, Meetings, Broadcasts, AI Assistant, Support (no billing clutter).
+- [ ] An interactive Suite Switcher in the top header allows instant switching between "POS & Billing" and "CRM".
+- [ ] Active suite selection persists across sessions in `localStorage` (`credsmart_active_suite`).
+
+### Onboarding & Entry Routing
+- [ ] Onboarding includes suite selection preference for new organizations.
+- [ ] Authenticated users entering the root path `/` or `/app` are intelligently routed to their preferred or last-active portal.
+
+### Build & Test Integrity
+- [ ] TypeScript compilation (`tsc --noEmit`) passes with 0 errors.
+- [ ] Vitest test suites across CRM, Billing, and RBAC pass with 100% success rate.
+- [ ] `npm run build` generates clean production assets with zero errors.

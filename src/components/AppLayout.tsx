@@ -29,7 +29,17 @@ import {
   FileText,
   FileSpreadsheet,
   CreditCard,
+  CalendarCheck,
+  CheckSquare,
+  Wallet,
+  Video,
+  Radio,
+  Bot,
+  LifeBuoy,
+  Shield,
 } from "lucide-react";
+import { SuiteSwitcher } from "@/components/SuiteSwitcher";
+import { useActiveSuite } from "@/hooks/useActiveSuite";
 import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
@@ -79,13 +89,76 @@ interface PageMeta {
 }
 
 function getPageMeta(pathname: string): PageMeta {
-  if (pathname === ROUTE_PATHS.dashboard || pathname === "/") {
+  // CRM Portal Routes
+  if (pathname === ROUTE_PATHS.crm || pathname === "/crm" || pathname === "/crm/dashboard") {
+    return {
+      title: "CRM Command Center",
+      subtitle: "Unified workforce, staff attendance, task boards, and company operations",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmAttendance || pathname === "/crm/attendance") {
+    return {
+      title: "Attendance & Geofence",
+      subtitle: "Real-time GPS geofenced clock-in, shift tracking, and daily rosters",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmSalary || pathname === "/crm/salary") {
+    return {
+      title: "Salary & Payroll Engine",
+      subtitle: "Staff compensation profiles, monthly payroll runs, advances, and payslips",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmTasks || pathname === "/crm/tasks") {
+    return {
+      title: "Enterprise Task Management",
+      subtitle: "Assign tasks, track Kanban stages, review proofs, and audit approvals",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmRoles || pathname === "/crm/roles") {
+    return {
+      title: "CRM Role & Permission Manager",
+      subtitle: "Configure custom roles, granular module permissions, and staff assignments",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmMeet || pathname === "/crm/meet") {
+    return {
+      title: "CredSmart Video Meet",
+      subtitle: "Host instant video huddles, team scrums, and multi-user conferences",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmBroadcasts || pathname === "/crm/broadcasts") {
+    return {
+      title: "Company Broadcasts",
+      subtitle: "Dispatch storewide announcements, urgent alerts, and workforce bulletins",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmAiAssistant || pathname === "/crm/ai-assistant") {
+    return {
+      title: "CRM AI Assistant",
+      subtitle: "Conversational business intelligence, policy queries, and automated workflows",
+    };
+  }
+  if (pathname === ROUTE_PATHS.crmSupport || pathname === "/crm/support") {
+    return {
+      title: "Support & Helpdesk",
+      subtitle: "Internal workforce ticketing, bug tracking, and staff technical support",
+    };
+  }
+
+  // POS & Billing Portal Routes
+  if (
+    pathname === ROUTE_PATHS.billing ||
+    pathname === ROUTE_PATHS.dashboard ||
+    pathname === "/billing" ||
+    pathname === "/billing/dashboard" ||
+    pathname === "/"
+  ) {
     return {
       title: "Dashboard",
       subtitle: "Real-time store overview, key metrics, and daily performance",
     };
   }
-  if (pathname === ROUTE_PATHS.checkout) {
+  if (pathname === ROUTE_PATHS.checkout || pathname === ROUTE_PATHS.pos) {
     return {
       title: "POS Billing & Checkout",
       subtitle: "Fast checkout, barcode scan & instant invoice generation",
@@ -95,6 +168,18 @@ function getPageMeta(pathname: string): PageMeta {
     return {
       title: "Parties & SharedLedger Hub",
       subtitle: "Customers, suppliers, balances, and real-time SharedLedger synchronization",
+    };
+  }
+  if (pathname === ROUTE_PATHS.customers) {
+    return {
+      title: "Customer Ledger (Udhar Khata)",
+      subtitle: "Track credit balances, customer khata, and payment receipts",
+    };
+  }
+  if (pathname === ROUTE_PATHS.suppliers) {
+    return {
+      title: "Supplier Ledger & Payables",
+      subtitle: "Manage vendor accounts, purchase bills, and pending payouts",
     };
   }
   if (pathname === ROUTE_PATHS.items) {
@@ -139,6 +224,12 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Vendor purchases, inward items, debit notes, and payment out",
     };
   }
+  if (pathname === ROUTE_PATHS.purchaseReturns) {
+    return {
+      title: "Purchase Returns & Debit Notes",
+      subtitle: "Manage inward returns, debit vouchers, and vendor refunds",
+    };
+  }
   if (pathname === ROUTE_PATHS.discovery) {
     return {
       title: "Verified B2B Vendor Discovery",
@@ -173,6 +264,12 @@ function getPageMeta(pathname: string): PageMeta {
     return {
       title: "E-Invoicing & E-Way Bills",
       subtitle: "Government IRP IRN generation and instant NIC e-way bill synchronization",
+    };
+  }
+  if (pathname === ROUTE_PATHS.ewayBill) {
+    return {
+      title: "E-Way Bills Portal",
+      subtitle: "Consignment tracking, distance validation, and e-way bill generation",
     };
   }
   if (pathname === ROUTE_PATHS.automatedBills) {
@@ -211,21 +308,22 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Configure thermal printer, barcode hardware, and digital scales",
     };
   }
-  if (pathname === ROUTE_PATHS.crmRoles || pathname === "/crm/roles") {
+  if (pathname === ROUTE_PATHS.tallyImport) {
     return {
-      title: "CRM Role & Permission Manager",
-      subtitle: "Configure custom roles, granular module permissions, and staff assignments",
+      title: "Auto Import (Tally / Excel)",
+      subtitle: "Synchronize vouchers, ledgers, inventory, and opening balances",
     };
   }
-  if (pathname === ROUTE_PATHS.crm || pathname === "/crm" || pathname.startsWith("/crm/")) {
+
+  if (pathname.startsWith("/crm")) {
     return {
-      title: "CRM Command Center",
-      subtitle: "Unified customer relations, team attendance, tasks, and communications",
+      title: "CredSmart CRM",
+      subtitle: "Enterprise Workforce & Operations Platform",
     };
   }
 
   return {
-    title: "CredSmart POS",
+    title: "CredSmart POS & Billing",
     subtitle: "Enterprise Retail Management System",
   };
 }
@@ -301,7 +399,11 @@ export default function AppLayout() {
   const [createPartyModalOpen, setCreatePartyModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newInvoiceMenuOpen, setNewInvoiceMenuOpen] = useState(false);
+  const [crmActionMenuOpen, setCrmActionMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const { activeSuite, isCrm } = useActiveSuite();
+  const isCrmSuite = isCrm || location.pathname.startsWith("/crm");
 
   const { title, subtitle } = getPageMeta(location.pathname);
   const isPosRoute =
@@ -375,11 +477,11 @@ export default function AppLayout() {
       {!isPosRoute && (
         <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
 
-            {/* LEFT: Logo + Dropdown Arrow (permanent, always visible) */}
+            {/* LEFT: Logo + Dropdown Arrow + Suite Switcher */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
               <NavLink
-                to={ROUTE_PATHS.dashboard}
-                title="CredSmart Dashboard"
+                to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
+                title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
                 className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
               >
                 <img
@@ -410,6 +512,15 @@ export default function AppLayout() {
                   )}
                 />
               </button>
+
+              {/* Top-Level Interactive Suite Switcher */}
+              {userRole !== "cashier" && (
+                <SuiteSwitcher
+                  onSuiteChange={(newSuite) => {
+                    navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
+                  }}
+                />
+              )}
             </div>
 
             {/* SEPARATOR */}
@@ -452,70 +563,169 @@ export default function AppLayout() {
                 <Search className="w-3.5 h-3.5" />
               </button>
 
-              {/* Auto Import Tally button (Desktop & Tablet only - hidden on mobile to prevent overflow) */}
-              <button
-                type="button"
-                onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-                className="hidden sm:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
-                title="Auto Search Tally Folder & Import All Data"
-              >
-                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Auto Import Tally</span>
-              </button>
+              {/* Auto Import Tally button (Desktop & Tablet only - hidden on mobile to prevent overflow) — Visible only in POS & Billing suite */}
+              {!isCrmSuite && (
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+                  className="hidden sm:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
+                  title="Auto Search Tally Folder & Import All Data"
+                >
+                  <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Auto Import Tally</span>
+                </button>
+              )}
 
-              {/* New Invoice split button */}
-              <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setSalesInvoiceModalOpen(true)}
-                    className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
-                  >
-                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-                    <span className="hidden sm:inline">New Invoice</span>
-                    <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Bill</span>
-                  </button>
-                  <DropdownMenuTrigger asChild>
+              {/* Action Split Button — Adaptive for Billing vs CRM */}
+              {!isCrmSuite ? (
+                /* Billing Suite: New Invoice split button */
+                <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
+                  <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
                     <button
                       type="button"
-                      className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
-                      aria-label="More creation options"
+                      onClick={() => setSalesInvoiceModalOpen(true)}
+                      className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
                     >
-                      <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+                      <span className="hidden sm:inline">New Invoice</span>
+                      <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Bill</span>
                     </button>
-                  </DropdownMenuTrigger>
-                </div>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
-                  <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-[#1F1C5C]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewInvoiceMenuOpen(false);
-                        setQuickCreateModalOpen(true);
-                      }}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-200 dark:border-indigo-700/40 cursor-pointer hover-3d-glow"
-                    >
-                      <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /><span>All Creation Options</span></div>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-mono font-bold uppercase">Hub</span>
-                    </button>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                        aria-label="More creation options"
+                      >
+                        <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
                   </div>
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><UserPlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><PackagePlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-800 dark:hover:text-amber-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-800 dark:hover:text-cyan-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileText className="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 rounded-xl cursor-pointer font-semibold hover-3d-glow"><ShoppingCart className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                    <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-[#1F1C5C]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewInvoiceMenuOpen(false);
+                          setQuickCreateModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-200 dark:border-indigo-700/40 cursor-pointer hover-3d-glow"
+                      >
+                        <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /><span>All Creation Options</span></div>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-mono font-bold uppercase">Hub</span>
+                      </button>
+                    </div>
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><UserPlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><PackagePlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-800 dark:hover:text-amber-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-800 dark:hover:text-cyan-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileText className="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 rounded-xl cursor-pointer font-semibold hover-3d-glow"><ShoppingCart className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                /* CRM Suite: CRM Quick Action split button */
+                <DropdownMenu open={crmActionMenuOpen} onOpenChange={setCrmActionMenuOpen}>
+                  <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 overflow-hidden hover:brightness-105 transition-all">
+                    <button
+                      type="button"
+                      onClick={() => navigate(ROUTE_PATHS.crmTasks)}
+                      className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                      title="Create New CRM Task"
+                    >
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+                      <span className="hidden sm:inline">Quick Action</span>
+                      <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Action</span>
+                    </button>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                        aria-label="More CRM actions"
+                      >
+                        <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                  </div>
+                  <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">
+                      WORKFORCE & OPERATIONS
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAttendance); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <CalendarCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Clock In / Attendance</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmTasks); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-xl cursor-pointer font-semibold"
+                    >
+                      <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span>+ Create Staff Task</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSalary); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <Wallet className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Run Payroll / Payslips</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
+                      COMMUNICATIONS
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmMeet); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <Video className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <span>Start Video Meet</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmBroadcasts); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <Radio className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>Post Broadcast Alert</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAiAssistant); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <Bot className="w-4 h-4 text-purple-500 shrink-0" />
+                      <span>CRM AI Assistant</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
+                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
+                      GOVERNANCE
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmRoles); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Staff Roles &amp; Permissions</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSupport); }}
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                    >
+                      <LifeBuoy className="w-4 h-4 text-cyan-500 shrink-0" />
+                      <span>Support &amp; Helpdesk</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               {/* Bell (Desktop & Tablet) */}
               <button
@@ -736,6 +946,7 @@ export default function AppLayout() {
         <AppSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          activeSuite={isCrmSuite ? "crm" : "billing"}
         />
 
         {/* Main Content Viewport Wrapper for 3D Effect */}

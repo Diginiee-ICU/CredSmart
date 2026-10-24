@@ -12,7 +12,8 @@ import { seedProductsByBusinessType } from "@/data/seed-products";
 import { WebsiteProductImport } from "@/components/WebsiteProductImport";
 import { productsApi } from "@/services/productsApi";
 import { settingsApi } from "@/services/settingsApi";
-import { ROUTE_PATHS } from "@/config/routes";
+import { ROUTE_PATHS, SuitePreference, resolvePostLoginRoute, completeOnboardingSuiteSetup } from "@/config/routes";
+import { OnboardingSuiteSelector } from "@/components/OnboardingSuiteSelector";
 import { useOrganization, getPendingOnboarding, setPendingOnboarding, clearPendingOnboarding, PendingOnboardingData } from "@/hooks/useOrganization";
 import {
   Dialog,
@@ -75,6 +76,7 @@ export default function Auth() {
   const [ifsc, setIfsc] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [upiId, setUpiId] = useState("");
+  const [suitePreference, setSuitePreference] = useState<SuitePreference>("both");
 
   // Password reset state
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -109,7 +111,7 @@ export default function Auth() {
       const { data: memberships } = await settingsApi.getMemberships(undefined, data.user.id);
       const membership = memberships && memberships.length > 0 ? memberships[0] : null;
 
-      const targetRoute = membership?.role === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard;
+      const targetRoute = resolvePostLoginRoute(membership?.role);
       navigate(targetRoute);
     } catch (setupErr) {
       toast({
@@ -167,6 +169,7 @@ export default function Auth() {
     email: email.trim(),
     storeName: storeName.trim(),
     businessType,
+    suitePreference,
     storeAddress: storeAddress.trim(),
     storePhone: storePhone.trim(),
     storeEmail: (storeEmail || email).trim(),
@@ -308,6 +311,10 @@ export default function Auth() {
     const payload = getPendingOnboarding();
     if (!payload) return;
 
+    if (payload.suitePreference) {
+      completeOnboardingSuiteSetup(payload.suitePreference);
+    }
+
     const { data: memberships } = await settingsApi.getMemberships(undefined, userId);
     const membership = memberships && memberships.length > 0 ? memberships[0] : null;
 
@@ -410,9 +417,11 @@ export default function Auth() {
 
       try {
         const logoUrl = await uploadLogo(data.user.id);
+        completeOnboardingSuiteSetup(suitePreference);
         await completePendingOnboarding(data.user.id, logoUrl);
         await refreshOrganization();
-        navigate(ROUTE_PATHS.dashboard);
+        const targetRoute = suitePreference === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard;
+        navigate(targetRoute);
       } catch (setupErr) {
         console.error("Onboarding setup failed:", setupErr);
         toast({
@@ -601,6 +610,12 @@ export default function Auth() {
                   ))}
                 </div>
               </div>
+
+              {/* Primary Operational Hub / Suite Preference */}
+              <OnboardingSuiteSelector
+                value={suitePreference}
+                onChange={setSuitePreference}
+              />
 
               <div className="relative">
                 <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-muted-foreground" />
