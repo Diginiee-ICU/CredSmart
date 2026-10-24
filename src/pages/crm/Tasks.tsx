@@ -541,13 +541,13 @@ export default function Tasks(): React.ReactElement {
           )}
           <div className="flex items-center gap-1.5 pt-0.5">
             {row.requires_proof && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
                 <FileCheck className="w-2.5 h-2.5" />
                 Proof Required
               </span>
             )}
             {row.review_feedback && row.status === "in_progress" && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
                 <AlertCircle className="w-2.5 h-2.5" />
                 Revision
               </span>
@@ -574,7 +574,7 @@ export default function Tasks(): React.ReactElement {
       header: "Assignee",
       accessor: (row) => (
         <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
-          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold">
+          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold">
             {row.assignee_name ? row.assignee_name.charAt(0).toUpperCase() : "U"}
           </div>
           <span>{row.assignee_name}</span>
@@ -879,7 +879,7 @@ export default function Tasks(): React.ReactElement {
                       <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
                         {col.label}
                       </span>
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold font-mono bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold font-mono bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {colTasks.length}
                       </span>
                     </div>
@@ -916,7 +916,7 @@ export default function Tasks(): React.ReactElement {
                               {/* Proof Required Badge */}
                               {task.requires_proof && (
                                 <div className="flex items-center gap-1">
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
                                     <FileCheck className="w-3 h-3 text-indigo-500" />
                                     Requires Proof
                                   </span>
@@ -937,7 +937,7 @@ export default function Tasks(): React.ReactElement {
                               {/* Submitted Proof Notes Display */}
                               {task.proof_notes && (
                                 <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
-                                  <span className="font-semibold text-slate-700 dark:text-slate-200 text-[10px] uppercase tracking-wider block">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200 text-[11px] uppercase tracking-wider block">
                                     Submitted Proof:
                                   </span>
                                   <p className="leading-snug line-clamp-3">{task.proof_notes}</p>
@@ -946,7 +946,7 @@ export default function Tasks(): React.ReactElement {
 
                               {/* Completed Timestamp & Approver */}
                               {task.status === "done" && (
-                                <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
+                                <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
                                   <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
                                   <span>
                                     Completed
@@ -958,14 +958,14 @@ export default function Tasks(): React.ReactElement {
 
                               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
                                 <div className="flex items-center gap-1.5 truncate max-w-[120px]">
-                                  <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-700 dark:text-slate-300">
+                                  <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:text-slate-300">
                                     {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : "U"}
                                   </div>
                                   <span className="font-medium truncate">{task.assignee_name}</span>
                                 </div>
                                 <div
                                   className={cn(
-                                    "flex items-center gap-1 font-mono tabular-nums text-[10px]",
+                                    "flex items-center gap-1 font-mono tabular-nums text-[11px]",
                                     isOverdue ? "text-rose-600 font-bold" : "text-slate-400"
                                   )}
                                 >
@@ -1120,7 +1120,7 @@ export default function Tasks(): React.ReactElement {
                     Assignee
                   </label>
                   {staffList.length > 0 && (
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[11px] text-slate-400">
                       {staffList.length} staff member{staffList.length > 1 ? "s" : ""} available
                     </span>
                   )}
@@ -1145,16 +1145,16 @@ export default function Tasks(): React.ReactElement {
                       {staffList.map((staff) => (
                         <SelectItem key={staff.id} value={staff.id}>
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold flex items-center justify-center">
+                            <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-[11px] font-bold flex items-center justify-center">
                               {staff.name.charAt(0)}
                             </div>
                             <span className="font-medium">{staff.name}</span>
                             {staff.role && (
-                              <span className="text-[10px] text-slate-400">({staff.role})</span>
+                              <span className="text-[11px] text-slate-400">({staff.role})</span>
                             )}
                             {staff.crmRole && (
                               <span
-                                className="text-[9px] px-1.5 py-0.2 rounded font-semibold text-white ml-auto"
+                                className="text-[11px] px-1.5 py-0.2 rounded font-semibold text-white ml-auto"
                                 style={{ backgroundColor: staff.crmRoleColor || "#1D4ED8" }}
                               >
                                 {staff.crmRole}

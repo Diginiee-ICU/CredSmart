@@ -475,7 +475,7 @@ export default function Customers() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans bg-slate-50/50 dark:bg-slate-950/50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -484,7 +484,7 @@ export default function Customers() {
               <Users2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
               Customer Directory
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>CRM &amp; KHATA</span>
             </span>
@@ -506,7 +506,7 @@ export default function Customers() {
           </Button>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Customer</span>
@@ -517,7 +517,7 @@ export default function Customers() {
       {/* Mobile Compact 3-Col KPI Mini Strip (Mobile Only) */}
       <div className="grid grid-cols-3 sm:hidden gap-1.5 shrink-0">
         <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
-          <span className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
             Customers
           </span>
           <p className="text-xs font-black text-foreground font-mono tracking-tight truncate mt-0.5">
@@ -526,7 +526,7 @@ export default function Customers() {
         </div>
 
         <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
-          <span className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
             Receivables
           </span>
           <p className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight truncate mt-0.5">
@@ -535,7 +535,7 @@ export default function Customers() {
         </div>
 
         <div className="p-1.5 rounded-xl border border-border/70 bg-card/90 select-none text-center">
-          <span className="text-[8.5px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
             Due Count
           </span>
           <p className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight truncate mt-0.5">
@@ -547,25 +547,25 @@ export default function Customers() {
       {/* Stats Cards - 3D Frosted Glass (Tablet / Desktop) */}
       <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
         {/* Total Customers */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">Total Customers</span>
+            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">Total Customers</span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
               <Users2 className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-1 sm:mt-3">
             <p className="text-sm sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono truncate">{customers.length}</p>
-            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">Active customer profiles</p>
+            
           </div>
         </div>
 
         {/* Total Outstanding Credit */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 via-red-500 to-rose-700 rounded-l-2xl shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-rose-500" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">Receivables</span>
+            <span className="text-[11px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate">Receivables</span>
             <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hidden sm:flex">
               <IndianRupee className="w-4 h-4" />
             </div>
@@ -574,15 +574,15 @@ export default function Customers() {
             <p className="text-sm sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono truncate">
               ₹{totalOutstandingCredit.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </p>
-            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">Pending payments to collect</p>
+            
           </div>
         </div>
 
         {/* Customers with Balance */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">With Balance Due</span>
+            <span className="text-[11px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate">With Balance Due</span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hidden sm:flex">
               <CreditCard className="w-4 h-4" />
             </div>
@@ -590,7 +590,7 @@ export default function Customers() {
           <div className="mt-1 sm:mt-3">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               <p className="text-sm sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{customersWithDue}</p>
-              <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">/ {customers.length} total</span>
+              <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">/ {customers.length} total</span>
             </div>
             <p className="hidden sm:block text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
               {customers.length > 0 ? `${Math.round((customersWithDue / customers.length) * 100)}% have debit balance` : "No debit balance"}
@@ -642,7 +642,7 @@ export default function Customers() {
                 {f.label}
                 <span
                   className={cn(
-                    "text-[9px] px-1 py-0.2 rounded-full",
+                    "text-[11px] px-1 py-0.2 rounded-full",
                     creditFilter === f.id ? "bg-white/20 text-white font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -731,7 +731,7 @@ export default function Customers() {
                           <div className="min-w-0">
                             <p className="font-bold text-xs text-foreground truncate">{c.name}</p>
                             {c.phone && (
-                              <p className="text-[10px] text-muted-foreground font-mono truncate">
+                              <p className="text-[11px] text-muted-foreground font-mono truncate">
                                 {c.phone}
                               </p>
                             )}
@@ -741,7 +741,7 @@ export default function Customers() {
                         {/* Balance Badge */}
                         <span
                           className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 font-mono",
+                            "px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 font-mono",
                             hasDue
                               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
@@ -754,7 +754,7 @@ export default function Customers() {
                       {/* Line 2: Actions row */}
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 gap-1">
                         <button
-                          className="h-6 px-2 text-[10.5px] font-bold gap-1 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-lg flex items-center active:scale-95 transition-all cursor-pointer"
+                          className="h-6 px-2 text-[11px] font-bold gap-1 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-lg flex items-center active:scale-95 transition-all cursor-pointer"
                           onClick={() => navigate(`/customers/${c.id}/ledger`)}
                         >
                           <FileText className="w-3 h-3" />
@@ -797,10 +797,10 @@ export default function Customers() {
                         <div className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20 mt-1">
                           <span className="text-[11px] font-medium text-destructive">Delete customer?</span>
                           <div className="flex gap-1.5">
-                            <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(c.id)}>
+                            <Button variant="destructive" size="sm" className="h-6 text-[11px] px-2" onClick={() => handleDelete(c.id)}>
                               Delete
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setDeleteConfirm(null)}>
+                            <Button variant="ghost" size="sm" className="h-6 text-[11px] px-2" onClick={() => setDeleteConfirm(null)}>
                               Cancel
                             </Button>
                           </div>
@@ -928,7 +928,7 @@ export default function Customers() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <h3 className="text-base font-black text-foreground">{activeCust.name}</h3>
-                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-muted-foreground font-semibold">
+                                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-muted-foreground font-semibold">
                                   ID: {activeCust.id.slice(0, 8)}
                                 </span>
                               </div>
@@ -983,17 +983,17 @@ export default function Customers() {
                         {/* Balance Stats Row */}
                         <div className="grid grid-cols-3 gap-3">
                           <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Net Due Balance</p>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Net Due Balance</p>
                             <p className="text-lg font-black text-rose-700 dark:text-rose-300 mt-0.5">₹{activeCust.balance.toFixed(2)}</p>
                           </div>
                           <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Status</p>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Status</p>
                             <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
                               {hasDue ? "Payment Due" : "Settled (All Clear)"}
                             </p>
                           </div>
                           <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Joined On</p>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Joined On</p>
                             <p className="text-xs font-semibold text-foreground mt-1.5">
                               {new Date(activeCust.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                             </p>
@@ -1042,7 +1042,7 @@ export default function Customers() {
                                         {new Date(tx.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                                       </td>
                                       <td className="py-2 px-3 font-semibold">
-                                        <span className={cn("px-1.5 py-0.5 rounded text-[10px] uppercase font-bold", tx.type === "credit" ? "bg-rose-100 dark:bg-rose-950/50 text-rose-600" : "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600")}>
+                                        <span className={cn("px-1.5 py-0.5 rounded text-[11px] uppercase font-bold", tx.type === "credit" ? "bg-rose-100 dark:bg-rose-950/50 text-rose-600" : "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600")}>
                                           {tx.type === "credit" ? "Debit / Sale" : "Payment Received"}
                                         </span>
                                       </td>
@@ -1292,7 +1292,7 @@ export default function Customers() {
                     <Building2 className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-foreground">Live MCA Company Search (3M+ Indian Companies)</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                  <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
                     Auto-fills Name & Address
                   </span>
                 </div>
@@ -1327,7 +1327,7 @@ export default function Customers() {
                       <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
                       Tally Search
                     </button>
-                    <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
+                    <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
                       Official Tally Live Engine
                     </span>
                   </div>
@@ -1557,7 +1557,7 @@ export default function Customers() {
                         <div>
                           <span
                             className={cn(
-                              "font-bold px-2 py-0.5 rounded-full text-[10px]",
+                              "font-bold px-2 py-0.5 rounded-full text-[11px]",
                               t.type === "credit"
                                 ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                                 : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -1566,7 +1566,7 @@ export default function Customers() {
                             {t.type === "credit" ? "Credit Given" : "Payment Received"}
                           </span>
                           {t.description && <p className="text-muted-foreground mt-1 font-medium">{t.description}</p>}
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             {new Date(t.created_at).toLocaleDateString("en-IN", {
                               day: "numeric",
                               month: "short",

@@ -723,7 +723,7 @@ setSortDirection("asc");
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Parties Directory</h1>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
                   {parties.length} Total
                 </span>
               </div>
@@ -764,7 +764,7 @@ setSortDirection("asc");
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Reconcile Hub</span>
-            <span className="bg-emerald-600 text-white text-[9px] font-mono px-1.5 py-0.2 rounded font-bold">
+            <span className="bg-emerald-600 text-white text-[11px] font-mono px-1.5 py-0.2 rounded font-bold">
               {auditResult?.integrityScore ?? 100}%
             </span>
           </Button>
@@ -898,9 +898,9 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-blue-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-blue-600">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
               Total Parties
             </span>
             <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0 hidden sm:flex">
@@ -910,7 +910,7 @@ setSortDirection("asc");
           <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight mt-0.5">
             {totalPartiesCount}
           </p>
-          <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
             <span>{parties.filter((p) => p.partyType === "customer").length} Cust</span>
             <span>·</span>
             <span>{parties.filter((p) => p.partyType === "supplier").length} Supp</span>
@@ -918,9 +918,9 @@ setSortDirection("asc");
         </div>
 
         {/* Card 2: To Collect (Dr) Emerald */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-emerald-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-emerald-500">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
               To Collect (Dr)
             </span>
             <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0 hidden sm:flex">
@@ -930,15 +930,15 @@ setSortDirection("asc");
           <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight truncate mt-0.5">
             ₹ {toCollectTotal.toLocaleString("en-IN")}
           </p>
-          <p className="hidden sm:block text-[10px] text-emerald-700/80 dark:text-emerald-400/80 font-mono mt-0.5">
+          <p className="hidden sm:block text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-mono mt-0.5">
             From {parties.filter((p) => p.balance > 0).length} customer ledgers
           </p>
         </div>
 
         {/* Card 3: To Pay (Cr) Rose */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-l-2 border-l-rose-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-rose-500">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
               To Pay (Cr)
             </span>
             <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 shrink-0 hidden sm:flex">
@@ -948,7 +948,7 @@ setSortDirection("asc");
           <p className="text-base sm:text-2xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
             ₹ {toPayTotal.toLocaleString("en-IN")}
           </p>
-          <p className="hidden sm:block text-[10px] text-rose-700/80 dark:text-rose-400/80 font-mono mt-0.5">
+          <p className="hidden sm:block text-[11px] text-rose-700/80 dark:text-rose-400/80 font-mono mt-0.5">
             To {parties.filter((p) => p.balance < 0).length} supplier bills
           </p>
         </div>
@@ -970,7 +970,7 @@ setSortDirection("asc");
         >
           <span>All Parties</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "all" ? "bg-white/20 dark:bg-slate-900/20" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
           )}>
             {parties.length}
@@ -989,7 +989,7 @@ setSortDirection("asc");
         >
           <span>Customers</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "customer" ? "bg-emerald-700/60 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
           )}>
             {parties.filter((p) => p.partyType === "customer" || p.partyType === "both").length}
@@ -1008,7 +1008,7 @@ setSortDirection("asc");
         >
           <span>Suppliers</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "supplier" ? "bg-purple-700/60 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
           )}>
             {parties.filter((p) => p.partyType === "supplier" || p.partyType === "both").length}
@@ -1028,7 +1028,7 @@ setSortDirection("asc");
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
           <span>To Collect (Dr)</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "to_collect" ? "bg-emerald-700/60 text-white" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
           )}>
             {parties.filter((p) => p.balance > 0).length}
@@ -1048,7 +1048,7 @@ setSortDirection("asc");
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
           <span>To Pay (Cr)</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded text-[10px] font-mono",
+            "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "to_pay" ? "bg-rose-700/60 text-white" : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
           )}>
             {parties.filter((p) => p.balance < 0).length}
@@ -1130,7 +1130,7 @@ setSortDirection("asc");
               setEditingParty(null);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Create Party</span>
@@ -1261,15 +1261,15 @@ setSortDirection("asc");
                             <Zap className="w-3 h-3 text-emerald-500 fill-emerald-500 shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded text-[9.5px] font-mono">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded text-[11px] font-mono">
                             {party.category || "General"}
                           </span>
                           <span>•</span>
                           <span className="truncate">{party.city || party.state || "India"}</span>
                           <span>•</span>
                           <span className={cn(
-                            "font-bold font-mono uppercase text-[9px]",
+                            "font-bold font-mono uppercase text-[11px]",
                             isCustomer ? "text-emerald-600 dark:text-emerald-400" : isSupplier ? "text-purple-600 dark:text-purple-400" : "text-blue-600 dark:text-blue-400"
                           )}>
                             {party.partyType}
@@ -1286,7 +1286,7 @@ setSortDirection("asc");
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                             Dr · ₹{party.balance.toLocaleString("en-IN")}
                           </span>
-                          <span className="text-[9.5px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
                             To Collect
                           </span>
                         </div>
@@ -1296,7 +1296,7 @@ setSortDirection("asc");
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                             Cr · ₹{Math.abs(party.balance).toLocaleString("en-IN")}
                           </span>
-                          <span className="text-[9.5px] font-semibold text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+                          <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 font-mono mt-0.5">
                             To Pay
                           </span>
                         </div>
@@ -1436,7 +1436,7 @@ setSortDirection("asc");
         {/* DESKTOP VIEW: High-Density 36px Data Table (md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[680px]">
-            <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-mono text-[10.5px] uppercase tracking-wider z-10 select-none">
+            <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-mono text-[11px] uppercase tracking-wider z-10 select-none">
               <tr>
                 <th className="px-3 py-2 w-10 text-center">
                   <button
@@ -1563,7 +1563,7 @@ setSortDirection("asc");
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                               {party.tradeName && party.tradeName !== party.name && (
                                 <span>{party.tradeName} ·</span>
                               )}
@@ -1580,7 +1580,7 @@ setSortDirection("asc");
 
                       {/* Category */}
                       <td className="px-3 py-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
                           {party.category || "General"}
                         </span>
                       </td>
@@ -1622,17 +1622,17 @@ setSortDirection("asc");
                       {/* Party Type Badge */}
                       <td className="px-3 py-2">
                         {isCustomer && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 uppercase">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 uppercase">
                             Customer
                           </span>
                         )}
                         {isSupplier && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 uppercase">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 uppercase">
                             Supplier
                           </span>
                         )}
                         {isBoth && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 uppercase">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 uppercase">
                             Both
                           </span>
                         )}
@@ -1646,7 +1646,7 @@ setSortDirection("asc");
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                               Dr · ₹{party.balance.toLocaleString("en-IN")}
                             </span>
-                            <span className="text-[9.5px] font-medium text-emerald-600/90 dark:text-emerald-400/90 font-mono">
+                            <span className="text-[11px] font-medium text-emerald-600/90 dark:text-emerald-400/90 font-mono">
                               To Collect
                             </span>
                           </div>
@@ -1656,7 +1656,7 @@ setSortDirection("asc");
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                               Cr · ₹{Math.abs(party.balance).toLocaleString("en-IN")}
                             </span>
-                            <span className="text-[9.5px] font-medium text-rose-600/90 dark:text-rose-400/90 font-mono">
+                            <span className="text-[11px] font-medium text-rose-600/90 dark:text-rose-400/90 font-mono">
                               To Pay
                             </span>
                           </div>
@@ -1921,34 +1921,34 @@ setSortDirection("asc");
               {/* Stat Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl bg-card border border-border">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Audited Parties</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase">Audited Parties</span>
                   <p className="text-xl font-black text-foreground mt-0.5">{auditResult.totalPartiesAudited}</p>
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
                     {auditResult.reconciledPartiesCount} Verified Reconciled
                   </p>
                 </div>
                 <div className="p-3 rounded-xl bg-card border border-border">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Trial Balance</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase">Trial Balance</span>
                   <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                     {auditResult.trialBalance.isBalanced ? "Balanced ✓" : "Variance"}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     Diff: ₹{auditResult.trialBalance.netDifference.toFixed(2)}
                   </p>
                 </div>
                 <div className="p-3 rounded-xl bg-card border border-border">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Receivables</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase">Total Receivables</span>
                   <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
                     ₹{auditResult.totalReceivables.toLocaleString("en-IN")}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">To Collect (Dr)</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">To Collect (Dr)</p>
                 </div>
                 <div className="p-3 rounded-xl bg-card border border-border">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Payables</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase">Total Payables</span>
                   <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono">
                     ₹{auditResult.totalPayables.toLocaleString("en-IN")}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">To Pay (Cr)</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">To Pay (Cr)</p>
                 </div>
               </div>
 
@@ -1956,11 +1956,11 @@ setSortDirection("asc");
               <div className="border border-border rounded-xl overflow-hidden bg-card">
                 <div className="p-3 bg-muted/40 border-b border-border flex items-center justify-between">
                   <span className="font-bold text-foreground">Party Balances & Variance Verification</span>
-                  <span className="text-[10px] text-muted-foreground font-semibold">Zero-Tolerance Double Entry</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">Zero-Tolerance Double Entry</span>
                 </div>
                 <div className="max-h-60 overflow-y-auto overflow-x-auto w-full pb-2 scrollbar-thin">
                   <table className="w-full text-xs text-left">
-                    <thead className="bg-muted/20 border-b border-border text-muted-foreground font-semibold uppercase text-[10px]">
+                    <thead className="bg-muted/20 border-b border-border text-muted-foreground font-semibold uppercase text-[11px]">
                       <tr>
                         <th className="px-3 py-2">Party Name</th>
                         <th className="px-3 py-2">Type</th>
@@ -1975,7 +1975,7 @@ setSortDirection("asc");
                         <tr key={p.partyId} className="hover:bg-muted/20">
                           <td className="px-3 py-2 font-semibold text-foreground">{p.partyName}</td>
                           <td className="px-3 py-2 capitalize">
-                            <Badge variant="outline" className="text-[9px] py-0">
+                            <Badge variant="outline" className="text-[11px] py-0">
                               {p.partyType}
                             </Badge>
                           </td>
@@ -1991,7 +1991,7 @@ setSortDirection("asc");
                           <td className="px-3 py-2 text-center">
                             <Badge
                               className={cn(
-                                "text-[9px] py-0",
+                                "text-[11px] py-0",
                                 p.isReconciled
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                   : "bg-amber-500/10 text-amber-600 border-amber-500/20"

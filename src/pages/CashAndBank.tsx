@@ -553,12 +553,12 @@ export default function CashAndBank() {
   return (
     <div className="h-full flex flex-col bg-slate-50/60 dark:bg-slate-950/40 text-foreground overflow-hidden font-sans">
       {/* Top Header - Frosted Glass Container */}
-      <header className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
         <div className="flex items-center gap-2.5">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
             Cash &amp; Bank
           </h1>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>REAL-TIME BALANCES</span>
           </span>
@@ -593,7 +593,7 @@ export default function CashAndBank() {
           <button
             type="button"
             onClick={() => setIsAddBankModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Bank Account</span>
@@ -604,12 +604,12 @@ export default function CashAndBank() {
       {/* Main 2-Column Dashboard Layout - Single-Screen View on Desktop, Scrollable on Mobile */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-800 bg-white/60 dark:bg-slate-950/60 overflow-y-auto lg:overflow-hidden p-3 pb-28 lg:pb-3 gap-3">
         {/* Left Side Panel: Balances & Accounts */}
-        <div className="w-full lg:w-[320px] xl:w-[360px] shrink-0 p-0 flex flex-col glass-card-3d lg:overflow-y-auto scrollbar-thin rounded-2xl">
+        <div className="w-full lg:w-[320px] xl:w-[360px] shrink-0 p-0 flex flex-col rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs lg:overflow-y-auto scrollbar-thin">
           {/* Total Balance Card */}
           <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-600 rounded-l-2xl" />
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
                 Total Net Liquidity
               </p>
               <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
@@ -635,7 +635,7 @@ export default function CashAndBank() {
               className={cn(
                 "w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors border-l-4",
                 selectedAccountId === "cash"
-                  ? "bg-[#EEF0FD] dark:bg-primary/15 border-[#5046E5] text-[#5046E5] dark:text-primary font-semibold"
+                  ? "bg-[#EFF6FF] dark:bg-primary/15 border-[#2563EB] text-[#2563EB] dark:text-primary font-semibold"
                   : "border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-muted/40 font-medium"
               )}
             >
@@ -658,7 +658,7 @@ export default function CashAndBank() {
               <button
                 type="button"
                 onClick={() => setIsAddBankModalOpen(true)}
-                className="text-xs font-semibold text-[#5046E5] hover:text-[#4338CA] hover:underline"
+                className="text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] hover:underline"
               >
                 + Add New Bank
               </button>
@@ -678,7 +678,7 @@ export default function CashAndBank() {
                     className={cn(
                       "w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors border-l-4",
                       selectedAccountId === account.id
-                        ? "bg-[#EEF0FD] dark:bg-primary/15 border-[#5046E5] text-[#5046E5] dark:text-primary font-semibold"
+                        ? "bg-[#EFF6FF] dark:bg-primary/15 border-[#2563EB] text-[#2563EB] dark:text-primary font-semibold"
                         : "border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-muted/40 font-medium"
                     )}
                   >
@@ -708,12 +708,12 @@ export default function CashAndBank() {
               className={cn(
                 "w-full px-5 py-4 flex items-center justify-between text-left transition-colors border-l-4",
                 selectedAccountId === "unlinked"
-                  ? "bg-[#EEF0FD] dark:bg-primary/15 border-[#5046E5] text-[#5046E5] dark:text-primary font-semibold"
+                  ? "bg-[#EFF6FF] dark:bg-primary/15 border-[#2563EB] text-[#2563EB] dark:text-primary font-semibold"
                   : "border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-muted/40 font-medium"
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Building2 className="w-4 h-4 text-[#5046E5] dark:text-primary" />
+                <Building2 className="w-4 h-4 text-[#2563EB] dark:text-primary" />
                 <span className="text-sm">Unlinked Transactions</span>
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-foreground">
@@ -746,10 +746,10 @@ export default function CashAndBank() {
             <div className="flex items-center gap-6">
               <button
                 type="button"
-                className="pb-3 border-b-2 border-[#5046E5] text-sm font-bold text-[#5046E5] dark:text-primary flex items-center gap-2"
+                className="pb-3 border-b-2 border-[#2563EB] text-sm font-bold text-[#2563EB] dark:text-primary flex items-center gap-2"
               >
                 <span>Transactions</span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-[#EEF0FD] dark:bg-primary/20 text-[#5046E5] dark:text-primary font-bold">
+                <span className="px-2 py-0.5 rounded-full text-[11px] bg-[#EFF6FF] dark:bg-primary/20 text-[#2563EB] dark:text-primary font-bold">
                   {filteredTransactions.length}
                 </span>
               </button>
@@ -793,11 +793,11 @@ export default function CashAndBank() {
                       onClick={() => setDateFilter(opt.id)}
                       className={cn(
                         "text-xs flex items-center justify-between",
-                        dateFilter === opt.id ? "font-bold text-[#5046E5]" : ""
+                        dateFilter === opt.id ? "font-bold text-[#2563EB]" : ""
                       )}
                     >
                       <span>{opt.label}</span>
-                      {dateFilter === opt.id && <Check className="w-3.5 h-3.5 text-[#5046E5]" />}
+                      {dateFilter === opt.id && <Check className="w-3.5 h-3.5 text-[#2563EB]" />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -811,7 +811,7 @@ export default function CashAndBank() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search transactions..."
-                  className="w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-[#5046E5]"
+                  className="w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
             </div>
@@ -861,7 +861,7 @@ export default function CashAndBank() {
                       setMoneyActionType("add");
                       setIsAddMoneyModalOpen(true);
                     }}
-                    className="bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs h-8 px-3.5 rounded-lg"
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs h-8 px-3.5 rounded-lg"
                   >
                     <Plus className="w-3.5 h-3.5 mr-1" /> Add Money Entry
                   </Button>
@@ -885,15 +885,15 @@ export default function CashAndBank() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               {isTransfer ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300">
                                   <ArrowLeftRight className="w-3 h-3" /> Transfer
                                 </span>
                               ) : isMoneyIn ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
                                   <ArrowDownLeft className="w-3 h-3" /> Money In
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
                                   <ArrowUpRight className="w-3 h-3" /> Money Out
                                 </span>
                               )}
@@ -923,14 +923,14 @@ export default function CashAndBank() {
                               {isMoneyIn ? "+ " : isTransfer ? "⇄ " : "- "}₹{" "}
                               {txn.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </span>
-                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                            <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                               {format(new Date(txn.date), "dd MMM yyyy")}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-border/60">
-                          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                          <span className="text-[11px] font-mono text-muted-foreground uppercase">
                             {txn.paymentMode.replace("_", " ")} {txn.referenceNo ? `• #${txn.referenceNo}` : ""}
                           </span>
 
@@ -977,15 +977,15 @@ export default function CashAndBank() {
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {isTransfer ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300">
                                   <ArrowLeftRight className="w-3 h-3" /> Transfer
                                 </span>
                               ) : isMoneyIn ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
                                   <ArrowDownLeft className="w-3 h-3" /> Money In
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
                                   <ArrowUpRight className="w-3 h-3" /> Money Out
                                 </span>
                               )}
@@ -1004,17 +1004,17 @@ export default function CashAndBank() {
                                 {txn.partyName || txn.category}
                               </p>
                               {txn.notes && (
-                                <p className="text-[10px] text-slate-400 dark:text-muted-foreground truncate max-w-[160px]">
+                                <p className="text-[11px] text-slate-400 dark:text-muted-foreground truncate max-w-[160px]">
                                   {txn.notes}
                                 </p>
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-muted-foreground">
-                              <span className="uppercase font-mono text-[10px]">
+                              <span className="uppercase font-mono text-[11px]">
                                 {txn.paymentMode.replace("_", " ")}
                               </span>
                               {txn.referenceNo && (
-                                <span className="ml-1 text-[10px] text-slate-400 font-mono">
+                                <span className="ml-1 text-[11px] text-slate-400 font-mono">
                                   #{txn.referenceNo}
                                 </span>
                               )}
@@ -1112,7 +1112,7 @@ export default function CashAndBank() {
               <select
                 value={moneyAccount}
                 onChange={(e) => setMoneyAccount(e.target.value)}
-                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
               >
                 <option value="cash">Cash in hand</option>
                 <option value="unlinked">Unlinked Transactions</option>
@@ -1166,7 +1166,7 @@ export default function CashAndBank() {
                 <select
                   value={moneyMode}
                   onChange={(e) => setMoneyMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
-                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
                   <option value="cash">Cash</option>
                   <option value="upi">UPI / QR Code</option>
@@ -1247,7 +1247,7 @@ export default function CashAndBank() {
         <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4 text-[#5046E5]" />
+              <ArrowLeftRight className="w-4 h-4 text-[#2563EB]" />
               <span>Transfer Money Between Accounts</span>
             </DialogTitle>
           </DialogHeader>
@@ -1261,7 +1261,7 @@ export default function CashAndBank() {
                 <select
                   value={transferFromAccount}
                   onChange={(e) => setTransferFromAccount(e.target.value)}
-                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
                   <option value="cash">Cash in hand (₹{cashInHand})</option>
                   <option value="unlinked">Unlinked Transactions (₹{unlinkedBalance})</option>
@@ -1281,7 +1281,7 @@ export default function CashAndBank() {
                   value={transferToAccount}
                   onChange={(e) => setTransferToAccount(e.target.value)}
                   required
-                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
                   <option value="">-- Select Destination --</option>
                   <option value="cash" disabled={transferFromAccount === "cash"}>
@@ -1342,7 +1342,7 @@ export default function CashAndBank() {
               <select
                 value={transferMode}
                 onChange={(e) => setTransferMode(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
-                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
               >
                 <option value="neft_rtgs">NEFT / RTGS / IMPS</option>
                 <option value="upi">UPI / Online</option>
@@ -1375,7 +1375,7 @@ export default function CashAndBank() {
               </Button>
               <Button
                 type="submit"
-                className="text-xs h-9 bg-[#5046E5] hover:bg-[#4338CA] text-white font-semibold"
+                className="text-xs h-9 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold"
               >
                 Transfer Now
               </Button>
@@ -1389,7 +1389,7 @@ export default function CashAndBank() {
         <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-[#5046E5]" />
+              <Landmark className="w-4 h-4 text-[#2563EB]" />
               <span>Add New Bank Account</span>
             </DialogTitle>
           </DialogHeader>
@@ -1409,7 +1409,7 @@ export default function CashAndBank() {
                     className={cn(
                       "px-2 py-1 rounded text-[11px] font-medium border transition-colors",
                       bankName === b
-                        ? "bg-[#5046E5] text-white border-[#5046E5]"
+                        ? "bg-[#2563EB] text-white border-[#2563EB]"
                         : "bg-slate-50 dark:bg-muted text-slate-700 dark:text-slate-300 border-slate-200 hover:border-slate-400"
                     )}
                   >
@@ -1470,7 +1470,7 @@ export default function CashAndBank() {
                 <select
                   value={accountType}
                   onChange={(e) => setAccountType(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)} // eslint-disable-line @typescript-eslint/no-explicit-any
-                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
                   <option value="current">Current Account</option>
                   <option value="savings">Savings Account</option>
@@ -1530,7 +1530,7 @@ export default function CashAndBank() {
               </Button>
               <Button
                 type="submit"
-                className="text-xs h-9 bg-[#5046E5] hover:bg-[#4338CA] text-white font-semibold"
+                className="text-xs h-9 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold"
               >
                 Save Bank Account
               </Button>

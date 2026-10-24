@@ -1557,7 +1557,7 @@ export default function Attendance(): React.ReactElement {
           <div className="text-xs font-mono font-semibold text-slate-800">
             {formatMinutesToHM(row.work_duration_minutes)}
             {row.overtime_minutes > 0 && (
-              <span className="ml-1 text-[10px] text-amber-600 font-normal">
+              <span className="ml-1 text-[11px] text-amber-600 font-normal">
                 (+{formatMinutesToHM(row.overtime_minutes)})
               </span>
             )}
@@ -2284,7 +2284,7 @@ export default function Attendance(): React.ReactElement {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-slate-900">{req.staff_name || "Staff Member"}</span>
-                        <Badge variant="outline" className="text-[10px] font-mono">
+                        <Badge variant="outline" className="text-[11px] font-mono">
                           {req.date}
                         </Badge>
                         {req.status === "pending" && (

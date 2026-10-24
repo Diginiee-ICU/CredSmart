@@ -410,12 +410,12 @@ export default function Expenses() {
   return (
     <div className="h-full flex flex-col bg-slate-50/60 dark:bg-slate-950/40 text-foreground overflow-hidden font-sans p-3 sm:p-4 space-y-3">
       {/* Top Header - Frosted Glass Container */}
-      <header className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-2xl shadow-xs">
+      <header className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-2.5 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-xl shadow-2xs">
         <div className="flex items-center gap-2.5">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
             Expenses
           </h1>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[11px] font-mono font-bold text-rose-600 dark:text-rose-400">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
             <span>OUTFLOW TRACKER</span>
           </span>
@@ -476,7 +476,7 @@ export default function Expenses() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Create Expense</span>
@@ -485,7 +485,7 @@ export default function Expenses() {
       </header>
 
       {/* Filter Bar - Frosted Glass Container */}
-      <div className="px-4 py-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shrink-0 shadow-xs">
+      <div className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl flex flex-col md:flex-row items-stretch md:items-center gap-2 shrink-0 shadow-2xs">
         {/* Search input */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -554,7 +554,7 @@ export default function Expenses() {
       </div>
 
       {/* Main Table & Empty State Area - 3D Glass Container */}
-      <div className="flex-1 min-h-0 flex flex-col glass-card-3d overflow-hidden rounded-2xl">
+      <div className="flex-1 min-h-0 flex flex-col border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
         {/* DESKTOP Table Header Bar (Visible on md: and above) */}
         <div className="hidden md:grid bg-slate-100/80 dark:bg-muted/60 border-b border-slate-200 dark:border-border grid-cols-12 text-xs font-semibold text-slate-600 dark:text-slate-300 px-4 sm:px-6 py-2.5 shrink-0">
           <div
@@ -586,7 +586,7 @@ export default function Expenses() {
         <div className="flex-1 flex flex-col justify-start overflow-y-auto pb-28 md:pb-0">
           {loading ? (
             <div className="py-20 text-center text-xs text-slate-400 my-auto">
-              <div className="w-7 h-7 border-2 border-[#5046E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="w-7 h-7 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               Loading expenses...
             </div>
           ) : filteredExpenses.length === 0 ? (
@@ -608,7 +608,7 @@ export default function Expenses() {
               <div className="mt-6">
                 <Button
                   onClick={openCreateModal}
-                  className="bg-[#5046E5] hover:bg-[#4338CA] text-white text-xs h-8 px-4 rounded-lg font-medium"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs h-8 px-4 rounded-lg font-medium"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" /> Add New Expense
                 </Button>
@@ -629,7 +629,7 @@ export default function Expenses() {
                           <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-muted px-2 py-0.5 rounded border border-slate-200 dark:border-border text-foreground">
                             {exp.expense_number || "EXP"}
                           </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-muted text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-border">
                             <Tag className="w-2.5 h-2.5 text-slate-400" />
                             {exp.category}
                           </span>
@@ -644,7 +644,7 @@ export default function Expenses() {
                         <span className="text-base font-black font-mono text-rose-600 dark:text-rose-400">
                           ₹{Number(exp.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </span>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                        <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                           {format(new Date(exp.date), "dd MMM yyyy")}
                         </p>
                       </div>
@@ -720,7 +720,7 @@ export default function Expenses() {
                       <div className="col-span-3 text-slate-800 dark:text-slate-200 font-medium truncate">
                         <p className="truncate">{exp.party_name || "—"}</p>
                         {exp.description && (
-                          <p className="text-[10px] text-slate-400 truncate">{exp.description}</p>
+                          <p className="text-[11px] text-slate-400 truncate">{exp.description}</p>
                         )}
                       </div>
 
@@ -740,13 +740,13 @@ export default function Expenses() {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => handleDelete(exp.id)}
-                              className="text-[10px] text-rose-600 font-bold hover:underline"
+                              className="text-[11px] text-rose-600 font-bold hover:underline"
                             >
                               Confirm
                             </button>
                             <button
                               onClick={() => setDeletingId(null)}
-                              className="text-[10px] text-slate-400 hover:underline"
+                              className="text-[11px] text-slate-400 hover:underline"
                             >
                               Cancel
                             </button>
@@ -790,7 +790,7 @@ export default function Expenses() {
         <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-[#5046E5]" />
+              <Receipt className="w-4 h-4 text-[#2563EB]" />
               <span>Create Store Expense</span>
             </DialogTitle>
           </DialogHeader>
@@ -846,7 +846,7 @@ export default function Expenses() {
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
-                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                  className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 >
                   {categoriesList
                     .filter((c) => c !== "All Expenses Categories")
@@ -885,7 +885,7 @@ export default function Expenses() {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#5046E5]"
+                className="w-full h-9 px-3 mt-1 bg-white dark:bg-card border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
               >
                 <option value="Cash in Hand">Cash in Hand</option>
                 <option value="Bank Account Transfer">Bank Account Transfer</option>
@@ -920,7 +920,7 @@ export default function Expenses() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="text-xs h-9 bg-[#5046E5] hover:bg-[#4338CA] text-white font-semibold"
+                className="text-xs h-9 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold"
               >
                 {saving ? "Saving..." : "Save Expense"}
               </Button>
@@ -934,7 +934,7 @@ export default function Expenses() {
         <DialogContent className="max-w-lg sm:max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <Settings className="w-4 h-4 text-[#5046E5]" />
+              <Settings className="w-4 h-4 text-[#2563EB]" />
               <span>Expense Settings & Categories</span>
             </DialogTitle>
           </DialogHeader>
@@ -976,7 +976,7 @@ export default function Expenses() {
                       toast({ title: "Category Added" });
                     }
                   }}
-                  className="h-9 px-3 text-xs bg-[#5046E5] text-white"
+                  className="h-9 px-3 text-xs bg-[#2563EB] text-white"
                 >
                   Add
                 </Button>
@@ -1009,7 +1009,7 @@ export default function Expenses() {
         <DialogContent className="max-w-md sm:max-w-lg bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <Keyboard className="w-4 h-4 text-[#5046E5]" />
+              <Keyboard className="w-4 h-4 text-[#2563EB]" />
               <span>Keyboard Shortcuts</span>
             </DialogTitle>
           </DialogHeader>
@@ -1044,7 +1044,7 @@ export default function Expenses() {
         <DialogContent className="max-w-lg sm:max-w-xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-border/70 pb-3">
             <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-              <PieChart className="w-4 h-4 text-[#5046E5]" />
+              <PieChart className="w-4 h-4 text-[#2563EB]" />
               <span>Expense Category Summary</span>
             </DialogTitle>
           </DialogHeader>
@@ -1065,7 +1065,7 @@ export default function Expenses() {
                       <span>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#5046E5] rounded-full" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-[#2563EB] rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
@@ -1073,7 +1073,7 @@ export default function Expenses() {
           </div>
 
           <DialogFooter className="pt-3 border-t border-border">
-            <Button onClick={handleExportCSV} className="bg-[#5046E5] text-white text-xs h-9">
+            <Button onClick={handleExportCSV} className="bg-[#2563EB] text-white text-xs h-9">
               <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Export Full Report
             </Button>
           </DialogFooter>

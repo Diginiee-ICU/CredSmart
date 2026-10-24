@@ -453,7 +453,7 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
+    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans bg-slate-50/50 dark:bg-slate-950/50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -462,7 +462,7 @@ export default function Suppliers() {
               <Truck className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
               Suppliers &amp; Vendors
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               <span>PROCUREMENT HUB</span>
             </span>
@@ -493,7 +493,7 @@ export default function Suppliers() {
           </Button>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Supplier</span>
@@ -504,10 +504,10 @@ export default function Suppliers() {
       {/* Overview Stat Cards - 3D Frosted Glass */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {/* Total Suppliers */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">Total Suppliers</span>
+            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">Total Suppliers</span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
               <Truck className="w-4 h-4" />
             </div>
@@ -519,10 +519,10 @@ export default function Suppliers() {
         </div>
 
         {/* GST Registered */}
-        <div className="glass-card-3d p-2.5 sm:p-5 relative overflow-hidden group select-none">
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">GST Registered</span>
+            <span className="text-[11px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">GST Registered</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hidden sm:flex">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -537,7 +537,7 @@ export default function Suppliers() {
 
         {/* Total Payables / Credit */}
         <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Supplier Payables</span>
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -618,7 +618,7 @@ export default function Suppliers() {
                 {f.label}
                 <span
                   className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    "text-[11px] px-1.5 py-0.2 rounded-full",
                     filterType === f.id ? "bg-primary/10 text-primary font-bold" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -663,7 +663,7 @@ export default function Suppliers() {
                       <div>
                         <p className="font-semibold text-foreground text-sm">{s.name}</p>
                         {s.gstin && (
-                          <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 mt-0.5 bg-background">
+                          <Badge variant="outline" className="font-mono text-[11px] px-1.5 py-0 mt-0.5 bg-background">
                             GST: {s.gstin}
                           </Badge>
                         )}
@@ -749,7 +749,7 @@ export default function Suppliers() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
               <table className="w-full min-w-[880px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
@@ -948,7 +948,7 @@ export default function Suppliers() {
                     <Building2 className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-foreground">Live MCA Company Search (3M+ Indian Suppliers)</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                  <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
                     Auto-fills Name & Address
                   </span>
                 </div>
@@ -983,7 +983,7 @@ export default function Suppliers() {
                       <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
                       Tally Search
                     </button>
-                    <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
+                    <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
                       Official Tally Live Engine
                     </span>
                   </div>
@@ -1216,7 +1216,7 @@ export default function Suppliers() {
                         <div>
                           <span
                             className={cn(
-                              "font-bold px-2 py-0.5 rounded-full text-[10px]",
+                              "font-bold px-2 py-0.5 rounded-full text-[11px]",
                               t.type === "credit"
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                 : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -1225,7 +1225,7 @@ export default function Suppliers() {
                             {t.type === "credit" ? "Credit Payable" : "Payment Made"}
                           </span>
                           {t.description && <p className="text-muted-foreground mt-1 font-medium">{t.description}</p>}
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             {new Date(t.created_at).toLocaleDateString("en-IN", {
                               day: "numeric",
                               month: "short",
