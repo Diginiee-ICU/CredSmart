@@ -225,7 +225,15 @@ export default function Dashboard() {
       const creditData = creditRes.data;
       const salesData = salesRes.data;
 
-      setCreditTxHistory((creditData as any) || []);
+      setCreditTxHistory(
+        (creditData || []).map((t) => ({
+          id: t.id,
+          party_type: t.party_type,
+          amount: Number(t.amount || 0),
+          type: t.type,
+          created_at: t.created_at || "",
+        }))
+      );
 
       let collectSum = 0;
       let paySum = 0;
@@ -356,7 +364,7 @@ export default function Dashboard() {
   const CustomTooltip = ({ active, payload, label }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-md text-xs space-y-1 min-w-[180px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-sm text-xs space-y-1 min-w-[180px]">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
             <span className="font-bold text-slate-800 dark:text-slate-200 font-mono text-[11px]">{label}</span>
             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold flex items-center gap-1">
@@ -973,7 +981,7 @@ export default function Dashboard() {
               <span>Last Sync: {lastUpdate || formatCurrentTime()}</span>
               <button
                 onClick={handleRefresh}
-                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                className="w-7.5 h-7.5 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 title="Refresh metrics"
               >
                 <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-blue-600")} />
