@@ -1142,7 +1142,7 @@ export default function SalaryManagement(): React.ReactElement {
   // Handle permissionLoading skeleton
   if (permissionLoading) {
     return (
-      <div className="space-y-6 pb-28 max-w-7xl mx-auto px-3 sm:px-6 pt-6">
+      <div className="space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-3 sm:px-6 pt-6">
         <Skeleton className="h-14 w-full rounded-2xl animate-pulse" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           {[1, 2, 3, 4].map((i) => (
@@ -1160,7 +1160,7 @@ export default function SalaryManagement(): React.ReactElement {
       action="view"
       fallback={<SalaryAccessRestrictedFallback />}
     >
-      <div className="space-y-6 pb-28 max-w-7xl mx-auto px-3 sm:px-6">
+      <div className="space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-3 sm:px-6">
         {/* ================================================================== */}
         {/* CRM Page Header                                                    */}
         {/* ================================================================== */}

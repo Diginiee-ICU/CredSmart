@@ -1597,7 +1597,7 @@ export default function Attendance(): React.ReactElement {
         </div>
       }
     >
-      <div className="space-y-4 sm:space-y-6 pb-28 max-w-7xl mx-auto px-2.5 sm:px-6">
+      <div className="space-y-4 sm:space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-2.5 sm:px-6">
         {/* ====================================================================== */}
         {/* Page Header                                                            */}
         {/* ====================================================================== */}

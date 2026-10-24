@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Shield,
   ShieldCheck,
@@ -260,6 +260,7 @@ const DEFAULT_PRESET_ROLES: CRMRole[] = [
 // ============================================================================
 
 export default function RoleManagement(): React.ReactElement {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { org, orgId, userRole } = useOrganization();
   const { isSuperAdmin: hookIsSuperAdmin, refreshPermissions } = useCRMPermission();
@@ -300,8 +301,11 @@ export default function RoleManagement(): React.ReactElement {
   // Search filter for staff assignment
   const [staffSearchQuery, setStaffSearchQuery] = useState<string>("");
 
-  // Staff View Mode: 'list' or 'tree'
-  const [staffViewMode, setStaffViewMode] = useState<"list" | "tree">("list");
+  // Staff View Mode: 'list' or 'tree' (initialized from ?view=tree or ?view=hierarchy)
+  const [staffViewMode, setStaffViewMode] = useState<"list" | "tree">(() => {
+    const viewParam = searchParams.get("view");
+    return viewParam === "tree" || viewParam === "hierarchy" ? "tree" : "list";
+  });
 
   // Hierarchy mapping: subordinateId -> managerId
   const [hierarchyMap, setHierarchyMap] = useState<Record<string, string>>({});
@@ -927,6 +931,32 @@ export default function RoleManagement(): React.ReactElement {
     setAddStaffModalOpen(true);
   };
 
+  // Handle direct deep-link actions from CRM Command Center C2A buttons
+  useEffect(() => {
+    const action = searchParams.get("action");
+    const view = searchParams.get("view");
+
+    if (action === "add-staff") {
+      openAddStaffModal();
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("action");
+        return next;
+      }, { replace: true });
+    } else if (action === "create-role") {
+      openCreateRoleModal();
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("action");
+        return next;
+      }, { replace: true });
+    }
+
+    if (view === "tree" || view === "hierarchy") {
+      setStaffViewMode("tree");
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleProvisionStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgId) return;
@@ -1341,7 +1371,7 @@ export default function RoleManagement(): React.ReactElement {
   // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-28 font-sans">
+    <div className="min-h-screen bg-slate-50/50 pb-32 sm:pb-20 font-sans">
       {/* Top Banner / Breadcrumb */}
       <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">

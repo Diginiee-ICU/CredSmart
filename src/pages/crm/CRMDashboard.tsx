@@ -14,6 +14,9 @@ import {
   Sparkles,
   Layers,
   Wallet,
+  UserPlus,
+  Plus,
+  Network,
 } from "lucide-react";
 import { settingsApi } from "@/services/settingsApi";
 import { crmApi } from "@/services/crmApi";
@@ -265,7 +268,7 @@ export default function CRMDashboard(): React.ReactElement {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-28 sm:pb-28 font-sans">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20 font-sans">
       {/* ── Page Header Strip using CRMPageHeader and CRMBadge ── */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
         <div className="max-w-7xl mx-auto">
@@ -282,33 +285,55 @@ export default function CRMDashboard(): React.ReactElement {
               </CRMBadge>
             }
             actions={
-              <>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer min-h-[40px] sm:min-h-[36px] touch-manipulation"
+                  className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer min-h-[38px] touch-manipulation shrink-0"
                   title="Refresh CRM metrics"
                 >
                   <RotateCw className={`w-4 h-4 text-slate-500 ${refreshing ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="hidden sm:inline sm:ml-1.5">Refresh</span>
                 </button>
 
+                {/* Direct C2A 1: Add Staff */}
                 <Link
-                  to={ROUTE_PATHS.crmRoles}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-all hover:shadow-sm min-h-[40px] sm:min-h-[36px] touch-manipulation"
+                  to="/crm/roles?action=add-staff"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  title="Provision new staff member credentials"
                 >
-                  <Shield className="w-4 h-4" />
-                  <span>Roles &amp; Hierarchy</span>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Add Staff</span>
                 </Link>
-              </>
+
+                {/* Direct C2A 2: Create Role */}
+                <Link
+                  to="/crm/roles?action=create-role"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  title="Create custom CRM role with permission matrix"
+                >
+                  <Plus className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Create Role</span>
+                </Link>
+
+                {/* Direct C2A 3: Hierarchy View */}
+                <Link
+                  to="/crm/roles?view=tree"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/60 shadow-2xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  title="Interactive organization reporting tree"
+                >
+                  <Network className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Hierarchy View</span>
+                </Link>
+              </div>
             }
           />
         </div>
       </header>
 
       {/* ── Main Container ── */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 sm:pb-6 space-y-4 sm:space-y-6">
         {/* ── Metric Summary Cards Grid using CRMStatCard (Responsive 375px, 768px, 1280px) ── */}
         <section aria-label="CRM Key Metrics">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -432,6 +457,7 @@ export default function CRMDashboard(): React.ReactElement {
               );
             })}
           </div>
+          <div className="h-6 md:hidden" aria-hidden="true" />
         </section>
       </main>
     </div>

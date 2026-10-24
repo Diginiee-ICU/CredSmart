@@ -700,7 +700,7 @@ export default function Tasks(): React.ReactElement {
         </div>
       }
     >
-      <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-28">
+      <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20">
         <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
           <div className="max-w-7xl mx-auto">
             <CRMPageHeader

@@ -983,8 +983,7 @@ export default function AppLayout() {
               isPosRoute
                 ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950 overflow-hidden"
                 : "bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
-              isMobile && !isPosRoute && "pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]",
-              isMobile && isPosRoute && "pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
+              !isPosRoute && "pb-28 sm:pb-32 md:pb-0"
             )}
             style={{
               transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
@@ -1010,6 +1009,14 @@ export default function AppLayout() {
             }}
           >
             <Outlet />
+            {/* Mobile Bottom Dock Clearance Spacer */}
+            {!isPosRoute && (
+              <div
+                className="block md:hidden shrink-0 w-full pointer-events-none select-none"
+                style={{ height: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}
+                aria-hidden="true"
+              />
+            )}
           </main>
         </div>
 
