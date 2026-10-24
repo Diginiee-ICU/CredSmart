@@ -190,6 +190,8 @@ function StandaloneSuiteSwitcher(props: SuiteSwitcherProps) {
  * Main SuiteSwitcher export with automatic Cashier guard and environment detection
  */
 export function SuiteSwitcher(props: SuiteSwitcherProps) {
+  const inRouter = useInRouterContext();
+
   let isCashier = false;
   try {
     const org = useOrganization();
@@ -203,7 +205,6 @@ export function SuiteSwitcher(props: SuiteSwitcherProps) {
     return null;
   }
 
-  const inRouter = useInRouterContext();
   if (inRouter) {
     return <RouterSuiteSwitcher {...props} />;
   }

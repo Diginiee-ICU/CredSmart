@@ -100,14 +100,20 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
   const { orgId, userRole } = useOrganization();
 
   // Storage keys for resilient offline caching
-  const rolesStorageKey = orgId ? `credsmart_crm_roles_${orgId}` : null;
+  // User's personal active roles (to avoid clobbering all-organization roles cache)
+  const userRolesStorageKey = orgId && user?.id ? `credsmart_crm_user_roles_${orgId}_${user.id}` : null;
+  const orgRolesStorageKey = orgId ? `credsmart_crm_roles_${orgId}` : null;
   const permissionsStorageKey = orgId ? `credsmart_crm_permissions_${orgId}` : null;
   const staffRolesStorageKey = orgId ? `credsmart_crm_staff_roles_${orgId}` : null;
 
   // Initialize from cache if available to prevent layout flicker
   const [userRoles, setUserRoles] = useState<CRMRole[]>(() => {
-    if (!rolesStorageKey) return [];
-    return readStorageJson<CRMRole[]>(rolesStorageKey, []);
+    if (userRolesStorageKey) {
+      const cachedUser = readStorageJson<CRMRole[]>(userRolesStorageKey, []);
+      if (cachedUser.length > 0) return cachedUser;
+    }
+    if (orgRolesStorageKey) return readStorageJson<CRMRole[]>(orgRolesStorageKey, []);
+    return [];
   });
 
   const [permissions, setPermissions] = useState<CRMPermission[]>(() => {
@@ -248,7 +254,18 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
       setPermissions(resolvedPermissions);
 
       // 3. Cache to localStorage
-      if (rolesStorageKey) writeStorageJson(rolesStorageKey, resolvedRoles);
+      if (userRolesStorageKey) writeStorageJson(userRolesStorageKey, resolvedRoles);
+      if (orgRolesStorageKey && allOrgRoles.length > 0) {
+        // Cache full organization roles without deleting existing custom roles
+        const existingCached = readStorageJson<CRMRole[]>(orgRolesStorageKey, []);
+        const mergedRoles = [...allOrgRoles];
+        existingCached.forEach((ec) => {
+          if (!mergedRoles.some((mr) => mr.id === ec.id)) {
+            mergedRoles.push(ec);
+          }
+        });
+        writeStorageJson(orgRolesStorageKey, mergedRoles);
+      }
       if (permissionsStorageKey) writeStorageJson(permissionsStorageKey, resolvedPermissions);
       if (staffRolesStorageKey && staffRolesData) writeStorageJson(staffRolesStorageKey, staffRolesData);
     } catch (err: unknown) {
@@ -257,8 +274,12 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
       setError(normalizedErr);
 
       // Fallback to cache
-      if (rolesStorageKey && permissionsStorageKey) {
-        const cachedRoles = readStorageJson<CRMRole[]>(rolesStorageKey, []);
+      const cachedRoles = userRolesStorageKey
+        ? readStorageJson<CRMRole[]>(userRolesStorageKey, [])
+        : orgRolesStorageKey
+        ? readStorageJson<CRMRole[]>(orgRolesStorageKey, [])
+        : [];
+      if (permissionsStorageKey) {
         const cachedPerms = readStorageJson<CRMPermission[]>(permissionsStorageKey, []);
         if (cachedRoles.length > 0) {
           setUserRoles(cachedRoles);
@@ -268,7 +289,7 @@ export function useCRMPermission(module?: string, action?: string): UseCRMPermis
     } finally {
       setLoading(false);
     }
-  }, [user?.id, orgId, userRole, rolesStorageKey, permissionsStorageKey, staffRolesStorageKey]);
+  }, [user?.id, orgId, userRole, userRolesStorageKey, orgRolesStorageKey, permissionsStorageKey, staffRolesStorageKey]);
 
   useEffect(() => {
     fetchPermissions();

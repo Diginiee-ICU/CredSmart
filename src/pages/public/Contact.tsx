@@ -31,7 +31,7 @@ export default function Contact() {
     "@type": "ContactPage",
     name: "Contact CredSmart by CredAlert Support & Grievance Desk",
     description: "Official contact channels, statutory Grievance Officer details, and customer support for CredSmart by CredAlert.",
-    url: "https://pos.credalert.bussiness/contact",
+    url: "https://credsmart.online/contact",
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,7 +50,7 @@ export default function Contact() {
         title="Contact Us & Grievance Officer — CredSmart by CredAlert"
         description="Get in touch with CredSmart support team, submit business feedback, or reach our statutory Grievance Officer under Section 2(1)(w) IT Act."
         keywords="contact CredSmart, CredSmart support, GST billing support India, grievance officer CredSmart, DPDP compliance contact"
-        canonicalUrl="https://pos.credalert.bussiness/contact"
+        canonicalUrl="https://credsmart.online/contact"
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Contact Us", url: "/contact" },

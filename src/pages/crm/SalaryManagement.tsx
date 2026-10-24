@@ -267,18 +267,11 @@ export default function SalaryManagement(): React.ReactElement {
       const dirMap: Record<string, StaffDirectoryMember> = {};
       let staffData: Record<string, unknown>[] | null = null;
       try {
-        const { data, error } = await supabase.from("profiles").select("*");
-        if (!error && data && data.length > 0) {
-          staffData = data as Record<string, unknown>[];
+        const res = await settingsApi.getProfiles();
+        if (res.data && res.data.length > 0) {
+          staffData = res.data as Record<string, unknown>[];
         }
       } catch {}
-
-      if (!staffData) {
-        try {
-          const res = await settingsApi.getProfiles();
-          if (res.data) staffData = res.data;
-        } catch {}
-      }
 
       if (staffData && staffData.length > 0) {
         staffData.forEach((s: Record<string, unknown>) => {

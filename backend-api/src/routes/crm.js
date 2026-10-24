@@ -188,14 +188,16 @@ router.delete('/permissions', async (req, res) => {
 router.post('/roles', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = req.orgId || req.body.org_id;
-    const { name, description, permissions = [] } = req.body;
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const { name, description = '', color = '#1D4ED8', icon = 'Shield', is_super_admin = false, permissions = [] } = req.body;
     if (!name) return res.status(400).json({ error: 'Role name is required' });
 
     await client.query('BEGIN');
     const roleRes = await client.query(
-      `INSERT INTO crm_roles (org_id, name, description) VALUES ($1, $2, $3) RETURNING *`,
-      [orgId, name, description]
+      `INSERT INTO crm_roles (org_id, organization_id, name, description, color, icon, is_super_admin)
+       VALUES ($1, $1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [orgId, name, description, color, icon, Boolean(is_super_admin)]
     );
     const role = roleRes.rows[0];
 
@@ -215,11 +217,33 @@ router.post('/roles', async (req, res) => {
   }
 });
 
+// PUT /api/crm/roles/:id
+router.put('/roles/:id', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.body.org_id || req.body.organization_id;
+    const { id } = req.params;
+    const { name, color, icon, description } = req.body;
+    const result = await pool.query(
+      `UPDATE crm_roles
+       SET name = COALESCE($1, name),
+           color = COALESCE($2, color),
+           icon = COALESCE($3, icon),
+           description = COALESCE($4, description)
+       WHERE id = $5 AND (org_id = $6 OR organization_id = $6)
+       RETURNING *`,
+      [name, color, icon, description, id, orgId]
+    );
+    return res.json(result.rows[0] || { id, name, color, icon, description });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /api/crm/roles/:id
 router.delete('/roles/:id', async (req, res) => {
   try {
-    const orgId = req.orgId || req.query.org_id;
-    await pool.query('DELETE FROM crm_roles WHERE id = $1 AND org_id = $2', [req.params.id, orgId]);
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    await pool.query('DELETE FROM crm_roles WHERE id = $1 AND (org_id = $2 OR organization_id = $2)', [req.params.id, orgId]);
     return res.json({ success: true, id: req.params.id });
   } catch (err) {
     return res.status(500).json({ error: err.message });

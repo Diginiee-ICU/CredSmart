@@ -364,12 +364,27 @@ export default function RoleManagement(): React.ReactElement {
         resolvedRoles = [defaultSuperAdmin];
       }
 
+      // Merge cached custom roles from localStorage so newly created roles are never dropped
+      try {
+        const cachedRaw = localStorage.getItem(`credsmart_crm_roles_${orgId}`);
+        if (cachedRaw) {
+          const cachedRoles: CRMRole[] = JSON.parse(cachedRaw);
+          if (Array.isArray(cachedRoles)) {
+            cachedRoles.forEach((cr) => {
+              if (cr?.id && !resolvedRoles.some((r) => r.id === cr.id)) {
+                resolvedRoles.push(cr);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Failed reading cached CRM roles:", e);
+      }
+
       setRoles(resolvedRoles);
 
-      // Select first role by default if none selected
-      if (!selectedRole || !resolvedRoles.some((r) => r.id === selectedRole.id)) {
-        setSelectedRole(resolvedRoles[0]);
-      }
+      // Select first role by default if none selected or current is invalid
+      setSelectedRole((prev) => (!prev || !resolvedRoles.some((r) => r.id === prev.id) ? resolvedRoles[0] : prev));
 
       // 2. Fetch CRM Permissions for all roles
       const roleIds = resolvedRoles.map((r) => r.id).filter((id) => id !== "super-admin-default");
@@ -452,7 +467,7 @@ export default function RoleManagement(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [orgId, selectedRole, user?.id, user?.email, userRole]);
+  }, [orgId, user?.id, user?.email, userRole]);
 
   useEffect(() => {
     loadData();
@@ -771,7 +786,7 @@ export default function RoleManagement(): React.ReactElement {
           }
         }
 
-        const updatedRoles = [...roles, createdRole];
+        const updatedRoles = [...roles.filter((r) => r.id !== createdRole.id), createdRole];
         setRoles(updatedRoles);
         setSelectedRole(createdRole);
         localStorage.setItem(`credsmart_crm_roles_${orgId}`, JSON.stringify(updatedRoles));
