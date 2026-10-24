@@ -1,27 +1,32 @@
-# Progress — challenger_m2_2 (Milestone 2 Regression & Invariance Verification)
+# Progress — challenger_m2_2 (Milestone 2 POS Billing Hotkeys & Containment Challenger)
 
-Last visited: 2026-10-21T19:22:30Z
+Last visited: 2026-10-24T19:58:00Z
 
 ## Status
-- [x] Ingested dispatch and updated DISPATCH.md
-- [x] Read ORIGINAL_REQUEST.md (2026-10-21T17:42:42Z) and PROJECT.md
-- [x] Verified Create Invoice flows remain 100% untouched via git status, diff against HEAD, and log since d585f15
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`: 0 changes
-  - `src/components/SalesInvoiceModal.tsx`: 0 changes
-  - `src/components/invoices/mobile/AddItemModal.tsx`: 0 changes
-  - `src/components/invoices/mobile/SelectPartyModal.tsx`: 0 changes
-  - `src/components/invoices/mobile/EditItemModal.tsx`: 0 changes
-- [x] Run TypeScript check: `cmd /c npx tsc --noEmit` -> Exited 0 with 0 errors
-- [x] Run test suites:
-  - `src/test/fixDbSchema.test.ts` (398 tests) -> PASSED
-  - `src/test/crmStaffProvisioning.test.ts` (29 tests) -> PASSED
-  - `src/test/crmTaskLifecycle.test.ts` (33 tests) -> PASSED
-  - `src/test/crmBackendApiM1.test.ts` (10 tests) -> PASSED
-  - `src/test/crmStaffProvisioningUI.test.tsx` (6 tests) -> PASSED
-  - `src/test/crmStaffProvisioningStress.test.tsx` (35 tests) -> PASSED
-  - `src/test/crmStaffTasksIntegration.test.tsx` (12 tests) -> PASSED
-  - Combined suite execution: 523 / 523 tests PASSED cleanly
-- [x] Identified and empirically documented test timeout caveat in heavy jsdom DOM rendering for `RoleManagement.tsx` (recommending explicit 15s test timeout or global 20s configuration)
-- [x] Render explicit verdict: APPROVE
+- [x] Ingested dispatch directive (`DISPATCH.md`)
+- [x] Read authoritative prompt in `ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
+- [x] Read Worker handoff report (`worker_m2/handoff.md`), minimal design rules (`minimal-design-system.md`), and `PROJECT.md`
+- [x] Verified zero modifications to the 19 protected invoice flow files
+- [x] Authored and executed dedicated adversarial stress harness `src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` (10 tests):
+  - [x] F1 (search focus & selection)
+  - [x] F2 (bill discount modal)
+  - [x] F3 (additional charge modal)
+  - [x] F6 (save & print checkout flow & empty cart guard)
+  - [x] F7 (save bill checkout flow & empty cart guard)
+  - [x] P (price modal when selected vs unselected)
+  - [x] Q (quantity modal when selected vs unselected)
+  - [x] D (item discount modal when selected vs unselected)
+  - [x] V (voice assistant toggle)
+  - [x] DEL / Backspace (delete item when selected vs unselected)
+  - [x] Input isolation shielding (P, Q, D, V, DEL blocked while typing in `<input>`)
+  - [x] 3-region decoupled checkout panel containment (Region 1 fixed top total, Region 2 scrollable middle, Region 3 fixed bottom dock)
+  - [x] Monochromatic ribbon sizing (h-7, 28px) and token compliance (zero pastel flood)
+- [x] Executed baseline test suites:
+  - `src/test/billingLifecycleEngine.test.ts` (17 tests) -> PASSED
+  - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests) -> PASSED
+  - `src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` (10 tests) -> PASSED
+  - Total: 51/51 tests passing with 0 failures
+- [x] Verified TypeScript compilation: `cmd /c npx tsc --noEmit` -> Exited with code 0 (0 errors)
+- [x] Render explicit verdict: `VERDICT: APPROVE`
 - [x] Author self-contained `handoff.md` following 5-component protocol
-- [ ] Send message back to parent `c838af97-21de-4616-9188-f0f8dfa904c9`
+- [ ] Send dispatch completion message to orchestrator `3044c8ce-523a-4157-917d-31b6f5d55c6a`

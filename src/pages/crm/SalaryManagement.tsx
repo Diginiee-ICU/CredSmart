@@ -267,11 +267,20 @@ export default function SalaryManagement(): React.ReactElement {
       const dirMap: Record<string, StaffDirectoryMember> = {};
       let staffData: Record<string, unknown>[] | null = null;
       try {
-        const res = await settingsApi.getProfiles();
-        if (res.data && res.data.length > 0) {
-          staffData = res.data as Record<string, unknown>[];
+        const { data } = await supabase.from("profiles").select("*");
+        if (data && data.length > 0) {
+          staffData = data as Record<string, unknown>[];
         }
       } catch {}
+
+      if (!staffData) {
+        try {
+          const res = await settingsApi.getProfiles();
+          if (res.data && res.data.length > 0) {
+            staffData = res.data as Record<string, unknown>[];
+          }
+        } catch {}
+      }
 
       if (staffData && staffData.length > 0) {
         staffData.forEach((s: Record<string, unknown>) => {
@@ -1173,9 +1182,12 @@ export default function SalaryManagement(): React.ReactElement {
             { label: "Salary & Payroll", href: ROUTE_PATHS.crmSalary },
           ]}
           badge={
-            <CRMBadge variant="success" size="sm" dot>
-              Live Sync
-            </CRMBadge>
+            <div className="flex items-center gap-1.5">
+              <CRMBadge variant="info" size="sm">Phase 3 Live</CRMBadge>
+              <CRMBadge variant="success" size="sm" dot>
+                Live Sync
+              </CRMBadge>
+            </div>
           }
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -1184,7 +1196,7 @@ export default function SalaryManagement(): React.ReactElement {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="h-8 gap-1.5 text-xs text-slate-700 bg-white border-slate-200/80 rounded-xl"
+                className="h-8.5 px-3 rounded-lg gap-1.5 text-xs text-slate-700 bg-white border border-slate-200/80 shadow-2xs"
               >
                 <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
                 <span className="hidden sm:inline">Refresh</span>
@@ -1194,7 +1206,7 @@ export default function SalaryManagement(): React.ReactElement {
                 <Button
                   size="sm"
                   onClick={openCreateProfileDrawer}
-                  className="h-8 gap-1.5 text-xs bg-[#1D4ED8] hover:bg-blue-700 text-white font-semibold rounded-xl"
+                  className="h-8.5 px-3 rounded-lg gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-2xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add New Profile</span>
@@ -1205,7 +1217,7 @@ export default function SalaryManagement(): React.ReactElement {
                 <Button
                   size="sm"
                   onClick={handleOpenAdjustmentDrawer}
-                  className="h-8 gap-1.5 text-xs bg-[#1D4ED8] hover:bg-blue-700 text-white font-semibold rounded-xl"
+                  className="h-8.5 px-3 rounded-lg gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-2xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Record Advance</span>
@@ -1380,7 +1392,7 @@ export default function SalaryManagement(): React.ReactElement {
                     header: "Base Wage",
                     sortable: true,
                     accessor: (p) => (
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">
+                      <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">
                         {formatIndianCurrency(p.base_amount)}
                       </span>
                     ),
@@ -1460,11 +1472,11 @@ export default function SalaryManagement(): React.ReactElement {
                     <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
                       <div>
                         <span className="text-slate-400">Base Wage:</span>
-                        <p className="font-mono font-bold text-slate-900">{formatIndianCurrency(p.base_amount)}</p>
+                        <p className="font-mono tabular-nums font-bold text-slate-900">{formatIndianCurrency(p.base_amount)}</p>
                       </div>
                       <div>
                         <span className="text-slate-400">Overtime:</span>
-                        <p className="font-mono text-slate-700">
+                        <p className="font-mono tabular-nums text-slate-700">
                           {p.hourly_overtime_rate ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr` : "None"}
                         </p>
                       </div>
@@ -1473,7 +1485,7 @@ export default function SalaryManagement(): React.ReactElement {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditProfileDrawer(p)}
-                      className="w-full text-xs font-semibold rounded-xl border-slate-200"
+                      className="w-full text-xs font-semibold rounded-lg border-slate-200 h-8.5 shadow-2xs"
                     >
                       Configure Profile
                     </Button>

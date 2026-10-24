@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T18:42:00Z
+# BRIEFING — 2026-10-24T19:25:00Z
 
 ## Mission
-Adversarial quality review and stress-testing of Milestone 1 database migrations and schema parity (`supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, `fix_db.sql`, `backend-api/fix_db.sql`), verifying idempotency, dual-column synchronization, legacy data normalization, byte parity, test coverage, and TypeScript compilation before issuing gate verdict.
+Objective review and adversarial challenge for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project: verify button sizing (34px, 28px, 30px, 46px), card padding (p-3.5), badge text-[11px], table row height (38px-42px), dialog rounded-2xl, run Vitest tests, run TypeScript typecheck, verify strict quarantine of protected invoice files, and render gate verdict.
 
 ## 🔒 My Identity
 - Archetype: reviewer_critic
@@ -10,6 +10,9 @@ Adversarial quality review and stress-testing of Milestone 1 database migrations
 - Original parent: c838af97-21de-4616-9188-f0f8dfa904c9
 - Milestone: M1 (PostgreSQL Schema & Express Backend Integration)
 - Instance: 2 of 2
+- [2026-10-24T19:21:00Z] Current Parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- [2026-10-24T19:21:00Z] Current Milestone: Milestone 1 (Minimal Design Tokens & Base Primitives - CredSmart Minimal & Fast-Access Redesign)
+- [2026-10-24T19:21:00Z] Instance: Reviewer 2 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code.
@@ -19,57 +22,67 @@ Adversarial quality review and stress-testing of Milestone 1 database migrations
 - Verify byte-for-byte parity of fix_db.sql and backend-api/fix_db.sql.
 - Verify dual organization columns (org_id, organization_id) and trigger trg_sync_org_ids.
 - Verify normalization of legacy 'pending' -> 'todo' and 'medium' -> 'normal'.
+- [2026-10-24T19:21:00Z] M1 Redesign Constraints:
+  - Button sizing: Standard action (34px / h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs), Table action (28px / h-7 px-2.5 rounded-md text-[11px] font-medium), Micro icon (30px / w-7.5 h-7.5 rounded-md), Center mobile CTA (46px / 46x46px rounded-xl). No oversized buttons.
+  - Card padding: p-3.5, border-border/80, shadow-xs, no heavy 3D glass reflections or liquid glass.
+  - Badge: text-[11px] font-semibold font-mono tracking-tight, semantic status tokens.
+  - Table: TableHead h-8.5 px-3, TableCell py-2 px-3 (38px-42px row height).
+  - Dialog: rounded-xl sm:rounded-2xl, backdrop-blur-xs, no heavy glass.
+  - Tailwind spacing: '7.5' (30px), '8.5' (34px), '11.5' (46px), '13' (52px).
+  - Strict Quarantine: All 19 invoice creation and document lifecycle files must have ZERO modifications.
 
 ## Current Parent
-- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
-- Updated: 2026-10-21T18:37:28Z
+- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Updated: 2026-10-24T19:25:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z)
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
-  - `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`
-  - `fix_db.sql`
-  - `backend-api/fix_db.sql`
-  - `backend-api/src/routes/crm.js`
-  - `src/services/crmApi.ts`
-- **Verification Commands**:
-  - `cmd /c npx vitest run src/test/fixDbSchema.test.ts`
-  - `cmd /c npx tsc --noEmit`
-  - Byte-for-byte parity check of `fix_db.sql` and `backend-api/fix_db.sql`
-  - `cmd /c npx vitest run src/test/crmBackendApiM1.test.ts src/test/crmStaffProvisioning.test.ts src/test/crmTaskLifecycle.test.ts src/test/crmStaffTasksIntegration.test.tsx`
-- **Review criteria**: Correctness, completeness, quality, idempotency, edge cases, failure modes, adversarial challenge, integrity.
+- **Files reviewed**:
+  - `src/components/ui/button.tsx` (72 lines)
+  - `src/components/ui/card.tsx` (49 lines)
+  - `src/components/ui/badge.tsx` (34 lines)
+  - `src/components/ui/table.tsx` (73 lines)
+  - `src/components/ui/dialog.tsx` (145 lines)
+  - `tailwind.config.ts` (177 lines)
+  - `src/index.css` (1213 lines)
+- **Protected Files checked**:
+  - 19 files in PROJECT.md Protected File Inventory verified untouched via filesystem timestamp audit.
+- **Verification Commands Executed**:
+  - `cmd /c npx vitest run src/test/crmComponents.test.tsx` (55/55 passed)
+  - `cmd /c npx vitest run src/test/componentPrimitivesAdversarial.challenger.test.tsx` (32/32 passed, 81 permutations tested)
+  - `cmd /c npx tsc --noEmit` (Exit code 0, 0 errors)
+  - `cmd /c npx eslint ...` (Exit code 0, 0 violations)
+  - Tailwind spacing resolution via Node.js script: 8.5=2.125rem, 7.5=1.875rem, 11.5=2.875rem, 13=3.25rem
 
 ## Review Checklist
 - **Items reviewed**:
-  - `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` (127 lines) — fully audited
-  - `fix_db.sql` (1452 lines, 83,292 bytes) — audited table 42 and parity
-  - `backend-api/fix_db.sql` (1452 lines, 83,292 bytes) — verified 100% byte-for-byte parity
-  - `src/test/fixDbSchema.test.ts` (490 lines, 398 tests) — verified independent execution (398/398 passed)
-  - `cmd /c npx tsc --noEmit` — verified independent execution (0 errors)
-  - Task lifecycle integration tests — verified 84/84 tests passed
+  - Button sizing: 34px default, 28px sm/table, 30px icon, 46px cta, legacy aliases retained (ruby, gold, glass), tactile active:scale-[0.98]
+  - Card padding: p-3.5, pb-2 in header, pt-0 in content/footer, shadow-xs, glass alias sanitized
+  - Badge font scale: text-[11px] font-mono font-semibold, semantic tokens (emerald, amber, rose, blue)
+  - Table row height: TableHead h-8.5 px-3 (sticky top-0), TableCell py-2 px-3 text-xs (38px-42px row height)
+  - Dialog styling: rounded-xl sm:rounded-2xl, bg-black/60 backdrop-blur-xs, screen-reader fallback
+  - Protected invoice files: 0 modified (all 19 intact)
+  - Zero integrity violations detected
 - **Verdict**: APPROVE
-- **Unverified claims**: None; all claims verified independently.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - *Migration Idempotency*: Multiple runs safe due to IF NOT EXISTS, DROP TRIGGER IF EXISTS, DO $$ BEGIN ... END $$, and ON CONFLICT DO UPDATE.
-  - *Trigger Availability Resilience*: Migration checks `IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'sync_org_id_and_organization_id')` before creating trigger, preventing migration failure if the function is missing.
-  - *RLS Resilience*: Migration uses EXCEPTION WHEN OTHERS THEN NULL when enabling RLS and checks for `has_org_access` function existence before creating policies.
-  - *Column Aliasing*: Bidirectional sync handles `assigned_by` / `created_by` and `requires_proof` / `proof_required`.
-  - *Legacy Data Migration*: Legacy 'pending' and NULL statuses normalize to 'todo'; 'medium' and NULL priorities normalize to 'normal'.
-  - *Integrity audit*: Confirmed no mock shortcuts, hardcoded test branches, or facade logic.
-- **Vulnerabilities found**: None. Schema and routes are fully aligned and robust.
-- **Untested angles**: None.
+  - Button 81-permutation matrix (9 variants x 9 sizes): All render without runtime error or class collision.
+  - SVG sizing inside buttons: size-3.5 (14px) fits within 28px and 30px buttons with ample padding.
+  - Card nesting padding: Header pb-2 + Content pt-0 prevents double padding gap.
+  - Table header occlusion: bg-background/95 backdrop-blur-xs cleanly occludes scrolled table rows.
+  - Screen reader accessibility in Dialog: VisuallyHidden fallback title renders if no explicit title is provided.
+- **Vulnerabilities found**: None. All primitives are resilient, accessible, and compliant.
+- **Untested angles**: None within M1 scope.
 
 ## Key Decisions Made
-- Confirmed zero integrity violations in M1 database migrations and schema scripts.
-- Verified byte-for-byte parity between root and backend fix_db.sql.
-- Successfully verified independent test runs: 398 fixDbSchema tests passed, 84 CRM task tests passed, tsc exited code 0.
+- Confirmed zero integrity violations in M1 design primitives.
+- Verified all component proportions against master design standard (`minimal-design-system.md`).
+- Confirmed strict quarantine of protected invoice files.
 - Rendered Gate Verdict: APPROVE.
 
 ## Artifact Index
-- `DISPATCH.md` — Inbound instructions log
-- `BRIEFING.md` — Persistent working memory and state
+- `DISPATCH.md` — Incoming directives log
+- `BRIEFING.md` — Working memory and state
 - `progress.md` — Liveness heartbeat
 - `handoff.md` — Final review and adversarial challenge report

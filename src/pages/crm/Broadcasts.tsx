@@ -302,16 +302,19 @@ export default function Broadcasts(): React.ReactElement {
                 { label: "Broadcasts", href: ROUTE_PATHS.crmBroadcasts },
               ]}
               badge={
-                <CRMBadge variant="success" size="sm" dot>
-                  Push Alerts Ready
-                </CRMBadge>
+                <div className="flex items-center gap-1.5">
+                  <CRMBadge variant="info" size="sm">Phase 4 Active</CRMBadge>
+                  <CRMBadge variant="success" size="sm" dot>
+                    Push Alerts Ready
+                  </CRMBadge>
+                </div>
               }
               actions={
                 canSend && (
                   <Button
                     onClick={() => setIsComposeOpen(true)}
                     size="sm"
-                    className="bg-[#EC4899] hover:bg-pink-600 text-white gap-1.5 text-xs h-9 shadow-xs"
+                    className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Publish Broadcast</span>
@@ -358,20 +361,20 @@ export default function Broadcasts(): React.ReactElement {
           </section>
 
           {/* Filter Bar */}
-          <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 placeholder="Search bulletins or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs border-slate-200 dark:border-slate-800"
+                className="pl-9 h-8.5 text-xs rounded-lg border-slate-200 dark:border-slate-800"
               />
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                <SelectTrigger className="w-[130px] h-9 text-xs border-slate-200 dark:border-slate-800">
+                <SelectTrigger className="w-[130px] h-8.5 text-xs rounded-lg border-slate-200 dark:border-slate-800">
                   <SelectValue placeholder="Urgency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,7 +387,7 @@ export default function Broadcasts(): React.ReactElement {
               </Select>
 
               <Select value={audienceFilter} onValueChange={setAudienceFilter}>
-                <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-800">
+                <SelectTrigger className="w-[140px] h-8.5 text-xs rounded-lg border-slate-200 dark:border-slate-800">
                   <SelectValue placeholder="Audience" />
                 </SelectTrigger>
                 <SelectContent>
@@ -400,7 +403,7 @@ export default function Broadcasts(): React.ReactElement {
           {/* Broadcasts Feed */}
           <section className="space-y-4">
             {filteredBroadcasts.length === 0 ? (
-              <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+              <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
                 <Megaphone className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   No broadcasts found
@@ -416,9 +419,9 @@ export default function Broadcasts(): React.ReactElement {
                   <div
                     key={b.id}
                     className={cn(
-                      "bg-white dark:bg-slate-900 rounded-2xl border transition-all p-5 shadow-2xs space-y-3.5",
+                      "bg-white dark:bg-slate-900 rounded-xl border transition-all p-4 sm:p-5 shadow-2xs space-y-3.5",
                       b.is_pinned
-                        ? "border-pink-300/80 dark:border-pink-900/60 ring-1 ring-pink-500/10 bg-gradient-to-r from-pink-50/20 to-white dark:from-pink-950/10 dark:to-slate-900"
+                        ? "border-pink-300/80 dark:border-pink-900/60 ring-1 ring-pink-500/10"
                         : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
                     )}
                   >

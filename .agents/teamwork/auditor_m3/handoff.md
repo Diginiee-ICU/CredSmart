@@ -1,124 +1,166 @@
-# Forensic Audit Report: Milestone 3 — Full-Stack Enterprise Task Management
+# Forensic Audit Report — Milestone 3: Mobile Ergonomics & Native-Touch Layouts
 
-**Work Product**: `src/pages/crm/Tasks.tsx` & `src/test/crmTasksView.test.tsx`  
-**Profile**: General Project (Integrity Mode: Development)  
-**Verdict**: **CLEAN**
+**Auditor**: Forensic Auditor (`auditor_m3`)  
+**Parent Agent**: Project Orchestrator (`3044c8ce-523a-4157-917d-31b6f5d55c6a`)  
+**Target Milestone**: Milestone 3: Mobile Ergonomics & Native-Touch Layouts  
+**Timestamp**: 2026-10-24T20:30:00Z  
+**Verdict**: **VERDICT: CLEAN**
 
 ---
 
 ## 1. Observation
 
-### 1.1 Source Code Analysis (`src/pages/crm/Tasks.tsx`)
-- **Backend API Integration**:
-  - `Tasks.tsx` lines 190–255: `loadData` dynamically queries `crmApi.getCRMStaffRoles(orgId)` (or `crmApi.getCRMStaff(orgId)`) to populate staff options, and queries `crmApi.getCRMTasks(orgId)` to populate live tasks from the server.
-  - Line 305: `crmApi.transitionCRMTaskStatus(taskId, nextStatus, { orgId })` called when transitioning status (`todo` -> `in_progress`).
-  - Line 336: `crmApi.transitionCRMTaskStatus(taskId, "done", { orgId })` called upon manager task approval.
-  - Line 386: `crmApi.createCRMTask(payload, orgId)` called when submitting the `<CreateTaskDialog>` form, receiving `res.data.id` to replace the temporary optimistic ID.
-  - Line 446: `crmApi.transitionCRMTaskStatus(taskId, "review", { proof_notes: finalNotes, orgId })` called upon proof submission.
-  - Line 495: `crmApi.transitionCRMTaskStatus(taskId, "in_progress", { review_feedback: trimmed, orgId })` called when a manager requests revisions.
-- **Offline / Network Resilience**:
-  - `Tasks.tsx` lines 147–155: Initial state reads from browser `localStorage.getItem(storageKey)` where `storageKey = 'credsmart_crm_tasks_${orgId || "default"}'`.
-  - Lines 183–187: Synchronizes task state to `localStorage` on any state update.
-  - Lines 250–252: Catches network rejections on `getCRMTasks` without crashing, preserving cached tasks.
-- **Genuine State Machine & Validation Logic**:
-  - `handleCreateTask` (lines 342–408): Enforces title presence and minimum length of 3 characters (`if (trimmedTitle.length < 3)` triggers destructive toast).
-  - `handleSubmitProof` (lines 410–453): Enforces non-empty proof description when `task.requires_proof` is true (`if (activeTaskForProof.requires_proof && !trimmed)` triggers destructive toast).
-  - `handleSubmitRevision` (lines 460–502): Enforces non-empty revision notes (`if (!trimmed)` triggers destructive toast), returning task to `in_progress` with `review_feedback`.
-  - Task card rendering (lines 927–936): Renders an amber revision alert banner when `task.review_feedback && task.status === "in_progress"`.
-- **Anti-Cheating & Mock Bypass Scrutiny**:
-  - Grep scan for `process.env` in `src/pages/crm/Tasks.tsx`: 0 matches.
-  - Grep scan for `mock` in `src/pages/crm/Tasks.tsx`: 0 matches.
-  - Grep scan for `bypass` in `src/pages/crm/Tasks.tsx`: 0 matches.
-  - Grep scan for `any` in `src/pages/crm/Tasks.tsx`: 0 matches (100% strictly typed).
-- **Dynamic KPI Metrics Calculation**:
-  - `Tasks.tsx` lines 262–270: `metrics` is a pure `useMemo` computing `total`, `inProgress`, `review`, `done`, `completionRate`, and `overdue` dynamically from `tasks` and current date `todayStr`. No hardcoded stats.
+### 1.1 Quarantined Protected Files (19 Files) — Zero Diff Verification
+Executed `git diff HEAD -- <file>` on all 19 quarantined protected files. Every single file has exactly 0 lines of diff:
 
-### 1.2 Test Suite Analysis (`src/test/crmTasksView.test.tsx`)
-- 6 comprehensive tests asserting genuine DOM structure and event handling:
-  1. `fetches organization staff members on mount and displays them in create task dialog`
-  2. `opens manager revision request dialog, rejects empty feedback, and transitions task to in_progress with feedback`
-  3. `renders Table view with complete action buttons matching Kanban lifecycle`
-  4. `validates proof notes are non-empty when proof is required`
-  5. `populates tasks from crmApi.getCRMTasks and updates localStorage cache`
-  6. `computes overdue tasks and displays overdue pill badge in header`
-- No hardcoded test results, facade assertions, or trivial tautologies.
+| # | Quarantined Protected File Path | Diff Output | Status |
+|---|---|---|---|
+| 1 | `src/components/invoices/mobile/MobileCreateInvoice.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 2 | `src/components/invoices/mobile/AddItemModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 3 | `src/components/invoices/mobile/SelectPartyModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 4 | `src/components/invoices/mobile/EditItemModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 5 | `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 6 | `src/components/invoices/mobile/MobileBillPreviewModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 7 | `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 8 | `src/components/invoices/mobile/CreatePartyModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 9 | `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 10 | `src/components/items/mobile/CreateNewItemModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 11 | `src/components/SalesInvoiceModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 12 | `src/components/PurchaseInvoiceModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 13 | `src/components/invoices/AddItemsToBillModal.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 14 | `src/components/invoices/InvoiceFitView.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 15 | `src/components/invoices/UnifiedInvoiceRenderer.tsx` | 0 lines modified | **PASS (0 DIFF)** |
+| 16 | `src/utils/downloadExactInvoice.ts` | 0 lines modified | **PASS (0 DIFF)** |
+| 17 | `src/utils/whatsappPdfShare.ts` | 0 lines modified | **PASS (0 DIFF)** |
+| 18 | `src/utils/invoiceThemeLoader.ts` | 0 lines modified | **PASS (0 DIFF)** |
+| 19 | `src/services/documentsService.ts` | 0 lines modified | **PASS (0 DIFF)** |
 
-### 1.3 Invariance of Protected Invoice Files
-Verified file system timestamps (`Get-Item ... | Select-Object Name, LastWriteTime`):
-- `src/components/invoices/mobile/MobileCreateInvoice.tsx`: `21-10-2026 14:14:18` (Untouched)
-- `src/components/SalesInvoiceModal.tsx`: `21-10-2026 15:07:50` (Untouched)
-- `src/components/invoices/mobile/AddItemModal.tsx`: `14-10-2026 00:26:14` (Untouched)
-- `src/components/invoices/mobile/SelectPartyModal.tsx`: `14-10-2026 00:26:14` (Untouched)
-- `src/components/invoices/mobile/EditItemModal.tsx`: `14-10-2026 00:26:14` (Untouched)
+### 1.2 Modified Scope & Static Integrity Analysis
+Inspected git diffs and source code across the 4 authorized files:
+1. `src/components/AppSidebar.tsx`:
+   - Line 240: `isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);` replaces legacy purchases check.
+   - Line 437: Center elevated CTA button size refactored to `w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95`. Removed all skeuomorphic multi-color rainbow gradients (`from-amber-500`, `from-indigo-600`).
+   - Line 478-499: Tab 5 destination refactored to `to={ROUTE_PATHS.parties}`, icon changed to `<Users2 className="w-5 h-5 stroke-[2.2]" />`, text changed to `"Parties"`.
+   - All active tab indicators unified to single Royal Blue accent token: `text-blue-600 dark:text-blue-400 font-bold` and `bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105`.
+   - Eliminated `any` type casts on `(group as any).group`, replacing with `(group as { group?: string }).group`.
+2. `src/components/items/CreateItemModal.tsx`:
+   - Line 332: Outer wrapper modified to `flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm`.
+   - Line 333: Drawer container refactored to `w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl`.
+   - Line 335: Top drag handle indicator added: `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`.
+   - Line 899: Fixed bottom confirmation action bar added: `sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0`.
+   - Line 388: Form content wraps in `<div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">` for independent scrolling.
+   - Eliminated all `(initialData as any)` casts, replacing with typed `dataRecord` and `tagsRecord` accesses.
+3. `src/components/parties/CreatePartyModal.tsx`:
+   - Line 622: Outer wrapper modified to `flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm`.
+   - Line 623: Drawer container refactored to `w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl`.
+   - Line 625: Top drag handle indicator added: `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`.
+   - Line 1572: Fixed bottom confirmation action bar added: `sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0`.
+   - Form fields scroll independently within `<div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">`.
+4. `src/test/mobileErgonomicsChallenger.test.ts`:
+   - Synchronized center elevated button assertion to `/w-\[46px\]\s+h-\[46px\]/`.
+   - Added explicit verification for Tab 5 destination `ROUTE_PATHS.parties` with `Users2` icon and `Parties` text.
+   - Added Audit 4 (`Mobile Bottom-Sheet Drawer Primitives & Royal Blue Dock Standardization`) containing 3 tests verifying drawer tokens, drag handle, sticky footer, and Royal Blue dock styling.
+   - Zero skipped tests (`it.skip`, `describe.skip`, `xit`), zero dummy assertions (`expect(true).toBe(true)`), zero `process.env.NODE_ENV === 'test'` bypasses.
 
-### 1.4 Empirical Command Execution
-- **Vitest Task Test Suites**:
-  - Command: `cmd /c "npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTaskLifecycle.test.ts"`
-  - Result: Exit code 0, 3 test files passed, 51/51 tests passed.
-- **Vitest Staff Provisioning Suites**:
-  - Command: `cmd /c "npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx"`
-  - Result: Exit code 0, 2 test files passed, 36/36 tests passed.
-- **TypeScript Strict Compilation**:
-  - Command: `cmd /c "npx tsc --noEmit"`
-  - Result: Exit code 0, 0 compiler errors.
-- **Production Bundle Build**:
-  - Command: `cmd /c "npm run build"`
-  - Result: Exit code 0, built cleanly in 2m 43s.
+### 1.3 Empirical Tool Execution Outputs
+1. **Static Lint Analysis**:
+   - Command: `cmd /c npx eslint src/components/AppSidebar.tsx src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx src/test/mobileErgonomicsChallenger.test.ts`
+   - Exit code: `0`
+   - Output: Clean, 0 errors, 0 warnings.
+2. **TypeScript Compilation**:
+   - Command: `cmd /c npx tsc --noEmit`
+   - Exit code: `0`
+   - Output: Clean, 0 errors.
+3. **Vitest Test Suite Execution**:
+   - Command: `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts`
+   - Exit code: `0`
+   - Output:
+     ```
+     RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
+
+     ✓ src/test/mobileErgonomicsChallenger.test.ts (17 tests) 83ms
+     ✓ src/test/mobileTouchErgonomicsRemediation.test.ts (9 tests) 29ms
+     ✓ src/test/billingLifecycleEngine.test.ts (17 tests) 61ms
+
+     Test Files  3 passed (3)
+          Tests  43 passed (43)
+       Duration  9.20s
+     ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Compliance with Ground-Truth Constraints**:
-   - `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z) defines Integrity Mode as `development`, requiring authentic implementation without hardcoded test outcomes, dummy facades, or fabricated logs.
-   - Observations in 1.1 confirm that `Tasks.tsx` connects to real API endpoints in `crmApi.ts`, which interface with the backend Express router (`backend-api/src/routes/crm.js`) backing PostgreSQL table `staff_tasks`.
-2. **State Machine Integrity**:
-   - Observation 1.1 demonstrates that status transitions are strictly validated: empty proof notes on proof-required tasks are blocked; empty revision feedback on manager revisions is blocked; title length validation is enforced.
-   - All state transitions update local state, trigger user notifications, and make backend API calls.
-3. **Absence of Cheating or Mocks in Production**:
-   - Grep scans in 1.1 reveal zero instances of `process.env.NODE_ENV`, `mock`, `bypass`, or `any` in `src/pages/crm/Tasks.tsx`.
-   - The component operates authentically in both browser and test environments, using standard React hooks and standard DOM events.
-4. **Desktop & Invoice Preservation**:
-   - Observation 1.3 shows that all 5 protected invoicing files have LastWriteTime timestamps prior to Milestone 3 implementation.
-5. **Empirical Validation**:
-   - Observation 1.4 confirms that all 51 task lifecycle and UI tests, all 36 staff provisioning tests, the full TypeScript compiler (`tsc --noEmit`), and the production build (`npm run build`) execute cleanly with zero errors.
+1. **Quarantine Invariance**:
+   - Observation: `git diff HEAD` produced 0 lines changed across all 19 quarantined protected files.
+   - Invariant: Zero business logic regressions were introduced to invoice creation, PDF generation, tax calculations, thermal printing, or Supabase subscriptions.
+
+2. **Mobile Dock Standard Compliance**:
+   - Observation: In `AppSidebar.tsx`, Tab 5 points to `ROUTE_PATHS.parties` with `Users2` and label `"Parties"`. The center elevated CTA has been reduced from 52x52px to 46x46px (`w-[46px] h-[46px] rounded-xl`) in solid Royal Blue (`bg-blue-600`), completely eliminating skeuomorphic rainbow gradients. All active tabs use the unified Royal Blue token.
+   - Invariant: Directly fulfills `minimal-design-system.md` §1 & §6 and `ORIGINAL_REQUEST.md` §R3 requirements for ergonomic thumb targets and single-accent neutrality.
+
+3. **Bottom-Sheet Drawer Fidelity**:
+   - Observation: Both `CreateItemModal.tsx` and `CreatePartyModal.tsx` wrap in `items-end sm:items-center`, use `max-h-[92dvh] rounded-t-2xl sm:rounded-2xl`, feature top drag handles (`w-12 h-1.5 rounded-full`), and provide sticky bottom confirmation action bars with `pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`.
+   - Invariant: Directly fulfills `minimal-design-system.md` §6 and `PROJECT.md` Pillar 3 for native touch-first mobile drawers without breaking desktop center-dialog presentations.
+
+4. **Code Quality & Authenticity**:
+   - Observation: ESLint and TypeScript checks exit with code 0. Zero `any` types remain in modified sections. Zero test bypasses or skipped tests exist.
+   - Invariant: The implementation is authentic, maintainable, and free of facades or cheats.
+
+5. **Empirical Verification**:
+   - Observation: All 43 tests across all 3 relevant Vitest suites pass cleanly.
+   - Invariant: Complete behavioral and layout compliance is empirically proven.
 
 ---
 
 ## 3. Caveats
 
-- In headless test runners lacking a live Express server, network requests via `fetch` / `apiClient` fail gracefully and activate the built-in `localStorage` fallback; this was verified to be authentic application error-handling rather than test-specific conditional branching.
-- No other caveats.
+- **No Caveats**: All 4 audit mandates from the dispatch instructions were empirically checked and verified.
+- Protected files were 100% untouched.
+- No dummy mocks or bypassed validations were found.
+- Compilation and test execution completed with zero failures.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: CLEAN**
+**VERDICT: CLEAN**
 
-Milestone 3 (Full-Stack Enterprise Task Management) adheres 100% to all specifications in `ORIGINAL_REQUEST.md` and `PROJECT.md`. The implementation in `src/pages/crm/Tasks.tsx` is authentic, production-grade, strictly typed with zero `any` types, free of mock bypasses, verified by 51 passing tests, passes `tsc --noEmit`, and leaves all invoice creation flows completely untouched.
+Milestone 3 (Mobile Ergonomics & Native-Touch Layouts) fully satisfies all requirements:
+1. 19/19 quarantined protected billing and invoice files remain 100% untouched (0 diff lines).
+2. Mobile bottom dock in `AppSidebar.tsx` strictly adheres to design tokens: Tab 5 navigates to `Parties`, center elevated CTA is standardized to 46x46px Royal Blue, and active states are unified to Royal Blue.
+3. `CreateItemModal.tsx` and `CreatePartyModal.tsx` implement genuine, touch-friendly mobile bottom-sheet drawers with top drag handles, independent scrolling form bodies, and sticky bottom confirmation bars.
+4. `tsc --noEmit` exits with code 0; ESLint exits with code 0; Vitest passes 43/43 tests (100%).
+
+The work product is approved without reservations.
 
 ---
 
 ## 5. Verification Method
 
-To independently re-verify this audit, run the following commands from repository root:
+To independently verify this verdict:
 
-```powershell
-# 1. Verify task unit, lifecycle, and view integration test suites
-cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTaskLifecycle.test.ts
+1. **Verify 19 Quarantined Protected Files**:
+   ```powershell
+   node .agents/teamwork/auditor_m3/verify_protected.cjs
+   ```
+   *Expected result: 19 / 19 protected files untouched (0 diff lines).*
 
-# 2. Verify staff provisioning and UI tests
-cmd /c npx vitest run src/test/crmStaffProvisioning.test.ts src/test/crmStaffProvisioningUI.test.tsx
+2. **Verify Static Code Quality & Zero Cheats**:
+   ```powershell
+   node .agents/teamwork/auditor_m3/scan_cheats.cjs
+   cmd /c npx eslint src/components/AppSidebar.tsx src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx src/test/mobileErgonomicsChallenger.test.ts
+   ```
+   *Expected result: Exit code 0, 0 errors, 0 warnings.*
 
-# 3. Verify TypeScript strict compiler
-cmd /c npx tsc --noEmit
+3. **Verify TypeScript Compilation**:
+   ```powershell
+   cmd /c npx tsc --noEmit
+   ```
+   *Expected result: Exit code 0, 0 errors.*
 
-# 4. Verify production build
-cmd /c npm run build
-```
-
-Invalidation conditions:
-- Any failure in `crmTasksView.test.tsx` or `crmStaffTasksIntegration.test.tsx`.
-- Introduction of `any` types or `process.env.NODE_ENV` bypass branches in `src/pages/crm/Tasks.tsx`.
-- Modifications to any protected invoice modal files.
+4. **Verify Vitest Test Execution**:
+   ```powershell
+   cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts
+   ```
+   *Expected result: 3 test files passed, 43 passed (43).*

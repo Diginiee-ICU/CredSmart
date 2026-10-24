@@ -663,7 +663,7 @@ return (
       <div className="grid grid-cols-4 sm:hidden gap-1.5 shrink-0">
         <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500" />
-          <span className="text-[8.5px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
             Valuation
           </span>
           <p className="text-xs font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
@@ -681,7 +681,7 @@ return (
           )}
         >
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-amber-500" />
-          <span className="text-[8.5px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
             Low Stock
           </span>
           <p className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
@@ -691,7 +691,7 @@ return (
 
         <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />
-          <span className="text-[8.5px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
             Catalog
           </span>
           <p className="text-xs font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
@@ -701,7 +701,7 @@ return (
 
         <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-rose-500" />
-          <span className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
             Zero Stock
           </span>
           <p className="text-xs font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
@@ -718,13 +718,14 @@ return (
         <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-3.5 flex items-center justify-between relative overflow-hidden group select-none transition-all">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500" />
           <div className="space-y-0.5 min-w-0">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
               Stock Valuation
             </span>
             <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate">
               ₹ {totalStockValue.toLocaleString("en-IN")}
             </p>
-            <p className="hidden sm:block text-[10.5px] text-slate-500 dark:text-slate-400 font-medium">Current cost valuation</p>
+
+
           </div>
           <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 shrink-0 hidden sm:flex">
             <Package className="w-4 h-4" />
@@ -752,9 +753,10 @@ return (
             <p className="text-base sm:text-xl font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate">
               {lowStockCount} Items
             </p>
-            <p className="hidden sm:block text-[10.5px] text-amber-700/80 dark:text-amber-400/80 font-medium">
-              {lowStockOnly ? "Click to clear filter" : "Below reorder level"}
-            </p>
+
+
+
+
           </div>
           <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40 shrink-0 hidden sm:flex">
             <AlertTriangle className="w-4 h-4" />
@@ -770,8 +772,8 @@ return (
             </span>
             <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate">
               {totalItemsCount} SKUs
+
             </p>
-            <p className="hidden sm:block text-[10.5px] text-slate-500 dark:text-slate-400 font-medium">Master products</p>
           </div>
           <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 shrink-0 hidden sm:flex">
             <Layers className="w-4 h-4" />
@@ -787,8 +789,8 @@ return (
             </span>
             <p className="text-base sm:text-xl font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate">
               {outOfStockCount} Items
+
             </p>
-            <p className="hidden sm:block text-[10.5px] text-rose-500 dark:text-rose-400 font-medium">Needs restock</p>
           </div>
           <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40 shrink-0 hidden sm:flex">
             <X className="w-4 h-4" />
@@ -878,7 +880,7 @@ return (
               setEditingItem(null);
               setShowCreateModal(true);
             }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Item</span>
@@ -1028,7 +1030,7 @@ return (
               <p className="text-xs font-bold text-slate-900 dark:text-white">No inventory items found</p>
               <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
                 {search ? `No items match "${search}".` : "Create your first product or import from product library."}
-              </p>
+  
               <Button
                 size="sm"
                 onClick={() => {
@@ -1273,7 +1275,7 @@ return (
                       {search
                         ? `No items match "${search}". Try searching another name or barcode.`
                         : "Start by creating your first product or import from our pre-built product library."}
-                    </p>
+        
                     <div className="flex items-center justify-center gap-2 pt-2">
                       <Button
                         size="sm"
@@ -1389,7 +1391,7 @@ return (
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                               <QrCode className="w-3 h-3 text-slate-400" />
                               <span>{item.barcode}</span>
-                            </p>
+                
                           ) : null}
                         </div>
                       </td>
@@ -1434,7 +1436,7 @@ return (
                         {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
                           <p className="text-[10px] text-slate-400 line-through tabular-nums">
                             MRP ₹{Number(item.mrp || 0).toLocaleString("en-IN")}
-                          </p>
+              
                         )}
                       </td>
 
@@ -1445,7 +1447,7 @@ return (
                         </span>
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                           Margin: ₹ {Math.max(0, (Number(item.sellingPrice) || 0) - (Number(item.purchasePrice) || 0)).toLocaleString("en-IN")}
-                        </p>
+            
                       </td>
 
                       {/* Actions */}
@@ -1606,7 +1608,7 @@ return (
                 </DialogTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   {adjustingItem?.name} {adjustingItem?.sku ? `(${adjustingItem.sku})` : ""}
-                </p>
+    
               </div>
             </div>
           </div>

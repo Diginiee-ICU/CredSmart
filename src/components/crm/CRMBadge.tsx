@@ -20,7 +20,7 @@ export interface CRMBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
    * - `success`: Emerald green (#10B981) for active states and positive confirmations.
    * - `warning`: Amber/Orange for alerts requiring attention.
    * - `error`: Rose/Red (#EF4444) for failures or destructive warnings.
-   * - `info`: Royal Blue (#1D4ED8) for informative metadata and tags.
+   * - `info`: Royal Blue (#2563EB) for informative metadata and tags.
    * - `neutral`: Slate/Navy (#0F172A) for standard counters and subtle categories.
    * - `orange`: CredSmart brand vibrant orange (#FF6A00).
    * @default "neutral"
@@ -75,8 +75,8 @@ export const CRMBadge = React.forwardRef<HTMLSpanElement, CRMBadgeProps>(
         dot: "bg-rose-500",
       },
       info: {
-        pill: "bg-blue-50 text-[#1D4ED8] border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
-        dot: "bg-[#1D4ED8]",
+        pill: "bg-blue-50 text-[#2563EB] border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
+        dot: "bg-blue-600",
       },
       neutral: {
         pill: "bg-slate-100 text-[#0F172A] border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
@@ -89,7 +89,7 @@ export const CRMBadge = React.forwardRef<HTMLSpanElement, CRMBadgeProps>(
     };
 
     const sizeStyles: Record<CRMBadgeSize, string> = {
-      sm: "text-[10px] px-2 py-0.5 gap-1",
+      sm: "text-[11px] px-2 py-0.5 gap-1 font-semibold",
       md: "text-xs px-2.5 py-0.5 gap-1.5",
       lg: "text-sm px-3 py-1 gap-2 font-medium",
     };

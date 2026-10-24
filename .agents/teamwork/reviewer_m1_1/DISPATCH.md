@@ -1,34 +1,51 @@
-# Reviewer 1 Dispatch: M1 Backend Routes & Security
+# Dispatch Directive: Reviewer 1 — Milestone 1 (Design Tokens & CSS Architecture)
 
 ## Mission
-Review Milestone 1 implementation in `backend-api/src/routes/crm.js` and `src/services/crmApi.ts`.
+Independently review the Milestone 1 changes in `tailwind.config.ts` and `src/index.css`:
+1. Check `tailwind.config.ts`: Verify spacing scale ('7.5', '8.5', '11.5', '13'), sans/display font family set to 'Inter', micro-shadows, borderRadius scale.
+2. Check `src/index.css`: Verify :root and .dark tokens (#F8FAFC light / #090D16 dark / #2563EB royal blue / #10B981 emerald / #E11D48 rose), font-family assignments, tabular figures configuration, body wallpaper gradient elimination, and sanitization of skeuomorphic glass/glow utilities.
+3. Verify builds/tests: Run `cmd /c npx tsc --noEmit` and check for any type or CSS regression.
+4. Check Protected Files: Verify zero changes were made to the 19 protected invoice files.
 
-## Review Criteria
-1. Backend `POST /api/crm/staff/provision`:
-   - Proper transaction handling (`BEGIN`, `COMMIT`, `ROLLBACK`).
-   - Bcrypt hashing with salt rounds >= 10.
-   - Atomicity: inserts into `users`, `org_memberships`, and CRM role assignments.
-   - Verification that user can log in immediately via `/api/auth/login`.
-2. Backend Task endpoints (`GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`, `DELETE /api/crm/tasks/:id`):
-   - Tenant isolation: strictly query and update where `org_id = $1`.
-   - Lifecycle state machine transitions and metadata updates (`completed_at`, `approved_by`, `proof_notes`, `review_feedback`).
-3. Frontend API client in `src/services/crmApi.ts`:
-   - TypeScript typing, no `any` types, correct endpoint URLs and payloads.
-4. Protected route preservation:
-   - Ensure Create Invoice flows (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc.) are completely untouched.
+## References to Read
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
 
-Verdict: APPROVE or REQUEST_CHANGES.
-Write report to `.agents/teamwork/reviewer_m1_1/handoff.md`.
+## Expected Output
+Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with your verdict (APPROVE or REQUEST_CHANGES), observation, logic chain, and verification method. Send message when done.
 
 
-## 2026-10-21T18:37:27Z
-You are Reviewer 1 for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+## 2026-10-24T19:19:47Z
+[Message] timestamp=2026-10-24T19:19:47Z sender=3044c8ce-523a-4157-917d-31b6f5d55c6a priority=MESSAGE_PRIORITY_HIGH content=You are Reviewer 1 for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project.
 
-MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
-Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md.
+Your dedicated working directory is:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1`
 
-Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
+Read your dispatch directive:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md`
 
-Review backend routes in `backend-api/src/routes/crm.js`, security, bcrypt hashing, transaction handling, tenant isolation, and `src/services/crmApi.ts`.
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit verdict: APPROVE or REQUEST_CHANGES.
-Send message back to parent when done.
+Read the authoritative user request:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
+
+Read the Worker's handoff report:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+
+Read the design rules and master project document:
+- `.agents/rules/minimal-design-system.md`
+- `PROJECT.md`
+
+Examine the changes made in:
+- `tailwind.config.ts`
+- `src/index.css`
+
+Your tasks:
+1. Objectively review and adversarially challenge the design tokens, fonts, spacing scale, and utility sanitization.
+2. Verify TypeScript compilation: run `cmd /c npx tsc --noEmit`.
+3. Check Protected Files: verify NONE of the 19 invoice files were modified.
+4. Record your clear verdict: `VERDICT: APPROVE` or `VERDICT: REQUEST_CHANGES` (with reasons).
+
+Write your handoff report to:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md`
+When complete, send a message to the orchestrator with your verdict.

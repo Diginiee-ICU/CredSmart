@@ -1,163 +1,156 @@
-# Milestone 3 Review & Adversarial Critic Handoff Report: Task Lifecycle & State Transitions
+# Review & Adversarial Audit Report — Milestone 3: Mobile Bottom-Sheet Drawers
 
-- **Reviewer**: Reviewer 2 (`reviewer_m3_2`)
-- **Roles**: reviewer, critic
-- **Target Deliverable**: Milestone 3 — Task Lifecycle State Transitions, Proof Enforcement, Manager Approvals, Revision Requests, and Real-Time KPI Metrics in `src/pages/crm/Tasks.tsx`
-- **Parent Orchestrator ID**: `c838af97-21de-4616-9188-f0f8dfa904c9`
-- **Timestamp**: 2026-10-21T19:58:00Z
-- **Verdict**: **APPROVE**
-
----
-
-## Review Summary
-
-**Verdict**: **APPROVE**
-
-The implementation of the Enterprise Task Management state machine, proof verification modals, manager approval controls, revision loop, and real-time KPI metrics in `src/pages/crm/Tasks.tsx` satisfies all specifications in `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z) and `PROJECT.md`.
-All verification tests pass cleanly:
-- `cmd /c npx vitest run crmTask`: **39/39 tests passed** across `crmTaskLifecycle.test.ts` (33 tests) and `crmTasksView.test.tsx` (6 tests).
-- `cmd /c npx tsc --noEmit`: **0 errors** (clean exit code 0).
-
-Zero integrity violations, hardcoded facades, or bypassed logic were detected.
+**Reviewer**: Reviewer 2 (`reviewer_m3_2`)  
+**Roles**: Reviewer, Adversarial Critic  
+**Parent Conversation ID**: `3044c8ce-523a-4157-917d-31b6f5d55c6a`  
+**Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_2\`  
+**Timestamp**: 2026-10-24T20:30:00Z  
+**Verdict**: **APPROVE**  
 
 ---
 
 ## 1. Observation
 
-### 1.1 State Machine Lifecycle Implementation (`src/pages/crm/Tasks.tsx`)
+### 1.1 Direct Code Audit: `src/components/items/CreateItemModal.tsx`
+- **Mobile Bottom-Sheet Presentation** (Line 335):
+  ```tsx
+  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+  ```
+  Alings to bottom (`items-end p-0`) on mobile, and centered (`sm:items-center sm:p-4`) on desktop.
+- **Sheet Dimensions & Styling** (Line 336):
+  ```tsx
+  <div className="w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl">
+  ```
+  Matches exact master tokens: `max-h-[92dvh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl`.
+- **Top Drag Handle Indicator** (Line 338):
+  ```tsx
+  {/* Top drag handle indicator */}
+  <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />
+  ```
+  Visual touch affordance present on mobile (`sm:hidden`).
+- **Independent Form Scrolling Body** (Lines 388–389):
+  ```tsx
+  <form ref={formScrollRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+  ```
+  Form fields scroll independently in `flex-1 overflow-y-auto`.
+- **Fixed Bottom Confirmation Action Bar** (Lines 900–942):
+  ```tsx
+  <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0">
+  ```
+  Pinned permanently at bottom with safe-area inset protection (`pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`).
 
-1. **`todo` -> `in_progress` Transition ("Start Job →")**:
-   - In Kanban swimlane (`lines 980-988`): Renders prominent "Start Job →" button (`min-h-[44px]`, blue font) triggering `handleMoveStatus(task.id, "in_progress")`.
-   - In Data Table view (`lines 626-635`): Renders "Start Job" button triggering identical transition.
-   - In `handleMoveStatus` (`lines 285-309`): Transitions `status` to `"in_progress"`. If returning from `todo`, cleanly clears prior `review_feedback`. Dispatches `crmApi.transitionCRMTaskStatus(taskId, "in_progress", { orgId })` and fires notification toast `"Task marked as in progress"`.
+### 1.2 Direct Code Audit: `src/components/parties/CreatePartyModal.tsx`
+- **Mobile Bottom-Sheet Presentation** (Line 625):
+  ```tsx
+  <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="create-party-title" className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+  ```
+  Alings to bottom on mobile (`items-end p-0`), and centered (`sm:items-center sm:p-4`) on desktop.
+- **Sheet Dimensions & Styling** (Line 626):
+  ```tsx
+  <div className="w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl">
+  ```
+  Matches exact master tokens.
+- **Top Drag Handle Indicator** (Line 628):
+  ```tsx
+  {/* Top drag handle indicator */}
+  <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />
+  ```
+- **Independent Form Scrolling Body** (Lines 689–690, 1570):
+  ```tsx
+  <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+      ...
+    </div>
+  ```
+- **Fixed Bottom Confirmation Action Bar** (Lines 1572–1617):
+  ```tsx
+  {/* Fixed bottom confirmation action bar */}
+  <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0">
+  ```
 
-2. **`in_progress` -> `review` Transition & Proof Enforcement**:
-   - In Kanban (`lines 989-1005`) & Table (`lines 636-652`): Action button "Submit Proof" inspects `task.requires_proof`.
-   - If `requires_proof === true`: Opens `<Dialog open={Boolean(activeTaskForProof)}>` modal (`lines 1219-1255`).
-   - If `requires_proof === false`: Bypasses dialog and directly transitions to `"review"`.
-   - In `handleSubmitProof` (`lines 410-453`):
-     - Enforces non-empty proof: checks `if (activeTaskForProof.requires_proof && !trimmed)`. If empty, shows destructive toast `"Please describe your work or proof before submitting"` and aborts transition.
-     - On valid submission: stores `proof_notes`, updates `status: "review"`, dispatches `crmApi.transitionCRMTaskStatus(taskId, "review", { proof_notes, orgId })`, and fires success toast `"Submitted for Review"`.
-     - In Kanban cards (`lines 938-945`), submitted proof notes are displayed in a clean preview card.
+### 1.3 Strict Quarantine Verification
+File write timestamps verified via PowerShell `Get-Item`:
+- `src/components/invoices/mobile/CreatePartyModal.tsx`: LastWriteTime = `2026-10-19 00:30` (100% untouched).
+- `src/components/items/mobile/CreateNewItemModal.tsx`: LastWriteTime = `2026-10-14 00:54` (100% untouched).
 
-3. **`review` -> `done` Transition & Manager Sign-Off**:
-   - In Kanban (`lines 1006-1025`) & Table (`lines 653-675`): Protected by `canApprove = isSuperAdmin || hasPermission("tasks", "approve")`. Non-manager users cannot see or trigger approval actions.
-   - Clicking "Approve ✓" triggers `handleApproveTask(task.id)` (`lines 311-340`).
-   - Records `status: "done"`, `completed_at: new Date().toISOString()`, `approved_by: "manager"`, and `approver_name: "Store Manager"`.
-   - Dispatches `crmApi.transitionCRMTaskStatus(taskId, "done", { orgId })` and fires toast `"Task Approved: Task marked as completed and signed off"`.
-   - On the completed card (`lines 948-957`), displays green check icon, completion date (`task.completed_at`), and approver name (`task.approver_name`).
-
-4. **`review` -> `in_progress` Manager Revision Loop**:
-   - In Kanban & Table: Manager clicks "Request Revision" when in `"review"`, opening `<Dialog open={Boolean(activeTaskForRevision)}>` (`lines 1257-1294`).
-   - In `handleSubmitRevision` (`lines 460-502`):
-     - Validates non-empty input: `if (!trimmed)` shows destructive toast `"Please enter revision notes before submitting"` and halts.
-     - On valid submission: sets `status: "in_progress"` and `review_feedback: trimmed`.
-     - Dispatches `crmApi.transitionCRMTaskStatus(taskId, "in_progress", { review_feedback, orgId })` and fires toast `"Revision Requested: Task returned to In Progress with feedback"`.
-   - Renders high-visibility amber alert callout banner on card in "In Progress" swimlane (`lines 927-935`) and an amber `"Revision"` badge in Table view (`lines 549-554`).
-   - Assignee can re-work the task and click "Submit Proof" again to resubmit for review.
-
-### 1.2 Real-Time KPI Metrics (`src/pages/crm/Tasks.tsx`, lines 262-270)
-
-The `metrics` memoized object accurately calculates:
-- `total`: `tasks.length`
-- `inProgress`: `tasks.filter(t => t.status === "in_progress").length`
-- `review`: `tasks.filter(t => t.status === "review").length`
-- `done`: `tasks.filter(t => t.status === "done").length`
-- `completionRate`: `total > 0 ? Math.round((done / total) * 100) : 0` (protects against division by zero when no tasks exist)
-- `overdue`: `tasks.filter(t => t.status !== "done" && Boolean(t.due_date && t.due_date < todayStr)).length`
-- Visual display:
-  - Header badge (`lines 722-726`): Renders `{metrics.overdue} Overdue` in an error badge if overdue tasks exist.
-  - Stat cards grid (`lines 796-829`): 4 `CRMStatCard` components (Total Tasks, In Progress, Pending Review, Completed with `{metrics.completionRate}%` trend indicator).
-
-### 1.3 Independent Verification Results
-
-1. **Vitest `crmTask` Suite**:
-   ```
-   cmd /c npx vitest run crmTask
-   ```
-   **Output**:
-   ```
-   ✓ src/test/crmTaskLifecycle.test.ts (33 tests) 45ms
-   ✓ src/test/crmTasksView.test.tsx (6 tests) 8963ms
-   Test Files  2 passed (2)
-        Tests  39 passed (39)
-     Duration  25.06s
-   ```
-   *Exit Code: 0.*
-
-2. **TypeScript Static Compilation**:
-   ```
-   cmd /c npx tsc --noEmit
-   ```
-   **Output**: 0 errors, clean exit.
-   *Exit Code: 0.*
-
-3. **Backend Route & Schema Inspection**:
-   - `backend-api/src/routes/crm.js`: `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id` enforce tenant isolation (`WHERE (org_id = $1 OR organization_id = $1)`), record `completed_at` and `approved_by` on `"done"`, and return enriched task models.
-   - `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` and `fix_db.sql`: Idempotently declare `staff_tasks` table with `requires_proof`, `proof_notes`, `completed_at`, `approved_by`, `review_feedback`, and tenant indexes.
+### 1.4 Independent Command Execution Results
+1. **ESLint**:
+   - Command: `cmd /c npx eslint src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx`
+   - Result: Exit code `0`, 0 errors, 0 warnings.
+2. **TypeScript Compilation**:
+   - Command: `cmd /c npx tsc --noEmit`
+   - Result: Exit code `0`, clean compilation, 0 errors.
+3. **Vitest Mobile Ergonomics & Regression Suite**:
+   - Command: `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts`
+   - Result: Exit code `0`, 3 test files passed, 43/43 tests passed (100%).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Complete Lifecycle Parity**:
-   The 4-stage lifecycle (`todo` -> `in_progress` -> `review` -> `done`) and the revision return loop (`review` -> `in_progress`) are consistently wired across both the Kanban board view and the Data Table view. Every button is contextually enabled based on the current task status and user permissions.
-2. **Proof & Revision Integrity**:
-   Proof notes and revision feedback are not treated as passive text; both dialogs enforce strict non-empty input validation (`!trimmed`) and display clear destructive error toasts when violated, preventing accidental empty submissions.
-3. **RBAC Gating & Authorization**:
-   Only users with manager or super-admin credentials (`tasks:approve` or `isSuperAdmin`) can approve tasks or request revisions. Regular staff can only transition jobs they are executing (`todo` -> `in_progress` -> `review`).
-4. **Resilience & Zero Data Loss**:
-   Tasks are cached in `localStorage` keyed by organization ID (`credsmart_crm_tasks_${orgId}`). If the network connection drops, tasks are retrieved from cache, guaranteeing zero UI crashes or blank screens.
-5. **Mathematical Precision**:
-   Metrics cleanly handle boundary scenarios, including empty task lists (`total === 0` defaults completion rate to `0%` without `NaN`), and overdue detection correctly ignores tasks in `"done"` status.
+1. **Mobile Ergonomics & Native Drawer Presentation**:
+   - Both `CreateItemModal.tsx` and `CreatePartyModal.tsx` now employ `items-end sm:items-center` combined with `max-h-[92dvh] rounded-t-2xl sm:rounded-2xl`. On mobile devices (< 768px), this produces a native mobile sheet docking to the bottom of the screen with a 2-corner top curve, leaving the upper 8% of viewport visible so users maintain spatial awareness of their underlying screen.
+   - The drag handle `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />` provides immediate visual affordance that the surface is a bottom sheet.
+2. **Fixed Bottom Thumb-Zone Confirmation**:
+   - Previously, Save/Cancel actions were buried at the bottom of long scrolling forms, requiring users on mobile to scroll through dozens of fields to find the submit button.
+   - The refactored structure isolates form fields inside `flex-1 overflow-y-auto` while pinning the action bar via `sticky bottom-0 ... shrink-0`. The confirmation bar remains permanently anchored in the natural thumb zone.
+   - The addition of `pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]` guarantees that the action buttons will never be occluded by mobile home indicator bars or virtual navigation keys.
+3. **Desktop Preservation & Zero Regression**:
+   - On desktop viewports (`sm:`), the layout gracefully expands to `sm:items-center sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl` with `sm:hidden` hiding the drag handle, maintaining desktop ergonomics.
+   - All submit and edit payload logic remains 100% authentic and unbypassed.
+4. **Integrity & Code Quality**:
+   - Zero hardcoded test outputs or mock facades.
+   - Quarantined protected files in `src/components/invoices/mobile/` and `src/components/items/mobile/` were untouched.
+   - TypeScript compiles cleanly with zero errors; ESLint reports zero errors.
 
 ---
 
-## 3. Caveats & Adversarial Stress Observations
+## 3. Caveats
 
-1. **Unmounted Component Async State Updates in Integration Tests**:
-   - *Observation*: In `Tasks.tsx`, `loadData()` includes a `finally { setIsRefreshing(false); }` block. In unit tests that do not mock `crmApi` (such as `crmStaffTasksIntegration.test.tsx`), an unhandled rejection warning was caught after the test environment was torn down because the async fetch finished after test completion.
-   - *Mitigation*: In `crmTasksView.test.tsx`, `crmApi` is mocked properly and no unhandled rejections occur. In production, this is a benign React warning that does not crash the application.
-   - *Recommendation*: For maximum React hygiene, implement an `isMounted` ref or `AbortController` in `Tasks.tsx` to guard `setIsRefreshing(false)` upon unmount.
-2. **Optimistic Local Approver vs Server Token**:
-   - *Observation*: When `handleApproveTask` executes locally, it sets `approver_name: "Store Manager"`. On the backend, `PATCH /api/crm/tasks/:id` records `req.user?.id` and pulls the authentic user name from the `users` table. This ensures immediate UI responsiveness while preserving database integrity.
+- **No Caveats**: All 7 criteria from the dispatch instructions were thoroughly investigated, verified through direct source inspection, and confirmed via clean CLI tool runs. No regressions or architectural flaws were found.
 
 ---
 
-## 4. Adversarial Challenge Matrix
-
-| Challenge / Failure Vector | Stress Test Scenario | Expected System Defense | Actual Behavior Observed | Result |
-|---|---|---|---|---|
-| **Empty Proof Submission** | User clicks "Submit Proof" and submits whitespace only | Rejection toast; status remains `in_progress` | `handleSubmitProof` rejects empty string; shows destructive toast | **PASS (Mitigated)** |
-| **Empty Revision Request** | Manager clicks "Request Revision" and sends empty string | Rejection toast; status remains `review` | `handleSubmitRevision` rejects empty string; shows destructive toast | **PASS (Mitigated)** |
-| **Unauthorized Approval** | Staff user without `tasks:approve` attempts approval | Action buttons hidden; approval denied | Buttons omitted from DOM; gated via `canApprove` | **PASS (Mitigated)** |
-| **Zero Tasks Division** | Store has 0 tasks configured | KPI rate must be 0%, not `NaN%` | `total > 0 ? Math.round((done / total) * 100) : 0` returns 0 | **PASS (Mitigated)** |
-| **Overdue Done Tasks** | Task past due date is marked `done` | Task must NOT be counted as overdue | Filter checks `task.status !== 'done'`, excludes completed tasks | **PASS (Mitigated)** |
-| **Revision Loop Return** | Task returned for revision | Task returns to `in_progress` with banner | Amber banner displayed on card; status is `in_progress` | **PASS (Mitigated)** |
-| **Re-submission After Revision** | User resubmits task after revision | Previous feedback cleared or updated | Proof modal opens and submits new notes to `review` | **PASS (Mitigated)** |
-
----
-
-## 5. Conclusion
+## 4. Conclusion
 
 **Verdict: APPROVE**
 
-Milestone 3's task management implementation in `src/pages/crm/Tasks.tsx` is completely functional, strictly typed, resilient to offline/network failure, and rigorously verified across 39 vitest tests. All acceptance criteria for task lifecycle state transitions, proof notes enforcement, manager approval/revision loops, and KPI metrics are fully met.
+The work implemented in `src/components/items/CreateItemModal.tsx` and `src/components/parties/CreatePartyModal.tsx` by Worker M3 fully complies with all specifications:
+1. Mobile bottom-sheet presentation (`items-end sm:items-center`) is cleanly implemented.
+2. Sheet styling tokens (`max-h-[92dvh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl`) are applied verbatim.
+3. Visual drag handle affordance is present on mobile and hidden on desktop.
+4. Confirmation action bars are sticky at the bottom with safe-area inset protection.
+5. Form inputs scroll independently inside `flex-1 overflow-y-auto`.
+6. Zero ESLint errors, zero TypeScript compilation errors, and 100% test pass rate (43/43).
+7. Quarantined protected files remain 100% untouched.
 
 ---
 
-## 6. Verification Method
+## 5. Verification Method
 
-To independently verify the implementation:
+To independently reproduce this verification:
 
-1. **Execute Task Lifecycle & Component Tests**:
+1. **Verify ESLint**:
    ```powershell
-   cmd /c npx vitest run crmTask
+   cmd /c npx eslint src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx
    ```
-   *Expected*: `39 passed (39)` across `crmTaskLifecycle.test.ts` and `crmTasksView.test.tsx`.
+   *Expectation*: Exit code 0, no errors, no warnings.
 
-2. **Execute TypeScript Static Type Check**:
+2. **Verify TypeScript Compilation**:
    ```powershell
    cmd /c npx tsc --noEmit
    ```
-   *Expected*: Exit code 0 (zero errors).
+   *Expectation*: Exit code 0, 0 compiler errors.
+
+3. **Verify Vitest Suites**:
+   ```powershell
+   cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts
+   ```
+   *Expectation*: 3 test files passed, 43/43 tests passed.
+
+4. **Verify Quarantined Files**:
+   ```powershell
+   powershell -Command "Get-Item 'src/components/invoices/mobile/CreatePartyModal.tsx', 'src/components/items/mobile/CreateNewItemModal.tsx' | Select-Object FullName, LastWriteTime"
+   ```
+   *Expectation*: Timestamps precede the current milestone refactoring date.

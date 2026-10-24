@@ -1,37 +1,93 @@
-# Dispatch: Forensic Auditor (Milestone 3 — Integrity Forensics)
+# DISPATCH — Forensic Auditor (Milestone 3: Forensic Integrity Audit)
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3`
+## Identity
+- Role: Forensic Auditor
+- Type: teamwork_preview_auditor
+- Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\
+- Parent: Project Orchestrator (3044c8ce-523a-4157-917d-31b6f5d55c6a)
 
-## Task
-Perform a comprehensive forensic integrity audit on Milestone 3: Full-Stack Enterprise Task Management (`src/pages/crm/Tasks.tsx`, `src/test/crmTasksView.test.tsx`).
+## Mandates & Context
+- Authoritative User Request: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`).
+- Master Project Architecture: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`.
+- Master Design System Rules: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`.
+- Worker M3 Handoff Report: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md`.
 
-## Forensic Audit Protocol
-1. **Authenticity of Implementation**:
-   - Inspect `src/pages/crm/Tasks.tsx`.
-   - Verify genuine API service integration with `crmApi.getCRMTasks`, `crmApi.createCRMTask`, `crmApi.transitionCRMTaskStatus`.
-   - Verify genuine `localStorage` cache fallback logic.
-   - Verify real staff loading via `crmApi.getCRMStaffRoles` / `crmApi.getCRMStaff`.
-   - Verify genuine state machine transitions with proof notes, manager approvals, and revision feedback.
-   - Verify authentic real-time KPI metrics calculation without hardcoded numbers.
-2. **Anti-Cheating & Anti-Facade Scrutiny**:
-   - Verify NO mock bypasses or hardcoded test returns exist in `Tasks.tsx`.
-   - Verify NO dummy implementations or fake UI triggers.
-   - Verify test suite `src/test/crmTasksView.test.tsx` tests real component rendering and interactions rather than trivial assertions.
-3. **Protected Files Invariance**:
-   - Verify that `MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, and `EditItemModal.tsx` have ZERO modifications.
+## Audit Scope & Verification Checks
+Perform an uncompromising, binary forensic audit of Milestone 3:
+1. **Protected File Quarantine Verification (19 Quarantined Files)**:
+   Verify using `git diff HEAD -- <file>` that ZERO lines have been modified in ANY of the following 19 files:
+   - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+   - `src/components/invoices/mobile/AddItemModal.tsx`
+   - `src/components/invoices/mobile/SelectPartyModal.tsx`
+   - `src/components/invoices/mobile/EditItemModal.tsx`
+   - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+   - `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+   - `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+   - `src/components/invoices/mobile/CreatePartyModal.tsx`
+   - `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+   - `src/components/items/mobile/CreateNewItemModal.tsx`
+   - `src/components/SalesInvoiceModal.tsx`
+   - `src/components/PurchaseInvoiceModal.tsx`
+   - `src/components/invoices/AddItemsToBillModal.tsx`
+   - `src/components/invoices/InvoiceFitView.tsx`
+   - `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+   - `src/utils/downloadExactInvoice.ts`
+   - `src/utils/whatsappPdfShare.ts`
+   - `src/utils/invoiceThemeLoader.ts`
+   - `src/services/documentsService.ts`
+2. **Cheat & Facade Detection**:
+   Scan modified files (`AppSidebar.tsx`, `CreateItemModal.tsx`, `CreatePartyModal.tsx`, `mobileErgonomicsChallenger.test.ts`) for:
+   - Hardcoded test outputs or dummy return strings.
+   - Bypassed authentication, mock skips, or commented-out validation checks.
+   - Fake assertions or disabled tests.
+3. **Compilation & Test Execution**:
+   Run and record outputs of:
+   - `cmd /c npx tsc --noEmit`
+   - `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts`
+4. **Binary Verdict**:
+   - `VERDICT: CLEAN` if and only if all checks pass, 0 violations, 0 diffs in protected files, clean compiler, passing tests.
+   - `VERDICT: INTEGRITY VIOLATION` if any violation, cheat, or protected file modification is detected.
 
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\handoff.md` with explicit binary verdict: **CLEAN** or **INTEGRITY VIOLATION**.
+## Deliverables
+Write your forensic report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\handoff.md`.
+Send completion message with binary verdict to orchestrator (`3044c8ce-523a-4157-917d-31b6f5d55c6a`).
 
 
-## 2026-10-21T19:50:07Z
-You are the Forensic Auditor for Milestone 3 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+## 2026-10-24T20:22:02Z
+You are Forensic Auditor for Milestone 3 (Mobile Ergonomics & Native-Touch Layouts).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\
 
-MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
-Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\DISPATCH.md.
+Read your dispatch instructions at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\DISPATCH.md.
+Read the authoritative user request at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (Section ## 2026-10-24T18:51:21Z).
+Read the project architecture at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md.
+Read the master design rules at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+Read Worker M3 handoff report at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md.
 
-Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3
+Perform an uncompromising, binary forensic audit of Milestone 3:
+1. Verify using `git diff HEAD -- <file>` that ZERO lines have been modified in ANY of the 19 quarantined protected files:
+   - src/components/invoices/mobile/MobileCreateInvoice.tsx
+   - src/components/invoices/mobile/AddItemModal.tsx
+   - src/components/invoices/mobile/SelectPartyModal.tsx
+   - src/components/invoices/mobile/EditItemModal.tsx
+   - src/components/invoices/mobile/MobileInvoiceSuccessView.tsx
+   - src/components/invoices/mobile/MobileBillPreviewModal.tsx
+   - src/components/invoices/mobile/MobileInvoiceFitViewer.tsx
+   - src/components/invoices/mobile/CreatePartyModal.tsx
+   - src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx
+   - src/components/items/mobile/CreateNewItemModal.tsx
+   - src/components/SalesInvoiceModal.tsx
+   - src/components/PurchaseInvoiceModal.tsx
+   - src/components/invoices/AddItemsToBillModal.tsx
+   - src/components/invoices/InvoiceFitView.tsx
+   - src/components/invoices/UnifiedInvoiceRenderer.tsx
+   - src/utils/downloadExactInvoice.ts
+   - src/utils/whatsappPdfShare.ts
+   - src/utils/invoiceThemeLoader.ts
+   - src/services/documentsService.ts
+2. Verify zero cheats, facades, or dummy implementations in the modified files (AppSidebar.tsx, CreateItemModal.tsx, CreatePartyModal.tsx, mobileErgonomicsChallenger.test.ts).
+3. Execute and verify commands:
+   - cmd /c npx tsc --noEmit (must exit with code 0)
+   - cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts (all tests must pass)
+4. Deliver binary verdict: VERDICT: CLEAN or VERDICT: INTEGRITY VIOLATION.
 
-Perform forensic integrity audit: inspect `src/pages/crm/Tasks.tsx` and `src/test/crmTasksView.test.tsx`. Check for genuine implementation, genuine API service calls, authentic state machine transitions, genuine localStorage caching, authentic validation logic, and zero cheating/facade/mock bypassing. Verify Create Invoice flows are completely untouched.
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\handoff.md` with explicit binary verdict: CLEAN or INTEGRITY VIOLATION.
-Send message back to parent when done.
+Write your forensic report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m3\handoff.md and message the verdict to orchestrator (3044c8ce-523a-4157-917d-31b6f5d55c6a).

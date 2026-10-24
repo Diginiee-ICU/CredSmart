@@ -1,62 +1,62 @@
-# BRIEFING — 2026-10-17T11:56:00Z
+# BRIEFING — 2026-10-24T20:42:42Z
 
 ## Mission
-CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export. Implement `crmAttendancePdf.ts`, wire export buttons in `Attendance.tsx`, and create comprehensive unit/integration tests with 100% pass rate.
+Milestone 4: Core Application Pages Overhaul. Execute surgical overhaul across Dashboard, Sales, Purchases, Items, Inventory, Parties, Customers, Suppliers, CashAndBank, Expenses, and CRM portal/components according to minimal-design-system rules with 0 regression, adhering strictly to quarantine locks on the 19 invoice files.
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4
-- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Milestone: CRM Phase 2 Milestone 4 (Attendance Reports & PDF/CSV Export)
+- Original parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Milestone: Milestone 4 (Core Application Pages Overhaul)
 
 ## 🔒 Key Constraints
-- Pure vector jsPDF (`import { jsPDF } from "jspdf"`). NO `jspdf-autotable`.
-- CredSmart brand tokens: Navy [15, 23, 42], Orange [255, 106, 0], Emerald [16, 185, 129], Slate [100, 116, 139], Light Slate [241, 245, 249].
-- Multi-page pagination support with clean header continuation and page numbers.
-- Genuine implementation with real state and behavior (Integrity mandate).
-- Minimal changes to `src/pages/crm/Attendance.tsx` without breaking existing features.
-- Verification commands must pass cleanly: `npx tsc --noEmit`, vitest tests.
+- STRICT QUARANTINE LOCK: Zero edits/formatting on 19 protected invoice files:
+  MobileCreateInvoice.tsx, SalesInvoiceModal.tsx, AddItemModal.tsx, SelectPartyModal.tsx, EditItemModal.tsx, MobileInvoiceSuccessView.tsx, MobileBillPreviewModal.tsx, MobileInvoiceFitViewer.tsx, CreatePartyModal.tsx (in invoices/mobile/), MobileCreatePurchaseInvoice.tsx, CreateNewItemModal.tsx (in items/mobile/), PurchaseInvoiceModal.tsx, AddItemsToBillModal.tsx, InvoiceFitView.tsx, UnifiedInvoiceRenderer.tsx, downloadExactInvoice.ts, whatsappPdfShare.ts, invoiceThemeLoader.ts, documentsService.ts.
+- Minimal-change principle: Only modify what is necessary; no unrelated refactoring.
+- Genuine implementations: Real state, real behavior, zero hardcoded cheat values.
+- Screen-fitted viewports on desktop tables (sticky thead, flex-1 min-h-0 overflow-y-auto, pinned pagination footer).
+- De-clutter KPI cards: strip micro-prose, hairline accents, p-3.5 padding.
+- Button standards: h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs; micro icons w-7.5 h-7.5 rounded-md; table actions h-7 px-2.5 rounded-md text-[11px].
+- Primary Royal Blue #2563EB for primary actions. Purge glassmorphic blur, 3D halos, glowing-btn-amber/blue.
+- Directional badges: Emerald for To Collect / In Stock, Amber for Low Stock, Rose for To Pay / Out of Stock with font-mono tabular-nums.
+- Elevate sub-11px micro fonts to text-[11px].
+- CRM Invariants:
+  - Preserve data-testid="attendance-role-filter" in Attendance.tsx.
+  - Preserve/Add <CRMBadge variant="info" size="sm">Phase 3 Live</CRMBadge> in SalaryManagement.tsx.
+  - Preserve/Add <CRMBadge variant="info" size="sm">Phase 4 Active</CRMBadge> in Broadcasts.tsx.
+  - Preserve min-h-[44px] h-11 px-3 flex items-center in Tasks.tsx.
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T11:56:00Z
+- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Updated: 2026-10-24T20:42:42Z
 
 ## Task Summary
-- **What to build**:
-  1. `src/utils/crmAttendancePdf.ts` with `calculateMonthlyAttendanceMetrics`, `generateAttendanceReportPDF`, and `exportAttendanceCSV`.
-  2. Wire "Export PDF" and "Export CSV" buttons in `src/pages/crm/Attendance.tsx`.
-  3. `src/test/crmAttendancePdf.test.ts` covering calculation metrics, PDF generation (including pagination), and CSV formatting.
-  4. Ensure `src/test/crmAttendance.test.tsx` and all CRM tests pass.
+- **What to build**: Surgical redesign and overhaul across 10 core pages and CRM components according to minimal design system.
 - **Success criteria**:
-  - Full TypeScript validation (`tsc --noEmit`) passes with 0 errors.
-  - Vitest test suites pass with 100% success (327/327 tests in 17 suites).
-  - High fidelity vector PDF layout and RFC 4180 CSV export.
-- **Interface contracts**: `src/types/crmAttendance.ts` and `src/utils/whatsappPdfShare.ts`.
+  - tsc --noEmit passes (0 errors)
+  - eslint passes on all affected pages (0 errors)
+  - vitest test suites pass 100%
+  - git diff HEAD on 19 quarantined files is completely empty (0 diff lines)
+- **Interface contracts**: minimal-design-system.md, PROJECT.md, and test suites.
 
 ## Change Tracker
-- **Files modified**:
-  - `src/utils/crmAttendancePdf.ts`: Created pure vector jsPDF & RFC 4180 CSV export engine with monthly attendance KPI calculation.
-  - `src/pages/crm/Attendance.tsx`: Replaced inline stubs with `exportAttendanceCSV` and `generateAttendanceReportPDF`, added toolbar export buttons for filtered logs in Team Daily Attendance Logs card.
-  - `src/test/crmAttendance.test.tsx`: Enhanced jsPDF mock to support named export and chained vector drawing methods.
-  - `src/test/crmAttendancePdf.test.ts`: Created 19 comprehensive unit & integration tests covering metrics calculation, PDF generation & pagination, and CSV formatting.
-- **Build status**: Pass (npx tsc --noEmit: 0 errors; Vitest: 327/327 tests pass across 17 suites).
-- **Pending issues**: None.
+- **Files modified**: [TBD]
+- **Build status**: [TBD]
+- **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (100% test pass rate).
-- **Lint status**: Clean.
-- **Tests added/modified**: `src/test/crmAttendancePdf.test.ts` (19 tests added), `src/test/crmAttendance.test.tsx` (16 tests verified).
+- **Build/test result**: [TBD]
+- **Lint status**: [TBD]
+- **Tests added/modified**: [TBD]
 
 ## Loaded Skills
-- **Source**: crm-rbac-skill
-- **Local copy**: None needed.
-- **Core methodology**: CredSmart CRM architecture and conventions.
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
+- **Local copy**: None needed
+- **Core methodology**: Master standard for minimal UI tokens, viewport containment, button sizing, neutral colors, tabular typography, and mobile-desktop divergence.
 
 ## Key Decisions Made
-- Used pure vector jsPDF without `jspdf-autotable` dependency matching `src/utils/whatsappPdfShare.ts`.
-- Implemented automatic multi-page pagination with continuation headers and dynamic "Page X of Y" footers.
-- Implemented RFC 4180 compliant CSV formatting with quote and comma escaping.
+- [TBD]
 
 ## Artifact Index
 - `.agents/teamwork/worker_m4/DISPATCH.md` — Assigned instructions

@@ -587,7 +587,7 @@ export default function Sales() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
               {activeTabMeta.label}
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-[10.5px] font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>LIVE GST SYNC</span>
             </span>
@@ -661,7 +661,7 @@ export default function Sales() {
                 : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               Volume
             </div>
             <div className="text-xs font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight truncate mt-0.5">
@@ -678,7 +678,7 @@ export default function Sales() {
                 : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[9px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
               Settled
             </div>
             <div className="text-xs font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400 tracking-tight truncate mt-0.5">
@@ -695,7 +695,7 @@ export default function Sales() {
                 : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[9px] font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400 truncate">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400 truncate">
               Receivables
             </div>
             <div className="text-xs font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
@@ -712,7 +712,7 @@ export default function Sales() {
                 : "border-slate-200/80 dark:border-slate-800"
             )}
           >
-            <div className="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               Voided
             </div>
             <div className="text-xs font-bold font-mono tabular-nums text-slate-700 dark:text-slate-300 tracking-tight truncate mt-0.5">
@@ -740,7 +740,7 @@ export default function Sales() {
             <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
               ₹ {Number(metrics.totalAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">All outward documents</p>
+
           </div>
 
           {/* Settled */}
@@ -760,7 +760,7 @@ export default function Sales() {
             <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
               ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Cash / UPI / Bank cleared</p>
+
           </div>
 
           {/* Receivables */}
@@ -780,7 +780,7 @@ export default function Sales() {
             <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight">
               ₹ {Number(metrics.unpaidAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pending customer credit</p>
+
           </div>
 
           {/* Voided */}
@@ -800,7 +800,7 @@ export default function Sales() {
             <div className="mt-2 text-lg sm:text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
               {Number(metrics.cancelledAmount ?? 0) > 0 ? `₹ ${Number(metrics.cancelledAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Cancelled vouchers</p>
+
           </div>
         </div>
 
@@ -928,7 +928,7 @@ export default function Sales() {
             {/* High-Contrast Create Sales Invoice Button */}
             <button
               onClick={handleOpenCreateDoc}
-              className="flex items-center gap-1.5 px-3.5 h-8.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -952,7 +952,7 @@ export default function Sales() {
                 <Button
                   onClick={handleOpenCreateDoc}
                   size="sm"
-                  className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-xs font-semibold px-3 py-1.5 mt-1 gap-1.5 shadow-2xs"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 mt-1 gap-1.5 shadow-2xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>
@@ -1020,7 +1020,7 @@ export default function Sales() {
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{doc.partyName}</p>
-                        <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           <span>{doc.docDate}</span>
                           <span>•</span>
                           <span className={doc.status === "unpaid" ? "text-rose-600 font-semibold" : ""}>{calculateDueInText(doc)}</span>
@@ -1182,7 +1182,7 @@ export default function Sales() {
           {/* DESKTOP VIEW: High-Density Stripe/Linear Data Table (Visible on md: and above) */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
             <table className="w-full text-left text-xs border-collapse min-w-[640px]">
-              <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-[10.5px] uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400 z-10">
+              <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-[11px] uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400 z-10">
                 <tr>
                   <th className="py-2.5 px-3 w-10">
                     <input
@@ -1279,7 +1279,7 @@ export default function Sales() {
                           <div>
                             <span className="font-semibold text-slate-900 dark:text-white">{doc.partyName}</span>
                             {doc.partyPhone && (
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                 {doc.partyPhone}
                               </p>
                             )}
@@ -1288,12 +1288,12 @@ export default function Sales() {
                         <td className="py-2.5 px-3 whitespace-nowrap">
                           {activeTab === "sales_return" || activeTab === "credit_note" ? (
                             <div className="space-y-0.5">
-                              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
                                 <RotateCcw className="w-2.5 h-2.5 shrink-0" />
                                 <span className="truncate max-w-[140px]">{doc.returnReason || "Sales Return"}</span>
                               </span>
                               {doc.originalInvoiceNumber && (
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                                   Ref: {doc.originalInvoiceNumber}
                                 </p>
                               )}
@@ -1323,7 +1323,7 @@ export default function Sales() {
                             onClick={() => handleTogglePaymentStatus(doc, doc.status === "paid" ? "unpaid" : "paid")}
                             title={`Click to mark as ${doc.status === "paid" ? "Unpaid" : "Paid"}`}
                             className={cn(
-                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border cursor-pointer active:scale-95 transition-all shadow-2xs",
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono border cursor-pointer active:scale-95 transition-all shadow-2xs",
                               doc.status === "paid" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100",
                               doc.status === "partial" && "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100",
                               doc.status === "unpaid" && "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-100",
@@ -1503,7 +1503,7 @@ export default function Sales() {
                         <Button
                           onClick={handleOpenCreateDoc}
                           size="sm"
-                          className="text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-2xs gap-1.5 mt-1"
+                          className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs gap-1.5 mt-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Create {activeTabMeta.label.replace(/s$/, "")}</span>

@@ -1104,3 +1104,114 @@ All existing POS billing algorithms, thermal invoice printing, GST calculation e
 - [ ] TypeScript compilation (`tsc --noEmit`) passes with 0 errors.
 - [ ] Vitest test suites across CRM, Billing, and RBAC pass with 100% success rate.
 - [ ] `npm run build` generates clean production assets with zero errors.
+
+
+## 2026-10-24T18:51:21Z
+
+# Teamwork Project Prompt — Launched
+
+> Status: Launched
+> Goal: Multi-agent execution of CredSmart Minimal & Fast-Access Redesign
+> Requested team: Specialized Multi-Agent Design & Layout Team (design-system-core, mobile-view-architect, desktop-layout-architect, theme-visual-qa)
+
+Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from scratch into a modern, attractive, minimalist, lightning-fast, and user-friendly experience across both mobile and desktop views. The design strictly prohibits visual crowding, bloated buttons, and long scrollable pages, ensuring screen-fitted data density with zero business logic regression.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+---
+
+## Visual Targets & Reference Mockups
+
+- **Desktop Minimal Dashboard Mockup**: `C:/Users/bishn/.gemini/antigravity/brain/a2993855-5881-4a48-9b6e-369ad00d3392/credsmart_desktop_dashboard_1792867012395.jpg`
+- **Mobile Touch-First Screen Mockup**: `C:/Users/bishn/.gemini/antigravity/brain/a2993855-5881-4a48-9b6e-369ad00d3392/credsmart_mobile_app_mockup_1792867057837.jpg`
+
+---
+
+## Requirements
+
+### R1. Non-Crowded Minimal Design System & Proportions
+Refactor global styles, typography, and base primitives to achieve an attractive, uncluttered, and fast-loading interface:
+- **Button Sizing & Proportions (Zero Bloated Buttons)**:
+  - Standard action button: `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (34px height).
+  - Compact / table action button: `h-7 px-2.5 rounded-md text-[11px] font-medium` (28px height).
+  - Micro / inline icon button: `w-7.5 h-7.5 rounded-md` (30x30px).
+  - Center mobile elevated CTA: `46x46px rounded-xl` (ergonomic thumb target, not oversized).
+  - Eliminate oversized `h-11`, `h-12`, and `rounded-3xl` bubble buttons.
+- **De-cluttering & Whitespace**:
+  - Strip redundant explanatory prose from cards (e.g. "Outstanding customer credit ledger balance."). Let bold figures and clean labels speak for themselves.
+  - Rely on 1px hairline borders (`border-slate-200/80` light, `border-slate-800` dark) and subtle micro-shadows (`shadow-xs`).
+  - Completely deprecate heavy 3D glass reflections, skeuomorphic bevels, liquid glass, and glowing neon halos.
+- **Typography & Readability**:
+  - Primary sans: `'Inter'` with system fallbacks for clean readability.
+  - Monospace: `'IBM Plex Mono'` with OpenType tabular figures (`font-mono tabular-nums`) strictly for currency (₹), numbers, dates, and barcodes.
+  - No sub-11px micro-fonts (strict hierarchy: 11px, 12px, 14px, 16px, 20px, 24px).
+- **Surfaces & Palette**:
+  - Light mode: `#F8FAFC` background, `#FFFFFF` pure white cards.
+  - Dark mode: `#090D16` background, `#111726` elevated charcoal cards.
+  - Accent: Single royal/electric blue (`#2563EB`) with semantic Emerald (`#10B981`) and Rose (`#E11D48`).
+
+### R2. Screen-Fitted Desktop Productivity Shell (Screens >= 768px, Zero Long Scroll)
+Re-engineer desktop viewports to fit within standard monitor heights (768px - 1080px) without long vertical scrolling:
+- **Unified 52px Command Header**: Slim bar (`h-13`) hosting compact 28px brand mark, organization switcher dropdown, suite toggle pill, Command Palette search trigger (`⌘K`), split `+ New Invoice` button, live sync dot, notifications, and profile.
+- **Screen-Fitted Data Tables**: Sticky table header, bounded scrollable table body (`flex-1 min-h-0 overflow-y-auto`), and fixed pagination footer at the bottom. Users always see the controls, headers, and footer without scrolling the entire page.
+- **Split POS Workbench**: Dual-pane layout where item catalog scrolls independently on the left, active cart scrolls independently on the right, and the checkout action bar is fixed at the bottom. Hotkeys (`F1`-`F7`, `CTRL+B`, `CTRL+I`, `DEL`) with clean monospace badges.
+
+### R3. Mobile Ergonomics & Native-Touch Layout (Screens < 768px)
+Re-engineer mobile viewports (360px–430px) for seamless one-handed thumb ergonomics:
+- **Thumb-Zone Bottom Navigation Dock**: Fixed at screen bottom with `safe-area-inset-bottom`, 5 primary destinations (`Home`, `Sales`, Center Elevated `+ POS/Bill` button, `Items`, `Parties`) with minimum 44x44px touch targets.
+- **Swipeable Action Strip**: 1-tap micro-cards directly below mobile header (`+ Sale Bill`, `+ Quick POS`, `+ Customer`, `+ Item`, `Day Book`).
+- **Responsive Mobile Data Cards**: Replace horizontal-scrolling 10-column desktop tables with clean responsive cards displaying party initials, document number, date, status pill, and bold currency amount.
+- **Full-Screen Bottom-Sheet Drawers**: Modals slide up smoothly as bottom sheets (`max-h-[92dvh] rounded-t-2xl overflow-y-auto`) with fixed bottom confirmation bars.
+
+### R4. Core Application Pages Overhaul
+Update all primary pages to seamlessly adopt the minimal design system:
+- `Dashboard.tsx`: 4 minimal KPI cards with top hairline accents, spline area chart with clean tooltips, and recent transactions table (desktop) / cards (mobile).
+- `POSBilling.tsx`: Monochromatic hotkey ribbon, streamlined cart items, swipeable delete on mobile, and fast checkout flow.
+- `Sales.tsx` & `Purchases.tsx`: Dense tabular list with sticky headers (desktop) / touch cards (mobile), multi-status filters, and CSV export.
+- `Items.tsx` & `Inventory.tsx`: Compact inventory catalog with stock level badges (In Stock, Low Stock, Out of Stock).
+- `Parties.tsx`, `Customers.tsx`, `Suppliers.tsx`: Clean ledger cards with Udhar Khata balances.
+- `CashAndBank.tsx` & `Expenses.tsx`: Reconciled liquidity cards and categorized transaction ledger.
+- `CRM Portal`: Clean workforce dashboard, attendance clock-in, task boards, and salary management.
+
+### R5. Zero Business Logic & Structural Regression
+Strictly preserve all database operations, Supabase real-time subscriptions, GST calculation engines, invoice PDF download pipelines, routes, role permissions, and printing services intact.
+
+---
+
+## Verification Resources
+
+- Automated build script: `npm run build`
+- ESLint verification: `npm run lint`
+- Design system rules: `.agents/rules/minimal-design-system.md`
+- Master skill reference: `.agents/skills/credsmart-minimal-design-system/SKILL.md`
+- Database schema: `src/integrations/supabase/types.ts`
+- Routes configuration: `src/config/routes.ts`
+
+---
+
+## Acceptance Criteria
+
+### Thematic & Visual Purity
+- [ ] Complete elimination of heavy 3D glass reflections, skeuomorphic bevels, liquid glass cards, and glowing neon halos across all pages.
+- [ ] All buttons follow compact, proportional sizing (34px standard action, 28px table action, 46px center mobile CTA); zero oversized bubble buttons.
+- [ ] All UI text uses `'Inter'` sans-serif with zero font sizes below `11px`.
+- [ ] All currency amounts, quantities, and invoice numbers use `'IBM Plex Mono'` with OpenType tabular figures (`font-mono tabular-nums`).
+- [ ] Color palette conforms to clean neutral canvas (`#F8FAFC` light / `#090D16` dark) with single royal blue accent (`#2563EB`) and standard semantic status tokens.
+- [ ] WCAG AA/AAA contrast ratios met in both light and dark themes.
+
+### Desktop Ergonomics & Viewport Containment
+- [ ] Top command bar height is exactly 52px (`h-13`) across all non-POS routes.
+- [ ] Main dashboard and data tables fit within standard screen heights without requiring long page scrolling.
+- [ ] Global Command Palette (`⌘K`) opens instantly and searches parties, items, and invoices.
+- [ ] Desktop data tables feature compact row heights (38px–42px), sticky headers, and right-aligned numeric columns.
+- [ ] Desktop POS billing terminal supports all standard keyboard hotkeys (`F1`-`F7`, `CTRL+B`, `CTRL+I`, `P`, `Q`, `DEL`).
+
+### Mobile Usability
+- [ ] Fixed bottom navigation dock active on screens < 768px with minimum 44x44px touch targets and `safe-area-inset-bottom`.
+- [ ] Zero horizontal page scroll or clipped tables on 360px and 390px mobile viewports.
+- [ ] Modals on mobile render as smooth bottom-sheet drawers with fixed bottom confirmation bars.
+
+### System Stability
+- [ ] TypeScript compilation (`npm run build`) passes with 0 errors.
+- [ ] All routes, Supabase real-time updates, tax calculations, and PDF generation work with zero regression.

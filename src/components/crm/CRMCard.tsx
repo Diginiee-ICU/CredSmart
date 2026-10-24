@@ -11,7 +11,7 @@ export const CRM_BRAND_COLORS = {
   /** CredSmart Vibrant Orange — primary CTA accents and operational highlights */
   orange: "#FF6A00",
   /** Royal Action Blue — interactive links, trust buttons, and primary actions */
-  blue: "#1D4ED8",
+  blue: "#2563EB",
   /** Live Status Emerald Green — active presence, success indicators, and growth */
   emerald: "#10B981",
   /** Liquidity & Highlight Warm Gold */
@@ -40,7 +40,7 @@ export interface CRMCardProps extends React.HTMLAttributes<HTMLDivElement> {
    * - `elevated`: Soft shadow card with hover lift interaction.
    * - `brand`: Card featuring CredSmart #FF6A00 left brand accent border.
    * - `outline`: Dashed border container for dropzones or empty states.
-   * - `glass`: Translucent card with backdrop blur.
+   * - `glass`: Clean hairline surface card.
    * @default "default"
    */
   variant?: CRMCardVariant;
@@ -82,7 +82,7 @@ export const CRMCard = React.forwardRef<HTMLDivElement, CRMCardProps>(
       elevated: "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-soft hover:shadow-lift transition-all duration-200",
       brand: "bg-white dark:bg-slate-900 border-y border-r border-slate-200/80 dark:border-slate-800 border-l-4 border-l-[#FF6A00] shadow-2xs",
       outline: "bg-transparent border-2 border-dashed border-slate-200 dark:border-slate-800",
-      glass: "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 shadow-2xs",
+      glass: "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs",
     };
 
     const hasHeader = Boolean(title || description || headerAction);
@@ -91,14 +91,14 @@ export const CRMCard = React.forwardRef<HTMLDivElement, CRMCardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-2xl overflow-hidden transition-all duration-200",
+          "rounded-xl overflow-hidden transition-all duration-200",
           variantClasses[variant],
           className
         )}
         {...props}
       >
         {hasHeader && (
-          <div className="flex items-start justify-between p-5 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+          <div className="flex items-start justify-between p-4 border-b border-slate-100 dark:border-slate-800/60 gap-4">
             <div className="space-y-1">
               {title && (
                 <h3 className="text-base font-bold text-[#0F172A] dark:text-white tracking-tight">

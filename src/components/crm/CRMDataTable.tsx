@@ -155,12 +155,12 @@ export function CRMDataTable<T extends Record<string, unknown>>({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={searchPlaceholder}
-            className="pl-9 h-9 text-xs rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+            className="pl-9 h-8.5 text-xs rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
           />
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
+      <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
         <Table>
           <TableHeader className="bg-slate-50/75 dark:bg-slate-800/40">
             <TableRow className="border-b border-slate-200/80 dark:border-slate-800">
@@ -184,9 +184,9 @@ export function CRMDataTable<T extends Record<string, unknown>>({
                       <span className="text-slate-400">
                         {sortKey === col.key ? (
                           sortDirection === "asc" ? (
-                            <ArrowUp className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                           ) : (
-                            <ArrowDown className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                            <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                           )
                         ) : (
                           <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
@@ -206,7 +206,7 @@ export function CRMDataTable<T extends Record<string, unknown>>({
                   className="h-32 text-center text-xs text-slate-500"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-[#1D4ED8] animate-spin" />
+                    <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-blue-600 animate-spin" />
                     <span>Loading CRM records...</span>
                   </div>
                 </TableCell>

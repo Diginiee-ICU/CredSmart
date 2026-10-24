@@ -1,37 +1,51 @@
-# Dispatch: Reviewer 1 (Milestone 3 — UI, Kanban & Table Views)
+# DISPATCH — Reviewer 1 (Milestone 3: Mobile Bottom Navigation Dock)
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1`
+## Identity
+- Role: Mobile Bottom Dock Reviewer
+- Type: teamwork_preview_reviewer
+- Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\
+- Parent: Project Orchestrator (3044c8ce-523a-4157-917d-31b6f5d55c6a)
 
-## Task
-Review the Milestone 3 implementation of full-stack Enterprise Task Management in `src/pages/crm/Tasks.tsx`.
+## Mandates & Context
+- Authoritative User Request: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`).
+- Master Project Architecture: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`.
+- Master Design System Rules: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`.
+- Worker M3 Handoff Report: Read `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md`.
 
-## Key Inspection Criteria
-1. **Live Backend Wiring & Offline Resilience**:
-   - Inspect `crmApi.getCRMTasks(orgId)` call on mount and manual refresh.
-   - Verify `localStorage` key `credsmart_crm_tasks_${orgId}` fallback on network errors.
-2. **Real Organization Staff Assignee Picker**:
-   - Inspect loading of staff from `crmApi.getCRMStaffRoles` / `getCRMStaff`.
-   - Verify `<Select>` dropdown displays staff with store role and CRM role badges.
-   - Verify compatibility with companion `<Input placeholder="Staff member name..." />`.
-3. **Interactive Dual Views (Kanban & Table)**:
-   - Verify 4 Kanban swimlanes (`todo`, `in_progress`, `review`, `done`) with count badges, priority chips, due date warnings, assignee avatars, and proof badges.
-   - Verify high-density sortable Table view with matching action buttons.
-4. **Verification**:
-   - Run `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx`.
-   - Run `cmd /c npx tsc --noEmit`.
+## Review Scope & Focus
+Examine `src/components/AppSidebar.tsx` with specific focus on:
+1. **Tab 5 Destination**: Verify Tab 5 is mapped to `ROUTE_PATHS.parties` (`/parties`) with `Users2` icon and `"Parties"` label. Verify active detection logic uses `isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers)`.
+2. **Center Elevated CTA**: Verify the center CTA is standardized to exactly 46x46px (`w-[46px] h-[46px] rounded-xl font-bold`) in solid Royal Blue (`bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95`). Verify all skeuomorphic rainbow/amber/indigo gradients are eliminated.
+3. **Active Tab Indicator**: Verify all active bottom navigation tabs use the single cohesive Royal Blue accent token (`text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30`), with inactive tabs set to neutral `text-slate-400`.
+4. **Touch Ergonomics & Safe Area**: Verify touch targets satisfy `min-h-[44px]` and include safe-area bottom padding `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`.
+5. **Type Safety & Code Quality**: Verify no `any` casts remain in `AppSidebar.tsx` and run:
+   - `cmd /c npx eslint src/components/AppSidebar.tsx`
+   - `cmd /c npx tsc --noEmit`
 
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md` with explicit verdict: **APPROVE** or **REQUEST_CHANGES**.
+## Deliverables
+Write your review report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md` with:
+- Observation (verified facts and command outputs)
+- Logic Chain (evaluation against rules and criteria)
+- Caveats (any issues found)
+- Verdict: `APPROVE` or `REQUEST_CHANGES`
+Send completion message to orchestrator (`3044c8ce-523a-4157-917d-31b6f5d55c6a`).
 
-## 2026-10-21T19:50:05Z
-You are Reviewer 1 for Milestone 3 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
 
-MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
-Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\DISPATCH.md.
+## 2026-10-24T20:21:59Z
+[Message] timestamp=2026-10-24T20:21:59Z sender=3044c8ce-523a-4157-917d-31b6f5d55c6a priority=MESSAGE_PRIORITY_HIGH content=You are Reviewer 1 for Milestone 3 (Mobile Ergonomics & Native-Touch Layouts).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\
 
-Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1
+Read your dispatch instructions at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\DISPATCH.md.
+Read the authoritative user request at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (Section ## 2026-10-24T18:51:21Z).
+Read the project architecture at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md.
+Read the master design rules at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+Read Worker M3 handoff report at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md.
 
-Review `src/pages/crm/Tasks.tsx`, live backend wiring with `crmApi.getCRMTasks`, offline cache fallback, real organization staff loading in `<CreateTaskDialog>`, 4-column Kanban board, and high-density Table view.
-Run verification commands: `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx` and `cmd /c npx tsc --noEmit`.
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md` with explicit verdict: APPROVE or REQUEST_CHANGES.
-Send message back to parent when done.
+Review src/components/AppSidebar.tsx with focus on:
+1. Tab 5 destination is ROUTE_PATHS.parties with Users2 icon and 'Parties' label. Active check: isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers).
+2. Center elevated CTA is standardized to exact 46x46px (w-[46px] h-[46px] rounded-xl font-bold) in solid Royal Blue (bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95). All skeuomorphic rainbow gradients removed.
+3. Active tab indicator uses single cohesive Royal Blue accent (text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30), with inactive tabs text-slate-400.
+4. Touch targets >= 44px with safe-area padding pb-[max(0.65rem,env(safe-area-inset-bottom,0px))].
+5. Verify clean ESLint and TypeScript (cmd /c npx eslint src/components/AppSidebar.tsx, cmd /c npx tsc --noEmit).
+
+Write your handoff report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md and report your verdict (APPROVE or REQUEST_CHANGES) via send_message to orchestrator (3044c8ce-523a-4157-917d-31b6f5d55c6a).

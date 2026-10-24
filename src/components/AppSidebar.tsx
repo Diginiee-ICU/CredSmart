@@ -203,8 +203,8 @@ export function AppSidebar({
 
         if (!query) {
           return {
-            label: group.label || (group as any).group || "",
-            group: (group as any).group || group.label || "",
+            label: group.label || (group as { group?: string }).group || "",
+            group: (group as { group?: string }).group || group.label || "",
             items: allowedItems,
           };
         }
@@ -219,8 +219,8 @@ export function AppSidebar({
         });
 
         return {
-          label: group.label || (group as any).group || "",
-          group: (group as any).group || group.label || "",
+          label: group.label || (group as { group?: string }).group || "",
+          group: (group as { group?: string }).group || group.label || "",
           items: matchedItems,
         };
       })
@@ -242,7 +242,7 @@ export function AppSidebar({
   const isPosActive = isRouteActive(ROUTE_PATHS.checkout) || isRouteActive(ROUTE_PATHS.pos);
   const isSalesActive = isRouteActive(ROUTE_PATHS.sales) || isRouteActive(ROUTE_PATHS.salesHistory);
   const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
-  const isPurchasesActive = isRouteActive(ROUTE_PATHS.purchases) || isRouteActive(ROUTE_PATHS.purchaseReturns);
+  const isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);
 
   // CRM Active States
   const isCrmCommandActive = isRouteActive(ROUTE_PATHS.crm) && (location.pathname === "/crm" || location.pathname === "/crm/dashboard");
@@ -275,7 +275,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isCrmCommandActive
-                      ? "bg-blue-100/60 dark:bg-blue-500/15 border-blue-300 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.2)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -290,7 +290,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isCrmAttendanceActive
-                    ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -298,7 +298,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isCrmAttendanceActive
-                      ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -310,24 +310,22 @@ export function AppSidebar({
               {/* CRM Tab 3: Center Elevated Punch / Task Button */}
               <NavLink
                 to={ROUTE_PATHS.crmTasks}
-                className="flex flex-col items-center justify-center -mt-5 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
+                className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
               >
                 <div
                   className={cn(
-                    "w-[52px] h-[52px] rounded-2xl flex items-center justify-center ring-4 ring-white dark:ring-slate-900 shadow-xl transition-all duration-200",
-                    isCrmTasksActive
-                      ? "bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 text-white shadow-blue-500/30 scale-105"
-                      : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-600 text-white shadow-indigo-500/30 hover:scale-105"
+                    "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
+                    isCrmTasksActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
                   )}
                 >
-                  <CheckSquare className="w-6 h-6 stroke-[2.2]" />
+                  <CheckSquare className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <span
                   className={cn(
                     "text-[10px] mt-1 font-bold tracking-tight",
                     isCrmTasksActive
                       ? "text-blue-600 dark:text-blue-400"
-                      : "text-indigo-600 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-300"
                   )}
                 >
                   Punch / Task
@@ -340,7 +338,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isCrmSalaryActive
-                    ? "text-amber-600 dark:text-amber-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -348,7 +346,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isCrmSalaryActive
-                      ? "bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.15)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -363,7 +361,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isCrmRolesActive
-                    ? "text-purple-600 dark:text-purple-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -371,7 +369,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isCrmRolesActive
-                      ? "bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 shadow-[0_0_12px_rgba(147,51,234,0.15)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -389,7 +387,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isDashboardActive
-                    ? "text-amber-600 dark:text-amber-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -397,7 +395,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isDashboardActive
-                      ? "bg-amber-100/60 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -412,7 +410,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isSalesActive
-                    ? "text-indigo-600 dark:text-indigo-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -420,7 +418,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isSalesActive
-                      ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -432,24 +430,22 @@ export function AppSidebar({
               {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
               <NavLink
                 to={ROUTE_PATHS.checkout}
-                className="flex flex-col items-center justify-center -mt-5 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
+                className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
               >
                 <div
                   className={cn(
-                    "w-[52px] h-[52px] rounded-2xl flex items-center justify-center ring-4 ring-white dark:ring-slate-900 shadow-xl transition-all duration-200",
-                    isPosActive
-                      ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-amber-500/30 scale-105"
-                      : "bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-indigo-500/30 hover:scale-105"
+                    "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
+                    isPosActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
                   )}
                 >
-                  <ShoppingCart className="w-6 h-6 stroke-[2.2]" />
+                  <ShoppingCart className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <span
                   className={cn(
                     "text-[10px] mt-1 font-bold tracking-tight",
                     isPosActive
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-indigo-600 dark:text-indigo-400"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-600 dark:text-slate-300"
                   )}
                 >
                   POS Billing
@@ -462,7 +458,7 @@ export function AppSidebar({
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
                   isItemsActive
-                    ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
@@ -470,7 +466,7 @@ export function AppSidebar({
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
                     isItemsActive
-                      ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)] scale-105"
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
@@ -479,27 +475,27 @@ export function AppSidebar({
                 <span className="text-[10px] tracking-tight">Items</span>
               </NavLink>
 
-              {/* POS & Billing Tab 5: Purchases */}
+              {/* POS & Billing Tab 5: Parties */}
               <NavLink
-                to={ROUTE_PATHS.purchases}
+                to={ROUTE_PATHS.parties}
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isPurchasesActive
-                    ? "text-rose-600 dark:text-rose-400 font-bold"
+                  isPartiesActive
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
                 <div
                   className={cn(
                     "p-1.5 rounded-xl border transition-all duration-200",
-                    isPurchasesActive
-                      ? "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 shadow-[0_0_12px_rgba(225,29,72,0.15)] scale-105"
+                    isPartiesActive
+                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
                       : "bg-transparent border-transparent"
                   )}
                 >
-                  <Truck className="w-5 h-5 stroke-[2.2]" />
+                  <Users2 className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Purchases</span>
+                <span className="text-[10px] tracking-tight">Parties</span>
               </NavLink>
             </>
           )}

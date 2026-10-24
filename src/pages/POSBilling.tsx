@@ -2438,101 +2438,143 @@ export default function POSBilling() {
           )}
         >
           {/* QUICK ACTION HOTKEY RIBBON */}
-          <div className="p-2 sm:p-3 border-b border-slate-200 bg-slate-50/80 flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0 overflow-x-auto scrollbar-none">
-            {/* 🎙️ Voice Assistant [V] */}
+          <div className="p-2 border-b border-slate-200/80 bg-slate-50/80 flex items-center gap-1.5 flex-wrap shrink-0 overflow-x-auto scrollbar-none select-none">
+            {/* Search [F1] */}
             <button
               type="button"
-              onClick={toggleVoiceRecognition}
-              className={cn(
-                "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-2xs active:scale-95",
-                isListening
-                  ? "bg-rose-600 border-rose-500 text-white animate-pulse shadow-md ring-2 ring-rose-300"
-                  : "border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800"
-              )}
-              title="Voice Assistant: speak to add items, change price, quantity or payment mode [V]"
+              onClick={() => {
+                searchInputRef.current?.focus();
+                searchInputRef.current?.select();
+              }}
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Focus Search Bar [F1]"
             >
-              {isListening ? (
-                <Radio className="w-3.5 h-3.5 text-white animate-spin" />
-              ) : (
-                <Mic className="w-3.5 h-3.5 text-indigo-600" />
-              )}
-              <span className="hidden sm:inline">{isListening ? "Listening..." : "Voice"}</span>
-              <span className="sm:hidden">{isListening ? "Listen" : "Voice"}</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono bg-white border border-indigo-200 px-1 py-0.5 rounded font-normal text-indigo-700">
-                V
+              <Search className="w-3 h-3 text-slate-400" />
+              <span>Search</span>
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+                F1
               </kbd>
             </button>
 
             {/* + New Item [CTRL + I] */}
             <button
+              type="button"
               onClick={() => setShowNewItemModal(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 text-xs font-bold transition-all shadow-2xs active:scale-95"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Add New Stock Item [CTRL+I]"
             >
-              <Plus className="w-3.5 h-3.5 text-emerald-600" />
+              <Plus className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">New Item</span>
-              <span className="sm:hidden">+ Item</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono text-emerald-700 bg-white border border-emerald-200 px-1 py-0.5 rounded font-normal">
-                CTRL + I
+              <span className="sm:hidden">Item</span>
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+                CTRL+I
+              </kbd>
+            </button>
+
+            {/* Hold Bill [CTRL + B] */}
+            <button
+              type="button"
+              onClick={handleHoldBillAndCreate}
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Hold Current Bill & Start New [CTRL+B]"
+            >
+              <Split className="w-3 h-3 text-slate-400" />
+              <span className="hidden sm:inline">Hold Bill</span>
+              <span className="sm:hidden">Hold</span>
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+                CTRL+B
               </kbd>
             </button>
 
             {/* Change Price [P] */}
             <button
+              type="button"
               onClick={handleOpenChangePrice}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Change Price of Selected Item [P]"
             >
-              <Tag className="w-3.5 h-3.5 text-amber-600" />
+              <Tag className="w-3 h-3 text-slate-400" />
               <span>Price</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono text-amber-800 bg-white border border-amber-200 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 P
               </kbd>
             </button>
 
             {/* Change QTY [Q] */}
             <button
+              type="button"
               onClick={handleOpenChangeQty}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Change Quantity of Selected Item [Q]"
             >
-              <Hash className="w-3.5 h-3.5 text-blue-600" />
+              <Hash className="w-3 h-3 text-slate-400" />
               <span>Qty</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono text-blue-700 bg-white border border-blue-200 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 Q
               </kbd>
             </button>
 
             {/* Change Discount [D] */}
             <button
+              type="button"
               onClick={handleOpenChangeDiscount}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 hover:text-purple-800 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Change Discount on Selected Item [D]"
             >
-              <Percent className="w-3.5 h-3.5 text-purple-600" />
+              <Percent className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">Discount</span>
               <span className="sm:hidden">Disc</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono text-purple-700 bg-white border border-purple-200 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 D
+              </kbd>
+            </button>
+
+            {/* Voice Assistant [V] */}
+            <button
+              type="button"
+              onClick={toggleVoiceRecognition}
+              className={cn(
+                "h-7 px-2.5 rounded-md border text-[11px] font-medium flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer",
+                isListening
+                  ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
+                  : "border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700"
+              )}
+              title="Voice Assistant: speak to add items, change price, quantity or payment mode [V]"
+            >
+              {isListening ? (
+                <Radio className="w-3 h-3 text-rose-600 animate-spin" />
+              ) : (
+                <Mic className="w-3 h-3 text-slate-400" />
+              )}
+              <span className="hidden sm:inline">{isListening ? "Listening..." : "Voice"}</span>
+              <span className="sm:hidden">{isListening ? "Listen" : "Voice"}</span>
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+                V
               </kbd>
             </button>
 
             {/* Delete Item [DEL] */}
             <button
+              type="button"
               onClick={handleDeleteSelectedItem}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              title="Delete Selected Item [DEL]"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-              <span className="hidden sm:inline">Delete</span>
-              <span className="sm:hidden">Del</span>
-              <kbd className="hidden sm:inline text-[10px] font-mono text-rose-700 bg-white border border-rose-200 px-1 py-0.5 rounded font-normal">
+              <Trash2 className="w-3 h-3 text-slate-400 group-hover:text-rose-500" />
+              <span>Delete</span>
+              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 DEL
               </kbd>
             </button>
 
             {/* Camera Scan Toggle for Touch Terminals / Mobile */}
             <button
+              type="button"
               onClick={() => setShowCameraScannerModal(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-medium transition-all ml-auto active:scale-95 shadow-2xs"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors ml-auto active:scale-95 cursor-pointer"
               title="Open Camera Barcode Scanner"
             >
-              <Camera className="w-3.5 h-3.5 text-indigo-600" />
+              <Camera className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">Scan Barcode</span>
               <span className="sm:hidden">Scan</span>
             </button>
@@ -3144,12 +3186,12 @@ export default function POSBilling() {
         {/* ========================================================================= */}
         <div
           className={cn(
-            "w-full lg:w-[410px] xl:w-[440px] shrink-0 bg-slate-50/95 flex flex-col justify-between p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto shadow-sm h-full min-h-0 overscroll-contain touch-pan-y pb-24 lg:pb-4",
+            "w-full lg:w-[400px] xl:w-[430px] shrink-0 bg-slate-50 flex flex-col h-full min-h-0 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-hidden",
             mobileActiveView === "checkout" ? "flex flex-1" : "hidden lg:flex"
           )}
         >
           {/* Mobile Top Back-to-Cart Trigger */}
-          <div className="flex lg:hidden items-center justify-between pb-3 border-b border-slate-200 mb-2 shrink-0">
+          <div className="flex lg:hidden items-center justify-between p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
             <button
               type="button"
               onClick={() => setMobileActiveView("cart")}
@@ -3158,118 +3200,119 @@ export default function POSBilling() {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Cart ({currentTab.items.length})</span>
             </button>
-            <span className="text-xs font-mono font-bold text-emerald-600">
-              ₹{grandTotal.toFixed(2)}
+            <span className="text-xs font-mono font-bold text-slate-700">
+              {currentTab.items.length} items
             </span>
           </div>
 
-          <div className="space-y-4">
-            {/* Top Quick Actions: [Add Discount], [Add Charge] (Short labels on mobile) */}
+          {/* Region 1: Fixed Top Net Payable Total (shrink-0) */}
+          <div className="shrink-0 p-3.5 bg-blue-600 text-white flex items-center justify-between shadow-2xs">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-blue-100 block">
+                Net Payable
+              </span>
+              <span className="text-2xl font-bold font-mono tabular-nums">
+                ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[11px] font-mono bg-blue-700/80 px-2 py-0.5 rounded text-blue-100 font-medium">
+                {totalItemsCount} Units
+              </span>
+              <span className="text-[10px] font-mono text-blue-200">
+                Incl. all taxes
+              </span>
+            </div>
+          </div>
+
+          {/* Region 2: Bounded Middle Scroll Area (flex-1 min-h-0 overflow-y-auto space-y-3 p-3) */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin">
+            {/* Quick Actions: Bill Discount [F2], Add Charge [F3] */}
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={handleOpenBillDiscount}
-                className="flex items-center justify-between px-2.5 sm:px-3 py-2 border border-slate-200 bg-white hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 transition-all shadow-2xs active:scale-95"
+                className="h-8 px-2.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-between shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
-                  <Percent className="w-3.5 h-3.5 text-purple-600" />
+                  <Percent className="w-3.5 h-3.5 text-slate-500" />
                   <span className="hidden sm:inline">Bill Discount</span>
                   <span className="sm:hidden">Discount</span>
                 </span>
-                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F2
                 </kbd>
               </button>
 
               <button
+                type="button"
                 onClick={handleOpenAdditionalCharge}
-                className="flex items-center justify-between px-2.5 sm:px-3 py-2 border border-slate-200 bg-white hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 transition-all shadow-2xs active:scale-95"
+                className="h-8 px-2.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-between shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-blue-600" />
+                  <Truck className="w-3.5 h-3.5 text-slate-500" />
                   <span className="hidden sm:inline">Add Charge</span>
                   <span className="sm:hidden">Charge</span>
                 </span>
-                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F3
                 </kbd>
               </button>
             </div>
 
             {/* Bill Details Breakdown Card */}
-            <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-2xs space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-100 pb-2">
+            <div className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-2xs space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-slate-500 font-semibold uppercase tracking-wider text-[10.5px] border-b border-slate-100 pb-1.5 font-mono">
                 <span>Bill Breakdown</span>
-                <span className="font-mono text-slate-400">{currentTab.items.length} items</span>
+                <span className="text-slate-400">{currentTab.items.length} items</span>
               </div>
 
               <div className="flex justify-between text-slate-600">
                 <span>Sub Total</span>
-                <span className="font-mono font-bold text-slate-900">
+                <span className="font-mono font-bold text-slate-900 tabular-nums">
                   ₹{subTotal.toFixed(2)}
                 </span>
               </div>
 
               {itemDiscountsTotal > 0 && (
-                <div className="flex justify-between text-emerald-600 font-semibold">
+                <div className="flex justify-between text-emerald-600 font-medium">
                   <span>Item Discounts</span>
-                  <span className="font-mono">- ₹{itemDiscountsTotal.toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">- ₹{itemDiscountsTotal.toFixed(2)}</span>
                 </div>
               )}
 
               {billDiscountAmount > 0 && (
-                <div className="flex justify-between text-emerald-600 font-semibold">
+                <div className="flex justify-between text-emerald-600 font-medium">
                   <span>
                     Bill Discount ({currentTab.discountValue}
                     {currentTab.discountType === "percent" ? "%" : "₹"})
                   </span>
-                  <span className="font-mono">- ₹{billDiscountAmount.toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">- ₹{billDiscountAmount.toFixed(2)}</span>
                 </div>
               )}
 
               {chargesTotal > 0 && (
-                <div className="flex justify-between text-blue-600 font-semibold">
+                <div className="flex justify-between text-blue-600 font-medium">
                   <span>Additional Charges</span>
-                  <span className="font-mono">+ ₹{chargesTotal.toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">+ ₹{chargesTotal.toFixed(2)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-slate-600">
                 <span>Tax (GST @ {org?.tax_rate ?? settings.defaultTaxRate}%)</span>
-                <span className="font-mono font-bold text-slate-900">
+                <span className="font-mono font-bold text-slate-900 tabular-nums">
                   ₹{taxAmount.toFixed(2)}
                 </span>
               </div>
             </div>
 
-            {/* PROMINENT TOTAL AMOUNT DISPLAY */}
-            <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-2xl p-3.5 sm:p-4 shadow-md flex flex-col gap-1 relative overflow-hidden">
-              <div className="flex items-center justify-between text-xs font-bold text-emerald-100 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Net Payable Total</span>
-                </span>
-                <span className="text-[11px] font-mono bg-white/20 px-2 py-0.5 rounded-full border border-white/30 text-white">
-                  {totalItemsCount} Qty
-                </span>
-              </div>
-
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white drop-shadow-xs">
-                  ₹{grandTotal.toLocaleString("en-IN")}
-                </span>
-                <span className="text-[11px] font-mono text-emerald-100 font-medium">
-                  Incl. all taxes
-                </span>
-              </div>
-            </div>
-
             {/* FAST PAYMENT MODE SELECTOR */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block font-mono">
                 Payment Mode
               </label>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {[
                   { mode: "Cash", label: "Cash", icon: Banknote },
                   { mode: "UPI", label: "UPI / QR", icon: QrCode },
@@ -3295,13 +3338,13 @@ export default function POSBilling() {
                         }
                       }}
                       className={cn(
-                        "flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-2xs",
+                        "flex flex-col items-center justify-center p-2 rounded-lg border text-xs font-semibold transition-all active:scale-95 shadow-2xs cursor-pointer",
                         isSelected
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30 ring-2 ring-indigo-300"
-                          : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-2xs font-bold"
+                          : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200/80"
                       )}
                     >
-                      <Icon className={cn("w-4 h-4 mb-1", isSelected ? "text-white" : "text-slate-500")} />
+                      <Icon className={cn("w-4 h-4 mb-0.5", isSelected ? "text-white" : "text-slate-500")} />
                       <span>{pm.label}</span>
                     </button>
                   );
@@ -3310,16 +3353,16 @@ export default function POSBilling() {
             </div>
 
             {/* RECEIVED AMOUNT & CHANGE DUE CALCULATOR */}
-            <div className="space-y-2 bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-2 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                 <span>Received Amount</span>
-                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F4
                 </kbd>
               </div>
 
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base font-bold text-slate-400 font-mono">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400 font-mono">
                   ₹
                 </span>
                 <input
@@ -3333,12 +3376,12 @@ export default function POSBilling() {
                     }))
                   }
                   placeholder={String(grandTotal)}
-                  className="w-full pl-8 pr-3 py-2 text-base sm:text-lg font-black font-mono bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 focus:bg-white focus:outline-none text-slate-900 placeholder:text-slate-400 shadow-inner"
+                  className="w-full pl-7 pr-3 py-1.5 text-base font-bold font-mono bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:outline-none text-slate-900 placeholder:text-slate-400 tabular-nums"
                 />
               </div>
 
               {/* Quick Cash Suggestions */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                 <button
                   type="button"
                   onClick={() =>
@@ -3347,7 +3390,7 @@ export default function POSBilling() {
                       receivedAmount: String(grandTotal),
                     }))
                   }
-                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-mono font-bold rounded-lg text-indigo-700 transition-colors"
+                  className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px] font-mono font-semibold rounded-md text-blue-700 transition-colors cursor-pointer"
                 >
                   Exact (₹{grandTotal})
                 </button>
@@ -3361,7 +3404,7 @@ export default function POSBilling() {
                         receivedAmount: String(amt),
                       }))
                     }
-                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-mono rounded-lg text-slate-700 transition-colors"
+                    className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-mono rounded-md text-slate-700 transition-colors cursor-pointer"
                   >
                     ₹{amt}
                   </button>
@@ -3372,17 +3415,17 @@ export default function POSBilling() {
               {receivedNum > 0 && (
                 <div
                   className={cn(
-                    "p-2.5 sm:p-3 rounded-xl text-xs font-bold flex justify-between items-center transition-all shadow-2xs",
+                    "p-2 rounded-lg text-xs font-semibold flex justify-between items-center transition-all shadow-2xs",
                     receivedNum >= grandTotal
                       ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                       : "bg-amber-50 text-amber-800 border border-amber-200"
                   )}
                 >
                   <span className="flex items-center gap-1.5">
-                    <Coins className="w-4 h-4" />
+                    <Coins className="w-3.5 h-3.5" />
                     <span>{receivedNum >= grandTotal ? "Change to Return:" : "Credit Due:"}</span>
                   </span>
-                  <span className="font-mono text-base font-black">
+                  <span className="font-mono text-sm font-bold tabular-nums">
                     ₹{(receivedNum >= grandTotal ? changeDue : balanceRemaining).toFixed(2)}
                   </span>
                 </div>
@@ -3390,25 +3433,26 @@ export default function POSBilling() {
             </div>
 
             {/* CUSTOMER DETAILS CARD */}
-            <div className="border border-slate-200 rounded-2xl p-3 sm:p-3.5 bg-white shadow-2xs space-y-2">
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-600" />
                   <span>Customer Profile</span>
                 </span>
                 <button
+                  type="button"
                   onClick={handleOpenCustomerModal}
-                  className="text-[10px] font-mono font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md hover:bg-indigo-100 transition-colors active:scale-95"
+                  className="text-[10px] font-mono font-medium text-blue-700 hover:text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors active:scale-95 cursor-pointer"
                 >
                   {currentTab.customer ? "Change" : "+ Select"}
                 </button>
               </div>
 
               {currentTab.customer ? (
-                <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">
+                      <span className="text-xs font-semibold text-slate-900">
                         {currentTab.customer.name}
                       </span>
                       {currentTab.customer.loyaltyPoints && (
@@ -3422,8 +3466,9 @@ export default function POSBilling() {
                     </span>
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleSelectCustomer(null)}
-                    className="p-1 text-slate-400 hover:text-rose-600 rounded-md transition-colors"
+                    className="p-1 text-slate-400 hover:text-rose-600 rounded-md transition-colors cursor-pointer"
                     title="Remove Customer"
                   >
                     <X className="w-4 h-4" />
@@ -3432,15 +3477,15 @@ export default function POSBilling() {
               ) : (
                 <div
                   onClick={handleOpenCustomerModal}
-                  className="text-xs text-slate-500 text-center py-2 border border-dashed border-slate-300 hover:border-indigo-400 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                  className="text-xs text-slate-500 text-center py-2 border border-dashed border-slate-300 hover:border-blue-400 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
                 >
                   Walk-in Customer (Tap to attach phone / points)
                 </div>
               )}
 
               {currentTab.customer && (currentTab.customer.keepSamePrice === false || currentTab.customer.keepSameInventory === false) && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-[11px] text-indigo-700 font-medium">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 border border-blue-200 rounded-md text-[11px] text-blue-700 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <span>
                     Custom Party Catalog:
                     {currentTab.customer.keepSamePrice === false && " Custom Rates"}
@@ -3451,48 +3496,48 @@ export default function POSBilling() {
             </div>
           </div>
 
-          {/* TRIPLE PRIMARY ACTION CTA BUTTONS */}
-          <div className="grid grid-cols-3 gap-2 pt-3 sm:pt-4 border-t border-slate-200 mt-4 shrink-0">
-            {/* Save & Print */}
+          {/* Region 3: Fixed Bottom Checkout Action Dock (shrink-0 border-t bg-white) */}
+          <div className="shrink-0 p-3 border-t border-slate-200/80 bg-white grid grid-cols-3 gap-2 shadow-xs">
+            {/* Save & Print [F6] */}
             <button
+              type="button"
               onClick={() => handleSaveBill(true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              title="Save bill and print receipt"
+              className="h-9 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save bill and print receipt [F6]"
             >
-              <Printer className="w-4 h-4 shrink-0" />
-              <span className="hidden xl:inline">Save &amp; Print</span>
-              <span className="xl:hidden">Print</span>
-              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-emerald-800 px-1 py-0.5 rounded font-normal">
+              <Printer className="w-3.5 h-3.5 shrink-0" />
+              <span>Print</span>
+              <kbd className="font-mono text-[10px] bg-emerald-700/90 text-emerald-100 px-1 py-0.5 rounded font-normal">
                 F6
               </kbd>
             </button>
 
-            {/* Save Bill */}
+            {/* Save Bill [F7] */}
             <button
+              type="button"
               onClick={() => handleSaveBill(false)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              title="Save bill directly"
+              className="h-9 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save bill directly [F7]"
             >
-              <Check className="w-4 h-4 shrink-0" />
-              <span className="hidden xl:inline">Save Bill</span>
-              <span className="xl:hidden">Save</span>
-              <kbd className="hidden xl:inline text-[10px] font-mono opacity-80 bg-indigo-800 px-1 py-0.5 rounded font-normal">
+              <Check className="w-3.5 h-3.5 shrink-0" />
+              <span>Save</span>
+              <kbd className="font-mono text-[10px] bg-blue-700/90 text-blue-100 px-1 py-0.5 rounded font-normal">
                 F7
               </kbd>
             </button>
 
-            {/* Save & WhatsApp */}
+            {/* WhatsApp Receipt */}
             <button
+              type="button"
               onClick={() => handleSaveBill(false, true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="flex items-center justify-center gap-1.5 py-3 sm:py-3.5 px-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="h-9 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-200/80 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Save bill and dispatch WhatsApp receipt"
             >
-              <Send className="w-4 h-4 shrink-0" />
-              <span className="hidden xl:inline">WhatsApp</span>
-              <span className="xl:hidden">WA</span>
+              <Send className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>WA</span>
             </button>
           </div>
         </div>

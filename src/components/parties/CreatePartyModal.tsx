@@ -622,8 +622,11 @@ export function CreatePartyModal({
   };
 
   return createPortal(
-    <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="create-party-title" className="fixed inset-0 z-modal flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="create-party-title" className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl">
+        {/* Top drag handle indicator */}
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />
+
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-muted/40 shrink-0">
           <div className="flex items-center gap-3">
@@ -683,7 +686,8 @@ export function CreatePartyModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
           {/* TAB 1: General & GSTIN */}
           {activeTab === "general" && (
             <div className="space-y-5">
@@ -1563,56 +1567,53 @@ export function CreatePartyModal({
             </div>
           )}
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {activeTab !== "general" && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (activeTab === "address") setActiveTab("general");
-                      else if (activeTab === "credit") setActiveTab("address");
-                      else if (activeTab === "inventory") setActiveTab("credit");
-                      else if (activeTab === "custom") setActiveTab("inventory");
-                    }}
-                    className="cursor-pointer"
-                  >
-                    ← Back
-                  </Button>
-                )}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="cursor-pointer">
-                Cancel
+          </div>
+
+          {/* Fixed bottom confirmation action bar */}
+          <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0">
+            {activeTab !== "general" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (activeTab === "address") setActiveTab("general");
+                  else if (activeTab === "credit") setActiveTab("address");
+                  else if (activeTab === "inventory") setActiveTab("credit");
+                  else if (activeTab === "custom") setActiveTab("inventory");
+                }}
+                className="cursor-pointer mr-auto"
+              >
+                ← Back
               </Button>
-              {activeTab !== "custom" ? (
-                <Button
-                  type="button"
-                  onClick={() => {
-                    if (activeTab === "general") setActiveTab("address");
-                    else if (activeTab === "address") setActiveTab("credit");
-                    else if (activeTab === "credit") setActiveTab("inventory");
-                    else if (activeTab === "inventory") setActiveTab("custom");
-                  }}
-                  className="gap-1.5 cursor-pointer"
-                >
-                  Continue →
-                </Button>
-              ) : (
-                <Button type="submit" disabled={isSubmitting} className="gap-2 cursor-pointer">
-                  {isSubmitting ? (
-                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
-                  {initialData ? "Update Party" : "Save & Create Party"}
-                </Button>
-              )}
-            </div>
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="cursor-pointer">
+              Cancel
+            </Button>
+            {activeTab !== "custom" ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  if (activeTab === "general") setActiveTab("address");
+                  else if (activeTab === "address") setActiveTab("credit");
+                  else if (activeTab === "credit") setActiveTab("inventory");
+                  else if (activeTab === "inventory") setActiveTab("custom");
+                }}
+                className="gap-1.5 cursor-pointer"
+              >
+                Continue →
+              </Button>
+            ) : (
+              <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2 cursor-pointer font-bold bg-primary text-primary-foreground shadow-md">
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                {initialData ? "Update Party" : "Save & Create Party"}
+              </Button>
+            )}
           </div>
         </form>
       </div>

@@ -1,28 +1,49 @@
-# Challenger 2 Dispatch: Full Regression & Zero Build Error Verification
+# Dispatch Directive: Challenger 2 — Milestone 1 (Component Primitives Regression Verifier)
 
 ## Mission
-Adversarially challenge system integrity and verify zero regression across existing features and test suites.
+Empirically challenge the component primitives (`button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx`):
+1. Stress-test `<Button>` with all variants (`default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `ruby`, `gold`, `glass`) and all sizes (`default`, `sm`, `table`, `icon`, `icon-sm`, `cta`, `lg`, `pill`, `pill-lg`). Verify no runtime errors and rendered class lists match standards.
+2. Stress-test `<Card>`, `<Badge>`, `<Table>`, `<Dialog>` components.
+3. Run test suites:
+   `cmd /c npx vitest run src/test/crmComponents.test.tsx`
+4. Confirm zero regressions across existing test suites.
 
-## Challenge Tasks
-1. Execute full CRM test suites: `cmd /c npx vitest run crmStaff crmTask crmBackendApiM1`.
-2. Execute database schema integrity test: `cmd /c npx vitest run src/test/fixDbSchema.test.ts`.
-3. Check TypeScript compilation: `cmd /c npx tsc --noEmit`.
-4. Verify Create Invoice flows remain untouched:
-   - Check `git diff --name-only` or file status on `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/components/invoices/mobile/AddItemModal.tsx`, `src/components/invoices/mobile/SelectPartyModal.tsx`, `src/components/invoices/mobile/EditItemModal.tsx`.
-   - Confirm zero changes to these files.
+## References to Read
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
 
-Verdict: APPROVE or REJECT.
-Write report to `.agents/teamwork/challenger_m1_2/handoff.md`.
+## Expected Output
+Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md` with your verdict (APPROVE or REQUEST_CHANGES), empirical tests executed, and results. Send message when done.
 
+## 2026-10-24T19:19:48Z
+You are Challenger 2 for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project.
 
-## 2026-10-21T18:37:29Z
-You are Challenger 2 for Milestone 1 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
+Your dedicated working directory is:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2`
 
-MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
-Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\DISPATCH.md.
+Read your dispatch directive:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\DISPATCH.md`
 
-Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
+Read the authoritative user request:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
 
-Adversarially verify zero regression, run full test suites (`cmd /c npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts`), check `cmd /c npx tsc --noEmit`, and verify Create Invoice flow files are 100% untouched.
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md` with explicit verdict: APPROVE or REJECT.
-Send message back to parent when done.
+Read the Worker's handoff report:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+
+Read the design rules and master project document:
+- `.agents/rules/minimal-design-system.md`
+- `PROJECT.md`
+
+Your tasks:
+Empirically challenge the component primitives (`button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx`):
+1. Stress-test `<Button>` with all variants (`default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `ruby`, `gold`, `glass`) and all sizes (`default`, `sm`, `table`, `icon`, `icon-sm`, `cta`, `lg`, `pill`, `pill-lg`). Verify no runtime errors and rendered class lists match standards.
+2. Stress-test `<Card>`, `<Badge>`, `<Table>`, `<Dialog>` components.
+3. Run test suites:
+   `cmd /c npx vitest run src/test/crmComponents.test.tsx`
+4. Confirm zero regressions across existing test suites.
+5. Record your clear verdict: `VERDICT: APPROVE` or `VERDICT: REQUEST_CHANGES` with empirical outputs.
+
+Write your handoff report to:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md`
+When complete, send a message to the orchestrator with your verdict.

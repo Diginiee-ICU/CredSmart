@@ -290,17 +290,17 @@ export default function CRMDashboard(): React.ReactElement {
                   type="button"
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer min-h-[38px] touch-manipulation shrink-0"
+                  className="inline-flex items-center justify-center h-8.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer shrink-0"
                   title="Refresh CRM metrics"
                 >
-                  <RotateCw className={`w-4 h-4 text-slate-500 ${refreshing ? "animate-spin" : ""}`} />
+                  <RotateCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? "animate-spin" : ""}`} />
                   <span className="hidden sm:inline sm:ml-1.5">Refresh</span>
                 </button>
 
                 {/* Direct C2A 1: Add Staff */}
                 <Link
                   to="/crm/roles?action=add-staff"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition-all active:scale-[0.98] whitespace-nowrap"
                   title="Provision new staff member credentials"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
@@ -310,7 +310,7 @@ export default function CRMDashboard(): React.ReactElement {
                 {/* Direct C2A 2: Create Role */}
                 <Link
                   to="/crm/roles?action=create-role"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all active:scale-[0.98] whitespace-nowrap"
                   title="Create custom CRM role with permission matrix"
                 >
                   <Plus className="w-3.5 h-3.5 text-blue-600" />
@@ -320,10 +320,10 @@ export default function CRMDashboard(): React.ReactElement {
                 {/* Direct C2A 3: Hierarchy View */}
                 <Link
                   to="/crm/roles?view=tree"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/60 shadow-2xs transition-all hover:shadow-sm min-h-[38px] touch-manipulation whitespace-nowrap active:scale-95"
+                  className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-all active:scale-[0.98] whitespace-nowrap"
                   title="Interactive organization reporting tree"
                 >
-                  <Network className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <Network className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                   <span>Hierarchy View</span>
                 </Link>
               </div>

@@ -1,32 +1,18 @@
-# Challenger 2 Dispatch: Milestone 2 Regression & Invariance Verification
+# Dispatch Directive: Challenger 2 — Milestone 2 (POS Billing Hotkeys & Containment Challenger)
 
 ## Mission
-Adversarially verify zero regression across existing features and compile integrity.
+Empirically stress-test the POS Billing workbench (`src/pages/POSBilling.tsx`):
+1. Test all hotkey shortcuts: `F1` (search focus), `F2` (discount), `F3` (charge), `F6` (print), `F7` (save bill), `P` (price), `Q` (qty), `D` (discount), `V` (voice), `DEL` (delete item).
+2. Stress-test the 3-region decoupled checkout panel: verify top net total does not scroll away, middle breakdown scrolls independently, and bottom action bar remains pinned with Save & Print buttons always clickable.
+3. Run test suites:
+   `cmd /c npx vitest run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx`
+4. Verify TypeScript compilation: `cmd /c npx tsc --noEmit`.
 
-## Challenge Tasks
-1. Execute full CRM and schema test suites:
-   - `cmd /c npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts`
-2. Verify TypeScript compilation:
-   - `cmd /c npx tsc --noEmit`
-3. Verify Create Invoice flows remain 100% untouched:
-   - `git diff --name-only` on:
-     - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-     - `src/components/SalesInvoiceModal.tsx`
-     - `src/components/invoices/mobile/AddItemModal.tsx`
-     - `src/components/invoices/mobile/SelectPartyModal.tsx`
-     - `src/components/invoices/mobile/EditItemModal.tsx`
+## References to Read
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
 
-Verdict: APPROVE or REJECT.
-Write report to `.agents/teamwork/challenger_m2_2/handoff.md`.
-
-## 2026-10-21T19:06:53Z
-You are Challenger 2 for Milestone 2 of the CredSmart Enterprise CRM Staff Provisioning & Task Management project.
-
-MANDATORY: Read c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp 2026-10-21T17:42:42Z) and c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md before starting work.
-Also read your task dispatch at c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2\DISPATCH.md.
-
-Your Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2
-
-Adversarially verify zero regression across test suites (`cmd /c npx vitest run crmStaff crmTask crmBackendApiM1 src/test/fixDbSchema.test.ts`), check `cmd /c npx tsc --noEmit`, and verify Create Invoice flow files are 100% untouched.
-Write your handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2\handoff.md` with explicit verdict: APPROVE or REJECT.
-Send message back to parent when done.
+## Expected Output
+Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_2\handoff.md` with your verdict (APPROVE or REQUEST_CHANGES). Send message when done.

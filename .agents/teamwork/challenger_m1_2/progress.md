@@ -1,14 +1,12 @@
-# Progress — Challenger M1-2
+# Progress — Challenger M1-2 (Primitives Regression Verifier)
 
-- Last visited: 2026-10-21T18:49:30Z
-- Status: Adversarial challenge and regression verification complete.
-- Results:
-  - `cmd /c npx vitest run crmStaff crmTask crmBackendApiM1`: 4 passed files (84 passed tests)
-  - `cmd /c npx vitest run src/test/fixDbSchema.test.ts`: 1 passed file (398 passed tests)
-  - `cmd /c npx tsc --noEmit`: 0 errors (exit code 0)
-  - Invoicing components diff check: 0 changes (100% untouched)
-  - Existing core regression checks: 3 passed files (58 passed tests)
-  - Invoicing rendering regression checks: 3 passed files (154 passed tests)
-  - Dedicated Challenger 2 adversarial suite (`crmChallengerM1_2.test.ts`): 1 passed file (11 passed tests)
-  - All M1 combined suites: 7 passed files (583 passed tests)
-- Next: Writing final `handoff.md` with explicit verdict APPROVE and dispatching message to parent.
+- Last visited: 2026-10-24T19:25:30Z
+- Status: Complete — Milestone 1 primitives verified, tests passed, zero regressions, verdict rendered.
+- Empirical Results:
+  1. Unit tests: `cmd /c npx vitest run src/test/crmComponents.test.tsx` -> 55/55 passed (100%).
+  2. Adversarial suite: `cmd /c npx vitest run src/test/componentPrimitivesAdversarial.challenger.test.tsx` -> 32/32 passed (100%), validating all 81 Button permutations, Card, Badge, Table, Dialog.
+  3. TypeScript check: `cmd /c npx tsc --noEmit` -> Exit code 0, 0 compiler errors.
+  4. Core regression check: 154/154 passed tests across 5 test suites.
+  5. Protected file check: Git status verifies 0 protected invoicing files modified.
+- Verdict: VERDICT: APPROVE
+- Next: Generating handoff report `handoff.md` and messaging parent.

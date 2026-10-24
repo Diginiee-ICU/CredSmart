@@ -14,9 +14,9 @@ export interface CRMRolePillProps extends React.HTMLAttributes<HTMLSpanElement> 
   /** Name of the custom role (e.g. "Store Manager", "Staff Associate", "HR Lead") */
   name: string;
   /**
-   * Hex color assigned to the role by the user (e.g. "#FF6A00", "#1D4ED8").
+   * Hex color assigned to the role by the user (e.g. "#FF6A00", "#2563EB").
    * Automatically computes 15% opacity background and 35% opacity border tints.
-   * @default "#1D4ED8"
+   * @default "#2563EB"
    */
   color?: string;
   /** Optional icon component rendered before role title. Defaults to Shield */
@@ -46,7 +46,7 @@ function toHexAlpha(hex: string, alphaHex: string): string {
  */
 export function CRMRolePill({
   name,
-  color = "#1D4ED8",
+  color = "#2563EB",
   icon: Icon = Shield,
   isSuperAdmin = false,
   size = "md",
@@ -55,7 +55,7 @@ export function CRMRolePill({
   ...props
 }: CRMRolePillProps): React.ReactElement {
   const sizeClasses: Record<CRMRolePillSize, string> = {
-    sm: "text-[10px] px-2 py-0.5 gap-1",
+    sm: "text-[11px] px-2 py-0.5 gap-1 font-semibold",
     md: "text-xs px-2.5 py-0.5 gap-1.5",
     lg: "text-sm px-3 py-1 gap-2 font-medium",
   };

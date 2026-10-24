@@ -75,7 +75,7 @@ export function CRMStatCard({
     },
     blue: {
       bg: "bg-blue-500/10",
-      text: "text-[#1D4ED8]",
+      text: "text-[#2563EB]",
       ring: "ring-blue-500/15",
     },
     emerald: {
@@ -96,7 +96,7 @@ export function CRMStatCard({
     <div
       onClick={onClick}
       className={cn(
-        "rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 flex flex-col justify-between",
+        "rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-2xs transition-all duration-200 flex flex-col justify-between",
         onClick && "cursor-pointer hover:shadow-md hover:-translate-y-0.5",
         className
       )}

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T19:20:00Z
+# BRIEFING — 2026-10-24T19:50:00Z
 
 ## Mission
-Objective review and adversarial challenge of Milestone 2 (Staff User Provisioning & Instant Role Assignment UI) in `src/pages/crm/RoleManagement.tsx` and `src/utils/crmStaffUtils.ts`.
+Objective review and adversarial challenge of Milestone 2 (Screen-Fitted Desktop Shell & Layouts) in `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, and `src/pages/POSBilling.tsx`.
 
 ## 🔒 My Identity
 - Archetype: reviewer_m2_1
@@ -15,6 +15,11 @@ Objective review and adversarial challenge of Milestone 2 (Staff User Provisioni
   - Project: CredSmart Enterprise CRM Staff Provisioning & Task Management
   - Milestone: M2 (Staff User Provisioning & Instant Role Assignment UI)
   - Instance: 1 of 2
+- Appended Identity (2026-10-24):
+  - Current Parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+  - Project: CredSmart Minimal & Fast-Access Redesign
+  - Milestone: M2 (Screen-Fitted Desktop Shell & Layouts)
+  - Instance: 1 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -25,66 +30,73 @@ Objective review and adversarial challenge of Milestone 2 (Staff User Provisioni
   - Must strictly preserve protected Create Invoice flows (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc.)
   - Verify 14-char cryptographic password generation with `window.crypto.getRandomValues` and character distribution
   - Verify Add Staff User modal, Credentials Confirmation modal, and in-memory roster hydration
+- Appended Constraints (2026-10-24):
+  - Review desktop command header: exact 52px height (`h-13`), compact 28px brand mark, left Organization Switcher dropdown pill, centered Command Palette (`⌘K`) available on `md:` and above, Royal Blue split action button, Live Sync dot
+  - Verify complete elimination of 3D perspective distortion and floating bottom-right watermark
+  - Verify `SuiteSwitcher.tsx` neutral segmented styling
+  - Verify screen-fitted layout containment in `<main>`
+  - Run `cmd /c npx tsc --noEmit` and check that 0 protected invoice files were touched
 
 ## Current Parent
-- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
-- Updated: 2026-10-21T19:06:52Z
+- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Updated: 2026-10-24T19:44:41Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/pages/crm/RoleManagement.tsx`
-  - `src/utils/crmStaffUtils.ts`
-  - `src/test/crmStaffProvisioningUI.test.tsx`
-  - `src/test/crmStaffProvisioning.test.ts`
-  - `src/test/crmStaffTasksIntegration.test.tsx`
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (preservation check)
-  - `src/components/SalesInvoiceModal.tsx` (preservation check)
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-21T17:42:42Z)
+  - `src/components/AppLayout.tsx`
+  - `src/components/SuiteSwitcher.tsx`
+  - `src/pages/POSBilling.tsx`
+  - `PROJECT.md`
+  - `.agents/rules/minimal-design-system.md`
+  - 19 Protected invoice files (invariance check)
 - **Review criteria**:
-  - Add Staff User modal fields & validation
-  - Cryptographic password generation (14 chars, `window.crypto.getRandomValues`, uppercase, lowercase, numbers, symbols)
-  - Form submission calling `crmApi.provisionStaffUser`
-  - Credentials Confirmation modal displaying email & plaintext password
-  - 1-click clipboard copy triggers and WhatsApp sharing template
-  - Zero-refresh in-memory roster hydration with `CRMRolePill` badge
-  - Protected invoice flows untouched
+  - Exact 52px header height (`h-13`)
+  - Compact 28px brand mark (`w-7 h-7`)
+  - Dedicated Organization Switcher dropdown pill
+  - Centered Command Palette trigger (`⌘K`) available on `md:` and above
+  - Royal Blue split action button with dropdown creation menu
+  - Emerald Live Sync status dot
+  - Complete elimination of 3D perspective (`perspective: 2000px`, `rotateX(3deg)`) and floating watermark (`/logo-static.jpeg`)
+  - Neutral segmented `SuiteSwitcher` (`bg-slate-100` / `bg-white`)
+  - Viewport containment in outer wrapper and `<main>`
+  - Strict preservation of all 19 protected invoice files
+  - Zero TypeScript compiler errors (`tsc --noEmit`)
 
 ## Key Decisions Made
-- Executed unit and UI test suite for staff provisioning: 29/29 tests passed in `crmStaffProvisioning.test.ts`, 6/6 tests passed in `crmStaffProvisioningUI.test.tsx`, 12/12 tests passed in `crmStaffTasksIntegration.test.tsx`.
-- Executed TypeScript static verification: `npx tsc --noEmit` exited with code 0 (zero errors).
-- Executed invoice test regression verification: 41/41 tests passed in `billingLifecycleEngine.test.ts` and `MobileInvoiceSuccessView.test.tsx`.
-- Conducted forensic integrity audit: verified genuine implementation of CSPRNG password generation, Fisher-Yates shuffle, real form handling, and clipboard/WhatsApp integration. Zero facade/mock shortcuts detected.
-- Verified protected invoice flows are 100% untouched.
+- Executed `cmd /c npx tsc --noEmit`: 0 errors (exited with code 0).
+- Verified all 19 protected invoice files timestamps: 0 protected files touched (all timestamps prior to 2026-10-25).
+- Executed Vitest test suites:
+  - `billingLifecycleEngine.test.ts` & `MobileInvoiceSuccessView.test.tsx`: 41/41 passed.
+  - `crmShellNavigation.audit.test.ts` & `componentPrimitivesAdversarial.challenger.test.tsx`: 40/40 passed.
+  - `decoupleShells.test.tsx` & `decoupleIntegration.test.tsx`: 199/199 passed.
+- Executed ESLint check on modified files: 0 errors (3 pre-existing fast-refresh warnings in SuiteSwitcher).
+- Confirmed total elimination of 3D perspective distortion (`rotateX`, `perspective`) and `/logo-static.jpeg` watermark.
+- Confirmed viewport containment with `<main>` `min-h-0` and dedicated POS `h-full overflow-hidden`.
 - Rendered Verdict: APPROVE.
 
 ## Artifact Index
-- `.agents/teamwork/reviewer_m2_1/DISPATCH.md` — Inbound instruction
-- `.agents/teamwork/reviewer_m2_1/BRIEFING.md` — Working memory and state
-- `.agents/teamwork/reviewer_m2_1/progress.md` — Heartbeat and step tracking
-- `.agents/teamwork/reviewer_m2_1/handoff.md` — Comprehensive review and challenge report
+- `.agents/teamwork/reviewer_m2_1/DISPATCH.md` — Incoming directives
+- `.agents/teamwork/reviewer_m2_1/BRIEFING.md` — Working memory and review state
+- `.agents/teamwork/reviewer_m2_1/progress.md` — Liveness heartbeat and step tracking
+- `.agents/teamwork/reviewer_m2_1/handoff.md` — Comprehensive review & adversarial report
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/pages/crm/RoleManagement.tsx` (verified)
-  - `src/utils/crmStaffUtils.ts` (verified)
-  - `src/test/crmStaffProvisioning.test.ts` (verified)
-  - `src/test/crmStaffProvisioningUI.test.tsx` (verified)
-  - `src/test/crmStaffTasksIntegration.test.tsx` (verified)
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (verified untouched)
-  - `src/components/SalesInvoiceModal.tsx` (verified untouched)
+  - `src/components/AppLayout.tsx` (verified compliant with all M2 criteria)
+  - `src/components/SuiteSwitcher.tsx` (verified neutral segmented control)
+  - `src/pages/POSBilling.tsx` (verified monochromatic hotkey ribbon and 3-region right panel)
+  - 19 Protected invoice files (verified 100% untouched)
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified through inspection, compilation, and test execution.
+- **Unverified claims**: None. All claims independently verified through code inspection, compilation, and test execution.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - CSPRNG entropy and character set distribution (uppercase, lowercase, digits, symbols)
-  - Boundary conditions for full name (unicode, accents, 2-char minimum, 100-char maximum, XSS/SQL injection prevention)
-  - Phone normalization matrix (+91 prefix, leading zero, hyphens, parentheses, whitespace)
-  - Modal form error handling and clipboard permission rejection fallbacks
-  - WhatsApp template URL encoding and `noopener,noreferrer` tab safety
-  - Zero-refresh roster hydration with `CRMRolePill` rendering
-  - Invoice flow preservation and zero regression
-- **Vulnerabilities found**:
-  - Minor: JSDOM rendering execution time for complex nested Radix UI Dialog + Select components on Windows can exceed Vitest's default 5000ms test runner timeout; resolved by running with appropriate test timeout (e.g. `--test-timeout=20000`).
-  - Minor: Negligible theoretical modulo bias in `getRandomChar` (1 in 2^32), standard for browser-level password generators.
-- **Untested angles**: Hardware failure during clipboard write (handled gracefully via try/catch toast).
+  - Height of desktop command header: verified `md:h-13` maps to `3.25rem` (52px) in `tailwind.config.ts`.
+  - Command palette visibility: verified `hidden md:flex` shows search on viewports >= 768px, with `md:hidden` mobile button.
+  - Keyboard listeners: verified `⌘K` / `Ctrl+K` listener captures metaKey and ctrlKey without conflicts.
+  - Organization switcher fallback: verified graceful handling of null/empty organization arrays with truncation.
+  - Suite switcher keyboard accessibility: verified `Enter` and `Space` key handlers and radio group ARIA roles.
+  - POS right panel containment: verified Region 1 (Net Total fixed), Region 2 (middle scroll), Region 3 (fixed bottom action dock).
+  - Screen-fitted containment: verified outer wrapper and `<main>` have `min-h-0` and `overflow-hidden`.
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within Milestone 2 scope.

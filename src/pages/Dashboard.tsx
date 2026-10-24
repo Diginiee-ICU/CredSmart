@@ -356,20 +356,20 @@ export default function Dashboard() {
   const CustomTooltip = ({ active, payload, label }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {  
     if (active && payload && payload.length) {
       return (
-        <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-700/80 p-3 rounded-xl shadow-2xl backdrop-blur-xl text-xs space-y-1.5 min-w-[190px]">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-            <span className="font-bold text-slate-200 font-mono">{label}</span>
-            <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-md text-xs space-y-1 min-w-[180px]">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono text-[11px]">{label}</span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> LIVE
             </span>
           </div>
           {payload.map((entry: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, index: number) => (  
             <div key={`item-${index}`} className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-1.5 text-slate-400">
+              <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 <span className="capitalize">{entry.name}:</span>
               </span>
-              <span className="font-mono font-bold text-white">
+              <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">
                 ₹{Number(entry.value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -628,7 +628,7 @@ export default function Dashboard() {
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
                 {getGreeting()}
               </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 LIVE
               </span>
@@ -667,11 +667,11 @@ export default function Dashboard() {
                     <span className="font-bold text-xs text-slate-900 dark:text-white">
                       Tally &amp; Excel Import
                     </span>
-                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 uppercase tracking-tight font-mono">
+                    <span className="text-[11px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 uppercase tracking-tight font-mono">
                       Fast
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
                     Import ledgers &amp; stock items
                   </span>
                 </div>
@@ -699,9 +699,62 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* HORIZONTAL SWIPEABLE QUICK ACTION STRIP (PLACED DIRECTLY BENEATH HEADER) */}
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
+            QUICK ACTIONS
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-0.5 px-0.5 touch-pan-x">
+            <button
+              type="button"
+              onClick={() => setShowSalesInvoiceModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Sale Bill</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.checkout)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+            >
+              <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ POS Billing</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCreateItemModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+            >
+              <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>+ Item</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCreatePartyModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+            >
+              <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>+ Customer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.sales)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+            >
+              <span className="text-xs leading-none">📊</span>
+              <span>Day Book</span>
+            </button>
+          </div>
+        </div>
+
         {/* HIGH-DENSITY 2x2 FINANCIAL METRIC GRID (CLEAN MODERN STRIPE / SQUARE RETAIL) */}
         <div>
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-mono font-bold tracking-wider uppercase mb-2 px-0.5">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold tracking-wider uppercase mb-2 px-0.5">
             <span>FINANCIAL OVERVIEW</span>
             <span>{lastUpdate || formatCurrentTime()}</span>
           </div>
@@ -712,9 +765,9 @@ export default function Dashboard() {
               onClick={() => navigate(ROUTE_PATHS.parties)}
               className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-600" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono">
+                <span className="text-[11px] font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono">
                   TO COLLECT
                 </span>
                 <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -728,7 +781,7 @@ export default function Dashboard() {
                 ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
-                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
+                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
                   Receivable
                 </span>
               </div>
@@ -739,9 +792,9 @@ export default function Dashboard() {
               onClick={() => navigate(ROUTE_PATHS.purchases)}
               className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-600" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono">
+                <span className="text-[11px] font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono">
                   TO PAY
                 </span>
                 <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400">
@@ -755,7 +808,7 @@ export default function Dashboard() {
                 ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
-                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono">
+                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono">
                   Payable
                 </span>
               </div>
@@ -766,9 +819,9 @@ export default function Dashboard() {
               onClick={() => navigate(ROUTE_PATHS.cashBank)}
               className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-yellow-400 to-amber-500" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                <span className="text-[11px] font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
                   CASH &amp; BANK
                 </span>
                 <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -782,7 +835,7 @@ export default function Dashboard() {
                 ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
-                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono">
+                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono">
                   Liquidity
                 </span>
               </div>
@@ -793,9 +846,9 @@ export default function Dashboard() {
               onClick={() => navigate(ROUTE_PATHS.sales)}
               className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
             >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 to-teal-500" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-teal-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+                <span className="text-[11px] font-black tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
                   TODAY&apos;S SALES
                 </span>
                 <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -809,7 +862,7 @@ export default function Dashboard() {
                 ₹ <span className="tabular-nums font-bold">{todaySalesTotal.toLocaleString("en-IN")}</span>
               </div>
               <div className="mt-1">
-                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
                   {todaySalesCount} Bill{todaySalesCount === 1 ? "" : "s"}
                 </span>
               </div>
@@ -817,67 +870,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* HORIZONTAL SWIPEABLE QUICK ACTION STRIP */}
-        <div className="space-y-1.5">
-          <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
-            QUICK ACTIONS
-          </span>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-0.5 px-0.5 touch-pan-x">
-            <button
-              type="button"
-              onClick={() => setShowSalesInvoiceModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Sale Bill</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate(ROUTE_PATHS.checkout)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
-            >
-              <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ POS Billing</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowCreateItemModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
-            >
-              <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span>+ Item</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowCreatePartyModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
-            >
-              <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>+ Customer</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition-transform cursor-pointer touch-manipulation"
-            >
-              <span className="text-xs leading-none">📊</span>
-              <span>Day Book</span>
-            </button>
-          </div>
-        </div>
-
         {/* RECENT ACTIVITY LIST */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-bold tracking-wider uppercase px-0.5">
-            <span className="text-slate-500 dark:text-slate-400 text-[10px]">RECENT ACTIVITY</span>
+            <span className="text-slate-500 dark:text-slate-400 text-[11px]">RECENT ACTIVITY</span>
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer min-h-[44px] flex items-center"
+              className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer min-h-[44px] flex items-center"
             >
               View All →
             </button>
@@ -887,7 +887,7 @@ export default function Dashboard() {
             <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center">
               <FileText className="w-7 h-7 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No Transactions Yet</p>
-              <span className="text-[10px] text-slate-400">Bills will appear here</span>
+              <span className="text-[11px] text-slate-400">Bills will appear here</span>
             </div>
           ) : (
             <div className="space-y-2">
@@ -915,7 +915,7 @@ export default function Dashboard() {
                         <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                           {displayName}
                         </p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
                           <span>{txn.txnNo}</span>
                           <span>•</span>
                           <span>{txn.date}</span>
@@ -929,7 +929,7 @@ export default function Dashboard() {
                       </div>
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 text-[9px] font-bold font-mono px-2 py-0.5 rounded-md mt-0.5 border",
+                          "inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md mt-0.5 border",
                           txn.status === "PAID"
                             ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
                             : txn.status === "PENDING"
@@ -983,13 +983,13 @@ export default function Dashboard() {
         </div>
 
         {/* 4 High-Density Stripe/Linear Metric Cards */}
-        <div className="grid grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-4 gap-3">
           {/* Card 1: TO COLLECT */}
           <div
             onClick={() => navigate(ROUTE_PATHS.parties)}
-            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-3.5 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-600" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -1006,18 +1006,15 @@ export default function Dashboard() {
               <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                Outstanding customer credit ledger balance.
-              </p>
             </div>
           </div>
 
           {/* Card 2: TO PAY */}
           <div
             onClick={() => navigate(ROUTE_PATHS.purchases)}
-            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-3.5 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-orange-600" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-orange-500/15 flex items-center justify-center text-orange-600 dark:text-orange-400">
@@ -1034,18 +1031,15 @@ export default function Dashboard() {
               <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                Pending supplier invoices &amp; outstanding dues.
-              </p>
             </div>
           </div>
 
           {/* Card 3: CASH & BANK */}
           <div
             onClick={() => navigate(ROUTE_PATHS.cashBank)}
-            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-3.5 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-yellow-400 to-amber-500" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -1062,18 +1056,15 @@ export default function Dashboard() {
               <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                Total reconciled liquidity across accounts.
-              </p>
             </div>
           </div>
 
           {/* Card 4: TOTAL SALES (MTD) */}
           <div
             onClick={() => navigate(ROUTE_PATHS.sales)}
-            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-4 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
+            className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 p-3.5 cursor-pointer transition-all flex flex-col justify-between relative overflow-hidden group"
           >
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 to-teal-500" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-teal-500" />
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1090,9 +1081,6 @@ export default function Dashboard() {
               <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{totalMtdSales.toLocaleString("en-IN")}</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                Total sales for this month.
-              </p>
             </div>
           </div>
         </div>
@@ -1108,7 +1096,7 @@ export default function Dashboard() {
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-mono">
                     FINANCIAL LEDGER SUMMARY
                   </h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span>REAL-TIME</span>
                   </span>
@@ -1164,13 +1152,13 @@ export default function Dashboard() {
                     <XAxis
                       dataKey="date"
                       stroke="#94A3B8"
-                      fontSize={10}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={{ stroke: "#E2E8F0" }}
                     />
                     <YAxis
                       stroke="#94A3B8"
-                      fontSize={10}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={formatCurrencyAxis}
@@ -1215,7 +1203,7 @@ export default function Dashboard() {
                   <TrendingUp className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">Period Sales</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">Period Sales</p>
                   <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{periodSalesTotal.toLocaleString("en-IN")}
                   </p>
@@ -1227,7 +1215,7 @@ export default function Dashboard() {
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Collect</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Collect</p>
                   <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{toCollect.toLocaleString("en-IN")}
                   </p>
@@ -1239,7 +1227,7 @@ export default function Dashboard() {
                   <ArrowUp className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Pay</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium truncate">To Pay</p>
                   <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate">
                     ₹{toPay.toLocaleString("en-IN")}
                   </p>
@@ -1279,7 +1267,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => setShowSalesInvoiceModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-xs active:scale-95 cursor-pointer transition-colors"
+                    className="flex items-center gap-2 h-8.5 px-3 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 shadow-2xs active:scale-[0.98] cursor-pointer transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                     <span>Create Sales Invoice</span>
@@ -1289,7 +1277,7 @@ export default function Dashboard() {
                 <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-800">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-slate-50/90 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800 font-mono text-[10px] uppercase sticky top-0">
+                      <tr className="bg-slate-50/90 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800 font-mono text-[11px] uppercase sticky top-0">
                         <th className="py-2.5 px-3">Invoice No.</th>
                         <th className="py-2.5 px-3">Party / Customer</th>
                         <th className="py-2.5 px-3 text-right">Amount</th>
@@ -1314,19 +1302,19 @@ export default function Dashboard() {
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {row.status === "PAID" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 text-[11px] font-bold font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                                 <span>PAID</span>
                               </span>
                             )}
                             {row.status === "PENDING" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 text-[11px] font-bold font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                                 <span>PENDING</span>
                               </span>
                             )}
                             {row.status === "OVERDUE" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 text-[10px] font-bold font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 text-[11px] font-bold font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                                 <span>OVERDUE</span>
                               </span>
@@ -1351,7 +1339,7 @@ export default function Dashboard() {
                 INSTITUTIONAL CHECKLIST
               </h3>
             </div>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>ACTIVE</span>
             </span>
@@ -1365,7 +1353,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 dark:text-white leading-none">KYC Verified</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">All documents verified</p>
+                <p className="text-[11px] text-slate-500 truncate mt-1">All documents verified</p>
               </div>
             </div>
 
@@ -1376,7 +1364,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 dark:text-white leading-none">Bank Linked</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">Accounts connected</p>
+                <p className="text-[11px] text-slate-500 truncate mt-1">Accounts connected</p>
               </div>
             </div>
 
@@ -1387,7 +1375,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 dark:text-white leading-none">GST Verified</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">GSTIN validated</p>
+                <p className="text-[11px] text-slate-500 truncate mt-1">GSTIN validated</p>
               </div>
             </div>
 
@@ -1398,7 +1386,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 dark:text-white leading-none">Credit Safe</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">Risk level low</p>
+                <p className="text-[11px] text-slate-500 truncate mt-1">Risk level low</p>
               </div>
             </div>
 
@@ -1409,7 +1397,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 dark:text-white leading-none">Data Secure</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">Your data is protected</p>
+                <p className="text-[11px] text-slate-500 truncate mt-1">Your data is protected</p>
               </div>
             </div>
           </div>

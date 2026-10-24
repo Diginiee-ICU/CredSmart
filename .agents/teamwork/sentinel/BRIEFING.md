@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-23T22:00:00Z
+# BRIEFING — 2026-10-24T18:51:21Z
 
 ## Mission
-Architecturally and visually decouple CredSmart into two distinct core product offerings: (1) CredSmart POS & Billing (`/billing/*`) and (2) CredSmart CRM (`/crm/*`), providing route-isolated portals, dedicated navigation shells, independent sidebars, separate onboarding entry points, and an intuitive top-level Suite Switcher, while preserving 100% backwards compatibility and sharing a unified authentication and organization layer.
+Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from scratch into a modern, attractive, minimalist, lightning-fast, and user-friendly experience across both mobile (< 768px) and desktop (>= 768px) views, strictly prohibiting visual crowding, bloated buttons, and long scrollable pages, ensuring screen-fitted data density with zero business logic regression.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -44,6 +44,8 @@ Architecturally and visually decouple CredSmart into two distinct core product o
 - Victory Auditor (Staff Provisioning & Enterprise Tasks Gen 2): [to be spawned on victory claim]
 - Active Orchestrator (Decouple Portals): 8ac6491a-275d-4c1c-b664-961cd66511b1
 - Victory Auditor (Decouple Portals): [to be spawned on victory claim]
+- Active Orchestrator (Minimal Redesign): 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Victory Auditor (Minimal Redesign): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -66,19 +68,20 @@ Architecturally and visually decouple CredSmart into two distinct core product o
 - Zero TypeScript compiler errors (`tsc --noEmit`)
 - All Vitest test suites must pass without regression
 - Strict exclusion: Create Invoice flow (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) must remain 100% untouched and functional
+- Minimal design system rules: 34px standard action, 28px table action, 46px mobile CTA, hairline borders, no 3D glass / neon halos / bubble buttons, screen-fitted 52px top bar, sticky headers and bounded scroll tables
 
 ## User Context
-- **Last user request**: Decouple CredSmart into POS & Billing (`/billing/*`) and CRM (`/crm/*`) portals with dedicated navigation shells, Suite Switcher, dual onboarding, and complete backward compatibility.
+- **Last user request**: Redesign CredSmart Theme, Fonts, Style, Structure, and Layout into a modern, minimalist, lightning-fast experience across mobile (< 768px) and desktop (>= 768px) with zero visual crowding, zero bloated buttons, screen-fitted data density, and zero regression.
 - **Pending clarifications**: none
-- **Delivered results**: In progress under Project Orchestrator `8ac6491a-275d-4c1c-b664-961cd66511b1`.
+- **Delivered results**: Project Orchestrator launched (ID: `3044c8ce-523a-4157-917d-31b6f5d55c6a`).
 
 ## Project Status
-- **Phase**: in progress (Milestone 1 DONE; Milestone 2 Navigation Shells & Suite Switcher active)
+- **Phase**: in progress (M1-M3: COMPLETE & AUDITED CLEAN; M4 Core Application Pages Overhaul: ACTIVE under Worker `73d7344a`)
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 8ac6491a-275d-4c1c-b664-961cd66511b1
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_decouple
-- **Cron 1 (Reporting)**: task-22
-- **Cron 2 (Liveness)**: task-24
+- **Active Orchestrator ID**: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_minimal_redesign
+- **Cron 1 (Reporting)**: task-26
+- **Cron 2 (Liveness)**: task-28
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -89,6 +92,6 @@ Architecturally and visually decouple CredSmart into two distinct core product o
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_decouple\DISPATCH.md — Orchestrator dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Authoritative project scope and feature inventory
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_INFRA.md — Opaque-box test strategy across Tiers 1-4
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_minimal_redesign\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md — Master design system rules
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md — Master design system skill specification

@@ -475,23 +475,25 @@ export default function AppLayout() {
 
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 sticky top-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1 sm:gap-4 px-2 sm:px-6 z-30 shadow-xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none">
 
-            {/* LEFT: Logo + Dropdown Arrow + Suite Switcher */}
-            <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
+            {/* LEFT: 28px Brand Mark + Menu Toggle + Org Switcher + Suite Switcher */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
+              {/* Compact 28px Brand Mark & Wordmark */}
               <NavLink
                 to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
                 title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
-                className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
+                className="flex items-center gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
               >
-                <img
-                  src="/logo-static.jpeg"
-                  alt="CredSmart"
-                  className="h-7 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[70px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
-                />
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">
+                  <Sparkles className="w-3.5 h-3.5 fill-white/20 stroke-white" />
+                </div>
+                <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
+                  CredSmart
+                </span>
               </NavLink>
 
-              {/* Dropdown toggle arrow */}
+              {/* Sidebar Menu Toggle Arrow */}
               <button
                 type="button"
                 onClick={() => setSidebarOpen((v) => !v)}
@@ -499,19 +501,75 @@ export default function AppLayout() {
                 aria-expanded={sidebarOpen}
                 title={sidebarOpen ? "Close Menu" : "Open Menu"}
                 className={cn(
-                  "flex items-center justify-center w-7.5 h-7.5 sm:w-auto sm:h-10 md:h-10.5 px-0 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0 active:scale-95",
+                  "flex items-center justify-center w-7.5 h-7.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors select-none shadow-2xs shrink-0 active:scale-95",
                   sidebarOpen
-                    ? "bg-amber-500/15 border-amber-400/50 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
-                    : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400/50 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
+                    ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400"
+                    : "bg-slate-50 dark:bg-slate-800/70 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
               >
                 <ChevronDown
                   className={cn(
-                    "w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] transition-transform duration-300",
-                    sidebarOpen ? "rotate-180 text-amber-500" : ""
+                    "w-3.5 h-3.5 stroke-[2] transition-transform duration-200",
+                    sidebarOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
                   )}
                 />
               </button>
+
+              {/* Dedicated Organization Switcher Dropdown Pill */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="hidden sm:flex h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none"
+                    title={org?.name || "Select Business"}
+                  >
+                    <span className="max-w-[110px] lg:max-w-[140px] truncate">{org?.name || "My Business"}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
+                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-1 pb-1">
+                    <span>YOUR BUSINESSES</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold font-mono">{(organizations || []).length} Store(s)</span>
+                  </DropdownMenuLabel>
+                  <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
+                    {(organizations || []).filter(Boolean).map((business) => {
+                      if (!business) return null;
+                      const isActive = business.id === orgId;
+                      const bizName = business.name || "Store";
+                      return (
+                        <DropdownMenuItem
+                          key={business.id}
+                          onSelect={() => {
+                            if (business.id) switchOrganization(business.id);
+                            toast.success(`Switched to "${bizName}"`);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer",
+                            isActive
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 font-bold border border-blue-200 dark:border-blue-800/60"
+                              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                          )}
+                        >
+                          <div className="min-w-0 pr-2">
+                            <p className="truncate text-xs font-semibold">{bizName}</p>
+                            <p className="text-[10px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
+                          </div>
+                          {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
+                  <DropdownMenuItem
+                    onSelect={() => setCreateBusinessModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Business / Branch</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Top-Level Interactive Suite Switcher */}
               {userRole !== "cashier" && (
@@ -523,182 +581,175 @@ export default function AppLayout() {
               )}
             </div>
 
-            {/* SEPARATOR */}
-            <div className="h-7 sm:h-8 md:h-9 w-px bg-slate-200 dark:bg-slate-700 shrink-0 hidden md:block" />
-
-            {/* CENTER-LEFT: Page title (desktop only) */}
-            <div className="hidden md:flex flex-col justify-center min-w-max shrink-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm md:text-base font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
-                  {title}
-                </h1>
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="tracking-wide">SYNC LIVE</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[240px] lg:max-w-[320px] mt-0.5">{subtitle}</p>
-            </div>
-
-            {/* Search bar (desktop) */}
-            <div className="hidden xl:flex items-center w-48 xl:w-64 mx-3 shrink">
+            {/* CENTER: Command Palette Trigger (Available md: and above) */}
+            <div className="hidden md:flex flex-1 max-w-md mx-2">
               <button
+                type="button"
                 onClick={() => setOpenCommand(true)}
-                className="relative w-full h-9.5 sm:h-10 md:h-10.5 flex items-center bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-amber-400/50 rounded-full pl-8 pr-10 py-1.5 text-xs text-slate-500 dark:text-slate-400 transition-all text-left shadow-xs group backdrop-blur-md cursor-pointer hover-3d-glow"
+                className="w-full h-8.5 px-3 rounded-lg bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
               >
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
-                <span className="truncate">Search...</span>
-                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">⌘K</kbd>
+                <div className="flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Search or ⌘K...</span>
+                </div>
+                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>
               </button>
             </div>
 
-            {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 ml-auto">
+            {/* RIGHT: Live Sync + Auto Import + Split Button + Notifications + Profile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
               {/* Mobile search */}
               <button
+                type="button"
                 onClick={() => setOpenCommand(true)}
-                className="w-7.5 h-7.5 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer hover-3d-glow shrink-0 active:scale-95"
+                className="w-7.5 h-7.5 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 md:hidden cursor-pointer shrink-0 active:scale-95 shadow-2xs"
                 title="Search"
                 aria-label="Search"
               >
                 <Search className="w-3.5 h-3.5" />
               </button>
 
-              {/* Auto Import Tally button (Desktop & Tablet only - hidden on mobile to prevent overflow) — Visible only in POS & Billing suite */}
+              {/* Auto Import Tally button — Visible only in POS & Billing suite */}
               {!isCrmSuite && (
                 <button
                   type="button"
                   onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-                  className="hidden sm:flex items-center gap-1.5 h-9 sm:h-10 md:h-10.5 px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600/15 via-teal-600/15 to-emerald-600/15 hover:from-emerald-600/25 hover:to-teal-600/25 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 text-xs font-black transition-all cursor-pointer hover-3d-glow shrink-0 shadow-2xs"
+                  className="hidden xl:flex items-center gap-1.5 h-8.5 px-2.5 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
                   title="Auto Search Tally Folder & Import All Data"
                 >
-                  <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Auto Import Tally</span>
                 </button>
               )}
 
-              {/* Action Split Button — Adaptive for Billing vs CRM */}
+              {/* Live Sync Status Pill */}
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Sync</span>
+              </div>
+
+              {/* Action Split Button — Royal Blue Standard Action */}
               {!isCrmSuite ? (
                 /* Billing Suite: New Invoice split button */
                 <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                  {/* On Mobile: Single compact, high-impact plus button */}
+                  {/* On Mobile: Single compact plus button */}
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg glowing-btn-amber text-white shadow-2xs select-none shrink-0 cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 cursor-pointer active:scale-95 transition-all"
                       title="New Invoice & Creation Options"
                       aria-label="New Invoice & Creation Options"
                     >
                       <Plus className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   </DropdownMenuTrigger>
-                  {/* On Desktop: Full split button */}
-                  <div className="hidden sm:flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
+                  {/* On Desktop: Royal Blue split button */}
+                  <div className="hidden sm:flex items-center h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden transition-colors">
                     <button
                       type="button"
                       onClick={() => setSalesInvoiceModalOpen(true)}
-                      className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                      className="flex items-center gap-1.5 h-full px-3 text-white text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-                      <span className="hidden sm:inline">New Invoice</span>
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>New Invoice</span>
                     </button>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                        className="flex items-center justify-center h-full px-1.5 border-l border-blue-500 hover:bg-blue-800 text-white transition-colors cursor-pointer"
                         aria-label="More creation options"
                       >
-                        <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <ChevronDown className="w-3 h-3" />
                       </button>
                     </DropdownMenuTrigger>
                   </div>
-                  <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
-                    <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-[#1F1C5C]">
+                  <DropdownMenuContent align="end" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                    <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => {
                           setNewInvoiceMenuOpen(false);
                           setQuickCreateModalOpen(true);
                         }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] transition-colors border border-indigo-200 dark:border-indigo-700/40 cursor-pointer hover-3d-glow"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-semibold text-[11px] transition-colors border border-blue-200 dark:border-blue-700/40 cursor-pointer"
                       >
-                        <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /><span>All Creation Options</span></div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-mono font-bold uppercase">Hub</span>
+                        <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /><span>All Creation Options</span></div>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono font-semibold uppercase">Hub</span>
                       </button>
                     </div>
                     <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><UserPlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><PackagePlus className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-800 dark:hover:text-amber-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                    <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><UserPlus className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><PackagePlus className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"><FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
                     <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-800 dark:hover:text-cyan-200 rounded-xl cursor-pointer font-semibold hover-3d-glow"><FileText className="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 rounded-xl cursor-pointer font-semibold hover-3d-glow"><ShoppingCart className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                    <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer font-semibold"><FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"><ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
                     <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
                 /* CRM Suite: CRM Quick Action split button */
                 <DropdownMenu open={crmActionMenuOpen} onOpenChange={setCrmActionMenuOpen}>
-                  {/* On Mobile: Single compact, high-impact quick action button */}
+                  {/* On Mobile: Single compact quick action button */}
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 cursor-pointer active:scale-95 transition-all"
                       title="CRM Quick Actions"
                       aria-label="CRM Quick Actions"
                     >
                       <Plus className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   </DropdownMenuTrigger>
-                  {/* On Desktop: Full split button */}
-                  <div className="hidden sm:flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 overflow-hidden hover:brightness-105 transition-all">
+                  {/* On Desktop: Royal Blue split button */}
+                  <div className="hidden sm:flex items-center h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden transition-colors">
                     <button
                       type="button"
                       onClick={() => navigate(ROUTE_PATHS.crmTasks)}
-                      className="flex items-center gap-1 sm:gap-1.5 h-full px-2 sm:px-3.5 text-white text-xs font-bold active:scale-[0.98] transition-all cursor-pointer hover-3d-glow"
+                      className="flex items-center gap-1.5 h-full px-3 text-white text-xs font-semibold active:scale-[0.98] transition-transform cursor-pointer"
                       title="Create New CRM Task"
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-                      <span className="hidden sm:inline">Quick Action</span>
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Quick Action</span>
                     </button>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="flex items-center justify-center h-full px-1.5 sm:px-2 border-l border-white/20 hover:bg-white/15 text-white transition-colors cursor-pointer hover-3d-glow"
+                        className="flex items-center justify-center h-full px-1.5 border-l border-blue-500 hover:bg-blue-800 text-white transition-colors cursor-pointer"
                         aria-label="More CRM actions"
                       >
-                        <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <ChevronDown className="w-3 h-3" />
                       </button>
                     </DropdownMenuTrigger>
                   </div>
-                  <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
+                  <DropdownMenuContent align="end" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
                     <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">
                       WORKFORCE & OPERATIONS
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAttendance); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <CalendarCheck className="w-4 h-4 text-emerald-500 shrink-0" />
                       <span>Clock In / Attendance</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmTasks); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-xl cursor-pointer font-semibold"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer font-semibold"
                     >
                       <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
                       <span>+ Create Staff Task</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSalary); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <Wallet className="w-4 h-4 text-amber-500 shrink-0" />
                       <span>Run Payroll / Payslips</span>
@@ -709,21 +760,21 @@ export default function AppLayout() {
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmMeet); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <Video className="w-4 h-4 text-indigo-500 shrink-0" />
                       <span>Start Video Meet</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmBroadcasts); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <Radio className="w-4 h-4 text-rose-500 shrink-0" />
                       <span>Post Broadcast Alert</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAiAssistant); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <Bot className="w-4 h-4 text-purple-500 shrink-0" />
                       <span>CRM AI Assistant</span>
@@ -734,14 +785,14 @@ export default function AppLayout() {
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmRoles); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
                       <span>Staff Roles &amp; Permissions</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSupport); }}
-                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                      className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                     >
                       <LifeBuoy className="w-4 h-4 text-cyan-500 shrink-0" />
                       <span>Support &amp; Helpdesk</span>
@@ -755,29 +806,29 @@ export default function AppLayout() {
                 type="button"
                 onClick={() => setNotifOpen(true)}
                 className={cn(
-                  "w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl transition-colors relative hidden sm:flex items-center justify-center border cursor-pointer shrink-0 shadow-2xs hover-3d-glow",
+                  "w-8.5 h-8.5 rounded-lg transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/80 dark:border-slate-800 cursor-pointer shrink-0 shadow-2xs",
                   pendingCount > 0
-                    ? "border-amber-400/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
                 )}
                 title="Notifications"
                 aria-label="Notifications"
               >
                 <Bell className="w-4 h-4" />
                 {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
-                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
               </button>
 
-              {/* Bell (Dedicated Mobile View - Sleek Touch-Optimized Layout & Structure) */}
+              {/* Bell (Dedicated Mobile View) */}
               <button
                 type="button"
                 onClick={() => setNotifOpen(true)}
                 className={cn(
                   "w-7.5 h-7.5 rounded-lg transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
                   pendingCount > 0
-                    ? "border-amber-400/80 bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-orange-500/10 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                    ? "border-amber-400/80 bg-amber-500/20 text-amber-600 dark:text-amber-400"
                     : unreadCount > 0
-                    ? "border-indigo-400/70 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                    ? "border-blue-400/70 bg-blue-500/10 text-blue-600 dark:text-blue-400"
                     : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/90 dark:bg-slate-800/90"
                 )}
                 title="Notifications & Alerts"
@@ -785,11 +836,11 @@ export default function AppLayout() {
               >
                 <Bell className="w-3.5 h-3.5 stroke-[2.2]" />
                 {pendingCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[8.5px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-amber-500 text-[8.5px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 ) : unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-indigo-600 text-[8.5px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-blue-600 text-[8.5px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 ) : null}
@@ -800,7 +851,7 @@ export default function AppLayout() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center justify-center w-7.5 h-7.5 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-2xs hover:scale-105 transition-all ring-1.5 sm:ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0 active:scale-95"
+                    className="flex items-center justify-center w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shadow-2xs hover:opacity-90 transition-opacity cursor-pointer shrink-0 active:scale-95"
                     title={org?.name || "Account"}
                   >
                     {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
@@ -972,41 +1023,16 @@ export default function AppLayout() {
           activeSuite={isCrmSuite ? "crm" : "billing"}
         />
 
-        {/* Main Content Viewport Wrapper for 3D Effect */}
-        <div 
-          className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-100 dark:bg-[#02010A]"
-          style={{ perspective: "2000px" }}
-        >
+        {/* Main Content Viewport Wrapper — Screen-fitted containment */}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
           <main
             className={cn(
-              "flex-1 min-w-0 flex flex-col overflow-y-auto scrollbar-thin transition-all duration-500",
+              "flex-1 min-w-0 min-h-0 flex flex-col transition-colors duration-200 scrollbar-thin",
               isPosRoute
-                ? "p-0 m-0 h-full border-none bg-[#F8FAFC] dark:bg-slate-950 overflow-hidden"
-                : "bg-white/20 dark:bg-slate-950/25 backdrop-blur-[2px] border-t border-white/60 dark:border-slate-800/60",
+                ? "p-0 m-0 h-full border-none bg-slate-50 dark:bg-slate-950 overflow-hidden"
+                : "bg-white/40 dark:bg-slate-950/40 border-t border-slate-200/80 dark:border-slate-800/80 overflow-y-auto",
               !isPosRoute && "pb-28 sm:pb-32 md:pb-0"
             )}
-            style={{
-              transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-              transformOrigin: "top center",
-              ...(sidebarOpen && !isMobile
-                ? {
-                    transform: "translateY(3rem) scale(0.96) rotateX(3deg)",
-                    borderTopLeftRadius: "2rem",
-                    borderTopRightRadius: "2rem",
-                    borderBottomLeftRadius: "0",
-                    boxShadow: "0 -30px 100px rgba(0, 0, 0, 0.15)",
-                    borderTop: "1px solid rgba(255, 255, 255, 0.6)",
-                    pointerEvents: "none",
-                  }
-                : {
-                    transform: "translateY(0) scale(1) rotateX(0)",
-                    borderTopLeftRadius: "0",
-                    borderTopRightRadius: "0",
-                    borderBottomLeftRadius: "0",
-                    boxShadow: "0 0 0 rgba(0, 0, 0, 0)",
-                    borderTop: "1px solid transparent",
-                  }),
-            }}
           >
             <Outlet />
             {/* Mobile Bottom Dock Clearance Spacer */}
@@ -1154,21 +1180,6 @@ export default function AppLayout() {
       )}
 
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* GLOBAL ON-SCREEN WATERMARK (BOTTOM-RIGHT ON DESKTOP) */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <div
-        className="hidden md:flex fixed bottom-4 right-6 z-40 select-none pointer-events-none transition-all duration-300 print:hidden opacity-85 hover:opacity-100"
-        title="CredSmart POS & ERP"
-      >
-        <div className="flex items-center justify-center p-2.5 md:p-3 lg:p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xl">
-          <img
-            src="/logo-static.jpeg"
-            alt="CredSmart"
-            className="h-10 md:h-14 lg:h-18 xl:h-20 w-auto max-w-[240px] md:max-w-[320px] lg:max-w-[400px] object-contain rounded-xl drop-shadow-md mix-blend-multiply dark:mix-blend-normal"
-          />
-        </div>
-      </div>
     </div>
   );
 }

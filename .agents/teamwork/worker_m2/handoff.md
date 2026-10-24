@@ -1,113 +1,132 @@
-# Milestone 2 (M2) Handoff Report: Products & Inventory Domain Query Migration
+# Handoff Report: Milestone 2 — Desktop Shell & Productivity Layouts
+
+**Role**: Desktop Shell & Layouts Worker (implementer, qa, specialist)  
+**Parent Agent**: 3044c8ce-523a-4157-917d-31b6f5d55c6a  
+**Workspace**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2`  
+**Date**: 2026-10-24T19:44:00Z  
+
+---
 
 ## 1. Observation
 
-Direct observations and execution outputs:
+Direct observations and file modifications made in accordance with the Milestone 2 directive:
 
-- **Created API Client Module**:
-  - `src/services/productsApi.ts` created using `apiClient`, `apiGet`, `apiPost`, `apiPut`, and `apiDelete` from `src/lib/apiClient.ts`.
-  - Exported typed functions:
-    * `getProducts(orgId, options)` -> `GET /products?organization_id=...`
-    * `getProductById(id, orgId)` -> `GET /products/:id`
-    * `createProduct(payload, orgId)` -> `POST /products`
-    * `updateProduct(id, payload, orgId)` -> `PUT /products/:id`
-    * `deleteProduct(id, orgId)` -> `DELETE /products/:id`
-    * `bulkImport(items, strategy, orgId)` -> `POST /products/bulk`
-    * `bulkDelete(ids, orgId)` / `bulkDeleteProducts` -> `POST /products/bulk-delete`
-    * `bulkUpdate(ids, update, orgId)` / `bulkUpdateProducts` -> `POST /products/bulk-update`
-    * `adjustStock(params)` -> `POST /inventory/adjust-stock`
-    * `getBatches(productIds, orgId)` -> `GET /product-batches?product_ids=...`
-    * `createBatch(payload, orgId)` -> `POST /product-batches`
-    * `updateBatch(batchId, payload, orgId)` -> `PUT /product-batches/:batchId`
-    * `deleteBatch(batchId, orgId)` -> `DELETE /product-batches/:batchId`
-    * `deleteBatchesByProductIds(productIds, orgId)` -> `POST /product-batches/bulk-delete`
-    * `bulkUpsertBatches(batches, orgId)` -> `POST /product-batches/bulk`
-    * `checkBarcodeUnique(barcode, orgId, excludeProductId)` -> `GET /products/check-barcode`
-    * `productsApi` namespace object.
-  - Types exported: `ProductCatalogOption`, `ProductBatch`, `SaveProductPayload`, `BulkImportResult`, `BulkDeleteResult`, `BulkUpdateResult`, `StockAdjustmentParams`.
+### A. `src/components/SuiteSwitcher.tsx`
+- **Previous Implementation**: Used saturated amber (`bg-amber-500`) and emerald (`bg-emerald-600`) fills for POS & Billing vs CRM active buttons with `min-h-[28px] sm:min-h-[32px]`.
+- **Modified Implementation**: Redesigned into a calm segmented control pill:
+  - Neutral surface: `bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80`
+  - Active button: `bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold h-7 sm:h-7.5 px-2 sm:px-2.5 rounded-md`
+  - Inactive button: `text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium`
+  - Active badge: `text-[9.5px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300`
+  - Zero amber/emerald saturated fills.
+  - Retained 100% of ARIA attributes (`role="group"`, `role="radio"`, `aria-checked`) and test IDs (`suite-btn-billing`, `suite-btn-crm`, `active-suite-badge-billing`, `active-suite-badge-crm`).
 
-- **Migrated Files (21 files total)**:
-  1. `src/context/ProductsContext.tsx`: Replaced direct `supabase.from("products").select(...)` with `productsApi.getProducts(effectiveOrg)`. Preserved offline responsiveness cache via `credsmart_cached_products_${orgId}`.
-  2. `src/pages/Items.tsx`: Replaced all 15 direct query call sites for single/bulk create, update, delete, batch lookup, and stock adjustments with `productsApi`.
-  3. `src/pages/ItemMaster.tsx`: Replaced all direct product & batch select, create, update, delete, bulk delete, and barcode uniqueness check with `productsApi`.
-  4. `src/pages/Inventory.tsx`: Replaced direct product and batch fetches, batch stock adjustments, and inline Excel cell edits with `productsApi`.
-  5. `src/services/stockService.ts`: Replaced product lookups, batch deductions, and batch additions in `resolveProductId`, `deductStockForInvoiceItems`, and `addStockForPurchaseItems` with `productsApi`.
-  6. `src/pages/POSBilling.tsx`: Replaced products catalog fetch, batch lookup, quick product create, and checkout stock deductions with `productsApi`.
-  7. `src/pages/BarcodeGenerator.tsx`: Replaced catalog fetch and batch price lookup with `productsApi`.
-  8. `src/pages/PurchaseReturns.tsx`: Replaced product and batch catalog options fetch with `productsApi`.
-  9. `src/components/storefront/StorefrontCatalogTab.tsx`: Replaced product visibility, featured flags, and image metadata update queries with `productsApi` (while preserving `supabase.storage.from("store-logos")` binary upload).
-  10. `src/services/storefrontService.ts`: Replaced public catalog products fetch with `productsApi`.
-  11. `src/utils/offlineQueue.ts`: Replaced replay queue execution of `stock_adjustment` with `productsApi.updateBatch`.
-  12. `src/components/items/QuickCreateItemModal.tsx`: Replaced direct product insert and initial batch creation with `productsApi.createProduct` and `productsApi.createBatch`.
-  13. `src/components/PurchaseInvoiceForm.tsx`: Replaced product catalog dropdown fetch with `productsApi.getProducts`.
-  14. `src/components/AppLayout.tsx`: Replaced top navigation quick item create and initial batch creation with `productsApi.createProduct` and `productsApi.createBatch`.
-  15. `src/pages/Dashboard.tsx`: Replaced dashboard quick item create and initial batch creation with `productsApi.createProduct` and `productsApi.createBatch`.
-  16. `src/hooks/useOrganization.tsx`: Replaced demo organization products seed and batch seeds with `productsApi.createProduct` and `productsApi.bulkUpsertBatches`.
-  17. `src/pages/Auth.tsx`: Replaced onboarding seed products check, product insertions, and batch insertions with `productsApi.getProducts`, `productsApi.createProduct`, and `productsApi.bulkUpsertBatches`.
-  18. `src/services/documentsService.ts`: Replaced purchase line item product lookup, name match, and auto-creation with `productsApi.getProductById`, `productsApi.getProducts`, and `productsApi.createProduct`.
-  19. `src/services/networkInvoicingService.ts`: Replaced B2B inward invoice product barcode/name match and auto-creation with `productsApi.getProducts` and `productsApi.createProduct`.
-  20. `src/services/autoSyncService.ts`: Replaced live background sync items pre-fetch, bulk product upsert, bulk batch upsert, and line-item product create with `productsApi.getProducts`, `productsApi.bulkImport`, `productsApi.getBatches`, `productsApi.bulkUpsertBatches`, and `productsApi.createProduct`.
-  21. `src/pages/TallyImport.tsx`: Replaced manual file import items prefetch, bulk products upsert, bulk batches upsert, direct items ingestion, and voucher line item product auto-creation with `productsApi.getProducts`, `productsApi.bulkImport`, `productsApi.getBatches`, `productsApi.bulkUpsertBatches`, and `productsApi.createProduct`.
+### B. `src/components/AppLayout.tsx`
+- **Previous Implementation**:
+  - Desktop header height was 80px–88px (`md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))]`).
+  - Rendered a large static image logo scaling up to 360px wide (`/logo-static.jpeg`).
+  - Organization switcher was buried within the right avatar dropdown.
+  - Search trigger was restricted to `xl:` only (`hidden xl:flex`).
+  - Action button used glowing amber gradients (`glowing-btn-amber`).
+  - Live sync indicator was nested inside the desktop title block on the left.
+  - Wrapper had 3D perspective distortion (`perspective: 2000px`, `rotateX(3deg)`).
+  - Floating bottom-right watermark (`/logo-static.jpeg`) obscured pagination and table action buttons.
+  - `<main>` lacked `min-h-0` flex boundary, causing whole-window scrolling when child pages rendered large lists.
+- **Modified Implementation**:
+  - **Exact 52px Desktop Header**: `h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13` (where `h-13` = `3.25rem` = 52px).
+  - **Compact 28px Brand Mark**: `w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs` accompanied by crisp `'CredSmart'` Inter wordmark.
+  - **Left Command Strip Organization Switcher**: Dedicated dropdown pill (`h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 text-xs font-semibold`) displaying active store name with chevron dropdown.
+  - **Central Command Palette (`⌘K`)**: Positioned in the center across all desktop viewports (`hidden md:flex flex-1 max-w-md mx-2 h-8.5 rounded-lg bg-slate-100/80 border border-slate-200/80 px-3 text-xs text-slate-500`).
+  - **Royal Blue Split Action Button**: `h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs` with primary action on left and chevron dropdown on right for quick document creation.
+  - **Right Command Strip Live Sync Dot**: `● Live Sync` (`text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400`).
+  - **Eliminated 3D Perspective**: Deprecated `perspective: 2000px` and `rotateX(3deg)` / `scale(0.96)` transforms; layout is clean and planar.
+  - **Eliminated Bottom-Right Watermark**: Completely removed the floating `/logo-static.jpeg` overlay.
+  - **Screen-Fitted Viewport Containment**: Configured outer wrapper as `flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden` and `<main>` with `min-h-0`, allowing child data tables and POS terminal to maintain `h-full min-h-0 overflow-hidden` without whole-page scroll.
 
-- **Compiler & Static AST Scan Outputs**:
-  - `cmd /c npx tsc --noEmit` exited with code 0 (0 errors).
-  - Codebase AST query scan across all 267 non-test `.ts` and `.tsx` source files in `src/`:
-    `Total files checked: 267, Violations found: 0`.
-  - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`:
-    `Test Files 1 passed (1) | Tests 43 passed (43)`.
+### C. `src/pages/POSBilling.tsx`
+- **Previous Implementation**:
+  - Hotkey ribbon used multi-colored pastel fills (`bg-indigo-50`, `bg-emerald-50`, `bg-amber-50`, `bg-blue-50`, `bg-purple-50`, `bg-rose-50`) and lacked `F1` and `CTRL+B` shortcuts.
+  - Right checkout panel was a single `overflow-y-auto` container with `pb-24 lg:pb-4`. Net Payable total was buried in the middle, and the Save/Print checkout action buttons at the bottom were pushed below the fold on standard 768px-900px displays.
+- **Modified Implementation**:
+  - **Monochromatic Hotkey Ribbon**: Standardized to hairline borders (`border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 h-7 px-2.5 rounded-md shadow-2xs`) with clean monospace badges:
+    `Search [F1]`, `+ New Item [CTRL+I]`, `Hold Bill [CTRL+B]`, `Price [P]`, `Qty [Q]`, `Discount [D]`, `Voice [V]`, `Delete [DEL]`, `Scan Barcode`.
+  - **Split POS Workbench Containment**: Right checkout column (`w-full lg:w-[400px] xl:w-[430px] shrink-0 flex flex-col h-full min-h-0 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-hidden bg-slate-50`) decoupled into 3 distinct regions:
+    - **Region 1 (Top Fixed Total)**: `shrink-0 p-3.5 bg-blue-600 text-white flex items-center justify-between shadow-2xs`, rendering `Net Payable` in `text-2xl font-bold font-mono tabular-nums`.
+    - **Region 2 (Middle Scrollable Body)**: `flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin` containing Quick Actions (Bill Discount `[F2]`, Add Charge `[F3]`), Bill Breakdown Card, Payment Mode Selector (6 modes), Received Amount & Change Due Calculator, and Customer Profile Card.
+    - **Region 3 (Bottom Fixed Action Dock)**: `shrink-0 p-3 border-t border-slate-200/80 bg-white grid grid-cols-3 gap-2 shadow-xs` permanently pinning `Save & Print [F6]`, `Save Bill [F7]`, and `WhatsApp Receipt`.
+  - **Result**: Zero vertical scroll required to complete checkout on standard 768px-900px displays.
+
+---
 
 ## 2. Logic Chain
 
-1. **API Client Centralization**:
-   - `src/lib/apiClient.ts` provides centralized authentication, JWT renewal, and standardized `ApiResponse<T>` envelopes.
-   - Creating `src/services/productsApi.ts` using `apiGet`, `apiPost`, `apiPut`, `apiDelete` establishes a single source of truth for all products and batch operations.
+1. **Header Height & Usability**:
+   - The design system specification (`minimal-design-system.md` § 1, 6) mandates a 52px command header (`h-13`) for desktop viewports.
+   - Reducing the header from 80px/88px to 52px reclaims 28px–36px of vertical monitor space.
+   - Moving the search input from `xl:` to `md:` ensures 768px-1200px laptop screens have immediate access to the Command Palette (`⌘K`).
 
-2. **Scope Discipline & Boundary Enforcement**:
-   - M2 explicitly migrates `products` and `product_batches` database queries.
-   - Cross-domain queries (e.g. `customers`, `suppliers`, `sales`, `purchase_invoices`) were intentionally kept intact for Milestones 3, 4, and 5.
-   - S3 / Supabase storage queries (e.g. `supabase.storage.from("store-logos")`) handle raw file binary uploads and are excluded from table query migration.
+2. **Decoupled POS Containment**:
+   - In the previous layout, putting `overflow-y-auto` on the entire right panel forced cashiers to scroll down past 5 separate sub-cards to click "Save & Print" on every single transaction.
+   - Decoupling into Region 1 (Fixed Net Total), Region 2 (Scrollable Body), and Region 3 (Fixed Bottom Action Dock) ensures the total is immediately readable at top, input fields are independently scrollable, and checkout buttons are always visible and actionable at the bottom dock.
 
-3. **Offline Caching Integrity**:
-   - `ProductsContext.tsx` maintains offline resilience by reading and writing to `localStorage` under `credsmart_cached_products_${orgId}`.
-   - `stockService.ts` and `networkInvoicingService.ts` continue to sync local cache updates when products/batches change.
+3. **Neutral Thematic Cohesion**:
+   - Saturated amber/emerald fills in the Suite Switcher and glowing neon borders violated the minimal design tokens.
+   - Replacing them with a neutral segmented pill (`bg-slate-100` / `bg-white`) and standard Royal Blue (`#2563EB`) accent creates a calm, high-efficiency enterprise ERP interface.
 
-4. **Zero Regressions & Type Safety**:
-   - Every migrated call site was typed to match the exact properties expected by UI components (handling both snake_case and camelCase field accessors).
-   - Strict TypeScript checking confirms zero signature mismatches, missing imports, or unhandled nullables.
+4. **Zero Regressions & File Boundaries**:
+   - Edits were strictly isolated to the 3 authorized files (`AppLayout.tsx`, `SuiteSwitcher.tsx`, `POSBilling.tsx`).
+   - None of the 19 invoice files were touched.
+   - All business logic, hotkey handlers, GST calculations, and print pipelines remain 100% intact.
+
+---
 
 ## 3. Caveats
 
-- Direct table queries for remaining domains (`customers`, `suppliers`, `credit_transactions` in M3; `sales`, `purchase_invoices` in M4; `organizations`, `profiles`, `organization_memberships` in M5) remain on `supabase.from(...)` until their respective milestones.
-- In `StorefrontCatalogTab.tsx`, `supabase.storage.from(...)` is preserved as it interfaces with object storage rather than database tables.
+- **Protected Invoice Routes**: Per user instructions, all 19 invoice files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, etc.) were excluded and left untouched.
+- **Mobile Responsive Divergence**: On screens `< 768px`, mobile-specific touch adaptations (bottom navigation dock clearance, mobile search modal trigger, mobile back-to-cart trigger in POS) are fully preserved.
+- **SuiteSwitcher Warnings**: ESLint outputs 3 pre-existing warnings in `SuiteSwitcher.tsx` regarding fast refresh on exported types/constants (`react-refresh/only-export-components`). These are non-breaking lint warnings that preserve existing imports across the test harness.
+
+---
 
 ## 4. Conclusion
 
-Milestone 2 (M2) — Products & Inventory Domain Query Migration is complete:
-- `src/services/productsApi.ts` is fully implemented and tested.
-- Direct `supabase.from("products")` and `supabase.from("product_batches")` queries in production frontend code have been eliminated (0 violations across 267 files).
-- Offline localStorage caching in `ProductsContext.tsx` is preserved.
-- Full TypeScript type check passes with 0 errors.
-- Vitest suite `src/test/e2eApiMigration.test.ts` passes 43/43 tests.
+Milestone 2 implementation is complete and verified:
+1. Desktop top command header in `AppLayout.tsx` is exactly 52px (`h-13`), featuring a 28px brand mark, dedicated Organization Switcher dropdown pill, central Command Palette (`⌘K`), Royal Blue split action button, and Live Sync indicator dot.
+2. 3D perspective distortion and the floating bottom-right watermark have been deprecated and eliminated.
+3. `SuiteSwitcher.tsx` conforms to a clean neutral segmented control pill with active card highlight.
+4. `POSBilling.tsx` features a monochromatic hotkey ribbon with clean monospace badges and a decoupled 3-region right panel that keeps the Net Payable total fixed at top and Save/Print CTAs permanently fixed at bottom.
+5. All verification commands passed with 0 errors.
+
+---
 
 ## 5. Verification Method
 
-To independently verify the implementation:
+To independently verify this milestone:
 
-1. **Verify TypeScript compilation**:
-   ```powershell
-   cmd /c npx tsc --noEmit
-   ```
-   *Expected result*: Exits with code 0 and zero errors.
+### A. TypeScript Compilation
+```powershell
+cmd /c npx tsc --noEmit
+```
+**Observed Result**: Exited with code 0 (0 errors).
 
-2. **Run E2E Migration Test Suite**:
-   ```powershell
-   cmd /c npx vitest run src/test/e2eApiMigration.test.ts
-   ```
-   *Expected result*: 43 tests pass (100% pass rate).
+### B. Core Test Suites
+```powershell
+cmd /c npx vitest run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx
+```
+**Observed Result**: 2 test files passed, 41/41 tests passed (0 failures).
 
-3. **Verify Zero Direct Products/Batches Table Queries in Source Files**:
-   Run ripgrep / grep search:
-   ```powershell
-   node -e "const fs = require('fs'); const path = require('path'); function walk(d) { let r = []; for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) { if (f !== 'node_modules' && f !== '.git' && f !== '.agents') r = r.concat(walk(p)); } else if ((f.endsWith('.ts') || f.endsWith('.tsx')) && !f.includes('.test.') && !p.includes('supabase/client.ts') && !p.includes('supabase\\\\client.ts')) r.push(p); } return r; } const hits = walk('src').filter(f => /(?:supabase|\\bdb)\\s*\\.\\s*from\\s*\\(\\s*[\"'](products|product_batches)[\"']\\s*\\)/.test(fs.readFileSync(f, 'utf8'))); console.log('Products violations:', hits.length); process.exit(hits.length === 0 ? 0 : 1);"
-   ```
-   *Expected result*: `Products violations: 0`, exits with code 0.
+```powershell
+cmd /c npx vitest run src/test/crmShellNavigation.audit.test.ts src/test/componentPrimitivesAdversarial.challenger.test.tsx
+```
+**Observed Result**: 2 test files passed, 40/40 tests passed (0 failures).
+
+### C. ESLint Verification
+```powershell
+cmd /c npx eslint src/components/AppLayout.tsx src/components/SuiteSwitcher.tsx src/pages/POSBilling.tsx
+```
+**Observed Result**: 0 errors (3 pre-existing warnings in SuiteSwitcher).
+
+### D. Visual Inspection
+- Check `src/components/AppLayout.tsx`: `<header>` has `md:h-13` (52px), 28px brand mark (`w-7 h-7`), left Organization Switcher pill, center `⌘K` trigger, right Royal Blue split `+ New Invoice`, no 3D tilt styles, no watermark div.
+- Check `src/components/SuiteSwitcher.tsx`: segmented control has `bg-slate-100` with active card `bg-white dark:bg-slate-900`.
+- Check `src/pages/POSBilling.tsx`: hotkey ribbon uses `border-slate-200/80 bg-white hover:bg-slate-100`; right column is divided into Region 1 (Fixed Net Total), Region 2 (Scrollable Body), and Region 3 (Fixed Bottom Action Dock with Print [F6], Save [F7], WA).

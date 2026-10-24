@@ -82,7 +82,7 @@ export function CRMPageHeader({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
           <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <h1 className="text-base sm:text-2xl lg:text-3xl font-extrabold text-[#0F172A] dark:text-white tracking-tight font-sans">
+            <h1 className="text-base sm:text-xl font-bold text-[#0F172A] dark:text-white tracking-tight font-sans">
               {title}
             </h1>
             {badge && <div className="shrink-0">{badge}</div>}

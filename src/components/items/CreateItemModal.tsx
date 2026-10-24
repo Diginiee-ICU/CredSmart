@@ -159,19 +159,22 @@ export function CreateItemModal({
         setAltUnitConversion("4");
       }
 
-      const initSelling = initialData.sellingPrice ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.selling_price ?? initialData.mrp ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.selling_price ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.mrp ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const initPurchase = initialData.purchasePrice ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.purchase_price ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.purchase_price ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const initMrp = initialData.mrp ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.mrp ?? initSelling ?? ""; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const initStock = initialData.currentStock ?? initialData.openingStock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.stock ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.stock ?? "0"; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const initMinAlert = initialData.minStockAlert ?? (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.min_stock_alert ?? "10"; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const initPurchaseTaxType = (initialData as any)?.purchaseTaxType || (initialData as any)?.tags?.purchase_tax_type || "exclusive";
+      const dataRecord = initialData as unknown as Record<string, unknown> | null;
+      const tagsRecord = (dataRecord?.tags as Record<string, unknown>) || undefined;
+
+      const initSelling = initialData.sellingPrice ?? (dataRecord?.selling_price as number | string) ?? initialData.mrp ?? (tagsRecord?.selling_price as number | string) ?? (tagsRecord?.mrp as number | string) ?? "";
+      const initPurchase = initialData.purchasePrice ?? (dataRecord?.purchase_price as number | string) ?? (tagsRecord?.purchase_price as number | string) ?? "";
+      const initMrp = initialData.mrp ?? (tagsRecord?.mrp as number | string) ?? initSelling ?? "";
+      const initStock = initialData.currentStock ?? initialData.openingStock ?? (dataRecord?.stock as number | string) ?? (tagsRecord?.stock as number | string) ?? "0";
+      const initMinAlert = initialData.minStockAlert ?? (tagsRecord?.min_stock_alert as number | string) ?? "10";
+      const initPurchaseTaxType = (dataRecord?.purchaseTaxType as string) || (tagsRecord?.purchase_tax_type as string) || "exclusive";
 
       setSellingPrice(initSelling ? String(initSelling) : "");
       setPurchasePrice(initPurchase ? String(initPurchase) : "");
       setPurchaseTaxType(initPurchaseTaxType === "inclusive" ? "inclusive" : "exclusive");
       setMrp(initMrp ? String(initMrp) : "");
-      setGstRate(initialData.gstRate || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tax_rate || 18); // eslint-disable-line @typescript-eslint/no-explicit-any
-      setHsnCode(initialData.hsnCode || (initialData as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tags?.hsn_code || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
+      setGstRate(initialData.gstRate || (dataRecord?.tax_rate as GSTRate) || 18);
+      setHsnCode(initialData.hsnCode || (tagsRecord?.hsn_code as string) || "");
       setOpeningStock(String(initStock));
       setMinStockAlert(String(initMinAlert));
       setGodownId(initialData.godownId || godowns[0]?.id || "g-main");
@@ -188,8 +191,8 @@ export function CreateItemModal({
         setManufacturingDate("");
       }
 
-      const initImageUrl = (initialData as any)?.imageUrl || (initialData as any)?.tags?.image_url || (initialData as any)?.tags?.imageUrl || "";
-      const initInCatalogue = (initialData as any)?.tags?.is_in_catalogue !== false && (initialData as any)?.tags?.show_in_catalogue !== false;
+      const initImageUrl = (dataRecord?.imageUrl as string) || (tagsRecord?.image_url as string) || (tagsRecord?.imageUrl as string) || "";
+      const initInCatalogue = tagsRecord?.is_in_catalogue !== false && tagsRecord?.show_in_catalogue !== false;
       setImageUrl(initImageUrl);
       setIsInCatalogue(initInCatalogue);
     } else {
@@ -329,8 +332,11 @@ export function CreateItemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-card w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-5xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl sm:border flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl">
+        {/* Top drag handle indicator */}
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />
+
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-muted/40 shrink-0">
           <div className="flex items-center gap-3">
@@ -379,7 +385,8 @@ export function CreateItemModal({
         </div>
 
         {/* Form Body */}
-        <form ref={formScrollRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
+        <form ref={formScrollRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">
           {/* TAB 1: Basic Details */}
           {activeTab === "basic" && (
             <div className="space-y-5">
@@ -887,53 +894,51 @@ export function CreateItemModal({
             </div>
           )}
 
-          {/* Footer Navigation */}
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <div>
-              {activeTab !== "basic" && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (activeTab === "pricing") setActiveTab("basic");
-                    else if (activeTab === "stock") setActiveTab("pricing");
-                    else if (activeTab === "batch") setActiveTab("stock");
-                  }}
-                >
-                  ← Back
-                </Button>
-              )}
-            </div>
+          </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-              <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
-                Cancel
+          {/* Fixed bottom confirmation action bar */}
+          <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0">
+            {activeTab !== "basic" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (activeTab === "pricing") setActiveTab("basic");
+                  else if (activeTab === "stock") setActiveTab("pricing");
+                  else if (activeTab === "batch") setActiveTab("stock");
+                }}
+                className="mr-auto"
+              >
+                ← Back
               </Button>
-              {activeTab !== "batch" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (activeTab === "basic") setActiveTab("pricing");
-                    else if (activeTab === "pricing") setActiveTab("stock");
-                    else if (activeTab === "stock") setActiveTab("batch");
-                  }}
-                  className="gap-1.5"
-                >
-                  Continue →
-                </Button>
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            {activeTab !== "batch" && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (activeTab === "basic") setActiveTab("pricing");
+                  else if (activeTab === "pricing") setActiveTab("stock");
+                  else if (activeTab === "stock") setActiveTab("batch");
+                }}
+                className="gap-1.5"
+              >
+                Continue →
+              </Button>
+            )}
+            <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2 font-bold bg-primary text-primary-foreground shadow-md">
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4" />
               )}
-              <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2 font-bold bg-primary text-primary-foreground shadow-md">
-                {isSubmitting ? (
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4" />
-                )}
-                {initialData ? "Update Item" : "Save Item"}
-              </Button>
-            </div>
+              {initialData ? "Update Item" : "Save Item"}
+            </Button>
           </div>
         </form>
       </div>

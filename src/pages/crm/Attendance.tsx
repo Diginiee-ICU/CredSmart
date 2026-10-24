@@ -109,6 +109,7 @@ const DEFAULT_SHIFT_TARGET_MINUTES = 480; // 8-hour shift standard
 const STORAGE_GEOFENCES_PREFIX = "credsmart_crm_geolocations_";
 const STORAGE_ATTENDANCE_PREFIX = "credsmart_crm_attendance_";
 const STORAGE_REQUESTS_PREFIX = "credsmart_crm_attendance_requests_";
+const STORAGE_ROLES_PREFIX = "credsmart_crm_roles_";
 
 function formatSecondsToHMS(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -267,7 +268,27 @@ export default function Attendance(): React.ReactElement {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [crmRoleNames, setCrmRoleNames] = useState<string[]>([]);
+  const [crmRoleNames, setCrmRoleNames] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached =
+        localStorage.getItem(`${STORAGE_ROLES_PREFIX}${effectiveOrgId}`) ||
+        localStorage.getItem(`credsmart_crm_roles_${effectiveOrgId}`) ||
+        localStorage.getItem("credsmart_crm_roles");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            return parsed
+              .map((r: unknown) => (typeof r === "string" ? r : (r && typeof r === "object" && "name" in r ? String((r as { name: unknown }).name) : "")))
+              .filter((n: string) => typeof n === "string" && Boolean(n.trim()));
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    return [];
+  });
 
   // 1. Live Digital Clock updating every 1000ms
   useEffect(() => {
@@ -354,7 +375,9 @@ export default function Attendance(): React.ReactElement {
         if (!error && data && data.length > 0) {
           loadedGeofences = data as unknown as CRMGeolocation[];
         }
-      } catch {}
+      } catch (_err) {
+        void _err;
+      }
 
       if (loadedGeofences.length === 0) {
         try {
@@ -405,7 +428,9 @@ export default function Attendance(): React.ReactElement {
         if (!error && data) {
           loadedAttendance = data as unknown as CRMAttendanceRecord[];
         }
-      } catch {}
+      } catch (_err) {
+        void _err;
+      }
 
       if (loadedAttendance.length === 0) {
         try {
@@ -441,7 +466,9 @@ export default function Attendance(): React.ReactElement {
         if (!error && data) {
           loadedRequests = data as unknown as CRMAttendanceRequest[];
         }
-      } catch {}
+      } catch (_err) {
+        void _err;
+      }
 
       if (loadedRequests.length === 0) {
         try {
@@ -469,14 +496,16 @@ export default function Attendance(): React.ReactElement {
       // Load Profiles & Roles for Directory
       const profilesMap: Record<string, StaffProfileInfo> = {};
       try {
-        let members: any[] | null = null;
+        let members: Array<{ id: string; user_id: string; role?: string }> | null = null;
         try {
           const { data } = await supabase
             .from("organization_memberships")
             .select("id, user_id, role")
             .eq("organization_id", effectiveOrgId);
           if (data && data.length > 0) members = data;
-        } catch {}
+        } catch (_err) {
+          void _err;
+        }
 
         if (!members) {
           const res = await settingsApi.getMemberships(effectiveOrgId);
@@ -484,42 +513,48 @@ export default function Attendance(): React.ReactElement {
         }
 
         if (members && members.length > 0) {
-          const userIds = members.map((m: any) => m.user_id);
-          let profiles: any[] | null = null;
+          const userIds = members.map((m) => m.user_id);
+          let profiles: Array<{ id: string; full_name?: string | null; email?: string | null }> | null = null;
           try {
             const { data } = await supabase
               .from("profiles")
               .select("id, full_name, email")
               .in("id", userIds);
             if (data) profiles = data;
-          } catch {}
+          } catch (_err) {
+            void _err;
+          }
 
           if (!profiles) {
             const res = await settingsApi.getProfiles({ ids: userIds });
             if (res.data) profiles = res.data;
           }
 
-          let staffRoles: any[] | null = null;
+          let staffRoles: Array<{ staff_id: string; role_id: string }> | null = null;
           try {
             const { data } = await supabase
               .from("crm_staff_roles")
               .select("staff_id, role_id");
             if (data) staffRoles = data;
-          } catch {}
+          } catch (_err) {
+            void _err;
+          }
 
           if (!staffRoles) {
             const res = await crmApi.getCRMStaffRoles(effectiveOrgId);
             if (res.data) staffRoles = res.data;
           }
 
-          let crmRoles: any[] | null = null;
+          let crmRoles: Array<{ id: string; name: string; color?: string; is_super_admin?: boolean }> | null = null;
           try {
             const { data } = await supabase
               .from("crm_roles")
               .select("id, name, color, is_super_admin")
               .eq("org_id", effectiveOrgId);
             if (data) crmRoles = data;
-          } catch {}
+          } catch (_err) {
+            void _err;
+          }
 
           if (!crmRoles) {
             const res = await crmApi.getCRMRoles(effectiveOrgId);
@@ -527,14 +562,14 @@ export default function Attendance(): React.ReactElement {
           }
 
           if (crmRoles && crmRoles.length > 0) {
-            const names = crmRoles.map((r: any) => r.name).filter(Boolean);
+            const names = crmRoles.map((r) => r.name).filter(Boolean);
             setCrmRoleNames((prev) => Array.from(new Set([...prev, ...names])));
           }
 
-          const roleMap = new Map((crmRoles || []).map((r: any) => [r.id, r]));
-          const staffRoleMap = new Map((staffRoles || []).map((sr: any) => [sr.staff_id, sr.role_id]));
+          const roleMap = new Map((crmRoles || []).map((r) => [r.id, r]));
+          const staffRoleMap = new Map((staffRoles || []).map((sr) => [sr.staff_id, sr.role_id]));
 
-          (profiles || []).forEach((p: any) => {
+          (profiles || []).forEach((p) => {
             const assignedRoleId = staffRoleMap.get(p.id);
             const assignedRole = assignedRoleId ? roleMap.get(assignedRoleId) : null;
             profilesMap[p.id] = {
@@ -542,7 +577,7 @@ export default function Attendance(): React.ReactElement {
               name: p.full_name || "Team Member",
               email: p.email || "",
               roleName: assignedRole?.name || "Staff",
-              roleColor: assignedRole?.color || "#1D4ED8",
+              roleColor: assignedRole?.color || "#2563EB",
               isSuperAdmin: assignedRole?.is_super_admin || false,
             };
           });
@@ -572,8 +607,8 @@ export default function Attendance(): React.ReactElement {
             const parsed = JSON.parse(cachedRolesStr);
             if (Array.isArray(parsed)) {
               const names = parsed
-                .map((r: any) => (typeof r === "string" ? r : r.name))
-                .filter((n: any) => typeof n === "string" && Boolean(n.trim()));
+                .map((r: unknown) => (typeof r === "string" ? r : (r && typeof r === "object" && "name" in r ? String((r as { name: unknown }).name) : "")))
+                .filter((n: string) => typeof n === "string" && Boolean(n.trim()));
               setCrmRoleNames((prev) => Array.from(new Set([...prev, ...names])));
             }
           } catch {
@@ -589,7 +624,7 @@ export default function Attendance(): React.ReactElement {
           name: (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Current Staff",
           email: user.email || "",
           roleName: isSuperAdmin ? "Super Admin" : "Staff Member",
-          roleColor: isSuperAdmin ? "#F59E0B" : "#1D4ED8",
+          roleColor: isSuperAdmin ? "#F59E0B" : "#2563EB",
           isSuperAdmin,
         };
       }
@@ -597,7 +632,7 @@ export default function Attendance(): React.ReactElement {
     } finally {
       setDataLoading(false);
     }
-  }, [effectiveOrgId, effectiveUserId, org, user, isSuperAdmin]);
+  }, [effectiveOrgId, org, user, isSuperAdmin]);
 
   useEffect(() => {
     loadAttendanceData();
@@ -1053,7 +1088,9 @@ export default function Attendance(): React.ReactElement {
   const handleDeleteGeofence = async (id: string, name: string) => {
     try {
       await supabase.from("crm_geolocations").delete().eq("id", id);
-    } catch {}
+    } catch (_err) {
+      void _err;
+    }
     try {
       await crmApi.deleteCRMGeolocation(id, effectiveOrgId);
     } catch (err) {
@@ -1131,7 +1168,9 @@ export default function Attendance(): React.ReactElement {
         reason: newRequest.reason,
         status: "pending",
       });
-    } catch {}
+    } catch (_err) {
+      void _err;
+    }
 
     try {
       await crmApi.createCRMAttendanceRequest(
@@ -1402,9 +1441,10 @@ export default function Attendance(): React.ReactElement {
       const raw = r as unknown as { role?: string; role_name?: string };
       if (raw.role && typeof raw.role === "string" && raw.role.trim()) {
         roleSet.add(raw.role.trim());
-      }
-      if (raw.role_name && typeof raw.role_name === "string" && raw.role_name.trim()) {
+      } else if (raw.role_name && typeof raw.role_name === "string" && raw.role_name.trim()) {
         roleSet.add(raw.role_name.trim());
+      } else if (!profile?.roleName) {
+        roleSet.add("Staff");
       }
     });
 
@@ -1775,11 +1815,11 @@ export default function Attendance(): React.ReactElement {
             >
               <div className="space-y-6 pt-2">
                 {/* Live Digital Clock */}
-                <div className="text-center p-4 rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/60 border border-slate-200/80">
-                  <div className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 mb-1">
+                <div className="text-center p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
+                  <div className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 mb-1 font-mono">
                     Current Time
                   </div>
-                  <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+                  <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
                     {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                   </div>
                   <div className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5">
@@ -1839,7 +1879,7 @@ export default function Attendance(): React.ReactElement {
 
                     {nearestGeofence ? (
                       <div className="text-xs text-slate-600 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span className="truncate">
                           Nearest: <strong className="text-slate-800">{nearestGeofence.geofence.name}</strong> (Radius: {nearestGeofence.geofence.radius_meters}m)
                         </span>
@@ -1860,23 +1900,23 @@ export default function Attendance(): React.ReactElement {
                       type="button"
                       onClick={handleClockIn}
                       disabled={actionLoading}
-                      className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                      className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      <CheckCircle2 className="w-5 h-5" />
+                      <CheckCircle2 className="w-4 h-4" />
                       <span>{actionLoading ? "Acquiring GPS & Punching..." : "Clock In Now"}</span>
                     </Button>
                   ) : !todayRecord.clock_out ? (
                     // 2. Active Session -> Clock Out Button
                     <div className="space-y-3">
                       {/* Active Session Ticking Timer */}
-                      <div className="p-3.5 rounded-xl bg-orange-50 border border-orange-200/80 text-center space-y-1">
-                        <div className="text-[11px] font-semibold text-[#FF6A00] uppercase tracking-wider">
+                      <div className="p-3.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-900/60 text-center space-y-1">
+                        <div className="text-[11px] font-semibold text-[#FF6A00] uppercase tracking-wider font-mono">
                           Active Work Session
                         </div>
-                        <div className="font-mono text-2xl font-black text-orange-950">
+                        <div className="font-mono text-2xl font-black text-orange-950 dark:text-orange-200 tabular-nums">
                           {formatSecondsToHMS(elapsedSeconds)}
                         </div>
-                        <div className="text-[11px] text-slate-600">
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400">
                           Clocked in at {formatTimeDisplay(todayRecord.clock_in)}
                         </div>
                       </div>
@@ -1885,15 +1925,15 @@ export default function Attendance(): React.ReactElement {
                         type="button"
                         onClick={handleClockOut}
                         disabled={actionLoading}
-                        className="w-full h-14 rounded-2xl bg-[#FF6A00] hover:bg-orange-600 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-orange-600/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                        className="w-full h-11 rounded-xl bg-[#FF6A00] hover:bg-orange-600 active:scale-[0.98] text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
-                        <Clock className="w-5 h-5" />
+                        <Clock className="w-4 h-4" />
                         <span>{actionLoading ? "Calculating Duration..." : "Clock Out"}</span>
                       </Button>
                     </div>
                   ) : (
                     // 3. Shift Completed
-                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-center space-y-2">
                       <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                         <Check className="w-5 h-5" />
                       </div>

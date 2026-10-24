@@ -13,9 +13,15 @@ export default {
       },
     },
     extend: {
+      spacing: {
+        "7.5": "1.875rem",
+        "8.5": "2.125rem",
+        "11.5": "2.875rem",
+        "13": "3.25rem",
+      },
       fontFamily: {
-        sans: ["'Instrument Sans'", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
-        display: ["'Instrument Sans'", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
+        display: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
         mono: ["'IBM Plex Mono'", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       colors: {
@@ -94,7 +100,7 @@ export default {
         },
       },
       borderRadius: {
-        "3xl": "calc(var(--radius) + 18px)",
+        "3xl": "1.25rem",
         "2xl": "calc(var(--radius) + 10px)",
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
@@ -102,12 +108,14 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        "2xs": "0 1px 2px 0 rgba(0, 0, 0, 0.03)",
-        xs: "0 1px 2px 0 rgba(15, 23, 42, 0.05)",
-        soft: "0 2px 8px rgba(30, 34, 53, 0.06), 0 12px 32px rgba(30, 34, 53, 0.06)",
-        lift: "0 4px 12px rgba(30, 34, 53, 0.08), 0 24px 60px rgba(30, 34, 53, 0.1)",
-        glow: "0 0 24px -4px hsl(var(--ruby) / 0.35)",
-        "glow-gold": "0 0 24px -4px hsl(var(--gold) / 0.35)",
+        "2xs": "0 1px 2px 0 rgba(0, 0, 0, 0.02)",
+        xs: "0 1px 2px 0 rgba(15, 23, 42, 0.04)",
+        sm: "0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08)",
+        md: "0 4px 6px -1px rgba(15, 23, 42, 0.08)",
+        soft: "0 1px 3px 0 rgba(15, 23, 42, 0.06)",
+        lift: "0 2px 6px 0 rgba(15, 23, 42, 0.08)",
+        glow: "none",
+        "glow-gold": "none",
       },
       keyframes: {
         "accordion-down": {

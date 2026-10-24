@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-21T20:00:00Z
+# BRIEFING — 2026-10-24T20:26:30Z
 
 ## Mission
-Adversarially challenge Milestone 3 Task Management implementation in `src/pages/crm/Tasks.tsx`, focusing on edge cases, boundary conditions, form validation, state machine integrity, and unauthorized manager actions.
+Adversarially challenge and empirically verify Milestone 3 (Mobile Ergonomics & Native-Touch Layouts), validating mobile bottom dock navigation, 46x46px center button, single Royal Blue active state, safe-area insets, mobile bottom-sheet drawers, and zero regression across billing and document engines.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -15,50 +15,57 @@ Adversarially challenge Milestone 3 Task Management implementation in `src/pages
 - Enterprise CRM Tasks Parent: c838af97-21de-4616-9188-f0f8dfa904c9
 - Enterprise CRM Tasks Milestone: Milestone 3: Full-Stack Enterprise Task Management
 - Instance: 1 of 1
+- Minimal Design System Parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Minimal Design System Milestone: Milestone 3: Mobile Ergonomics & Native-Touch Layouts
+- Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Empirically verify every claim and test case by executing tests
 - Place metadata only in .agents/teamwork/challenger_m3_1/
 - Adversarially challenge Milestone 3 task management edge cases: empty titles, empty proof notes rejection, empty revision notes rejection, 0-task KPI calculations, special regex characters in search filter, overdue date highlighting, and unauthorized manager actions.
+- Never modify underlying business logic, Supabase real-time subscriptions, GST tax calculation engines, routes, role permissions, or printing pipelines.
+- Verify mobile dock assertions: Tab 5 to Parties, 46x46px center button, single Royal Blue active state, safe area insets.
+- Verify bottom sheet drawer assertions: max-h-[92dvh] rounded-t-2xl sm:rounded-2xl, drag handle, sticky bottom bar.
 
 ## Current Parent
-- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
-- Updated: 2026-10-21T19:50:06Z
+- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Updated: 2026-10-24T20:22:01Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/Tasks.tsx`, `src/test/crmTasksView.test.tsx`, `src/test/crmStaffTasksIntegration.test.tsx`, `src/test/crmTaskLifecycle.test.ts`, `src/test/crmTasksChallengerM3.test.tsx`
-- **Interface contracts**: `PROJECT.md` § Feature 9-13, Backend API `GET /api/crm/tasks`, `PATCH /api/crm/tasks/:id`
+- **Files to review**: `src/components/AppSidebar.tsx`, `src/components/items/CreateItemModal.tsx`, `src/components/parties/CreatePartyModal.tsx`, `src/test/mobileErgonomicsChallenger.test.ts`, `src/test/mobileTouchErgonomicsRemediation.test.ts`, `src/test/billingLifecycleEngine.test.ts`
+- **Interface contracts**: `PROJECT.md` § Milestone 3, `ORIGINAL_REQUEST.md` § R3, `.agents/rules/minimal-design-system.md`
 - **Review criteria**:
-  1. Form Validation & Edge Cases: blank/whitespace-only titles, empty proof notes rejection with warning toast, empty revision notes rejection, 0-task KPI metrics calculations (no NaN / division by zero), special regex characters in search filter without runtime crash.
-  2. State Machine Integrity: unauthorized non-managers blocked from approving tasks or requesting revisions; overdue tasks highlighting logic (`due_date < today && status !== 'done'`).
-  3. Verification: test suites passing, TypeScript type safety (`tsc --noEmit`).
+  1. Mobile Dock (AppSidebar): 5 destinations (Home, Sales, Center Elevated + POS, Items, Parties), 46x46px center button, solid Royal Blue (`bg-blue-600`), zero skeuomorphic rainbow gradients, min-h-[44px] touch targets, safe area bottom insets.
+  2. Bottom Sheet Drawers (CreateItemModal & CreatePartyModal): `max-h-[92dvh] rounded-t-2xl sm:rounded-2xl`, drag handle `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`, independent scrolling body, sticky bottom confirmation bar.
+  3. Zero Regressions: TypeScript compilation (`tsc --noEmit`), Vitest test suites (mobileErgonomicsChallenger, mobileTouchErgonomicsRemediation, billingLifecycleEngine), no quarantined invoice/billing files modified.
 
 ## Key Decisions Made
-- Created and executed adversarial test suite `src/test/crmTasksChallengerM3.test.tsx` (14/14 tests passing).
-- Executed full test verification: `cmd /c npx vitest run crmTask src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmTasksChallengerM3.test.tsx` (65/65 tests passing across 4 files).
-- Verified static typing: `cmd /c npx tsc --noEmit` exited with code 0.
-- Confirmed all 7 challenge hypotheses empirically.
-- Final verdict: APPROVE.
+- Executed Vitest test suite (`mobileErgonomicsChallenger.test.ts`, `mobileTouchErgonomicsRemediation.test.ts`, `billingLifecycleEngine.test.ts`): 43/43 tests passed (100%).
+- Executed TypeScript static typecheck (`tsc --noEmit`): Exit code 0, 0 errors.
+- Executed ESLint on modified files: Exit code 0, 0 errors, 0 warnings.
+- Executed adversarial billing lifecycle tests (`billingLifecycleEngine.adversarial.test.ts`): 6/6 tests passed.
+- Empirically inspected and verified code contracts in `AppSidebar.tsx`, `CreateItemModal.tsx`, and `CreatePartyModal.tsx`.
+- Verdict: APPROVE.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - H1: Submitting empty or whitespace-only title is rejected by validation -> CONFIRMED (native HTML5 required + trimmedTitle validation blocks and fires toast).
-  - H2: Submitting empty proof notes on proof-required task is rejected with warning toast -> CONFIRMED (modal remains open, no status transition).
-  - H3: Submitting empty revision feedback is rejected with warning toast -> CONFIRMED (modal remains open, no status transition).
-  - H4: When 0 tasks are loaded, KPI metrics calculate completionRate as 0% without NaN or division by zero -> CONFIRMED.
-  - H5: Search filter with special regex characters (`[`, `*`, `+`, `?`, `\`, `^`, `$`, `(`, `)`) does not throw RegExp syntax error or crash UI -> CONFIRMED (uses string `.includes()` safely).
-  - H6: Unauthorized non-managers cannot approve tasks or request revisions in Kanban or Table view -> CONFIRMED (RBAC gates buttons out of DOM).
-  - H7: Overdue tasks (`due_date < today && status !== 'done'`) trigger overdue counter badge and red warning styling, while completed tasks in past date are not counted as overdue -> CONFIRMED.
+  - H1: Mobile dock Tab 5 points to Parties (`ROUTE_PATHS.parties`) and activates on party/customer routes -> CONFIRMED.
+  - H2: Mobile dock center elevated button is strictly 46x46px with solid Royal Blue (`bg-blue-600`) and no multi-color gradients -> CONFIRMED.
+  - H3: Active dock tabs use single Royal Blue accent token without conflicting rainbow colors -> CONFIRMED.
+  - H4: Mobile modal drawers implement `max-h-[92dvh] rounded-t-2xl sm:rounded-2xl` with drag handles and sticky bottom confirmation bars -> CONFIRMED for both `CreateItemModal.tsx` and `CreatePartyModal.tsx`.
+  - H5: Zero TypeScript compilation errors or broken type contracts -> CONFIRMED (`tsc --noEmit` exit code 0).
+  - H6: Complete suite of vitest tests pass (>= 43 tests) -> CONFIRMED (43/43 passed).
+  - H7: No quarantined billing/invoice files were modified or violated -> CONFIRMED.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.
 
 ## Loaded Skills
-- Source: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
-- Core methodology: CRM RBAC schema, hooks, and permission gating
+- Source: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
+- Local copy: None needed (skill viewed in place)
+- Core methodology: Master standard for minimal UI tokens, mobile ergonomics, 44px+ touch targets, 46x46px CTA, bottom sheets
 
 ## Artifact Index
 - .agents/teamwork/challenger_m3_1/DISPATCH.md — incoming instructions
 - .agents/teamwork/challenger_m3_1/progress.md — liveness & step tracking
 - .agents/teamwork/challenger_m3_1/handoff.md — final handoff report
-- src/test/crmTasksChallengerM3.test.tsx — empirical adversarial stress test suite

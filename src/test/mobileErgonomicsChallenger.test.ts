@@ -75,10 +75,15 @@ describe("Challenger 1: Mobile Ergonomics & Viewport Stress Suite", () => {
 
       // All nav items in dock must satisfy >= 44px
       const minH44Count = (dockCode.match(/min-h-\[44px\]/g) || []).length;
-      expect(minH44Count).toBeGreaterThanOrEqual(4); // Home, Sales, Items, Purchases
+      expect(minH44Count).toBeGreaterThanOrEqual(4); // Home, Sales, Items, Parties
 
       // Elevated POS button
-      expect(dockCode).toMatch(/w-\[52px\]\s+h-\[52px\]/);
+      expect(dockCode).toMatch(/w-\[46px\]\s+h-\[46px\]/);
+
+      // Tab 5 destination must be Parties
+      expect(dockCode).toMatch(/to=\{ROUTE_PATHS\.parties\}/);
+      expect(dockCode).toMatch(/Users2/);
+      expect(dockCode).toMatch(/Parties<\/span>/);
     });
 
     it("empirically verifies touch targets in Sales.tsx mobile cards meet >= 44px standard", () => {
@@ -183,7 +188,7 @@ describe("Challenger 1: Mobile Ergonomics & Viewport Stress Suite", () => {
       // Root wrapper has overflow-hidden and w-full
       expect(content).toMatch(/flex\s+flex-col\s+h-screen\s+w-full\s+overflow-hidden/);
       // Main container has min-w-0
-      expect(content).toMatch(/flex-1\s+min-w-0\s+flex\s+flex-col/);
+      expect(content).toMatch(/flex-1\s+min-w-0(?:\s+min-h-0)?\s+flex\s+flex-col/);
     });
 
     it("verifies horizontal swipeable quick action strip in Dashboard has touch-pan-x and scrollbar-none", () => {
@@ -196,10 +201,9 @@ describe("Challenger 1: Mobile Ergonomics & Viewport Stress Suite", () => {
   // 3. SAFE-AREA INSET BOTTOM PADDING AUDIT
   // ─────────────────────────────────────────────────────────────
   describe("Audit 3: Safe-Area Inset Bottom Padding & Floating Dock Clearance", () => {
-    it("verifies AppLayout.tsx applies dynamic safe-area bottom padding to main container", () => {
+    it("verifies AppLayout.tsx applies dynamic safe-area bottom clearance", () => {
       const content = fs.readFileSync(path.join(SRC_DIR, "components/AppLayout.tsx"), "utf-8");
-      expect(content).toMatch(/isMobile\s*&&\s*!isPosRoute\s*&&\s*"pb-\[calc\(5\.5rem\+env\(safe-area-inset-bottom,0px\)\)\]"/);
-      expect(content).toMatch(/isMobile\s*&&\s*isPosRoute\s*&&\s*"pb-\[calc\(4\.75rem\+env\(safe-area-inset-bottom,0px\)\)\]"/);
+      expect(content).toMatch(/calc\(6rem\s*\+\s*env\(safe-area-inset-bottom,\s*0px\)\)/);
     });
 
     it("verifies internal mobile card streams have sufficient bottom padding", () => {
@@ -228,6 +232,65 @@ describe("Challenger 1: Mobile Ergonomics & Viewport Stress Suite", () => {
       const content = fs.readFileSync(path.join(SRC_DIR, "components/AppSidebar.tsx"), "utf-8");
       expect(content).toMatch(/pb-\[max\(0\.65rem,env\(safe-area-inset-bottom,0px\)\)\]/);
       expect(content).toMatch(/fixed\s+bottom-0\s+left-0\s+right-0\s+z-50/);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. MOBILE BOTTOM-SHEET DRAWERS & ROYAL BLUE DOCK AUDIT
+  // ─────────────────────────────────────────────────────────────
+  describe("Audit 4: Mobile Bottom-Sheet Drawer Primitives & Royal Blue Dock Standardization", () => {
+    it("empirically audits AppSidebar.tsx mobile dock for single Royal Blue active state and zero rainbow gradients", () => {
+      const content = fs.readFileSync(path.join(SRC_DIR, "components/AppSidebar.tsx"), "utf-8");
+      const dockMatch = content.match(/Mobile: Bottom Navigation Dock([\s\S]*?)<\/nav>/);
+      expect(dockMatch).not.toBeNull();
+      const dockCode = dockMatch![1];
+
+      // Standard Royal Blue active state highlight tokens
+      expect(dockCode).toMatch(/text-blue-600 dark:text-blue-400 font-bold/);
+      expect(dockCode).toMatch(/bg-blue-50\/60 dark:bg-blue-500\/15 border-blue-200 dark:border-blue-500\/30/);
+
+      // No skeuomorphic rainbow gradients
+      expect(dockCode).not.toMatch(/from-indigo-600/);
+      expect(dockCode).not.toMatch(/from-amber-500/);
+
+      // Elevated CTA button standardized to 46x46px solid Royal Blue
+      expect(dockCode).toMatch(/w-\[46px\] h-\[46px\] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white/);
+
+      // Tab 5 destination is Parties with Users2
+      expect(dockCode).toMatch(/to=\{ROUTE_PATHS\.parties\}/);
+      expect(dockCode).toMatch(/Users2 className="w-5 h-5/);
+    });
+
+    it("empirically audits CreateItemModal.tsx mobile bottom-sheet drawer specifications", () => {
+      const content = fs.readFileSync(path.join(SRC_DIR, "components/items/CreateItemModal.tsx"), "utf-8");
+
+      // Outer wrapper aligns items-end on mobile for drawer presentation
+      expect(content).toMatch(/flex\s+items-end\s+sm:items-center/);
+
+      // Drawer container matches master tokens
+      expect(content).toMatch(/max-h-\[92dvh\]\s+sm:max-w-5xl\s+sm:h-auto\s+sm:max-h-\[92vh\]\s+rounded-t-2xl\s+sm:rounded-2xl\s+border-slate-200\/90\s+dark:border-slate-800\s+bg-white\/95\s+dark:bg-slate-900\/95\s+backdrop-blur-xl/);
+
+      // Top drag handle indicator on mobile
+      expect(content).toMatch(/w-12\s+h-1\.5\s+rounded-full\s+bg-slate-300\s+dark:bg-slate-700\s+mx-auto\s+my-2\s+sm:hidden\s+shrink-0/);
+
+      // Fixed bottom confirmation action bar
+      expect(content).toMatch(/sticky\s+bottom-0\s+bg-white\/95\s+dark:bg-slate-900\/95\s+backdrop-blur-sm\s+border-t\s+border-slate-200\/80\s+p-3\s+pb-\[max\(0\.75rem,env\(safe-area-inset-bottom,0px\)\)\]\s+flex\s+items-center\s+justify-end\s+gap-2\s+shrink-0/);
+    });
+
+    it("empirically audits CreatePartyModal.tsx mobile bottom-sheet drawer specifications", () => {
+      const content = fs.readFileSync(path.join(SRC_DIR, "components/parties/CreatePartyModal.tsx"), "utf-8");
+
+      // Outer wrapper aligns items-end on mobile for drawer presentation
+      expect(content).toMatch(/flex\s+items-end\s+sm:items-center/);
+
+      // Drawer container matches master tokens
+      expect(content).toMatch(/max-h-\[92dvh\]\s+sm:max-w-5xl\s+sm:h-auto\s+sm:max-h-\[92vh\]\s+rounded-t-2xl\s+sm:rounded-2xl\s+border-slate-200\/90\s+dark:border-slate-800\s+bg-white\/95\s+dark:bg-slate-900\/95\s+backdrop-blur-xl/);
+
+      // Top drag handle indicator on mobile
+      expect(content).toMatch(/w-12\s+h-1\.5\s+rounded-full\s+bg-slate-300\s+dark:bg-slate-700\s+mx-auto\s+my-2\s+sm:hidden\s+shrink-0/);
+
+      // Fixed bottom confirmation action bar
+      expect(content).toMatch(/sticky\s+bottom-0\s+bg-white\/95\s+dark:bg-slate-900\/95\s+backdrop-blur-sm\s+border-t\s+border-slate-200\/80\s+p-3\s+pb-\[max\(0\.75rem,env\(safe-area-inset-bottom,0px\)\)\]\s+flex\s+items-center\s+justify-end\s+gap-2\s+shrink-0/);
     });
   });
 });
