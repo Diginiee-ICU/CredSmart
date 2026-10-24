@@ -600,7 +600,7 @@ export default function Sales() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs font-medium gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-2xs rounded-lg"
+                  className="h-8.5 px-3 text-xs font-semibold gap-1.5 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-2xs rounded-lg"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Reports</span>
@@ -630,7 +630,7 @@ export default function Sales() {
             {/* Settings Cog with Notification Dot */}
             <button
               onClick={() => setSettingsModalOpen(true)}
-              className="relative p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer"
+              className="relative w-7.5 h-7.5 rounded-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer flex items-center justify-center"
               title="Sales & Invoicing Preferences"
               aria-label="Sales Preferences"
             >
@@ -641,7 +641,7 @@ export default function Sales() {
             {/* Keyboard Shortcuts Button */}
             <button
               onClick={() => setShortcutsModalOpen(true)}
-              className="p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer"
+              className="w-7.5 h-7.5 rounded-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs cursor-pointer flex items-center justify-center"
               title="Keyboard Shortcuts"
               aria-label="Keyboard Shortcuts"
             >

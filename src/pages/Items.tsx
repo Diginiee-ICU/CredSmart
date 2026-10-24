@@ -745,10 +745,10 @@ return (
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-amber-500" />
           <div className="space-y-0.5 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+              <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
                 Low Stock
               </span>
-              {lowStockOnly && <span className="text-[9px] px-1.5 py-0.2 rounded font-bold font-mono bg-amber-500 text-white">Active</span>}
+              {lowStockOnly && <span className="text-[11px] px-1.5 py-0.2 rounded font-bold font-mono bg-amber-500 text-white">Active</span>}
             </div>
             <p className="text-base sm:text-xl font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate">
               {lowStockCount} Items
@@ -767,7 +767,7 @@ return (
         <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-3.5 flex items-center justify-between relative overflow-hidden group select-none transition-all">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />
           <div className="space-y-0.5 min-w-0">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
               Total Catalog
             </span>
             <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate">
@@ -784,7 +784,7 @@ return (
         <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-3.5 flex items-center justify-between relative overflow-hidden group select-none transition-all">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-rose-500" />
           <div className="space-y-0.5 min-w-0">
-            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+            <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
               Zero Stock
             </span>
             <p className="text-base sm:text-xl font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate">
