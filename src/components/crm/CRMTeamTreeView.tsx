@@ -2,14 +2,16 @@
  * @file CRMTeamTreeView.tsx
  * @description Enterprise Hierarchical Team Tree View for CredSmart CRM.
  * Displays interactive reporting lines, collapsible drop-down chevrons to save space,
- * dynamic search/filtering, and an expandable detail inspector showing users working under each member.
- * Calibrated for native mobile ergonomics (min 44px tap targets) and desktop views.
+ * dynamic search/filtering, specific user hierarchy scoping, and an expandable inline & side
+ * detail inspector showing users working under each member.
+ * Calibrated for native mobile ergonomics (min 44px tap targets) and responsive viewports.
  */
 
 import React, { useState, useMemo, useCallback } from "react";
 import {
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Users,
   User,
   Shield,
@@ -25,6 +27,8 @@ import {
   ArrowRight,
   Check,
   Building2,
+  Filter,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +68,7 @@ export interface CRMTeamTreeViewProps {
   onSetManager: (staffId: string, managerId: string | null) => void;
   onOpenAddStaff?: (preselectedManagerId?: string) => void;
   searchQuery?: string;
+  defaultScopedUserId?: string;
 }
 
 interface TreeNodeData extends CRMTreeMember {
@@ -81,13 +86,25 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
   onSetManager,
   onOpenAddStaff,
   searchQuery = "",
+  defaultScopedUserId,
 }) => {
+  // User scope filter: 'all' or specific staff ID to view hierarchy under that specific user
+  const [scopedUserId, setScopedUserId] = useState<string>(() => {
+    if (defaultScopedUserId && staff.some((s) => s.id === defaultScopedUserId)) {
+      return defaultScopedUserId;
+    }
+    return "all";
+  });
+
   // Selected staff member for detailed inspector
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(() => {
     return staff[0]?.id || null;
   });
 
-  // Collapsible dropdown state for nodes
+  // Inline expanded node ID for space-saving dropdown details directly in the tree
+  const [inlineExpandedId, setInlineExpandedId] = useState<string | null>(null);
+
+  // Collapsible dropdown state for tree branches
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     staff.forEach((s) => {
@@ -96,7 +113,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
     return init;
   });
 
-  // Toggle single node dropdown
+  // Toggle single branch dropdown
   const toggleNode = useCallback((nodeId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setExpandedNodes((prev) => ({
@@ -105,7 +122,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
     }));
   }, []);
 
-  // Expand all nodes
+  // Expand all branches
   const expandAll = useCallback(() => {
     const allExpanded: Record<string, boolean> = {};
     staff.forEach((s) => {
@@ -114,7 +131,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
     setExpandedNodes(allExpanded);
   }, [staff]);
 
-  // Collapse all nodes
+  // Collapse all branches
   const collapseAll = useCallback(() => {
     const allCollapsed: Record<string, boolean> = {};
     staff.forEach((s) => {
@@ -130,7 +147,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
     return map;
   }, [staff]);
 
-  // Build the hierarchical tree structure
+  // Build the hierarchical tree structure with cycle detection & user scoping
   const treeRoots = useMemo(() => {
     if (staff.length === 0) return [];
 
@@ -144,6 +161,35 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
         childrenMap.set(parentId, arr);
       }
     });
+
+    // Recursive tree node assembler with cycle detection
+    const buildNode = (member: CRMTreeMember, depth = 0, visited = new Set<string>()): TreeNodeData => {
+      const nextVisited = new Set(visited);
+      nextVisited.add(member.id);
+
+      const rawChildren = (childrenMap.get(member.id) || []).filter((c) => !nextVisited.has(c.id));
+      const builtChildren = rawChildren.map((c) => buildNode(c, depth + 1, nextVisited));
+
+      const totalSubordinates = builtChildren.reduce(
+        (sum, child) => sum + 1 + child.totalSubordinatesCount,
+        0
+      );
+
+      return {
+        ...member,
+        children: builtChildren,
+        depth,
+        totalSubordinatesCount: totalSubordinates,
+      };
+    };
+
+    // If scoped to a specific user, root exclusively at that specific user
+    if (scopedUserId !== "all") {
+      const scopedMember = staffMap.get(scopedUserId);
+      if (scopedMember) {
+        return [buildNode(scopedMember, 0)];
+      }
+    }
 
     // Identify candidate roots:
     // 1. Explicitly has no parent
@@ -174,29 +220,8 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
       return bScore - aScore;
     });
 
-    // Recursive tree node assembler with cycle detection
-    const buildNode = (member: CRMTreeMember, depth = 0, visited = new Set<string>()): TreeNodeData => {
-      const nextVisited = new Set(visited);
-      nextVisited.add(member.id);
-
-      const rawChildren = (childrenMap.get(member.id) || []).filter((c) => !nextVisited.has(c.id));
-      const builtChildren = rawChildren.map((c) => buildNode(c, depth + 1, nextVisited));
-
-      const totalSubordinates = builtChildren.reduce(
-        (sum, child) => sum + 1 + child.totalSubordinatesCount,
-        0
-      );
-
-      return {
-        ...member,
-        children: builtChildren,
-        depth,
-        totalSubordinatesCount: totalSubordinates,
-      };
-    };
-
     return roots.map((r) => buildNode(r, 0));
-  }, [staff, staffMap, currentUserId]);
+  }, [staff, staffMap, currentUserId, scopedUserId]);
 
   // Selected member details
   const selectedMember = useMemo(() => {
@@ -240,6 +265,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
     const isExpanded = expandedNodes[node.id] ?? true;
     const hasChildren = node.children.length > 0;
     const isSelected = selectedMember?.id === node.id;
+    const isInlineExpanded = inlineExpandedId === node.id;
     const isMatched = matchesSearch(node);
     const assignedRole = roles.find((r) => r.id === node.crmRoleId);
 
@@ -254,7 +280,10 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               : "border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/70",
             !isMatched && searchQuery.trim() && "opacity-40"
           )}
-          onClick={() => setSelectedStaffId(node.id)}
+          onClick={() => {
+            setSelectedStaffId(node.id);
+            setInlineExpandedId((prev) => (prev === node.id ? null : node.id));
+          }}
           title={`Click to view team details under ${node.name}`}
         >
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
@@ -264,7 +293,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                 type="button"
                 onClick={(e) => toggleNode(node.id, e)}
                 className={cn(
-                  "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all",
+                  "w-8 h-8 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all touch-manipulation",
                   isExpanded
                     ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
                     : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
@@ -279,7 +308,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                 )}
               </button>
             ) : (
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border border-transparent text-slate-300">
+              <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border border-transparent text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
               </div>
             )}
@@ -339,7 +368,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
             </div>
           </div>
 
-          {/* Subordinates Count Badge & Action Button */}
+          {/* Subordinates Count Badge & Space-Saving Drop Down Button */}
           <div className="flex items-center gap-1.5 shrink-0">
             {hasChildren && (
               <span
@@ -359,6 +388,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               </span>
             )}
 
+            {/* Drop down button to see details of users working under this user */}
             <Button
               type="button"
               variant="ghost"
@@ -366,23 +396,164 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedStaffId(node.id);
+                setInlineExpandedId((prev) => (prev === node.id ? null : node.id));
               }}
               className={cn(
-                "h-7 px-2 text-[11px] rounded-lg font-semibold gap-1",
-                isSelected
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                "min-h-[36px] sm:min-h-[32px] px-2.5 text-xs rounded-xl font-semibold gap-1 transition-all touch-manipulation",
+                isSelected || isInlineExpanded
+                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-xs"
                   : "text-slate-600 hover:bg-slate-100"
               )}
+              title={isInlineExpanded ? "Hide details and direct reports" : "View details and team working under this user"}
+              aria-expanded={isInlineExpanded}
             >
               <span>Details</span>
-              <ArrowRight className="w-3 h-3" />
+              {isInlineExpanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Children Sub-Tree with Space-Saving Drop Down Collapse */}
+        {/* Space-Saving Inline Drop Down Details Panel */}
+        {isInlineExpanded && (
+          <div className="my-2 p-3 sm:p-4 rounded-2xl border border-blue-200 bg-blue-50/40 space-y-3 transition-all animate-in fade-in-50">
+            <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-blue-200/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center shrink-0">
+                  {node.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+                    {node.name}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
+                      {node.role}
+                    </span>
+                    {assignedRole && (
+                      <span
+                        className="text-[10px] font-semibold px-2 py-0.2 rounded-full border bg-white"
+                        style={{ color: assignedRole.color, borderColor: `${assignedRole.color}40` }}
+                      >
+                        {assignedRole.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setScopedUserId(node.id);
+                  }}
+                  className="h-7 px-2 text-[10px] rounded-lg bg-white border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold gap-1"
+                  title="Focus tree on team under this user"
+                >
+                  <Network className="w-3 h-3 text-blue-600" />
+                  <span>Focus Tree</span>
+                </Button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setInlineExpandedId(null);
+                  }}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white"
+                  title="Close details"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Direct Subordinates Under This User */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Team Members Under {node.name} ({node.children.length})</span>
+                </span>
+                {isSuperAdminOrOwner && onOpenAddStaff && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenAddStaff(node.id);
+                    }}
+                    className="h-6 text-[10px] text-blue-600 hover:bg-blue-100/60 px-1.5 rounded font-semibold gap-1"
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    <span>Add</span>
+                  </Button>
+                )}
+              </div>
+
+              {node.children.length === 0 ? (
+                <div className="p-2.5 rounded-xl border border-dashed border-blue-200 bg-white/70 text-center text-xs text-slate-500">
+                  No team members currently report under {node.name}.
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {node.children.map((sub) => {
+                    const subRole = roles.find((r) => r.id === sub.crmRoleId);
+                    return (
+                      <div
+                        key={sub.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedStaffId(sub.id);
+                          setInlineExpandedId(sub.id);
+                        }}
+                        className="p-2 rounded-xl border border-blue-200/80 bg-white hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            {sub.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 truncate">{sub.name}</p>
+                            <span className="text-[9px] font-mono text-slate-500">{sub.role}</span>
+                          </div>
+                        </div>
+                        {subRole && (
+                          <span
+                            className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full border bg-slate-50 shrink-0"
+                            style={{ color: subRole.color, borderColor: `${subRole.color}30` }}
+                          >
+                            {subRole.name}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Children Sub-Tree with Space-Saving Drop Down Collapse & Adaptive Indent */}
         {hasChildren && isExpanded && (
-          <div className="pl-4 sm:pl-6 ml-3 sm:ml-4 border-l-2 border-slate-200 border-dashed space-y-1 my-1">
+          <div
+            className={cn(
+              "border-l-2 border-slate-200 border-dashed space-y-1 my-1",
+              node.depth >= 3
+                ? "pl-2 sm:pl-5 ml-1.5 sm:ml-3"
+                : node.depth >= 1
+                ? "pl-3 sm:pl-6 ml-2 sm:ml-4"
+                : "pl-4 sm:pl-6 ml-3 sm:ml-4"
+            )}
+          >
             {node.children.map((child) => renderTreeNode(child))}
           </div>
         )}
@@ -393,15 +564,46 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Tree Controls Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-slate-50/90 rounded-xl border border-slate-200/80">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-2 flex-wrap">
           <Network className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-xs font-bold text-slate-800">
             Team Hierarchy ({staff.length} Members)
           </span>
-          <span className="text-[11px] text-slate-500 hidden sm:inline">
-            • Click any member to view details &amp; direct reports
-          </span>
+
+          {/* Specific User Scope Filter */}
+          <div className="flex items-center gap-1.5">
+            <Select value={scopedUserId} onValueChange={setScopedUserId}>
+              <SelectTrigger className="h-8 text-xs rounded-xl border-slate-200 bg-white min-w-[140px] sm:min-w-[190px]">
+                <SelectValue placeholder="Scope Hierarchy" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  <span className="font-semibold text-slate-800">All Organization</span>
+                </SelectItem>
+                {staff.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-[10px] text-slate-400 ml-1 font-mono">({s.role})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {scopedUserId !== "all" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setScopedUserId("all")}
+                className="h-8 px-2 text-xs text-blue-600 hover:bg-blue-50 rounded-xl font-medium gap-1"
+                title="Reset to full organizational tree"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span className="hidden sm:inline">Show All</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -410,7 +612,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
             variant="outline"
             size="sm"
             onClick={expandAll}
-            className="h-8 text-xs rounded-xl border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium gap-1"
+            className="h-8 text-xs rounded-xl border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium gap-1 min-h-[36px] sm:min-h-[32px] touch-manipulation"
             title="Expand all tree branches"
           >
             <Maximize2 className="w-3 h-3 text-blue-600" />
@@ -422,7 +624,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
             variant="outline"
             size="sm"
             onClick={collapseAll}
-            className="h-8 text-xs rounded-xl border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium gap-1"
+            className="h-8 text-xs rounded-xl border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium gap-1 min-h-[36px] sm:min-h-[32px] touch-manipulation"
             title="Collapse all tree branches to save space"
           >
             <Minimize2 className="w-3 h-3 text-slate-500" />
@@ -434,7 +636,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               type="button"
               size="sm"
               onClick={() => onOpenAddStaff(selectedMember?.id)}
-              className="h-8 text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1 shadow-xs"
+              className="h-8 text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1 shadow-xs min-h-[36px] sm:min-h-[32px] touch-manipulation"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Add Under Selected</span>
@@ -451,9 +653,11 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
             <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
               ORGANIZATION STRUCTURE
             </span>
-            <span className="text-[11px] text-slate-400">
-              Drop-down chevrons collapse sub-teams
-            </span>
+            {scopedUserId !== "all" && (
+              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                Filtered: {staffMap.get(scopedUserId)?.name}
+              </Badge>
+            )}
           </div>
 
           {treeRoots.length === 0 ? (
@@ -568,7 +772,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onOpenAddStaff(selectedMember.id)}
-                      className="h-7 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 rounded-lg font-semibold gap-1"
+                      className="h-7 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 rounded-lg font-semibold gap-1 min-h-[36px] sm:min-h-[28px] touch-manipulation"
                     >
                       <UserPlus className="w-3 h-3" />
                       <span>Add</span>
@@ -601,7 +805,10 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                       return (
                         <div
                           key={sub.id}
-                          onClick={() => setSelectedStaffId(sub.id)}
+                          onClick={() => {
+                            setSelectedStaffId(sub.id);
+                            setInlineExpandedId(sub.id);
+                          }}
                           className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-2"
                         >
                           <div className="flex items-center gap-2 min-w-0">

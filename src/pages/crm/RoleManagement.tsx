@@ -1353,17 +1353,21 @@ export default function RoleManagement(): React.ReactElement {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  Access &amp; Team Hierarchy
+                  RBAC Foundation
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Live
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                  {roles.length} Dynamic Roles
+                  Zero Hard-coded Roles
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight mt-1">
                 CRM Role &amp; Permission Manager
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Configure user roles, granular permissions, and organization team hierarchy.
+                Configure user roles, permissions, and organization team hierarchy.
               </p>
             </div>
           </div>
@@ -1374,7 +1378,7 @@ export default function RoleManagement(): React.ReactElement {
               variant="outline"
               size="sm"
               disabled={loading}
-              className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5 h-9"
+              className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
             >
               <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
               <span>Refresh</span>
@@ -1385,7 +1389,7 @@ export default function RoleManagement(): React.ReactElement {
               disabled={!isSuperAdminOrOwner}
               variant="outline"
               size="sm"
-              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5 h-9"
+              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
             >
               <UserPlus className="w-4 h-4 text-blue-600" />
               <span>Add Staff User</span>
@@ -1394,7 +1398,7 @@ export default function RoleManagement(): React.ReactElement {
             <Button
               onClick={openCreateRoleModal}
               disabled={!isSuperAdminOrOwner}
-              className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5 h-9"
+              className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
             >
               <Plus className="w-4 h-4" />
               <span>Create Custom Role</span>
@@ -1412,7 +1416,7 @@ export default function RoleManagement(): React.ReactElement {
             <div>
               <p className="font-semibold">Read-Only Mode</p>
               <p className="text-amber-700 mt-0.5">
-                You are currently viewing roles in read-only mode. Only Store Owners and Super Admins can configure roles, permissions, and team members.
+                Only Store Owners and Super Admins can configure roles, permissions, and team members.
               </p>
             </div>
           </div>
@@ -1516,10 +1520,10 @@ export default function RoleManagement(): React.ReactElement {
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-600 mt-3 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-2.5 leading-relaxed font-medium">
                       {role.is_super_admin
-                        ? "Unrestricted administrative control across all 7 CRM modules and 14 system operations."
-                        : `User-defined CRM role governing access to specific tasks, attendance, meetings, and tickets.`}
+                        ? "Full administrative access across all CRM modules."
+                        : `Custom role with designated module permissions.`}
                     </p>
                   </div>
 
@@ -1570,8 +1574,8 @@ export default function RoleManagement(): React.ReactElement {
                   </h3>
                   <p className="text-xs text-slate-500">
                     {selectedRole.is_super_admin
-                      ? "Super Admin permanently bypasses all permission checks with unconditional access."
-                      : "Toggle granular action permissions. Click 'Save Changes' to persist."}
+                      ? "Super Admin has unconditional access across all CRM modules."
+                      : "Configure module permissions and save changes."}
                   </p>
                 </div>
               </div>
@@ -1642,7 +1646,7 @@ export default function RoleManagement(): React.ReactElement {
                             {modAllowedCount} / {mod.actions.length} Enabled
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{mod.description}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 hidden sm:block">{mod.description}</p>
                       </div>
 
                       <button
@@ -1715,8 +1719,8 @@ export default function RoleManagement(): React.ReactElement {
                   Staff CRM Role Assignments
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Assign customized CRM roles to team members or switch to Team Tree View for organizational hierarchy.
+              <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
+                Assign CRM roles or view team reporting hierarchy.
               </p>
             </div>
 
@@ -1728,7 +1732,7 @@ export default function RoleManagement(): React.ReactElement {
                   type="button"
                   onClick={() => setStaffViewMode("list")}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all",
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all min-h-[40px] sm:min-h-[34px] touch-manipulation",
                     staffViewMode === "list"
                       ? "bg-white text-blue-700 shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
@@ -1741,7 +1745,7 @@ export default function RoleManagement(): React.ReactElement {
                   type="button"
                   onClick={() => setStaffViewMode("tree")}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all",
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all min-h-[40px] sm:min-h-[34px] touch-manipulation",
                     staffViewMode === "tree"
                       ? "bg-white text-blue-700 shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
@@ -1767,7 +1771,7 @@ export default function RoleManagement(): React.ReactElement {
                 onClick={() => openAddStaffModal()}
                 disabled={!isSuperAdminOrOwner}
                 size="sm"
-                className="h-9 px-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs gap-1.5 shrink-0"
+                className="h-9 px-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs gap-1.5 shrink-0 min-h-[44px] sm:min-h-[36px] touch-manipulation"
               >
                 <UserPlus className="w-3.5 h-3.5 text-blue-400" />
                 <span>Add Staff</span>
@@ -1916,6 +1920,7 @@ export default function RoleManagement(): React.ReactElement {
               onSetManager={handleSetManager}
               onOpenAddStaff={(mgrId) => openAddStaffModal(undefined, mgrId)}
               searchQuery={staffSearchQuery}
+              defaultScopedUserId={!isSuperAdminOrOwner && user?.id ? user.id : undefined}
             />
           )}
         </div>

@@ -273,4 +273,59 @@ describe("CRMTeamTreeView Component", () => {
 
     expect(screen.getAllByText("User A").length).toBeGreaterThanOrEqual(1);
   });
+
+  it("7. Specific user scoping: Roots tree at specific user to show team members working under them", () => {
+    const { container } = render(
+      <CRMTeamTreeView
+        staff={mockStaff}
+        roles={mockRoles}
+        currentUserId="user-owner-1"
+        defaultScopedUserId="user-manager-1"
+        isSuperAdminOrOwner={true}
+        onAssignRole={onAssignRoleMock}
+        onSetManager={onSetManagerMock}
+      />
+    );
+
+    const treeContainer = container.querySelector(".lg\\:col-span-7")!;
+
+    // Vikram Malhotra (owner/parent) should NOT be in the scoped tree
+    expect(within(treeContainer as HTMLElement).queryByText("Vikram Malhotra")).not.toBeInTheDocument();
+
+    // Pooja Sharma (manager) is the apex of this scoped tree
+    expect(within(treeContainer as HTMLElement).getByText("Pooja Sharma")).toBeInTheDocument();
+
+    // Rohan and Ananya (subordinates) are displayed under Pooja
+    expect(within(treeContainer as HTMLElement).getByText("Rohan Verma")).toBeInTheDocument();
+    expect(within(treeContainer as HTMLElement).getByText("Ananya Iyer")).toBeInTheDocument();
+  });
+
+  it("8. Inline space-saving drop down button: Expands inline details and reports right inside the tree view", () => {
+    const { container } = render(
+      <CRMTeamTreeView
+        staff={mockStaff}
+        roles={mockRoles}
+        currentUserId="user-owner-1"
+        isSuperAdminOrOwner={true}
+        onAssignRole={onAssignRoleMock}
+        onSetManager={onSetManagerMock}
+      />
+    );
+
+    const treeContainer = container.querySelector(".lg\\:col-span-7")!;
+    const poojaNode = within(treeContainer as HTMLElement).getByText("Pooja Sharma").closest(".group");
+    expect(poojaNode).toBeDefined();
+
+    // Click Details button on Pooja Sharma
+    const detailsBtn = within(poojaNode!).getByRole("button", { name: /Details/i });
+    fireEvent.click(detailsBtn);
+
+    // Inline details expanded: shows Team Members Under Pooja Sharma (2) directly in tree
+    expect(within(treeContainer as HTMLElement).getByText("Team Members Under Pooja Sharma (2)")).toBeInTheDocument();
+
+    // Click again to collapse and save space
+    fireEvent.click(detailsBtn);
+    expect(within(treeContainer as HTMLElement).queryByText("Team Members Under Pooja Sharma (2)")).not.toBeInTheDocument();
+  });
 });
+
