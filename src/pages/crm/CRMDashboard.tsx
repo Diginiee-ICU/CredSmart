@@ -194,7 +194,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Daily clock-in/out, biometric sync, geo-fence, and overtime logs",
       url: ROUTE_PATHS.crmAttendance,
       icon: CalendarCheck,
-      badge: "Active",
       accentColor: "#1D4ED8",
       bgLight: "bg-blue-50/70",
       borderLight: "border-blue-200/80",
@@ -204,7 +203,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Automated wage calculation, advances, deductions, and pay slips",
       url: ROUTE_PATHS.crmSalary,
       icon: Wallet,
-      badge: "Phase 2",
       accentColor: "#10B981",
       bgLight: "bg-emerald-50/70",
       borderLight: "border-emerald-200/80",
@@ -214,7 +212,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Assign store jobs, set deadlines, track Kanban, and verify proof of work",
       url: ROUTE_PATHS.crmTasks,
       icon: CheckSquare,
-      badge: "Phase 3",
       accentColor: "#FF6A00",
       bgLight: "bg-amber-50/70",
       borderLight: "border-amber-200/80",
@@ -224,7 +221,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "One-click team video huddles, shift handovers, and screen sharing",
       url: ROUTE_PATHS.crmMeet,
       icon: Video,
-      badge: "Phase 4",
       accentColor: "#6366F1",
       bgLight: "bg-indigo-50/70",
       borderLight: "border-indigo-200/80",
@@ -234,7 +230,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Urgent announcements, store circulars, and instant push notices",
       url: ROUTE_PATHS.crmBroadcasts,
       icon: Radio,
-      badge: "Phase 4",
       accentColor: "#EC4899",
       bgLight: "bg-pink-50/70",
       borderLight: "border-pink-200/80",
@@ -244,7 +239,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Autonomous lead follow-ups, smart sales scripts, and staff insights",
       url: ROUTE_PATHS.crmAiAssistant,
       icon: Bot,
-      badge: "Phase 5",
       accentColor: "#8B5CF6",
       bgLight: "bg-purple-50/70",
       borderLight: "border-purple-200/80",
@@ -254,7 +248,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Omnichannel customer tickets, resolution SLA, and escalation rules",
       url: ROUTE_PATHS.crmSupport,
       icon: LifeBuoy,
-      badge: "Phase 6",
       accentColor: "#0EA5E9",
       bgLight: "bg-sky-50/70",
       borderLight: "border-sky-200/80",
@@ -264,7 +257,6 @@ export default function CRMDashboard(): React.ReactElement {
       description: "Custom roles, granular permission matrices, and user assignments",
       url: ROUTE_PATHS.crmRoles,
       icon: Shield,
-      badge: "Active",
       accentColor: "#0F172A",
       bgLight: "bg-slate-100/90",
       borderLight: "border-slate-300",
@@ -272,27 +264,21 @@ export default function CRMDashboard(): React.ReactElement {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-20">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-12 sm:pb-20 font-sans">
       {/* ── Page Header Strip using CRMPageHeader and CRMBadge ── */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-5 shadow-2xs">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-3.5 sm:py-5 shadow-2xs">
         <div className="max-w-7xl mx-auto">
           <CRMPageHeader
             title="CRM Command Center"
-            subtitle={`${org?.name ? `${org.name} • ` : ""}Unified customer relations, team attendance, tasks, and communications`}
+            subtitle={`${org?.name ? `${org.name} • ` : ""}Workforce operations, attendance, tasks, and communications`}
             breadcrumbs={[
               { label: "Home", href: "/" },
               { label: "CRM", href: ROUTE_PATHS.crm },
             ]}
             badge={
-              <div className="flex items-center gap-2">
-                <CRMBadge variant="info" size="sm" className="gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                  Phase 1 Foundation
-                </CRMBadge>
-                <CRMBadge variant="success" size="sm" dot>
-                  Live Sync
-                </CRMBadge>
-              </div>
+              <CRMBadge variant="success" size="sm" dot>
+                Live Sync
+              </CRMBadge>
             }
             actions={
               <>
@@ -300,7 +286,7 @@ export default function CRMDashboard(): React.ReactElement {
                   type="button"
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer min-h-[40px] sm:min-h-[36px] touch-manipulation"
                   title="Refresh CRM metrics"
                 >
                   <RotateCw className={`w-4 h-4 text-slate-500 ${refreshing ? "animate-spin" : ""}`} />
@@ -309,10 +295,10 @@ export default function CRMDashboard(): React.ReactElement {
 
                 <Link
                   to={ROUTE_PATHS.crmRoles}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-all hover:shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs transition-all hover:shadow-sm min-h-[40px] sm:min-h-[36px] touch-manipulation"
                 >
                   <Shield className="w-4 h-4" />
-                  <span>Role Management</span>
+                  <span>Roles &amp; Hierarchy</span>
                 </Link>
               </>
             }
@@ -321,7 +307,7 @@ export default function CRMDashboard(): React.ReactElement {
       </header>
 
       {/* ── Main Container ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* ── Metric Summary Cards Grid using CRMStatCard (Responsive 375px, 768px, 1280px) ── */}
         <section aria-label="CRM Key Metrics">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">

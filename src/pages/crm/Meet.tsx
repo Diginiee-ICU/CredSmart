@@ -250,14 +250,9 @@ export default function Meet(): React.ReactElement {
                 { label: "Meet", href: ROUTE_PATHS.crmMeet },
               ]}
               badge={
-                <div className="flex items-center gap-2">
-                  <CRMBadge variant="info" size="sm">
-                    Phase 4 Active
-                  </CRMBadge>
-                  <CRMBadge variant="success" size="sm" dot>
-                    WebRTC Ready
-                  </CRMBadge>
-                </div>
+                <CRMBadge variant="success" size="sm" dot>
+                  WebRTC Ready
+                </CRMBadge>
               }
               actions={
                 <div className="flex items-center gap-2">

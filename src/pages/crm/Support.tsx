@@ -490,14 +490,9 @@ export default function Support(): React.ReactElement {
                 { label: "Support", href: ROUTE_PATHS.crmSupport },
               ]}
               badge={
-                <div className="flex items-center gap-2">
-                  <CRMBadge variant="info" size="sm">
-                    Phase 6 Active
-                  </CRMBadge>
-                  <CRMBadge variant="success" size="sm" dot>
-                    SLA Live
-                  </CRMBadge>
-                </div>
+                <CRMBadge variant="success" size="sm" dot>
+                  SLA Live
+                </CRMBadge>
               }
               actions={
                 <Button

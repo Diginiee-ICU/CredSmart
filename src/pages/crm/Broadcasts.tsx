@@ -302,14 +302,9 @@ export default function Broadcasts(): React.ReactElement {
                 { label: "Broadcasts", href: ROUTE_PATHS.crmBroadcasts },
               ]}
               badge={
-                <div className="flex items-center gap-2">
-                  <CRMBadge variant="info" size="sm">
-                    Phase 4 Active
-                  </CRMBadge>
-                  <CRMBadge variant="success" size="sm" dot>
-                    Push Alerts Ready
-                  </CRMBadge>
-                </div>
+                <CRMBadge variant="success" size="sm" dot>
+                  Push Alerts Ready
+                </CRMBadge>
               }
               actions={
                 canSend && (

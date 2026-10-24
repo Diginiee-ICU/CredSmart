@@ -1597,13 +1597,13 @@ export default function Attendance(): React.ReactElement {
         </div>
       }
     >
-      <div className="space-y-6 pb-12 max-w-7xl mx-auto px-3 sm:px-6">
+      <div className="space-y-4 sm:space-y-6 pb-12 max-w-7xl mx-auto px-2.5 sm:px-6">
         {/* ====================================================================== */}
         {/* Page Header                                                            */}
         {/* ====================================================================== */}
         <CRMPageHeader
           title="Attendance & Geolocation Hub"
-          subtitle="GPS geofence verified staff clock-in, active work sessions, shifts, and team oversight"
+          subtitle="GPS verified clock-in, active work sessions, and shift tracking"
           breadcrumbs={[
             { label: "Home", href: "/" },
             { label: "CRM", href: ROUTE_PATHS.crm },
@@ -1611,7 +1611,7 @@ export default function Attendance(): React.ReactElement {
           ]}
           badge={
             <CRMBadge variant="success" size="sm" dot>
-              Phase 2 Live
+              Live Sync
             </CRMBadge>
           }
           actions={

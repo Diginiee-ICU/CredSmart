@@ -713,9 +713,6 @@ export default function Tasks(): React.ReactElement {
               ]}
               badge={
                 <div className="flex items-center gap-2">
-                  <CRMBadge variant="info" size="sm">
-                    Phase 3 Active
-                  </CRMBadge>
                   <CRMBadge variant="success" size="sm" dot>
                     Kanban Ready
                   </CRMBadge>

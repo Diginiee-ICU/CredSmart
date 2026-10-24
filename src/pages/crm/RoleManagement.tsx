@@ -1447,7 +1447,7 @@ export default function RoleManagement(): React.ReactElement {
                   key={role.id}
                   onClick={() => setSelectedRole(role)}
                   className={cn(
-                    "rounded-2xl border p-5 transition-all cursor-pointer bg-white relative flex flex-col justify-between group",
+                    "rounded-2xl border p-3.5 sm:p-5 transition-all cursor-pointer bg-white relative flex flex-col justify-between group",
                     isSelected
                       ? "ring-2 ring-blue-600 border-blue-500 shadow-md bg-blue-50/10"
                       : "border-slate-200/80 hover:border-slate-300 hover:shadow-xs"
@@ -1551,7 +1551,7 @@ export default function RoleManagement(): React.ReactElement {
         {selectedRole && (
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-200/80 bg-slate-50/70 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-200/80 bg-slate-50/70 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center font-bold"
@@ -1615,7 +1615,7 @@ export default function RoleManagement(): React.ReactElement {
             </div>
 
             {/* Matrix Module Rows with Mobile Accordion Support */}
-            <div className="p-4 sm:p-5 divide-y divide-slate-100">
+            <div className="p-3 sm:p-5 divide-y divide-slate-100">
               {CRM_MODULES.map((mod) => {
                 const modAllowedCount = mod.actions.filter((act) =>
                   selectedRole.is_super_admin ? true : Boolean(matrixState[`${mod.id}:${act.id}`])
@@ -1710,7 +1710,7 @@ export default function RoleManagement(): React.ReactElement {
         {/* ───────────────────────────────────────────────────────────── */}
         {/* 3. SEARCHABLE STAFF ROLE ASSIGNMENT & TEAM TREE SECTION */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-3 sm:p-5">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2">

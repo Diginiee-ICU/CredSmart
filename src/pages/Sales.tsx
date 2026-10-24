@@ -651,7 +651,7 @@ export default function Sales() {
         </div>
 
         {/* Mobile Compact 4-Col KPI Mini Strip (Mobile Only) */}
-        <div className="grid grid-cols-4 sm:hidden gap-1.5 shrink-0">
+        <div className="grid grid-cols-2 sm:hidden gap-2 shrink-0">
           <div
             onClick={() => setStatusFilter(statusFilter === "all" ? "all" : "all")}
             className={cn(

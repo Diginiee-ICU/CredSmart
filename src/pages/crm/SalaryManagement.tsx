@@ -1166,15 +1166,15 @@ export default function SalaryManagement(): React.ReactElement {
         {/* ================================================================== */}
         <CRMPageHeader
           title="Salary Management & Payroll Engine"
-          subtitle="Staff compensation structures, monthly payroll runs, advances, deductions, and payslips"
+          subtitle="Staff compensation, monthly payroll runs, advances, and payslips"
           breadcrumbs={[
             { label: "Home", href: "/" },
             { label: "CRM", href: ROUTE_PATHS.crm },
             { label: "Salary & Payroll", href: ROUTE_PATHS.crmSalary },
           ]}
           badge={
-            <CRMBadge variant="orange" size="sm" dot>
-              Phase 3 Live
+            <CRMBadge variant="emerald" size="sm" dot>
+              Live Sync
             </CRMBadge>
           }
           actions={

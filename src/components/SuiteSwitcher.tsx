@@ -93,17 +93,18 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 cursor-pointer",
+          "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[36px] sm:min-h-[32px]",
           effectiveSuite === "billing"
             ? "bg-amber-500 text-white shadow-sm font-bold"
             : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
         )}
       >
-        <span>POS & Billing</span>
+        <span className="hidden sm:inline">POS & Billing</span>
+        <span className="sm:hidden font-bold">POS</span>
         {effectiveSuite === "billing" && (
           <span
             data-testid="active-suite-badge-billing"
-            className="text-[10px] bg-amber-600 px-1 rounded uppercase tracking-wider font-bold"
+            className="text-[10px] bg-amber-600 px-1 rounded uppercase tracking-wider font-bold hidden sm:inline-block"
           >
             Active
           </span>
@@ -125,7 +126,7 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 cursor-pointer",
+          "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[36px] sm:min-h-[32px]",
           effectiveSuite === "crm"
             ? "bg-emerald-600 text-white shadow-sm font-bold"
             : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -135,7 +136,7 @@ function SuiteSwitcherView({
         {effectiveSuite === "crm" && (
           <span
             data-testid="active-suite-badge-crm"
-            className="text-[10px] bg-emerald-700 px-1 rounded uppercase tracking-wider font-bold"
+            className="text-[10px] bg-emerald-700 px-1 rounded uppercase tracking-wider font-bold hidden sm:inline-block"
           >
             Active
           </span>

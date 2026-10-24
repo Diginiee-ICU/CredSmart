@@ -211,14 +211,9 @@ export default function AIAssistant(): React.ReactElement {
                 { label: "AI Assistant", href: ROUTE_PATHS.crmAiAssistant },
               ]}
               badge={
-                <div className="flex items-center gap-2">
-                  <CRMBadge variant="info" size="sm">
-                    Phase 5 Active
-                  </CRMBadge>
-                  <CRMBadge variant="success" size="sm" dot>
-                    Linear Copilot
-                  </CRMBadge>
-                </div>
+                <CRMBadge variant="success" size="sm" dot>
+                  Linear Copilot
+                </CRMBadge>
               }
               actions={
                 <div className="flex items-center gap-2">

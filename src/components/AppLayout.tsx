@@ -93,55 +93,55 @@ function getPageMeta(pathname: string): PageMeta {
   if (pathname === ROUTE_PATHS.crm || pathname === "/crm" || pathname === "/crm/dashboard") {
     return {
       title: "CRM Command Center",
-      subtitle: "Unified workforce, staff attendance, task boards, and company operations",
+      subtitle: "Workforce & Operations",
     };
   }
   if (pathname === ROUTE_PATHS.crmAttendance || pathname === "/crm/attendance") {
     return {
       title: "Attendance & Geofence",
-      subtitle: "Real-time GPS geofenced clock-in, shift tracking, and daily rosters",
+      subtitle: "Staff Clock-In & Shifts",
     };
   }
   if (pathname === ROUTE_PATHS.crmSalary || pathname === "/crm/salary") {
     return {
       title: "Salary & Payroll Engine",
-      subtitle: "Staff compensation profiles, monthly payroll runs, advances, and payslips",
+      subtitle: "Payroll & Compensation",
     };
   }
   if (pathname === ROUTE_PATHS.crmTasks || pathname === "/crm/tasks") {
     return {
       title: "Enterprise Task Management",
-      subtitle: "Assign tasks, track Kanban stages, review proofs, and audit approvals",
+      subtitle: "Task Board & Workflow",
     };
   }
   if (pathname === ROUTE_PATHS.crmRoles || pathname === "/crm/roles") {
     return {
       title: "CRM Role & Permission Manager",
-      subtitle: "Configure custom roles, granular module permissions, and staff assignments",
+      subtitle: "Roles & Hierarchy",
     };
   }
   if (pathname === ROUTE_PATHS.crmMeet || pathname === "/crm/meet") {
     return {
       title: "CredSmart Video Meet",
-      subtitle: "Host instant video huddles, team scrums, and multi-user conferences",
+      subtitle: "Video Conferencing",
     };
   }
   if (pathname === ROUTE_PATHS.crmBroadcasts || pathname === "/crm/broadcasts") {
     return {
       title: "Company Broadcasts",
-      subtitle: "Dispatch storewide announcements, urgent alerts, and workforce bulletins",
+      subtitle: "Team Bulletins",
     };
   }
   if (pathname === ROUTE_PATHS.crmAiAssistant || pathname === "/crm/ai-assistant") {
     return {
       title: "CRM AI Assistant",
-      subtitle: "Conversational business intelligence, policy queries, and automated workflows",
+      subtitle: "Retail Intelligence",
     };
   }
   if (pathname === ROUTE_PATHS.crmSupport || pathname === "/crm/support") {
     return {
       title: "Support & Helpdesk",
-      subtitle: "Internal workforce ticketing, bug tracking, and staff technical support",
+      subtitle: "Helpdesk & Tickets",
     };
   }
 
@@ -155,97 +155,97 @@ function getPageMeta(pathname: string): PageMeta {
   ) {
     return {
       title: "Dashboard",
-      subtitle: "Real-time store overview, key metrics, and daily performance",
+      subtitle: "Store Overview",
     };
   }
   if (pathname === ROUTE_PATHS.checkout || pathname === ROUTE_PATHS.pos) {
     return {
       title: "POS Billing & Checkout",
-      subtitle: "Fast checkout, barcode scan & instant invoice generation",
+      subtitle: "POS Terminal",
     };
   }
   if (pathname === ROUTE_PATHS.parties) {
     return {
       title: "Parties & SharedLedger Hub",
-      subtitle: "Customers, suppliers, balances, and real-time SharedLedger synchronization",
+      subtitle: "Ledgers & Khatas",
     };
   }
   if (pathname === ROUTE_PATHS.customers) {
     return {
       title: "Customer Ledger (Udhar Khata)",
-      subtitle: "Track credit balances, customer khata, and payment receipts",
+      subtitle: "Customer Khatas",
     };
   }
   if (pathname === ROUTE_PATHS.suppliers) {
     return {
       title: "Supplier Ledger & Payables",
-      subtitle: "Manage vendor accounts, purchase bills, and pending payouts",
+      subtitle: "Supplier Payables",
     };
   }
   if (pathname === ROUTE_PATHS.items) {
     return {
       title: "Items Master Catalog",
-      subtitle: "Manage products, barcodes, GST rates, and categories",
+      subtitle: "Product Master",
     };
   }
   if (pathname === ROUTE_PATHS.inventory) {
     return {
       title: "Inventory Management",
-      subtitle: "Live stock levels, low-stock warnings, and stock adjustments",
+      subtitle: "Stock & Godowns",
     };
   }
   if (pathname === ROUTE_PATHS.godown) {
     return {
       title: "Godown & Multi-Warehouse Hub",
-      subtitle: "Multi-warehouse tracking, capacity metrics, and stock transfers",
+      subtitle: "Multi-Warehouse",
     };
   }
   if (pathname === ROUTE_PATHS.barcode) {
     return {
       title: "Barcode Label Generator",
-      subtitle: "Design and print custom product barcode stickers",
+      subtitle: "Barcode Designer",
     };
   }
   if (pathname === ROUTE_PATHS.sales) {
     return {
       title: "Sales Hub & Invoices",
-      subtitle: "Tax invoices, quotations, delivery challans, and credit notes",
+      subtitle: "Sales & Invoicing",
     };
   }
   if (pathname === ROUTE_PATHS.salesHistory) {
     return {
       title: "Sales & Invoicing History",
-      subtitle: "Search, filter, reprint, and track customer transactions",
+      subtitle: "Invoice History",
     };
   }
   if (pathname === ROUTE_PATHS.purchases) {
     return {
       title: "Purchase Hub & Bills",
-      subtitle: "Vendor purchases, inward items, debit notes, and payment out",
+      subtitle: "Purchase Orders",
     };
   }
   if (pathname === ROUTE_PATHS.purchaseReturns) {
     return {
       title: "Purchase Returns & Debit Notes",
-      subtitle: "Manage inward returns, debit vouchers, and vendor refunds",
+      subtitle: "Inward Returns",
     };
   }
   if (pathname === ROUTE_PATHS.discovery) {
     return {
       title: "Verified B2B Vendor Discovery",
-      subtitle: "Direct wholesale prices from verified manufacturers and distributors",
+      subtitle: "B2B Wholesale",
     };
   }
   if (pathname === ROUTE_PATHS.reports) {
     return {
       title: "Financial & Tax Reports",
-      subtitle: "GSTR-1, GSTR-3B, Profit & Loss, Balance Sheet, and Tax Audit books",
+      subtitle: "GST & Tax Books",
     };
   }
   if (pathname === ROUTE_PATHS.analytics) {
     return {
       title: "Business Analytics & Insights",
-      subtitle: "Revenue trends, product velocities, profit margins, and AI forecasts",
+      subtitle: "Business Insights",
     };
   }
   if (pathname === ROUTE_PATHS.cashBank) {
