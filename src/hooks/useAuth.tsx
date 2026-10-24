@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Safety timeout to prevent any infinite spinner if supabase client takes time
     const safetyTimer = setTimeout(() => {
-      if (isMounted && loading) {
+      if (isMounted) {
         setLoading(false);
       }
     }, 1500);
