@@ -485,7 +485,7 @@ export default function AppLayout() {
                 className="flex items-center rounded-lg sm:rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-200 cursor-pointer hover-3d-glow py-0.5 sm:py-1 shrink-0"
               >
                 <img
-                  src="./logo-static.jpeg"
+                  src="/logo-static.jpeg"
                   alt="CredSmart"
                   className="h-7 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[70px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
