@@ -39,6 +39,7 @@ import {
   Phone,
   Mail,
   User,
+  Network,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTE_PATHS } from "@/config/routes";
@@ -58,7 +59,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CRMRolePill } from "@/components/crm";
+import { CRMRolePill, CRMTeamTreeView } from "@/components/crm";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,11 @@ interface StaffMember {
   role: string; // store role (salesman, cashier, etc.)
   crmRoleId?: string;
   assignedAt?: string;
+  email?: string;
+  phone?: string;
+  parentId?: string | null;
+  createdBy?: string | null;
+  assignedBy?: string | null;
 }
 
 interface ModuleAction {
@@ -290,6 +296,12 @@ export default function RoleManagement(): React.ReactElement {
   // Search filter for staff assignment
   const [staffSearchQuery, setStaffSearchQuery] = useState<string>("");
 
+  // Staff View Mode: 'list' or 'tree'
+  const [staffViewMode, setStaffViewMode] = useState<"list" | "tree">("list");
+
+  // Hierarchy mapping: subordinateId -> managerId
+  const [hierarchyMap, setHierarchyMap] = useState<Record<string, string>>({});
+
   // Modal States
   const [roleModalOpen, setRoleModalOpen] = useState<boolean>(false);
   const [editingRole, setEditingRole] = useState<CRMRole | null>(null);
@@ -308,6 +320,7 @@ export default function RoleManagement(): React.ReactElement {
   const [staffFormPhone, setStaffFormPhone] = useState<string>("");
   const [staffFormStoreRole, setStaffFormStoreRole] = useState<string>("salesman");
   const [staffFormCrmRole, setStaffFormCrmRole] = useState<string>("none");
+  const [staffFormManagerId, setStaffFormManagerId] = useState<string>("none");
   const [passwordMode, setPasswordMode] = useState<"auto" | "custom">("auto");
   const [staffFormAutoPassword, setStaffFormAutoPassword] = useState<string>("");
   const [staffFormCustomPassword, setStaffFormCustomPassword] = useState<string>("");
@@ -408,14 +421,18 @@ export default function RoleManagement(): React.ReactElement {
       );
       const userIds = memberRows.map((m) => m.user_id);
 
-      // Fetch user profile names
-      const profileMap: Record<string, string> = {};
+      // Fetch user profile info (name, email, phone)
+      const profileMap: Record<string, { name: string; email?: string; phone?: string }> = {};
       if (userIds.length > 0) {
         const { data: profilesData } = await settingsApi.getProfiles({ ids: userIds });
 
         if (Array.isArray(profilesData)) {
           profilesData.forEach((p) => {
-            if (p.full_name) profileMap[p.id] = p.full_name;
+            profileMap[p.id] = {
+              name: p.full_name || p.name || "",
+              email: p.email || undefined,
+              phone: p.phone || undefined,
+            };
           });
         }
       }
@@ -430,14 +447,45 @@ export default function RoleManagement(): React.ReactElement {
         assignmentMap[sr.staff_id] = sr.role_id;
       });
 
-      // Construct staff list
-      const staffListBuilt: StaffMember[] = memberRows.map((m) => ({
-        id: m.user_id,
-        membershipId: m.id,
-        name: profileMap[m.user_id] || `User (${m.user_id.slice(0, 8)})`,
-        role: m.role || "staff",
-        crmRoleId: assignmentMap[m.user_id],
-      }));
+      // 5. Restore or infer team reporting hierarchy
+      let loadedHierarchy: Record<string, string> = {};
+      try {
+        const cachedRaw = localStorage.getItem(`credsmart_crm_team_hierarchy_${orgId}`);
+        if (cachedRaw) {
+          loadedHierarchy = JSON.parse(cachedRaw) || {};
+        }
+      } catch (e) {
+        console.warn("Failed reading cached hierarchy:", e);
+      }
+
+      // Infer hierarchy from assigned_by if not present
+      (Array.isArray(staffRolesData) ? staffRolesData : []).forEach((sr: CRMStaffRole) => {
+        if (sr.staff_id && sr.assigned_by && !loadedHierarchy[sr.staff_id]) {
+          loadedHierarchy[sr.staff_id] = sr.assigned_by;
+        }
+      });
+      setHierarchyMap(loadedHierarchy);
+
+      // Construct staff list with hierarchy
+      const staffListBuilt: StaffMember[] = memberRows.map((m) => {
+        const prof = profileMap[m.user_id];
+        const assignedManager =
+          loadedHierarchy[m.user_id] ||
+          (m.role !== "store_owner" && m.role !== "super_admin" ? (user?.id ?? null) : null);
+
+        return {
+          id: m.user_id,
+          membershipId: m.id,
+          name: prof?.name || `User (${m.user_id.slice(0, 8)})`,
+          role: m.role || "staff",
+          crmRoleId: assignmentMap[m.user_id],
+          email: prof?.email,
+          phone: prof?.phone,
+          parentId: assignedManager,
+          createdBy: assignedManager,
+          assignedBy: assignedManager,
+        };
+      });
 
       // If no members returned (e.g. preview mode), fallback to authenticated user
       if (staffListBuilt.length === 0 && user?.id) {
@@ -447,6 +495,9 @@ export default function RoleManagement(): React.ReactElement {
           name: user.email?.split("@")[0] || "Organization Owner",
           role: userRole || "store_owner",
           crmRoleId: resolvedRoles[0]?.id,
+          email: user.email || undefined,
+          parentId: null,
+          createdBy: null,
         });
         assignmentMap[user.id] = resolvedRoles[0]?.id;
       }
@@ -816,7 +867,39 @@ export default function RoleManagement(): React.ReactElement {
   // Staff User Provisioning & Credentials Confirmation Handlers
   // ──────────────────────────────────────────────────────────────────────────
 
-  const openAddStaffModal = (preselectedRoleId?: string) => {
+  const handleSetManager = (subordinateId: string, managerId: string | null) => {
+    if (!isSuperAdminOrOwner) {
+      toast({
+        title: "Unauthorized",
+        description: "Only Super Admins can update reporting lines.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const updated = { ...hierarchyMap };
+    if (managerId) {
+      updated[subordinateId] = managerId;
+    } else {
+      delete updated[subordinateId];
+    }
+    setHierarchyMap(updated);
+    if (orgId) {
+      localStorage.setItem(`credsmart_crm_team_hierarchy_${orgId}`, JSON.stringify(updated));
+    }
+    setStaffList((prev) =>
+      prev.map((s) => (s.id === subordinateId ? { ...s, parentId: managerId, createdBy: managerId } : s))
+    );
+    const subordinate = staffList.find((s) => s.id === subordinateId);
+    const manager = staffList.find((s) => s.id === managerId);
+    toast({
+      title: "Hierarchy Updated",
+      description: manager
+        ? `${subordinate?.name || "Member"} now reports to ${manager.name}.`
+        : `${subordinate?.name || "Member"} moved to organization apex.`,
+    });
+  };
+
+  const openAddStaffModal = (preselectedRoleId?: string, preselectedManagerId?: string) => {
     if (!isSuperAdminOrOwner) {
       toast({
         title: "Unauthorized",
@@ -832,6 +915,7 @@ export default function RoleManagement(): React.ReactElement {
     setStaffFormCrmRole(
       preselectedRoleId || (selectedRole && !selectedRole.is_super_admin ? selectedRole.id : "none")
     );
+    setStaffFormManagerId(preselectedManagerId || user?.id || (staffList[0]?.id ?? "none"));
     setPasswordMode("auto");
     setStaffFormAutoPassword(generateCryptographicPassword(14));
     setStaffFormCustomPassword("");
@@ -864,6 +948,7 @@ export default function RoleManagement(): React.ReactElement {
     }
 
     const crmRoleIdToAssign = staffFormCrmRole !== "none" ? staffFormCrmRole : null;
+    const effectiveManagerId = staffFormManagerId !== "none" ? staffFormManagerId : user?.id || null;
 
     setSubmittingStaff(true);
     try {
@@ -883,6 +968,13 @@ export default function RoleManagement(): React.ReactElement {
       const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
       const newUserId = res?.data?.user?.id || `user-${Date.now()}`;
 
+      // Update hierarchy
+      if (effectiveManagerId) {
+        const updatedHierarchy = { ...hierarchyMap, [newUserId]: effectiveManagerId };
+        setHierarchyMap(updatedHierarchy);
+        localStorage.setItem(`credsmart_crm_team_hierarchy_${orgId}`, JSON.stringify(updatedHierarchy));
+      }
+
       // In-memory instant roster hydration
       const newStaffEntry: StaffMember = {
         id: newUserId,
@@ -891,6 +983,11 @@ export default function RoleManagement(): React.ReactElement {
         role: payload.store_role,
         crmRoleId: crmRoleIdToAssign || undefined,
         assignedAt: new Date().toISOString(),
+        email: payload.email,
+        phone: payload.phone,
+        parentId: effectiveManagerId,
+        createdBy: effectiveManagerId,
+        assignedBy: effectiveManagerId,
       };
 
       setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== newUserId)]);
@@ -943,6 +1040,13 @@ export default function RoleManagement(): React.ReactElement {
       // Fallback: still hydrate locally and display credentials modal so user is not blocked
       const fallbackUserId = `user-${Date.now()}`;
       const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
+
+      if (effectiveManagerId) {
+        const updatedHierarchy = { ...hierarchyMap, [fallbackUserId]: effectiveManagerId };
+        setHierarchyMap(updatedHierarchy);
+        localStorage.setItem(`credsmart_crm_team_hierarchy_${orgId}`, JSON.stringify(updatedHierarchy));
+      }
+
       const newStaffEntry: StaffMember = {
         id: fallbackUserId,
         membershipId: `mem-${Date.now()}`,
@@ -950,6 +1054,11 @@ export default function RoleManagement(): React.ReactElement {
         role: staffFormStoreRole,
         crmRoleId: crmRoleIdToAssign || undefined,
         assignedAt: new Date().toISOString(),
+        email: staffFormEmail.trim().toLowerCase(),
+        phone: staffFormPhone.trim(),
+        parentId: effectiveManagerId,
+        createdBy: effectiveManagerId,
+        assignedBy: effectiveManagerId,
       };
       setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== fallbackUserId)]);
       if (crmRoleIdToAssign) {
@@ -1230,24 +1339,21 @@ export default function RoleManagement(): React.ReactElement {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
       {/* Top Banner / Breadcrumb */}
-      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-5">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 sm:py-5">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={ROUTE_PATHS.crm}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs transition-colors"
+              className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs transition-colors shrink-0"
               title="Back to CRM Command Center"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  RBAC Foundation
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Live
+                  Access &amp; Team Hierarchy
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200">
                   {roles.length} Dynamic Roles
@@ -1257,18 +1363,18 @@ export default function RoleManagement(): React.ReactElement {
                 CRM Role &amp; Permission Manager
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Configure user-defined roles, assign staff members, and toggle granular CRM module permissions.
+                Configure user roles, granular permissions, and organization team hierarchy.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <Button
               onClick={loadData}
               variant="outline"
               size="sm"
               disabled={loading}
-              className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5"
+              className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5 h-9"
             >
               <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
               <span>Refresh</span>
@@ -1279,7 +1385,7 @@ export default function RoleManagement(): React.ReactElement {
               disabled={!isSuperAdminOrOwner}
               variant="outline"
               size="sm"
-              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5"
+              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5 h-9"
             >
               <UserPlus className="w-4 h-4 text-blue-600" />
               <span>Add Staff User</span>
@@ -1288,7 +1394,7 @@ export default function RoleManagement(): React.ReactElement {
             <Button
               onClick={openCreateRoleModal}
               disabled={!isSuperAdminOrOwner}
-              className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5"
+              className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5 h-9"
             >
               <Plus className="w-4 h-4" />
               <span>Create Custom Role</span>
@@ -1298,42 +1404,15 @@ export default function RoleManagement(): React.ReactElement {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        {/* Architecture Notice Card */}
-        <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 p-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                  <span>Custom Configurable Role System</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                    Zero Hard-coded Roles
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-                  CredSmart CRM enforces completely dynamic permissions stored in <code className="font-mono text-blue-700 font-semibold">crm_roles</code> and <code className="font-mono text-blue-700 font-semibold">crm_permissions</code>. The default Super Admin role possesses full access across all 7 CRM modules.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-              <span className="text-xs font-medium text-slate-500">
-                14 Granular Actions • 7 Modules
-              </span>
-            </div>
-          </div>
-        </div>
-
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
         {/* Read-Only Alert for Non-Admins */}
         {!isSuperAdminOrOwner && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-800 flex items-start gap-3">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 sm:p-4 text-xs text-amber-800 flex items-start gap-3">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">Read-Only Mode</p>
               <p className="text-amber-700 mt-0.5">
-                You are currently viewing roles in read-only mode. Only Store Owners and Super Admins can create roles, modify the permissions matrix, and assign staff.
+                You are currently viewing roles in read-only mode. Only Store Owners and Super Admins can configure roles, permissions, and team members.
               </p>
             </div>
           </div>
@@ -1350,9 +1429,6 @@ export default function RoleManagement(): React.ReactElement {
                 Configured CRM Roles ({roles.length})
               </h2>
             </div>
-            <span className="text-xs text-slate-500">
-              Click any role card to view or modify its 14-action matrix
-            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1628,10 +1704,10 @@ export default function RoleManagement(): React.ReactElement {
         )}
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* 3. SEARCHABLE STAFF ROLE ASSIGNMENT SECTION */}
+        {/* 3. SEARCHABLE STAFF ROLE ASSIGNMENT & TEAM TREE SECTION */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-4 sm:p-5">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-600" />
@@ -1640,12 +1716,42 @@ export default function RoleManagement(): React.ReactElement {
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Assign customized CRM roles to team members or promote them to Super Admin.
+                Assign customized CRM roles to team members or switch to Team Tree View for organizational hierarchy.
               </p>
             </div>
 
-            {/* Staff Search Input & Add Staff Button */}
-            <div className="flex items-center gap-2 max-w-sm w-full">
+            {/* View Mode Toggle, Staff Search Input & Add Staff Button */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-xl w-full">
+              {/* Segmented View Mode Toggle */}
+              <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setStaffViewMode("list")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all",
+                    staffViewMode === "list"
+                      ? "bg-white text-blue-700 shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>List View</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStaffViewMode("tree")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all",
+                    staffViewMode === "tree"
+                      ? "bg-white text-blue-700 shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Network className="w-3.5 h-3.5" />
+                  <span>Team Tree View</span>
+                </button>
+              </div>
+
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <Input
@@ -1669,123 +1775,149 @@ export default function RoleManagement(): React.ReactElement {
             </div>
           </div>
 
-          {/* Staff Table / List */}
-          <div className="divide-y divide-slate-100">
-            {filteredStaff.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-500">
-                No staff members matching &ldquo;{staffSearchQuery}&rdquo;
-              </div>
-            ) : (
-              filteredStaff.map((staff) => {
-                const assignedRoleId = staffRolesMap[staff.id] || staff.crmRoleId;
-                const assignedRole = roles.find((r) => r.id === assignedRoleId);
-                const isStaffSuper = assignedRole?.is_super_admin === true;
+          {staffViewMode === "list" ? (
+            /* Staff Table / List */
+            <div className="divide-y divide-slate-100">
+              {filteredStaff.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-500">
+                  No staff members matching &ldquo;{staffSearchQuery}&rdquo;
+                </div>
+              ) : (
+                filteredStaff.map((staff) => {
+                  const assignedRoleId = staffRolesMap[staff.id] || staff.crmRoleId;
+                  const assignedRole = roles.find((r) => r.id === assignedRoleId);
+                  const isStaffSuper = assignedRole?.is_super_admin === true;
 
-                return (
-                  <div
-                    key={staff.id}
-                    className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/50 rounded-xl px-2 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
-                        {staff.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-900">{staff.name}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                            Store: {staff.role}
-                          </span>
+                  return (
+                    <div
+                      key={staff.id}
+                      className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/50 rounded-xl px-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                          {staff.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] text-slate-500">Assigned CRM Role:</span>
-                          {assignedRole ? (
-                            <CRMRolePill
-                              name={assignedRole.name}
-                              color={assignedRole.color}
-                              isSuperAdmin={isStaffSuper}
-                              icon={ICON_MAP[assignedRole.icon] || Shield}
-                              size="sm"
-                            />
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200">
-                              No CRM Access
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Role Dropdown and Promote/Demote Actions */}
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <div className="w-48">
-                        <Select
-                          value={assignedRoleId || "none"}
-                          disabled={!isSuperAdminOrOwner}
-                          onValueChange={(val) => handleAssignRole(staff.id, val)}
-                        >
-                          <SelectTrigger className="h-8 text-xs rounded-xl border-slate-200">
-                            <SelectValue placeholder="Select CRM Role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <span className="text-slate-400">None (No CRM Access)</span>
-                            </SelectItem>
-                            {roles.map((r) => (
-                              <SelectItem key={r.id} value={r.id}>
-                                <div className="flex items-center gap-1.5">
-                                  <span
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ backgroundColor: r.color }}
-                                  />
-                                  <span>{r.name}</span>
-                                  {r.is_super_admin && (
-                                    <span className="text-[10px] text-amber-600 font-bold ml-1">
-                                      (System Default)
-                                    </span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Promote to Super Admin / Demote Action */}
-                      {isSuperAdminOrOwner && (
                         <div>
-                          {isStaffSuper ? (
-                            <Button
-                              type="button"
-                              onClick={() => handleDemote(staff.id)}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 rounded-xl"
-                              title="Demote to standard role"
-                            >
-                              Demote
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              onClick={() => handlePromoteToSuperAdmin(staff.id)}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-200 rounded-xl gap-1"
-                              title="Promote directly to Super Admin"
-                            >
-                              <Crown className="w-3 h-3 text-amber-500 fill-amber-400" />
-                              <span>Promote</span>
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-900">{staff.name}</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                              Store: {staff.role}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[11px] text-slate-500">Assigned CRM Role:</span>
+                            {assignedRole ? (
+                              <CRMRolePill
+                                name={assignedRole.name}
+                                color={assignedRole.color}
+                                isSuperAdmin={isStaffSuper}
+                                icon={ICON_MAP[assignedRole.icon] || Shield}
+                                size="sm"
+                              />
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200">
+                                No CRM Access
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Role Dropdown and Promote/Demote Actions */}
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <div className="w-48">
+                          <Select
+                            value={assignedRoleId || "none"}
+                            disabled={!isSuperAdminOrOwner}
+                            onValueChange={(val) => handleAssignRole(staff.id, val)}
+                          >
+                            <SelectTrigger className="h-8 text-xs rounded-xl border-slate-200">
+                              <SelectValue placeholder="Select CRM Role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                <span className="text-slate-400">None (No CRM Access)</span>
+                              </SelectItem>
+                              {roles.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span
+                                      className="w-2 h-2 rounded-full"
+                                      style={{ backgroundColor: r.color }}
+                                    />
+                                    <span>{r.name}</span>
+                                    {r.is_super_admin && (
+                                      <span className="text-[10px] text-amber-600 font-bold ml-1">
+                                       (System Default)
+                                      </span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Promote to Super Admin / Demote Action */}
+                        {isSuperAdminOrOwner && (
+                          <div>
+                            {isStaffSuper ? (
+                              <Button
+                                type="button"
+                                onClick={() => handleDemote(staff.id)}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 rounded-xl"
+                                title="Demote to standard role"
+                              >
+                                Demote
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                onClick={() => handlePromoteToSuperAdmin(staff.id)}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-200 rounded-xl gap-1"
+                                title="Promote directly to Super Admin"
+                              >
+                                <Crown className="w-3 h-3 text-amber-500 fill-amber-400" />
+                                <span>Promote</span>
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            /* Interactive Team Tree View */
+            <CRMTeamTreeView
+              staff={staffList.map((s) => ({
+                id: s.id,
+                name: s.name,
+                email: s.email,
+                phone: s.phone,
+                role: s.role,
+                crmRoleId: staffRolesMap[s.id] || s.crmRoleId,
+                crmRoleName: roles.find((r) => r.id === (staffRolesMap[s.id] || s.crmRoleId))?.name,
+                crmRoleColor: roles.find((r) => r.id === (staffRolesMap[s.id] || s.crmRoleId))?.color,
+                parentId: hierarchyMap[s.id] || s.parentId || null,
+                createdBy: s.createdBy || null,
+                assignedBy: s.assignedBy || null,
+              }))}
+              roles={roles}
+              currentUserId={user?.id}
+              isSuperAdminOrOwner={isSuperAdminOrOwner}
+              onAssignRole={handleAssignRole}
+              onSetManager={handleSetManager}
+              onOpenAddStaff={(mgrId) => openAddStaffModal(undefined, mgrId)}
+              searchQuery={staffSearchQuery}
+            />
+          )}
         </div>
       </main>
 
@@ -2192,6 +2324,32 @@ export default function RoleManagement(): React.ReactElement {
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reports To (Team Hierarchy) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Reports To (Team Hierarchy)</span>
+                <span className="text-[10px] font-normal text-slate-400">Optional</span>
+              </label>
+              <Select value={staffFormManagerId} onValueChange={setStaffFormManagerId}>
+                <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200">
+                  <SelectValue placeholder="Select Manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-slate-500">Organization Apex (Root / Store Owner)</span>
+                  </SelectItem>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{s.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({s.role})</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
