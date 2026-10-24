@@ -652,7 +652,7 @@ export default function Suppliers() {
         ) : (
           <>
             {/* Mobile View: Cards */}
-            <div className="block md:hidden divide-y divide-border">
+            <div className="block md:hidden divide-y divide-border pb-24">
               {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">

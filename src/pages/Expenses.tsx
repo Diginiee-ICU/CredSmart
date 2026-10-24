@@ -617,7 +617,7 @@ export default function Expenses() {
           ) : (
             <>
               {/* MOBILE VIEW: Touch Expense Cards (Visible on screens < md) */}
-              <div className="block md:hidden p-2.5 space-y-2.5">
+              <div className="block md:hidden p-2.5 pb-24 space-y-2.5">
                 {paginatedExpenses.map((exp) => (
                   <div
                     key={exp.id}

@@ -665,7 +665,7 @@ export default function Inventory() {
       {/* Inventory Table Container */}
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden relative">
         {/* Mobile View: Cards */}
-        <div className="block md:hidden divide-y divide-border">
+        <div className="block md:hidden divide-y divide-border pb-24">
           {paginatedItems.map((item) => {
             const stockPercent = Math.min(100, Math.max(0, (item.totalStock / (LOW_STOCK_THRESHOLD * 2.5)) * 100));
             const isOutOfStock = item.totalStock === 0;
