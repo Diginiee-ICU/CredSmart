@@ -964,7 +964,7 @@ return (
                 <span>{cat}</span>
                 {count > 0 && (
                   <span className={cn(
-                    "text-[10px] px-1 rounded-full font-mono",
+                    "text-[11px] px-1 rounded-full font-mono",
                     isSelected ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                   )}>
                     {count}
@@ -1090,7 +1090,7 @@ return (
                         >
                           {item.name}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono mt-0.5">
                           {item.brand && <span>{item.brand} ·</span>}
                           <span className="bg-slate-100 dark:bg-slate-800 px-1 rounded border border-slate-200/60 dark:border-slate-700/60">
                             {item.category}
@@ -1101,17 +1101,17 @@ return (
 
                     <div className="shrink-0">
                       {isZero ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                           0 Stock
                         </span>
                       ) : isLow ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                           {item.currentStock} {item.unit}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           {item.currentStock} {item.unit}
                         </span>
@@ -1122,19 +1122,19 @@ return (
                   {/* Middle Line: Pricing & Stock figures in Tabular Num */}
                   <div className="flex items-center justify-between text-xs font-mono py-1 border-t border-b border-slate-100 dark:border-slate-800/60">
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-sans">Selling Price</span>
+                      <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-sans">Selling Price</span>
                       <span className="font-bold tabular-nums text-slate-900 dark:text-white text-xs">
                         ₹ {(Number(item.sellingPrice) || 0).toLocaleString("en-IN")}
                       </span>
                       {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
-                        <span className="text-[9.5px] text-slate-400 line-through ml-1 tabular-nums">
+                        <span className="text-[11px] text-slate-400 line-through ml-1 tabular-nums">
                           ₹{Number(item.mrp || 0).toLocaleString("en-IN")}
                         </span>
                       )}
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-sans">Cost Price</span>
+                      <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-sans">Cost Price</span>
                       <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400 text-xs">
                         ₹ {(Number(item.purchasePrice) || 0).toLocaleString("en-IN")}
                       </span>
@@ -1143,7 +1143,7 @@ return (
 
                   {/* Bottom Line: SKU / Barcode + Adjust & More Actions (≥44px touch targets) */}
                   <div className="flex items-center justify-between gap-2 pt-0.5">
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono truncate min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono truncate min-w-0">
                       {item.sku && (
                         <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 truncate font-semibold">
                           {item.sku}
@@ -1211,7 +1211,7 @@ return (
         {/* DESKTOP VIEW: High-Density Data Table (Visible on md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
           <table className="w-full text-xs text-left min-w-[640px]">
-            <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-mono text-[10.5px] uppercase tracking-wider z-10">
+            <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-mono text-[11px] uppercase tracking-wider z-10">
               <tr>
                 <th className="px-3 py-2.5 w-10 text-center">
                   <button
@@ -1362,7 +1362,7 @@ return (
                             >
                               {item.name}
                             </span>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap mt-0.5">
                               {item.brand && <span>{item.brand} ·</span>}
                               <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded border border-slate-200/60 dark:border-slate-700/60 font-mono text-slate-600 dark:text-slate-400">
                                 {item.category}
@@ -1388,7 +1388,7 @@ return (
                         <div className="space-y-0.5">
                           <span className="font-bold text-slate-900 dark:text-white text-xs">{item.sku || "—"}</span>
                           {item.barcode ? (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                               <QrCode className="w-3 h-3 text-slate-400" />
                               <span>{item.barcode}</span>
                 
@@ -1402,24 +1402,24 @@ return (
                           <div className="font-mono tabular-nums font-bold text-xs text-slate-900 dark:text-white">
                             {item.currentStock} <span className="font-normal text-slate-500 text-[11px]">{item.unit}</span>
                             {item.altUnit && item.altUnitConversion && item.altUnitConversion > 1 && (
-                              <span className="block text-[10px] font-normal text-slate-400 font-mono">
+                              <span className="block text-[11px] font-normal text-slate-400 font-mono">
                                 ({(item.currentStock / item.altUnitConversion).toFixed(1).replace(/\.0$/, "")} {item.altUnit})
                               </span>
                             )}
                           </div>
                           <div>
                             {isZero ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                 Out of Stock
                               </span>
                             ) : isLow ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                 Low Stock
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 In Stock
                               </span>
@@ -1434,7 +1434,7 @@ return (
                           ₹ {(Number(item.sellingPrice) || 0).toLocaleString("en-IN")}
                         </span>
                         {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
-                          <p className="text-[10px] text-slate-400 line-through tabular-nums">
+                          <p className="text-[11px] text-slate-400 line-through tabular-nums">
                             MRP ₹{Number(item.mrp || 0).toLocaleString("en-IN")}
               
                         )}
@@ -1445,7 +1445,7 @@ return (
                         <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400 text-xs">
                           ₹ {(Number(item.purchasePrice) || 0).toLocaleString("en-IN")}
                         </span>
-                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
                           Margin: ₹ {Math.max(0, (Number(item.sellingPrice) || 0) - (Number(item.purchasePrice) || 0)).toLocaleString("en-IN")}
             
                       </td>

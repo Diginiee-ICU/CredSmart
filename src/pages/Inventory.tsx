@@ -433,23 +433,23 @@ export default function Inventory() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
+    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans bg-slate-50/50 dark:bg-slate-950/50">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2.5">
-              <Boxes className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-2">
+              <Boxes className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               Inventory &amp; Stock Hub
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>LIVE VALUATION</span>
             </span>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Real-time stock valuation, batch management &amp; low-stock alerts
-          </p>
+
+
+
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
@@ -459,90 +459,70 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Metrics Cards - 3D Frosted Glass */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Metrics Cards - Hairline Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
         {/* Total Products */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Total Products</span>
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Package className="w-4 h-4" />
-            </div>
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none flex flex-col justify-between">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-blue-600 dark:text-blue-400">Total Products</span>
+            <Package className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{totalItems}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-              <span className="font-bold text-foreground">{categories.length}</span> Active Categories
-            </p>
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">{totalItems}</p>
           </div>
         </div>
 
         {/* Stock Units */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Stock Units</span>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <BarChart3 className="w-4 h-4" />
-            </div>
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none flex flex-col justify-between">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Stock Units</span>
+            <BarChart3 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
               {totalStockUnits.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Total Quantity on Hand
             </p>
           </div>
         </div>
 
         {/* Inventory Value */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Inventory Value</span>
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-              <IndianRupee className="w-4 h-4" />
-            </div>
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none flex flex-col justify-between">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-indigo-500" />
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">Inventory Value</span>
+            <IndianRupee className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
+          <div className="mt-2">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
               ₹{totalInventoryValue.toLocaleString("en-IN")}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Cost Price Valuation</p>
           </div>
         </div>
 
         {/* Low / Out of Stock */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Stock Alerts</span>
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
+        <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs relative overflow-hidden select-none flex flex-col justify-between">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-amber-600 dark:text-amber-400">Stock Alerts</span>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="mt-3">
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{lowStockCount}</p>
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">Low</span>
-              {outOfStockCount > 0 && (
-                <>
-                  <span className="text-slate-400">·</span>
-                  <span className="text-sm font-bold text-rose-600">{outOfStockCount} Out</span>
-                </>
-              )}
-            </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
-              Needs replenishment (≤ {LOW_STOCK_THRESHOLD})
-            </p>
+          <div className="mt-2 flex items-baseline gap-2 font-mono">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">{lowStockCount}</p>
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Low</span>
+            {outOfStockCount > 0 && (
+              <>
+                <span className="text-slate-400">·</span>
+                <span className="text-xs font-semibold text-rose-600">{outOfStockCount} Out</span>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Search & Filter Controls - Frosted Glass Container */}
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 shadow-2xs shrink-0 space-y-2">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search bar */}
           <div className="relative flex-1">
@@ -584,7 +564,7 @@ export default function Inventory() {
                 <span>{f.label}</span>
                 <span
                   className={cn(
-                    "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    "text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold",
                     filter === f.id ? "bg-white/25 text-white" : "bg-slate-200/80 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                   )}
                 >
@@ -615,7 +595,7 @@ export default function Inventory() {
               <span>Excel Edit</span>
               <span
                 className={cn(
-                  "text-[9px] px-1.5 py-0.2 rounded-full font-mono uppercase font-bold",
+                  "text-[11px] px-1.5 py-0.2 rounded-full font-mono uppercase font-bold",
                   isExcelEditMode
                     ? "bg-white/25 text-white"
                     : "bg-muted text-muted-foreground"
@@ -663,7 +643,7 @@ export default function Inventory() {
       </div>
 
       {/* Inventory Table Container */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden relative">
+      <div className="flex-1 min-h-0 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs flex flex-col justify-between">
         {/* Mobile View: Cards */}
         <div className="block md:hidden divide-y divide-border pb-24">
           {paginatedItems.map((item) => {
@@ -683,7 +663,7 @@ export default function Inventory() {
                       <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                         {item.brand && <span className="text-xs text-muted-foreground">{item.brand}</span>}
                         {item.category && (
-                          <Badge variant="secondary" className="text-[10px] px-2 py-0">
+                          <Badge variant="secondary" className="text-[11px] px-2 py-0">
                             {item.category}
                           </Badge>
                         )}
@@ -771,13 +751,13 @@ export default function Inventory() {
         </div>
 
         {/* Desktop View: Table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:flex flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin flex-col justify-between">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">
-                <th className="text-left px-5 py-3.5">Product & Details</th>
-                <th className="text-left px-5 py-3.5">Category</th>
-                <th className="text-left px-5 py-3.5 min-w-[180px]">
+              <tr className="sticky top-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider z-10">
+                <th className="text-left px-3 py-2.5">Product & Details</th>
+                <th className="text-left px-3 py-2.5">Category</th>
+                <th className="text-left px-3 py-2.5 min-w-[180px]">
                   {isExcelEditMode ? (
                     <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
                       <FileSpreadsheet className="w-3.5 h-3.5" /> Stock (Units)
@@ -786,7 +766,7 @@ export default function Inventory() {
                     "Stock Level"
                   )}
                 </th>
-                <th className="text-left px-5 py-3.5">
+                <th className="text-left px-3 py-2.5">
                   {isExcelEditMode ? (
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">MRP (₹)</span>
                   ) : (
@@ -794,14 +774,14 @@ export default function Inventory() {
                   )}
                 </th>
                 {isExcelEditMode && (
-                  <th className="text-left px-5 py-3.5">
+                  <th className="text-left px-3 py-2.5">
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">Cost Price (₹)</span>
                   </th>
                 )}
-                <th className="text-left px-5 py-3.5">Batches</th>
-                {!isExcelEditMode && <th className="text-left px-5 py-3.5">Inventory Value</th>}
-                <th className="text-left px-5 py-3.5">Status</th>
-                <th className="text-right px-5 py-3.5">Actions</th>
+                <th className="text-left px-3 py-2.5">Batches</th>
+                {!isExcelEditMode && <th className="text-left px-3 py-2.5">Inventory Value</th>}
+                <th className="text-left px-3 py-2.5">Status</th>
+                <th className="text-right px-3 py-2.5">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -823,7 +803,7 @@ export default function Inventory() {
                     )}
                   >
                     {/* Product Name & Brand */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                           <Package className="w-4 h-4" />
@@ -844,7 +824,7 @@ export default function Inventory() {
                     </td>
 
                     {/* Category */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       {item.category ? (
                         <Badge variant="secondary" className="font-medium text-xs">
                           {item.category}
@@ -855,7 +835,7 @@ export default function Inventory() {
                     </td>
 
                     {/* Stock Level (Standard or Excel Edit Input) */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       {isExcelEditMode ? (
                         <div className="flex items-center gap-2">
                           <input
@@ -912,7 +892,7 @@ export default function Inventory() {
                     </td>
 
                     {/* Avg MRP (Standard or Excel Edit Input) */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       {isExcelEditMode ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold text-muted-foreground">₹</span>
@@ -956,7 +936,7 @@ export default function Inventory() {
 
                     {/* Cost Price (Excel Edit Mode only) */}
                     {isExcelEditMode && (
-                      <td className="px-5 py-4">
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold text-muted-foreground">₹</span>
                           <input
@@ -994,7 +974,7 @@ export default function Inventory() {
                     )}
 
                     {/* Batches Viewer Button */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <button
                         onClick={() => setViewBatchesProduct(item)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border/50"
@@ -1007,13 +987,13 @@ export default function Inventory() {
 
                     {/* Total Value */}
                     {!isExcelEditMode && (
-                      <td className="px-5 py-4 font-bold text-foreground">
+                      <td className="px-3 py-2.5 font-bold text-foreground">
                         ₹{item.totalValue.toLocaleString("en-IN")}
                       </td>
                     )}
 
                     {/* Status Badge */}
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
@@ -1041,7 +1021,7 @@ export default function Inventory() {
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
@@ -1091,7 +1071,7 @@ export default function Inventory() {
               {products.length === 0
                 ? "Your inventory is currently empty. Add products from the Items page to start tracking stock."
                 : "No products matched your search or category filter. Try clearing filters."}
-            </p>
+  
             {search && (
               <Button variant="outline" size="sm" onClick={() => setSearch("")} className="mt-4 text-xs">
                 Clear Search
@@ -1135,7 +1115,7 @@ export default function Inventory() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-card border border-border rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-muted/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <Layers className="w-5 h-5" />
@@ -1209,7 +1189,7 @@ export default function Inventory() {
                                   <Calendar className="w-3 h-3" />
                                   {new Date(b.expiry_date).toLocaleDateString("en-IN")}
                                   {isExpired && (
-                                    <Badge variant="destructive" className="text-[9px] px-1 py-0 ml-1">
+                                    <Badge variant="destructive" className="text-[11px] px-1 py-0 ml-1">
                                       Expired
                                     </Badge>
                                   )}
@@ -1242,7 +1222,7 @@ export default function Inventory() {
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pt-6 pb-6 overflow-y-auto animate-fade-in">
           <div className="bg-card border border-border rounded-2xl shadow-xl max-w-[440px] w-full overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-muted/20">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <ArrowUpDown className="w-4 h-4" />
