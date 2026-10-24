@@ -74,7 +74,7 @@ function SuiteSwitcherView({
       role="group"
       aria-label="Suite Switcher"
       className={cn(
-        "inline-flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 select-none shrink-0",
+        "inline-flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 select-none shrink-0",
         className
       )}
     >
@@ -93,7 +93,7 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[36px] sm:min-h-[32px]",
+          "px-1.5 sm:px-3 py-0.5 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[28px] sm:min-h-[32px]",
           effectiveSuite === "billing"
             ? "bg-amber-500 text-white shadow-sm font-bold"
             : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -126,7 +126,7 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[36px] sm:min-h-[32px]",
+          "px-1.5 sm:px-3 py-0.5 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-md transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation min-h-[28px] sm:min-h-[32px]",
           effectiveSuite === "crm"
             ? "bg-emerald-600 text-white shadow-sm font-bold"
             : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"

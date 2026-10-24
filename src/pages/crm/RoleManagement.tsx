@@ -1339,7 +1339,7 @@ export default function RoleManagement(): React.ReactElement {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
       {/* Top Banner / Breadcrumb */}
-      <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 sm:py-5">
+      <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <Link

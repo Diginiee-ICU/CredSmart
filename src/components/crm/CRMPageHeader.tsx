@@ -44,11 +44,11 @@ export function CRMPageHeader({
   className,
 }: CRMPageHeaderProps): React.ReactElement {
   return (
-    <div className={cn("space-y-3 pb-2", className)}>
+    <div className={cn("space-y-2 sm:space-y-3 pb-1 sm:pb-2", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav
           aria-label="Breadcrumb"
-          className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
+          className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
         >
           {breadcrumbs.map((bc, idx) => {
             const isLast = idx === breadcrumbs.length - 1;
@@ -79,23 +79,23 @@ export function CRMPageHeader({
         </nav>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
           <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-extrabold text-[#0F172A] dark:text-white tracking-tight font-sans">
+            <h1 className="text-base sm:text-2xl lg:text-3xl font-extrabold text-[#0F172A] dark:text-white tracking-tight font-sans">
               {title}
             </h1>
             {badge && <div className="shrink-0">{badge}</div>}
           </div>
           {subtitle && (
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+            <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
               {subtitle}
             </p>
           )}
         </div>
 
         {actions && (
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
             {actions}
           </div>
         )}

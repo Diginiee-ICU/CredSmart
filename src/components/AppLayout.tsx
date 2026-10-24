@@ -475,10 +475,10 @@ export default function AppLayout() {
 
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 z-10 shadow-xs bg-white dark:bg-slate-900/90">
+        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] md:h-[calc(5rem+env(safe-area-inset-top,0px))] lg:h-[calc(5.5rem+env(safe-area-inset-top,0px))] shrink-0 sticky top-0 glass-nav border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-1 sm:gap-4 px-2 sm:px-6 z-30 shadow-xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
 
             {/* LEFT: Logo + Dropdown Arrow + Suite Switcher */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
               <NavLink
                 to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
                 title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
@@ -487,7 +487,7 @@ export default function AppLayout() {
                 <img
                   src="./logo-static.jpeg"
                   alt="CredSmart"
-                  className="h-8 xs:h-9 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[95px] xs:max-w-[115px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
+                  className="h-7 sm:h-12 md:h-14 lg:h-15 w-auto max-w-[70px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[360px] object-contain rounded-md sm:rounded-xl drop-shadow-xs sm:drop-shadow-md"
                 />
               </NavLink>
 
@@ -499,7 +499,7 @@ export default function AppLayout() {
                 aria-expanded={sidebarOpen}
                 title={sidebarOpen ? "Close Menu" : "Open Menu"}
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 sm:w-auto sm:h-10 md:h-10.5 px-0 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0",
+                  "flex items-center justify-center w-7.5 h-7.5 sm:w-auto sm:h-10 md:h-10.5 px-0 sm:px-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-mono uppercase tracking-wider cursor-pointer border transition-all duration-200 select-none shadow-2xs shrink-0 active:scale-95",
                   sidebarOpen
                     ? "bg-amber-500/15 border-amber-400/50 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
                     : "bg-slate-100 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400/50 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800"
@@ -553,12 +553,13 @@ export default function AppLayout() {
             </div>
 
             {/* RIGHT: Action buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
+            <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 ml-auto">
               {/* Mobile search */}
               <button
                 onClick={() => setOpenCommand(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer hover-3d-glow shrink-0"
+                className="w-7.5 h-7.5 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 bg-white/80 dark:bg-slate-800/80 lg:hidden cursor-pointer hover-3d-glow shrink-0 active:scale-95"
                 title="Search"
+                aria-label="Search"
               >
                 <Search className="w-3.5 h-3.5" />
               </button>
@@ -580,7 +581,19 @@ export default function AppLayout() {
               {!isCrmSuite ? (
                 /* Billing Suite: New Invoice split button */
                 <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                  <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
+                  {/* On Mobile: Single compact, high-impact plus button */}
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg glowing-btn-amber text-white shadow-2xs select-none shrink-0 cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+                      title="New Invoice & Creation Options"
+                      aria-label="New Invoice & Creation Options"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  {/* On Desktop: Full split button */}
+                  <div className="hidden sm:flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl glowing-btn-amber shadow-2xs select-none shrink-0 overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setSalesInvoiceModalOpen(true)}
@@ -588,7 +601,6 @@ export default function AppLayout() {
                     >
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                       <span className="hidden sm:inline">New Invoice</span>
-                      <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Bill</span>
                     </button>
                     <DropdownMenuTrigger asChild>
                       <button
@@ -634,7 +646,19 @@ export default function AppLayout() {
               ) : (
                 /* CRM Suite: CRM Quick Action split button */
                 <DropdownMenu open={crmActionMenuOpen} onOpenChange={setCrmActionMenuOpen}>
-                  <div className="flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 overflow-hidden hover:brightness-105 transition-all">
+                  {/* On Mobile: Single compact, high-impact quick action button */}
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+                      title="CRM Quick Actions"
+                      aria-label="CRM Quick Actions"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  {/* On Desktop: Full split button */}
+                  <div className="hidden sm:flex items-center h-8 sm:h-10 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs select-none shrink-0 overflow-hidden hover:brightness-105 transition-all">
                     <button
                       type="button"
                       onClick={() => navigate(ROUTE_PATHS.crmTasks)}
@@ -643,7 +667,6 @@ export default function AppLayout() {
                     >
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                       <span className="hidden sm:inline">Quick Action</span>
-                      <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">Action</span>
                     </button>
                     <DropdownMenuTrigger asChild>
                       <button
@@ -750,7 +773,7 @@ export default function AppLayout() {
                 type="button"
                 onClick={() => setNotifOpen(true)}
                 className={cn(
-                  "w-8 h-8 rounded-lg transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
+                  "w-7.5 h-7.5 rounded-lg transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
                   pendingCount > 0
                     ? "border-amber-400/80 bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-orange-500/10 text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                     : unreadCount > 0
@@ -762,11 +785,11 @@ export default function AppLayout() {
               >
                 <Bell className="w-3.5 h-3.5 stroke-[2.2]" />
                 {pendingCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[9px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[8.5px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 ) : unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-indigo-600 text-[9px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-2 ring-white dark:ring-slate-900">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-indigo-600 text-[8.5px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 ) : null}
@@ -777,7 +800,7 @@ export default function AppLayout() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-2xs hover:scale-105 transition-all ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0"
+                    className="flex items-center justify-center w-7.5 h-7.5 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-2xs hover:scale-105 transition-all ring-1.5 sm:ring-2 ring-amber-400/40 cursor-pointer hover-3d-glow shrink-0 active:scale-95"
                     title={org?.name || "Account"}
                   >
                     {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
