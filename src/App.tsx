@@ -88,7 +88,7 @@ export function SleekRouteLoader() {
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="relative flex flex-col items-center justify-center max-w-sm w-full">
         <img
-          src="./IMG_9301.GIF"
+          src="/IMG_9301.GIF"
           alt="CredSmart"
           className="w-72 sm:w-80 max-w-[85vw] h-auto object-contain select-none"
           loading="eager"
