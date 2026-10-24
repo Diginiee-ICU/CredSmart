@@ -8,7 +8,7 @@ Last visited: 2026-10-24T22:36:00Z
 - [x] Milestone 1: Non-Crowded Minimal Design System & Base Primitives (Gate PASSED: 2 Reviews APPROVE, 2 Challengers APPROVE, Forensic Audit CLEAN)
 - [x] Milestone 2: Screen-Fitted Desktop Shell & Productivity Layouts (Gate PASSED: 2 Reviews APPROVE, 2 Challengers APPROVE, Forensic Audit CLEAN)
 - [x] Milestone 3: Mobile Ergonomics & Native-Touch Layouts (Gate PASSED: 2 Reviews APPROVE, 2 Challengers APPROVE, Forensic Audit CLEAN)
-- [/] Milestone 4: Core Application Pages Overhaul (Parallel Implementation active: Workers M4-A 413d633b, M4-B b792db5c, M4-C a22afcb6 — healthy tool execution verified)
+- [/] Milestone 4: Core Application Pages Overhaul (Sequential Execution: Worker M4-A Gen2 f90a992b active; M4-B Gen2 & M4-C Gen2 staged)
 - [ ] Milestone 5: Verification & Zero Regression (tsc --noEmit, npm run build, npm run lint)
 
 ## Milestone Breakdown
@@ -18,7 +18,7 @@ Last visited: 2026-10-24T22:36:00Z
 | M1 | Minimal Design Tokens & Base Primitives | DONE | Gate Result: PASS |
 | M2 | Screen-Fitted Desktop Shell & Layouts | DONE | Gate Result: PASS (Reviewers: 4a4c30df, 8ef56494; Challengers: 003411fd, 4a23f375; Auditor: 98ab323a) |
 | M3 | Mobile Ergonomics & Native-Touch Layouts | DONE | Gate Result: PASS (Reviewers: 224a6107, 3b0eef4c; Challengers: 31ab3a15, bed585bd; Auditor: 6abfd960) |
-| M4 | Core Application Pages Overhaul | IN_PROGRESS (Workers Active) | Workers: M4-A (413d633b), M4-B (b792db5c), M4-C (a22afcb6) |
+| M4 | Core Application Pages Overhaul | IN_PROGRESS (Workers Active) | Worker M4-A Gen2 (f90a992b) active; M4-B Gen2 & M4-C Gen2 staged |
 | M5 | Verification & Zero Regression | PLANNED | TBD |
 
 ## Iteration Status

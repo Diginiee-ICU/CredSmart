@@ -86,14 +86,15 @@ Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout into a 
 | Dashboard & Transactions Explorer | teamwork_preview_explorer | M4 Exploration (Dashboard, Sales, Purchases) | completed | a9424e79-b3c0-48ec-afb7-28258db60e87 |
 | Catalog & Ledgers Explorer | teamwork_preview_explorer | M4 Exploration (Items, Parties, Cash/Bank) | completed | 72aa25a5-1ad8-4b72-9a39-3a3df72b177d |
 | CRM & Design Tokens Explorer | teamwork_preview_explorer | M4 Exploration (CRM Portal, Cross-Page Tokens) | completed | 8aa0ccfa-fd35-448a-a047-80ccbe876ce9 |
-| Dashboard & Transactions Worker | teamwork_preview_worker | M4 Implementation (Dashboard, Sales, Purchases) | in-progress | 413d633b-6417-4daa-9011-5ff6ca46fa24 |
-| Catalog & Ledgers Worker | teamwork_preview_worker | M4 Implementation (Catalog, Ledgers, Accounts) | in-progress | b792db5c-b494-4467-bbec-7d8de242ca49 |
-| CRM Portal & Tokens Worker | teamwork_preview_worker | M4 Implementation (CRM Portal & Components) | in-progress | a22afcb6-abfa-487e-ae87-5d7ac049569c |
+| Dashboard & Transactions Worker | teamwork_preview_worker | M4 Implementation (Dashboard, Sales, Purchases) | failed (429) | 413d633b-6417-4daa-9011-5ff6ca46fa24 |
+| Catalog & Ledgers Worker | teamwork_preview_worker | M4 Implementation (Catalog, Ledgers, Accounts) | failed (429) | b792db5c-b494-4467-bbec-7d8de242ca49 |
+| CRM Portal & Tokens Worker | teamwork_preview_worker | M4 Implementation (CRM Portal & Components) | failed (429) | a22afcb6-abfa-487e-ae87-5d7ac049569c |
+| Dashboard & Transactions Worker Gen2 | teamwork_preview_worker | M4 Implementation (Dashboard, Sales, Purchases) | in-progress | f90a992b-d634-4dc3-a020-343f9d1e33f8 |
 
 ## Succession Status
-- Succession required: no (orchestrator continuation active; spawn count 27 / 128)
-- Spawn count: 27 / 128
-- Pending subagents: 413d633b, b792db5c, a22afcb6
+- Succession required: no (orchestrator continuation active; spawn count 28 / 128)
+- Spawn count: 28 / 128
+- Pending subagents: f90a992b-d634-4dc3-a020-343f9d1e33f8
 - Predecessor: none
 - Successor: none (self-orchestrator)
 
