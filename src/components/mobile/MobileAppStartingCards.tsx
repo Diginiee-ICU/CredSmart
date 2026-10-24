@@ -175,7 +175,7 @@ export function MobileAppStartingCards() {
       <div className="flex items-center justify-between z-10 pt-2 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center p-0.5 shadow-lg shadow-amber-500/20 border border-white/20">
-            <img src="./favicon.png" alt="CredSmart" className="w-full h-full object-contain rounded-lg" />
+            <img src="/favicon.png" alt="CredSmart" className="w-full h-full object-contain rounded-lg" />
           </div>
           <div className="flex flex-col">
             <span className="text-base font-black tracking-tight text-white font-sans leading-none">

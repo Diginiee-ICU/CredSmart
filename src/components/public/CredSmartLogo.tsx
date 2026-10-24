@@ -11,7 +11,7 @@ interface CredSmartLogoProps {
 export function CredSmartShieldIcon({ size = 36, className }: { size?: number; className?: string }) {
   return (
     <img
-      src="./favicon.png"
+      src="/favicon.png"
       alt="CredSmart Shield Logo"
       width={size}
       height={size}
@@ -31,7 +31,7 @@ export function CredSmartImageLogo({
 }) {
   return (
     <img
-      src="./logo-static.jpeg"
+      src="/logo-static.jpeg"
       alt="CredSmart POS & Invoicing BillBook by CredAlert"
       style={{ height: `${height}px` }}
       className={cn("w-auto object-contain select-none drop-shadow-sm", className)}
