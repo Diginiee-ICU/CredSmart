@@ -487,7 +487,7 @@ export default function Purchases() {
   return (
     <div className="h-full flex flex-col w-full bg-slate-50/60 dark:bg-slate-950/40 select-none overflow-hidden font-sans">
       {/* Sub-document Tabs Navigation Ribbon - Stripe / Linear hairline */}
-      <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 shrink-0 overflow-x-auto scrollbar-none h-11 flex items-center">
+      <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 shrink-0 overflow-x-auto scrollbar-none h-8.5 flex items-center">
         <div className="flex items-center gap-1.5 min-w-max">
           {PURCHASE_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -519,7 +519,7 @@ export default function Purchases() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-sans">
               {activeTabMeta.label}
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               <span>GSTR-2 ITC READY</span>
             </span>
@@ -911,7 +911,7 @@ export default function Purchases() {
                         </span>
                         {renderStatusBadge(doc.status, true, doc)}
                         {(doc.notes?.includes("Auto-imported from Sales Invoice") || doc.referenceNumber?.startsWith("INV")) && (
-                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded-md shrink-0">
+                          <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded-md shrink-0">
                             <Sparkles className="w-2 h-2 text-emerald-500" />
                             Sync
                           </span>
@@ -929,7 +929,7 @@ export default function Purchases() {
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{doc.partyName}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           <span>{doc.docDate}</span>
                           <span>•</span>
                           <span className={doc.status === "unpaid" ? "text-rose-600 font-semibold" : ""}>{calculateDueInText(doc)}</span>
@@ -955,7 +955,7 @@ export default function Purchases() {
                       {/* Print */}
                       <button
                         onClick={() => handleOpenReceipt(doc)}
-                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
                         title="Print Receipt"
                       >
                         <Printer className="w-3.5 h-3.5" />
@@ -993,7 +993,7 @@ export default function Purchases() {
                             })),
                           });
                         }}
-                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
                         title="Download PDF"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -1026,7 +1026,7 @@ export default function Purchases() {
                             })),
                           });
                         }}
-                        className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
                         title="WhatsApp Share"
                       >
                         <Share2 className="w-3.5 h-3.5" />
@@ -1035,7 +1035,7 @@ export default function Purchases() {
                       {/* More Menu */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center">
+                          <button className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center">
                             <MoreVertical className="w-3.5 h-3.5" />
                           </button>
                         </DropdownMenuTrigger>
@@ -1172,12 +1172,12 @@ export default function Purchases() {
                               {doc.documentNumber}
                             </span>
                             {doc.referenceNumber && (
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[11px] text-slate-400 font-mono">
                                 (Ref: {doc.referenceNumber})
                               </span>
                             )}
                             {(doc.notes?.includes("Auto-imported from Sales Invoice") || doc.referenceNumber?.startsWith("INV")) && (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.2 rounded-full">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.2 rounded-full">
                                 <Sparkles className="w-2.5 h-2.5 text-emerald-500" />
                                 Auto-Synced
                               </span>
@@ -1188,7 +1188,7 @@ export default function Purchases() {
                           <div>
                             <span className="font-semibold text-slate-900 dark:text-white">{doc.partyName}</span>
                             {doc.partyPhone && (
-                              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                                 {doc.partyPhone}
                               </p>
                             )}

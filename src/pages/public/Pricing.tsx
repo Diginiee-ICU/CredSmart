@@ -111,7 +111,7 @@ export default function Pricing() {
           </p>
 
           {/* Master ₹0 Plan Card */}
-          <div className="max-w-lg mx-auto mt-8 p-8 sm:p-10 rounded-3xl bg-white border-2 border-amber-500/40 shadow-2xl relative overflow-hidden text-left">
+          <div className="max-w-lg mx-auto mt-8 p-8 sm:p-10 rounded-2xl bg-white border-2 border-amber-500/40 shadow-2xl relative overflow-hidden text-left">
             <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-center justify-between pb-6 border-b border-slate-100">

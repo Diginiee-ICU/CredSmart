@@ -164,7 +164,7 @@ export default function ActivityLog() {
               <ShieldAlert className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
               Security Audit &amp; Activity Log
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>IMMUTABLE AUDIT TRAIL</span>
             </span>
@@ -174,7 +174,7 @@ export default function ActivityLog() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
+          <Badge variant="outline" className="px-3 py-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 mr-1" />
             {logs.length} Recorded Events
           </Badge>
@@ -184,44 +184,44 @@ export default function ActivityLog() {
       {/* Summary KPI Bar - 3D Frosted Glass */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total Events */}
-        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl" />
           <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Logged Actions</span>
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Logged Actions</span>
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{logs.length}</p>
           </div>
         </div>
 
         {/* Active Staff */}
-        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl" />
           <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
             <User className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Staff Operators</span>
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Staff Operators</span>
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{activeStaffCount} Active Users</p>
           </div>
         </div>
 
         {/* Event Types */}
-        <div className="glass-card-3d p-5 flex items-center gap-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 flex items-center gap-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
           <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Activity Domains</span>
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Activity Domains</span>
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{entityTypes.length} Categories</p>
           </div>
         </div>
       </div>
 
       {/* Search & Category Filter Pills - Frosted Glass Container */}
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -331,7 +331,7 @@ export default function ActivityLog() {
                         </span>
                         <Badge
                           variant="secondary"
-                          className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0"
+                          className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0"
                         >
                           {log.entity_type.replace(/_/g, " ")}
                         </Badge>
@@ -368,7 +368,7 @@ export default function ActivityLog() {
 
                     {/* Operator Avatar & Details */}
                     <div className="flex items-center gap-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
-                      <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px]">
+                      <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[11px]">
                         {initials}
                       </div>
                       <span>

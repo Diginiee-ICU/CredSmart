@@ -347,7 +347,7 @@ export function UniversalQuickCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl lg:max-w-5xl sm:h-auto sm:max-h-[90vh] sm:rounded-3xl sm:border border-slate-200/80 dark:border-slate-800 flex flex-col gap-0 overflow-hidden bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
+      <DialogContent className="w-full h-[100dvh] max-h-[100dvh] max-w-full rounded-none border-none p-0 sm:max-w-4xl lg:max-w-5xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:border border-slate-200/80 dark:border-slate-800 flex flex-col gap-0 overflow-hidden bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
         {/* Header with Search & Filter Tabs */}
         <div className="p-4 sm:p-6 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl space-y-3.5 shrink-0">
           <div className="flex items-center justify-between">
@@ -358,7 +358,7 @@ export function UniversalQuickCreateModal({
               <div>
                 <DialogTitle className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span>Create New Transaction or Record</span>
-                  <Badge variant="outline" className="text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
+                  <Badge variant="outline" className="text-[11px] font-mono font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
                     ALL MODULES
                   </Badge>
                 </DialogTitle>
@@ -392,7 +392,7 @@ export function UniversalQuickCreateModal({
 
           {/* Dedicated Category Filter Pills Row (Never overflows screen) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span className="text-[10px] font-mono font-bold uppercase text-slate-400 shrink-0 mr-1">
+            <span className="text-[11px] font-mono font-bold uppercase text-slate-400 shrink-0 mr-1">
               Category:
             </span>
             {[
@@ -418,7 +418,7 @@ export function UniversalQuickCreateModal({
                   <span>{tab.label}</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 rounded-md text-[9px] font-mono font-bold",
+                      "px-1.5 py-0.2 rounded-md text-[11px] font-mono font-bold",
                       isActive
                         ? "bg-white/20 text-white"
                         : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
@@ -464,7 +464,7 @@ export function UniversalQuickCreateModal({
                           {item.title}
                         </h3>
                         {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded-md text-[8.5px] font-mono font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
+                          <span className="px-1.5 py-0.2 rounded-md text-[11px] font-mono font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
                             {item.badge}
                           </span>
                         )}
@@ -492,7 +492,7 @@ export function UniversalQuickCreateModal({
         <div className="px-5 py-3 border-t border-border bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px]">Tip: Press</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-card border text-[10px] font-mono">⌘K</kbd>
+            <kbd className="px-1.5 py-0.5 rounded bg-card border text-[11px] font-mono">⌘K</kbd>
             <span>or click</span>
             <strong className="text-foreground">"New Invoice"</strong>
             <span>anytime to open this menu</span>

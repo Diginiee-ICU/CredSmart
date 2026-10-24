@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { WifiOff, RefreshCw, CheckCircle2, CloudUpload } from "lucide-react";
 import { getOfflineQueueCount, syncOfflineQueue } from "@/utils/offlineQueue";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ export function OfflineSyncBanner() {
           <WifiOff className="w-3.5 h-3.5 shrink-0" />
           <span>Offline Mode Active</span>
           {queueCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-slate-950/20 text-[10px] font-mono font-bold">
+            <span className="px-1.5 py-0.2 rounded-full bg-slate-950/20 text-[11px] font-mono font-bold">
               {queueCount} Queued Locally
             </span>
           )}
@@ -79,7 +79,7 @@ export function OfflineSyncBanner() {
       ) : (
         <>
           <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />
-          <span>Back Online • All Data Synced</span>
+          <span>Back Online � All Data Synced</span>
         </>
       )}
 
@@ -91,7 +91,7 @@ export function OfflineSyncBanner() {
             await syncOfflineQueue();
             setIsSyncing(false);
           }}
-          className="ml-1 px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-[10px] font-mono cursor-pointer flex items-center gap-1"
+          className="ml-1 px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-mono cursor-pointer flex items-center gap-1"
         >
           <CloudUpload className="w-3 h-3" /> Sync Now
         </button>

@@ -84,7 +84,7 @@ export default function Contact() {
           <div className="lg:col-span-5 space-y-6">
             
             {/* Helpdesk */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 rounded-l-2xl" />
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center">
@@ -105,7 +105,7 @@ export default function Contact() {
             </div>
 
             {/* Statutory Desk */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500 rounded-l-2xl" />
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
@@ -125,7 +125,7 @@ export default function Contact() {
             </div>
 
             {/* Fast Resolution Guarantee */}
-            <div className="p-6 rounded-3xl bg-slate-100 border border-slate-200 space-y-2">
+            <div className="p-6 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
               <div className="flex items-center gap-2 text-slate-900 font-bold text-xs">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 Zero-Cost Support Included
@@ -138,7 +138,7 @@ export default function Contact() {
 
           {/* Right Form */}
           <div className="lg:col-span-7">
-            <div className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200/80 shadow-md relative overflow-hidden">
+            <div className="p-8 sm:p-10 rounded-2xl bg-white border border-slate-200/80 shadow-md relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-blue-600 via-indigo-600 to-[#FF6A00] rounded-l-2xl" />
               
               <div className="space-y-2 mb-6">

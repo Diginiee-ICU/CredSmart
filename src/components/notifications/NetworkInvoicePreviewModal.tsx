@@ -161,19 +161,19 @@ export function NetworkInvoicePreviewModal({
           {/* Key Dates & Payment Mode */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border text-xs">
             <div>
-              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Invoice Date</span>
+              <span className="text-muted-foreground block text-[11px] uppercase font-semibold">Invoice Date</span>
               <span className="font-bold text-foreground">{invoice.docDate}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Due Date</span>
+              <span className="text-muted-foreground block text-[11px] uppercase font-semibold">Due Date</span>
               <span className="font-bold text-foreground">{invoice.dueDate || invoice.docDate}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Payment Terms</span>
+              <span className="text-muted-foreground block text-[11px] uppercase font-semibold">Payment Terms</span>
               <span className="font-bold text-foreground">{invoice.paymentTerms || "Due on Receipt"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Payment Mode</span>
+              <span className="text-muted-foreground block text-[11px] uppercase font-semibold">Payment Mode</span>
               <span className="font-bold text-foreground">{invoice.paymentMethod || "Credit"}</span>
             </div>
           </div>
@@ -190,7 +190,7 @@ export function NetworkInvoicePreviewModal({
             <div className="rounded-xl border border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <thead className="bg-muted/60 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <tr>
                       <th className="px-3 py-2.5">#</th>
                       <th className="px-3 py-2.5">Item Name</th>
@@ -208,7 +208,7 @@ export function NetworkInvoicePreviewModal({
                         <td className="px-3 py-2.5 font-semibold text-foreground">
                           {item.productName}
                           {item.batchNumber && (
-                            <span className="block text-[10px] font-mono text-muted-foreground">
+                            <span className="block text-[11px] font-mono text-muted-foreground">
                               Batch: {item.batchNumber}
                             </span>
                           )}
@@ -222,7 +222,7 @@ export function NetworkInvoicePreviewModal({
                               <span className="font-bold text-foreground block">
                                 {item.altQty} {item.altUnit}
                               </span>
-                              <span className="block text-[10px] text-muted-foreground font-mono mt-0.5">
+                              <span className="block text-[11px] text-muted-foreground font-mono mt-0.5">
                                 ({item.altQty}*{item.altUnitConversion || Math.round(item.quantity / item.altQty) || 1} {item.unit || "Pcs"})
                               </span>
                             </div>

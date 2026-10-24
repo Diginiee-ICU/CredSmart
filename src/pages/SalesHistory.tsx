@@ -505,7 +505,7 @@ export default function SalesHistory() {
                           )}
 
                           {sale.discount_amount > 0 && (
-                            <span className="badge badge-success text-[10px] py-0">
+                            <span className="badge badge-success text-[11px] py-0">
                               -₹{sale.discount_amount.toFixed(2)}
                             </span>
                           )}

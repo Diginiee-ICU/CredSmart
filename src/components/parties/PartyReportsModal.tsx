@@ -157,19 +157,19 @@ export function PartyReportsModal({
                     <td className="px-4 py-3 font-semibold text-foreground">
                       {p.name}
                       {p.category && (
-                        <span className="block text-[10px] font-normal text-muted-foreground">
+                        <span className="block text-[11px] font-normal text-muted-foreground">
                           {p.category}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3 capitalize">
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-[11px]">
                         {p.partyType}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 font-mono text-muted-foreground">
                       {p.phone || "—"}
-                      {p.gstin && <span className="block text-[10px]">{p.gstin}</span>}
+                      {p.gstin && <span className="block text-[11px]">{p.gstin}</span>}
                     </td>
                     <td className="px-4 py-3 font-mono text-muted-foreground">
                       {p.creditLimit ? `₹ ${p.creditLimit.toLocaleString("en-IN")}` : "Unlimited"}

@@ -115,7 +115,7 @@ export function SharedLedgerModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-foreground">SharedLedger Portal</h2>
-                <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px] uppercase font-bold tracking-wider">
+                <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[11px] uppercase font-bold tracking-wider">
                   <Zap className="w-3 h-3 mr-1 fill-emerald-500 text-emerald-500" />
                   Live Sync & Reconciled
                 </Badge>
@@ -139,7 +139,7 @@ export function SharedLedgerModal({
           <div className="md:col-span-4 bg-muted/20 flex flex-col overflow-hidden max-h-[350px] md:max-h-none border-b md:border-b-0">
             <div className="p-3 border-b border-border bg-muted/40 text-xs font-semibold text-muted-foreground flex items-center justify-between">
               <span>Connected Parties ({parties.length})</span>
-              <span className="text-[10px]">Instant View</span>
+              <span className="text-[11px]">Instant View</span>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-border/60">
               {parties.map((p) => (
@@ -191,7 +191,7 @@ export function SharedLedgerModal({
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-base font-bold text-foreground">{currentParty.name}</h3>
-                        <Badge variant="outline" className="text-[10px] capitalize">
+                        <Badge variant="outline" className="text-[11px] capitalize">
                           {currentParty.partyType}
                         </Badge>
                       </div>
@@ -201,7 +201,7 @@ export function SharedLedgerModal({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">Reconciled Balance</p>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase">Reconciled Balance</p>
                       <p
                         className={cn(
                           "text-lg font-black font-mono",
@@ -343,9 +343,9 @@ export function SharedLedgerModal({
                         <div key={tx.id} className="p-3 flex items-center justify-between hover:bg-muted/30">
                           <div>
                             <p className="font-semibold text-foreground">{tx.referenceNo || tx.id}</p>
-                            <p className="text-[10px] text-muted-foreground">{tx.date}</p>
+                            <p className="text-[11px] text-muted-foreground">{tx.date}</p>
                           </div>
-                          <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary capitalize">
+                          <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary capitalize">
                             {tx.type.replace(/_/g, " ")}
                           </Badge>
                           <span className="font-mono font-bold text-foreground">₹ {tx.amount.toLocaleString("en-IN")}</span>

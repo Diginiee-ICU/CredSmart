@@ -219,7 +219,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                       Notifications &amp; Inward Alerts
                     </SheetTitle>
                     {pendingCount > 0 && (
-                      <Badge className="bg-amber-500 text-white font-bold text-[9px] px-1.5 py-0.2 rounded-full animate-pulse shrink-0">
+                      <Badge className="bg-amber-500 text-white font-bold text-[11px] px-1.5 py-0.2 rounded-full animate-pulse shrink-0">
                         {pendingCount} Action{pendingCount > 1 ? "s" : ""}
                       </Badge>
                     )}
@@ -261,7 +261,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                 >
                   <span className="truncate">Inward</span>
                   {pendingCount > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-[10px] text-white font-mono font-bold">
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-[11px] text-white font-mono font-bold">
                       {pendingCount}
                     </span>
                   )}
@@ -278,7 +278,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                 >
                   <span className="truncate">Store Alerts</span>
                   {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-primary text-[10px] text-white font-mono font-bold">
+                    <span className="px-1.5 py-0.2 rounded-full bg-primary text-[11px] text-white font-mono font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -295,7 +295,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                 >
                   <span className="truncate">History</span>
                   {historyInvoices.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-muted-foreground/20 text-[10px] text-foreground font-mono">
+                    <span className="px-1.5 py-0.2 rounded-full bg-muted-foreground/20 text-[11px] text-foreground font-mono">
                       {historyInvoices.length}
                     </span>
                   )}
@@ -325,7 +325,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                         type="button"
                         onClick={() => setSelectedCategory(cat.id)}
                         className={cn(
-                          "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 transition-all border cursor-pointer",
+                          "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all border cursor-pointer",
                           isActive
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-muted/40 text-muted-foreground border-border/60 hover:text-foreground"
@@ -405,7 +405,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                               <p className="text-[11px] text-muted-foreground mt-0.5">
                                 created a sale on your business name
                               </p>
-                              <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-muted-foreground flex-wrap font-sans">
+                              <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted-foreground flex-wrap font-sans">
                                 <span className="font-mono font-bold text-foreground bg-muted/80 px-1.5 py-0.5 rounded border border-border/70">
                                   #{inv.invoiceNumber}
                                 </span>
@@ -417,7 +417,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                             </div>
 
                             <div className="text-right shrink-0">
-                              <span className="text-[9px] uppercase font-bold text-muted-foreground block">
+                              <span className="text-[11px] uppercase font-bold text-muted-foreground block">
                                 Total Bill
                               </span>
                               <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
@@ -517,7 +517,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                               <div className="flex-1 min-w-0 space-y-0.5">
                                 <div className="flex items-center justify-between gap-2">
                                   <p className="font-bold text-foreground truncate">{notif.title}</p>
-                                  <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                                  <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
                                     {new Date(notif.created_at).toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -532,7 +532,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
 
                             {notif.actionLabel && (
                               <div className="flex justify-end pt-1 border-t border-border/40">
-                                <span className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
+                                <span className="text-[11px] font-bold text-primary flex items-center gap-1 hover:underline">
                                   <span>{notif.actionLabel}</span>
                                   <ArrowUpRight className="w-3 h-3" />
                                 </span>
@@ -569,7 +569,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                               <span className="font-bold text-foreground truncate">{inv.senderOrgName}</span>
                               <Badge
                                 className={cn(
-                                  "text-[9px] px-1.5 py-0.2 rounded-full font-bold",
+                                  "text-[11px] px-1.5 py-0.2 rounded-full font-bold",
                                   inv.status === "approved"
                                     ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
                                     : "bg-rose-500/15 text-rose-600 border-rose-500/30"
@@ -578,7 +578,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                                 {inv.status === "approved" ? "Approved" : "Rejected"}
                               </Badge>
                             </div>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
                               #{inv.invoiceNumber} • {inv.docDate} • {inv.items.length} items
                             </p>
                           </div>
@@ -610,7 +610,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Live 2-Way Ledger Sync</span>
               </div>
-              <div className="font-mono text-[10px]">
+              <div className="font-mono text-[11px]">
                 <span>GST Ready</span>
               </div>
             </div>
@@ -621,7 +621,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
         /* DESKTOP DIALOG VIEW (100% Masterpiece Architecture) */
         /* ───────────────────────────────────────────────────────────── */
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-2xl sm:max-w-3xl max-h-[88vh] flex flex-col p-0 gap-0 rounded-3xl border-border bg-card shadow-2xl overflow-hidden font-sans">
+          <DialogContent className="max-w-2xl sm:max-w-3xl max-h-[88vh] flex flex-col p-0 gap-0 rounded-2xl border-border bg-card shadow-2xl overflow-hidden font-sans">
             {/* Header */}
             <div className="p-5 border-b border-border bg-gradient-to-r from-amber-500/10 via-primary/5 to-transparent flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -634,7 +634,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                       Notifications &amp; Inward Alerts
                     </DialogTitle>
                     {pendingCount > 0 && (
-                      <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full animate-pulse shadow-2xs">
+                      <Badge className="bg-amber-500 text-white font-bold text-[11px] px-2 py-0.5 rounded-full animate-pulse shadow-2xs">
                         {pendingCount} Action{pendingCount > 1 ? "s" : ""} Required
                       </Badge>
                     )}
@@ -692,7 +692,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                   >
                     <span>Incoming Invoices</span>
                     {pendingCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-[10px] text-white font-mono font-bold">
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-[11px] text-white font-mono font-bold">
                         {pendingCount}
                       </span>
                     )}
@@ -710,7 +710,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                   >
                     <span>Real-Time Business Alerts</span>
                     {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-primary text-[10px] text-white font-mono font-bold">
+                      <span className="px-1.5 py-0.2 rounded-full bg-primary text-[11px] text-white font-mono font-bold">
                         {unreadCount}
                       </span>
                     )}
@@ -728,7 +728,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                   >
                     <span>Inward History</span>
                     {historyInvoices.length > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-muted text-[10px] text-muted-foreground font-mono">
+                      <span className="px-1.5 py-0.2 rounded-full bg-muted text-[11px] text-muted-foreground font-mono">
                         {historyInvoices.length}
                       </span>
                     )}
@@ -839,7 +839,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                             </div>
 
                             <div className="text-right shrink-0 pl-3 border-l border-border/60">
-                              <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">
+                              <span className="text-[11px] uppercase font-bold text-muted-foreground block tracking-wider">
                                 Bill Amount
                               </span>
                               <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
@@ -940,7 +940,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                                 <p className="font-bold text-foreground text-xs sm:text-sm truncate">
                                   {notif.title}
                                 </p>
-                                <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                                <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
                                   {new Date(notif.created_at).toLocaleTimeString([], {
                                     hour: "2-digit",
                                     minute: "2-digit",
@@ -988,7 +988,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                               <span className="font-bold text-foreground text-sm truncate">{inv.senderOrgName}</span>
                               <Badge
                                 className={cn(
-                                  "text-[10px] px-2 py-0.5 rounded-full font-bold",
+                                  "text-[11px] px-2 py-0.5 rounded-full font-bold",
                                   inv.status === "approved"
                                     ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
                                     : "bg-rose-500/15 text-rose-600 border-rose-500/30"
@@ -1005,7 +1005,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
 
                           <div className="text-right shrink-0 flex items-center gap-3">
                             <div>
-                              <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                              <span className="text-[11px] uppercase font-bold text-muted-foreground block">
                                 Grand Total
                               </span>
                               <span className="font-mono font-black text-sm sm:text-base text-foreground">
@@ -1036,7 +1036,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Real-time CredSmart 2-Way Synchronization</span>
               </div>
-              <div className="text-[10px] font-mono text-muted-foreground">
+              <div className="text-[11px] font-mono text-muted-foreground">
                 <span>Encrypted • GST Ready • Auto Ledger Reconciliation</span>
               </div>
             </div>

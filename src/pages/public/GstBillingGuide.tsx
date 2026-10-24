@@ -144,7 +144,7 @@ export default function GstBillingGuide() {
 
         {/* CGST vs SGST vs IGST */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-bold text-xs">
               INTRA
             </div>
@@ -157,7 +157,7 @@ export default function GstBillingGuide() {
             </div>
           </div>
 
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-xs">
               INTER
             </div>
@@ -172,7 +172,7 @@ export default function GstBillingGuide() {
         </div>
 
         {/* Mandatory Invoice Requirements */}
-        <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+        <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
           <h2 className="text-xl font-black text-[#0A1931]">2. Mandatory Fields on a Legal GST Tax Invoice</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
             {[

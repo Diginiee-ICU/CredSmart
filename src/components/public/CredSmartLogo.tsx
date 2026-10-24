@@ -73,13 +73,13 @@ export function CredSmartLogo({
         {showTagline && (
           <div className="flex flex-col mt-0.5">
             <span className={cn(
-              "text-[8px] sm:text-[9px] font-bold tracking-widest uppercase leading-tight font-mono",
+              "text-[11px] sm:text-[11px] font-bold tracking-widest uppercase leading-tight font-mono",
               isDark ? "text-slate-400" : "text-[#0A1931]/80"
             )}>
               POS &amp; Invoicing BillBook
             </span>
             <span className={cn(
-              "text-[9px] sm:text-[10px] font-semibold leading-tight flex items-center gap-0.5",
+              "text-[11px] sm:text-[11px] font-semibold leading-tight flex items-center gap-0.5",
               isDark ? "text-slate-300" : "text-slate-600"
             )}>
               by <span className={cn("font-bold", isDark ? "text-white" : "text-[#0A1931]")}>Cred</span><span className="font-bold text-[#FF5E00]">Alert</span>

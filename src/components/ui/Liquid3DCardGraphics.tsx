@@ -83,10 +83,10 @@ export const CredsmartLogo: React.FC<{ className?: string; size?: number; showSu
         </div>
         {showSubtitle && (
           <>
-            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase font-mono mt-0.5 leading-none">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase font-mono mt-0.5 leading-none">
               POS &amp; INVOICING BILLBOOK
             </span>
-            <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium leading-tight mt-0.5">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium leading-tight mt-0.5">
               by <span className="font-semibold text-orange-500">CredAlert</span>
             </span>
           </>

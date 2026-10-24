@@ -414,7 +414,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
           </div>
 
           <div className="text-right hidden sm:block">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 block font-semibold">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">
               Consignment Value
             </span>
             <span className="text-lg font-black font-mono text-emerald-400">
@@ -542,14 +542,14 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                     <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
                       Consignor (Dispatch From)
                     </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
                       Your Business
                     </span>
                   </div>
 
                   <div className="space-y-2">
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">GSTIN</Label>
+                      <Label className="text-[11px] font-semibold text-slate-600">GSTIN</Label>
                       <Input
                         value={fromGstin}
                         onChange={(e) => setFromGstin(e.target.value.toUpperCase())}
@@ -557,7 +557,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">Trade Name</Label>
+                      <Label className="text-[11px] font-semibold text-slate-600">Trade Name</Label>
                       <Input
                         value={fromTrdName}
                         onChange={(e) => setFromTrdName(e.target.value)}
@@ -565,7 +565,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">Address</Label>
+                      <Label className="text-[11px] font-semibold text-slate-600">Address</Label>
                       <Input
                         value={fromAddr1}
                         onChange={(e) => setFromAddr1(e.target.value)}
@@ -574,7 +574,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">Place / City</Label>
+                        <Label className="text-[11px] font-semibold text-slate-600">Place / City</Label>
                         <Input
                           value={fromPlace}
                           onChange={(e) => setFromPlace(e.target.value)}
@@ -582,7 +582,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">Pincode</Label>
+                        <Label className="text-[11px] font-semibold text-slate-600">Pincode</Label>
                         <Input
                           value={fromPincode}
                           onChange={(e) => setFromPincode(e.target.value)}
@@ -591,7 +591,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">State</Label>
+                        <Label className="text-[11px] font-semibold text-slate-600">State</Label>
                         <Select value={fromStateCode} onValueChange={setFromStateCode}>
                           <SelectTrigger className="h-7 text-xs mt-0.5">
                             <SelectValue />
@@ -615,14 +615,14 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                     <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                       Consignee (Bill & Ship To)
                     </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
                       Destination Party
                     </span>
                   </div>
 
                   <div className="space-y-2">
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">
+                      <Label className="text-[11px] font-semibold text-slate-600">
                         GSTIN (or "URP" if unregistered)
                       </Label>
                       <Input
@@ -633,7 +633,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">
+                      <Label className="text-[11px] font-semibold text-slate-600">
                         Recipient Trade Name <span className="text-rose-500">*</span>
                       </Label>
                       <Input
@@ -644,7 +644,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] font-semibold text-slate-600">Address</Label>
+                      <Label className="text-[11px] font-semibold text-slate-600">Address</Label>
                       <Input
                         value={toAddr1}
                         onChange={(e) => setToAddr1(e.target.value)}
@@ -654,7 +654,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">Place / City</Label>
+                        <Label className="text-[11px] font-semibold text-slate-600">Place / City</Label>
                         <Input
                           value={toPlace}
                           onChange={(e) => setToPlace(e.target.value)}
@@ -663,7 +663,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">
+                        <Label className="text-[11px] font-semibold text-slate-600">
                           Pincode <span className="text-rose-500">*</span>
                         </Label>
                         <Input
@@ -675,7 +675,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-600">State</Label>
+                        <Label className="text-[11px] font-semibold text-slate-600">State</Label>
                         <Select value={toStateCode} onValueChange={setToStateCode}>
                           <SelectTrigger className="h-7 text-xs mt-0.5">
                             <SelectValue />
@@ -819,7 +819,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
               {/* Totals Summary Footer */}
               <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Taxable Value
                   </span>
                   <span className="text-sm font-mono font-bold text-slate-800 dark:text-slate-200">
@@ -827,7 +827,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     CGST + SGST
                   </span>
                   <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">
@@ -835,7 +835,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     IGST Value
                   </span>
                   <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">
@@ -843,7 +843,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider block">
+                  <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider block">
                     Total Consignment Value
                   </span>
                   <span className="text-base font-mono font-black text-indigo-600 dark:text-indigo-400">
@@ -889,7 +889,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       onChange={(e) => setTransDistance(Math.max(1, Number(e.target.value) || 1))}
                       className="h-8 text-xs font-mono font-bold mt-1"
                     />
-                    <p className="text-[10px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       From: {fromPincode || "Origin"} ➔ To: {toPincode || "Destination"}
                     </p>
                   </div>
@@ -913,13 +913,13 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </div>
 
                   <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-center flex flex-col justify-center">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                       Calculated Validity Duration
                     </span>
                     <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                       {validity.validDays} Day{validity.validDays > 1 ? "s" : ""}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[11px] text-slate-500 font-mono">
                       Expires: {validity.expiryDate.toLocaleDateString("en-IN")} at 23:59 PM
                     </span>
                   </div>
@@ -932,7 +932,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                     Part-B Vehicle Assignment
                   </span>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[11px] text-slate-500">
                     Optional if generating Part-A only (transporter will assign later)
                   </span>
                 </div>
@@ -968,7 +968,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                       placeholder="e.g. MH12AB1234"
                       className="h-8 text-xs font-mono uppercase font-bold mt-1"
                     />
-                    <p className="text-[10px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Required for active transit movement
                     </p>
                   </div>
@@ -1044,7 +1044,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Document
                   </span>
                   <span className="font-bold text-xs">
@@ -1052,7 +1052,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Party (Consignee)
                   </span>
                   <span className="font-bold text-xs truncate block">
@@ -1060,7 +1060,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Vehicle Number
                   </span>
                   <span className="font-bold text-xs font-mono">
@@ -1068,7 +1068,7 @@ export const GenerateEwayBillModal: React.FC<GenerateEwayBillModalProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Validity Period
                   </span>
                   <span className="font-bold text-xs text-indigo-600">

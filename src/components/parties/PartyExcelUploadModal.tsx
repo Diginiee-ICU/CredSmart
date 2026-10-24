@@ -247,7 +247,7 @@ export function PartyExcelUploadModal({
               onDragLeave={() => setIsDraggingExcel(false)}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "p-6 sm:p-8 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
+                "p-6 sm:p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
                 isDraggingExcel
                   ? "border-emerald-500 bg-emerald-500/15 scale-[1.01]"
                   : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent"
@@ -350,13 +350,13 @@ export function PartyExcelUploadModal({
                     <div key={idx} className="p-3 flex items-center justify-between text-xs">
                       <div>
                         <p className="font-bold text-foreground">{p.name}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">
+                        <p className="text-[11px] text-muted-foreground font-mono">
                           {p.partyType?.toUpperCase()} · {p.phone || "No phone"} · {p.address || "No address"}
                         </p>
                       </div>
                       <div className="text-right font-mono">
                         <p className="font-bold">Bal: ₹ {p.openingBalance || 0}</p>
-                        <p className="text-[10px] text-muted-foreground">{p.category || "General"}</p>
+                        <p className="text-[11px] text-muted-foreground">{p.category || "General"}</p>
                       </div>
                     </div>
                   ))}
@@ -535,7 +535,7 @@ export function PartyExcelUploadModal({
                       <div key={idx} className="px-3 py-2 flex items-center justify-between text-xs">
                         <div>
                           <p className="font-bold text-foreground truncate max-w-[200px]">{p.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">
+                          <p className="text-[11px] text-muted-foreground font-mono">
                             {p.partyType?.toUpperCase()} · {p.gstin || "No GSTIN"} · {p.phone || "No phone"}
                           </p>
                         </div>
@@ -543,7 +543,7 @@ export function PartyExcelUploadModal({
                           <p className={`font-bold text-xs ${(p.balance ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                             {(p.balance ?? 0) >= 0 ? "+" : ""}₹{Math.abs(p.balance ?? 0).toLocaleString("en-IN")}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">{p.category || "General"}</p>
+                          <p className="text-[11px] text-muted-foreground">{p.category || "General"}</p>
                         </div>
                       </div>
                     ))}

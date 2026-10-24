@@ -74,7 +74,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
   return (
     <div
       className={cn(
-        "relative rounded-3xl bg-white border border-slate-200/80 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.15)] ring-1 ring-slate-900/5 overflow-hidden text-left select-none transition-all duration-300 hover:shadow-[0_35px_80px_-20px_rgba(15,23,42,0.2)]",
+        "relative rounded-2xl bg-white border border-slate-200/80 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.15)] ring-1 ring-slate-900/5 overflow-hidden text-left select-none transition-all duration-300 hover:shadow-[0_35px_80px_-20px_rgba(15,23,42,0.2)]",
         className
       )}
     >
@@ -98,7 +98,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
 
         {/* Center Live Indicator Pill */}
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold font-mono tracking-wider border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] sm:text-xs font-bold font-mono tracking-wider border border-emerald-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
             <span>• LIVE RECONCILED</span>
           </span>
@@ -130,7 +130,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
         {/* Left Mini-Sidebar (Desktop Only) */}
         <div className="hidden md:flex md:col-span-3 lg:col-span-3 border-r border-slate-200/80 bg-white p-3 flex-col justify-between">
           <div className="space-y-0.5">
-            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+            <div className="px-2 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
               Workspace
             </div>
             {sidebarItems.map((item) => {
@@ -161,11 +161,11 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
           </div>
 
           <div className="p-2 rounded-xl bg-orange-50/80 border border-orange-200/60 mt-2">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-orange-800">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-800">
               <Sparkles className="w-3 h-3 text-[#FF6A00]" />
               <span>100% Free ERP</span>
             </div>
-            <p className="text-[9px] text-orange-900/80 mt-0.5 leading-tight">
+            <p className="text-[11px] text-orange-900/80 mt-0.5 leading-tight">
               Zero transaction fees or limits
             </p>
           </div>
@@ -205,14 +205,14 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
                 )}
               >
                 <div>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-blue-700 uppercase tracking-wider font-mono">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-blue-700 uppercase tracking-wider font-mono">
                     <ArrowDownLeft className="w-3 h-3" />
                     <span>To Collect</span>
                   </div>
                   <div className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
                     ₹ 0
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[11px] text-slate-500 font-medium">
                     Outstanding Due
                   </div>
                 </div>
@@ -230,14 +230,14 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
                 )}
               >
                 <div>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-orange-700 uppercase tracking-wider font-mono">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-orange-700 uppercase tracking-wider font-mono">
                     <ArrowUpRight className="w-3 h-3" />
                     <span>To Pay</span>
                   </div>
                   <div className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
                     ₹ 0
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[11px] text-slate-500 font-medium">
                     Pending Bills
                   </div>
                 </div>
@@ -255,14 +255,14 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
                 )}
               >
                 <div>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-amber-700 uppercase tracking-wider font-mono">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-700 uppercase tracking-wider font-mono">
                     <Landmark className="w-3 h-3" />
                     <span>Cash &amp; Bank</span>
                   </div>
                   <div className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 text-amber-600">
                     ₹ 97,678
                   </div>
-                  <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                  <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5">
                     <CheckCircle2 className="w-2.5 h-2.5" /> Reconciled
                   </div>
                 </div>
@@ -274,43 +274,43 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
             {/* ── 4-METRIC OVERVIEW STRIP ── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-2xl bg-white border border-slate-200/80 mb-4 shadow-2xs">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
                   Sales (Month)
                 </span>
                 <span className="text-xs sm:text-sm font-black text-slate-900">
                   ₹ 1,24,590
                 </span>
-                <span className="text-[10px] text-slate-500 block">12 Invoices</span>
+                <span className="text-[11px] text-slate-500 block">12 Invoices</span>
               </div>
 
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
                   Purchases
                 </span>
                 <span className="text-xs sm:text-sm font-black text-slate-900">
                   ₹ 78,320
                 </span>
-                <span className="text-[10px] text-slate-500 block">9 Invoices</span>
+                <span className="text-[11px] text-slate-500 block">9 Invoices</span>
               </div>
 
               <div>
-                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block font-mono">
+                <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block font-mono">
                   Low Stock
                 </span>
                 <span className="text-xs sm:text-sm font-black text-amber-600">
                   16 Items
                 </span>
-                <span className="text-[10px] text-slate-500 block">Need Order</span>
+                <span className="text-[11px] text-slate-500 block">Need Order</span>
               </div>
 
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
                   Customers Due
                 </span>
                 <span className="text-xs sm:text-sm font-black text-slate-900">
                   ₹ 54,320
                 </span>
-                <span className="text-[10px] text-slate-500 block">8 Parties</span>
+                <span className="text-[11px] text-slate-500 block">8 Parties</span>
               </div>
             </div>
 
@@ -318,7 +318,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-slate-800 mb-2">
                 <span>Recent Reconciled Activity</span>
-                <span className="text-[10px] text-blue-600 font-semibold cursor-pointer hover:underline">
+                <span className="text-[11px] text-blue-600 font-semibold cursor-pointer hover:underline">
                   View Ledger &rarr;
                 </span>
               </div>
@@ -335,7 +335,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
                         <span className="font-bold text-slate-900 block leading-tight">
                           {tx.party}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[11px] text-slate-400 font-mono">
                           {tx.id} &bull; {tx.type}
                         </span>
                       </div>
@@ -347,7 +347,7 @@ export function HeroDashboardCard({ className, onStartFree }: HeroDashboardCardP
                       </span>
                       <span
                         className={cn(
-                          "inline-block px-1.5 py-0.2 rounded-md text-[9px] font-bold border",
+                          "inline-block px-1.5 py-0.2 rounded-md text-[11px] font-bold border",
                           tx.statusColor
                         )}
                       >

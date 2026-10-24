@@ -69,7 +69,7 @@ export default function About() {
       {/* Story & Pillars */}
       <section className="py-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 to-orange-500 rounded-l-2xl" />
             <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-black text-base shadow-xs">
               ₹0
@@ -80,7 +80,7 @@ export default function About() {
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-l-2xl" />
             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-black text-base shadow-xs">
               <Scale className="w-6 h-6" />
@@ -91,7 +91,7 @@ export default function About() {
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-l-2xl" />
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-black text-base shadow-xs">
               <ShieldCheck className="w-6 h-6" />
@@ -104,7 +104,7 @@ export default function About() {
         </div>
 
         {/* Commitment to Indian MSMEs */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200/80 shadow-md space-y-5 relative overflow-hidden">
+        <div className="p-8 sm:p-12 rounded-2xl bg-white border border-slate-200/80 shadow-md space-y-5 relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200/80">
             <Award className="w-3.5 h-3.5" /> Engineered for India

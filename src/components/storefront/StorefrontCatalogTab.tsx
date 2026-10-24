@@ -297,7 +297,7 @@ export function StorefrontCatalogTab({ themeColor = "#FF6A00" }: StorefrontCatal
                           {product.name}
                         </h4>
                         {featured && (
-                          <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-sm flex items-center gap-0.5">
+                          <span className="text-[11px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-sm flex items-center gap-0.5">
                             <Star className="w-2.5 h-2.5 fill-current" />
                             Featured
                           </span>

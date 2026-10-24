@@ -275,7 +275,7 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
                 ) : (
                   <>
                     <Upload className="w-4 h-4 text-muted-foreground mb-1" />
-                    <span className="text-[9px] text-muted-foreground font-medium">
+                    <span className="text-[11px] text-muted-foreground font-medium">
                       {uploading ? "Uploading..." : "Upload"}
                     </span>
                   </>
@@ -301,7 +301,7 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
                     className="w-full h-9 pl-8 pr-3 rounded-lg border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground">Upload a file or paste an image URL. Max 5MB.</p>
+                <p className="text-[11px] text-muted-foreground">Upload a file or paste an image URL. Max 5MB.</p>
               </div>
             </div>
           </div>
@@ -323,7 +323,7 @@ export function AddProductModal({ onClose, onSave, onUpdate, onBulkImport, categ
               <div className="text-center">
                 <QRCodeSVG value={form.barcode || sku} size={160} level="H" includeMargin />
                 <p className="text-xs text-muted-foreground mt-3 font-mono">{form.barcode || sku}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Print this label for the product</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Print this label for the product</p>
               </div>
             </div>
           )}

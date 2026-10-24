@@ -409,7 +409,7 @@ export default function Reports() {
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
               GST &amp; Financial Reports
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>GST SCHEMA 2.0 READY</span>
             </span>
@@ -456,9 +456,9 @@ export default function Reports() {
 
           <button
             onClick={() => setShowCaModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
           >
-            <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center text-[9px] font-black font-mono">
+            <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center text-[11px] font-black font-mono">
               CA
             </div>
             <span>CA 1-Click Sharing</span>
@@ -467,8 +467,8 @@ export default function Reports() {
       </div>
 
       {/* GST Filing Return Period Quick Bar - Frosted Glass Card with Lightbar */}
-      <div className="glass-card-3d p-2.5 sm:p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 shrink-0 relative overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-2.5 sm:p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 shrink-0 relative overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl" />
         <div className="flex items-center gap-2.5 min-w-0 pl-1">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
             <Calendar className="w-4 h-4" />
@@ -476,12 +476,12 @@ export default function Reports() {
           <div className="truncate">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <span className="text-xs font-bold text-slate-900 dark:text-white">Return Period:</span>
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/30">
+              <span className="text-[11px] sm:text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/30">
                 FY {getFinancialYear()} • {formatFilingPeriod()}
               </span>
-              <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">GSTIN: {org?.gstin || "27AAPFU0939F1ZV"}</span>
+              <span className="text-[11px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">GSTIN: {org?.gstin || "27AAPFU0939F1ZV"}</span>
             </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+            <p className="text-[11px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
               Active Invoices: <span className="font-bold text-slate-900 dark:text-white font-mono">{gstr1Data.summary.totalInvoicesCount}</span> •
               Taxable: <span className="font-bold text-slate-900 dark:text-white font-mono">₹{gstr1Data.summary.totalTaxableValue.toLocaleString("en-IN")}</span> •
               Liability: <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">₹{gstr1Data.summary.totalTax.toLocaleString("en-IN")}</span>
@@ -504,10 +504,10 @@ export default function Reports() {
       </div>
 
       {/* Filter Tabs & Search Bar - Frosted Glass Container */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0">
         {/* Filter Pills (Scrollable on mobile) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full md:w-auto">
-          <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 mr-0.5 uppercase font-mono shrink-0">Filter:</span>
+          <span className="text-[11px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 mr-0.5 uppercase font-mono shrink-0">Filter:</span>
           {FILTER_TABS.map((tab) => (
             <button
               key={tab}
@@ -532,7 +532,7 @@ export default function Reports() {
             placeholder="Find Report (e.g. GSTR-1, HSN, P&L)"
             className="pl-9 pr-14 h-9 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
           />
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-semibold text-slate-400 bg-slate-200/80 dark:bg-slate-700/80 px-1.5 py-0.5 rounded border border-slate-300/50 dark:border-slate-600">
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono font-semibold text-slate-400 bg-slate-200/80 dark:bg-slate-700/80 px-1.5 py-0.5 rounded border border-slate-300/50 dark:border-slate-600">
             Ctrl + F
           </span>
         </div>
@@ -542,7 +542,7 @@ export default function Reports() {
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pr-1 pb-28">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 pb-4">
           {/* Col 1: Favourite */}
-          <div className="glass-card-3d flex flex-col overflow-hidden rounded-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs flex flex-col overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 bg-amber-500/10 border-b border-slate-200/80 dark:border-slate-800 font-bold text-xs text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>Favourite &amp; GST Returns</span>
@@ -798,19 +798,19 @@ export default function Reports() {
 
                     <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center border-b border-slate-200/80 bg-white">
                       <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">B2B Registered</p>
+                        <p className="text-[11px] text-slate-500 font-semibold uppercase">B2B Registered</p>
                         <p className="text-base font-bold text-slate-900 mt-0.5">{gstr1Data.summary.b2bCount} Invoices</p>
                       </div>
                       <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">B2CS Retail Small</p>
+                        <p className="text-[11px] text-slate-500 font-semibold uppercase">B2CS Retail Small</p>
                         <p className="text-base font-bold text-slate-900 mt-0.5">{gstr1Data.summary.b2csCount} Groups</p>
                       </div>
                       <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Credit/Debit Notes</p>
+                        <p className="text-[11px] text-slate-500 font-semibold uppercase">Credit/Debit Notes</p>
                         <p className="text-base font-bold text-slate-900 mt-0.5">{gstr1Data.summary.cdnrCount} Notes</p>
                       </div>
                       <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">HSN Code Count</p>
+                        <p className="text-[11px] text-slate-500 font-semibold uppercase">HSN Code Count</p>
                         <p className="text-base font-bold text-slate-900 mt-0.5">{gstr1Data.hsn.data.length} Items</p>
                       </div>
                     </div>
@@ -931,9 +931,9 @@ export default function Reports() {
               )}
 
               {/* Bottom-left Report Watermark */}
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono py-1 border-t border-slate-100">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono py-1 border-t border-slate-100">
                 <div className="flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-bold text-[9px] text-slate-700">⚡ CredSmart</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 font-bold text-[11px] text-slate-700">⚡ CredSmart</span>
                   <span>Generated via CredSmart Tax Engine</span>
                 </div>
                 <span>100% Tax Compliant</span>

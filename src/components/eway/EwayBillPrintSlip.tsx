@@ -130,15 +130,15 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
               <DialogTitle className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 Official Form GST EWB-01 Slip
                 {isCancelled ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-300">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-300">
                     CANCELLED
                   </span>
                 ) : isExpired ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border border-amber-300">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border border-amber-300">
                     EXPIRED
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-300 flex items-center gap-1">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-300 flex items-center gap-1">
                     <CheckCircle className="w-2.5 h-2.5" /> ACTIVE
                   </span>
                 )}
@@ -198,7 +198,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
               <h1 className="text-base font-black tracking-wider uppercase">
                 FORM GST EWB-01
               </h1>
-              <p className="text-[10px] text-slate-600 font-medium">
+              <p className="text-[11px] text-slate-600 font-medium">
                 (See Rule 138 of Central Goods and Services Tax Rules, 2017)
               </p>
               <p className="text-sm font-bold text-slate-900 tracking-wide mt-1">
@@ -226,7 +226,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
               {/* Central Metadata */}
               <div className="text-center space-y-1">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     E-Way Bill Number
                   </span>
                   <span className="text-base font-mono font-black text-slate-900 tracking-wider">
@@ -234,7 +234,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                     Generated Date
                   </span>
                   <span className="text-xs font-semibold text-slate-800">
@@ -253,7 +253,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                     includeMargin={false}
                   />
                 </div>
-                <span className="text-[9px] text-slate-500 mt-1 font-mono">
+                <span className="text-[11px] text-slate-500 mt-1 font-mono">
                   Scan for Verification
                 </span>
               </div>
@@ -279,7 +279,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
             <div className="mt-4">
               <div className="bg-slate-900 text-white font-bold px-3 py-1 text-xs uppercase tracking-wider flex justify-between items-center">
                 <span>PART - A (Consignment Details)</span>
-                <span className="text-[10px] font-normal text-slate-300">
+                <span className="text-[11px] font-normal text-slate-300">
                   Distance: {ewayBill.transDistance} KM
                 </span>
               </div>
@@ -370,7 +370,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                       5. Value of Goods
                     </td>
                     <td colSpan={3} className="p-2">
-                      <div className="grid grid-cols-4 gap-2 text-[10px]">
+                      <div className="grid grid-cols-4 gap-2 text-[11px]">
                         <div>
                           <span className="text-slate-500 block">Taxable Amount:</span>
                           <span className="font-mono font-bold text-xs">
@@ -424,10 +424,10 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
 
             {/* Items Table */}
             <div className="mt-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                 Itemized Consignment Manifest
               </span>
-              <table className="w-full border-collapse border border-slate-300 text-[10px]">
+              <table className="w-full border-collapse border border-slate-300 text-[11px]">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-300 font-bold text-slate-700">
                     <th className="p-1.5 text-left border-r border-slate-300 w-8">#</th>
@@ -478,14 +478,14 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
             <div className="mt-4">
               <div className="bg-slate-900 text-white font-bold px-3 py-1 text-xs uppercase tracking-wider flex justify-between items-center">
                 <span>PART - B (Vehicle & Transit Information)</span>
-                <span className="text-[10px] font-normal text-slate-300">
+                <span className="text-[11px] font-normal text-slate-300">
                   {ewayBill.vehicleNo ? "Vehicle Assigned" : "Vehicle Pending (Part-A Only)"}
                 </span>
               </div>
 
               <table className="w-full border-collapse border border-slate-300 mt-1 text-[11px]">
                 <thead>
-                  <tr className="bg-slate-100 border-b border-slate-300 font-bold text-slate-700 text-[10px]">
+                  <tr className="bg-slate-100 border-b border-slate-300 font-bold text-slate-700 text-[11px]">
                     <th className="p-1.5 text-left border-r border-slate-300">Mode</th>
                     <th className="p-1.5 text-left border-r border-slate-300">Vehicle / Trans Doc No</th>
                     <th className="p-1.5 text-left border-r border-slate-300">From Place</th>
@@ -509,7 +509,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                       <td className="p-1.5 border-r border-slate-200 font-mono font-bold text-slate-900">
                         {ewayBill.vehicleNo}
                         {ewayBill.transDocNo && (
-                          <div className="text-[9px] text-slate-500 font-normal">
+                          <div className="text-[11px] text-slate-500 font-normal">
                             Doc: {ewayBill.transDocNo}
                           </div>
                         )}
@@ -517,13 +517,13 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                       <td className="p-1.5 border-r border-slate-200">
                         {ewayBill.fromPlace} ({ewayBill.fromStateCode})
                       </td>
-                      <td className="p-1.5 border-r border-slate-200 font-mono text-[10px]">
+                      <td className="p-1.5 border-r border-slate-200 font-mono text-[11px]">
                         {formatDateTime(ewayBill.ewayBillDate)}
                       </td>
-                      <td className="p-1.5 border-r border-slate-200 font-mono text-[10px]">
+                      <td className="p-1.5 border-r border-slate-200 font-mono text-[11px]">
                         {ewayBill.fromGstin}
                       </td>
-                      <td className="p-1.5 text-[10px] text-emerald-700 font-medium">
+                      <td className="p-1.5 text-[11px] text-emerald-700 font-medium">
                         Initial Assignment
                       </td>
                     </tr>
@@ -546,7 +546,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                           <td className="p-1.5 border-r border-slate-200 font-mono font-bold text-slate-800">
                             {hist.vehicleNo}
                             {hist.transDocNo && (
-                              <div className="text-[9px] text-slate-500 font-normal">
+                              <div className="text-[11px] text-slate-500 font-normal">
                                 Doc: {hist.transDocNo}
                               </div>
                             )}
@@ -554,13 +554,13 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                           <td className="p-1.5 border-r border-slate-200">
                             {hist.fromPlace} ({hist.fromState})
                           </td>
-                          <td className="p-1.5 border-r border-slate-200 font-mono text-[10px]">
+                          <td className="p-1.5 border-r border-slate-200 font-mono text-[11px]">
                             {formatDateTime(hist.updatedAt)}
                           </td>
-                          <td className="p-1.5 border-r border-slate-200 font-mono text-[10px]">
+                          <td className="p-1.5 border-r border-slate-200 font-mono text-[11px]">
                             {ewayBill.fromGstin}
                           </td>
-                          <td className="p-1.5 text-[10px] text-slate-700">
+                          <td className="p-1.5 text-[11px] text-slate-700">
                             {hist.reasonCode} {hist.reasonRemarks ? `(${hist.reasonRemarks})` : ""}
                           </td>
                         </tr>
@@ -572,7 +572,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
             </div>
 
             {/* Statutory Disclaimer & Footer */}
-            <div className="mt-8 pt-4 border-t border-slate-300 text-[9px] text-slate-500 flex justify-between items-end">
+            <div className="mt-8 pt-4 border-t border-slate-300 text-[11px] text-slate-500 flex justify-between items-end">
               <div className="space-y-0.5">
                 <p className="font-semibold text-slate-700">
                   Notes & Statutory Compliance:

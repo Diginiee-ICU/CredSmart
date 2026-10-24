@@ -209,7 +209,7 @@ export function CompanySearchAutocomplete({
 
       {open && results.length > 0 && (
         <div className="absolute z-[9999] top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-border/60 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-3 py-1.5 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+          <div className="px-3 py-1.5 bg-muted/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
             <span>Found in MCA 3M+ Database</span>
             <span>Click to Auto-fill</span>
           </div>
@@ -229,7 +229,7 @@ export function CompanySearchAutocomplete({
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px] text-muted-foreground">
                   {comp.cin && (
-                    <span className="font-mono bg-muted text-foreground px-1.5 py-0.5 rounded text-[10px]">
+                    <span className="font-mono bg-muted text-foreground px-1.5 py-0.5 rounded text-[11px]">
                       {comp.cin}
                     </span>
                   )}

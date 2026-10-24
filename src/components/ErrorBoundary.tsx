@@ -94,11 +94,11 @@ ${this.state.errorInfo?.componentStack || "No component stack available"}`;
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest font-semibold rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="px-2 py-0.5 text-[11px] font-mono uppercase tracking-widest font-semibold rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                     System Protection
                   </span>
                   {isChunkLoadError && (
-                    <span className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest font-semibold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="px-2 py-0.5 text-[11px] font-mono uppercase tracking-widest font-semibold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       Update Available
                     </span>
                   )}
@@ -160,7 +160,7 @@ ${this.state.errorInfo?.componentStack || "No component stack available"}`;
                 <details className="w-full text-xs group">
                   <summary className="cursor-pointer text-slate-400 hover:text-slate-200 transition-colors flex items-center justify-between font-mono list-none py-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-slate-500 group-open:rotate-90 transition-transform">▶</span>
+                      <span className="text-[11px] text-slate-500 group-open:rotate-90 transition-transform">▶</span>
                       Technical Diagnostic Details
                     </span>
                     <button
@@ -187,13 +187,13 @@ ${this.state.errorInfo?.componentStack || "No component stack available"}`;
                   </summary>
                   <div className="mt-3 p-3 bg-slate-950 rounded-lg border border-slate-800/80 font-mono text-[11px] text-slate-400 overflow-x-auto max-h-48 scrollbar-thin">
                     <p className="font-semibold text-rose-400 mb-1">{this.state.error?.name}: {this.state.error?.message}</p>
-                    <pre className="whitespace-pre-wrap leading-relaxed text-[10px] text-slate-400">
+                    <pre className="whitespace-pre-wrap leading-relaxed text-[11px] text-slate-400">
                       {this.state.error?.stack || "No stack trace available"}
                     </pre>
                     {this.state.errorInfo?.componentStack && (
                       <>
                         <p className="font-semibold text-slate-300 mt-2 mb-1">Component Hierarchy:</p>
-                        <pre className="whitespace-pre-wrap leading-relaxed text-[10px] text-slate-500">
+                        <pre className="whitespace-pre-wrap leading-relaxed text-[11px] text-slate-500">
                           {this.state.errorInfo.componentStack}
                         </pre>
                       </>

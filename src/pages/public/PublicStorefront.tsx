@@ -68,7 +68,7 @@ export default function PublicStorefront() {
   if (notFound || !store) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4 border border-slate-200">
+        <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4 border border-slate-200">
           <Store className="w-10 h-10 stroke-[1.2]" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900">Store Not Found</h1>

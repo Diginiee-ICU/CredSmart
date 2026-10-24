@@ -129,7 +129,7 @@ describe("Challenger 2 — Component Primitives Adversarial & Stress Harness", (
         expect(classes).toContain("transition-colors");
         expect(classes).not.toContain("h-11");
         expect(classes).not.toContain("h-12");
-        expect(classes).not.toContain("rounded-3xl");
+        expect(classes).not.toContain("rounded-2xl");
       });
     });
 

@@ -399,7 +399,7 @@ export default function BarcodeGenerator() {
               <BarcodeIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               Barcode &amp; MRP Label Studio
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>LABEL ENGINE</span>
             </span>
@@ -413,7 +413,7 @@ export default function BarcodeGenerator() {
           <button
             onClick={handlePrint}
             disabled={selectedLabels.length === 0}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-40 flex-1 sm:flex-none"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-40 flex-1 sm:flex-none"
           >
             <Printer className="w-4 h-4 stroke-[2.5]" />
             <span>Print Labels ({totalLabelCount})</span>
@@ -425,7 +425,7 @@ export default function BarcodeGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Left Column: Product Selector (5 Cols) */}
-        <div className="lg:col-span-5 glass-card-3d rounded-2xl shadow-sm overflow-hidden flex flex-col h-[640px]">
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl shadow-sm overflow-hidden flex flex-col h-[640px]">
           {/* Header & Search */}
           <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 space-y-2.5">
             <div className="flex items-center justify-between">
@@ -585,7 +585,7 @@ export default function BarcodeGenerator() {
                 }}
               >
                 {showShopName && (
-                  <div className="text-[9px] font-black tracking-widest text-slate-900 uppercase mb-0.5 truncate max-w-full">
+                  <div className="text-[11px] font-black tracking-widest text-slate-900 uppercase mb-0.5 truncate max-w-full">
                     {storeDisplayName}
                   </div>
                 )}
@@ -626,7 +626,7 @@ export default function BarcodeGenerator() {
                   )}
                 >
                   <span>Store Name</span>
-                  <span className={cn("text-[10px] font-bold", showShopName ? "text-primary" : "text-muted-foreground")}>
+                  <span className={cn("text-[11px] font-bold", showShopName ? "text-primary" : "text-muted-foreground")}>
                     {showShopName ? "ON" : "OFF"}
                   </span>
                 </button>
@@ -640,7 +640,7 @@ export default function BarcodeGenerator() {
                   )}
                 >
                   <span>Product Name</span>
-                  <span className={cn("text-[10px] font-bold", showProductName ? "text-primary" : "text-muted-foreground")}>
+                  <span className={cn("text-[11px] font-bold", showProductName ? "text-primary" : "text-muted-foreground")}>
                     {showProductName ? "ON" : "OFF"}
                   </span>
                 </button>
@@ -654,7 +654,7 @@ export default function BarcodeGenerator() {
                   )}
                 >
                   <span>Price / MRP</span>
-                  <span className={cn("text-[10px] font-bold", showPrice ? "text-primary" : "text-muted-foreground")}>
+                  <span className={cn("text-[11px] font-bold", showPrice ? "text-primary" : "text-muted-foreground")}>
                     {showPrice ? "ON" : "OFF"}
                   </span>
                 </button>
@@ -668,7 +668,7 @@ export default function BarcodeGenerator() {
                   )}
                 >
                   <span>Barcode Text</span>
-                  <span className={cn("text-[10px] font-bold", showSkuText ? "text-primary" : "text-muted-foreground")}>
+                  <span className={cn("text-[11px] font-bold", showSkuText ? "text-primary" : "text-muted-foreground")}>
                     {showSkuText ? "ON" : "OFF"}
                   </span>
                 </button>

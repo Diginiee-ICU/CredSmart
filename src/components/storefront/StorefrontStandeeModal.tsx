@@ -29,7 +29,7 @@ export function StorefrontStandeeModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden rounded-3xl bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden rounded-2xl bg-slate-900 border-slate-800 text-white">
         <DialogHeader className="p-4 sm:p-5 border-b border-slate-800 flex flex-row items-center justify-between">
           <div>
             <DialogTitle className="text-base font-bold text-white">
@@ -55,7 +55,7 @@ export function StorefrontStandeeModal({
           <div
             id="credsmart-printable-standee"
             ref={standeeRef}
-            className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border-4 border-slate-100 flex flex-col items-center text-center relative overflow-hidden print:w-[148mm] print:h-[210mm] print:border-none print:shadow-none print:p-8"
+            className="w-full max-w-sm bg-white text-slate-900 rounded-2xl p-6 sm:p-7 shadow-2xl border-4 border-slate-100 flex flex-col items-center text-center relative overflow-hidden print:w-[148mm] print:h-[210mm] print:border-none print:shadow-none print:p-8"
           >
             {/* Top Brand Banner */}
             <div
@@ -131,7 +131,7 @@ export function StorefrontStandeeModal({
             )}
 
             {/* Footer Watermark */}
-            <div className="mt-4 pt-2 text-[10px] text-slate-400 flex items-center justify-center gap-1">
+            <div className="mt-4 pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1">
               <span>Powered by CredSmart</span>
             </div>
           </div>

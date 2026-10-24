@@ -613,7 +613,7 @@ export function ProductLibraryModal({
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-foreground text-xs sm:text-sm truncate">{item.name}</p>
-                        <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground font-mono mt-0.5">
+                        <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground font-mono mt-0.5">
                           <span className="font-semibold text-primary">{item.brand}</span>
                           <span>·</span>
                           <span>{item.category}</span>
@@ -629,7 +629,7 @@ export function ProductLibraryModal({
 
                     <div className="text-right font-mono shrink-0">
                       <p className="font-bold text-foreground text-xs sm:text-sm">₹ {item.sellingPrice}</p>
-                      <p className="text-[10px] text-muted-foreground">Cost: ₹ {item.purchasePrice}</p>
+                      <p className="text-[11px] text-muted-foreground">Cost: ₹ {item.purchasePrice}</p>
                     </div>
                   </div>
                 );
@@ -647,7 +647,7 @@ export function ProductLibraryModal({
               onDragLeave={() => setIsDraggingExcel(false)}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "p-6 sm:p-8 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
+                "p-6 sm:p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3.5 text-center transition-all duration-200 shadow-inner cursor-pointer select-none",
                 isDraggingExcel
                   ? "border-emerald-500 bg-emerald-500/15 scale-[1.01]"
                   : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent"
@@ -716,14 +716,14 @@ export function ProductLibraryModal({
                     <div key={idx} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       <div>
                         <p className="font-bold text-slate-900 dark:text-white">{item.name}</p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           {item.barcode && `Barcode: ${item.barcode} · `}
                           HSN: {item.hsnCode || "N/A"} · GST: {item.gstRate}% · Stock: {item.openingStock} {item.unit}
                         </p>
                       </div>
                       <div className="text-right font-mono">
                         <p className="font-black text-emerald-600 dark:text-emerald-400">₹ {item.sellingPrice}</p>
-                        <p className="text-[10px] text-slate-500">MRP: ₹ {item.mrp}</p>
+                        <p className="text-[11px] text-slate-500">MRP: ₹ {item.mrp}</p>
                       </div>
                     </div>
                   ))}
@@ -904,13 +904,13 @@ export function ProductLibraryModal({
                       <div key={idx} className="px-3 py-2 flex items-center justify-between text-xs">
                         <div>
                           <p className="font-bold text-foreground truncate max-w-[200px]">{item.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">
+                          <p className="text-[11px] text-muted-foreground font-mono">
                             {item.unit} · HSN: {item.hsnCode || "—"} · GST: {item.gstRate}%
                           </p>
                         </div>
                         <div className="text-right font-mono">
                           <p className="font-bold">Qty: {item.openingStock ?? 0}</p>
-                          <p className="text-[10px] text-muted-foreground">₹{(item.sellingPrice ?? item.purchasePrice ?? 0).toFixed(2)}</p>
+                          <p className="text-[11px] text-muted-foreground">₹{(item.sellingPrice ?? item.purchasePrice ?? 0).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}

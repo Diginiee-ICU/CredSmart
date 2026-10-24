@@ -302,7 +302,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
               ) : (
                 <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/30 mt-2">
                   <div className="space-y-1">
-                    <Label className="text-[10px] font-semibold text-primary uppercase tracking-wider">Smart Auto-fill</Label>
+                    <Label className="text-[11px] font-semibold text-primary uppercase tracking-wider">Smart Auto-fill</Label>
                     <CompanySearchAutocomplete 
                       onSelect={(comp) => {
                         setNewSupplierName(comp.name);
@@ -340,7 +340,7 @@ export function PurchaseInvoiceForm({ organizationId, onClose, onSaved, initialS
             </div>
 
             {/* Table header - desktop */}
-            <div className="hidden md:grid grid-cols-[2fr_1fr_0.7fr_0.8fr_0.8fr_1fr_auto] gap-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            <div className="hidden md:grid grid-cols-[2fr_1fr_0.7fr_0.8fr_0.8fr_1fr_auto] gap-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
               <span>Product</span>
               <span>Batch #</span>
               <span>Qty</span>

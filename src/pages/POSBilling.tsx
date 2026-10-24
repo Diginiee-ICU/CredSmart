@@ -2238,7 +2238,7 @@ export default function POSBilling() {
             <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-900 transition-colors" />
             <span className="hidden sm:inline">Exit POS</span>
             <span className="sm:hidden">Exit</span>
-            <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
+            <kbd className="hidden sm:inline text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
               CTRL + ESC
             </kbd>
           </button>
@@ -2253,7 +2253,7 @@ export default function POSBilling() {
               <span className="text-xs font-bold text-slate-900 tracking-tight leading-none">
                 {settings.storeName || org?.name || "CredSmart POS"}
               </span>
-              <span className="text-[10px] font-mono text-slate-500 leading-tight">
+              <span className="text-[11px] font-mono text-slate-500 leading-tight">
                 Terminal #01
               </span>
             </div>
@@ -2310,12 +2310,12 @@ export default function POSBilling() {
                   <span className="sm:hidden">Bill {tab.tabIndex}</span>
                 </div>
 
-                <kbd className="hidden lg:inline text-[10px] font-mono opacity-60 bg-slate-100 px-1 rounded border border-slate-200">
+                <kbd className="hidden lg:inline text-[11px] font-mono opacity-60 bg-slate-100 px-1 rounded border border-slate-200">
                   CTRL + {tab.tabIndex}
                 </kbd>
 
                 {itemsCount > 0 && (
-                  <span className="px-1.5 py-0.2 sm:py-0.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] sm:text-[10px] font-bold font-mono">
+                  <span className="px-1.5 py-0.2 sm:py-0.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] sm:text-[11px] font-bold font-mono">
                     {itemsCount}
                   </span>
                 )}
@@ -2341,7 +2341,7 @@ export default function POSBilling() {
               <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span className="hidden sm:inline">+ Hold Bill</span>
               <span className="sm:hidden">+ Hold</span>
-              <kbd className="hidden lg:inline text-[10px] font-mono text-indigo-700/80 font-normal bg-indigo-100 px-1 rounded border border-indigo-200">
+              <kbd className="hidden lg:inline text-[11px] font-mono text-indigo-700/80 font-normal bg-indigo-100 px-1 rounded border border-indigo-200">
                 CTRL + B
               </kbd>
             </button>
@@ -2386,7 +2386,7 @@ export default function POSBilling() {
           >
             <Settings className="w-3.5 h-3.5 text-slate-500" />
             <span className="hidden sm:inline">Settings</span>
-            <kbd className="hidden xl:inline text-[9px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-normal">
+            <kbd className="hidden xl:inline text-[11px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-normal">
               CTRL+S
             </kbd>
           </button>
@@ -2451,7 +2451,7 @@ export default function POSBilling() {
             >
               <Search className="w-3 h-3 text-slate-400" />
               <span>Search</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 F1
               </kbd>
             </button>
@@ -2466,7 +2466,7 @@ export default function POSBilling() {
               <Plus className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">New Item</span>
               <span className="sm:hidden">Item</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 CTRL+I
               </kbd>
             </button>
@@ -2481,7 +2481,7 @@ export default function POSBilling() {
               <Split className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">Hold Bill</span>
               <span className="sm:hidden">Hold</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 CTRL+B
               </kbd>
             </button>
@@ -2495,7 +2495,7 @@ export default function POSBilling() {
             >
               <Tag className="w-3 h-3 text-slate-400" />
               <span>Price</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 P
               </kbd>
             </button>
@@ -2509,7 +2509,7 @@ export default function POSBilling() {
             >
               <Hash className="w-3 h-3 text-slate-400" />
               <span>Qty</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 Q
               </kbd>
             </button>
@@ -2524,7 +2524,7 @@ export default function POSBilling() {
               <Percent className="w-3 h-3 text-slate-400" />
               <span className="hidden sm:inline">Discount</span>
               <span className="sm:hidden">Disc</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 D
               </kbd>
             </button>
@@ -2548,7 +2548,7 @@ export default function POSBilling() {
               )}
               <span className="hidden sm:inline">{isListening ? "Listening..." : "Voice"}</span>
               <span className="sm:hidden">{isListening ? "Listen" : "Voice"}</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 V
               </kbd>
             </button>
@@ -2562,7 +2562,7 @@ export default function POSBilling() {
             >
               <Trash2 className="w-3 h-3 text-slate-400 group-hover:text-rose-500" />
               <span>Delete</span>
-              <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
+              <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60 ml-0.5">
                 DEL
               </kbd>
             </button>
@@ -2650,7 +2650,7 @@ export default function POSBilling() {
 
                 {/* [F1] Shortcut Badge (Hidden on mobile) */}
                 <div className="pr-3 hidden sm:flex items-center">
-                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-600 bg-white border border-slate-200 rounded shadow-2xs">
+                  <kbd className="px-1.5 py-0.5 text-[11px] font-mono font-semibold text-slate-600 bg-white border border-slate-200 rounded shadow-2xs">
                     F1
                   </kbd>
                 </div>
@@ -2722,7 +2722,7 @@ export default function POSBilling() {
                           <span className="font-extrabold text-base font-mono text-emerald-600">
                             ₹{p.batches?.[0]?.mrp || 100}
                           </span>
-                          <span className="text-[10px] text-emerald-700 font-mono">
+                          <span className="text-[11px] text-emerald-700 font-mono">
                             Stock: {p.batches?.[0]?.stock || 0}
                           </span>
                         </div>
@@ -3044,12 +3044,12 @@ export default function POSBilling() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                              <span className="text-[11px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
                                 #{idx + 1}
                               </span>
                               <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-500">
+                            <div className="flex items-center gap-2 mt-1 text-[11px] font-mono text-slate-500">
                               <span>{item.itemCode}</span>
                               {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
                             </div>
@@ -3084,12 +3084,12 @@ export default function POSBilling() {
                                 ₹{item.sp.toFixed(2)}
                               </span>
                               {item.discountPercent > 0 && (
-                                <span className="text-[9px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="text-[11px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-slate-400 font-mono line-through">
+                            <span className="text-[11px] text-slate-400 font-mono line-through">
                               MRP: ₹{item.mrp.toFixed(2)}
                             </span>
                           </div>
@@ -3160,7 +3160,7 @@ export default function POSBilling() {
           {mobileActiveView === "cart" && (
             <div className="flex lg:hidden items-center justify-between p-3 border-t border-slate-200 bg-white shrink-0 gap-3 z-20 shadow-xs">
               <div className="flex flex-col">
-                <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
+                <span className="text-[11px] text-slate-500 uppercase font-mono tracking-wider">
                   Total ({totalItemsCount} Qty)
                 </span>
                 <span className="text-xl font-black font-mono text-emerald-600 leading-none">
@@ -3208,7 +3208,7 @@ export default function POSBilling() {
           {/* Region 1: Fixed Top Net Payable Total (shrink-0) */}
           <div className="shrink-0 p-3.5 bg-blue-600 text-white flex items-center justify-between shadow-2xs">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-blue-100 block">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-blue-100 block">
                 Net Payable
               </span>
               <span className="text-2xl font-bold font-mono tabular-nums">
@@ -3219,7 +3219,7 @@ export default function POSBilling() {
               <span className="text-[11px] font-mono bg-blue-700/80 px-2 py-0.5 rounded text-blue-100 font-medium">
                 {totalItemsCount} Units
               </span>
-              <span className="text-[10px] font-mono text-blue-200">
+              <span className="text-[11px] font-mono text-blue-200">
                 Incl. all taxes
               </span>
             </div>
@@ -3239,7 +3239,7 @@ export default function POSBilling() {
                   <span className="hidden sm:inline">Bill Discount</span>
                   <span className="sm:hidden">Discount</span>
                 </span>
-                <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
+                <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F2
                 </kbd>
               </button>
@@ -3254,7 +3254,7 @@ export default function POSBilling() {
                   <span className="hidden sm:inline">Add Charge</span>
                   <span className="sm:hidden">Charge</span>
                 </span>
-                <kbd className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
+                <kbd className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F3
                 </kbd>
               </button>
@@ -3356,7 +3356,7 @@ export default function POSBilling() {
             <div className="space-y-2 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                 <span>Received Amount</span>
-                <kbd className="hidden sm:inline text-[10px] font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
+                <kbd className="hidden sm:inline text-[11px] font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60">
                   F4
                 </kbd>
               </div>
@@ -3390,7 +3390,7 @@ export default function POSBilling() {
                       receivedAmount: String(grandTotal),
                     }))
                   }
-                  className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px] font-mono font-semibold rounded-md text-blue-700 transition-colors cursor-pointer"
+                  className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[11px] font-mono font-semibold rounded-md text-blue-700 transition-colors cursor-pointer"
                 >
                   Exact (₹{grandTotal})
                 </button>
@@ -3404,7 +3404,7 @@ export default function POSBilling() {
                         receivedAmount: String(amt),
                       }))
                     }
-                    className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-mono rounded-md text-slate-700 transition-colors cursor-pointer"
+                    className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-mono rounded-md text-slate-700 transition-colors cursor-pointer"
                   >
                     ₹{amt}
                   </button>
@@ -3442,7 +3442,7 @@ export default function POSBilling() {
                 <button
                   type="button"
                   onClick={handleOpenCustomerModal}
-                  className="text-[10px] font-mono font-medium text-blue-700 hover:text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors active:scale-95 cursor-pointer"
+                  className="text-[11px] font-mono font-medium text-blue-700 hover:text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors active:scale-95 cursor-pointer"
                 >
                   {currentTab.customer ? "Change" : "+ Select"}
                 </button>
@@ -3456,12 +3456,12 @@ export default function POSBilling() {
                         {currentTab.customer.name}
                       </span>
                       {currentTab.customer.loyaltyPoints && (
-                        <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold font-mono border border-amber-200">
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold font-mono border border-amber-200">
                           ⭐ {currentTab.customer.loyaltyPoints} pts
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                    <span className="text-[11px] text-slate-500 font-mono mt-0.5">
                       {currentTab.customer.phone || "No Phone Attached"}
                     </span>
                   </div>
@@ -3508,7 +3508,7 @@ export default function POSBilling() {
             >
               <Printer className="w-3.5 h-3.5 shrink-0" />
               <span>Print</span>
-              <kbd className="font-mono text-[10px] bg-emerald-700/90 text-emerald-100 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[11px] bg-emerald-700/90 text-emerald-100 px-1 py-0.5 rounded font-normal">
                 F6
               </kbd>
             </button>
@@ -3523,7 +3523,7 @@ export default function POSBilling() {
             >
               <Check className="w-3.5 h-3.5 shrink-0" />
               <span>Save</span>
-              <kbd className="font-mono text-[10px] bg-blue-700/90 text-blue-100 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[11px] bg-blue-700/90 text-blue-100 px-1 py-0.5 rounded font-normal">
                 F7
               </kbd>
             </button>
@@ -3554,7 +3554,7 @@ export default function POSBilling() {
       {/* Tutorial / Walkthrough Modal */}
       {showTutorialModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200">
@@ -3657,7 +3657,7 @@ export default function POSBilling() {
       {/* Settings Modal [CTRL + S] */}
       {showSettingsModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200">
@@ -3747,7 +3747,7 @@ export default function POSBilling() {
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <div className="font-bold text-slate-800 flex items-center justify-between">
                   <span>⚡ Thermal Printer (ESC/POS)</span>
-                  <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                     USB / BT / Serial
                   </span>
                 </div>
@@ -3800,7 +3800,7 @@ export default function POSBilling() {
       {/* Change Price Modal [P] */}
       {showChangePriceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Tag className="w-4 h-4 text-amber-600" />
@@ -3842,7 +3842,7 @@ export default function POSBilling() {
       {/* Change Quantity Modal [Q] */}
       {showChangeQtyModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Hash className="w-4 h-4 text-blue-600" />
@@ -3885,7 +3885,7 @@ export default function POSBilling() {
       {/* Change Item Discount Modal [D] */}
       {showChangeDiscountModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Percent className="w-4 h-4 text-purple-600" />
@@ -3955,7 +3955,7 @@ export default function POSBilling() {
       {/* Bill Discount Modal [F2] */}
       {showBillDiscountModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Percent className="w-4 h-4 text-purple-600" />
@@ -4032,7 +4032,7 @@ export default function POSBilling() {
       {/* Additional Charge Modal [F3] */}
       {showAdditionalChargeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Truck className="w-4 h-4 text-blue-600" />
@@ -4085,7 +4085,7 @@ export default function POSBilling() {
       {/* Customer Lookup Modal [F5] */}
       {showCustomerModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <User className="w-4 h-4 text-indigo-600" />
@@ -4148,7 +4148,7 @@ export default function POSBilling() {
                       <div className="text-[11px] text-slate-500 font-mono">{c.phone || "No phone"}</div>
                     </div>
                     {c.loyaltyPoints && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold font-mono border border-amber-200">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold font-mono border border-amber-200">
                         ⭐ {c.loyaltyPoints} pts
                       </span>
                     )}
@@ -4162,7 +4162,7 @@ export default function POSBilling() {
       {/* Quick Add Customer Modal */}
       {showQuickAddCustomerModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <User className="w-4 h-4 text-indigo-600" />
@@ -4175,7 +4175,7 @@ export default function POSBilling() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs text-slate-600 font-semibold">GSTIN (Optional)</label>
-                <span className="text-[10px] text-slate-400">Auto-fills name</span>
+                <span className="text-[11px] text-slate-400">Auto-fills name</span>
               </div>
               <input
                 type="text"
@@ -4228,7 +4228,7 @@ export default function POSBilling() {
       {/* Quick Add Item Modal [CTRL + I] */}
       {showNewItemModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Plus className="w-4 h-4 text-emerald-600" />
@@ -4321,7 +4321,7 @@ export default function POSBilling() {
       {/* UPI QR Payment Modal */}
       {showUPIQRModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center text-slate-900 animate-scale-in">
             <div className="flex justify-between items-center border-b border-slate-100 pb-2">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-indigo-600" />
@@ -4362,7 +4362,7 @@ export default function POSBilling() {
       {/* Camera Barcode Scanner Modal */}
       {showCameraScannerModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center text-slate-900 animate-scale-in">
             <div className="flex justify-between items-center border-b border-slate-100 pb-2">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Camera className="w-4 h-4 text-indigo-600" />
@@ -4400,7 +4400,7 @@ export default function POSBilling() {
       {/* Exit POS Confirmation Modal */}
       {showExitConfirmModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 animate-scale-in">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
                 <AlertCircle className="w-5 h-5" />
@@ -4481,7 +4481,7 @@ export default function POSBilling() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                   <span>Voice Assistant Active</span>
-                  <span className="text-[10px] font-mono font-normal text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                  <span className="text-[11px] font-mono font-normal text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
                     {voiceLang === "hi-IN" ? "हिंदी" : "English"}
                   </span>
                 </span>
@@ -4523,7 +4523,7 @@ export default function POSBilling() {
       {/* Voice Assistant Commands Cheat Sheet & Manual Trigger Modal */}
       {showVoiceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-slate-900 animate-scale-in">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-slate-900 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200">
@@ -4553,7 +4553,7 @@ export default function POSBilling() {
                 type="button"
                 onClick={toggleVoiceRecognition}
                 className={cn(
-                  "w-16 h-16 rounded-3xl mx-auto flex items-center justify-center text-white transition-all shadow-md active:scale-95 cursor-pointer",
+                  "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white transition-all shadow-md active:scale-95 cursor-pointer",
                   isListening
                     ? "bg-rose-600 animate-pulse ring-4 ring-rose-300 shadow-rose-600/30"
                     : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20"
@@ -4602,7 +4602,7 @@ export default function POSBilling() {
                     <span className="font-bold text-indigo-700 font-mono">
                       &quot;{c.cmd}&quot;
                     </span>
-                    <span className="text-[10px] text-slate-500">{c.desc}</span>
+                    <span className="text-[11px] text-slate-500">{c.desc}</span>
                   </div>
                 ))}
               </div>

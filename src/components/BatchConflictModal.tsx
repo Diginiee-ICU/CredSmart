@@ -84,7 +84,7 @@ export function BatchConflictModal({ product, batches, onSelect, onClose }: Batc
                   <p className="text-xl sm:text-2xl font-black text-foreground group-hover:text-primary transition-colors">
                     ₹{batch.mrp.toFixed(2)}
                   </p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">MRP</p>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">MRP</p>
                 </div>
               </button>
             );

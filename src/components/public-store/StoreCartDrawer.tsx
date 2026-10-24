@@ -276,7 +276,7 @@ export function StoreCartDrawer({
                       <Truck className={`w-4 h-4 ${deliveryType === "home_delivery" ? "text-blue-600" : "text-slate-400"}`} />
                       <div>
                         <span className="text-xs block">Home Delivery</span>
-                        <span className="text-[10px] text-slate-400 block">
+                        <span className="text-[11px] text-slate-400 block">
                           {finalDeliveryCharge === 0 ? "FREE" : `₹${store.delivery_charges}`}
                         </span>
                       </div>
@@ -296,7 +296,7 @@ export function StoreCartDrawer({
                       <Store className={`w-4 h-4 ${deliveryType === "store_pickup" ? "text-blue-600" : "text-slate-400"}`} />
                       <div>
                         <span className="text-xs block">Store Pickup</span>
-                        <span className="text-[10px] text-slate-400 block">Self Collect</span>
+                        <span className="text-[11px] text-slate-400 block">Self Collect</span>
                       </div>
                     </button>
                   )}

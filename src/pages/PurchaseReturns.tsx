@@ -398,7 +398,7 @@ export default function PurchaseReturns() {
               {typeof Undo2 !== 'undefined' ? <Undo2 className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> : <RotateCcw className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> }
               Purchase Returns &amp; Debit Notes
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-[11px] font-mono font-bold text-rose-600 dark:text-rose-400">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
               <span>DEBIT NOTES</span>
             </span>
@@ -409,7 +409,7 @@ export default function PurchaseReturns() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>New Return / Debit Note</span>
@@ -421,10 +421,10 @@ export default function PurchaseReturns() {
 
       {/* Stats Cards - 3D Frosted Glass */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <div className="glass-card-3d p-2.5 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-2.5 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
+            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
               Total Returns
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
@@ -437,10 +437,10 @@ export default function PurchaseReturns() {
           </div>
         </div>
 
-        <div className="glass-card-3d p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
               Draft / Pending
             </span>
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -455,10 +455,10 @@ export default function PurchaseReturns() {
           </div>
         </div>
 
-        <div className="glass-card-3d p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
               Completed
             </span>
             <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -473,10 +473,10 @@ export default function PurchaseReturns() {
           </div>
         </div>
 
-        <div className="glass-card-3d p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
               Total Value
             </span>
             <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -493,7 +493,7 @@ export default function PurchaseReturns() {
       </div>
 
       {/* Filter & Search Bar - Frosted Container */}
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -802,7 +802,7 @@ export default function PurchaseReturns() {
                   </Button>
                 </div>
 
-                <div className="hidden md:grid grid-cols-[2fr_1fr_0.7fr_0.8fr_auto] gap-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                <div className="hidden md:grid grid-cols-[2fr_1fr_0.7fr_0.8fr_auto] gap-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
                   <span>Product</span>
                   <span>Batch #</span>
                   <span>Qty</span>

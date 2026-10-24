@@ -181,7 +181,7 @@ export function OnboardingSuiteSelector({
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-sm">POS & Billing</span>
             {value === "billing" && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
                 Selected
               </span>
             )}
@@ -214,7 +214,7 @@ export function OnboardingSuiteSelector({
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-sm">CRM & Workforce</span>
             {value === "crm" && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
                 Selected
               </span>
             )}
@@ -247,7 +247,7 @@ export function OnboardingSuiteSelector({
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-sm">Both (Complete)</span>
             {value === "both" && (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded-full">
                 Selected
               </span>
             )}

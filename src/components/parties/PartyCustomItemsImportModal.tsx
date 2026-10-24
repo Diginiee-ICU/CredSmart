@@ -346,11 +346,11 @@ export function PartyCustomItemsImportModal({
                   <span className="font-bold text-foreground">
                     Step 3: Preview ({parsedItems.length} Products Found)
                   </span>
-                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold">
+                  <Badge variant="outline" className="text-[11px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold">
                     ✓ {matchedCount} Matched in Catalogue
                   </Badge>
                   {newCount > 0 && (
-                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold">
+                    <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold">
                       + {newCount} New Items
                     </Badge>
                   )}
@@ -386,7 +386,7 @@ export function PartyCustomItemsImportModal({
               {/* Preview Table */}
               <div className="border border-border rounded-xl overflow-hidden bg-card shadow-2xs">
                 <div className="max-h-[260px] overflow-y-auto divide-y divide-border">
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider sticky top-0 z-10">
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/60 text-[11px] font-bold text-muted-foreground uppercase tracking-wider sticky top-0 z-10">
                     <div className="col-span-1 text-center">Sel</div>
                     <div className="col-span-5">Product / SKU</div>
                     <div className="col-span-2 text-right">Standard SP</div>
@@ -425,16 +425,16 @@ export function PartyCustomItemsImportModal({
                               {item.productName}
                             </span>
                             {isCatalogueMatched ? (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shrink-0">
+                              <Badge variant="outline" className="text-[11px] px-1 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shrink-0">
                                 Matched
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0 bg-muted text-muted-foreground shrink-0">
+                              <Badge variant="outline" className="text-[11px] px-1 py-0 bg-muted text-muted-foreground shrink-0">
                                 New
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                             {item.sku && <span>SKU: {item.sku}</span>}
                             {item.barcode && <span>• Barcode: {item.barcode}</span>}
                             <span>• {item.category || "General"}</span>
@@ -451,15 +451,15 @@ export function PartyCustomItemsImportModal({
 
                         <div className="col-span-2 text-center">
                           {diff < 0 ? (
-                            <span className="inline-flex items-center text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            <span className="inline-flex items-center text-[11px] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                               {pct.toFixed(1)}% ({diff.toFixed(0)})
                             </span>
                           ) : diff > 0 ? (
-                            <span className="inline-flex items-center text-[10px] font-semibold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            <span className="inline-flex items-center text-[11px] font-semibold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
                               +{pct.toFixed(1)}% (+{diff.toFixed(0)})
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground">Same</span>
+                            <span className="text-[11px] text-muted-foreground">Same</span>
                           )}
                         </div>
                       </div>

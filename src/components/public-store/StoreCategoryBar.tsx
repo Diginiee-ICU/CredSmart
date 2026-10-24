@@ -103,7 +103,7 @@ export function StoreCategoryBar({
                 >
                   <span>{cat.label || cat.name}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    className={`text-[11px] px-1.5 py-0.2 rounded-full font-semibold ${
                       isSelected
                         ? "bg-black/20 text-white"
                         : "bg-slate-200 text-slate-600"

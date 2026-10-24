@@ -367,7 +367,7 @@ export default function BusinessSettings() {
         </div>
 
         {/* Main Content Area - 3D Glass Container */}
-        <main className="flex-1 min-h-0 w-full glass-card-3d rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
+        <main className="flex-1 min-h-0 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
           {/* Top Header Bar - Compact */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
             <div>
@@ -375,7 +375,7 @@ export default function BusinessSettings() {
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
                   Business Settings
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>MASTER PROFILE</span>
                 </span>
@@ -422,7 +422,7 @@ export default function BusinessSettings() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
               >
                 {saving ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -483,7 +483,7 @@ export default function BusinessSettings() {
                           <Upload className="w-4 h-4" />
                         </div>
                         <span className="text-xs font-bold text-[#0284C7]">Upload Logo</span>
-                        <span className="text-[9px] text-muted-foreground leading-tight mt-0.5">
+                        <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                           PNG/JPG, max 5 MB.
                         </span>
                       </>
@@ -502,7 +502,7 @@ export default function BusinessSettings() {
                     placeholder="Enter Business Name"
                     className="h-10 rounded-xl font-medium"
                   />
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     This official name will be prominently printed on invoices, vouchers, and thermal receipts.
                   </p>
                 </div>
@@ -656,7 +656,7 @@ export default function BusinessSettings() {
                       )}
                     />
                     {pan && (
-                      <p className="text-[10px] text-muted-foreground font-mono">
+                      <p className="text-[11px] text-muted-foreground font-mono">
                         Extracted Entity PAN: <strong className="text-foreground">{pan}</strong>
                       </p>
                     )}
@@ -670,7 +670,7 @@ export default function BusinessSettings() {
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                       <span className="text-xs font-bold text-foreground">Official Tally Live GST Search</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-300 font-mono">
+                    <Badge variant="outline" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-300 font-mono">
                       Active &amp; Automatic
                     </Badge>
                   </div>
@@ -858,7 +858,7 @@ export default function BusinessSettings() {
                     >
                       <div>
                         <p className="font-bold text-foreground">{b.bankName}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">
+                        <p className="text-[11px] text-muted-foreground font-mono">
                           A/C: {b.accountNumber} | IFSC: {b.ifsc}
                         </p>
                       </div>
@@ -1023,15 +1023,15 @@ export default function BusinessSettings() {
             <div className="p-3 bg-muted/40 rounded-xl space-y-1.5 border">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Save Changes:</span>
-                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[10px]">Ctrl+S</kbd>
+                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[11px]">Ctrl+S</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">New POS Invoice:</span>
-                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[10px]">F9</kbd>
+                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[11px]">F9</kbd>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Global Search:</span>
-                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[10px]">Ctrl+K</kbd>
+                <kbd className="px-1.5 py-0.5 bg-card border rounded font-mono text-[11px]">Ctrl+K</kbd>
               </div>
             </div>
           </div>

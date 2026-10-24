@@ -196,7 +196,7 @@ export function ItemImageUpload({
                 </Button>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">PNG, JPG, WEBP up to 5MB</p>
+            <p className="text-[11px] text-muted-foreground truncate">PNG, JPG, WEBP up to 5MB</p>
           </div>
 
           <input

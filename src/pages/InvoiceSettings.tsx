@@ -218,7 +218,7 @@ export default function InvoiceSettings() {
         </div>
 
         {/* Main Split-Screen Customizer Area */}
-        <main className="flex-1 min-h-0 w-full glass-card-3d rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
+        <main className="flex-1 min-h-0 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col overflow-hidden">
           {/* Top Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
             <div>
@@ -226,7 +226,7 @@ export default function InvoiceSettings() {
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
                   Invoice Settings
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>MASTER GST STANDARD</span>
                 </span>
@@ -240,7 +240,7 @@ export default function InvoiceSettings() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
               >
                 {saving ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -296,7 +296,7 @@ export default function InvoiceSettings() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-bold text-foreground">Live Invoice Preview</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[11px] text-muted-foreground font-mono">
                   Master Format • 1-Page Standard
                 </span>
               </div>
@@ -329,7 +329,7 @@ export default function InvoiceSettings() {
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Master Invoice Design Standard</span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     Active Everywhere
                   </span>
                 </div>
@@ -342,7 +342,7 @@ export default function InvoiceSettings() {
                 <div className="pt-2 border-t border-border/70 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground">Brand Color Accent</span>
-                    <span className="text-[10px] text-muted-foreground font-mono">{settings.primaryColor}</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">{settings.primaryColor}</span>
                   </div>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {COLOR_SWATCHES.map((swatch) => {

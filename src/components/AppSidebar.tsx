@@ -281,7 +281,7 @@ export function AppSidebar({
                 >
                   <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Command</span>
+                <span className="text-[11px] tracking-tight">Command</span>
               </NavLink>
 
               {/* CRM Tab 2: Attendance */}
@@ -304,7 +304,7 @@ export function AppSidebar({
                 >
                   <CalendarCheck className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Attendance</span>
+                <span className="text-[11px] tracking-tight">Attendance</span>
               </NavLink>
 
               {/* CRM Tab 3: Center Elevated Punch / Task Button */}
@@ -322,7 +322,7 @@ export function AppSidebar({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] mt-1 font-bold tracking-tight",
+                    "text-[11px] mt-1 font-bold tracking-tight",
                     isCrmTasksActive
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-600 dark:text-slate-300"
@@ -352,7 +352,7 @@ export function AppSidebar({
                 >
                   <Wallet className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Payroll</span>
+                <span className="text-[11px] tracking-tight">Payroll</span>
               </NavLink>
 
               {/* CRM Tab 5: Roles & RBAC */}
@@ -375,7 +375,7 @@ export function AppSidebar({
                 >
                   <Shield className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Roles</span>
+                <span className="text-[11px] tracking-tight">Roles</span>
               </NavLink>
             </>
           ) : (
@@ -401,7 +401,7 @@ export function AppSidebar({
                 >
                   <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Home</span>
+                <span className="text-[11px] tracking-tight">Home</span>
               </NavLink>
 
               {/* POS & Billing Tab 2: Sales */}
@@ -424,7 +424,7 @@ export function AppSidebar({
                 >
                   <Receipt className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Sales</span>
+                <span className="text-[11px] tracking-tight">Sales</span>
               </NavLink>
 
               {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
@@ -442,7 +442,7 @@ export function AppSidebar({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] mt-1 font-bold tracking-tight",
+                    "text-[11px] mt-1 font-bold tracking-tight",
                     isPosActive
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-600 dark:text-slate-300"
@@ -472,7 +472,7 @@ export function AppSidebar({
                 >
                   <Package className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Items</span>
+                <span className="text-[11px] tracking-tight">Items</span>
               </NavLink>
 
               {/* POS & Billing Tab 5: Parties */}
@@ -495,7 +495,7 @@ export function AppSidebar({
                 >
                   <Users2 className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[10px] tracking-tight">Parties</span>
+                <span className="text-[11px] tracking-tight">Parties</span>
               </NavLink>
             </>
           )}
@@ -521,7 +521,7 @@ export function AppSidebar({
               // Dimensions
               "max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-7rem)] flex flex-col",
               // 3D Glass Surface Architecture - LIGHT THEME
-              "rounded-2xl sm:rounded-3xl overflow-hidden",
+              "rounded-2xl sm:rounded-2xl overflow-hidden",
               "bg-white/95 backdrop-blur-3xl",
               // Specular highlights & multi-tier 3D elevation
               "border border-slate-200/80",
@@ -566,7 +566,7 @@ export function AppSidebar({
                         )}
                       />
                     </div>
-                    <p className="text-[10px] sm:text-[11px] text-slate-500 truncate font-sans">
+                    <p className="text-[11px] sm:text-[11px] text-slate-500 truncate font-sans">
                       {isCrmSuite
                         ? "Command center, attendance, salary, tasks & roles"
                         : "Quick navigation across retail, inventory & billing tools"}
@@ -604,7 +604,7 @@ export function AppSidebar({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <kbd className="hidden sm:inline-flex px-2 py-1 rounded-md text-[10px] font-mono bg-slate-100 text-slate-500 border border-slate-200">
+                  <kbd className="hidden sm:inline-flex px-2 py-1 rounded-md text-[11px] font-mono bg-slate-100 text-slate-500 border border-slate-200">
                     ESC
                   </kbd>
                   <button
@@ -680,7 +680,7 @@ export function AppSidebar({
                         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 font-mono">
                           {group.label}
                         </span>
-                        <span className="ml-auto px-2 py-0.5 rounded-lg text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        <span className="ml-auto px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                           {group.items.length}
                         </span>
                       </div>
@@ -731,7 +731,7 @@ export function AppSidebar({
                                     {item.badge && (
                                       <span
                                         className={cn(
-                                          "px-1.5 py-0.2 rounded-md text-[8px] font-black border font-mono shrink-0",
+                                          "px-1.5 py-0.2 rounded-md text-[11px] font-black border font-mono shrink-0",
                                           isCrmSuite
                                             ? "bg-blue-100 text-blue-700 border-blue-200"
                                             : "bg-rose-100 text-rose-700 border-rose-200"
@@ -847,11 +847,11 @@ export function AppSidebar({
 
             {/* ── Dropdown Footer Bar ── */}
             <div className="shrink-0 px-6 py-3 border-t border-slate-200/80 bg-slate-50 flex items-center justify-between rounded-b-3xl">
-              <div className="flex items-center gap-2 text-[10px] sm:text-xs text-emerald-600 font-mono">
+              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-emerald-600 font-mono">
                 <Shield className="w-3.5 h-3.5 text-emerald-500" />
                 <span>256-Bit SSL • Enterprise Secure • {isCrmSuite ? "RBAC Enforced" : "GST Compliant"}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono text-slate-500">
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-slate-500">
                 <span>Cred</span>
                 {isCrmSuite ? (
                   <span className="text-blue-600 font-bold">Smart CRM</span>

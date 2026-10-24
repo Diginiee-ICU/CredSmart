@@ -116,7 +116,7 @@ export default function BarcodeGuide() {
         {/* Barcode Formats Table */}
         <div className="space-y-4">
           <h2 className="text-2xl font-black text-[#0A1931]">1. Understanding Barcode Formats in Indian Retail</h2>
-          <div className="overflow-x-auto rounded-3xl bg-white border border-slate-200/80 shadow-sm">
+          <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-mono text-[11px]">
                 <tr>
@@ -142,7 +142,7 @@ export default function BarcodeGuide() {
 
         {/* Thermal Roll vs A4 Sheets */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
               <Printer className="w-6 h-6" />
             </div>
@@ -152,7 +152,7 @@ export default function BarcodeGuide() {
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-bold">
               <Layers className="w-6 h-6" />
             </div>

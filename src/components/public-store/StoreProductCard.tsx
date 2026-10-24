@@ -55,7 +55,7 @@ export function StoreProductCard({
 
           <div className="flex-1 min-w-0">
             {product.brand && (
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">
                 {product.brand}
               </span>
             )}
@@ -79,7 +79,7 @@ export function StoreProductCard({
                   <span className="text-xs text-slate-400 line-through">
                     ₹{product.mrp}
                   </span>
-                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded-sm">
+                  <span className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded-sm">
                     {discountPercent}% OFF
                   </span>
                 </>
@@ -154,7 +154,7 @@ export function StoreProductCard({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">
             <Package className="w-12 h-12 stroke-[1.2]" />
-            <span className="text-[10px] font-medium text-slate-400 mt-1 uppercase">
+            <span className="text-[11px] font-medium text-slate-400 mt-1 uppercase">
               {product.category || "Item"}
             </span>
           </div>
@@ -162,7 +162,7 @@ export function StoreProductCard({
 
         {/* Discount badge */}
         {hasDiscount && (
-          <div className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+          <div className="absolute top-2 left-2 bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
             {discountPercent}% OFF
           </div>
         )}
@@ -188,7 +188,7 @@ export function StoreProductCard({
       <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
         <div className="cursor-pointer" onClick={() => onOpenDetails(product)}>
           {product.brand && (
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">
               {product.brand}
             </span>
           )}

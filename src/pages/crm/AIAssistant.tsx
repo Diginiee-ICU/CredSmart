@@ -269,7 +269,7 @@ export default function AIAssistant(): React.ReactElement {
                 >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
+                      <span className="text-[11px] font-mono font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
                         {item.category}
                       </span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
@@ -325,7 +325,7 @@ export default function AIAssistant(): React.ReactElement {
 
                       <div
                         className={cn(
-                          "flex items-center gap-2 text-[10px] text-slate-400 font-mono",
+                          "flex items-center gap-2 text-[11px] text-slate-400 font-mono",
                           isUser ? "justify-end" : "justify-start"
                         )}
                       >
@@ -381,13 +381,13 @@ export default function AIAssistant(): React.ReactElement {
                   onClick={() => handleSendMessage()}
                   disabled={!inputPrompt.trim() || isTyping}
                   size="sm"
-                  className="h-11 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1.5 shrink-0 shadow-xs"
+                  className="h-8.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1.5 shrink-0 shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Send</span>
                 </Button>
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2 px-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
                 <span>Press Enter to send, Shift+Enter for newline</span>
                 <span>Powered by CredAlert FinOps Intelligence</span>
               </div>

@@ -344,7 +344,7 @@ export function TallyImportModal({
             <div>
               <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
                 Tally Data Import Wizard
-                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-mono hidden sm:inline-flex">
+                <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-mono hidden sm:inline-flex">
                   Tally Prime / ERP 9
                 </Badge>
               </h2>
@@ -375,7 +375,7 @@ export function TallyImportModal({
                   {i < stepIndex ? (
                     <Check className="w-3 h-3" />
                   ) : (
-                    <span className="w-4 h-4 rounded-full border-2 flex items-center justify-center text-[9px] font-bold border-current">
+                    <span className="w-4 h-4 rounded-full border-2 flex items-center justify-center text-[11px] font-bold border-current">
                       {i + 1}
                     </span>
                   )}
@@ -401,7 +401,7 @@ export function TallyImportModal({
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
                     Select Your Accounting Software
                   </p>
-                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold">
+                  <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold">
                     1-Click Migration
                   </Badge>
                 </div>
@@ -424,7 +424,7 @@ export function TallyImportModal({
                           <span className="text-xs font-black truncate">{soft.shortName}</span>
                           <span
                             className={cn(
-                              "text-[8.5px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0",
+                              "text-[11px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0",
                               isSelected
                                 ? "bg-white/25 text-white"
                                 : cn(soft.badgeBg, soft.badgeText)
@@ -433,7 +433,7 @@ export function TallyImportModal({
                             {soft.badge}
                           </span>
                         </div>
-                        <p className={cn("text-[9.5px] line-clamp-2 leading-tight", isSelected ? "text-white/85" : "text-muted-foreground")}>
+                        <p className={cn("text-[11px] line-clamp-2 leading-tight", isSelected ? "text-white/85" : "text-muted-foreground")}>
                           {soft.tagline}
                         </p>
                       </button>
@@ -533,7 +533,7 @@ export function TallyImportModal({
                     </span>
                   </div>
                   {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut && (
-                    <kbd className="px-2 py-0.5 rounded bg-muted border border-border text-[10px] font-mono text-muted-foreground">
+                    <kbd className="px-2 py-0.5 rounded bg-muted border border-border text-[11px] font-mono text-muted-foreground">
                       {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut}
                     </kbd>
                   )}
@@ -620,7 +620,7 @@ export function TallyImportModal({
                       {parseResult.companyName}
                     </Badge>
                   )}
-                  <Badge variant="outline" className={cn("text-[10px] font-mono", parseResult.source === "xml" ? "text-amber-600" : "text-blue-600")}>
+                  <Badge variant="outline" className={cn("text-[11px] font-mono", parseResult.source === "xml" ? "text-amber-600" : "text-blue-600")}>
                     {parseResult.source.toUpperCase()}
                   </Badge>
                 </div>
@@ -736,7 +736,7 @@ export function TallyImportModal({
                           <td className="px-3 py-2 font-medium text-foreground truncate max-w-[180px]">{party.name}</td>
                           <td className="px-3 py-2 hidden sm:table-cell">
                             <Badge variant="outline" className={cn(
-                              "text-[10px] font-semibold",
+                              "text-[11px] font-semibold",
                               party.partyType === "customer" ? "text-blue-600 border-blue-200" :
                               party.partyType === "supplier" ? "text-purple-600 border-purple-200" :
                               "text-slate-600 border-slate-200"
@@ -752,7 +752,7 @@ export function TallyImportModal({
                               {(party.balance ?? 0) >= 0 ? "+" : ""}₹{Math.abs(party.balance ?? 0).toLocaleString("en-IN")}
                             </span>
                           </td>
-                          <td className="px-3 py-2 font-mono text-muted-foreground text-[10px] hidden sm:table-cell">{party.gstin || "—"}</td>
+                          <td className="px-3 py-2 font-mono text-muted-foreground text-[11px] hidden sm:table-cell">{party.gstin || "—"}</td>
                           <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{party.phone || "—"}</td>
                         </tr>
                       ))}
@@ -768,7 +768,7 @@ export function TallyImportModal({
                           <Wallet className="w-4 h-4 text-emerald-600" />
                           <div>
                             <p className="text-xs font-bold text-foreground">Cash-in-Hand Ledger</p>
-                            <p className="text-[10px] text-muted-foreground">Tally Cash Account Balance</p>
+                            <p className="text-[11px] text-muted-foreground">Tally Cash Account Balance</p>
                           </div>
                         </div>
                         <p className="font-mono font-bold text-sm text-emerald-600">
@@ -832,7 +832,7 @@ export function TallyImportModal({
                             <td className="px-3 py-2 font-mono text-xs font-medium">{v.voucherNumber}</td>
                             <td className="px-3 py-2">
                               <Badge variant="outline" className={cn(
-                                "text-[10px]",
+                                "text-[11px]",
                                 v.voucherType === "Receipt" ? "text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20" :
                                 v.voucherType === "Payment" ? "text-blue-600 border-blue-300 bg-blue-50 dark:bg-blue-950/20" :
                                 v.voucherType === "Sales" ? "text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/20" :
@@ -845,7 +845,7 @@ export function TallyImportModal({
                             <td className="px-3 py-2">
                               <div className="font-medium text-foreground truncate max-w-[160px]">{v.partyName || "—"}</div>
                               {v.items && v.items.length > 0 && (
-                                <span className="text-[10px] text-muted-foreground font-mono">
+                                <span className="text-[11px] text-muted-foreground font-mono">
                                   ({v.items.length} line item{v.items.length > 1 ? "s" : ""})
                                 </span>
                               )}
@@ -1010,7 +1010,7 @@ export function TallyImportModal({
                       )}
                     >
                       <p className="text-xs font-bold text-foreground capitalize">{mode}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         {mode === "skip" && "Keep existing data"}
                         {mode === "overwrite" && "Replace with Tally data"}
                         {mode === "merge" && "Fill only blank fields"}

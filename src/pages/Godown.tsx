@@ -320,7 +320,7 @@ export default function GodownPage() {
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
                 Godown &amp; Warehouse Hub
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>MULTI-FACILITY</span>
               </span>
@@ -343,7 +343,7 @@ export default function GodownPage() {
 
           <button
             onClick={() => handleOpenGodownModal()}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Godown</span>
@@ -356,10 +356,10 @@ export default function GodownPage() {
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: Total Godowns */}
-        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-2.5 sm:p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
+            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate">
               Total Godowns
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hidden sm:flex">
@@ -373,10 +373,10 @@ export default function GodownPage() {
         </div>
 
         {/* Card 2: Total Stock Stored */}
-        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-2.5 sm:p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
+            <span className="text-[11px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate">
               Units Stored
             </span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hidden sm:flex">
@@ -392,10 +392,10 @@ export default function GodownPage() {
         </div>
 
         {/* Card 3: Total Stock Valuation */}
-        <div className="glass-card-3d p-2.5 sm:p-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-2.5 sm:p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate">
+            <span className="text-[11px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate">
               Total Valuation
             </span>
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -411,10 +411,10 @@ export default function GodownPage() {
         </div>
 
         {/* Card 4: Active Stock Transfers */}
-        <div className="glass-card-3d p-4 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
               Transfers
             </span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -480,7 +480,7 @@ export default function GodownPage() {
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-foreground text-sm">{godown.name}</h3>
                         {godown.isDefault && (
-                          <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] uppercase font-bold py-0">
+                          <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px] uppercase font-bold py-0">
                             Primary
                           </Badge>
                         )}
@@ -544,7 +544,7 @@ export default function GodownPage() {
                   {/* Stored Metrics */}
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border font-mono text-xs">
                     <div>
-                      <p className="text-[10px] text-muted-foreground uppercase font-sans">
+                      <p className="text-[11px] text-muted-foreground uppercase font-sans">
                         Items Stored
                       </p>
                       <p className="font-bold text-foreground">
@@ -552,7 +552,7 @@ export default function GodownPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-muted-foreground uppercase font-sans">
+                      <p className="text-[11px] text-muted-foreground uppercase font-sans">
                         Valuation
                       </p>
                       <p className="font-bold text-foreground">
@@ -655,7 +655,7 @@ export default function GodownPage() {
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3.5 font-mono">
                       <p className="font-bold text-foreground text-xs">{t.transferNumber}</p>
-                      <p className="text-[10px] text-muted-foreground">{t.date}</p>
+                      <p className="text-[11px] text-muted-foreground">{t.date}</p>
                     </td>
                     <td className="px-4 py-3.5 font-medium text-foreground">
                       {t.sourceGodownName}
@@ -665,7 +665,7 @@ export default function GodownPage() {
                     </td>
                     <td className="px-4 py-3.5">
                       <p className="font-semibold text-foreground">{t.productName}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">
+                      <p className="text-[11px] text-muted-foreground font-mono">
                         {t.sku} · Batch: {t.batchNumber || "DEFAULT"}
                       </p>
                     </td>
@@ -675,22 +675,22 @@ export default function GodownPage() {
                     <td className="px-4 py-3.5 text-muted-foreground">
                       {t.transferredBy}
                       {t.vehicleNumber && (
-                        <span className="block text-[10px] font-mono">{t.vehicleNumber}</span>
+                        <span className="block text-[11px] font-mono">{t.vehicleNumber}</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-center">
                       {t.status === "completed" && (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[10px]">
+                        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[11px]">
                           Completed
                         </Badge>
                       )}
                       {t.status === "in_transit" && (
-                        <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-[10px]">
+                        <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-[11px]">
                           In Transit
                         </Badge>
                       )}
                       {t.status === "pending" && (
-                        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-[10px]">
+                        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-[11px]">
                           Pending
                         </Badge>
                       )}

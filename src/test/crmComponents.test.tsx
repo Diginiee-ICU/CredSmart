@@ -335,7 +335,7 @@ describe("CRM Design System Component Suite (Milestone 5 Verification)", () => {
 
     it("renders size variants correctly (sm, md, lg)", () => {
       const { rerender } = render(<CRMBadge size="sm">Small</CRMBadge>);
-      expect(screen.getByText("Small")).toHaveClass("text-[10px]");
+      expect(screen.getByText("Small")).toHaveClass("text-[11px]");
 
       rerender(<CRMBadge size="md">Medium</CRMBadge>);
       expect(screen.getByText("Medium")).toHaveClass("text-xs");
@@ -602,7 +602,7 @@ describe("CRM Design System Component Suite (Milestone 5 Verification)", () => {
 
     it("supports pill sizes (sm, md, lg)", () => {
       const { rerender } = render(<CRMRolePill name="Role" size="sm" />);
-      expect(screen.getByText("Role").parentElement).toHaveClass("text-[10px]");
+      expect(screen.getByText("Role").parentElement).toHaveClass("text-[11px]");
 
       rerender(<CRMRolePill name="Role" size="md" />);
       expect(screen.getByText("Role").parentElement).toHaveClass("text-xs");

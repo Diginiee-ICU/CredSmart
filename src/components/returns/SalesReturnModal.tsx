@@ -537,7 +537,7 @@ export function SalesReturnModal({
               <div>
                 <DialogTitle className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
                   <span>Create {docType === "credit_note" ? "Credit Note" : "Sales Return"}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono uppercase bg-amber-500/10 text-amber-600 border-amber-500/30">
+                  <Badge variant="outline" className="text-[11px] font-mono uppercase bg-amber-500/10 text-amber-600 border-amber-500/30">
                     GST Sec 34
                   </Badge>
                 </DialogTitle>
@@ -683,7 +683,7 @@ export function SalesReturnModal({
                               <span className="font-mono font-bold text-foreground">
                                 {inv.documentNumber}
                               </span>
-                              <Badge variant="outline" className="text-[10px]">
+                              <Badge variant="outline" className="text-[11px]">
                                 {inv.docDate}
                               </Badge>
                             </div>
@@ -695,7 +695,7 @@ export function SalesReturnModal({
                             <span className="font-mono font-bold text-foreground">
                               ₹ {Number(inv.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </span>
-                            <div className="text-[10px] text-muted-foreground">
+                            <div className="text-[11px] text-muted-foreground">
                               {inv.items?.length || 0} items
                             </div>
                           </div>
@@ -715,7 +715,7 @@ export function SalesReturnModal({
           {/* Party Details Card */}
           <div className="p-3.5 rounded-xl border border-border/80 bg-muted/20 space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px] flex items-center gap-1.5">
+              <span className="font-bold uppercase tracking-wider text-muted-foreground text-[11px] flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5" />
                 Customer / Party Details
               </span>
@@ -728,7 +728,7 @@ export function SalesReturnModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
               <div>
-                <Label className="text-[10px] text-muted-foreground">Party Name</Label>
+                <Label className="text-[11px] text-muted-foreground">Party Name</Label>
                 <Input
                   value={partyName}
                   onChange={(e) => setPartyName(e.target.value)}
@@ -737,7 +737,7 @@ export function SalesReturnModal({
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">Phone</Label>
+                <Label className="text-[11px] text-muted-foreground">Phone</Label>
                 <Input
                   value={partyPhone}
                   onChange={(e) => setPartyPhone(e.target.value)}
@@ -746,7 +746,7 @@ export function SalesReturnModal({
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">GSTIN</Label>
+                <Label className="text-[11px] text-muted-foreground">GSTIN</Label>
                 <Input
                   value={partyGstin}
                   onChange={(e) => setPartyGstin(e.target.value.toUpperCase())}
@@ -755,7 +755,7 @@ export function SalesReturnModal({
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">Place of Supply</Label>
+                <Label className="text-[11px] text-muted-foreground">Place of Supply</Label>
                 <Input
                   value={placeOfSupply}
                   onChange={(e) => setPlaceOfSupply(e.target.value)}
@@ -794,7 +794,7 @@ export function SalesReturnModal({
                       >
                         <div>
                           <div className="font-semibold text-foreground">{p.name}</div>
-                          <div className="text-[10px] text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground">
                             {p.barcode ? `Barcode: ${p.barcode} • ` : ""}Unit: {p.unit || "PCS"}
                           </div>
                         </div>
@@ -903,7 +903,7 @@ export function SalesReturnModal({
 
                         {/* Unit Rate */}
                         <div className="text-right w-20">
-                          <div className="text-[10px] text-muted-foreground">Rate</div>
+                          <div className="text-[11px] text-muted-foreground">Rate</div>
                           <div className="text-xs font-mono font-semibold text-foreground">
                             ₹ {Number(item.rate ?? 0).toFixed(2)}
                           </div>
@@ -911,7 +911,7 @@ export function SalesReturnModal({
 
                         {/* Line Total */}
                         <div className="text-right w-24">
-                          <div className="text-[10px] text-muted-foreground">Refund</div>
+                          <div className="text-[11px] text-muted-foreground">Refund</div>
                           <div className="text-xs sm:text-sm font-mono font-bold text-amber-600 dark:text-amber-400">
                             ₹ {(Number(item.rate ?? 0) * Number(item.quantity ?? 0)).toFixed(2)}
                           </div>
@@ -933,7 +933,7 @@ export function SalesReturnModal({
                     {/* Item Specific Return Reason Dropdown */}
                     {item.selected && (
                       <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center gap-2 pl-7">
-                        <span className="text-[10px] text-muted-foreground font-semibold">
+                        <span className="text-[11px] text-muted-foreground font-semibold">
                           Item Reason:
                         </span>
                         <select
@@ -987,7 +987,7 @@ export function SalesReturnModal({
                     <Package className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Restock Inventory</span>
                   </div>
-                  <span className="text-[10px] font-normal opacity-80">
+                  <span className="text-[11px] font-normal opacity-80">
                     Add items back to active stock/batches
                   </span>
                 </button>
@@ -1006,7 +1006,7 @@ export function SalesReturnModal({
                     <PackageX className="w-3.5 h-3.5 text-rose-600" />
                     <span>Damaged / Scrap</span>
                   </div>
-                  <span className="text-[10px] font-normal opacity-80">
+                  <span className="text-[11px] font-normal opacity-80">
                     Write off items; do NOT restock
                   </span>
                 </button>
@@ -1062,7 +1062,7 @@ export function SalesReturnModal({
                   <span className="text-[11px]">UPI / Online</span>
                 </button>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 {settlementMode === "store_credit" && "Credits the customer's khata ledger; reduces pending customer balance."}
                 {settlementMode === "cash_refund" && "Returns cash directly to the customer; customer ledger is not touched."}
                 {settlementMode === "upi_refund" && "Refunds via UPI / Bank transfer; customer ledger is not touched."}

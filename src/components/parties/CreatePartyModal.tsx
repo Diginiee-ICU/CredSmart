@@ -661,7 +661,7 @@ export function CreatePartyModal({
               id: "inventory",
               label: "Custom Inventory & Pricing",
               badge: (!keepSamePrice || !keepSameInventory || customItems.length > 0) ? (
-                <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 bg-primary/15 text-primary font-semibold">
+                <Badge variant="secondary" className="ml-1.5 text-[11px] px-1.5 py-0 bg-primary/15 text-primary font-semibold">
                   {customItems.length > 0 ? `${customItems.length} items` : "Customized"}
                 </Badge>
               ) : undefined,
@@ -727,7 +727,7 @@ export function CreatePartyModal({
                     <Building2 className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-foreground">Live MCA Company Directory (3 Million+ Indian Companies)</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
+                  <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border">
                     Auto-fills Name, Address, City, PIN & State
                   </span>
                 </div>
@@ -750,7 +750,7 @@ export function CreatePartyModal({
                       <Building2 className="w-3 h-3 text-[#D97706] dark:text-[#FBBF24]" />
                       Tally Search
                     </button>
-                    <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
+                    <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border hidden sm:inline-block">
                       Official Tally Live Engine
                     </span>
                   </div>
@@ -1173,7 +1173,7 @@ export function CreatePartyModal({
                       <strong>Note:</strong> These items and custom prices will be saved <u>only for this Party/Customer</u> ({name || "this party"}) and will not affect other parties or your master catalogue.
                     </span>
                   </div>
-                  <Badge variant="outline" className="font-semibold shrink-0 text-[10px] bg-background border-blue-500/30 text-blue-700 dark:text-blue-300 hidden sm:inline-flex">
+                  <Badge variant="outline" className="font-semibold shrink-0 text-[11px] bg-background border-blue-500/30 text-blue-700 dark:text-blue-300 hidden sm:inline-flex">
                     Party Scoped
                   </Badge>
                 </div>
@@ -1384,18 +1384,18 @@ export function CreatePartyModal({
                                 {item.productName}
                               </span>
                               <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                                   {item.category || "General"}
                                 </Badge>
-                                {item.sku && <span className="font-mono text-[10px]">SKU: {item.sku}</span>}
-                                {item.barcode && <span className="font-mono text-[10px]">• Code: {item.barcode}</span>}
-                                <span className="text-[10px]">• Unit: {item.unit || "PCS"}</span>
+                                {item.sku && <span className="font-mono text-[11px]">SKU: {item.sku}</span>}
+                                {item.barcode && <span className="font-mono text-[11px]">• Code: {item.barcode}</span>}
+                                <span className="text-[11px]">• Unit: {item.unit || "PCS"}</span>
                               </div>
                             </div>
 
                             {/* Catalogue Standard Price */}
                             <div className="col-span-2 text-left md:text-right text-xs">
-                              <span className="text-[10px] text-muted-foreground md:hidden mr-1">Standard:</span>
+                              <span className="text-[11px] text-muted-foreground md:hidden mr-1">Standard:</span>
                               <span className="font-semibold text-muted-foreground line-through mr-1">
                                 {item.customPrice !== item.standardPrice ? `₹${item.standardPrice.toFixed(2)}` : ""}
                               </span>
@@ -1433,7 +1433,7 @@ export function CreatePartyModal({
                                       const next = Math.max(0, Math.round((item.customPrice - 10) * 100) / 100);
                                       handleUpdateCustomPrice(item.productId, String(next));
                                     }}
-                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-bold text-muted-foreground cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[11px] font-bold text-muted-foreground cursor-pointer"
                                   >
                                     -₹10
                                   </button>
@@ -1443,7 +1443,7 @@ export function CreatePartyModal({
                                       const next = Math.round((item.customPrice + 10) * 100) / 100;
                                       handleUpdateCustomPrice(item.productId, String(next));
                                     }}
-                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-bold text-muted-foreground cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[11px] font-bold text-muted-foreground cursor-pointer"
                                   >
                                     +₹10
                                   </button>
@@ -1453,7 +1453,7 @@ export function CreatePartyModal({
                                       const discounted = Math.round(item.standardPrice * 0.9 * 100) / 100;
                                       handleUpdateCustomPrice(item.productId, String(discounted));
                                     }}
-                                    className="px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer"
                                   >
                                     -10%
                                   </button>
@@ -1464,11 +1464,11 @@ export function CreatePartyModal({
                               {!keepSamePrice && item.customPrice !== item.standardPrice && (
                                 <div className="mt-1">
                                   {diff < 0 ? (
-                                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                                       -₹{Math.abs(diff).toFixed(2)} ({Math.abs(pctDiff).toFixed(1)}% off)
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                    <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
                                       +₹{diff.toFixed(2)} (+{pctDiff.toFixed(1)}%)
                                     </span>
                                   )}
@@ -1749,7 +1749,7 @@ export function CreatePartyModal({
                             {prod.name}
                           </span>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                               {prod.category || "General"}
                             </Badge>
                             {prod.sku && <span>SKU: {prod.sku}</span>}
@@ -1761,7 +1761,7 @@ export function CreatePartyModal({
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs font-bold text-foreground">₹{price.toFixed(2)}</span>
                         {isAlreadyAdded && (
-                          <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                          <Badge variant="outline" className="text-[11px] text-muted-foreground">
                             Already Added
                           </Badge>
                         )}

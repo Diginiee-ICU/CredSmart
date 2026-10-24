@@ -84,7 +84,7 @@ export function AppDownloadButtons({
         >
           <AndroidIcon className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
           <span>Android App</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
             APK ({APP_DOWNLOAD_LINKS.apkSize})
           </span>
         </a>
@@ -99,7 +99,7 @@ export function AppDownloadButtons({
         >
           <WindowsIcon className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
           <span>Windows PC</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono">
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono">
             EXE ({APP_DOWNLOAD_LINKS.exeSize})
           </span>
         </a>
@@ -137,7 +137,7 @@ export function AppDownloadButtons({
             <span className="text-xs uppercase font-extrabold tracking-wider text-slate-500 font-mono">
               Get for Mobile
             </span>
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">
               v{APP_DOWNLOAD_LINKS.version}
             </span>
           </div>
@@ -174,7 +174,7 @@ export function AppDownloadButtons({
             <span className="text-xs uppercase font-extrabold tracking-wider text-slate-500 font-mono">
               Get for PC
             </span>
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[11px] font-bold">
               64-bit
             </span>
           </div>

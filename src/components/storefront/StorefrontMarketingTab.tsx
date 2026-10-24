@@ -86,12 +86,12 @@ ${storeUrl}
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       {/* 1. Counter Standee Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 flex-1">
           {/* Mini Standee QR Card Preview */}
           <div className="p-3 bg-slate-50 border-2 border-slate-200 rounded-2xl shadow-inner flex flex-col items-center flex-shrink-0">
             <QRCodeSVG value={shortUrl} size={110} />
-            <span className="text-[10px] font-mono text-slate-500 font-bold mt-2">
+            <span className="text-[11px] font-mono text-slate-500 font-bold mt-2">
               /c/{store.slug}
             </span>
           </div>
@@ -121,7 +121,7 @@ ${storeUrl}
       </div>
 
       {/* 2. Direct Sharing & Bio Links */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs flex flex-col gap-4">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs flex flex-col gap-4">
         <div>
           <h3 className="text-base font-bold text-slate-900">
             Social Bio Links & Direct Sharing
@@ -185,7 +185,7 @@ ${storeUrl}
       </div>
 
       {/* 3. WhatsApp Promotional Message Templates */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs flex flex-col gap-4">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs flex flex-col gap-4">
         <div>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-emerald-600" />

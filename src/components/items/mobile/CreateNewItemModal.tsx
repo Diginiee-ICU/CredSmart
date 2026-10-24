@@ -193,7 +193,7 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
                    </div>
                    <div className="flex flex-col">
                      <span className="text-sm font-semibold text-slate-700">Alternate Unit</span>
-                     <span className="text-[10px] text-slate-400">Sell in secondary units (e.g. BOX)</span>
+                     <span className="text-[11px] text-slate-400">Sell in secondary units (e.g. BOX)</span>
                    </div>
                  </div>
                  <div 

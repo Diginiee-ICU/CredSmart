@@ -203,7 +203,7 @@ export default function FaqPage() {
         {/* FAQ Accordions */}
         <div className="space-y-3.5">
           {filteredFaqs.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 p-8">
+            <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 p-8">
               <p className="text-slate-600 font-medium text-sm">No matching questions found for "{searchQuery}".</p>
               <Button
                 variant="outline"

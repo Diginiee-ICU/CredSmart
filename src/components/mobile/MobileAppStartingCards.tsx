@@ -181,7 +181,7 @@ export function MobileAppStartingCards() {
             <span className="text-base font-black tracking-tight text-white font-sans leading-none">
               CredSmart<span className="text-amber-400">.</span>
             </span>
-            <span className="text-[9px] font-mono font-medium text-slate-400 leading-tight">
+            <span className="text-[11px] font-mono font-medium text-slate-400 leading-tight">
               POS &amp; ERP Terminal
             </span>
           </div>
@@ -201,7 +201,7 @@ export function MobileAppStartingCards() {
         <div
           key={card.id}
           className={cn(
-            "rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden transition-all duration-500 flex flex-col justify-between",
+            "rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden transition-all duration-500 flex flex-col justify-between",
             `bg-gradient-to-b ${card.gradient}`
           )}
         >
@@ -209,7 +209,7 @@ export function MobileAppStartingCards() {
           <div className="flex items-center justify-between gap-2 mb-4">
             <span
               className={cn(
-                "px-3 py-1 rounded-full text-[10px] font-mono font-black tracking-wider uppercase border shadow-xs",
+                "px-3 py-1 rounded-full text-[11px] font-mono font-black tracking-wider uppercase border shadow-xs",
                 card.badgeColor
               )}
             >
@@ -223,7 +223,7 @@ export function MobileAppStartingCards() {
           {/* 3D Hero Graphic Area */}
           <div className="relative my-2 py-4 flex items-center justify-center">
             <div
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center shadow-2xl transition-transform duration-500 transform hover:scale-105 border border-white/20"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex items-center justify-center shadow-2xl transition-transform duration-500 transform hover:scale-105 border border-white/20"
               style={{
                 background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), transparent), ${card.glowColor}`,
                 boxShadow: `0 20px 50px ${card.glowColor}`,

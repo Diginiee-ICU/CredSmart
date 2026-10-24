@@ -234,7 +234,7 @@ export default function CustomerLedger() {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "text-[10px] font-bold uppercase tracking-wider py-0.5",
+                    "text-[11px] font-bold uppercase tracking-wider py-0.5",
                     reconciliation.isReconciled
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                       : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
@@ -297,7 +297,7 @@ export default function CustomerLedger() {
       {reconciliation && (
         <div
           className={cn(
-            "glass-card-3d p-4 transition-all print:hidden relative overflow-hidden",
+            "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 transition-all print:hidden relative overflow-hidden",
             reconciliation.isReconciled
               ? "border-emerald-500/30"
               : "border-amber-500/40"
@@ -327,7 +327,7 @@ export default function CustomerLedger() {
                       ? "Automated Ledger Integrity: 100% Reconciled"
                       : "Ledger Discrepancy Flagged"}
                   </span>
-                  <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
+                  <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
                     Variance: ₹{Math.abs(reconciliation.variance).toFixed(2)}
                   </Badge>
                 </div>
@@ -359,22 +359,22 @@ export default function CustomerLedger() {
             <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800 text-xs space-y-2 animate-in fade-in duration-150">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Verified Debits (Given)</span>
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Verified Debits (Given)</span>
                   <p className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">
                     ₹{reconciliation.totalDebits.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Verified Credits (Got)</span>
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Verified Credits (Got)</span>
                   <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                     ₹{reconciliation.totalCredits.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Mathematical Balance</span>
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase font-mono">Mathematical Balance</span>
                   <p className="font-mono font-bold text-slate-900 dark:text-white text-sm">
                     ₹{Math.abs(reconciliation.calculatedBalance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}{" "}
-                    <span className="text-[10px] uppercase font-bold">{reconciliation.calculatedBalance >= 0 ? "Dr" : "Cr"}</span>
+                    <span className="text-[11px] uppercase font-bold">{reconciliation.calculatedBalance >= 0 ? "Dr" : "Cr"}</span>
                   </p>
                 </div>
               </div>
@@ -390,9 +390,9 @@ export default function CustomerLedger() {
                       <div>
                         <p className="font-bold text-foreground">{d.title}</p>
                         <p className="text-[11px] text-muted-foreground mt-0.5">{d.description}</p>
-                        <p className="text-[10px] text-primary mt-1 font-semibold">Action: {d.suggestedAction}</p>
+                        <p className="text-[11px] text-primary mt-1 font-semibold">Action: {d.suggestedAction}</p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] capitalize shrink-0">
+                      <Badge variant="outline" className="text-[11px] capitalize shrink-0">
                         {d.severity}
                       </Badge>
                     </div>
@@ -405,7 +405,7 @@ export default function CustomerLedger() {
       )}
 
       {/* Statement Header Card - 3D Glass Container */}
-      <div className="glass-card-3d overflow-hidden p-6 print:border-none print:shadow-none space-y-6 rounded-2xl">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden p-6 print:border-none print:shadow-none space-y-6">
         {/* Printable Business Identity Bar */}
         {org && (
           <div className="hidden print:block pb-4 border-b border-border">
@@ -419,7 +419,7 @@ export default function CustomerLedger() {
               <div className="text-right">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reconciled Statement</span>
                 <p className="text-xs text-muted-foreground mt-1">Generated: {format(new Date(), "dd MMM yyyy")}</p>
-                <Badge variant="outline" className="mt-1 font-mono text-[10px] border-emerald-500 text-emerald-600">
+                <Badge variant="outline" className="mt-1 font-mono text-[11px] border-emerald-500 text-emerald-600">
                   Audit Verified ✓
                 </Badge>
               </div>
@@ -436,7 +436,7 @@ export default function CustomerLedger() {
                 {customer?.name ? customer.name.slice(0, 2).toUpperCase() : <User className="w-6 h-6" />}
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Statement For Party
                 </span>
                 <h2 className="text-lg sm:text-xl font-bold text-foreground">{customer?.name || "—"}</h2>
@@ -567,7 +567,7 @@ export default function CustomerLedger() {
                         <p className="text-xs text-muted-foreground mt-0.5">{tx.description}</p>
                       )}
                       {tx.reference_id && (
-                        <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
                           Ref: {tx.reference_id}
                         </p>
                       )}
@@ -617,12 +617,12 @@ export default function CustomerLedger() {
         {/* Ledger Statement Footer & Watermark */}
         <div className="p-4 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5 font-medium">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted border border-border font-bold text-[10px] text-foreground font-mono">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted border border-border font-bold text-[11px] text-foreground font-mono">
               ⚡ CredSmart
             </span>
             <span>Generated via <strong>CredSmart SharedLedger Hub</strong></span>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground">
+          <div className="text-[11px] font-mono text-muted-foreground">
             100% Tamper-Proof Audit Trail • IT Act 2000 Compliant
           </div>
         </div>

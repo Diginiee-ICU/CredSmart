@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
       />
 
       <section className="py-12 md:py-16 max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-12 shadow-sm space-y-8">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-8 sm:p-12 shadow-sm space-y-8">
           <div className="border-b border-slate-100 pb-6 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
               <Shield className="w-3.5 h-3.5 text-emerald-600" />

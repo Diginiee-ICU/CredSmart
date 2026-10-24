@@ -536,7 +536,7 @@ export default function Suppliers() {
         </div>
 
         {/* Total Payables / Credit */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Supplier Payables</span>
@@ -553,7 +553,7 @@ export default function Suppliers() {
         </div>
 
         {/* Recently Added */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">New (Last 30 Days)</span>

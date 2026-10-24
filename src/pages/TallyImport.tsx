@@ -2167,11 +2167,11 @@ export default function TallyImport() {
                 1-Click Data Migration Hub
               </h1>
               {typeof window !== "undefined" && window.credsmartDesktop?.isDesktop ? (
-                <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold hidden sm:inline-flex">
+                <Badge variant="outline" className="text-[11px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold hidden sm:inline-flex">
                   DESKTOP SOFTWARE • DIRECT SYNC READY
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold hidden sm:inline-flex">
+                <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-bold hidden sm:inline-flex">
                   ALL TOOLS SUPPORTED
                 </Badge>
               )}
@@ -2197,7 +2197,7 @@ export default function TallyImport() {
             >
               <Upload className="w-3.5 h-3.5 text-primary" />
               <span>1-Click File Upload</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 font-black">
+              <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 font-black">
                 INSTANT
               </span>
             </button>
@@ -2242,14 +2242,14 @@ export default function TallyImport() {
       {/* Main Content Body */}
       <div className="flex-1 max-w-7xl w-full min-w-0 mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
         {/* ── 1-CLICK NATIVE AUTO-SEARCH HERO BANNER (DESKTOP ONLY - LOCAL DRIVES CANNOT BE SCANNED ON MOBILE) ────────────────────── */}
-        <div className="hidden md:flex p-5 sm:p-7 rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-card to-teal-500/10 shadow-lg relative overflow-hidden flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="hidden md:flex p-5 sm:p-7 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-card to-teal-500/10 shadow-lg relative overflow-hidden flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40">
                 <Sparkles className="w-3.5 h-3.5" />
                 1-Click Tally Auto Import
               </span>
-              <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/40 text-emerald-600">
+              <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/40 text-emerald-600">
                 Windows Native Auto-Detector
               </Badge>
             </div>
@@ -2285,7 +2285,7 @@ export default function TallyImport() {
         {activeMode === "auto_sync" && (
           <div className="space-y-6 animate-in fade-in-50 duration-200">
             {/* 1. Hero Live Status & Quick Action Card */}
-            <div className="p-4 sm:p-8 rounded-3xl border border-border bg-gradient-to-br from-card via-card to-amber-500/5 shadow-xl relative overflow-hidden">
+            <div className="p-4 sm:p-8 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-amber-500/5 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
@@ -2295,7 +2295,7 @@ export default function TallyImport() {
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       {syncConfig.enabled ? "Live Background Sync Active" : "Direct Local Probe Ready"}
                     </span>
-                    <Badge variant="outline" className="text-[10px] font-mono border-amber-500/30 text-amber-600">
+                    <Badge variant="outline" className="text-[11px] font-mono border-amber-500/30 text-amber-600">
                       ODBC / XML Port 9000
                     </Badge>
                   </div>
@@ -2410,7 +2410,7 @@ export default function TallyImport() {
                     <div className="pt-3 border-t border-amber-500/20 grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
                         <div className="flex items-center gap-1.5 font-bold text-foreground">
-                          <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center text-[10px]">1</span>
+                          <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center text-[11px]">1</span>
                           <span>1-Click File Upload (Recommended)</span>
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-snug">
@@ -2421,13 +2421,13 @@ export default function TallyImport() {
                       <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
                         <div className="flex items-center justify-between gap-1.5 font-bold text-foreground">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 flex items-center justify-center text-[10px]">2</span>
+                            <span className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 flex items-center justify-center text-[11px]">2</span>
                             <span>Tally Setup Guide (Optional)</span>
                           </div>
                           <button
                             type="button"
                             onClick={handleDownloadSetupGuide}
-                            className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                            className="text-[11px] text-primary hover:underline font-bold cursor-pointer"
                           >
                             Download guide
                           </button>
@@ -2440,13 +2440,13 @@ export default function TallyImport() {
                       <div className="p-3 rounded-xl bg-background/80 border border-border/80 space-y-1">
                         <div className="flex items-center justify-between gap-1.5 font-bold text-foreground">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 flex items-center justify-center text-[10px]">3</span>
+                            <span className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 flex items-center justify-center text-[11px]">3</span>
                             <span>Desktop Sync Daemon</span>
                           </div>
                           <button
                             type="button"
                             onClick={handleCopyCli}
-                            className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                            className="text-[11px] text-primary hover:underline font-bold cursor-pointer"
                           >
                             Copy CLI
                           </button>
@@ -2463,7 +2463,7 @@ export default function TallyImport() {
               {/* Host & Status Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mt-6 pt-6 border-t border-border/80 text-xs">
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Target Endpoint</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Target Endpoint</span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Server className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                     <input
@@ -2481,7 +2481,7 @@ export default function TallyImport() {
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Last Sync Status</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Last Sync Status</span>
                   <p className="font-bold text-foreground mt-1 flex items-center gap-1.5">
                     <span
                       className={cn(
@@ -2498,35 +2498,35 @@ export default function TallyImport() {
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Items Synced</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Items Synced</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.items ?? 0} Products
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Parties Synced</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Parties Synced</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.parties ?? 0} Ledgers
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Balances Synced</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Balances Synced</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.balances ?? 0} Ledgers
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Vouchers Synced</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Vouchers Synced</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.vouchers ?? 0} Invoices
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-background/60 border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Banks &amp; Cash</span>
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Banks &amp; Cash</span>
                   <p className="font-mono font-black text-foreground mt-1 text-sm">
                     {syncConfig.lastSyncStats?.banks ?? 0} Accounts
                   </p>
@@ -2607,13 +2607,13 @@ export default function TallyImport() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="font-black text-xs text-foreground truncate">{c.name}</span>
-                          <span className={cn("text-[9px] font-bold px-1.5 py-0.2 rounded-full", c.badgeColor)}>
+                          <span className={cn("text-[11px] font-bold px-1.5 py-0.2 rounded-full", c.badgeColor)}>
                             {c.status}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground font-mono">{c.method}</p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground/80 leading-tight">{c.tagline}</p>
+                      <p className="text-[11px] text-muted-foreground/80 leading-tight">{c.tagline}</p>
                     </button>
                   );
                 })}
@@ -2630,7 +2630,7 @@ export default function TallyImport() {
                       <Terminal className="w-4 h-4" />
                       <h4 className="font-bold text-xs text-foreground">Option 1: Windows Utility</h4>
                     </div>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600">
+                    <span className="text-[11px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600">
                       NO NODE.JS NEEDED
                     </span>
                   </div>
@@ -2655,8 +2655,8 @@ export default function TallyImport() {
                     <span>Download Windows .exe</span>
                   </Button>
                   <div className="pt-2 border-t border-border/60">
-                    <span className="text-[10px] text-muted-foreground font-semibold">Or if you have Node.js installed:</span>
-                    <div className="p-2 mt-1 rounded-xl bg-muted font-mono text-[9px] text-foreground break-all border border-border select-all flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground font-semibold">Or if you have Node.js installed:</span>
+                    <div className="p-2 mt-1 rounded-xl bg-muted font-mono text-[11px] text-foreground break-all border border-border select-all flex items-center justify-between gap-2">
                       <span className="truncate">{getDaemonCliCommand(orgId || "demo-org", syncConfig.pairingToken)}</span>
                       <button
                         type="button"
@@ -2821,7 +2821,7 @@ export default function TallyImport() {
                   <Activity className="w-4 h-4 text-emerald-600" />
                   <h4 className="font-bold text-xs text-foreground">Recent Sync Audit Trail &amp; Stream</h4>
                 </div>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[11px] text-muted-foreground font-mono">
                   {syncConfig.history.length} events logged
                 </span>
               </div>
@@ -2847,19 +2847,19 @@ export default function TallyImport() {
                         />
                         <div className="min-w-0">
                           <p className="font-bold text-foreground truncate">{h.message}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                             {new Date(h.timestamp).toLocaleTimeString()} · Source: <span className="capitalize">{h.source.replace("_", " ")}</span> · Latency: {h.durationMs}ms
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                        <Badge variant="outline" className="text-[11px] uppercase font-mono">
                           {h.software}
                         </Badge>
                         <span
                           className={cn(
-                            "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                            "text-[11px] font-bold px-2 py-0.5 rounded-full uppercase",
                             h.status === "success"
                               ? "bg-emerald-500/15 text-emerald-600"
                               : "bg-rose-500/15 text-rose-600"
@@ -2913,13 +2913,13 @@ export default function TallyImport() {
                   <span className="text-xs font-black truncate w-full mb-1">{soft.shortName}</span>
                   <span
                     className={cn(
-                      "text-[8.5px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0 mb-1.5",
+                      "text-[11px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0 mb-1.5",
                       isSelected ? "bg-white/25 text-white" : cn(soft.badgeBg, soft.badgeText)
                     )}
                   >
                     {soft.badge}
                   </span>
-                  <p className={cn("text-[9px] line-clamp-2 leading-tight", isSelected ? "text-white/85" : "text-muted-foreground")}>
+                  <p className={cn("text-[11px] line-clamp-2 leading-tight", isSelected ? "text-white/85" : "text-muted-foreground")}>
                     {soft.supportedFormats.join(", ")}
                   </p>
                 </button>
@@ -2940,7 +2940,7 @@ export default function TallyImport() {
                   {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.title}
                 </h3>
                 {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut && (
-                  <kbd className="px-2 py-0.5 rounded bg-muted border border-border text-[10px] font-mono text-muted-foreground">
+                  <kbd className="px-2 py-0.5 rounded bg-muted border border-border text-[11px] font-mono text-muted-foreground">
                     {SOFTWARE_PROFILES[selectedSoftware]?.exportGuide.shortcut}
                   </kbd>
                 )}
@@ -2992,7 +2992,7 @@ export default function TallyImport() {
             onDragLeave={() => setIsDragging(false)}
             onClick={() => handleSelectFiles()}
             className={cn(
-              "p-8 sm:p-12 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-4 text-center transition-all duration-200 cursor-pointer select-none",
+              "p-8 sm:p-12 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 text-center transition-all duration-200 cursor-pointer select-none",
               isDragging
                 ? "border-amber-500 bg-amber-500/10 scale-[1.01]"
                 : "border-amber-500/30 hover:border-amber-500/60 bg-gradient-to-b from-amber-500/5 to-transparent hover:bg-amber-500/8"
@@ -3096,7 +3096,7 @@ export default function TallyImport() {
                         {parsedData.folderName ? `Folder: ${parsedData.folderName}` : "Scanned Import Batch"}
                       </span>
                       {parsedData.companyName && (
-                        <Badge variant="outline" className="text-[10px] font-bold border-amber-500/30 text-amber-600 bg-amber-500/10">
+                        <Badge variant="outline" className="text-[11px] font-bold border-amber-500/30 text-amber-600 bg-amber-500/10">
                           {parsedData.companyName}
                         </Badge>
                       )}
@@ -3135,7 +3135,7 @@ export default function TallyImport() {
                   <span>Items Detected</span>
                 </div>
                 <p className="text-2xl font-black text-foreground">{parsedData.items.length}</p>
-                <p className="text-[10px] text-muted-foreground">Ready for POS &amp; Inventory</p>
+                <p className="text-[11px] text-muted-foreground">Ready for POS &amp; Inventory</p>
               </div>
 
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
@@ -3144,7 +3144,7 @@ export default function TallyImport() {
                   <span>Parties Detected</span>
                 </div>
                 <p className="text-2xl font-black text-foreground">{parsedData.parties.all.length}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {parsedData.parties.customers.length} Customers • {parsedData.parties.suppliers.length} Suppliers
                 </p>
               </div>
@@ -3155,7 +3155,7 @@ export default function TallyImport() {
                   <span>Daybook Vouchers</span>
                 </div>
                 <p className="text-2xl font-black text-foreground">{parsedData.vouchers.length}</p>
-                <p className="text-[10px] text-muted-foreground">Invoices, Bills &amp; Vouchers</p>
+                <p className="text-[11px] text-muted-foreground">Invoices, Bills &amp; Vouchers</p>
               </div>
 
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs">
@@ -3166,7 +3166,7 @@ export default function TallyImport() {
                 <p className="text-2xl font-black text-emerald-600">
                   ₹{parsedData.summary.totalOpeningReceivable.toLocaleString("en-IN")}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Customer Udhar Khata</p>
+                <p className="text-[11px] text-muted-foreground">Customer Udhar Khata</p>
               </div>
 
               <div className="p-4 rounded-2xl border border-border bg-card shadow-xs col-span-2 sm:col-span-4 lg:col-span-1">
@@ -3177,7 +3177,7 @@ export default function TallyImport() {
                 <p className="text-2xl font-black text-rose-600">
                   ₹{parsedData.summary.totalOpeningPayable.toLocaleString("en-IN")}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Supplier Due Balance</p>
+                <p className="text-[11px] text-muted-foreground">Supplier Due Balance</p>
               </div>
             </div>
 
@@ -3272,7 +3272,7 @@ export default function TallyImport() {
                         <tr key={idx} className="hover:bg-muted/30 transition-colors">
                           <td className="py-2.5 px-4 font-bold text-foreground truncate max-w-xs">{it.name}</td>
                           <td className="py-2.5 px-3 font-mono text-muted-foreground">{it.sku || "—"}</td>
-                          <td className="py-2.5 px-3"><Badge variant="outline" className="text-[10px]">{it.category || "General"}</Badge></td>
+                          <td className="py-2.5 px-3"><Badge variant="outline" className="text-[11px]">{it.category || "General"}</Badge></td>
                           <td className="py-2.5 px-3 font-semibold">{it.openingStock || 0} {it.unit || "PCS"}</td>
                           <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">₹{it.sellingPrice || 0}</td>
                           <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">₹{it.purchasePrice || 0}</td>
@@ -3314,7 +3314,7 @@ export default function TallyImport() {
                               <Badge
                                 variant="outline"
                                 className={cn(
-                                  "text-[10px] font-bold uppercase",
+                                  "text-[11px] font-bold uppercase",
                                   p.partyType === "supplier"
                                     ? "bg-purple-500/10 text-purple-600 border-purple-500/30"
                                     : "bg-blue-500/10 text-blue-600 border-blue-500/30"
@@ -3372,7 +3372,7 @@ export default function TallyImport() {
                             <Badge
                               variant="outline"
                               className={cn(
-                                "text-[10px] font-bold uppercase",
+                                "text-[11px] font-bold uppercase",
                                 vch.voucherType === "Sales"
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
                                   : vch.voucherType === "Purchase"
@@ -3410,7 +3410,7 @@ export default function TallyImport() {
             )}
 
             {/* Execution Control Action Box */}
-            <div className="p-6 rounded-3xl border border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-card to-amber-500/5 shadow-md flex flex-col gap-5">
+            <div className="p-6 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-card to-amber-500/5 shadow-md flex flex-col gap-5">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -3529,7 +3529,7 @@ export default function TallyImport() {
 
         {/* Success Card */}
         {importCompleted && (
-              <div className="p-6 rounded-3xl border border-emerald-400/50 bg-emerald-500/10 shadow-lg space-y-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-6 rounded-2xl border border-emerald-400/50 bg-emerald-500/10 shadow-lg space-y-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md">
                     <Check className="w-6 h-6 stroke-[3]" />

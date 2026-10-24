@@ -35,7 +35,7 @@ const businessTypes = [
   "Other",
 ];
 
-const inputClass = "w-full h-11 pl-10 pr-4 rounded-xl glass-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all text-sm font-sans";
+const inputClass = "w-full h-8.5 pl-10 pr-4 rounded-xl glass-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all text-sm font-sans";
 
 const isMissingBootstrapFunction = (error: { code?: string; message?: string } | null) => {
   if (!error) return false;
@@ -457,7 +457,7 @@ export default function Auth() {
           </p>
         </div>
 
-        <div className="rounded-3xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 relative overflow-hidden">
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 relative overflow-hidden">
           {/* Tabs — only show on step 1 */}
           {step === 1 && (
             <div className="flex gap-2 p-1.5 bg-slate-100/90 rounded-2xl mb-6">
@@ -548,7 +548,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 rounded-xl bg-blue-700 hover:bg-blue-800 text-white shadow-md font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer"
+                className="w-full h-8.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white shadow-md font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer"
               >
                 {loading ? "Signing in..." : "Sign In to Workspace"} {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
@@ -575,7 +575,7 @@ export default function Auth() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (min 6 chars)" required minLength={6} className={inputClass} />
               </div>
-              <button type="submit" className="w-full h-11 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white shadow-md shadow-orange-500/20 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer">
+              <button type="submit" className="w-full h-8.5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white shadow-md shadow-orange-500/20 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer">
                 Continue to Store Setup <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -654,7 +654,7 @@ export default function Auth() {
                     className="w-full py-4 rounded-xl border-2 border-dashed border-border/80 text-muted-foreground hover:border-gold hover:text-foreground transition-all flex flex-col items-center gap-1.5 bg-muted/20">
                     <Upload className="w-5 h-5 text-gold" />
                     <span className="text-xs font-medium">Click to upload invoice logo</span>
-                    <span className="text-[10px] text-muted-foreground font-mono">PNG, JPG up to 2MB</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">PNG, JPG up to 2MB</span>
                   </button>
                 )}
               </div>
@@ -684,7 +684,7 @@ export default function Auth() {
                 )}
               </div>
 
-              <button type="submit" disabled={!businessType} className="w-full h-11 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white shadow-md shadow-orange-500/20 font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer">
+              <button type="submit" disabled={!businessType} className="w-full h-8.5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white shadow-md shadow-orange-500/20 font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer">
                 Continue to Invoicing <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -754,12 +754,12 @@ export default function Auth() {
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Tax Rate (%)</label>
                   <input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} min={0} max={100} step={0.5}
-                    className="w-full h-11 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                    className="w-full h-8.5 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Invoice Prefix</label>
                   <input type="text" value={invoicePrefix} onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase().replace(/[^0-9A-Z_-]/g, ''))} maxLength={6} placeholder="INV"
-                    className="w-full h-11 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                    className="w-full h-8.5 px-4 rounded-xl glass-input text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                 </div>
               </div>
 
@@ -767,7 +767,7 @@ export default function Auth() {
                 💡 Bank &amp; UPI details are automatically rendered on printed invoices &amp; thermal POS receipts.
               </div>
 
-              <button type="submit" disabled={loading} className="w-full h-11 rounded-xl bg-blue-700 hover:bg-blue-800 text-white shadow-md font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer">
+              <button type="submit" disabled={loading} className="w-full h-8.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white shadow-md font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99] cursor-pointer">
                 {loading ? "Initializing Store Infrastructure..." : "Launch My Store Free 🚀"}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
@@ -778,7 +778,7 @@ export default function Auth() {
 
       {/* Forgot Password Dialog */}
       <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
-        <DialogContent className="max-w-md bg-card border border-gold/30 rounded-3xl p-6">
+        <DialogContent className="max-w-md bg-card border border-gold/30 rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground font-bold">
               <KeyRound className="w-5 h-5 text-accent" />

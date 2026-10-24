@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 // 6 Distinct Visual Shapes
 const BUBBLE_SHAPES = [
   // 0: Frosted Amber Squircle
-  "rounded-3xl border border-amber-500/40 bg-gradient-to-br from-slate-900/95 via-slate-900/95 to-amber-950/40 text-slate-100 shadow-[0_16px_50px_rgba(245,158,11,0.25)]",
+  "rounded-2xl border border-amber-500/40 bg-gradient-to-br from-slate-900/95 via-slate-900/95 to-amber-950/40 text-slate-100 shadow-[0_16px_50px_rgba(245,158,11,0.25)]",
   // 1: Futuristic Cyan Capsule
   "rounded-[2rem] border border-cyan-500/40 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-cyan-950/40 text-slate-100 shadow-[0_16px_50px_rgba(6,182,212,0.25)]",
   // 2: Emerald Organic Shield
@@ -186,14 +186,14 @@ export function FeatureBubbleNotification() {
             {/* CredAlert Category Badge */}
             <span
               className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] sm:text-[9.5px] font-mono font-black tracking-wider uppercase border shadow-2xs shrink-0",
+                "px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] font-mono font-black tracking-wider uppercase border shadow-2xs shrink-0",
                 tip.badgeColor
               )}
             >
               {tip.badge}
             </span>
 
-            <span className="text-[10px] font-mono text-slate-400 truncate">
+            <span className="text-[11px] font-mono text-slate-400 truncate">
               {isPaused ? "• Paused" : "• Live"}
             </span>
           </div>
@@ -228,7 +228,7 @@ export function FeatureBubbleNotification() {
               style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
             />
           </div>
-          <span className="text-[9px] font-mono text-slate-400 shrink-0">
+          <span className="text-[11px] font-mono text-slate-400 shrink-0">
             {isPaused ? "Paused" : "CredAlert • 1m"}
           </span>
         </div>

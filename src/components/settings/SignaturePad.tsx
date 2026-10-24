@@ -334,7 +334,7 @@ export function SignaturePad({
         >
           <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary mb-2 group-hover:scale-110 transition-transform" />
           <p className="text-xs font-bold text-foreground">Click to upload signature image</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">PNG, JPG, or WEBP (Transparent background recommended, max 3MB)</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">PNG, JPG, or WEBP (Transparent background recommended, max 3MB)</p>
         </div>
       )}
     </div>

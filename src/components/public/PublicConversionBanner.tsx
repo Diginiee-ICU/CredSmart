@@ -21,7 +21,7 @@ export function PublicConversionBanner({
   return (
     <section className={cn("py-12 sm:py-16", className)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 p-8 sm:p-12 shadow-2xl text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 p-8 sm:p-12 shadow-2xl text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
           {/* Ambient Glow */}
           <div className="absolute right-0 bottom-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-64 h-64 bg-orange-500/20 rounded-full blur-2xl pointer-events-none" />

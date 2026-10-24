@@ -104,7 +104,7 @@ function SuiteSwitcherView({
         {effectiveSuite === "billing" && (
           <span
             data-testid="active-suite-badge-billing"
-            className="text-[9.5px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
+            className="text-[11px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
           >
             Active
           </span>
@@ -136,7 +136,7 @@ function SuiteSwitcherView({
         {effectiveSuite === "crm" && (
           <span
             data-testid="active-suite-badge-crm"
-            className="text-[9.5px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
+            className="text-[11px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
           >
             Active
           </span>

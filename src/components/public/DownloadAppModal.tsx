@@ -50,7 +50,7 @@ function AndroidDownloadQrCode({ className }: { className?: string }) {
           className="w-full h-full"
         />
       </div>
-      <span className="text-[10px] font-bold text-slate-600 mt-2 text-center uppercase tracking-wider font-mono">
+      <span className="text-[11px] font-bold text-slate-600 mt-2 text-center uppercase tracking-wider font-mono">
         Scan with Phone
       </span>
     </div>
@@ -79,7 +79,7 @@ export function DownloadAppModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden bg-white text-slate-900 border border-slate-200 rounded-3xl shadow-2xl">
+      <DialogContent className="max-w-2xl p-0 overflow-hidden bg-white text-slate-900 border border-slate-200 rounded-2xl shadow-2xl">
         {/* Header Strip */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-6 sm:p-7 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -114,7 +114,7 @@ export function DownloadAppModal({
             >
               <Smartphone className="w-4 h-4 text-emerald-600" />
               <span>Android Mobile &amp; Tablet</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono">
+              <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono">
                 APK
               </span>
             </button>
@@ -131,7 +131,7 @@ export function DownloadAppModal({
             >
               <Monitor className="w-4 h-4 text-blue-600" />
               <span>Windows PC Desktop</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800 font-mono">
+              <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800 font-mono">
                 64-bit EXE
               </span>
             </button>

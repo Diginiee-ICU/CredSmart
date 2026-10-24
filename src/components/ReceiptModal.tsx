@@ -363,7 +363,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       aria-labelledby="receipt-modal-title"
       className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 pb-[env(safe-area-inset-bottom,0px)]"
     >
-      <div className="bg-slate-900 border-0 sm:border border-slate-800 w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[94vh] max-w-full sm:max-w-[820px] sm:rounded-3xl flex flex-col shadow-2xl text-white overflow-hidden animate-scale-in">
+      <div className="bg-slate-900 border-0 sm:border border-slate-800 w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[94vh] max-w-full sm:max-w-[820px] sm:rounded-2xl flex flex-col shadow-2xl text-white overflow-hidden animate-scale-in">
         
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-slate-800 bg-slate-900/95 shrink-0 z-10 gap-2">
@@ -374,11 +374,11 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             <div className="min-w-0">
               <h2 className="font-bold text-white text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 truncate">
                 <span className="truncate">{data.isEstimate ? "Estimate Generated" : "Bill Saved Successfully"}</span>
-                <span className="text-[9px] sm:text-[10px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-500/30 shrink-0">
+                <span className="text-[11px] sm:text-[11px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-500/30 shrink-0">
                   ₹{data.total.toLocaleString("en-IN")}
                 </span>
               </h2>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono truncate">Invoice #{data.invoiceNumber}</p>
+              <p className="text-[11px] sm:text-[11px] text-slate-400 font-mono truncate">Invoice #{data.invoiceNumber}</p>
             </div>
           </div>
 
@@ -389,7 +389,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 type="button"
                 onClick={() => handleLayoutChange("a4")}
                 className={cn(
-                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                   layout === "a4"
                     ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
                     : "text-slate-400 hover:text-slate-200"
@@ -403,7 +403,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 type="button"
                 onClick={() => handleLayoutChange("a4_detailed")}
                 className={cn(
-                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                   layout === "a4_detailed"
                     ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
                     : "text-slate-400 hover:text-slate-200"
@@ -417,7 +417,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 type="button"
                 onClick={() => handleLayoutChange("80mm")}
                 className={cn(
-                  "px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                  "px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                   layout === "80mm"
                     ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200"
@@ -431,7 +431,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 type="button"
                 onClick={() => handleLayoutChange("58mm")}
                 className={cn(
-                  "px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition-all cursor-pointer",
+                  "px-2 py-1 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all cursor-pointer",
                   layout === "58mm"
                     ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200"
@@ -460,7 +460,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             type="button"
             onClick={() => handleLayoutChange("a4")}
             className={cn(
-              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
               layout === "a4"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
@@ -473,7 +473,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             type="button"
             onClick={() => handleLayoutChange("a4_detailed")}
             className={cn(
-              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
               layout === "a4_detailed"
                 ? "bg-emerald-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
@@ -486,7 +486,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             type="button"
             onClick={() => handleLayoutChange("80mm")}
             className={cn(
-              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
               layout === "80mm"
                 ? "bg-purple-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
@@ -499,7 +499,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             type="button"
             onClick={() => handleLayoutChange("58mm")}
             className={cn(
-              "px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
+              "px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer",
               layout === "58mm"
                 ? "bg-indigo-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"

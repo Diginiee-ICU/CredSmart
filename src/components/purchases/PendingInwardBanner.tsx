@@ -66,7 +66,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
     <>
       <div
         className={cn(
-          "w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/10 dark:from-amber-950/30 dark:via-emerald-950/20 dark:to-amber-950/20 border border-amber-400/40 dark:border-amber-500/30 p-3.5 sm:p-4.5 shadow-sm shrink-0 space-y-3 transition-all duration-300 animate-in fade-in",
+          "w-full rounded-2xl sm:rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/10 dark:from-amber-950/30 dark:via-emerald-950/20 dark:to-amber-950/20 border border-amber-400/40 dark:border-amber-500/30 p-3.5 sm:p-4.5 shadow-sm shrink-0 space-y-3 transition-all duration-300 animate-in fade-in",
           className
         )}
       >
@@ -81,7 +81,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
                 <h3 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
                   Incoming Sales Invoices Awaiting Inward Approval
                 </h3>
-                <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-bold text-[10px] px-2 py-0.2 rounded-full font-mono shrink-0 shadow-2xs">
+                <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-bold text-[11px] px-2 py-0.2 rounded-full font-mono shrink-0 shadow-2xs">
                   {pendingInvoices.length} Pending
                 </Badge>
               </div>
@@ -149,7 +149,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
 
                   {/* Center-Right: Amount */}
                   <div className="text-right shrink-0 px-4 border-l border-r border-border/60">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+                    <span className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground block">
                       Total Bill
                     </span>
                     <span className="text-lg lg:text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">
@@ -214,7 +214,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         created a sale on your business name
                       </p>
-                      <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-muted-foreground flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
                         <span className="font-mono font-bold text-foreground bg-muted px-1.5 py-0.5 rounded border border-border/70">
                           #{singleInv.invoiceNumber}
                         </span>
@@ -226,7 +226,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-[9px] uppercase font-bold text-muted-foreground block">
+                      <span className="text-[11px] uppercase font-bold text-muted-foreground block">
                         Total Bill
                       </span>
                       <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
@@ -303,7 +303,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
                         <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                           created sale on your name
                         </p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1 flex-wrap font-sans">
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1 flex-wrap font-sans">
                           <span className="font-mono font-medium text-foreground bg-muted px-1.5 py-0.5 rounded border border-border/70">
                             #{inv.invoiceNumber}
                           </span>
@@ -315,7 +315,7 @@ export function PendingInwardBanner({ onActionComplete, className }: PendingInwa
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground block">
+                        <span className="text-[11px] uppercase font-bold text-muted-foreground block">
                           Amount
                         </span>
                         <span className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400">

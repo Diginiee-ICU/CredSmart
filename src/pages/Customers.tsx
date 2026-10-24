@@ -635,7 +635,7 @@ export default function Customers() {
                 className={cn(
                   "px-2.5 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer",
                   creditFilter === f.id
-                    ? "glowing-btn-amber text-white shadow-xs"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground"
                 )}
               >
@@ -908,7 +908,7 @@ export default function Customers() {
                     const activeCust = customers.find((c) => c.id === selectedCustomerId) || filtered[0];
                     if (!activeCust) {
                       return (
-                        <div className="p-12 text-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl">
+                        <div className="p-12 text-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
                           <Users2 className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-50" />
                           <p className="text-sm font-bold text-foreground">Select a customer from the left list</p>
                         </div>
@@ -918,7 +918,7 @@ export default function Customers() {
                     const hasDue = activeCust.balance > 0;
 
                     return (
-                      <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 backdrop-blur-xl">
+                      <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 backdrop-blur-xl">
                         {/* Header Banner */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                           <div className="flex items-center gap-3.5">
@@ -964,7 +964,7 @@ export default function Customers() {
                             <Button
                               size="sm"
                               onClick={() => openCreditModal(activeCust)}
-                              className="h-8 gap-1.5 text-xs glowing-btn-amber font-bold cursor-pointer"
+                              className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 font-bold cursor-pointer"
                             >
                               <IndianRupee className="w-3.5 h-3.5" /> Payment In
                             </Button>

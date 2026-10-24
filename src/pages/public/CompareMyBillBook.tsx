@@ -121,7 +121,7 @@ export default function CompareMyBillBook() {
       {/* Comparison Table */}
       <section className="py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-3xl bg-white border border-slate-200/80 shadow-md">
+          <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-md">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-mono text-[11px]">
                 <tr>

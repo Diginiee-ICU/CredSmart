@@ -276,7 +276,7 @@ export function SuiteSwitcher({
       >
         <span>POS & Billing</span>
         {effectiveSuite === "billing" && (
-          <span data-testid="active-suite-badge-billing" className="text-[10px] bg-amber-600 px-1 rounded uppercase">
+          <span data-testid="active-suite-badge-billing" className="text-[11px] bg-amber-600 px-1 rounded uppercase">
             Active
           </span>
         )}
@@ -303,7 +303,7 @@ export function SuiteSwitcher({
       >
         <span>CRM</span>
         {effectiveSuite === "crm" && (
-          <span data-testid="active-suite-badge-crm" className="text-[10px] bg-emerald-700 px-1 rounded uppercase">
+          <span data-testid="active-suite-badge-crm" className="text-[11px] bg-emerald-700 px-1 rounded uppercase">
             Active
           </span>
         )}

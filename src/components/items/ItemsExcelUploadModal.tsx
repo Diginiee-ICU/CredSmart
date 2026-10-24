@@ -177,7 +177,7 @@ export function ItemsExcelUploadModal({
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "border-2 border-dashed rounded-3xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-200 shadow-inner group flex flex-col items-center justify-center gap-2",
+                "border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-200 shadow-inner group flex flex-col items-center justify-center gap-2",
                 isDragging
                   ? "border-teal-500 bg-teal-500/15 scale-[1.01]"
                   : "border-teal-500/40 hover:border-teal-500/80 bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent hover:from-teal-500/15"
@@ -273,13 +273,13 @@ export function ItemsExcelUploadModal({
                   <div key={idx} className="p-2.5 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <div>
                       <p className="font-bold text-slate-900 dark:text-white">{item.name}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                         SKU: {item.sku} · {item.category} · {item.currentStock} {item.unit}
                       </p>
                     </div>
                     <div className="text-right font-mono">
                       <p className="font-black text-emerald-600 dark:text-emerald-400">₹ {item.sellingPrice}</p>
-                      <p className="text-[10px] text-slate-500">Cost: ₹ {item.purchasePrice}</p>
+                      <p className="text-[11px] text-slate-500">Cost: ₹ {item.purchasePrice}</p>
                     </div>
                   </div>
                 ))}

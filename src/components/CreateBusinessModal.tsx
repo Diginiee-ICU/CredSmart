@@ -301,7 +301,7 @@ export function CreateBusinessModal({
                 onChange={(e) => handleGstinChange(e.target.value)}
                 className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 font-mono tracking-wider uppercase"
               />
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[11px] text-slate-500">
                 Entering GSTIN auto-fills PAN and operating state.
               </p>
             </div>

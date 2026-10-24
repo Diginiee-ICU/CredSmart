@@ -658,7 +658,7 @@ export default function Support(): React.ReactElement {
                     >
                       <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         <span>{m.sender_name}</span>
-                        <span className="font-mono text-[10px] text-slate-400 font-normal">{m.created_at}</span>
+                        <span className="font-mono text-[11px] text-slate-400 font-normal">{m.created_at}</span>
                       </div>
                       <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{m.message}</p>
                     </div>

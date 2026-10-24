@@ -986,7 +986,7 @@ export default function Sales() {
                         >
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border",
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono border",
                               doc.status === "paid" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60",
                               doc.status === "partial" && "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60",
                               doc.status === "unpaid" && "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",

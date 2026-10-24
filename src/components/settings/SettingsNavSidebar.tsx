@@ -174,7 +174,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
                 {businessName}
               </h3>
               {businessPhone && (
-                <p className="text-[10px] text-muted-foreground truncate">{businessPhone}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{businessPhone}</p>
               )}
             </div>
           </div>
@@ -209,7 +209,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
                 {item.badge && (
                   <span
                     className={cn(
-                      "text-[9px] font-bold px-1 py-0.2 rounded",
+                      "text-[11px] font-bold px-1 py-0.2 rounded",
                       isActive ? "bg-white/20 text-white" : "bg-rose-500 text-white"
                     )}
                   >
@@ -277,7 +277,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
                   {item.badge && (
                     <span
                       className={cn(
-                        "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
+                        "text-[11px] font-bold px-1.5 py-0.5 rounded-md",
                         isActive
                           ? "bg-white text-[#6366F1]"
                           : "bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold"
@@ -295,7 +295,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
         {/* Sidebar Footer Metadata */}
         <div className="pt-6 border-t border-border/70 mt-6 space-y-2 text-center">
           <p className="text-[11px] text-muted-foreground font-medium">App Version : 9.17.3</p>
-          <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               100% Secure
@@ -308,7 +308,7 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
             <span className="text-xs font-extrabold text-foreground tracking-tight">
               CredSmart<span className="text-[#6366F1] font-bold">POS</span>
             </span>
-            <span className="text-[10px] text-muted-foreground">by flobiz</span>
+            <span className="text-[11px] text-muted-foreground">by flobiz</span>
           </div>
         </div>
       </aside>

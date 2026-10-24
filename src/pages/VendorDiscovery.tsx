@@ -89,7 +89,7 @@ export default function VendorDiscovery() {
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
       {/* Hero Search Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/95 via-primary to-slate-900 text-white p-6 sm:p-10 shadow-xl border border-primary/20">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-slate-900 text-white p-6 sm:p-10 shadow-xl border border-primary/20">
         {/* Glow & background patterns */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 -mb-10 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -120,7 +120,7 @@ export default function VendorDiscovery() {
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Search industry or company name (e.g., Textile, Steel, Pharma)..."
-                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm font-medium"
+                  className="w-full h-8.5 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm font-medium"
                 />
                 {search && (
                   <button
@@ -144,14 +144,14 @@ export default function VendorDiscovery() {
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="PIN Code..."
                   maxLength={6}
-                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm font-mono"
+                  className="w-full h-8.5 pl-10 pr-4 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm font-mono"
                 />
               </div>
 
               <button
                 onClick={() => handleSearch()}
                 disabled={loading}
-                className="h-11 px-6 font-bold rounded-xl gap-2 shrink-0 glowing-btn-amber text-white text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                className="h-8.5 px-6 font-bold rounded-xl gap-2 shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -202,7 +202,7 @@ export default function VendorDiscovery() {
           [...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="h-52 glass-card-3d rounded-2xl p-5 shadow-sm space-y-3 animate-pulse"
+              className="h-52 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-5 shadow-sm space-y-3 animate-pulse"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-xl" />
@@ -222,7 +222,7 @@ export default function VendorDiscovery() {
           results.map((comp) => (
             <div
               key={comp.cin || comp.company_name}
-              className="glass-card-3d rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
             >
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-blue-500 to-cyan-500 rounded-l-2xl" />
               <div>
@@ -275,7 +275,7 @@ export default function VendorDiscovery() {
             </div>
           ))
         ) : hasSearched ? (
-          <div className="col-span-full py-16 text-center text-muted-foreground border-2 border-dashed border-border rounded-3xl bg-muted/20 px-4">
+          <div className="col-span-full py-16 text-center text-muted-foreground border-2 border-dashed border-border rounded-2xl bg-muted/20 px-4">
             <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary" />
             <h3 className="text-base font-bold text-foreground">No Businesses Found</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">

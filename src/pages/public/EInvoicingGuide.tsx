@@ -92,7 +92,7 @@ export default function EInvoicingGuide() {
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             Under Rule 48(4) of the CGST Rules, businesses whose aggregate annual turnover exceeded ₹5 Crore in any preceding financial year from 2017-18 onwards are mandatory required to issue e-Invoices for all B2B and export supplies.
           </p>
-          <div className="overflow-x-auto rounded-3xl bg-white border border-slate-200/80 shadow-sm">
+          <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-mono text-[11px]">
                 <tr>
@@ -118,7 +118,7 @@ export default function EInvoicingGuide() {
 
         {/* 3 Steps */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-black text-sm">
               1
             </div>
@@ -128,7 +128,7 @@ export default function EInvoicingGuide() {
             </p>
           </div>
 
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-black text-sm">
               2
             </div>
@@ -138,7 +138,7 @@ export default function EInvoicingGuide() {
             </p>
           </div>
 
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-black text-sm">
               3
             </div>

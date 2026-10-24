@@ -185,7 +185,7 @@ export default function Analytics() {
               <Activity className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
               Financial &amp; Sales Analytics
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>LIVE INSIGHTS</span>
             </span>
@@ -195,7 +195,7 @@ export default function Analytics() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Badge variant="outline" className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
+          <Badge variant="outline" className="px-3 py-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs font-semibold gap-1.5 shadow-xs rounded-xl">
             <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> All Historical Data
           </Badge>
         </div>
@@ -204,8 +204,8 @@ export default function Analytics() {
       {/* KPI Cards with 3D Frosted Glass and Lightbars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
               Total Revenue
@@ -228,8 +228,8 @@ export default function Analytics() {
         </div>
 
         {/* Total Orders */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
               Total Invoices
@@ -249,8 +249,8 @@ export default function Analytics() {
         </div>
 
         {/* Avg Order Value */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-500 to-violet-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">
               Avg Basket Value
@@ -270,8 +270,8 @@ export default function Analytics() {
         </div>
 
         {/* Payment Channels */}
-        <div className="glass-card-3d p-5 relative overflow-hidden group select-none">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-5 relative overflow-hidden group select-none">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl" />
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">
               Payment Channels
@@ -297,7 +297,7 @@ export default function Analytics() {
           Analyzing revenue streams...
         </div>
       ) : sales.length === 0 ? (
-        <div className="p-16 text-center text-muted-foreground border-2 border-dashed border-border rounded-3xl bg-card">
+        <div className="p-16 text-center text-muted-foreground border-2 border-dashed border-border rounded-2xl bg-card">
           <Receipt className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary" />
           <h3 className="text-base font-bold text-foreground">No Sales Records Found</h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
@@ -485,7 +485,7 @@ export default function Analytics() {
                       <div className="flex items-center gap-2.5">
                         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                         <span className="font-bold text-foreground text-sm uppercase">{p.name}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
+                        <Badge variant="secondary" className="text-[11px] px-1.5 py-0 font-medium">
                           {p.percentage}% share
                         </Badge>
                       </div>

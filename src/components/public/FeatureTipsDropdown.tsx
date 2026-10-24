@@ -204,18 +204,18 @@ export function FeatureTipsDropdown({
             </div>
 
             {/* Title Label */}
-            <span className="text-[10px] sm:text-[10.5px] font-black tracking-wider uppercase font-mono text-amber-800 dark:text-amber-300 shrink-0">
+            <span className="text-[11px] sm:text-[10.5px] font-black tracking-wider uppercase font-mono text-amber-800 dark:text-amber-300 shrink-0">
               DID YOU KNOW?
             </span>
 
             {/* Category Tag */}
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[8.5px] sm:text-[9px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/25 shrink-0 truncate">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] sm:text-[11px] font-bold font-mono uppercase tracking-wider bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/25 shrink-0 truncate">
               {currentNote.badge}
             </span>
           </div>
 
           {/* Micro Slide Indicator */}
-          <div className="flex items-center gap-0.5 text-[9px] sm:text-[9.5px] font-mono text-slate-400 dark:text-slate-400 shrink-0 font-bold">
+          <div className="flex items-center gap-0.5 text-[11px] sm:text-[11px] font-mono text-slate-400 dark:text-slate-400 shrink-0 font-bold">
             <span>{String(orderIndex + 1).padStart(2, "0")}</span>
             <span className="text-slate-300 dark:text-slate-600">/</span>
             <span>{String(DID_YOU_KNOW_NOTES.length).padStart(2, "0")}</span>

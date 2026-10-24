@@ -334,7 +334,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                   {node.name}
                 </span>
                 {node.role === "store_owner" && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                     <Crown className="w-2.5 h-2.5 text-amber-600 fill-amber-400" />
                     Owner
                   </span>
@@ -342,13 +342,13 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200/60">
+                <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200/60">
                   {node.role}
                 </span>
 
                 {assignedRole ? (
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold border"
+                    className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[11px] font-semibold border"
                     style={{
                       backgroundColor: `${assignedRole.color}15`,
                       color: assignedRole.color,
@@ -362,7 +362,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                     {assignedRole.name}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400">No CRM Role</span>
+                  <span className="text-[11px] text-slate-400">No CRM Role</span>
                 )}
               </div>
             </div>
@@ -374,7 +374,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               <span
                 onClick={(e) => toggleNode(node.id, e)}
                 className={cn(
-                  "cursor-pointer text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border transition-colors flex items-center gap-1",
+                  "cursor-pointer text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border transition-colors flex items-center gap-1",
                   isExpanded
                     ? "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
                     : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold"
@@ -430,12 +430,12 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                     {node.name}
                   </h4>
                   <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
+                    <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
                       {node.role}
                     </span>
                     {assignedRole && (
                       <span
-                        className="text-[10px] font-semibold px-2 py-0.2 rounded-full border bg-white"
+                        className="text-[11px] font-semibold px-2 py-0.2 rounded-full border bg-white"
                         style={{ color: assignedRole.color, borderColor: `${assignedRole.color}40` }}
                       >
                         {assignedRole.name}
@@ -454,7 +454,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                     e.stopPropagation();
                     setScopedUserId(node.id);
                   }}
-                  className="h-7 px-2 text-[10px] rounded-lg bg-white border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold gap-1"
+                  className="h-7 px-2 text-[11px] rounded-lg bg-white border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold gap-1"
                   title="Focus tree on team under this user"
                 >
                   <Network className="w-3 h-3 text-blue-600" />
@@ -490,7 +490,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                       e.stopPropagation();
                       onOpenAddStaff(node.id);
                     }}
-                    className="h-6 text-[10px] text-blue-600 hover:bg-blue-100/60 px-1.5 rounded font-semibold gap-1"
+                    className="h-6 text-[11px] text-blue-600 hover:bg-blue-100/60 px-1.5 rounded font-semibold gap-1"
                   >
                     <UserPlus className="w-3 h-3" />
                     <span>Add</span>
@@ -517,17 +517,17 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                         className="p-2 rounded-xl border border-blue-200/80 bg-white hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 font-bold text-[10px] flex items-center justify-center shrink-0">
+                          <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 font-bold text-[11px] flex items-center justify-center shrink-0">
                             {sub.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-slate-900 truncate">{sub.name}</p>
-                            <span className="text-[9px] font-mono text-slate-500">{sub.role}</span>
+                            <span className="text-[11px] font-mono text-slate-500">{sub.role}</span>
                           </div>
                         </div>
                         {subRole && (
                           <span
-                            className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full border bg-slate-50 shrink-0"
+                            className="text-[11px] font-semibold px-1.5 py-0.2 rounded-full border bg-slate-50 shrink-0"
                             style={{ color: subRole.color, borderColor: `${subRole.color}30` }}
                           >
                             {subRole.name}
@@ -584,7 +584,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                 {staff.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     <span className="font-medium">{s.name}</span>
-                    <span className="text-[10px] text-slate-400 ml-1 font-mono">({s.role})</span>
+                    <span className="text-[11px] text-slate-400 ml-1 font-mono">({s.role})</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -654,7 +654,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
               ORGANIZATION STRUCTURE
             </span>
             {scopedUserId !== "all" && (
-              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+              <Badge variant="outline" className="text-[11px] bg-blue-50 text-blue-700 border-blue-200">
                 Filtered: {staffMap.get(scopedUserId)?.name}
               </Badge>
             )}
@@ -710,7 +710,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                   </div>
                 </div>
 
-                <Badge variant="outline" className="text-[10px] font-mono bg-slate-50 text-slate-600 shrink-0">
+                <Badge variant="outline" className="text-[11px] font-mono bg-slate-50 text-slate-600 shrink-0">
                   {directSubordinates.length} Direct {directSubordinates.length === 1 ? "Report" : "Reports"}
                 </Badge>
               </div>
@@ -812,7 +812,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                           className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-2"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-[11px] flex items-center justify-center shrink-0">
                               {sub.name.slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -820,12 +820,12 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                                 {sub.name}
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
+                                <span className="text-[11px] font-mono px-1 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
                                   {sub.role}
                                 </span>
                                 {subRole && (
                                   <span
-                                    className="text-[9px] font-medium"
+                                    className="text-[11px] font-medium"
                                     style={{ color: subRole.color }}
                                   >
                                     {subRole.name}
@@ -839,7 +839,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-[10px] text-blue-600 hover:bg-blue-50 rounded-lg shrink-0 gap-0.5"
+                            className="h-7 px-2 text-[11px] text-blue-600 hover:bg-blue-50 rounded-lg shrink-0 gap-0.5"
                           >
                             <span>Inspect</span>
                             <ChevronRight className="w-3 h-3" />
@@ -907,7 +907,7 @@ export const CRMTeamTreeView: React.FC<CRMTeamTreeViewProps> = ({
                             <SelectItem key={m.id} value={m.id}>
                               <div className="flex items-center gap-1.5">
                                 <span>{m.name}</span>
-                                <span className="text-[10px] text-slate-400 font-mono">
+                                <span className="text-[11px] text-slate-400 font-mono">
                                   ({m.role})
                                 </span>
                               </div>

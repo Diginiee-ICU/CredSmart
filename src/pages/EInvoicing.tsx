@@ -217,7 +217,7 @@ export default function EInvoicing() {
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
               e-Invoicing &amp; IRP Gateway
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>NIC / IRP CONNECTED</span>
             </span>
@@ -249,7 +249,7 @@ export default function EInvoicing() {
         {/* 3 Feature Cards - 3D Frosted Glass */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {/* CARD 1: Automatic e-invoice generation */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with QR & lines */}
@@ -286,7 +286,7 @@ export default function EInvoicing() {
           {/* CARD 2: Hassle e-way bill generation using IRN */}
           <Link
             to={ROUTE_PATHS.ewayBill}
-            className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none cursor-pointer hover:border-amber-400/60 transition-all"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none cursor-pointer hover:border-amber-400/60 transition-all"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
@@ -322,7 +322,7 @@ export default function EInvoicing() {
           </Link>
 
           {/* CARD 3: Easy GSTR1 reconciliation */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Report Illustration with Charts */}
@@ -364,7 +364,7 @@ export default function EInvoicing() {
             <button
               type="button"
               onClick={() => setIsGeneratorOpen(true)}
-              className="px-6 py-3 glowing-btn-amber text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
               <Zap className="w-4 h-4 stroke-[2.5]" />
               <span>Start Generating e-Invoices</span>
@@ -674,7 +674,7 @@ export default function EInvoicing() {
                           </td>
                           <td className="px-3.5 py-2.5">
                             <p className="font-semibold text-slate-800 dark:text-slate-200">{inv.buyerName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">{inv.buyerGstin}</p>
+                            <p className="text-[11px] text-slate-400 font-mono">{inv.buyerGstin}</p>
                           </td>
                           <td className="px-3.5 py-2.5 font-mono text-slate-600 dark:text-slate-300">
                             {inv.ackNumber}
@@ -684,11 +684,11 @@ export default function EInvoicing() {
                           </td>
                           <td className="px-3.5 py-2.5">
                             {inv.status === "active" ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 Active
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                 Cancelled
                               </span>
                             )}
@@ -911,7 +911,7 @@ export default function EInvoicing() {
                 )}
               >
                 <p className="leading-relaxed">{m.text}</p>
-                <span className="text-[9px] opacity-70 mt-1 block text-right">{m.time}</span>
+                <span className="text-[11px] opacity-70 mt-1 block text-right">{m.time}</span>
               </div>
             ))}
           </div>

@@ -412,7 +412,7 @@ export function CreateItemModal({
                     <button
                       type="button"
                       onClick={() => setSku(`SKU-${Math.floor(100000 + Math.random() * 900000)}`)}
-                      className="text-[10px] text-primary hover:underline"
+                      className="text-[11px] text-primary hover:underline"
                     >
                       Auto-generate
                     </button>
@@ -435,7 +435,7 @@ export function CreateItemModal({
                     <button
                       type="button"
                       onClick={handleGenerateBarcode}
-                      className="text-[10px] text-primary hover:underline"
+                      className="text-[11px] text-primary hover:underline"
                     >
                       Generate Barcode
                     </button>
@@ -633,7 +633,7 @@ export function CreateItemModal({
                     <Label htmlFor="purchase-price" className="text-xs font-semibold">
                       Purchase Price (₹) *
                     </Label>
-                    <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[10px]">
+                    <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[11px]">
                       <button
                         type="button"
                         onClick={() => setPurchaseTaxType("exclusive")}
@@ -737,7 +737,7 @@ export function CreateItemModal({
                     <Label htmlFor="hsn-code" className="text-xs font-semibold">
                       HSN / SAC Code
                     </Label>
-                    <span className="text-[10px] text-muted-foreground">Type to search HSN library</span>
+                    <span className="text-[11px] text-muted-foreground">Type to search HSN library</span>
                   </div>
                   <div className="relative">
                     <Input
@@ -766,7 +766,7 @@ export function CreateItemModal({
                             <span className="font-bold text-foreground font-mono mr-2">{h.code}</span>
                             <span className="text-muted-foreground text-[11px]">{h.description}</span>
                           </div>
-                          <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
+                          <Badge variant="outline" className="text-[11px] shrink-0 font-mono">
                             {h.gstRate}% GST
                           </Badge>
                         </button>

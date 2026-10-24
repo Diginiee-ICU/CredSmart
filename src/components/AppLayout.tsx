@@ -528,7 +528,7 @@ export default function AppLayout() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-1 pb-1">
+                  <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-1 pb-1">
                     <span>YOUR BUSINESSES</span>
                     <span className="text-blue-600 dark:text-blue-400 font-semibold font-mono">{(organizations || []).length} Store(s)</span>
                   </DropdownMenuLabel>
@@ -553,7 +553,7 @@ export default function AppLayout() {
                         >
                           <div className="min-w-0 pr-2">
                             <p className="truncate text-xs font-semibold">{bizName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
+                            <p className="text-[11px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
                           </div>
                           {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
                         </DropdownMenuItem>
@@ -592,7 +592,7 @@ export default function AppLayout() {
                   <Search className="w-3.5 h-3.5 text-slate-400" />
                   <span>Search or ⌘K...</span>
                 </div>
-                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>
+                <kbd className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>
               </button>
             </div>
 
@@ -674,21 +674,21 @@ export default function AppLayout() {
                         className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-semibold text-[11px] transition-colors border border-blue-200 dark:border-blue-700/40 cursor-pointer"
                       >
                         <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /><span>All Creation Options</span></div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono font-semibold uppercase">Hub</span>
+                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono font-semibold uppercase">Hub</span>
                       </button>
                     </div>
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">MASTER DATA</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => handleQuickAction("party")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><UserPlus className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Create Party</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("item")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><PackagePlus className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Create Item</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setNewInvoiceMenuOpen(false); navigate(ROUTE_PATHS.tallyImport); }} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"><FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>Import Data (Tally / Excel)</span></DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">SALES</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => handleQuickAction("sales_invoice")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer font-semibold"><FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /><span>Sales Invoice</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("pos_billing")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"><ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>POS Billing (Fast)</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("quotation")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><FileSpreadsheet className="w-4 h-4 text-slate-400 shrink-0" /><span>Quotation / Estimate</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("payment_in")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>Payment In</span></DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">PURCHASES & EXPENSES</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => handleQuickAction("purchase")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Truck className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" /><span>Purchase Bill</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("payment_out")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><CreditCard className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" /><span>Payment Out</span></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
@@ -730,7 +730,7 @@ export default function AppLayout() {
                     </DropdownMenuTrigger>
                   </div>
                   <DropdownMenuContent align="end" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">
                       WORKFORCE & OPERATIONS
                     </DropdownMenuLabel>
                     <DropdownMenuItem
@@ -755,7 +755,7 @@ export default function AppLayout() {
                       <span>Run Payroll / Payslips</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
                       COMMUNICATIONS
                     </DropdownMenuLabel>
                     <DropdownMenuItem
@@ -780,7 +780,7 @@ export default function AppLayout() {
                       <span>CRM AI Assistant</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                    <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
+                    <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
                       GOVERNANCE
                     </DropdownMenuLabel>
                     <DropdownMenuItem
@@ -815,8 +815,8 @@ export default function AppLayout() {
                 aria-label="Notifications"
               >
                 <Bell className="w-4 h-4" />
-                {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
-                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+                {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[11px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
+                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[11px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
               </button>
 
               {/* Bell (Dedicated Mobile View) */}
@@ -836,11 +836,11 @@ export default function AppLayout() {
               >
                 <Bell className="w-3.5 h-3.5 stroke-[2.2]" />
                 {pendingCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-amber-500 text-[8.5px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-amber-500 text-[11px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 ) : unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-blue-600 text-[8.5px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-blue-600 text-[11px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 ) : null}
@@ -863,10 +863,10 @@ export default function AppLayout() {
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || "CredSmart Business"}</h4>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
-                    <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">{roleLabel}</div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
+                    <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">{roleLabel}</div>
                   </div>
-                  <DropdownMenuLabel className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
+                  <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">
                     <span>YOUR BUSINESSES</span><span className="text-amber-600 dark:text-amber-400">{(organizations || []).length} Store(s)</span>
                   </DropdownMenuLabel>
                   <div className="space-y-1 my-1 max-h-40 overflow-y-auto">
@@ -884,7 +884,7 @@ export default function AppLayout() {
                           }}
                           className={cn("flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer", isActive ? "bg-amber-50 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-400/40" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1C1A54]")}
                         >
-                          <div className="min-w-0 pr-2"><p className="truncate text-xs font-semibold">{bizName}</p><p className="text-[10px] text-slate-500 font-mono truncate">{business.business_type || "Retail"}</p></div>
+                          <div className="min-w-0 pr-2"><p className="truncate text-xs font-semibold">{bizName}</p><p className="text-[11px] text-slate-500 font-mono truncate">{business.business_type || "Retail"}</p></div>
                           {isActive && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />}
                         </DropdownMenuItem>
                       );
@@ -993,11 +993,11 @@ export default function AppLayout() {
                 <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Keyboard Shortcuts</p>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Global Search</span>
-                  <kbd className="px-1.5 py-0.5 bg-card border rounded text-[10px] font-mono">⌘K / Ctrl+K</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-card border rounded text-[11px] font-mono">⌘K / Ctrl+K</kbd>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>New Invoice</span>
-                  <kbd className="px-1.5 py-0.5 bg-card border rounded text-[10px] font-mono">POS Billing</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-card border rounded text-[11px] font-mono">POS Billing</kbd>
                 </div>
               </div>
               <div className="p-3 bg-muted/50 rounded-xl space-y-1 border border-border">

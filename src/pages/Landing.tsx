@@ -545,7 +545,7 @@ export default function Landing() {
               {/* ── Left Bento Card: The CredSmart Business Ecosystem ── */}
               <div
                 id="ecosystem"
-                className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
+                className="rounded-2xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
               >
                 <div>
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
@@ -565,7 +565,7 @@ export default function Landing() {
                           <Store className="w-6 h-6" />
                         </div>
                         <span className="text-xs font-bold text-slate-800">Business A</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Creates Sales Invoice</span>
+                        <span className="text-[11px] text-slate-500 font-medium">Creates Sales Invoice</span>
                       </div>
 
                       {/* Arrow */}
@@ -579,7 +579,7 @@ export default function Landing() {
                           <RotateCw className="w-3.5 h-3.5" />
                           <span>CredSmart Ecosystem</span>
                         </div>
-                        <span className="text-[10px] text-emerald-600 font-bold">Auto-Reconciled</span>
+                        <span className="text-[11px] text-emerald-600 font-bold">Auto-Reconciled</span>
                       </div>
 
                       {/* Arrow */}
@@ -593,7 +593,7 @@ export default function Landing() {
                           <Building className="w-6 h-6" />
                         </div>
                         <span className="text-xs font-bold text-slate-800">Business B</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Receives as Purchase Invoice</span>
+                        <span className="text-[11px] text-slate-500 font-medium">Receives as Purchase Invoice</span>
                       </div>
 
                     </div>
@@ -641,7 +641,7 @@ export default function Landing() {
               {/* ── Right Bento Card: CredAlert Intelligence ── */}
               <div
                 id="intelligence"
-                className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
+                className="rounded-2xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
                   
@@ -746,7 +746,7 @@ export default function Landing() {
             {(() => {
               const current = moduleShowcases[activeModuleTab];
               return (
-                <div className="rounded-3xl bg-slate-50/80 border border-slate-200/90 p-6 sm:p-10 shadow-sm">
+                <div className="rounded-2xl bg-slate-50/80 border border-slate-200/90 p-6 sm:p-10 shadow-sm">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                     
                     {/* Left text column */}
@@ -791,7 +791,7 @@ export default function Landing() {
                         <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider font-mono">
                           Live Module Preview
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                           Active
                         </span>
                       </div>
@@ -817,7 +817,7 @@ export default function Landing() {
 
                       <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-100 text-xs text-blue-800 flex items-start gap-2">
                         <Zap className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                        <span>Instant keyboard shortcuts enabled: Press <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-200 font-mono text-[10px]">F8</kbd> to tender cash or <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-200 font-mono text-[10px]">Enter</kbd> to print receipt.</span>
+                        <span>Instant keyboard shortcuts enabled: Press <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-200 font-mono text-[11px]">F8</kbd> to tender cash or <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-200 font-mono text-[11px]">Enter</kbd> to print receipt.</span>
                       </div>
                     </div>
 
@@ -851,7 +851,7 @@ export default function Landing() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               
               {/* ── CARD 1: ANDROID APP (Button 1 for Android) ── */}
-              <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold font-mono tracking-wider">
@@ -910,7 +910,7 @@ export default function Landing() {
               </div>
 
               {/* ── CARD 2: DESKTOP APP (Button 2 for Desktop) ── */}
-              <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-extrabold font-mono tracking-wider">
@@ -987,7 +987,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="overflow-x-auto rounded-3xl border border-slate-200 shadow-xs">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-xs">
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-900 text-white">
@@ -1174,7 +1174,7 @@ export default function Landing() {
         {/* ── SECTION 9: HIGH-CONVERSION BOTTOM BANNER (With Web & Download CTAs) ── */}
         <section className="py-12 sm:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 p-8 sm:p-12 shadow-2xl text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+            <div className="rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 p-8 sm:p-12 shadow-2xl text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
               
               {/* Backglow accents */}
               <div className="absolute right-0 bottom-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />

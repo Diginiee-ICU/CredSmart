@@ -151,7 +151,7 @@ export function WebsiteProductImport({ onImport, compact = false }: WebsiteProdu
           )}
 
           {!compact && (
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Paste a URL of a product listing page (e.g., an online catalog or store page). We'll extract product names, prices, and categories automatically.
             </p>
           )}
@@ -166,13 +166,13 @@ export function WebsiteProductImport({ onImport, compact = false }: WebsiteProdu
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleAll}
-                className="text-[10px] font-medium text-primary hover:underline"
+                className="text-[11px] font-medium text-primary hover:underline"
               >
                 {products.every((p) => p.selected) ? "Deselect All" : "Select All"}
               </button>
               <button
                 onClick={() => { setScraped(false); setProducts([]); }}
-                className="text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 ← Change URL
               </button>
@@ -213,7 +213,7 @@ export function WebsiteProductImport({ onImport, compact = false }: WebsiteProdu
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground truncate">{p.name}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">
+                  <p className="text-[11px] text-muted-foreground truncate">
                     {p.brand && `${p.brand} · `}{p.category && `${p.category} · `}₹{p.mrp || "N/A"}
                   </p>
                 </div>

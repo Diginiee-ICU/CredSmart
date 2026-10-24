@@ -214,14 +214,14 @@ export default function PrintSettings() {
         <SettingsNavSidebar activeItem="print" />
 
         {/* Main Content Area - 3D Frosted Glass Container */}
-        <main className="flex-1 w-full glass-card-3d rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
+        <main className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
           <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
                   Print &amp; POS Hardware Settings
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>ESC/POS PERIPHERALS</span>
                 </span>
@@ -233,7 +233,7 @@ export default function PrintSettings() {
 
             <button
               onClick={handleSaveHardwareAndReceipt}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Save className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Save Print Settings</span>
@@ -267,7 +267,7 @@ export default function PrintSettings() {
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                 <div>
                   <p className="text-xs font-bold text-foreground">Auto-Enter for Barcode Scanners</p>
-                  <p className="text-[10px] text-muted-foreground">Trigger item lookup on scanner ENTER keystroke</p>
+                  <p className="text-[11px] text-muted-foreground">Trigger item lookup on scanner ENTER keystroke</p>
                 </div>
                 <button type="button" onClick={() => setAutoEnter(!autoEnter)}>
                   {autoEnter ? (
@@ -297,7 +297,7 @@ export default function PrintSettings() {
               <div className="hidden md:flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                 <div>
                   <p className="text-xs font-bold text-foreground">Auto Cash Drawer Kick</p>
-                  <p className="text-[10px] text-muted-foreground">Pulse RJ11/RJ12 drawer signal on bill save</p>
+                  <p className="text-[11px] text-muted-foreground">Pulse RJ11/RJ12 drawer signal on bill save</p>
                 </div>
                 <button type="button" onClick={() => setCashDrawer(!cashDrawer)}>
                   {cashDrawer ? (
@@ -350,7 +350,7 @@ export default function PrintSettings() {
               {/* Palette */}
               {availableToAdd.length > 0 && (
                 <div className="p-3 rounded-xl bg-muted/40 border space-y-1.5">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Add Components:</p>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase">Add Components:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {availableToAdd.map((c) => (
                       <button
@@ -368,7 +368,7 @@ export default function PrintSettings() {
 
               {/* DnD Layout list */}
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border flex flex-col items-center">
-                <Badge variant="outline" className="mb-3 text-[10px]">
+                <Badge variant="outline" className="mb-3 text-[11px]">
                   Thermal Receipt Layout ({selectedFormat}) — Drag to Reorder
                 </Badge>
                 <div className="w-full max-w-xs bg-white dark:bg-slate-900 border-2 border-dashed rounded-xl p-2 space-y-1.5 shadow-sm">

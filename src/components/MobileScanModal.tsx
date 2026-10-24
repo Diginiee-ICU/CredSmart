@@ -77,7 +77,7 @@ export function MobileScanModal({ open, onOpenChange, onFileUploaded }: MobileSc
               <p className="text-xs font-semibold text-foreground">
                 Or upload bill photo / PDF from this PC
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Supports JPG, PNG, WebP, PDF (Max 10MB)
               </p>
             </div>

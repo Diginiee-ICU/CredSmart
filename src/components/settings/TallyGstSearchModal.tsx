@@ -110,7 +110,7 @@ export function TallyGstSearchModal({
                 </DialogDescription>
               </div>
             </div>
-            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-mono">
+            <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-600 border-amber-500/20 font-mono">
               Tally Bridge
             </Badge>
           </div>
@@ -176,7 +176,7 @@ export function TallyGstSearchModal({
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Captured Business Details</span>
                 </div>
-                <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                <Badge variant="outline" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200">
                   {parsedResult.status}
                 </Badge>
               </div>

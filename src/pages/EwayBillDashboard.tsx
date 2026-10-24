@@ -150,7 +150,7 @@ export default function EwayBillDashboard() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-11 h-8.5 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
             <Truck className="w-6 h-6" />
           </div>
           <div className="min-w-0 flex-1">
@@ -158,7 +158,7 @@ export default function EwayBillDashboard() {
               <h1 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
                 GST E-Way Bill Hub
               </h1>
-              <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
+              <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
                 Rule 138 Compliant
               </span>
             </div>
@@ -356,7 +356,7 @@ export default function EwayBillDashboard() {
                           <span className="font-mono font-bold text-slate-900 dark:text-white">
                             {r.ewayBillNo}
                           </span>
-                          <span className="text-[10px] text-slate-500 font-mono">
+                          <span className="text-[11px] text-slate-500 font-mono">
                             {formatDateTime(r.ewayBillDate)}
                           </span>
                         </div>
@@ -368,7 +368,7 @@ export default function EwayBillDashboard() {
                           <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {r.docType}: {r.docNo}
                           </span>
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-[11px] text-slate-500">
                             {r.docDate}
                           </span>
                         </div>
@@ -380,7 +380,7 @@ export default function EwayBillDashboard() {
                           <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
                             {r.toTrdName}
                           </span>
-                          <span className="text-[10px] font-mono text-slate-500">
+                          <span className="text-[11px] font-mono text-slate-500">
                             {r.toGstin || "URP"}
                           </span>
                         </div>
@@ -392,7 +392,7 @@ export default function EwayBillDashboard() {
                           <span className="font-medium text-slate-700 dark:text-slate-300">
                             {r.fromPlace} ➔ {r.toPlace}
                           </span>
-                          <span className="text-[10px] text-slate-500 font-mono">
+                          <span className="text-[11px] text-slate-500 font-mono">
                             {r.transDistance} KM • {r.fromPincode} to {r.toPincode}
                           </span>
                         </div>
@@ -406,7 +406,7 @@ export default function EwayBillDashboard() {
                               {r.vehicleNo}
                             </span>
                             {r.vehicleHistory && r.vehicleHistory.length > 0 && (
-                              <span className="text-[10px] text-indigo-600 font-semibold mt-0.5">
+                              <span className="text-[11px] text-indigo-600 font-semibold mt-0.5">
                                 Updated {r.vehicleHistory.length} time(s)
                               </span>
                             )}
@@ -428,19 +428,19 @@ export default function EwayBillDashboard() {
                       {/* Status */}
                       <td className="p-3 text-center">
                         {r.status === "cancelled" ? (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300">
+                          <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300">
                             Cancelled
                           </span>
                         ) : isExp ? (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300">
+                          <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300">
                             Expired
                           </span>
                         ) : r.status === "part_a_only" ? (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-300">
+                          <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-300">
                             Part-A Only
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
+                          <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
                             Active
                           </span>
                         )}
@@ -448,7 +448,7 @@ export default function EwayBillDashboard() {
 
                       {/* Validity */}
                       <td className="p-3">
-                        <div className="flex flex-col text-[10px]">
+                        <div className="flex flex-col text-[11px]">
                           <span className="font-semibold text-slate-700 dark:text-slate-300 font-mono">
                             {formatDateTime(r.validUpto)}
                           </span>
@@ -560,28 +560,28 @@ export default function EwayBillDashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-black text-slate-900 dark:text-white truncate">{r.ewayBillNo}</p>
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">{formatDateTime(r.ewayBillDate)}</p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{formatDateTime(r.ewayBillDate)}</p>
                     </div>
-                    <span className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-bold border ${statusClass}`}>{statusLabel}</span>
+                    <span className={`shrink-0 px-2 py-1 rounded-full text-[11px] font-bold border ${statusClass}`}>{statusLabel}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-                    <div className="min-w-0"><span className="block text-[10px] uppercase tracking-wide text-slate-500">Recipient</span><span className="block font-bold text-slate-800 dark:text-slate-200 truncate">{r.toTrdName}</span><span className="block text-[10px] text-slate-500 font-mono truncate">{r.toGstin || "URP"}</span></div>
-                    <div className="text-right"><span className="block text-[10px] uppercase tracking-wide text-slate-500">Invoice Value</span><span className="block font-mono font-black text-slate-900 dark:text-white">₹{r.totInvValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
-                    <div className="min-w-0"><span className="block text-[10px] uppercase tracking-wide text-slate-500">Route</span><span className="block font-medium text-slate-700 dark:text-slate-300 truncate">{r.fromPlace} to {r.toPlace}</span><span className="block text-[10px] text-slate-500 font-mono">{r.transDistance} KM</span></div>
-                    <div className="text-right"><span className="block text-[10px] uppercase tracking-wide text-slate-500">Vehicle</span><span className="block font-mono font-bold text-slate-800 dark:text-slate-200 truncate">{r.vehicleNo || "Awaiting Vehicle"}</span></div>
+                    <div className="min-w-0"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Recipient</span><span className="block font-bold text-slate-800 dark:text-slate-200 truncate">{r.toTrdName}</span><span className="block text-[11px] text-slate-500 font-mono truncate">{r.toGstin || "URP"}</span></div>
+                    <div className="text-right"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Invoice Value</span><span className="block font-mono font-black text-slate-900 dark:text-white">₹{r.totInvValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
+                    <div className="min-w-0"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Route</span><span className="block font-medium text-slate-700 dark:text-slate-300 truncate">{r.fromPlace} to {r.toPlace}</span><span className="block text-[11px] text-slate-500 font-mono">{r.transDistance} KM</span></div>
+                    <div className="text-right"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Vehicle</span><span className="block font-mono font-bold text-slate-800 dark:text-slate-200 truncate">{r.vehicleNo || "Awaiting Vehicle"}</span></div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="text-[10px] text-slate-500">Valid until {formatDateTime(r.validUpto)}</span>
+                    <span className="text-[11px] text-slate-500">Valid until {formatDateTime(r.validUpto)}</span>
                     <div className="flex items-center gap-1">
                       <Button variant="outline" size="sm" onClick={() => { setSelectedRecord(r); setIsPrintSlipOpen(true); }} className="h-10 px-3 gap-1.5 text-xs font-semibold"><Printer className="w-3.5 h-3.5" />View</Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="h-10 w-10 p-0" aria-label={`Actions for ${r.ewayBillNo}`}><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52 text-xs">
-                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsUpdatePartBOpen(true); }} className="min-h-11 gap-2"><Truck className="w-3.5 h-3.5 text-blue-600" />Update Vehicle (Part-B)</DropdownMenuItem>}
-                          <DropdownMenuItem onClick={() => handleExportSingleJson(r)} className="min-h-11 gap-2"><Download className="w-3.5 h-3.5 text-amber-600" />Export Government JSON</DropdownMenuItem>
-                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsCancelOpen(true); }} className="min-h-11 gap-2 text-rose-600"><Ban className="w-3.5 h-3.5" />Cancel E-Way Bill</DropdownMenuItem>}
+                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsUpdatePartBOpen(true); }} className="min-h-8.5 gap-2"><Truck className="w-3.5 h-3.5 text-blue-600" />Update Vehicle (Part-B)</DropdownMenuItem>}
+                          <DropdownMenuItem onClick={() => handleExportSingleJson(r)} className="min-h-8.5 gap-2"><Download className="w-3.5 h-3.5 text-amber-600" />Export Government JSON</DropdownMenuItem>
+                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsCancelOpen(true); }} className="min-h-8.5 gap-2 text-rose-600"><Ban className="w-3.5 h-3.5" />Cancel E-Way Bill</DropdownMenuItem>}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

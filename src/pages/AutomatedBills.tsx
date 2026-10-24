@@ -196,13 +196,13 @@ export default function AutomatedBills() {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-background text-foreground overflow-hidden font-sans">
       {/* Top Header - Frosted Container */}
-      <header className="border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xs">
+      <header className="border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white dark:bg-slate-900 shadow-xs">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
               Automated Bills &amp; Subscriptions
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>RECURRING ENGINE</span>
             </span>
@@ -223,7 +223,7 @@ export default function AutomatedBills() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glowing-btn-amber text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>New Automated Bill</span>
@@ -237,7 +237,7 @@ export default function AutomatedBills() {
         {/* 3 Feature Cards - 3D Frosted Glass */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {/* CARD 1: Creating repeated bills? */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized illustration matching mockup */}
@@ -260,7 +260,7 @@ export default function AutomatedBills() {
                 </div>
 
                 {/* Thought bubble */}
-                <div className="absolute top-2 left-0 z-10 bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 text-[9px] font-medium px-2 py-1 rounded-full border border-blue-200 shadow-xs">
+                <div className="absolute top-2 left-0 z-10 bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 text-[11px] font-medium px-2 py-1 rounded-full border border-blue-200 shadow-xs">
                   Tired of creating repeated bills !!!
                 </div>
 
@@ -289,20 +289,20 @@ export default function AutomatedBills() {
           </div>
 
           {/* CARD 2: Automated Billing */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Robot & Schedule illustration matching mockup */}
               <div className="relative w-full max-w-[200px] h-36 flex items-center justify-center">
                 {/* Auto Send Badge */}
-                <div className="absolute -top-1 right-6 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                <div className="absolute -top-1 right-6 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[11px] font-bold px-2 py-0.5 rounded-full border border-blue-200">
                   Auto Send
                 </div>
 
                 {/* Invoices connected to Robot Clock */}
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-16 bg-white dark:bg-muted border border-slate-300 rounded p-1 shadow-xs flex flex-col justify-between">
-                    <span className="text-[8px] font-mono font-bold text-slate-600">INVOICE 1</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-600">INVOICE 1</span>
                     <div className="h-1 w-full bg-blue-500 rounded" />
                   </div>
 
@@ -311,13 +311,13 @@ export default function AutomatedBills() {
                     <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-muted border-2 border-slate-700 flex items-center justify-center">
                       <Clock className="w-6 h-6 text-blue-600" />
                     </div>
-                    <div className="mt-1 px-1.5 py-0.5 rounded bg-slate-800 text-white font-mono text-[9px] font-bold">
+                    <div className="mt-1 px-1.5 py-0.5 rounded bg-slate-800 text-white font-mono text-[11px] font-bold">
                       31
                     </div>
                   </div>
 
                   <div className="w-12 h-16 bg-white dark:bg-muted border border-slate-300 rounded p-1 shadow-xs flex flex-col justify-between">
-                    <span className="text-[8px] font-mono font-bold text-slate-600">INVOICE 2</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-600">INVOICE 2</span>
                     <div className="h-1 w-full bg-emerald-500 rounded" />
                   </div>
                 </div>
@@ -335,33 +335,33 @@ export default function AutomatedBills() {
           </div>
 
           {/* CARD 3: Easy Reminders & Payment */}
-          <div className="glass-card-3d rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[300px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Phone with Reminders bubble matching mockup */}
               <div className="relative w-full max-w-[220px] h-36 flex items-center justify-center">
                 {/* Reminders Tag Bubble */}
-                <div className="absolute top-0 right-2 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                <div className="absolute top-0 right-2 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[11px] font-semibold px-2 py-0.5 rounded-full">
                   Reminders
                 </div>
 
                 {/* Notification toast card */}
                 <div className="absolute top-5 left-1 bg-white dark:bg-card border border-slate-200 dark:border-border rounded-xl p-2 shadow-sm text-left max-w-[170px]">
-                  <div className="flex items-center gap-1 text-[9px] text-slate-400">
+                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
                     <User className="w-2.5 h-2.5" />
                     <span>Your Party</span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-800 dark:text-foreground">Invoice Amount: ₹ 500</p>
-                  <span className="text-[9px] text-blue-600 font-semibold underline">Payment Link</span>
+                  <p className="text-[11px] font-bold text-slate-800 dark:text-foreground">Invoice Amount: ₹ 500</p>
+                  <span className="text-[11px] text-blue-600 font-semibold underline">Payment Link</span>
                 </div>
 
                 {/* Sent notification card */}
                 <div className="absolute -bottom-1 right-0 bg-slate-50 dark:bg-muted border border-slate-200 dark:border-border rounded-xl p-2 shadow-xs text-left max-w-[150px]">
-                  <div className="flex items-center gap-1 text-[9px] text-emerald-600 font-bold">
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold">
                     <Send className="w-2.5 h-2.5" />
                     <span>Automated Bill sent</span>
                   </div>
-                  <p className="text-[8px] text-slate-500">Sent successfully!</p>
+                  <p className="text-[11px] text-slate-500">Sent successfully!</p>
                 </div>
               </div>
             </div>
@@ -386,7 +386,7 @@ export default function AutomatedBills() {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-8 py-3.5 glowing-btn-amber text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
+              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Create Automated Bill</span>
@@ -424,7 +424,7 @@ export default function AutomatedBills() {
                     <tr key={bill.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-bold text-slate-800 dark:text-slate-200">{bill.customerName}</p>
-                        <p className="text-[10px] text-slate-400 font-mono">{bill.customerPhone}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{bill.customerPhone}</p>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap capitalize font-medium text-slate-700 dark:text-slate-300">
                         {bill.frequency}
@@ -461,11 +461,11 @@ export default function AutomatedBills() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {bill.status === "active" ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             Paused
                           </span>
                         )}

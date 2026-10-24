@@ -140,7 +140,7 @@ export default function StorefrontManager() {
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Orders & Inquiries</span>
             {pendingOrdersCount > 0 && (
-              <span className="bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+              <span className="bg-amber-500 text-white text-[11px] font-black px-1.5 py-0.2 rounded-full">
                 {pendingOrdersCount}
               </span>
             )}

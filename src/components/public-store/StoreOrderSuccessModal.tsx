@@ -17,7 +17,7 @@ export function StoreOrderSuccessModal({
 
   return (
     <Dialog open={!!orderInfo} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm p-6 text-center rounded-3xl bg-white border-slate-200">
+      <DialogContent className="max-w-sm p-6 text-center rounded-2xl bg-white border-slate-200">
         <DialogHeader className="flex flex-col items-center">
           <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 shadow-inner">
             <CheckCircle2 className="w-10 h-10" />

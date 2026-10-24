@@ -276,7 +276,7 @@ export default function Features() {
                     >
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                       {feat.badge}
                     </span>
                   </div>
