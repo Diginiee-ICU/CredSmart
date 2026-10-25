@@ -284,9 +284,14 @@ export default function CRMDashboard(): React.ReactElement {
               { label: "CRM", href: ROUTE_PATHS.crm },
             ]}
             badge={
-              <CRMBadge variant="success" size="sm" dot>
-                Live Sync
-              </CRMBadge>
+              <div className="flex items-center gap-1.5">
+                <CRMBadge variant="info" size="sm">
+                  Phase 1 Foundation
+                </CRMBadge>
+                <CRMBadge variant="success" size="sm" dot>
+                  Live Sync
+                </CRMBadge>
+              </div>
             }
             actions={
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">

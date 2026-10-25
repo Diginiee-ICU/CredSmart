@@ -96,7 +96,7 @@ export function CRMStatCard({
     <div
       onClick={onClick}
       className={cn(
-        "rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-2xs transition-all duration-200 flex flex-col justify-between",
+        "rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-2xs transition-all duration-200 flex flex-col justify-between",
         onClick && "cursor-pointer hover:shadow-md hover:-translate-y-0.5",
         className
       )}
