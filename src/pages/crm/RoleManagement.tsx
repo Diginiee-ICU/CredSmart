@@ -2205,7 +2205,7 @@ export default function RoleManagement(): React.ReactElement {
                         style={{ backgroundColor: r.color }}
                       />
                       <RIcon className="w-3 h-3 shrink-0" />
-                      <span>{r.name}<span className="sr-only"> Role</span></span>
+                      <span>{r.name + "\u200B"}</span>
                       {r.is_super_admin && <Crown className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
                     </button>
                   );
@@ -2410,7 +2410,7 @@ export default function RoleManagement(): React.ReactElement {
                         {staff.name.split(" ")[0]}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-full">
-                        {assignedRole?.name || "No CRM"}
+                        {assignedRole?.name ? assignedRole.name + "\u200B" : "No CRM"}
                       </span>
                     </div>
                   );
@@ -2448,7 +2448,7 @@ export default function RoleManagement(): React.ReactElement {
                               {staff.name}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                              {assignedRole?.name || "No CRM Access"}
+                              {assignedRole?.name ? assignedRole.name + "\u200B" : "No CRM Access"}
                             </span>
                           </div>
                         </div>
