@@ -49,6 +49,29 @@ export interface CRMStaffRole {
   [key: string]: unknown;
 }
 
+export interface CRMStaffMember {
+  id: string;
+  user_id?: string;
+  staff_id?: string;
+  email: string;
+  full_name: string;
+  name?: string;
+  phone?: string | null;
+  avatar_url?: string | null;
+  store_role?: string;
+  role?: string;
+  membership_id?: string;
+  crm_role_id?: string | null;
+  role_id?: string | null;
+  role_name?: string | null;
+  crm_role_name?: string | null;
+  crm_role_color?: string | null;
+  crm_role_icon?: string | null;
+  is_super_admin?: boolean;
+  assigned_at?: string;
+  [key: string]: unknown;
+}
+
 export interface CRMGeolocation {
   id: string;
   organization_id: string;
@@ -311,6 +334,20 @@ export async function getCRMPermissions(options?: {
     ...(roleId ? { role_id: roleId } : {}),
     ...(roleIds && roleIds.length > 0 ? { role_ids: roleIds.join(",") } : {}),
   });
+}
+
+export async function getCRMStaff(
+  orgId: string,
+  userId?: string
+): Promise<ApiResponse<CRMStaffMember[]>> {
+  return apiGet<CRMStaffMember[]>(
+    "/crm/staff",
+    {
+      organization_id: orgId,
+      ...(userId ? { user_id: userId } : {}),
+    },
+    { organizationId: orgId }
+  );
 }
 
 export async function getCRMStaffRoles(
@@ -769,6 +806,7 @@ export const crmApi = {
   getCRMPermissions,
   deleteCRMPermissionsByRoleId,
   insertCRMPermissions,
+  getCRMStaff,
   getCRMStaffRoles,
   assignCRMStaffRole,
   deleteCRMStaffRole,

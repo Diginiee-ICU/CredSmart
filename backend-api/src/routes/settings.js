@@ -281,8 +281,43 @@ router.get('/profiles/:userId', async (req, res) => {
 
 router.get('/profiles', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, full_name, phone, avatar_url FROM users WHERE id = $1', [req.user.id]);
-    return res.json(result.rows[0] || null);
+    const { ids, search, limit } = req.query;
+    const targetOrg = req.query.organization_id || req.query.org_id || req.orgId;
+    let query = 'SELECT id, email, full_name, phone, avatar_url FROM users WHERE 1=1';
+    const params = [];
+
+    if (ids) {
+      const idList = String(ids).split(',').map(s => s.trim()).filter(Boolean);
+      if (idList.length > 0) {
+        const phs = idList.map(id => {
+          params.push(id);
+          return `$${params.length}`;
+        }).join(', ');
+        query += ` AND id IN (${phs})`;
+      }
+    } else if (targetOrg) {
+      params.push(targetOrg);
+      query += ` AND id IN (
+        SELECT user_id FROM org_memberships WHERE org_id = $${params.length} OR organization_id = $${params.length}
+        UNION
+        SELECT user_id FROM organization_memberships WHERE organization_id = $${params.length} OR org_id = $${params.length}
+      )`;
+    }
+
+    if (search) {
+      params.push(`%${search.trim()}%`);
+      query += ` AND (full_name ILIKE $${params.length} OR email ILIKE $${params.length} OR phone ILIKE $${params.length})`;
+    }
+
+    query += ' ORDER BY full_name ASC NULLS LAST, created_at ASC';
+
+    if (limit && Number(limit) > 0) {
+      params.push(Number(limit));
+      query += ` LIMIT $${params.length}`;
+    }
+
+    const result = await pool.query(query, params);
+    return res.json(result.rows || []);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

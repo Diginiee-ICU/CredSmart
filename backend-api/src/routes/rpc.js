@@ -46,7 +46,7 @@ router.post('/rpc/:fn', async (req, res) => {
 // ==================== GENERIC REST PASSTHROUGH ====================
 
 const ALLOWED_TABLES = new Set([
-  'users', 'organizations', 'org_memberships', 'organization_memberships', 'products', 'product_batches',
+  'users', 'profiles', 'organizations', 'org_memberships', 'organization_memberships', 'products', 'product_batches',
   'godowns', 'locations', 'stock_transfers', 'customers', 'suppliers', 'credit_transactions',
   'bank_accounts', 'party_wise_prices', 'sales', 'sale_items',
   'purchase_invoices', 'purchase_invoice_items', 'expenses', 'sales_returns',
@@ -59,7 +59,7 @@ const ALLOWED_TABLES = new Set([
 ]);
 
 const TABLES_WITHOUT_ORG_ID = new Set([
-  'users', 'crm_permissions', 'crm_role_permissions', 'crm_staff_roles'
+  'users', 'profiles', 'crm_permissions', 'crm_role_permissions', 'crm_staff_roles'
 ]);
 
 function splitClauses(str) {
@@ -146,6 +146,7 @@ router.get('/rest/v1/:table', async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) {
       return res.status(400).json({ error: `Table '${table}' not accessible via REST passthrough` });
     }
+    const actualTable = table === 'profiles' ? 'users' : table;
 
     const orgId = req.orgId || req.query.org_id;
     const selectCols = req.query.select || '*';
@@ -161,7 +162,7 @@ router.get('/rest/v1/:table', async (req, res) => {
       }
     }
 
-    let query = `SELECT ${projection} FROM "${table}" WHERE 1=1`;
+    let query = `SELECT ${projection} FROM "${actualTable}" WHERE 1=1`;
     const params = [];
 
     // PostgREST OR filter parsing
@@ -278,6 +279,7 @@ router.post('/rest/v1/:table', async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) {
       return res.status(400).json({ error: `Table '${table}' not accessible` });
     }
+    const actualTable = table === 'profiles' ? 'users' : table;
 
     const orgId = req.orgId || req.body?.org_id;
     const isArray = Array.isArray(req.body);
@@ -290,7 +292,7 @@ router.post('/rest/v1/:table', async (req, res) => {
     const insertedRows = [];
     for (const item of rawItems) {
       const body = { ...item };
-      if (orgId && !body.org_id && !['users', 'network_invoices', 'network_notifications'].includes(table)) {
+      if (orgId && !body.org_id && !['users', 'profiles', 'network_invoices', 'network_notifications'].includes(table)) {
         body.org_id = orgId;
       }
 
@@ -301,7 +303,7 @@ router.post('/rest/v1/:table', async (req, res) => {
       const values = cols.map(c => body[c]);
 
       const result = await pool.query(
-        `INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders}) RETURNING *`,
+        `INSERT INTO "${actualTable}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders}) RETURNING *`,
         values
       );
       if (result.rows.length > 0) {
@@ -322,12 +324,13 @@ router.patch('/rest/v1/:table', async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) {
       return res.status(400).json({ error: `Table '${table}' not accessible` });
     }
+    const actualTable = table === 'profiles' ? 'users' : table;
 
     const updates = { ...req.body };
     const fields = Object.keys(updates).filter(k => /^[a-zA-Z0-9_]+$/.test(k));
     if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
-    let query = `UPDATE "${table}" SET `;
+    let query = `UPDATE "${actualTable}" SET `;
     const params = [];
 
     fields.forEach((f, i) => {
@@ -380,8 +383,9 @@ router.delete('/rest/v1/:table', async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) {
       return res.status(400).json({ error: `Table '${table}' not accessible` });
     }
+    const actualTable = table === 'profiles' ? 'users' : table;
 
-    let query = `DELETE FROM "${table}" WHERE 1=1`;
+    let query = `DELETE FROM "${actualTable}" WHERE 1=1`;
     const params = [];
 
     if (req.query.or) {

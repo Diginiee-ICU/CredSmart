@@ -341,13 +341,44 @@ router.post('/staff/provision', async (req, res) => {
     // 4. Assign CRM Role if provided
     let assignedRole = null;
     if (crm_role_id) {
-      const roleCheck = await client.query(
+      let roleCheck = await client.query(
         `SELECT id, name, color, icon FROM crm_roles WHERE id = $1 AND (org_id = $2 OR organization_id = $2)`,
         [crm_role_id, orgId]
       );
 
+      // If not found by literal ID (e.g. client used default slug "super-admin-default", "role-super-admin", "super-admin"),
+      // check if a Super Admin role exists in DB for this org, or auto-seed it.
+      if (roleCheck.rows.length === 0) {
+        const isDefaultSuper =
+          crm_role_id === 'super-admin-default' ||
+          crm_role_id === 'role-super-admin' ||
+          crm_role_id === 'super_admin' ||
+          crm_role_id.toLowerCase().includes('super');
+
+        if (isDefaultSuper) {
+          const existingSuper = await client.query(
+            `SELECT id, name, color, icon FROM crm_roles 
+             WHERE (org_id = $1 OR organization_id = $1) AND (is_super_admin = true OR LOWER(name) = 'super admin') 
+             LIMIT 1`,
+            [orgId]
+          );
+          if (existingSuper.rows.length > 0) {
+            roleCheck = existingSuper;
+          } else {
+            const seededRole = await client.query(
+              `INSERT INTO crm_roles (org_id, organization_id, name, description, color, icon, is_super_admin)
+               VALUES ($1, $1, 'Super Admin', 'Full administrative access across all CRM modules', '#1D4ED8', 'Crown', true)
+               RETURNING id, name, color, icon`,
+              [orgId]
+            );
+            roleCheck = seededRole;
+          }
+        }
+      }
+
       if (roleCheck.rows.length > 0) {
         assignedRole = roleCheck.rows[0];
+        const effectiveRoleId = assignedRole.id;
 
         // Sync to crm_staff_assignments
         try {
@@ -355,18 +386,18 @@ router.post('/staff/provision', async (req, res) => {
             `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
              VALUES ($1, $1, $2, $2, $3, $4)
              ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id`,
-            [orgId, userId, crm_role_id, req.user?.id || null]
+            [orgId, userId, effectiveRoleId, req.user?.id || null]
           );
         } catch (confErr) {
           const upd = await client.query(
             `UPDATE crm_staff_assignments SET role_id = $1 WHERE (user_id = $2 OR staff_id = $2) AND (org_id = $3 OR organization_id = $3)`,
-            [crm_role_id, userId, orgId]
+            [effectiveRoleId, userId, orgId]
           );
           if (upd.rowCount === 0) {
             await client.query(
               `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
                VALUES ($1, $1, $2, $2, $3, $4)`,
-              [orgId, userId, crm_role_id, req.user?.id || null]
+              [orgId, userId, effectiveRoleId, req.user?.id || null]
             );
           }
         }
@@ -376,7 +407,7 @@ router.post('/staff/provision', async (req, res) => {
           `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by)
            VALUES ($1, $2, $3)
            ON CONFLICT DO NOTHING`,
-          [userId, crm_role_id, req.user?.id || null]
+          [userId, effectiveRoleId, req.user?.id || null]
         ).catch(() => {});
       }
     }

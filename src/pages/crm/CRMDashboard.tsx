@@ -84,17 +84,21 @@ export default function CRMDashboard(): React.ReactElement {
       const activeOrgId = orgId;
       const today = new Date().toISOString().split("T")[0];
 
-      // 1. Staff count: query organization_memberships
+      // 1. Staff count: query crmApi.getCRMStaff with fallback to organization_memberships
       let staff = 1;
       try {
-        const { count, error, data } = await supabase
-          .from("organization_memberships")
-          .select("id", { count: "exact" })
-          .eq("organization_id", activeOrgId)
-          .eq("status", "active");
-        if (!error) {
-          const num = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
-          staff = Math.max(1, num);
+        const staffRes = await crmApi.getCRMStaff(activeOrgId);
+        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+          staff = staffRes.data.length;
+        } else {
+          const { count, error, data } = await supabase
+            .from("organization_memberships")
+            .select("id", { count: "exact" })
+            .eq("organization_id", activeOrgId);
+          if (!error) {
+            const num = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+            staff = Math.max(1, num);
+          }
         }
       } catch {
         staff = 1;

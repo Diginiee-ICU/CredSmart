@@ -272,7 +272,15 @@ export default function RoleManagement(): React.ReactElement {
   // Data States
   const [roles, setRoles] = useState<CRMRole[]>(DEFAULT_PRESET_ROLES);
   const [allPermissions, setAllPermissions] = useState<CRMPermission[]>([]);
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>(() => {
+    if (typeof window !== "undefined" && orgId) {
+      try {
+        const cached = localStorage.getItem(`credsmart_crm_staff_${orgId}`);
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
   const [staffRolesMap, setStaffRolesMap] = useState<Record<string, string>>({}); // staffId -> roleId
   const [loading, setLoading] = useState<boolean>(true);
   const [savingMatrix, setSavingMatrix] = useState<boolean>(false);
@@ -419,43 +427,11 @@ export default function RoleManagement(): React.ReactElement {
       }
       setAllPermissions(permsData);
 
-      // 3. Fetch Staff Members from organization_memberships + profiles
-      const { data: membersData, error: membersErr } = await settingsApi.getMemberships(orgId);
-
-      if (membersErr) console.warn("RoleManagement: memberships notice:", membersErr.message);
-
-      const memberRows = (Array.isArray(membersData) ? [...membersData] : []).sort((a, b) =>
-        (a.created_at ?? "").localeCompare(b.created_at ?? "")
-      );
-      const userIds = memberRows.map((m) => m.user_id);
-
-      // Fetch user profile info (name, email, phone)
-      const profileMap: Record<string, { name: string; email?: string; phone?: string }> = {};
-      if (userIds.length > 0) {
-        const { data: profilesData } = await settingsApi.getProfiles({ ids: userIds });
-
-        if (Array.isArray(profilesData)) {
-          profilesData.forEach((p) => {
-            profileMap[p.id] = {
-              name: p.full_name || p.name || "",
-              email: p.email || undefined,
-              phone: p.phone || undefined,
-            };
-          });
-        }
-      }
-
-      // 4. Fetch Staff CRM Role Assignments
-      const { data: staffRolesData, error: srErr } = await crmApi.getCRMStaffRoles(orgId);
-
-      if (srErr) console.warn("RoleManagement: crm_staff_roles notice:", srErr.message);
-
+      // 3. Fetch Staff Members via crmApi.getCRMStaff (authoritative) with fallback
       const assignmentMap: Record<string, string> = {};
-      (Array.isArray(staffRolesData) ? staffRolesData : []).forEach((sr: CRMStaffRole) => {
-        assignmentMap[sr.staff_id] = sr.role_id;
-      });
+      let staffListBuilt: StaffMember[] = [];
 
-      // 5. Restore or infer team reporting hierarchy
+      // Restore or infer team reporting hierarchy
       let loadedHierarchy: Record<string, string> = {};
       try {
         const cachedRaw = localStorage.getItem(`credsmart_crm_team_hierarchy_${orgId}`);
@@ -466,6 +442,100 @@ export default function RoleManagement(): React.ReactElement {
         console.warn("Failed reading cached hierarchy:", e);
       }
 
+      // Try primary roster endpoint: crmApi.getCRMStaff
+      try {
+        const staffRes = await crmApi.getCRMStaff(orgId);
+        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+          staffListBuilt = staffRes.data.map((m) => {
+            const sId = String(m.user_id || m.id || m.staff_id || "");
+            const assignedManager =
+              loadedHierarchy[sId] ||
+              (m.store_role !== "store_owner" && m.store_role !== "super_admin" && m.role !== "store_owner"
+                ? (user?.id ?? null)
+                : null);
+
+            const effectiveCrmRole = m.crm_role_id || m.role_id || undefined;
+            if (effectiveCrmRole) {
+              assignmentMap[sId] = effectiveCrmRole;
+            }
+
+            return {
+              id: sId,
+              membershipId: String(m.membership_id || `mem-${sId}`),
+              name: m.full_name || m.name || (m.email ? m.email.split("@")[0] : `User (${sId.slice(0, 8)})`),
+              role: (m.store_role || m.role || "staff") as StoreRole,
+              crmRoleId: effectiveCrmRole,
+              email: m.email || undefined,
+              phone: m.phone || undefined,
+              parentId: assignedManager,
+              createdBy: assignedManager,
+              assignedBy: assignedManager,
+            };
+          }).filter((s) => Boolean(s.id));
+        }
+      } catch (staffErr) {
+        console.warn("RoleManagement: getCRMStaff notice:", staffErr);
+      }
+
+      // Fallback: If primary endpoint returned empty, load from memberships + profiles
+      let staffRolesData: CRMStaffRole[] = [];
+      if (staffListBuilt.length === 0) {
+        const { data: membersData, error: membersErr } = await settingsApi.getMemberships(orgId);
+        if (membersErr) console.warn("RoleManagement: memberships notice:", membersErr.message);
+
+        const memberRows = (Array.isArray(membersData) ? [...membersData] : []).sort((a, b) =>
+          (a.created_at ?? "").localeCompare(b.created_at ?? "")
+        );
+        const userIds = memberRows.map((m) => m.user_id);
+
+        const profileMap: Record<string, { name: string; email?: string; phone?: string }> = {};
+        if (userIds.length > 0) {
+          const { data: profilesData } = await settingsApi.getProfiles({ ids: userIds });
+          if (Array.isArray(profilesData)) {
+            profilesData.forEach((p) => {
+              profileMap[p.id] = {
+                name: p.full_name || p.name || "",
+                email: p.email || undefined,
+                phone: p.phone || undefined,
+              };
+            });
+          }
+        }
+
+        const { data: srData } = await crmApi.getCRMStaffRoles(orgId);
+        staffRolesData = Array.isArray(srData) ? srData : [];
+        staffRolesData.forEach((sr: CRMStaffRole) => {
+          if (sr.staff_id && sr.role_id) {
+            assignmentMap[sr.staff_id] = sr.role_id;
+          }
+        });
+
+        staffListBuilt = memberRows.map((m) => {
+          const prof = profileMap[m.user_id];
+          const rawMember = m as Record<string, unknown>;
+          const assignedManager =
+            loadedHierarchy[m.user_id] ||
+            (m.role !== "store_owner" && m.role !== "super_admin" ? (user?.id ?? null) : null);
+
+          return {
+            id: m.user_id,
+            membershipId: m.id || `mem-${m.user_id}`,
+            name:
+              prof?.name ||
+              (rawMember.full_name ? String(rawMember.full_name) : "") ||
+              (rawMember.name ? String(rawMember.name) : "") ||
+              (prof?.email ? prof.email.split("@")[0] : `User (${m.user_id.slice(0, 8)})`),
+            role: (m.role || "staff") as StoreRole,
+            crmRoleId: assignmentMap[m.user_id],
+            email: prof?.email || (rawMember.email ? String(rawMember.email) : undefined),
+            phone: prof?.phone || (rawMember.phone ? String(rawMember.phone) : undefined),
+            parentId: assignedManager,
+            createdBy: assignedManager,
+            assignedBy: assignedManager,
+          };
+        });
+      }
+
       // Infer hierarchy from assigned_by if not present
       (Array.isArray(staffRolesData) ? staffRolesData : []).forEach((sr: CRMStaffRole) => {
         if (sr.staff_id && sr.assigned_by && !loadedHierarchy[sr.staff_id]) {
@@ -473,27 +543,6 @@ export default function RoleManagement(): React.ReactElement {
         }
       });
       setHierarchyMap(loadedHierarchy);
-
-      // Construct staff list with hierarchy
-      const staffListBuilt: StaffMember[] = memberRows.map((m) => {
-        const prof = profileMap[m.user_id];
-        const assignedManager =
-          loadedHierarchy[m.user_id] ||
-          (m.role !== "store_owner" && m.role !== "super_admin" ? (user?.id ?? null) : null);
-
-        return {
-          id: m.user_id,
-          membershipId: m.id,
-          name: prof?.name || `User (${m.user_id.slice(0, 8)})`,
-          role: m.role || "staff",
-          crmRoleId: assignmentMap[m.user_id],
-          email: prof?.email,
-          phone: prof?.phone,
-          parentId: assignedManager,
-          createdBy: assignedManager,
-          assignedBy: assignedManager,
-        };
-      });
 
       // If no members returned (e.g. preview mode), fallback to authenticated user
       if (staffListBuilt.length === 0 && user?.id) {
@@ -517,6 +566,7 @@ export default function RoleManagement(): React.ReactElement {
       localStorage.setItem(`credsmart_crm_roles_${orgId}`, JSON.stringify(resolvedRoles));
       localStorage.setItem(`credsmart_crm_permissions_${orgId}`, JSON.stringify(permsData));
       localStorage.setItem(`credsmart_crm_staff_roles_${orgId}`, JSON.stringify(staffRolesData ?? []));
+      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(staffListBuilt));
     } catch (err) {
       console.error("RoleManagement: Error loading data:", err);
       toast({
@@ -1024,7 +1074,10 @@ export default function RoleManagement(): React.ReactElement {
         assignedBy: effectiveManagerId,
       };
 
-      setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== newUserId)]);
+      const nextStaffList = [newStaffEntry, ...staffList.filter((s) => s.id !== newUserId)];
+      setStaffList(nextStaffList);
+      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(nextStaffList));
+
       if (crmRoleIdToAssign) {
         setStaffRolesMap((prev) => ({
           ...prev,
@@ -1094,7 +1147,9 @@ export default function RoleManagement(): React.ReactElement {
         createdBy: effectiveManagerId,
         assignedBy: effectiveManagerId,
       };
-      setStaffList((prev) => [newStaffEntry, ...prev.filter((s) => s.id !== fallbackUserId)]);
+      const fallbackStaffList = [newStaffEntry, ...staffList.filter((s) => s.id !== fallbackUserId)];
+      setStaffList(fallbackStaffList);
+      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(fallbackStaffList));
       if (crmRoleIdToAssign) {
         setStaffRolesMap((prev) => ({ ...prev, [fallbackUserId]: crmRoleIdToAssign }));
       }

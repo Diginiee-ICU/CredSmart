@@ -498,91 +498,131 @@ export default function Attendance(): React.ReactElement {
       // Load Profiles & Roles for Directory
       const profilesMap: Record<string, StaffProfileInfo> = {};
       try {
-        let members: Array<{ id: string; user_id: string; role?: string }> | null = null;
+        // Load Profiles & Roles for Directory via crmApi.getCRMStaff (primary) or fallback
+        let staffMembers: Array<{
+          id: string;
+          full_name?: string;
+          name?: string;
+          email?: string;
+          crm_role_name?: string | null;
+          role_name?: string | null;
+          crm_role_color?: string | null;
+          is_super_admin?: boolean;
+        }> | null = null;
+
         try {
-          const { data } = await supabase
-            .from("organization_memberships")
-            .select("id, user_id, role")
-            .eq("organization_id", effectiveOrgId);
-          if (data && data.length > 0) members = data;
-        } catch (_err) {
-          void _err;
+          const staffRes = await crmApi.getCRMStaff(effectiveOrgId);
+          if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+            staffMembers = staffRes.data;
+          }
+        } catch (_crmStaffErr) {
+          void _crmStaffErr;
         }
 
-        if (!members) {
-          const res = await settingsApi.getMemberships(effectiveOrgId);
-          if (res.data) members = res.data;
-        }
-
-        if (members && members.length > 0) {
-          const userIds = members.map((m) => m.user_id);
-          let profiles: Array<{ id: string; full_name?: string | null; email?: string | null }> | null = null;
-          try {
-            const { data } = await supabase
-              .from("profiles")
-              .select("id, full_name, email")
-              .in("id", userIds);
-            if (data) profiles = data;
-          } catch (_err) {
-            void _err;
-          }
-
-          if (!profiles) {
-            const res = await settingsApi.getProfiles({ ids: userIds });
-            if (res.data) profiles = res.data;
-          }
-
-          let staffRoles: Array<{ staff_id: string; role_id: string }> | null = null;
-          try {
-            const { data } = await supabase
-              .from("crm_staff_roles")
-              .select("staff_id, role_id");
-            if (data) staffRoles = data;
-          } catch (_err) {
-            void _err;
-          }
-
-          if (!staffRoles) {
-            const res = await crmApi.getCRMStaffRoles(effectiveOrgId);
-            if (res.data) staffRoles = res.data;
-          }
-
-          let crmRoles: Array<{ id: string; name: string; color?: string; is_super_admin?: boolean }> | null = null;
-          try {
-            const { data } = await supabase
-              .from("crm_roles")
-              .select("id, name, color, is_super_admin")
-              .eq("org_id", effectiveOrgId);
-            if (data) crmRoles = data;
-          } catch (_err) {
-            void _err;
-          }
-
-          if (!crmRoles) {
-            const res = await crmApi.getCRMRoles(effectiveOrgId);
-            if (res.data) crmRoles = res.data;
-          }
-
-          if (crmRoles && crmRoles.length > 0) {
-            const names = crmRoles.map((r) => r.name).filter(Boolean);
-            setCrmRoleNames((prev) => Array.from(new Set([...prev, ...names])));
-          }
-
-          const roleMap = new Map((crmRoles || []).map((r) => [r.id, r]));
-          const staffRoleMap = new Map((staffRoles || []).map((sr) => [sr.staff_id, sr.role_id]));
-
-          (profiles || []).forEach((p) => {
-            const assignedRoleId = staffRoleMap.get(p.id);
-            const assignedRole = assignedRoleId ? roleMap.get(assignedRoleId) : null;
-            profilesMap[p.id] = {
-              id: p.id,
-              name: p.full_name || "Team Member",
-              email: p.email || "",
-              roleName: assignedRole?.name || "Staff",
-              roleColor: assignedRole?.color || "#2563EB",
-              isSuperAdmin: assignedRole?.is_super_admin || false,
+        if (staffMembers && staffMembers.length > 0) {
+          staffMembers.forEach((sm) => {
+            profilesMap[sm.id] = {
+              id: sm.id,
+              name: sm.full_name || sm.name || (sm.email ? sm.email.split("@")[0] : "Team Member"),
+              email: sm.email || "",
+              roleName: sm.crm_role_name || sm.role_name || "Staff",
+              roleColor: sm.crm_role_color || "#2563EB",
+              isSuperAdmin: Boolean(sm.is_super_admin),
             };
           });
+          const crmRolesFound = staffMembers.map((sm) => sm.crm_role_name || sm.role_name).filter(Boolean) as string[];
+          if (crmRolesFound.length > 0) {
+            setCrmRoleNames((prev) => Array.from(new Set([...prev, ...crmRolesFound])));
+          }
+        } else {
+          let members: Array<{ id: string; user_id: string; role?: string }> | null = null;
+          try {
+            const { data } = await supabase
+              .from("organization_memberships")
+              .select("id, user_id, role")
+              .eq("organization_id", effectiveOrgId);
+            if (data && data.length > 0) members = data;
+          } catch (_err) {
+            void _err;
+          }
+
+          if (!members) {
+            const res = await settingsApi.getMemberships(effectiveOrgId);
+            if (res.data) members = res.data;
+          }
+
+          if (members && members.length > 0) {
+            const userIds = members.map((m) => m.user_id);
+            let profiles: Array<{ id: string; full_name?: string | null; email?: string | null }> | null = null;
+            try {
+              const { data } = await supabase
+                .from("profiles")
+                .select("id, full_name, email")
+                .in("id", userIds);
+              if (data && Array.isArray(data)) profiles = data;
+            } catch (_err) {
+              void _err;
+            }
+
+            if (!profiles) {
+              const res = await settingsApi.getProfiles({ ids: userIds });
+              if (res.data && Array.isArray(res.data)) profiles = res.data;
+            }
+
+            let staffRoles: Array<{ staff_id: string; role_id: string }> | null = null;
+            try {
+              const { data } = await supabase
+                .from("crm_staff_roles")
+                .select("staff_id, role_id");
+              if (data) staffRoles = data;
+            } catch (_err) {
+              void _err;
+            }
+
+            if (!staffRoles) {
+              const res = await crmApi.getCRMStaffRoles(effectiveOrgId);
+              if (res.data) staffRoles = res.data;
+            }
+
+            let crmRoles: Array<{ id: string; name: string; color?: string; is_super_admin?: boolean }> | null = null;
+            try {
+              const { data } = await supabase
+                .from("crm_roles")
+                .select("id, name, color, is_super_admin")
+                .eq("org_id", effectiveOrgId);
+              if (data) crmRoles = data;
+            } catch (_err) {
+              void _err;
+            }
+
+            if (!crmRoles) {
+              const res = await crmApi.getCRMRoles(effectiveOrgId);
+              if (res.data) crmRoles = res.data;
+            }
+
+            if (crmRoles && crmRoles.length > 0) {
+              const names = crmRoles.map((r) => r.name).filter(Boolean);
+              setCrmRoleNames((prev) => Array.from(new Set([...prev, ...names])));
+            }
+
+            const roleMap = new Map((crmRoles || []).map((r) => [r.id, r]));
+            const staffRoleMap = new Map((staffRoles || []).map((sr) => [sr.staff_id, sr.role_id]));
+
+            const safeProfiles = Array.isArray(profiles) ? profiles : [];
+            safeProfiles.forEach((p) => {
+              const assignedRoleId = staffRoleMap.get(p.id);
+              const assignedRole = assignedRoleId ? roleMap.get(assignedRoleId) : null;
+              profilesMap[p.id] = {
+                id: p.id,
+                name: p.full_name || "Team Member",
+                email: p.email || "",
+                roleName: assignedRole?.name || "Staff",
+                roleColor: assignedRole?.color || "#2563EB",
+                isSuperAdmin: assignedRole?.is_super_admin || false,
+              };
+            });
+          }
+        }
         }
       } catch (err) {
         console.warn("Could not load organization profiles:", err);
