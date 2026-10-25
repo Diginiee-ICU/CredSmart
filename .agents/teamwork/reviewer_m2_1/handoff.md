@@ -1,186 +1,253 @@
-# Handoff Report: Reviewer 1 — Milestone 2 (Screen-Fitted Desktop Shell & Layouts)
+# Review & Adversarial Challenge Report: Milestone 2 (Core Billing & Inventory Modernization)
 
-**Role**: Reviewer & Adversarial Critic (`reviewer_m2_1`)  
-**Parent Agent**: `3044c8ce-523a-4157-917d-31b6f5d55c6a`  
-**Workspace**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m2_1`  
-**Date**: 2026-10-24T19:52:00Z  
-
----
-
-## Review Summary
-
-**Verdict**: **VERDICT: APPROVE**
-
-Milestone 2 implementation in `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, and `src/pages/POSBilling.tsx` has been independently examined, tested, and adversarially stress-tested. All requirements from the dispatch directive and `PROJECT.md` have been met with zero regressions, zero integrity violations, 0 compiler errors, and 100% preservation of all 19 protected invoice and document files.
+**Agent**: Reviewer 1 & Critic (`reviewer_m2_1`)  
+**Scope**: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`, and 19 Protected Quarantine Files  
+**Verdict**: **APPROVE**  
+**Date**: 2026-10-25T09:55:00Z  
+**Parent Orchestrator**: `24d614cb-853d-49d4-9ac2-cf0090c93a62`
 
 ---
 
 ## 1. Observation
 
-Direct observations and evidence gathered during independent verification:
+### Verification of `src/pages/Purchases.tsx`
+- **Outer Wrapper Double Border Removal** (Line 864):
+  ```tsx
+  <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
+  ```
+  *Observed*: Prior `rounded-xl border border-slate-200/80 dark:border-slate-800 ... shadow-2xs` removed. The outer wrapper is now an unbordered viewport container.
+- **Mobile Stream Container** (Line 866):
+  ```tsx
+  <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
+  ```
+  *Observed*: Prior `p-2.5 pb-24 space-y-2.5` replaced with `px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60`, establishing seamless edge-to-edge list dividers.
+- **Mobile Row Item Container** (Lines 897–905):
+  ```tsx
+  <div
+    key={doc.id}
+    className={cn(
+      "px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2",
+      isSelected
+        ? "bg-amber-50/30 dark:bg-amber-950/20"
+        : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+    )}
+  >
+  ```
+  *Observed*: Removed individual `p-3 rounded-xl border ... shadow-2xs`. Rows are flat `px-3.5 py-3` with subtle amber background highlights on selection.
+- **Touch Target Verification** (Lines 944, 958, 996, 1029, 1038):
+  - Line 944: Pay Now button: `min-h-[44px] px-3.5`
+  - Lines 958, 996, 1029, 1038: Print, Download, WhatsApp, More menu buttons: `min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center`
+  *Observed*: Contradictory `w-11 h-8.5` (34px height) was cleanly removed in favor of `w-11 h-11 min-w-[44px] min-h-[44px]`, satisfying ergonomic minimum touch targets.
 
-### A. Desktop Command Header Specifications (`src/components/AppLayout.tsx`)
-- **Header Height**: Line 478 specifies `h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13`. In `tailwind.config.ts` line 20, `"13": "3.25rem"`, which computes to exactly `52px` (`3.25 * 16px = 52px`).
-- **Brand Mark**: Lines 488–490 render `<div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">` (`w-7 h-7` = 28px × 28px).
-- **Organization Switcher Pill**: Lines 519–572 render a dedicated `<DropdownMenu>` trigger button: `hidden sm:flex h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 text-xs font-semibold text-slate-700 items-center gap-1.5 shadow-2xs`. The dropdown lists all user stores with checkmark indicators and an "+ Add Business / Branch" action button.
-- **Centered Command Palette (`⌘K`)**: Lines 584–597 render `<div className="hidden md:flex flex-1 max-w-md mx-2">` containing a button trigger with `<kbd className="... shadow-2xs">⌘K</kbd>`. For mobile viewports (< 768px), line 602 renders a dedicated search icon button. Both triggers toggle `setOpenCommand(true)`, and lines 423–433 bind keyboard shortcut `⌘K` / `Ctrl+K`.
-- **Royal Blue Split Action Button**:
-  - Billing Suite (lines 647–665): `hidden sm:flex items-center h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden` with primary button `+ New Invoice` and secondary chevron button opening creation options.
-  - CRM Suite (lines 712–731): Identical 34px Royal Blue split button with `+ Quick Action` and chevron opening CRM actions (Attendance, Tasks, Salary, Meet, Broadcasts, AI Assistant, Roles, Support).
-- **Live Sync Indicator Dot**: Lines 626–629 render `<div className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400 shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /><span>Live Sync</span></div>`.
+---
 
-### B. Elimination of 3D Perspective Distortion & Floating Watermark (`src/components/AppLayout.tsx`)
-- Grep queries for `perspective`, `rotateX`, and `logo-static` across `src/components/AppLayout.tsx` returned **0 matches**.
-- The legacy `perspective: 2000px`, `rotateX(3deg)`, and floating `/logo-static.jpeg` watermark div have been completely deprecated and removed.
+### Verification of `src/pages/Items.tsx`
+- **Outer Wrapper Double Border Removal** (Line 1019):
+  ```tsx
+  <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
+  ```
+  *Observed*: Prior `border border-slate-200/80 dark:border-slate-800 rounded-xl ... shadow-2xs` removed.
+- **Mobile Stream Container** (Line 1021):
+  ```tsx
+  <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
+  ```
+  *Observed*: Prior `p-2 space-y-2` replaced with `px-0 divide-y divide-slate-100 dark:divide-slate-800/60` and safe-area inset bottom padding.
+- **Mobile Item Row Container** (Lines 1054–1061):
+  ```tsx
+  <div
+    key={item.id}
+    className={cn(
+      "px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2",
+      isSelected
+        ? "bg-blue-50/30 dark:bg-blue-950/20"
+        : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+    )}
+  >
+  ```
+  *Observed*: Converted from floating boxes to flat list rows with soft blue selection tint.
+- **Touch Target Verification** (Lines 1171, 1181):
+  - Line 1171: Stock Adjust button: `min-h-[44px] h-11 px-3 ... min-w-[70px]`
+  - Line 1181: More Actions dropdown: `min-w-[44px] min-h-[44px] w-11 h-11`
+  *Observed*: All touch targets strictly >= 44px.
 
-### C. Neutral Segmented Styling (`src/components/SuiteSwitcher.tsx`)
-- Lines 76–80 render the segmented container: `inline-flex items-center gap-0.5 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-lg border border-slate-200/80 dark:border-slate-700/80`.
-- Lines 98 & 131 style active state: `bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold`.
-- Lines 99 & 132 style inactive state: `text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium`.
-- Lines 105–111 & 136–142 render active badge: `text-[9.5px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block`.
-- Grep search for saturated fills (`bg-amber`, `bg-emerald`) in `SuiteSwitcher.tsx` returned **0 matches**.
+---
 
-### D. Viewport Containment in `<main>` (`src/components/AppLayout.tsx`)
-- Lines 1026–1047:
-  - Outer wrapper: `flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950`.
-  - Main element: `flex-1 min-w-0 min-h-0 flex flex-col transition-colors duration-200 scrollbar-thin`.
-  - On POS route (`isPosRoute`): `p-0 m-0 h-full border-none bg-slate-50 dark:bg-slate-950 overflow-hidden` (enables POS terminal to fill 100% height with independent internal scrolling panes).
-  - On non-POS routes: `overflow-y-auto` with mobile bottom dock spacer clearance (`block md:hidden`).
+### Verification of `src/pages/Sales.tsx`
+- **Outer Wrapper** (Line 940):
+  ```tsx
+  <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
+  ```
+- **Mobile Stream Container** (Line 942):
+  ```tsx
+  <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
+  ```
+- **Mobile Item Rows** (Lines 965–973): Flat `px-3.5 py-3` with `bg-blue-50/30` selection.
+- **Touch Targets** (Lines 985, 1034, 1044, 1054, 1065): All `min-h-[44px] min-w-[44px]` or `w-11 h-11 min-w-[44px] min-h-[44px]`.
+- *Observed*: `Sales.tsx` was already fully compliant with the target architecture and was correctly preserved without unnecessary edits.
 
-### E. Split POS Workbench (`src/pages/POSBilling.tsx`)
-- **Monochromatic Hotkey Ribbon**: Lines 2460–2581 render standardized hairline hotkey badges: `border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 h-7 px-2.5 rounded-md shadow-2xs` for `Search [F1]`, `+ New Item [CTRL+I]`, `Hold Bill [CTRL+B]`, `Price [P]`, `Qty [Q]`, `Discount [D]`, `Voice [V]`, `Delete [DEL]`, `Scan Barcode`.
-- **Decoupled 3-Region Right Panel**: Lines 3187–3543:
-  - Region 1 (Top Fixed Total): Lines 3209–3226 render `Net Payable` in `shrink-0 p-3.5 bg-blue-600 text-white` with `text-2xl font-bold font-mono tabular-nums`.
-  - Region 2 (Middle Scroll Area): Lines 3229–3497 render `flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin`.
-  - Region 3 (Bottom Fixed Action Dock): Lines 3500–3542 render `shrink-0 p-3 border-t border-slate-200/80 bg-white grid grid-cols-3 gap-2 shadow-xs` pinning `Save & Print [F6]`, `Save Bill [F7]`, and `WhatsApp Receipt [WA]`.
+---
 
-### F. Compiler, Linter, and Automated Tests Execution
-1. `cmd /c npx tsc --noEmit` -> **Exited with code 0 (0 errors)**.
-2. `cmd /c npx eslint src/components/AppLayout.tsx src/components/SuiteSwitcher.tsx src/pages/POSBilling.tsx` -> **Exited with code 0 (0 errors, 3 fast-refresh warnings in SuiteSwitcher)**.
-3. `cmd /c npx vitest run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx` -> **2 passed, 41/41 tests passed (0 failures)**.
-4. `cmd /c npx vitest run src/test/crmShellNavigation.audit.test.ts src/test/componentPrimitivesAdversarial.challenger.test.tsx` -> **2 passed, 40/40 tests passed (0 failures)**.
-5. `cmd /c npx vitest run src/test/e2e/decoupleShells.test.tsx src/test/e2e/decoupleIntegration.test.tsx` -> **2 passed, 199/199 tests passed (0 failures)**.
+### Quarantine & Scope Invariance Check
+Executed git check against the 19 protected invoice/modal files:
+- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+- `src/components/invoices/mobile/AddItemModal.tsx`
+- `src/components/invoices/mobile/SelectPartyModal.tsx`
+- `src/components/invoices/mobile/EditItemModal.tsx`
+- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+- `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+- `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+- `src/components/invoices/mobile/CreatePartyModal.tsx`
+- `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+- `src/components/items/mobile/CreateNewItemModal.tsx`
+- `src/components/SalesInvoiceModal.tsx`
+- `src/components/PurchaseInvoiceModal.tsx`
+- `src/components/invoices/AddItemsToBillModal.tsx`
+- `src/components/invoices/InvoiceFitView.tsx`
+- `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+- `src/utils/downloadExactInvoice.ts`
+- `src/utils/whatsappPdfShare.ts`
+- `src/utils/invoiceThemeLoader.ts`
+- `src/services/documentsService.ts`
+*Result*: 0 modifications. All 19 files are 100% untouched.
 
-### G. Protected Files Invariance Check
-Filesystem timestamp verification via PowerShell confirmed that **all 19 protected invoice and document files** were untouched:
-- `MobileCreateInvoice.tsx` (21-10-2026)
-- `AddItemModal.tsx` (14-10-2026)
-- `SelectPartyModal.tsx` (14-10-2026)
-- `EditItemModal.tsx` (14-10-2026)
-- `MobileInvoiceSuccessView.tsx` (21-10-2026)
-- `MobileBillPreviewModal.tsx` (21-10-2026)
-- `MobileInvoiceFitViewer.tsx` (21-10-2026)
-- `CreatePartyModal.tsx` (19-10-2026)
-- `MobileCreatePurchaseInvoice.tsx` (14-10-2026)
-- `CreateNewItemModal.tsx` (14-10-2026)
-- `SalesInvoiceModal.tsx` (21-10-2026)
-- `PurchaseInvoiceModal.tsx` (19-10-2026)
-- `AddItemsToBillModal.tsx` (14-10-2026)
-- `InvoiceFitView.tsx` (14-10-2026)
-- `UnifiedInvoiceRenderer.tsx` (21-10-2026)
-- `downloadExactInvoice.ts` (21-10-2026)
-- `whatsappPdfShare.ts` (14-10-2026)
-- `invoiceThemeLoader.ts` (14-10-2026)
-- `documentsService.ts` (20-10-2026)
+---
+
+### Typography & Font Verification
+Ran regex analysis across `Sales.tsx`, `Purchases.tsx`, and `Items.tsx` for custom font classes (`text-[...]`):
+- `Sales.tsx`: `['text-[11px]']`
+- `Purchases.tsx`: `['text-[11px]']`
+- `Items.tsx`: `['text-[11px]']`
+*Result*: Zero instances of sub-11px typography (`text-[10px]`, `text-[9px]`, etc.). All text conforms to >= 11px.
+
+---
+
+### Compiler, Build & Test Verification
+1. **TypeScript Compilation**:
+   - Command: `node node_modules/typescript/bin/tsc --noEmit`
+   - Result: Exited with code 0 (0 errors).
+2. **Vite Production Build**:
+   - Command: `node node_modules/vite/bin/vite.js build`
+   - Result: `✓ built in 1m 51s`, exited with code 0.
+3. **Vitest Unit Test Suites**:
+   - Command: `node node_modules/vitest/vitest.mjs run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx`
+   - Result: 2 passed test files, 41 passed tests (41/41 passed, exit 0).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Header Ergonomics & Screen Real Estate (Obs. A)**:
-   - By lowering the desktop header from ~88px to exactly 52px (`md:h-13`), 36 vertical pixels are reclaimed for high-density business information.
-   - Moving the search input from `xl:` to `md:` ensures all laptop screens (768px–1200px) have immediate 1-click and shortcut access to the Command Palette (`⌘K`).
-
-2. **Visual Purity & Performance (Obs. B, C)**:
-   - Deprecating `perspective: 2000px` and `rotateX(3deg)` eliminates hardware compositor overhead and potential blurry text rendering on Chromium-based browsers.
-   - Removing the `/logo-static.jpeg` watermark div eliminates visual interference with data tables and pagination controls.
-   - Replacing saturated button fills in `SuiteSwitcher` with neutral `bg-slate-100` / `bg-white` achieves visual calm aligned with the Minimal Design System standard.
-
-3. **Screen-Fitted POS Productivity (Obs. D, E)**:
-   - Previously, placing a single `overflow-y-auto` on the right checkout panel buried the `Save & Print` button below multiple long form cards.
-   - Decoupling into Region 1 (Top Fixed Total), Region 2 (Scrollable Body), and Region 3 (Fixed Bottom Action Dock) ensures cashiers can immediately read the grand total and click `Print [F6]` or `Save [F7]` without scrolling on standard 768px–1080px monitors.
-
-4. **Safety & Zero Regression (Obs. F, G)**:
-   - All 19 quarantined invoice files were verified untouched.
-   - 280 automated tests passed across all core functional domains without a single failure.
-   - `tsc --noEmit` exited cleanly with code 0.
+1. **Double Border Elimination**:
+   - *Observation*: The outer container in `Purchases.tsx` (line 864) and `Items.tsx` (line 1019) previously had `rounded-xl border ... shadow-2xs` wrapping the mobile list.
+   - *Deduction*: By removing `border` and `rounded-xl` from the outer wrapper, it now functions as a clean viewport box (`flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`), eliminating nested framing on mobile screens.
+2. **Seamless Hairline Separation**:
+   - *Observation*: The mobile stream container was converted from `space-y-2.5 p-2.5` to `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`.
+   - *Deduction*: Rows now sit flush with the screen edges separated only by 1px subtle hairline dividers, matching iOS/native design patterns and the target specification.
+3. **Flat Row Ergonomics**:
+   - *Observation*: Row items in `Purchases.tsx` (lines 897–905) and `Items.tsx` (lines 1054–1061) use `px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2`.
+   - *Deduction*: By removing individual row borders, rounded corners, and shadows, the "card-inside-a-card" anti-pattern is completely eradicated.
+4. **Touch Target Accessibility**:
+   - *Observation*: All action buttons across `Purchases.tsx` (print, download, WhatsApp, more) and `Items.tsx` (adjust stock, more) explicitly specify `min-w-[44px] min-h-[44px] w-11 h-11`.
+   - *Deduction*: Satisfies WCAG 2.5.5 and mobile ergonomics, preventing mis-taps on small screens.
+5. **Desktop Segregation**:
+   - *Observation*: In `Purchases.tsx` and `Items.tsx`, desktop tables reside inside `hidden md:flex` and `hidden md:block` containers.
+   - *Deduction*: The mobile changes are strictly isolated to `< md` viewports; desktop layout, sticky table headers, sorting, and pagination are 100% preserved.
 
 ---
 
-## 3. Adversarial Challenges & Stress-Testing
+## 3. Caveats
 
-### Challenge 1: Command Palette Keyboard Conflict & Cross-Platform Behavior
-- **Assumption Challenged**: The `⌘K` listener might conflict with browser shortcuts or fail on Windows PCs.
-- **Stress-Test**: Tested listener implementation: `e.key === "k" && (e.metaKey || e.ctrlKey)`. On macOS, `metaKey` (Command) triggers the dialog; on Windows/Linux, `ctrlKey` triggers the dialog. `e.preventDefault()` properly suppresses default browser browser search focus.
-- **Actual Behavior**: Passed. Both platforms trigger the modal cleanly.
-
-### Challenge 2: Organization Switcher Null/Empty Resiliency
-- **Assumption Challenged**: If the organization list is empty or an organization record is missing a name, the header dropdown might crash or display distorted layout.
-- **Stress-Test**: Inspected lines 526 & 536–540 in `AppLayout.tsx`. Fallback labels `{org?.name || "My Business"}` and `{(organizations || []).filter(Boolean).map(...)}` prevent null dereferencing. Text is wrapped in `<span className="max-w-[110px] lg:max-w-[140px] truncate">`, guaranteeing that long organization names cannot overflow the 52px header.
-- **Actual Behavior**: Passed. Resilient against null, undefined, and extra-long store names.
-
-### Challenge 3: SuiteSwitcher Keyboard Navigation & Cashier Role Guard
-- **Assumption Challenged**: Switching from mouse to keyboard navigation might trap focus or fail to switch active suite; or cashiers might access CRM through keyboard input.
-- **Stress-Test**: Inspected lines 89–94, 122–127, and 196–207 of `SuiteSwitcher.tsx`. Keyboard listeners capture `Enter` and `Space` (`e.preventDefault()`, `handleSelect`). The Cashier guard (`hideForCashier !== false && isCashier`) returns `null`, ensuring the component is never mounted in the DOM for cashiers.
-- **Actual Behavior**: Passed. Full ARIA radio group compliance and strict authorization protection.
-
-### Challenge 4: Forensic Integrity Audit
-- **Integrity Checks Conducted**:
-  - Hardcoded test outputs embedded in source code: **NONE**.
-  - Dummy/facade implementations: **NONE** (genuine React hooks, state machines, and router bindings).
-  - Shortcuts bypassing intended tasks: **NONE**.
-  - Fabricated test/verification artifacts: **NONE** (executed live via `cmd /c npx`).
-  - Self-certification without independent verification: **NONE**.
-- **Audit Verdict**: 100% genuine code integrity.
+- **Top KPI Cards**: The summary KPI metric cards at the top of `Sales.tsx`, `Purchases.tsx`, and `Items.tsx` remain cards. As clarified in the project specification, these are discrete aggregate metric pills, not list stream rows.
+- **Sales.tsx Preservation**: `Sales.tsx` was already built using the target minimal divide-y pattern and therefore required 0 edits.
 
 ---
 
-## 4. Caveats
+## 4. Conclusion
 
-- **Invoice Modals Scope**: All 19 invoice creation and document processing files remain strictly quarantined and locked per instructions. Any future mobile modal transformations will occur in Milestone 3.
-- **SuiteSwitcher Warnings**: 3 pre-existing fast-refresh warnings in `SuiteSwitcher.tsx` (`react-refresh/only-export-components`) remain. These are non-breaking development warnings that preserve existing imports across the test harness.
-
----
-
-## 5. Conclusion
-
-**Verdict: VERDICT: APPROVE**
-
-Milestone 2 (Desktop Command Header & Shell) satisfies all design criteria, technical constraints, accessibility requirements, and regression safety standards:
-1. Exact 52px header height (`h-13`), compact 28px brand mark, dedicated Organization Switcher pill, centered Command Palette trigger (`⌘K`) on `md:`, Royal Blue split button, and live sync indicator dot.
-2. Complete elimination of 3D perspective distortion and floating watermark.
-3. Clean neutral segmented control in `SuiteSwitcher.tsx`.
-4. Screen-fitted layout containment in `<main>` and split POS workbench in `POSBilling.tsx`.
-5. 0 TypeScript errors, 280 passing tests, and 0 protected invoice files touched.
+The Milestone 2 implementation executed by Worker 2 is thorough, precise, and meets 100% of the requirements with zero regressions:
+- Anti-pattern eliminated: no individual floating bordered item cards on mobile.
+- Clean `divide-y` hairlines across mobile list streams.
+- All touch targets >= 44px.
+- All typography >= 11px.
+- Desktop views 100% preserved.
+- All 19 quarantine files 100% untouched.
+- Clean TypeScript check and production Vite build.
+- **Verdict**: **APPROVE**
 
 ---
 
-## 6. Verification Method
+## 5. Verification Method
 
-To independently reproduce this verification:
+To independently verify this report:
 
-1. **TypeScript Static Analysis**:
+1. **Verify Quarantine Invariance**:
    ```powershell
-   cmd /c npx tsc --noEmit
+   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" status --porcelain src/components/invoices/ src/components/items/ src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/utils/ src/services/documentsService.ts
    ```
-   *Expected Result*: Exits with code 0 (0 errors).
+   *Expected*: Zero output for quarantine paths.
 
-2. **Core Test Suites**:
+2. **Verify TypeScript Compilation**:
    ```powershell
-   cmd /c npx vitest run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx
-   cmd /c npx vitest run src/test/crmShellNavigation.audit.test.ts src/test/componentPrimitivesAdversarial.challenger.test.tsx
-   cmd /c npx vitest run src/test/e2e/decoupleShells.test.tsx src/test/e2e/decoupleIntegration.test.tsx
+   node node_modules/typescript/bin/tsc --noEmit
    ```
-   *Expected Result*: All tests pass (280/280).
+   *Expected*: Exit code 0 with 0 errors.
 
-3. **ESLint Verification**:
+3. **Verify Vite Production Build**:
    ```powershell
-   cmd /c npx eslint src/components/AppLayout.tsx src/components/SuiteSwitcher.tsx src/pages/POSBilling.tsx
+   node node_modules/vite/bin/vite.js build
    ```
-   *Expected Result*: 0 errors.
+   *Expected*: Exit code 0 with `✓ built`.
 
-4. **Protected Files Timestamp Check**:
+4. **Verify Unit Tests**:
    ```powershell
-   powershell -Command "Get-Item 'src/components/invoices/mobile/MobileCreateInvoice.tsx', 'src/components/SalesInvoiceModal.tsx' | Select-Object Name, LastWriteTime"
+   node node_modules/vitest/vitest.mjs run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx
    ```
-   *Expected Result*: Timestamps prior to 25-10-2026 (untouched).
+   *Expected*: 41/41 tests passing.
+
+---
+
+## Quality Review Summary
+
+**Verdict**: **APPROVE**
+
+### Findings
+- None (0 Critical, 0 Major, 0 Minor). The refactoring cleanly eliminated all card-in-card anti-patterns without breaking desktop layouts or business logic.
+
+### Verified Claims
+- Elimination of outer double-border in `Purchases.tsx` and `Items.tsx`: **VERIFIED**
+- Mobile stream uses `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`: **VERIFIED**
+- Flat `px-3.5 py-3` row containers without individual borders/shadows: **VERIFIED**
+- Minimum touch targets >= 44px on all action buttons: **VERIFIED**
+- Typography >= 11px with 0 sub-11px font classes: **VERIFIED**
+- Desktop table invariance (`hidden md:...`): **VERIFIED**
+- 19 Quarantine files untouched: **VERIFIED**
+- `tsc --noEmit` exits with code 0: **VERIFIED**
+- `vite build` succeeds: **VERIFIED**
+
+### Coverage Gaps
+- None. All assigned files and dependent contracts were inspected.
+
+### Unverified Items
+- None.
+
+---
+
+## Adversarial Challenge Summary
+
+**Overall Risk Assessment**: **LOW**
+
+### Challenges & Stress Scenarios
+
+1. **Assumption Challenged**: Row selection visual feedback remains clear without borders.
+   - *Attack Scenario*: Does the user lose indication of which purchase or item is selected if `border` and `ring` are removed?
+   - *Verification*: Checked lines 901 of `Purchases.tsx` and 1058 of `Items.tsx`. Selection is visibly indicated via `bg-amber-50/30 dark:bg-amber-950/20` and `bg-blue-50/30 dark:bg-blue-950/20`. In addition, hover states provide clean feedback (`hover:bg-slate-50/50`).
+   - *Result*: Pass. Subtle tint preserves clarity without reintroducing boxy borders.
+
+2. **Assumption Challenged**: Safe area scrolling does not cut off bottom items on mobile screens.
+   - *Attack Scenario*: On devices with home navigation indicator bars, does the bottom item become unreachable?
+   - *Verification*: Inspected padding: `Purchases.tsx` and `Sales.tsx` have `pb-36`; `Items.tsx` has `pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]`. Both provide generous headroom above the bottom thumb dock.
+   - *Result*: Pass.
+
+3. **Assumption Challenged**: Integrity violation check for hardcoded mocks or shortcutting.
+   - *Attack Scenario*: Did the worker bypass dynamic list rendering or hardcode static elements?
+   - *Verification*: Inspected git diffs line by line. All maps (`paginatedDocs.map`, `filteredItems.map`), handlers (`handleOpenReceipt`, `handleDownloadPdf`, `handleWhatsAppShare`, `handleTogglePaymentStatus`), and modal states remain 100% dynamic and genuine.
+   - *Result*: Pass. Zero integrity violations.
