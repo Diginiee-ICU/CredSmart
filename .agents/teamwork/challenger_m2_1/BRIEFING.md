@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:52:00Z
+# BRIEFING — 2026-10-25T09:53:00Z
 
 ## Mission
-Empirically stress-test CredSmart Minimal & Fast-Access Redesign Milestone 2: desktop header height (52px / h-13), 28px brand mark, left Organization Switcher pill, centered Command Palette trigger visible on md: screens, Royal Blue split action button, Live Sync dot, absence of 3D tilt perspective and floating watermark, SuiteSwitcher neutral segmented styling, active state persistence, ARIA attributes, and POS workbench viewport containment.
+Empirically stress-test Milestone 2 Core Billing & Inventory mobile modernization in `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, and `src/pages/Items.tsx`. Verify elimination of box-in-box anti-patterns, adoption of hairline `divide-y` list rows, minimum 44px touch targets, >=11px typography, zero quarantine regressions, and clean build.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -12,6 +12,8 @@ Empirically stress-test CredSmart Minimal & Fast-Access Redesign Milestone 2: de
 - Instance: 1 of 1
 - Current parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Active Milestone: Milestone 2 (CredSmart Minimal & Fast-Access Redesign — Desktop Shell & Productivity Layouts)
+- Dispatched Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Dispatched Milestone: Milestone 2 (Core Billing & Inventory Empiric Verification — Sales, Purchases, Items)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -23,65 +25,58 @@ Empirically stress-test CredSmart Minimal & Fast-Access Redesign Milestone 2: de
 - Use send_message to communicate results back to parent (c838af97-21de-4616-9188-f0f8dfa904c9)
 - Milestone 2 Fast-Access Redesign: Empirically stress-test desktop header height (52px / h-13), 28px brand mark, org switcher pill, centered ⌘K trigger, Royal Blue split button, Live Sync dot, 3D tilt/watermark elimination, SuiteSwitcher neutral styling, ARIA compliance, and POS workbench viewport containment.
 - Use send_message to communicate results back to parent (3044c8ce-523a-4157-917d-31b6f5d55c6a)
+- Milestone 2 Core Billing & Inventory: Empirically verify Sales.tsx, Purchases.tsx, Items.tsx; touch targets >=44px, typography >=11px, divide-y hairline containers, tsc and vite build, 19 quarantine files untouched.
+- Use send_message to communicate results back to parent (24d614cb-853d-49d4-9ac2-cf0090c93a62)
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:44:42Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:46:22Z
 
 ## Review Scope
-- **Files to review**: `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, `src/pages/POSBilling.tsx`, `src/test/crmShellNavigation.audit.test.ts`
-- **Interface contracts**: `.agents/rules/minimal-design-system.md`, `PROJECT.md`, `ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`), `worker_m2/handoff.md`
+- **Files to review**: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`
+- **Interface contracts**: `.agents/rules/minimal-design-system.md`, `ORIGINAL_REQUEST.md` (2026-10-25T08:53:34Z), `worker_m2/handoff.md`
 - **Review criteria**:
-  1. Desktop header height is exactly 52px (`md:h-13`).
-  2. 28px brand mark (`w-7 h-7`).
-  3. Left Organization Switcher pill.
-  4. Centered Command Palette trigger visible on `md:` screens (`hidden md:flex`).
-  5. Royal Blue split action button (`bg-blue-600`).
-  6. Live Sync indicator dot (`● Live Sync` with emerald dot).
-  7. 3D tilt perspective (`perspective: 2000px`, `rotateX`) and floating watermark (`/logo-static.jpeg`) completely absent from DOM.
-  8. `SuiteSwitcher.tsx` neutral segmented styling (no saturated amber/emerald), active state persistence, ARIA attributes (`role="group"`, `role="radio"`, `aria-checked`).
-  9. POSBilling right column 3-region containment (Region 1 fixed top total, Region 2 scrollable body, Region 3 fixed bottom action dock).
-  10. Automated tests & TypeScript checks pass cleanly.
+  1. Box-in-box anti-pattern eliminated on mobile (`px-0`, `divide-y divide-slate-100 dark:divide-slate-800/60`, flat `px-3.5 py-3` list rows).
+  2. Outer double border removed from table/stream wrappers.
+  3. Minimum touch targets >= 44px (`min-h-[44px] min-w-[44px]` or `w-11 h-11`).
+  4. Typography >= 11px (no `text-[10px]` or below).
+  5. Desktop views preserved 100% on `md:` breakpoints.
+  6. 19 quarantine files 100% untouched.
+  7. TypeScript compiles clean (`tsc --noEmit`).
+  8. Vite production build succeeds (`vite build`).
+  9. Automated test suites pass.
 
 ## Key Decisions Made
-- Authored comprehensive empirical stress test suite at `src/test/desktopShellMilestone2.challenger.test.tsx` (19 tests).
-- Ran empirical verification across all required suites:
-  - `src/test/desktopShellMilestone2.challenger.test.tsx` (19/19 passed)
-  - `src/test/crmShellNavigation.audit.test.ts` (8/8 passed)
-  - `src/test/billingLifecycleEngine.test.ts` + `src/test/MobileInvoiceSuccessView.test.tsx` (41/41 passed)
-  - Total: 68/68 Vitest tests passed (0 failures).
-- Verified TypeScript compiler integrity via `cmd /c npx tsc --noEmit` with zero errors.
-- Verified absence of non-metadata files in `.agents/teamwork/challenger_m2_1/`.
-- Rendered Gate Verdict: APPROVE.
+- Authored empirical test suite at `src/test/coreBillingInventoryMobileModernization.challenger.test.ts` (19 tests).
+- Ran verification commands:
+  - `node node_modules/typescript/bin/tsc --noEmit` -> 0 errors (Exit 0)
+  - `node node_modules/vite/bin/vite.js build` -> Built clean in 1m 15s (Exit 0)
+  - `node node_modules/vitest/vitest.mjs run src/test/coreBillingInventoryMobileModernization.challenger.test.ts` -> 19/19 passed
+  - `node node_modules/vitest/vitest.mjs run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx` -> 41/41 passed
+- Verified quarantine status: 19/19 files untouched.
+- Rendered Verdict: APPROVE.
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\BRIEFING.md — Persistent context & state
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\progress.md — Liveness & progress tracking
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md — Final handoff report & gate verdict
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\skills\credsmart-minimal-design-system.md — Local domain skill dump
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\test\desktopShellMilestone2.challenger.test.tsx — Empirical stress test oracle
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\test\coreBillingInventoryMobileModernization.challenger.test.ts — Empirical stress test oracle
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Desktop header height is strictly 52px (`md:h-13`), completely eliminating legacy 80px/88px heights: PASSED.
-  2. 28px brand mark (`w-7 h-7`), Sparkles icon (`w-3.5 h-3.5`), and Inter wordmark render without distortion: PASSED.
-  3. Left Organization Switcher pill renders with compact styling (`h-8 px-2.5`) and dropdown controls: PASSED.
-  4. Centered Command Palette search trigger is active and visible on all `md:` viewports: PASSED.
-  5. Royal Blue split action button (`bg-blue-600`) renders primary action and chevron dropdown across both Billing and CRM suites: PASSED.
-  6. Live Sync status indicator renders emerald pulsing dot with monospace text: PASSED.
-  7. 3D tilt perspective (`perspective: 2000px`, `rotateX`) and floating watermark (`/logo-static.jpeg`) are 100% eliminated: PASSED.
-  8. Viewport containment is maintained via `overflow-hidden` and `<main>` with `min-h-0`: PASSED.
-  9. `SuiteSwitcher.tsx` adopts neutral segmented control styling with zero saturated amber/emerald fills: PASSED.
-  10. `SuiteSwitcher.tsx` maintains full ARIA radio group semantics and keyboard accessibility (Enter/Space): PASSED.
-  11. `SuiteSwitcher.tsx` synchronizes state with `localStorage` (`credsmart_active_suite`) and emits `credsmart:suite_changed` window event: PASSED.
-  12. `POSBilling.tsx` features monochromatic hotkey ribbon (`border-slate-200/80 bg-white hover:bg-slate-100`) with F1, CTRL+I, CTRL+B, P, Q, D, V badges: PASSED.
-  13. `POSBilling.tsx` right column decouples into 3 independent regions: Region 1 (Fixed Net Total), Region 2 (Scrollable Body), Region 3 (Fixed Bottom Action Dock with Print [F6], Save [F7], WA): PASSED.
-- **Vulnerabilities found**:
-  - None blocking. All specifications verified and fully passing.
-- **Untested angles**:
-  - Native WebGL hardware rendering differences on physical GPUs (simulated via jsdom & React Testing Library).
+  1. Outer container box border eliminated in Purchases.tsx and Items.tsx: PASSED.
+  2. Mobile card stream containers use `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`: PASSED.
+  3. Mobile list items use flat `px-3.5 py-3` rows without individual borders or floating cards: PASSED.
+  4. Touch targets on action buttons meet >= 44px in Sales, Purchases, and Items: PASSED.
+  5. Purchases.tsx h-8.5 height regression fixed to w-11 h-11: PASSED.
+  6. Sub-11px typography eliminated across all 3 pages: PASSED.
+  7. Desktop tables and toolbars preserved with full parity: PASSED.
+  8. 19 protected quarantine files untouched: PASSED.
+  9. Production build and type checks pass with 0 errors: PASSED.
+- **Vulnerabilities found**: None. All specifications empirically verified.
+- **Untested angles**: None.
 
 ## Loaded Skills
 - Source: .agents/skills/credsmart-minimal-design-system/SKILL.md
 - Local copy: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\skills\credsmart-minimal-design-system.md
-- Core methodology: 52px command header, compact controls, viewport containment, neutral palette, split POS workbench.
+- Core methodology: Touch targets >=44px, divide-y flat rows, screen-fitted viewports, neutral surface architecture.
