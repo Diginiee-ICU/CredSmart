@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { crmApi } from "@/services/crmApi";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
-import { ROUTE_PATHS } from "@/config/routes";
+import { ROUTE_PATHS, ACTIVE_SUITE_STORAGE_KEY } from "@/config/routes";
 import {
   CRMCard,
   CRMBadge,
@@ -306,7 +306,7 @@ export default function CRMDashboard(): React.ReactElement {
     },
   ];
 
-  const unpunchedCount = Math.max(1, stats.staffCount - stats.todayAttendance);
+  const unpunchedCount = Math.max(0, stats.staffCount - stats.todayAttendance);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans pb-32 sm:pb-24 select-none">
@@ -364,7 +364,17 @@ export default function CRMDashboard(): React.ReactElement {
           <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
             <button
               type="button"
-              onClick={() => navigate(ROUTE_PATHS.pos)}
+              onClick={() => {
+                try {
+                  localStorage.setItem(ACTIVE_SUITE_STORAGE_KEY, "billing");
+                  window.dispatchEvent(
+                    new CustomEvent("credsmart:suite_changed", { detail: { suite: "billing" } })
+                  );
+                } catch {
+                  // ignore
+                }
+                navigate(ROUTE_PATHS.pos);
+              }}
               className="px-3 py-1 rounded-full text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               POS
@@ -404,8 +414,9 @@ export default function CRMDashboard(): React.ReactElement {
               to="/crm/roles?view=tree"
               className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors"
             >
-              <Crown className="w-3.5 h-3.5 text-amber-500" />
-              <span>[ 👑 Org Tree ]</span>
+              <span>[</span>
+              <Crown className="w-3.5 h-3.5 stroke-[2] text-slate-700 dark:text-slate-300" />
+              <span>Org Tree ]</span>
             </Link>
 
             <Link
@@ -429,11 +440,16 @@ export default function CRMDashboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <Users className="w-4 h-4" />
               </div>
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Present <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.todayAttendance}/{stats.staffCount}&#8203;</span>
-              </div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                Present
+              </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
+                {stats.todayAttendance}/{stats.staffCount}&#8203;
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
           </Link>
 
           {/* Card 2: Tasks */}
@@ -445,11 +461,16 @@ export default function CRMDashboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <CheckSquare className="w-4 h-4" />
               </div>
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Tasks <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.pendingTasks}&#8203;</span>
-              </div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                Tasks
+              </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
+                {stats.pendingTasks}&#8203;
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
           </Link>
 
           {/* Card 3: Broadcasts */}
@@ -461,11 +482,16 @@ export default function CRMDashboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
                 <Radio className="w-4 h-4" />
               </div>
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Broadcasts&#8203; <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.unreadBroadcasts}&#8203;</span>
-              </div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                Broadcasts&#8203;
+              </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
+                {stats.unreadBroadcasts}&#8203;
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
           </Link>
 
           {/* Card 4: Meet */}
@@ -477,11 +503,16 @@ export default function CRMDashboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <Video className="w-4 h-4" />
               </div>
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Meet <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.upcomingMeetings}&#8203;</span>
-              </div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                Meet
+              </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
+                {stats.upcomingMeetings}&#8203;
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
           </Link>
         </div>
 
@@ -498,12 +529,23 @@ export default function CRMDashboard(): React.ReactElement {
                 type="text"
                 value={staffSearchQuery}
                 onChange={(e) => setStaffSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && staffSearchQuery.trim()) {
+                    navigate(
+                      `/crm/roles?action=add-staff&name=${encodeURIComponent(staffSearchQuery.trim())}`
+                    );
+                  }
+                }}
                 placeholder="Search / Add new..."
                 className="w-full h-9 px-3 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
               />
             </div>
             <Link
-              to="/crm/roles?action=add-staff"
+              to={
+                staffSearchQuery.trim()
+                  ? `/crm/roles?action=add-staff&name=${encodeURIComponent(staffSearchQuery.trim())}`
+                  : "/crm/roles?action=add-staff"
+              }
               className="h-9 px-3.5 rounded-xl bg-[#0B1536] hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1 shadow-2xs active:scale-95 transition-all shrink-0"
             >
               <span>+ Add Staff</span>
@@ -602,7 +644,7 @@ export default function CRMDashboard(): React.ReactElement {
             >
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
-                  <LifeBuoy className="w-4 h-4" />
+                  <Headset className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                   Support {"\u200B"}Desk
@@ -624,10 +666,16 @@ export default function CRMDashboard(): React.ReactElement {
               <h3 className="text-xs sm:text-sm font-bold text-[#451A03] dark:text-amber-300">
                 {stats.todayAttendance === 0
                   ? "No staff clocked in yet today"
+                  : unpunchedCount === 0
+                  ? "All staff clocked in today"
                   : `${stats.todayAttendance} of ${stats.staffCount} staff clocked in today`}
               </h3>
               <p className="text-[11px] text-[#78350F] dark:text-amber-400 mt-0.5 font-medium">
-                {unpunchedCount} active member{unpunchedCount === 1 ? "" : "s"} hasn't punched in
+                {stats.todayAttendance === 0
+                  ? `${stats.staffCount} active member${stats.staffCount === 1 ? " hasn't" : "s haven't"} punched in`
+                  : unpunchedCount === 0
+                  ? "Full team attendance recorded for today"
+                  : `${unpunchedCount} active member${unpunchedCount === 1 ? " hasn't" : "s haven't"} punched in`}
               </p>
             </div>
 
