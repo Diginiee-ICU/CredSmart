@@ -1238,12 +1238,18 @@ export default function Staff() {
           <div className="space-y-2.5">
             {paginatedMembers.map((member) => {
               const isCurrentUser = member.user_id === user?.id;
-              const initials = (member.profile?.full_name || "Staff Member")
+              const displayName =
+                member.profile?.full_name ||
+                (member as any).full_name ||
+                (member as any).name ||
+                ((member as any).email ? (member as any).email.split("@")[0] : "Staff Member");
+              const initials = displayName
                 .split(" ")
-                .map((n) => n[0])
+                .filter(Boolean)
+                .map((n: string) => n[0])
                 .slice(0, 2)
                 .join("")
-                .toUpperCase();
+                .toUpperCase() || "SM";
 
               const rDef = ROLE_DEFINITIONS.find((r) => r.id === member.role);
 
@@ -1260,7 +1266,7 @@ export default function Staff() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-bold text-foreground truncate">
-                          {member.profile?.full_name || "Staff Member"}
+                          {displayName}
                         </p>
                         {isCurrentUser && (
                           <span className="badge badge-info text-[11px] py-0 px-1.5">
@@ -1274,9 +1280,14 @@ export default function Staff() {
                           {getEnabledFeaturesCount(member)} / {SYSTEM_FEATURES.length} Features ON
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Joined {new Date(member.created_at).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground flex-wrap">
+                        {((member as any).email || (member.profile as any)?.email) && (
+                          <span className="font-mono text-[11px] text-muted-foreground/80">
+                            {(member as any).email || (member.profile as any)?.email} •
+                          </span>
+                        )}
+                        <span>Joined {new Date(member.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
 

@@ -270,7 +270,17 @@ router.post('/staff/provision', async (req, res) => {
     if (!email || !email.trim()) {
       return res.status(400).json({ error: 'Email address is required' });
     }
-    if (!password || password.length < 6) {
+
+    // Auto-derive default password as {firstName}123 if not explicitly provided
+    let effectivePassword = password;
+    if (!effectivePassword || !effectivePassword.trim()) {
+      const cleanName = full_name.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+      let autoPwd = cleanName ? `${cleanName}123` : 'staff123';
+      while (autoPwd.length < 6) autoPwd += '3';
+      effectivePassword = autoPwd;
+    }
+
+    if (effectivePassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
@@ -304,17 +314,27 @@ router.post('/staff/provision', async (req, res) => {
         });
       }
 
-      // If user exists in users table, update phone/name if missing
-      if (phone && !existingUserRes.rows[0].phone) {
-        await client.query(`UPDATE users SET phone = $1 WHERE id = $2`, [phone.trim(), userId]);
+      // Always update full_name, name, phone and password on existing user
+      if (full_name && full_name.trim()) {
+        await client.query(
+          `UPDATE users SET full_name = $1, name = $1, updated_at = NOW() WHERE id = $2`,
+          [full_name.trim(), userId]
+        );
+      }
+      if (phone && phone.trim()) {
+        await client.query(`UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`, [phone.trim(), userId]);
+      }
+      if (effectivePassword) {
+        const passwordHash = await bcrypt.hash(effectivePassword, 10);
+        await client.query(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, [passwordHash, userId]);
       }
     } else {
       // 2. Hash password with bcrypt (10 rounds) and insert into users
       isNewUser = true;
-      const passwordHash = await bcrypt.hash(password, 10);
+      const passwordHash = await bcrypt.hash(effectivePassword, 10);
       const insertUserRes = await client.query(
-        `INSERT INTO users (email, password_hash, full_name, phone)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO users (email, password_hash, full_name, name, phone)
+         VALUES ($1, $2, $3, $3, $4)
          RETURNING id, email, full_name, phone, created_at`,
         [normalizedEmail, passwordHash, full_name.trim(), phone.trim()]
       );
@@ -430,7 +450,7 @@ router.post('/staff/provision', async (req, res) => {
       },
       credentials: {
         email: normalizedEmail,
-        password, // Plaintext returned once for immediate UI display in copyable dialog
+        password: effectivePassword, // Plaintext returned once for immediate UI display in copyable dialog
       },
     });
   } catch (err) {
@@ -454,7 +474,8 @@ const getStaffHandler = async (req, res) => {
         u.id AS user_id,
         u.id AS staff_id,
         u.email,
-        u.full_name,
+        COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+        COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS name,
         u.phone,
         u.avatar_url,
         COALESCE(m.role, 'staff') AS store_role,
@@ -503,7 +524,8 @@ const getStaffHandler = async (req, res) => {
           u.id AS user_id,
           u.id AS staff_id,
           u.email,
-          u.full_name,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS name,
           u.phone,
           u.avatar_url,
           COALESCE(m.role, 'staff') AS store_role,

@@ -863,7 +863,10 @@ export default function AppLayout() {
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || "CredSmart Business"}</h4>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{user?.email || "Account Owner"}</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 mt-0.5 truncate">
+                      {(user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || (user as any)?.full_name || user?.email?.split("@")[0] || "Account Owner"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">{user?.email || ""}</p>
                     <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">{roleLabel}</div>
                   </div>
                   <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-2 pb-1">

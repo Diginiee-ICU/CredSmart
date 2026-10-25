@@ -139,7 +139,10 @@ const getMembershipsHandler = async (req, res) => {
         SELECT m.*,
                COALESCE(m.org_id, m.organization_id) AS org_id,
                COALESCE(m.organization_id, m.org_id) AS organization_id,
-               u.email, u.full_name, u.phone, u.avatar_url
+               u.email,
+               COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+               COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
+               u.phone, u.avatar_url
         FROM org_memberships m
         LEFT JOIN users u ON u.id = m.user_id
         WHERE 1=1
@@ -172,7 +175,10 @@ const getMembershipsHandler = async (req, res) => {
           SELECT m.*,
                  COALESCE(m.org_id, m.organization_id) AS org_id,
                  COALESCE(m.organization_id, m.org_id) AS organization_id,
-                 u.email, u.full_name, u.phone, u.avatar_url
+                 u.email,
+                COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+                COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
+                u.phone, u.avatar_url
           FROM organization_memberships m
           LEFT JOIN users u ON u.id = m.user_id
           WHERE 1=1
@@ -289,7 +295,7 @@ router.get('/profiles', async (req, res) => {
   try {
     const { ids, search, limit } = req.query;
     const targetOrg = req.query.organization_id || req.query.org_id || req.orgId;
-    let query = 'SELECT id, email, full_name, phone, avatar_url FROM users WHERE 1=1';
+    let query = "SELECT id, email, full_name, COALESCE(NULLIF(TRIM(full_name), ''), NULLIF(TRIM(name), ''), split_part(email, '@', 1)) as name, phone, avatar_url FROM users WHERE 1=1";
     const params = [];
 
     if (ids) {

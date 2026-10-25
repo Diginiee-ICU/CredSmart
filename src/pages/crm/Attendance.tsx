@@ -523,7 +523,7 @@ export default function Attendance(): React.ReactElement {
           staffMembers.forEach((sm) => {
             profilesMap[sm.id] = {
               id: sm.id,
-              name: sm.full_name || sm.name || (sm.email ? sm.email.split("@")[0] : "Team Member"),
+              name: sm.full_name?.trim() || sm.name?.trim() || (sm.email ? sm.email.split("@")[0] : "Team Member"),
               email: sm.email || "",
               roleName: sm.crm_role_name || sm.role_name || "Staff",
               roleColor: sm.crm_role_color || "#2563EB",
@@ -663,7 +663,7 @@ export default function Attendance(): React.ReactElement {
       if (user && !profilesMap[user.id]) {
         profilesMap[user.id] = {
           id: user.id,
-          name: (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Current Staff",
+          name: (user.user_metadata?.full_name as string)?.trim() || (user.user_metadata?.name as string)?.trim() || (user as any)?.full_name || user.email?.split("@")[0] || "Current Staff",
           email: user.email || "",
           roleName: isSuperAdmin ? "Super Admin" : "Staff Member",
           roleColor: isSuperAdmin ? "#F59E0B" : "#2563EB",
