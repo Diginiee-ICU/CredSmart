@@ -269,6 +269,7 @@ export interface CreateCRMTaskPayload {
   status?: CRMTaskStatus;
   assigned_to?: string | null;
   assignee_id?: string | null;
+  assignee_name?: string | null;
   due_date?: string | null;
   requires_proof?: boolean;
   proof_required?: boolean;

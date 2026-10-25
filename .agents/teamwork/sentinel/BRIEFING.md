@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-25T11:21:00Z
+# BRIEFING — 2026-10-25T20:34:00Z
 
 ## Mission
-Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages in 9 files. Replace individual floating bordered item cards (`rounded-xl border shadow-2xs`) with clean minimal divide-y list rows (`divide-y divide-slate-100 dark:divide-slate-800/60`) throughout mobile views.
+Enforce strict multi-tenant organization isolation for CredSmart CRM so that staff members, attendance, tasks, salary profiles, roles, and CRM operations are strictly scoped to the active organization (e.g., "Cred"), preventing any cross-tenant data or user visibility across different organizations.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -48,6 +48,8 @@ Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages 
 - Victory Auditor (Minimal Redesign): [to be spawned on victory claim]
 - Active Orchestrator (Mobile Cards Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Victory Auditor (Mobile Cards Modernization): 2a8e0dab-ae50-4423-aa41-e1b25238be9a
+- Active Orchestrator (SWE Tenant Isolation): 2c379784-fe44-4a5a-926c-fb71ccfb2a72
+- Victory Auditor (SWE Tenant Isolation): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -72,29 +74,29 @@ Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages 
 - Strict exclusion: 19 quarantine files must remain 100% untouched
 - Minimal design system rules: 34px standard action, 28px table action, 46px mobile CTA, hairline borders, no 3D glass / neon halos / bubble buttons, screen-fitted 52px top bar, sticky headers and bounded scroll tables
 - Flat minimal list rows with divide-y divide-slate-100 dark:divide-slate-800/60 replacing boxy nested card containers
+- Multi-tenant organization isolation: CRM staff, attendance, tasks, salary profiles, roles strictly scoped to active org
+- 0 cross-tenant visibility or bleeding between organizations
 
 ## User Context
-- **Last user request**: Replace boxy nested cards across 9 mobile pages with clean minimal divide-y list rows.
+- **Last user request**: Enforce strict multi-tenant organization isolation for CredSmart CRM across staff, attendance, tasks, salary profiles, roles, and endpoints.
 - **Pending clarifications**: none
-- **Delivered results**: Orchestrator finished all 4 milestones; Victory Auditor dispatched.
+- **Delivered results**: SWE Light Orchestrator dispatched; crons active.
 
 ## Project Status
-- **Phase**: auditing
-- **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards
-- **Cron 1 (Reporting)**: task-26
-- **Cron 2 (Liveness)**: task-28
+- **Phase**: in progress
+- **Routing Decision**: SWE Light -> teamwork_preview_swe
+- **Active Orchestrator ID**: 2c379784-fe44-4a5a-926c-fb71ccfb2a72
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation
+- **Cron 1 (Reporting)**: task-28
+- **Cron 2 (Liveness)**: task-30
 
 ## Victory Audit Status
-- **Triggered**: yes
+- **Triggered**: no
 - **Verdict**: pending
-- **Auditor ID**: 2a8e0dab-ae50-4423-aa41-e1b25238be9a
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_mobile_cards
+- **Auditor ID**: [to be spawned on victory claim]
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe_tenant_isolation
 - **Retry count**: 0
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\DISPATCH.md — Orchestrator dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_mobile_cards\DISPATCH.md — Victory Auditor dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\handoff.md — Orchestrator completion report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation\DISPATCH.md — Dispatch instructions for SWE Light orchestrator

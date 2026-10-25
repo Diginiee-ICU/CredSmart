@@ -335,14 +335,12 @@ export default function CRMDashboard(): React.ReactElement {
 
       if (typeof crmApi?.getCRMTasks === "function") {
         crmApi.getCRMTasks(activeOrgId).then((res) => {
-          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+          if (res?.data && Array.isArray(res.data)) {
             const pending = res.data.filter((t) => t.status !== "done" && t.status !== "completed");
-            if (pending.length > 0) {
-              setStats((prev) => ({
-                ...prev,
-                pendingTasks: Math.max(prev.pendingTasks, pending.length),
-              }));
-            }
+            setStats((prev) => ({
+              ...prev,
+              pendingTasks: pending.length,
+            }));
           }
         }).catch(() => {});
       }

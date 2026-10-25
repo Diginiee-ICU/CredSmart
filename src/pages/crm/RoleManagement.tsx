@@ -2263,7 +2263,7 @@ export default function RoleManagement(): React.ReactElement {
                         </span>
                         <span
                           className={cn(
-                            "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full border",
+                            "text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-full border",
                             modAllowedCount === mod.actions.length
                               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                               : modAllowedCount > 0
@@ -2412,7 +2412,7 @@ export default function RoleManagement(): React.ReactElement {
                       <span className="text-[11px] font-bold text-slate-900 dark:text-white truncate max-w-full">
                         {staff.name.split(" ")[0]}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-full">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-full">
                         {assignedRole?.name ? assignedRole.name + "\u200B" : "No CRM"}
                       </span>
                     </div>

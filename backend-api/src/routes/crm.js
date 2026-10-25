@@ -958,7 +958,11 @@ router.post('/tasks', async (req, res) => {
       return res.status(400).json({ error: 'Task title is required' });
     }
 
-    const targetAssignee = assigned_to || assignee_id || null;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rawAssignee = assigned_to || assignee_id || null;
+    const targetAssignee = (rawAssignee && typeof rawAssignee === 'string' && uuidRegex.test(rawAssignee.trim()))
+      ? rawAssignee.trim()
+      : null;
     const targetProof = requires_proof !== undefined ? Boolean(requires_proof) : Boolean(proof_required);
     const normalizedPriority = ['urgent', 'high', 'normal', 'low'].includes(priority) ? priority : 'normal';
     const normalizedStatus = ['todo', 'in_progress', 'review', 'done'].includes(status) ? status : 'todo';
@@ -988,13 +992,13 @@ router.post('/tasks', async (req, res) => {
     const inserted = result.rows[0];
 
     // Fetch user details for enriched response
-    let assigneeName = 'Unassigned';
+    let assigneeName = req.body.assignee_name || 'Unassigned';
     let assigneeEmail = null;
     let assigneeAvatarUrl = null;
     if (targetAssignee) {
       const uRes = await pool.query('SELECT full_name, email, avatar_url FROM users WHERE id = $1', [targetAssignee]);
       if (uRes.rows.length > 0) {
-        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email;
+        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email || assigneeName;
         assigneeEmail = uRes.rows[0].email;
         assigneeAvatarUrl = uRes.rows[0].avatar_url;
       }
@@ -1054,6 +1058,15 @@ router.patch('/tasks/:id', async (req, res) => {
     }
     delete updates.assignee_id;
 
+    if (updates.assigned_to !== undefined) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!updates.assigned_to || !uuidRegex.test(String(updates.assigned_to).trim())) {
+        updates.assigned_to = null;
+      } else {
+        updates.assigned_to = String(updates.assigned_to).trim();
+      }
+    }
+
     // Handle proof boolean alias
     if (updates.requires_proof !== undefined) {
       updates.proof_required = updates.requires_proof;
@@ -1109,13 +1122,13 @@ router.patch('/tasks/:id', async (req, res) => {
     const updatedTask = result.rows[0];
 
     // Fetch assignee name & approver details
-    let assigneeName = 'Unassigned';
+    let assigneeName = req.body.assignee_name || 'Unassigned';
     let assigneeEmail = null;
     let assigneeAvatarUrl = null;
     if (updatedTask.assigned_to) {
       const uRes = await pool.query('SELECT full_name, email, avatar_url FROM users WHERE id = $1', [updatedTask.assigned_to]);
       if (uRes.rows.length > 0) {
-        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email;
+        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email || assigneeName;
         assigneeEmail = uRes.rows[0].email;
         assigneeAvatarUrl = uRes.rows[0].avatar_url;
       }
