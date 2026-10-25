@@ -1127,7 +1127,7 @@ export default function Tasks(): React.ReactElement {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                    Total Tasks&#8203;
+                    Total Tasks
                   </span>
                   <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
                     {metrics.total}
@@ -1161,7 +1161,7 @@ export default function Tasks(): React.ReactElement {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                    Pending Review&#8203;
+                    Pending Review
                   </span>
                   <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
                     {metrics.review}
