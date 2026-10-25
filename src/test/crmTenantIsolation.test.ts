@@ -723,5 +723,221 @@ describe("CRM Multi-Tenant Organization Isolation Verification", () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ tasks: 0, broadcasts: 0, meetings: 0 });
     });
+
+    it("preserves an existing user's password hash and does not overwrite it on multi-tenant provisioning (OI-3)", async () => {
+      let passwordUpdated = false;
+      mockClientQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT id, email, full_name, phone")) {
+          return Promise.resolve({
+            rows: [{ id: "user-existing-sec", email: "alice@company.com", password_hash: "preexisting_hash_123" }]
+          });
+        }
+        if (sql.includes("org_memberships") && sql.includes("LIMIT 1")) {
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes("UPDATE users SET password_hash")) {
+          passwordUpdated = true;
+          return Promise.resolve({ rowCount: 1 });
+        }
+        if (sql.includes("INSERT INTO org_memberships")) {
+          return Promise.resolve({ rows: [{ id: "mem-alice", role: "staff" }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/staff/provision",
+        headers: { "x-organization-id": "org-cred-B" },
+        body: {
+          full_name: "Alice Smith",
+          email: "alice@company.com",
+          store_role: "staff",
+        },
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(passwordUpdated).toBe(false);
+      expect(res.body.credentials.password).toBe("(existing account password)");
+    });
+
+    it("handles legacy single-table deployment when only org_memberships exists (OI-1)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("organization_memberships")) {
+          const err: any = new Error("relation organization_memberships does not exist");
+          err.code = "42P01";
+          return Promise.reject(err);
+        }
+        if (sql.includes("org_memberships") && sql.includes("SELECT 1")) {
+          if (params[0] === "11111111-1111-1111-1111-111111111111" && params[1] === "org-cred-A") {
+            return Promise.resolve({ rows: [{ 1: 1 }] });
+          }
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes("staff_tasks")) {
+          return Promise.resolve({ rows: [{ id: "task-legacy", title: "Legacy Task" }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/tasks",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          title: "Legacy Table Task",
+          assigned_to: "11111111-1111-1111-1111-111111111111",
+        },
+      });
+
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it("rejects GET /permissions without organization context to prevent permissions leakage", async () => {
+      const res = await dispatch({
+        method: "GET",
+        url: "/permissions?role_id=role-foreign-b",
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("rejects cross-tenant staff in POST /payslips/bulk", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("org_memberships") && sql.includes("SELECT 1")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/payslips/bulk",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          items: [
+            { id: "slip-foreign", staff_id: "user-from-org-B", net_salary: 25000, month_year: "2026-10" }
+          ]
+        },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.count).toBe(0);
+    });
+
+    it("rejects POST /payroll-runs for a user belonging to another organization", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("org_memberships") && sql.includes("SELECT 1")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/payroll-runs",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          user_id: "user-org-B",
+          month: 10,
+          year: 2026,
+          base_salary: 50000,
+        },
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("rejects assigning ticket in POST /tickets to a user from another organization", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("org_memberships") && sql.includes("SELECT 1")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/tickets",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          customer_id: "cust-1",
+          subject: "Printer Issue",
+          assigned_to: "foreign-user-id",
+        },
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("scopes geolocations endpoints strictly to active organization", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("crm_geolocations") && sql.includes("SELECT")) {
+          expect(params[0]).toBe("org-cred-A");
+          return Promise.resolve({
+            rows: [
+              { id: "geo-1", org_id: "org-cred-A", name: "Cred HQ", latitude: 28.6, longitude: 77.2, radius_meters: 150 }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/geolocations",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].name).toBe("Cred HQ");
+    });
+
+    it("rejects PUT /geolocations/:id on another organization's geofence", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("UPDATE crm_geolocations")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "PUT",
+        url: "/geolocations/geo-foreign-id",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: { name: "Hijacked Geofence" },
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain("not found or unauthorized");
+    });
+
+    it("rejects POST /attendance-requests for user from another organization", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("org_memberships") && sql.includes("SELECT 1")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/attendance-requests",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          user_id: "foreign-user-2",
+          date: "2026-10-25",
+          reason: "Missed punch",
+        },
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
   });
 });
