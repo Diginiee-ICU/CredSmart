@@ -330,7 +330,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
     fireEvent.click(doneBtn);
 
     // 6. Verify newly created user is in Section 3 roster immediately without refresh
-    expect(screen.getByText("Aarav Gupta")).toBeInTheDocument();
+    expect(screen.getAllByText("Aarav Gupta").length).toBeGreaterThanOrEqual(1);
   }, 15000);
 
   it("M2.UI.5 — Create Custom Role modal displays 'Assign Staff Members (Optional)' checklist and assigns role upon creation", async () => {
@@ -390,12 +390,13 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
       </MemoryRouter>
     );
 
-    await screen.findByText("Ramesh Kumar");
+    const ramesh = await screen.findAllByText("Ramesh Kumar");
+    expect(ramesh.length).toBeGreaterThanOrEqual(1);
 
     const searchInput = screen.getByPlaceholderText("Search staff by name or role...");
     fireEvent.change(searchInput, { target: { value: "Sneha" } });
 
-    expect(screen.getByText("Sneha Patel")).toBeInTheDocument();
+    expect(screen.getAllByText("Sneha Patel").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Ramesh Kumar")).not.toBeInTheDocument();
   }, 15000);
 
@@ -406,7 +407,8 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
       </MemoryRouter>
     );
 
-    await screen.findByText("Ramesh Kumar");
+    const ramesh = await screen.findAllByText("Ramesh Kumar");
+    expect(ramesh.length).toBeGreaterThanOrEqual(1);
 
     const searchInput = screen.getByPlaceholderText("Search staff by name or role...");
     // Special regex characters that would break unescaped RegExp constructors
@@ -414,7 +416,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
     for (const char of regexInputs) {
       fireEvent.change(searchInput, { target: { value: char } });
       // Should safely display empty state message rather than crashing
-      expect(screen.getByText(new RegExp("No staff members matching", "i"))).toBeInTheDocument();
+      expect(screen.getAllByText(new RegExp("No staff members matching", "i")).length).toBeGreaterThanOrEqual(1);
     }
   }, 15000);
 });

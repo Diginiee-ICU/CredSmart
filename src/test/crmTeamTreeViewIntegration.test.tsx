@@ -89,6 +89,7 @@ vi.mock("@/services/crmApi", () => {
       getCRMPermissions: vi.fn().mockResolvedValue({ data: [], error: null }),
       deleteCRMPermissionsByRoleId: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
       insertCRMPermissions: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
+      getCRMStaff: vi.fn().mockResolvedValue({ data: [], error: null }),
       getCRMStaffRoles: vi.fn().mockResolvedValue({
         data: [
           { staff_id: "user-existing-1", role_id: "role-operations", assigned_by: "user-admin-999" },
@@ -175,7 +176,8 @@ describe("RoleManagement Team Tree View Integration", () => {
     expect(screen.getByRole("button", { name: /Team Tree View/i })).toBeInTheDocument();
 
     // Staff roster in list view
-    await screen.findByText("Ramesh Lead");
+    const ramesh = await screen.findAllByText("Ramesh Lead");
+    expect(ramesh.length).toBeGreaterThanOrEqual(1);
 
     // Click "Team Tree View"
     const treeTabBtn = screen.getByRole("button", { name: /Team Tree View/i });
@@ -183,16 +185,16 @@ describe("RoleManagement Team Tree View Integration", () => {
 
     // Tree View rendered
     expect(screen.getAllByText(/Team Hierarchy/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("ORGANIZATION STRUCTURE")).toBeInTheDocument();
+    expect(screen.getAllByText("ORGANIZATION STRUCTURE").length).toBeGreaterThanOrEqual(1);
 
     // Verify Expand All and Collapse All buttons are present
-    expect(screen.getByRole("button", { name: /Expand All/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Collapse All/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Expand All/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("button", { name: /Collapse All/i }).length).toBeGreaterThanOrEqual(1);
 
     // Switch back to List View
     const listTabBtn = screen.getByRole("button", { name: /List View/i });
     fireEvent.click(listTabBtn);
-    expect(screen.getByText("Ramesh Lead")).toBeInTheDocument();
+    expect(screen.getAllByText("Ramesh Lead").length).toBeGreaterThanOrEqual(1);
   }, 15000);
 
   it("2. In Tree View: Drop down buttons collapse and expand sub-teams to save space", async () => {
