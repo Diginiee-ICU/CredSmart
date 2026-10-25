@@ -1639,10 +1639,11 @@ export default function Attendance(): React.ReactElement {
         </div>
       }
     >
-      {/* ====================================================================== */}
-      {/* DESKTOP VIEW (>= 768px): Preserved 100% Byte-for-Byte                  */}
-      {/* ====================================================================== */}
-      <div className="hidden md:block space-y-4 sm:space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-2.5 sm:px-6">
+      <div className="min-h-screen bg-slate-50/50 pb-32 sm:pb-20 font-sans">
+        {/* ====================================================================== */}
+        {/* DESKTOP VIEW (>= 768px): Preserved 100% Byte-for-Byte                  */}
+        {/* ====================================================================== */}
+        <div className="hidden md:block space-y-4 sm:space-y-6 max-w-7xl mx-auto px-2.5 sm:px-6">
         {/* ====================================================================== */}
         {/* Page Header                                                            */}
         {/* ====================================================================== */}
