@@ -220,70 +220,10 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadData();
 
-    // Centralized incoming invoice handler across all realtime transports
-    const handleIncomingInvoiceEvent = (
-      networkInvoice?: NetworkInvoice,
-      notification?: NetworkNotification
-    ) => {
-      const currentOrg = orgRef.current;
-      if (!networkInvoice || !currentOrg) return;
-
-      const u = userRef.current;
-      // Check if invoice is addressed to this organization or user
-      const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
-        networkInvoice,
-        currentOrg.id,
-        currentOrg.phone,
-        currentOrg.gstin,
-        currentOrg.name,
-        u.userName,
-        u.userEmail,
-        u.userPhone
-      );
-
-      // Only alert if we are the recipient and NOT the sender
-      if (isTargetRecipient && networkInvoice.senderOrgId !== currentOrg.id) {
-        // Ingest immediately into local storage
-        networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
-
-        const now = Date.now();
-        const invNumKey = networkInvoice.invoiceNumber ? networkInvoice.invoiceNumber.trim().toLowerCase() : undefined;
-        const scopedInvKey = networkInvoice.senderOrgId && invNumKey ? `${networkInvoice.senderOrgId}_${invNumKey}` : invNumKey;
-        const lastNotified = (networkInvoice.id && handledEventInvoiceIdsRef.current.get(networkInvoice.id)) ||
-                             (scopedInvKey && handledEventInvoiceIdsRef.current.get(scopedInvKey)) ||
-                             (notification?.id && handledEventInvoiceIdsRef.current.get(notification.id));
-        const shouldShowToast = !lastNotified || (now - lastNotified > 10000);
-
-        if (shouldShowToast) {
-          if (networkInvoice.id) handledEventInvoiceIdsRef.current.set(networkInvoice.id, now);
-          if (scopedInvKey) handledEventInvoiceIdsRef.current.set(scopedInvKey, now);
-          if (notification?.id) handledEventInvoiceIdsRef.current.set(notification.id, now);
-          // Prune stale cache entries
-          for (const [k, ts] of handledEventInvoiceIdsRef.current.entries()) {
-            if (now - ts > 30000) handledEventInvoiceIdsRef.current.delete(k);
-          }
-
-          // Play pleasant sound chime & haptic feedback
-          playChimeAndVibrate();
-
-          // Show real-time actionable toast notification
-          toast.info(`⚡ New Sales Invoice on your name!`, {
-            description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
-            duration: 9000,
-            action: {
-              label: "Review & Inward",
-              onClick: () => {
-                window.dispatchEvent(
-                  new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
-                );
-              },
-            },
-          });
-        }
-
-        loadData();
-      }
-    };
+    // 10-second polling fallback across tabs, windows, and remote devices
+    const pollInterval = setInterval(() => {
+      loadData();
+    }, 10000);
 
     // Listen to custom DOM events (cross-component sync)
     const handleNetworkUpdate = (e?: Event) => {
@@ -477,6 +417,7 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     } catch { /* empty */ }
 
     return () => {
+      clearInterval(pollInterval);
       window.removeEventListener("credsmart_network_update", handleNetworkUpdate);
       window.removeEventListener("credsmart_notification_update", handleNetworkUpdate);
       window.removeEventListener("credsmart_org_changed", handleNetworkUpdate);

@@ -75,6 +75,9 @@ ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS organization_id UUID;
 ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS location_id UUID;
 ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS invited_by UUID;
+ALTER TABLE organization_memberships ALTER COLUMN role DROP DEFAULT;
+ALTER TABLE organization_memberships ALTER COLUMN role TYPE VARCHAR(50) USING role::text;
+ALTER TABLE organization_memberships ALTER COLUMN role SET DEFAULT 'owner';
 
 UPDATE organization_memberships SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE organization_memberships SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
@@ -95,6 +98,9 @@ CREATE TABLE IF NOT EXISTS org_memberships (
 );
 ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE org_memberships ALTER COLUMN role DROP DEFAULT;
+ALTER TABLE org_memberships ALTER COLUMN role TYPE VARCHAR(50) USING role::text;
+ALTER TABLE org_memberships ALTER COLUMN role SET DEFAULT 'owner';
 
 UPDATE org_memberships SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE org_memberships SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
@@ -104,27 +110,41 @@ CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON org_memberships FOR E
 
 -- Cross-sync between org_memberships and organization_memberships
 INSERT INTO org_memberships (id, user_id, org_id, organization_id, role, created_at)
-SELECT id, user_id, COALESCE(org_id, organization_id), COALESCE(organization_id, org_id), role::text, created_at
-FROM organization_memberships
-ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;
+SELECT gen_random_uuid(), om.user_id, COALESCE(om.org_id, om.organization_id), COALESCE(om.organization_id, om.org_id), om.role::text, om.created_at
+FROM organization_memberships om
+WHERE NOT EXISTS (
+  SELECT 1 FROM org_memberships m
+  WHERE m.user_id = om.user_id
+  AND (m.org_id = COALESCE(om.org_id, om.organization_id) OR m.organization_id = COALESCE(om.organization_id, om.org_id))
+);
 
 INSERT INTO organization_memberships (id, user_id, organization_id, org_id, role, created_at)
-SELECT id, user_id, COALESCE(organization_id, org_id), COALESCE(org_id, organization_id), role::text, created_at
-FROM org_memberships
-ON CONFLICT DO NOTHING;
+SELECT gen_random_uuid(), m.user_id, COALESCE(m.organization_id, m.org_id), COALESCE(m.org_id, m.organization_id), m.role::text, m.created_at
+FROM org_memberships m
+WHERE NOT EXISTS (
+  SELECT 1 FROM organization_memberships om
+  WHERE om.user_id = m.user_id
+  AND (om.organization_id = COALESCE(m.organization_id, m.org_id) OR om.org_id = COALESCE(m.org_id, m.organization_id))
+);
 
 -- Guarantee that all registered users have access to all business organizations so old data is always visible
 INSERT INTO org_memberships (user_id, org_id, organization_id, role)
 SELECT u.id, o.id, o.id, 'owner'
 FROM users u
 CROSS JOIN organizations o
-ON CONFLICT (user_id, org_id) DO NOTHING;
+WHERE NOT EXISTS (
+  SELECT 1 FROM org_memberships m
+  WHERE m.user_id = u.id AND (m.org_id = o.id OR m.organization_id = o.id)
+);
 
 INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
 SELECT u.id, o.id, o.id, 'owner'
 FROM users u
 CROSS JOIN organizations o
-ON CONFLICT DO NOTHING;
+WHERE NOT EXISTS (
+  SELECT 1 FROM organization_memberships om
+  WHERE om.user_id = u.id AND (om.organization_id = o.id OR om.org_id = o.id)
+);
 
 -- ============================================================================
 -- 4. PRODUCTS MASTER
