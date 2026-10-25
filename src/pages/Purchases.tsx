@@ -861,9 +861,9 @@ export default function Purchases() {
         {/* ───────────────────────────────────────────────────────────── */}
         {/* TRANSACTIONS TABLE / MOBILE STREAM CONTAINER */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs flex flex-col justify-between">
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
           {/* MOBILE VIEW: High-Density Touch Card Stream (< md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-24 space-y-2.5 scrollbar-thin overscroll-y-contain">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
             {loading ? (
               <div className="py-16 text-center space-y-2">
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" />
@@ -897,10 +897,10 @@ export default function Purchases() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2 shadow-2xs active:scale-[0.99]",
+                      "px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2",
                       isSelected
-                        ? "border-amber-500 ring-1.5 ring-amber-500/30 bg-amber-50/10"
-                        : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                        ? "bg-amber-50/30 dark:bg-amber-950/20"
+                        : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                     )}
                   >
                     {/* Line 1: Voucher Number + Status + Grand Total */}
@@ -955,7 +955,7 @@ export default function Purchases() {
                       {/* Print */}
                       <button
                         onClick={() => handleOpenReceipt(doc)}
-                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
                         title="Print Receipt"
                       >
                         <Printer className="w-3.5 h-3.5" />
@@ -993,7 +993,7 @@ export default function Purchases() {
                             })),
                           });
                         }}
-                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
                         title="Download PDF"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -1026,7 +1026,7 @@ export default function Purchases() {
                             })),
                           });
                         }}
-                        className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center"
+                        className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
                         title="WhatsApp Share"
                       >
                         <Share2 className="w-3.5 h-3.5" />
@@ -1035,7 +1035,7 @@ export default function Purchases() {
                       {/* More Menu */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-8.5 flex items-center justify-center">
+                          <button className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-all cursor-pointer min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center">
                             <MoreVertical className="w-3.5 h-3.5" />
                           </button>
                         </DropdownMenuTrigger>

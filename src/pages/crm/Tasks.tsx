@@ -873,9 +873,9 @@ export default function Tasks(): React.ReactElement {
                 return (
                   <div
                     key={col.status}
-                    className="flex flex-col rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3 min-h-[380px]"
+                    className="flex flex-col rounded-xl md:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-3 min-h-0 md:min-h-[380px]"
                   >
-                    <div className="flex items-center justify-between pb-3 px-1">
+                    <div className="flex items-center justify-between pb-2.5 md:pb-3 px-1">
                       <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
                         {col.label}
                       </span>
@@ -884,9 +884,9 @@ export default function Tasks(): React.ReactElement {
                       </span>
                     </div>
 
-                    <div className="space-y-2.5 flex-1">
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 md:divide-y-0 md:space-y-2.5 flex-1 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-xl md:rounded-none border border-slate-200/80 dark:border-slate-800 md:border-0 overflow-hidden md:overflow-visible">
                       {colTasks.length === 0 ? (
-                        <div className="h-28 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center text-xs text-slate-400">
+                        <div className="py-6 md:h-28 text-center md:flex md:items-center md:justify-center md:rounded-xl md:border md:border-dashed md:border-slate-200 md:dark:border-slate-800 text-xs text-slate-400">
                           No tasks
                         </div>
                       ) : (
@@ -898,7 +898,7 @@ export default function Tasks(): React.ReactElement {
                           return (
                             <div
                               key={task.id}
-                              className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all space-y-2.5"
+                              className="px-3.5 py-3 md:p-3.5 space-y-2 md:space-y-2.5 bg-white dark:bg-slate-900 md:rounded-xl md:border md:border-slate-200/80 md:dark:border-slate-800 md:shadow-2xs hover:shadow-xs transition-all"
                             >
                               <div className="flex items-start justify-between gap-1.5">
                                 <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">

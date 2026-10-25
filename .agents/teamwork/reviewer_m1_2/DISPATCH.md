@@ -1,55 +1,74 @@
-# Dispatch Directive: Reviewer 2 — Milestone 1 (Component Primitives & Accessibility)
+# Dispatch Assignment: Reviewer 2 (Milestone 1 — CRM Roles & Tasks Modernization)
 
 ## Mission
-Independently review the Milestone 1 changes in `src/components/ui/button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, and `dialog.tsx`:
-1. Check `button.tsx`: Verify 34px default (h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs), 28px sm/table (h-7 px-2.5 rounded-md text-[11px] font-medium), 30px icon (w-7.5 h-7.5 rounded-md), 46px cta (w-[46px] h-[46px] rounded-xl font-bold); check backward compatibility of legacy aliases (ruby, gold, glass, pill, pill-lg, lg); check removal of ripple surface.
-2. Check `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx`: Verify card padding p-3.5, badge text-[11px] semantic indicators, table 38px–42px row height, dialog rounded-2xl.
-3. Run tests: Run `cmd /c npx vitest run src/test/crmComponents.test.tsx` and `cmd /c npx tsc --noEmit`.
-4. Check Protected Files: Verify zero changes were made to the 19 protected invoice files.
+Independently review the Milestone 1 changes implemented by Worker 1 in:
+1. `src/pages/crm/RoleManagement.tsx`
+2. `src/pages/crm/Tasks.tsx`
 
-## References to Read
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
-
-## Expected Output
-Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md` with your verdict (APPROVE or REQUEST_CHANGES), observation, logic chain, and verification method. Send message when done.
-
-
-## 2026-10-24T19:19:47Z
-You are Reviewer 2 for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project.
-
-Your dedicated working directory is:
+## Working Directory
 `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2`
 
-Read your dispatch directive:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\DISPATCH.md`
+## Mandatory Reference Documents
+- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
+- Project Architecture & Feature Inventory: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
+- Worker 1 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
 
-Read the authoritative user request:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
+## 19 Protected Quarantine Files — NEVER MODIFY OR APPROVE MODIFICATIONS:
+- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+- `src/components/invoices/mobile/AddItemModal.tsx`
+- `src/components/invoices/mobile/SelectPartyModal.tsx`
+- `src/components/invoices/mobile/EditItemModal.tsx`
+- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+- `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+- `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+- `src/components/invoices/mobile/CreatePartyModal.tsx`
+- `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+- `src/components/items/mobile/CreateNewItemModal.tsx`
+- `src/components/SalesInvoiceModal.tsx`
+- `src/components/PurchaseInvoiceModal.tsx`
+- `src/components/invoices/AddItemsToBillModal.tsx`
+- `src/components/invoices/InvoiceFitView.tsx`
+- `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+- `src/utils/downloadExactInvoice.ts`
+- `src/utils/whatsappPdfShare.ts`
+- `src/utils/invoiceThemeLoader.ts`
+- `src/services/documentsService.ts`
 
-Read the Worker's handoff report:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+## Review Checklist
+1. Anti-Pattern Fix Verification:
+   - In `RoleManagement.tsx`: on mobile, are permission actions rendered as flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60` without individual card borders or shadows?
+   - In `Tasks.tsx`: on mobile, are Kanban tasks rendered as flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60`?
+2. Desktop Preservation:
+   - Are desktop views (`sm:` in RoleManagement, `md:` in Tasks) 100% preserved?
+3. Touch & Typography:
+   - Are touch targets >= 44px (`min-h-[44px]`)?
+   - Are all fonts >= 11px?
+4. Quarantine Integrity:
+   - Are all 19 quarantine files 100% untouched?
+5. Independent Build Verification:
+   - Run `node node_modules/typescript/bin/tsc --noEmit`
+   - Run `node node_modules/vite/bin/vite.js build`
+6. Output:
+   - Write your review verdict (`APPROVE` or `REQUEST_CHANGES`) and findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md`.
+   - Notify parent via `send_message`.
 
-Read the design rules and master project document:
-- `.agents/rules/minimal-design-system.md`
-- `PROJECT.md`
 
-Examine the changes made in:
-- `src/components/ui/button.tsx`
-- `src/components/ui/card.tsx`
-- `src/components/ui/badge.tsx`
-- `src/components/ui/table.tsx`
-- `src/components/ui/dialog.tsx`
+## 2026-10-25T09:24:24Z
+From parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+Priority: MESSAGE_PRIORITY_HIGH
 
-Your tasks:
-1. Objectively review and adversarially challenge the component primitives: button sizing (34px, 28px, 30px, 46px), card padding (p-3.5), badge text-[11px], table row height (38px-42px), dialog rounded-2xl.
-2. Run unit tests: run `cmd /c npx vitest run src/test/crmComponents.test.tsx`.
-3. Run TypeScript check: run `cmd /c npx tsc --noEmit`.
-4. Check Protected Files: verify zero invoice files were touched.
-5. Record your clear verdict: `VERDICT: APPROVE` or `VERDICT: REQUEST_CHANGES` (with reasons).
+You are Reviewer 2 for Milestone 1 (CRM Roles & Tasks Modernization).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
+Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\DISPATCH.md
+Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read Worker 1 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
 
-Write your handoff report to:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md`
-When complete, send a message to the orchestrator with your verdict.
+Independently review the changes in src/pages/crm/RoleManagement.tsx and src/pages/crm/Tasks.tsx.
+Verify the elimination of boxy cards on mobile, clean divide-y containers, 44px touch targets, >=11px fonts, desktop preservation, and that all 19 quarantine files are untouched.
+Run:
+- node node_modules/typescript/bin/tsc --noEmit
+- node node_modules/vite/bin/vite.js build
+
+Write your review verdict (APPROVE or REQUEST_CHANGES) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md and notify the parent orchestrator via send_message.

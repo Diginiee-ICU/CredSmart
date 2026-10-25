@@ -1,7 +1,10 @@
-# BRIEFING — 2026-10-20T10:55:00Z
+# BRIEFING — 2026-10-25T09:07:00Z
 
 ## Mission
-Investigate `backend-api/` routes (`invoices.js`, `settings.js`, `parties.js`, db connection, server entry points) and analyze implementation requirements for 8 core backend endpoints, data sanitization, schema alignment, and transaction guarantees.
+Survey and map all occurrences of the "nested/boxy card container" anti-pattern in:
+1. `src/pages/Sales.tsx` (mobile invoice list cards + outer wrapper double border)
+2. `src/pages/Purchases.tsx` (mobile purchase invoice list cards)
+3. `src/pages/Items.tsx` (mobile product list cards)
 
 ## 🔒 My Identity
 - Archetype: explorer
@@ -17,6 +20,9 @@ Investigate `backend-api/` routes (`invoices.js`, `settings.js`, `parties.js`, d
 - Latest Parent: 47768107-cdc6-46b5-a415-7ea52564fffb
 - Latest Roles: Backend API Routes & Schema Alignment Survey Explorer (Invoices, Settings, Parties, DB)
 - Latest Milestone: Production Fix Survey 2
+- Current Roles: Explorer 2 (Survey: Core Billing & Inventory - Sales, Purchases, Items)
+- Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Current Milestone: Mobile Boxy Card Container Survey (Sales, Purchases, Items)
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
@@ -27,39 +33,34 @@ Investigate `backend-api/` routes (`invoices.js`, `settings.js`, `parties.js`, d
 - Read-only audit of all direct `supabase.from(...)` queries for these domains
 - Read-only audit of `backend-api/` (invoices.js, settings.js, parties.js, db.js, index.js)
 - Analyze requirements 1-8 without committing source changes
+- Never modify or suggest modifying any of the 19 protected quarantine files listed in DISPATCH.md
+- Desktop views (>=768px) must remain 100% untouched
+- Business logic, handlers, modals, filters remain 100% untouched
+- Minimum touch targets >= 44px
+- Minimum font sizes >= 11px
 
 ## Current Parent
-- Conversation ID: 47768107-cdc6-46b5-a415-7ea52564fffb
-- Updated: 2026-10-20T10:55:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:07:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `backend-api/src/index.js` (Express configuration, compression, route mounting, cache)
-  - `backend-api/src/db.js` (pg Pool configuration)
-  - `backend-api/src/routes/invoices.js` (sales, purchases, sequences)
-  - `backend-api/src/routes/settings.js` (organizations, memberships, storefront-settings, locations)
-  - `backend-api/src/routes/parties.js` (customers, suppliers, credit_transactions, bank_accounts)
-  - `backend-api/src/routes/products.js`, `inventory.js`, `rpc.js`, `auth.js`
-  - `backend-api/schema.sql`, `fix_db.sql`, `add_indexes.sql`, `deploy-all.sh`, `setup.sh`
-  - `src/services/invoicesApi.ts`, `partiesApi.ts`, `settingsApi.ts`, `documentsService.ts`, `storefrontService.ts`
+  - `src/pages/Sales.tsx`
+  - `src/pages/Purchases.tsx`
+  - `src/pages/Items.tsx`
 - **Key findings**:
-  1. `POST /api/sale-items` completely missing from `invoices.js`. Line items fail with 404 when saved separately. Needs bulk batching with multi-row SQL.
-  2. `DELETE /api/sale-items` and `DELETE /api/sale-items/sale/:saleId` completely missing. Edit bill re-save fails to clean previous line items.
-  3. `POST /api/sales/bulk` missing. Batch invoice sync from Tally or imports fails.
-  4. `POST /api/sales` drops amounts when frontend sends `total` and `tax` instead of `total_amount` and `tax_amount`. Invoices saved with 0 amount.
-  5. `POST /api/sales` must support atomic sale + items insert in single transaction. `PUT /api/sales/:id` is missing and must be added with atomic item replacement.
-  6. `/storefront-settings` and `/storefront` alias need public unauthenticated access for customer viewing and support for `/storefront-orders`.
-  7. Membership queries throw 500 column errors when `org_id` or `organization_id` is missing in database table. Resilient query helper needed.
-  8. `POST /customers` and `POST /suppliers` crash with 500 if new columns (`trade_name`, `custom_fields`, etc.) are absent in Postgres or empty string is passed for numeric columns. Needs sanitization and fallback.
-- **Unexplored areas**: None. Backend route survey is comprehensive.
+  1. `Sales.tsx`: Outer wrapper double border (line 940) and mobile divide-y stream with flat rows (lines 942, 965-973) are already implemented and compliant with minimal design rules. Touch targets are >= 44px. Serves as reference implementation.
+  2. `Purchases.tsx`: Outer wrapper double border at line 864 (`rounded-xl border ... shadow-2xs`), mobile stream at line 866 (`p-2.5 pb-24 space-y-2.5`), and per-row card boxes at lines 897-905 (`p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]`). Action buttons on lines 958, 966, 1029, 1038 use `h-8.5` conflicting with `min-h-[44px]` and should be unified to `w-11 h-11`.
+  3. `Items.tsx`: Outer wrapper double border at line 1019 (`border ... rounded-xl ... shadow-2xs`), mobile stream at line 1021 (`p-2 space-y-2`), and per-row card boxes at lines 1054-1060 (`p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]`). Touch targets and typography >=11px mapped.
+  4. Build integrity: `tsc --noEmit` verified with 0 errors. All 19 quarantine files verified untouched.
+- **Unexplored areas**: None.
 
 ## Key Decisions Made
-- Recommending parameterized multi-row batching for `POST /api/sale-items`.
-- Normalizing dual naming across all invoice and party fields (`total` <-> `total_amount`, `tax` <-> `tax_amount`, `slug` <-> `store_slug`).
-- Designing fallback column recovery in `parties.js` and `settings.js` so endpoints succeed even before `fix_db.sql` is executed.
-- Recommending single network call for `saveDocument` (sale + items together).
+- All three files surveyed with exact line numbers, existing classes, proposed divide-y replacements, touch target audits, and desktop view protection.
+- Reported all findings in `handoff.md`.
 
 ## Artifact Index
 - `handoff.md` — 5-component handoff report for orchestrator and implementers
 - `progress.md` — Heartbeat and step tracking
 - `DISPATCH.md` — Stored dispatch instructions
+- `BRIEFING.md` — Persistent working memory

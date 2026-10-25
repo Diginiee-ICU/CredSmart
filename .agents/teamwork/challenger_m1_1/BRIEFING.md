@@ -1,12 +1,10 @@
-# BRIEFING — 2026-10-24T19:26:00Z
+# BRIEFING — 2026-10-25T09:33:00Z
 
 ## Mission
-Empirically stress-test the Tailwind theme and CSS tokens implemented in Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project:
-1. Verify Tailwind spacing scale resolution ('8.5', '7.5', '11.5', '13'), font-family ('sans', 'display', 'mono'), boxShadows, and border-radius.
-2. Verify CSS token variables in :root and .dark conform to contrast requirements (WCAG AA/AAA) and expected hex values.
-3. Verify font-feature-settings: "tnum" on is active on .font-mono and .tabular-nums.
-4. Run `cmd /c npx tsc --noEmit` and verify 0 errors.
-5. Author and run automated adversarial tests, document findings, and render explicit verdict: VERDICT: APPROVE or VERDICT: REQUEST_CHANGES.
+Empirically stress-test and verify the Milestone 1 mobile card modernization changes in:
+1. `src/pages/crm/RoleManagement.tsx`
+2. `src/pages/crm/Tasks.tsx`
+Verify elimination of nested/boxy card container anti-pattern, touch targets (>=44px), typography hierarchy (>=11px), desktop grid invariance, zero quarantine regressions, and verify clean TypeScript and Vite production builds. Render explicit gate verdict: APPROVE or FAIL.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
@@ -18,6 +16,7 @@ Empirically stress-test the Tailwind theme and CSS tokens implemented in Milesto
 - Current parent: c838af97-21de-4616-9188-f0f8dfa904c9
 - Project: CredSmart Enterprise CRM Staff Provisioning & Task Management
 - Active Parent ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a (Milestone 1 CredSmart Minimal & Fast-Access Redesign)
+- Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62 (Milestone 1 — CRM Roles & Tasks Empiric Verification)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code (`fix_db.sql`, `backend-api/fix_db.sql`)
@@ -27,49 +26,54 @@ Empirically stress-test the Tailwind theme and CSS tokens implemented in Milesto
 - Strict layout compliance — no tests, code, or data inside `.agents/teamwork/`
 - Explicit verdict required: APPROVE or REJECT
 - Milestone 1 Review-only: do NOT modify implementation code (`tailwind.config.ts`, `src/index.css`, `src/components/ui/*`). Report all findings in handoff.md.
+- Review-only: do NOT modify implementation code in `src/pages/crm/RoleManagement.tsx` or `src/pages/crm/Tasks.tsx`. Report findings only.
+- 19 Quarantine Files are strictly protected: NEVER TOUCH.
+- Verify touch targets >= 44px, typography >= 11px, divide-y list containers on mobile, desktop styles intact.
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:26:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:33:00Z
 
 ## Review Scope
 - **Files reviewed**:
-  - `tailwind.config.ts`
-  - `src/index.css`
-  - `src/components/ui/button.tsx`
-  - `src/components/ui/card.tsx`
-  - `src/components/ui/badge.tsx`
-  - `src/components/ui/table.tsx`
-  - `src/components/ui/dialog.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/pages/crm/Tasks.tsx`
+  - 19 quarantine files
+- **Reference documents**:
+  - `ORIGINAL_REQUEST.md` (2026-10-25 prompt)
   - `.agents/teamwork/worker_m1/handoff.md`
-- **Interface contracts**: `.agents/rules/minimal-design-system.md`, `PROJECT.md`
-- **Review criteria**: Empirical resolution of spacing tokens, typography, contrast ratios, OpenType features, TypeScript compilation, and zero regression.
+  - `.agents/rules/minimal-design-system.md`
+- **Verification criteria**:
+  - Elimination of card-in-card anti-pattern on mobile (`divide-y divide-slate-100 dark:divide-slate-800/60`)
+  - Preservation of desktop layout (`sm:` and `md:` breakpoints)
+  - Minimum touch targets (`min-h-[44px]`)
+  - Minimum font size (`text-[11px]`)
+  - 19 quarantine files 100% untouched
+  - Clean TypeScript check (`tsc --noEmit`)
+  - Clean Vite build (`vite build`)
 
 ## Key Decisions Made
-- Authored 20-test comprehensive adversarial challenge suite `src/test/designTokensM1.challenger.test.ts`.
-- Verified 100% test pass rate (20/20 tests passing in 51ms via Vitest).
-- Executed WCAG 2.1 relative luminance and contrast oracle script: Light foreground on background is 17.10:1 (AAA), Card foreground on card is 17.87:1 (AAA), Primary button text is 5.17:1 (AA), Warning dark text on amber is 8.38:1 (AAA), Dark mode text is 18.68:1 (AAA).
-- Verified OpenType tabular figures: `code, kbd, pre, .font-mono, .tabular-nums` enforces `font-feature-settings: "tnum" on, "cv02", "cv03", "cv04"` and `font-variant-numeric: tabular-nums`.
-- Verified TypeScript compilation: `cmd /c npx tsc --noEmit` exited with code 0 and zero errors.
-- Verified existing component suite: `src/test/crmComponents.test.tsx` passed 55/55 tests cleanly.
-- Rendered Gate Verdict: **`VERDICT: APPROVE`**.
+- Executed `node node_modules/typescript/bin/tsc --noEmit`: 0 errors.
+- Executed `node node_modules/vite/bin/vite.js build`: succeeded in 3m 22s with code 0.
+- Executed Vitest suites `src/test/crmTasksView.test.tsx`, `src/test/crmTaskLifecycle.test.ts`, and `src/test/crmPermissionRbac.test.ts`: 65/65 tests passed.
+- Authored and executed automated challenger test suite `src/test/crmRolesTasksModernization.challenger.test.ts`: 11/11 tests passed.
+- Confirmed zero modifications to all 19 quarantine files.
+- Rendered Gate Verdict: **APPROVE**.
 
 ## Artifact Index
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` — Final challenge report and gate verdict
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` — Final challenge report and verdict
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\progress.md` — Liveness heartbeat
-- `src/test/designTokensM1.challenger.test.ts` — 20-test automated empirical stress test suite
+- `src/test/crmRolesTasksModernization.challenger.test.ts` — Empirical challenger test suite
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Tailwind spacing keys `'7.5'`, `'8.5'`, `'11.5'`, `'13'`: verified resolving to `'1.875rem'`, `'2.125rem'`, `'2.875rem'`, `'3.25rem'`.
-  - Font families `'sans'`, `'display'`, `'mono'`: verified resolving to `'Inter'` and `'IBM Plex Mono'`.
-  - BoxShadows: verified micro-shadows (`2xs`, `xs`, `soft`, `lift`) and zero glow (`glow: 'none'`).
-  - Border radius: verified `3xl` is constrained to `1.25rem` (20px) preventing oversized bubble buttons.
-  - WCAG contrast: verified all critical text pairs meet or exceed WCAG AA/AAA standards.
-  - Button backwards compatibility: verified legacy aliases (`ruby`, `gold`, `glass`, `pill`, `lg`) operate cleanly.
-  - OpenType features: verified `tnum` active on `.font-mono` and `.tabular-nums`.
-- **Vulnerabilities found**: None. All implementations strictly conform to `.agents/rules/minimal-design-system.md` and `PROJECT.md`.
-- **Untested angles**: Runtime layout containment of upcoming Milestone 2 pages (`AppLayout.tsx`, `POSBilling.tsx`) which are scheduled for M2.
+  - Mobile card-in-card anti-pattern: verified replaced with `divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3` rows in `RoleManagement.tsx` and `Tasks.tsx`.
+  - Desktop layout invariance: verified `sm:grid sm:grid-cols-2 md:grid-cols-3` and `md:rounded-xl md:border md:shadow-2xs` are intact on desktop viewports.
+  - Touch targets: verified `min-h-[44px]` on all interactive elements.
+  - Typography: verified no sub-11px fonts.
+  - Quarantine preservation: verified 19 protected files are 100% untouched.
+- **Vulnerabilities found**: None. All implementations strictly conform to `.agents/rules/minimal-design-system.md` and the 2026-10-25 prompt.
+- **Untested angles**: Milestone 2 and 3 files (`Sales.tsx`, `Purchases.tsx`, `Items.tsx`, `Dashboard.tsx`, etc.), which are handled by subsequent milestones.
 
 ## Loaded Skills
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md`

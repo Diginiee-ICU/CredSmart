@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:07:37Z
+# BRIEFING — 2026-10-25T09:25:00Z
 
 ## Mission
-Implement Milestone 1 (M1) — Minimal Design Tokens & Base Primitives: extend Tailwind spacing scale & micro-shadows, overhaul CSS variables for light/dark canvas, sanitize skeuomorphic styles, configure 'Inter' and 'IBM Plex Mono' tabular figures, and update base UI primitives (Button, Card, Badge, Table, Dialog) with zero business logic regression.
+Implement Milestone 1 (M1) — CRM Roles & Tasks Modernization: refactor mobile list item containers in `src/pages/crm/RoleManagement.tsx` (module permission action grid) and `src/pages/crm/Tasks.tsx` (Kanban column task cards) to eliminate the nested card-in-a-card anti-pattern on mobile, converting them to clean minimal flat list rows in a single `divide-y divide-slate-100 dark:divide-slate-800/60` container while strictly preserving 100% desktop layouts, state, and functionality.
 
 ## 🔒 My Identity
 - Archetype: worker
@@ -13,6 +13,8 @@ Implement Milestone 1 (M1) — Minimal Design Tokens & Base Primitives: extend T
 - Active Milestone: M1: Live Database Schema Alignment & Idempotent fix_db.sql
 - Current Parent ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Current Milestone: Milestone 1: Minimal Design Tokens & Base Primitives
+- Active Parent ID (Milestone 1 — Mobile List Item Containers): 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Active Milestone (Current): Milestone 1 — CRM Roles & Tasks Modernization (`RoleManagement.tsx`, `Tasks.tsx`)
 
 ## 🔒 Key Constraints
 - Exclusively own `src/lib/apiClient.ts` and `src/test/apiClient.test.ts`. Do NOT modify files outside this ownership boundary.
@@ -42,47 +44,48 @@ Implement Milestone 1 (M1) — Minimal Design Tokens & Base Primitives: extend T
 - Table: `TableHead` `h-8.5 px-3 uppercase tracking-wider sticky top-0`, `TableCell` `py-2 px-3 text-xs align-middle` (38px-42px row height).
 - Dialog: replace `sm:rounded-3xl` with `sm:rounded-2xl` and remove oversized blur.
 - Verification commands: `cmd /c npx tsc --noEmit`, `cmd /c npx vitest run src/test/crmComponents.test.tsx`, node spacing check.
+- Exclusively own `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`. Do NOT touch any other files, especially the 19 quarantine files.
+- Eliminate floating card-in-a-card anti-pattern on mobile (`rounded-xl border shadow-2xs`), converting to clean flat list rows in a single `divide-y divide-slate-100 dark:divide-slate-800/60` container.
+- Preserve 100% desktop layouts (`sm:` and `md:` grid and cards), state, logic, and handlers.
+- Minimum touch targets `min-h-[44px]` on mobile. Minimum font size >= 11px.
+- Verification commands: `node node_modules/typescript/bin/tsc --noEmit` and `node node_modules/vite/bin/vite.js build`.
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:07:37Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:25:00Z
 
 ## Task Summary
-- **What to build**: Minimal design tokens in Tailwind, clean CSS color canvas & typography in `src/index.css`, sanitized utilities, standard button sizes & backward-compatible aliases in `button.tsx`, compact card in `card.tsx`, semantic badge in `badge.tsx`, screen-fitted table in `table.tsx`, clamped dialog in `dialog.tsx`.
-- **Success criteria**: All 7 files updated cleanly according to the survey blueprint; `node -e` resolves spacing '8.5', '7.5', '13'; `tsc --noEmit` exits 0; `vitest run src/test/crmComponents.test.tsx` passes 100%.
-- **Interface contracts**: `PROJECT.md`, `.agents/rules/minimal-design-system.md`, `.agents/skills/credsmart-minimal-design-system/SKILL.md`, `survey_miner_tokens/handoff.md`.
-- **Code layout**: `tailwind.config.ts`, `src/index.css`, `src/components/ui/button.tsx`, `src/components/ui/card.tsx`, `src/components/ui/badge.tsx`, `src/components/ui/table.tsx`, `src/components/ui/dialog.tsx`.
+- **What to build**: Modernize mobile view list item containers in `src/pages/crm/RoleManagement.tsx` (module permission action grid) and `src/pages/crm/Tasks.tsx` (Kanban column tasks) to clean minimal flat list rows in `divide-y divide-slate-100 dark:divide-slate-800/60` containers while preserving desktop grids, touch targets (>= 44px), font sizes (>= 11px), and all business logic.
+- **Success criteria**:
+  1. `src/pages/crm/RoleManagement.tsx` refactored with clean `divide-y` mobile container and flat rows.
+  2. `src/pages/crm/Tasks.tsx` refactored with clean `divide-y` mobile container and flat task rows.
+  3. `node node_modules/typescript/bin/tsc --noEmit` exits with 0 errors.
+  4. `node node_modules/vite/bin/vite.js build` succeeds.
+  5. `git status` verifies only `RoleManagement.tsx` and `Tasks.tsx` were modified.
+- **Interface contracts**: `PROJECT.md`, `DISPATCH.md`, `handoff.md` (explorer_survey_1), `minimal-design-system.md`.
+- **Code layout**: `src/pages/crm/RoleManagement.tsx`, `src/pages/crm/Tasks.tsx`.
 
 ## Key Decisions Made
-- Use exact blueprint from `survey_miner_tokens/handoff.md` which was thoroughly pre-mined.
-- Retain backward compatibility by aliasing legacy variants (`ruby`, `gold`, `glass`, `pill`, `pill-lg`, `lg`) in `button.tsx` and `glass` in `card.tsx` so existing unit tests (e.g., `crmComponents.test.tsx`) pass without failure.
+- Followed Explorer 1's blueprint from `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md`.
+- Implemented responsive divergence: mobile gets flat rows in `divide-y divide-slate-100 dark:divide-slate-800/60` containers, desktop (`sm:` / `md:`) retains grid and bordered card styling.
+- Maintained touch targets at `min-h-[44px]` and kept all fonts >= 11px.
 
 ## Artifact Index
-- `tailwind.config.ts` — Spacing, font family, boxShadow, borderRadius
-- `src/index.css` — CSS variables, typography, sanitized utilities
-- `src/components/ui/button.tsx` — Button primitives and sizes
-- `src/components/ui/card.tsx` — Card primitive and compact padding
-- `src/components/ui/badge.tsx` — Badge primitive and semantic variants
-- `src/components/ui/table.tsx` — Table head and cell density
-- `src/components/ui/dialog.tsx` — Dialog content radius and clean backdrop
-- `.agents/teamwork/worker_m1/handoff.md` — Final handoff report
+- `src/pages/crm/RoleManagement.tsx` — CRM Role Management permission matrix
+- `src/pages/crm/Tasks.tsx` — CRM Tasks Kanban columns
+- `.agents/teamwork/worker_m1/handoff.md` — Worker 1 completion report
 
 ## Change Tracker
 - **Files modified**:
-  - `tailwind.config.ts`: Added spacing scale ('7.5', '8.5', '11.5', '13'), set Inter sans/display, refined boxShadow micro-shadows, clamped borderRadius['3xl'] to 1.25rem.
-  - `src/index.css`: Overhauled :root and .dark tokens (#F8FAFC canvas, #2563EB royal blue, semantic tokens, hairline borders), set body and h1-h6 to Inter, added IBM Plex Mono tabular numbers, sanitized skeuomorphic and glowing utilities.
-  - `src/components/ui/button.tsx`: Implemented standard button sizing (34px default, 28px sm/table, 30px icon, 46px cta), clean variants, re-aliased legacy variants (ruby, gold, glass, pill, pill-lg, lg), active:scale-[0.98] duration-150.
-  - `src/components/ui/card.tsx`: Tightened padding to p-3.5 (14px), hairline border border-border/80, shadow-xs, re-aliased variant="glass".
-  - `src/components/ui/badge.tsx`: Enforced text-[11px] font-semibold font-mono, added semantic status variants (success, warning, destructive, info).
-  - `src/components/ui/table.tsx`: Updated TableHead to h-8.5 px-3 uppercase tracking-wider sticky header, TableCell to py-2 px-3 for 38-42px row height.
-  - `src/components/ui/dialog.tsx`: Clamped dialog radius to sm:rounded-2xl, replaced oversized blur with subtle blur.
-- **Build status**: PASS (tsc --noEmit: 0 errors; vitest crmComponents.test.tsx: 55/55 passed; spacing check: 2.125rem 1.875rem 3.25rem; eslint: 0 violations)
+  - `src/pages/crm/RoleManagement.tsx`: Replaced mobile nested action cards with flat divide-y list rows (`min-h-[44px]`), preserving desktop 2/3 column grid.
+  - `src/pages/crm/Tasks.tsx`: Replaced mobile Kanban task cards with flat divide-y list rows in unified container, preserving desktop Kanban cards.
+- **Build status**: PASS (`tsc --noEmit`: 0 errors; `vite build`: ✓ built in 55.00s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: PASS (55/55 unit tests passing in 2.16s, `tsc --noEmit` exited 0)
-- **Lint status**: 0 violations (ESLint passed cleanly across all modified files)
-- **Tests added/modified**: Verified against `src/test/crmComponents.test.tsx` and node Tailwind config resolution test
+- **Build/test result**: PASS (TypeScript 0 errors, Vite production build successful)
+- **Lint status**: 0 violations
+- **Tests added/modified**: Verified via `tsc --noEmit`, `vite build`, and git boundary checks
 
 ## Loaded Skills
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md`

@@ -1,29 +1,51 @@
-## 2026-10-18T19:03:51Z
+# Dispatch Assignment: Forensic Auditor (Milestone 2 — Core Billing & Inventory Integrity Forensics)
 
-You are auditor_m2_1. Your working directory is:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1
+## Mission
+Perform comprehensive forensic integrity verification of Milestone 2 changes in:
+1. `src/pages/Sales.tsx`
+2. `src/pages/Purchases.tsx`
+3. `src/pages/Items.tsx`
 
-MANDATORY FIRST STEP:
-Read ORIGINAL_REQUEST.md at:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+## Working Directory
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1`
 
-Artifacts to Audit:
-- Project Specification: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
-- Products API Service: src/services/productsApi.ts
-- Products Context: src/context/ProductsContext.tsx
-- Migrated Pages: src/pages/Items.tsx, src/pages/Inventory.tsx
+## Mandatory Reference Documents
+- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
+- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
+- Worker 2 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md`
 
-Forensic Audit Mission:
-Verify code authenticity and integrity for Milestone 2:
-1. Static analysis:
-   - Ensure NO mock cheating, no hardcoded responses, and genuine routing through `apiClient`.
-   - Confirm genuine payload serialization and error handling.
-   - Verify that `supabase.from("products")` and `supabase.from("product_batches")` were genuinely replaced, not hidden behind dummy shims.
-2. Run verification:
-   - `cmd /c npx vitest run src/test/e2eApiMigration.test.ts`
-   - `cmd /c npx tsc --noEmit`
-3. Render a binary gate verdict: CLEAN or INTEGRITY VIOLATION.
+## 19 Protected Quarantine Files:
+- NEVER MODIFY. Verify they are 100% untouched.
 
-Write your report to:
-c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\handoff.md
-When done, notify the orchestrator with send_message to recipient 73ee3452-ffda-43b4-83da-c3ca2006c47f.
+## Integrity Audit Requirements
+1. Static Analysis:
+   - Check git diff for `src/pages/Purchases.tsx` and `src/pages/Items.tsx`. Verify `Sales.tsx` has no unwanted changes.
+   - Verify changes are genuine UI refactorings (proper Tailwind classes, genuine components, proper event binding).
+   - Verify NO mock or dummy implementations, hardcoded states, fake strings, or logic bypasses were introduced.
+2. Quarantine Enforcement:
+   - Verify that none of the 19 quarantine files were touched or altered in git status.
+3. Build & Compiler Verification:
+   - Run `node node_modules/typescript/bin/tsc --noEmit`
+   - Run `node node_modules/vite/bin/vite.js build`
+4. Verdict:
+   - If ANY cheating, dummy code, or quarantine violation is found: `INTEGRITY VIOLATION`.
+   - If clean, genuine, and verified: `CLEAN`.
+5. Deliverables:
+   - Write your forensic audit report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\handoff.md`.
+   - Notify parent via `send_message`.
+
+
+## 2026-10-25T09:46:23Z
+
+You are Forensic Auditor for Milestone 2 (Core Billing & Inventory Integrity Forensics).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1
+Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\DISPATCH.md
+Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read Worker 2 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2\handoff.md
+
+Conduct forensic integrity audit on the changes made to src/pages/Sales.tsx, src/pages/Purchases.tsx, and src/pages/Items.tsx.
+Verify that:
+1. Changes are genuine UI improvements, not hardcoded mocks or dummy code.
+2. All 19 quarantine files remain 100% untouched.
+3. Build and tsc pass cleanly.
+Write your verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m2_1\handoff.md and notify parent via send_message.

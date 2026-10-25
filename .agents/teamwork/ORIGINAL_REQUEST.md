@@ -1215,3 +1215,98 @@ Strictly preserve all database operations, Supabase real-time subscriptions, GST
 ### System Stability
 - [ ] TypeScript compilation (`npm run build`) passes with 0 errors.
 - [ ] All routes, Supabase real-time updates, tax calculations, and PDF generation work with zero regression.
+
+
+## 2026-10-25T08:53:34Z
+
+Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart`. Replace individual floating bordered item cards with clean minimal divide-y list rows throughout the app's mobile views.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+
+## Background
+
+Across CredSmart mobile views, list items are currently wrapped in individual `rounded-xl border shadow-2xs` floating boxes placed inside an outer container — a "card-inside-a-card" anti-pattern. Screenshots show this as:
+- Permission toggles in RoleManagement: 32 individual bordered boxes
+- Invoice rows in Sales/Purchases: each row is a separate bordered card inside another bordered wrapper
+- Item/Party/Dashboard rows: same pattern
+
+The fix is to replace all these with clean minimal list rows separated by subtle `divide-y divide-slate-100 dark:divide-slate-800/60` hairlines — one clean outer container, flat rows inside.
+
+## The Anti-Pattern vs The Fix
+
+**❌ Current (Box-in-Box)**:
+```jsx
+// Outer container
+<div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs ...">
+  // Each item is its own floating card
+  <div className="p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs space-y-2.5">
+    ...row content...
+  </div>
+  <div className="p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs space-y-2.5">
+    ...row content...
+  </div>
+</div>
+```
+
+**✅ Target (Clean Minimal List)**:
+```jsx
+// Single clean container with divide-y
+<div className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60 ...">
+  // Each item is a flat row — no border, no shadow, no rounded corners
+  <div className="px-3.5 py-3 space-y-2">
+    ...row content...
+  </div>
+  <div className="px-3.5 py-3 space-y-2">
+    ...row content...
+  </div>
+</div>
+```
+
+## Requirements
+
+### R1. Fix Mobile List Item Containers in 9 Files
+Remove the individual per-row `border`, `rounded-xl`, and `shadow-2xs` classes from mobile list item cards in these files. Replace with clean flat rows inside a `divide-y divide-slate-100 dark:divide-slate-800/60` container:
+
+- `src/pages/crm/RoleManagement.tsx` — **32 hits**: permission toggle rows (`rounded-xl border p-3 flex items-center justify-between gap-3`) each become flat `px-3.5 py-3 flex items-center justify-between gap-3` rows
+- `src/pages/Items.tsx` — **13 hits**: mobile product list item cards
+- `src/pages/Sales.tsx` — **9 hits**: mobile invoice list cards + outer wrapper double border
+- `src/pages/Dashboard.tsx` — **9 hits**: recent activity transaction rows
+- `src/pages/Purchases.tsx` — **6 hits**: mobile purchase invoice list cards
+- `src/pages/Parties.tsx` — **6 hits**: mobile party directory rows
+- `src/pages/crm/SalaryManagement.tsx` — **4 hits**: salary profile list rows
+- `src/pages/crm/Attendance.tsx` — **4 hits**: attendance log rows
+- `src/pages/crm/Tasks.tsx` — **3 hits**: task cards in Kanban groups
+
+For Sales.tsx specifically, also fix the outer wrapper: `flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden` → `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden` (the outer double-border wrapping the list).
+
+### R2. Preserve Design System Rules
+- Never touch these 19 protected quarantine files: `src/components/invoices/mobile/MobileCreateInvoice.tsx`, `src/components/invoices/mobile/AddItemModal.tsx`, `src/components/invoices/mobile/SelectPartyModal.tsx`, `src/components/invoices/mobile/EditItemModal.tsx`, `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`, `src/components/invoices/mobile/MobileBillPreviewModal.tsx`, `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`, `src/components/invoices/mobile/CreatePartyModal.tsx`, `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`, `src/components/items/mobile/CreateNewItemModal.tsx`, `src/components/SalesInvoiceModal.tsx`, `src/components/PurchaseInvoiceModal.tsx`, `src/components/invoices/AddItemsToBillModal.tsx`, `src/components/invoices/InvoiceFitView.tsx`, `src/components/invoices/UnifiedInvoiceRenderer.tsx`, `src/utils/downloadExactInvoice.ts`, `src/utils/whatsappPdfShare.ts`, `src/utils/invoiceThemeLoader.ts`, `src/services/documentsService.ts`
+- Minimum touch targets: `min-h-[44px]` on all interactive rows
+- No sub-11px fonts (`text-[11px]` minimum)
+- Desktop views (`md:` and above breakpoints) must be preserved — only the mobile patterns (`block md:hidden` sections and mobile-only containers) need the flat row treatment
+- Keep all business logic, data fetching, state, onClick handlers, and functionality 100% intact
+- Single primary accent: Royal Blue `bg-blue-600` only — do not add new amber or purple buttons
+
+### R3. Build Must Pass
+After all changes:
+1. Run `cd c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart; node node_modules/typescript/bin/tsc --noEmit` — must produce 0 errors
+2. Run `cd c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart; node node_modules/vite/bin/vite.js build` — must complete with `✓ built`
+3. Verify all 19 protected files are untouched (check git status or file modification times)
+
+## Acceptance Criteria
+
+### Mobile UI
+- [ ] No mobile list item has its own individual `rounded-xl border shadow` floating card inside a parent container
+- [ ] All list rows are separated by hairline `divide-y divide-slate-100 dark:divide-slate-800/60` only
+- [ ] RoleManagement permission toggles: grouped per module section, flat rows with dividers — not 32 individual floating boxes
+- [ ] Sales/Purchases invoice list: clean flat rows, no double border
+
+### Code Quality
+- [ ] TypeScript: 0 errors (`tsc --noEmit`)
+- [ ] Vite production build: passes (`✓ built`)
+- [ ] All 19 quarantine files: unmodified
+
+### Preservation
+- [ ] Desktop table views (`hidden md:block` sections) are unchanged
+- [ ] All click handlers, navigation, state, and data logic intact
+- [ ] No new design system violations introduced (no sub-11px fonts, no oversized buttons)

@@ -1710,7 +1710,7 @@ export default function RoleManagement(): React.ReactElement {
                     </div>
 
                     {isExpanded && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800/60 sm:divide-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 pt-1 rounded-xl sm:rounded-none overflow-hidden sm:overflow-visible">
                         {mod.actions.map((act) => {
                           const key = `${mod.id}:${act.id}`;
                           const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
@@ -1720,18 +1720,18 @@ export default function RoleManagement(): React.ReactElement {
                               key={act.id}
                               onClick={() => !selectedRole.is_super_admin && handleToggleAction(mod.id, act.id)}
                               className={cn(
-                                "rounded-xl border p-3 flex items-center justify-between gap-3 transition-colors",
+                                "px-3.5 py-3 flex items-center justify-between gap-3 min-h-[44px] transition-colors sm:rounded-xl sm:border sm:p-3",
                                 selectedRole.is_super_admin
-                                  ? "bg-slate-50/70 border-slate-200/80 cursor-default"
-                                  : "bg-white border-slate-200 hover:border-slate-300 cursor-pointer",
-                                isAllowed && "border-blue-200 bg-blue-50/20"
+                                  ? "bg-slate-50/70 dark:bg-slate-800/40 sm:border-slate-200/80 cursor-default"
+                                  : "bg-white dark:bg-slate-900 sm:border-slate-200 hover:border-slate-300 cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
+                                isAllowed && "bg-blue-50/25 dark:bg-blue-950/20 sm:border-blue-200"
                               )}
                             >
                               <div className="space-y-0.5">
-                                <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                                   {act.label}
                                 </span>
-                                <p className="text-[11px] text-slate-500 leading-tight">
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                                   {act.description}
                                 </p>
                               </div>

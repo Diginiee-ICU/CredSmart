@@ -1,12 +1,20 @@
-# Progress — Challenger M1-2 (Primitives Regression Verifier)
+# Progress: Challenger 2 (Milestone 1 — CRM Roles & Tasks Modernization)
 
-- Last visited: 2026-10-24T19:25:30Z
-- Status: Complete — Milestone 1 primitives verified, tests passed, zero regressions, verdict rendered.
-- Empirical Results:
-  1. Unit tests: `cmd /c npx vitest run src/test/crmComponents.test.tsx` -> 55/55 passed (100%).
-  2. Adversarial suite: `cmd /c npx vitest run src/test/componentPrimitivesAdversarial.challenger.test.tsx` -> 32/32 passed (100%), validating all 81 Button permutations, Card, Badge, Table, Dialog.
-  3. TypeScript check: `cmd /c npx tsc --noEmit` -> Exit code 0, 0 compiler errors.
-  4. Core regression check: 154/154 passed tests across 5 test suites.
-  5. Protected file check: Git status verifies 0 protected invoicing files modified.
-- Verdict: VERDICT: APPROVE
-- Next: Generating handoff report `handoff.md` and messaging parent.
+Last visited: 2026-10-25T09:35:00Z
+Status: Complete — VERDICT: APPROVE
+
+## Steps
+- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, worker_m1/handoff.md, minimal-design-system.md
+- [x] Updated BRIEFING.md
+- [x] Inspect git status & verify 19 quarantine files are untouched (0 touched)
+- [x] Inspect git diff on `src/pages/crm/RoleManagement.tsx`
+- [x] Inspect git diff on `src/pages/crm/Tasks.tsx`
+- [x] Empirically check touch targets (`min-h-[44px]`)
+- [x] Empirically check typography (no `< text-[11px]`)
+- [x] Empirically check responsive divergence (mobile flat divide-y vs desktop grid/cards)
+- [x] Run `node node_modules/typescript/bin/tsc --noEmit` (exit code 0)
+- [x] Run `node node_modules/vite/bin/vite.js build` (exit code 0, ✓ built in 2m 45s)
+- [x] Authored and passed test suite `src/test/crmRolesTasksEmpiricChallenger2.test.ts` (13 tests passed)
+- [x] Executed full CRM task test suite (32 passed tests)
+- [x] Authored handoff.md with verdict (APPROVE)
+- [x] Send message to orchestrator

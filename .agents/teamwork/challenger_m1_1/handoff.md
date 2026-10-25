@@ -1,264 +1,193 @@
-# Handoff Report — Challenger 1 (Milestone 1: Theme & Spacing Stress Tester)
+# Handoff Report: Challenger 1 (Milestone 1 — CRM Roles & Tasks Empiric Verification)
 
-**Author**: Theme & Spacing Empirical Challenger (`challenger_m1_1`)  
-**Project**: CredSmart Minimal & Fast-Access Redesign  
-**Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1`  
-**Date**: 2026-10-24T19:28:00Z  
-**Type**: Hard Handoff (Adversarial Challenge Complete)  
-**Gate Verdict**: **`VERDICT: APPROVE`**
+**Author**: Challenger 1 (`challenger_m1_1`)  
+**Parent Agent**: Orchestrator (`24d614cb-853d-49d4-9ac2-cf0090c93a62`)  
+**Date**: 2026-10-25T09:34:00Z  
+**Type**: Hard Handoff  
+**Gate Verdict**: **APPROVE**  
+**Verified Files**:
+1. `src/pages/crm/RoleManagement.tsx`
+2. `src/pages/crm/Tasks.tsx`
 
 ---
 
 ## 1. Observation
 
-Direct empirical examination of the Milestone 1 deliverables was conducted using automated scripts, static AST analysis, TypeScript compiler execution, and Vitest test harnesses.
+### 1.1 Git Working Tree & Quarantine Integrity
+- Command: `& "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" status --porcelain`
+- Result: Exited with code 0.
+- Observed in `src/`:
+  - `M src/pages/crm/RoleManagement.tsx`
+  - `M src/pages/crm/Tasks.tsx`
+- Verbatim: Strictly only the two assigned Milestone 1 files in `src/` were modified.
+- All 19 protected quarantine files were verified completely untouched:
+  1. `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+  2. `src/components/invoices/mobile/AddItemModal.tsx`
+  3. `src/components/invoices/mobile/SelectPartyModal.tsx`
+  4. `src/components/invoices/mobile/EditItemModal.tsx`
+  5. `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+  6. `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+  7. `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+  8. `src/components/invoices/mobile/CreatePartyModal.tsx`
+  9. `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+  10. `src/components/items/mobile/CreateNewItemModal.tsx`
+  11. `src/components/SalesInvoiceModal.tsx`
+  12. `src/components/PurchaseInvoiceModal.tsx`
+  13. `src/components/invoices/AddItemsToBillModal.tsx`
+  14. `src/components/invoices/InvoiceFitView.tsx`
+  15. `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+  16. `src/utils/downloadExactInvoice.ts`
+  17. `src/utils/whatsappPdfShare.ts`
+  18. `src/utils/invoiceThemeLoader.ts`
+  19. `src/services/documentsService.ts`
 
-### 1.1. Tailwind Spacing Scale Resolution
-Execution of the Tailwind CSS configuration resolver command:
-```bash
-node -e "const resolveConfig = require('tailwindcss/resolveConfig'); const config = require('./tailwind.config.ts'); const full = resolveConfig(config.default || config); console.log(JSON.stringify({ '7.5': full.theme.spacing['7.5'], '8.5': full.theme.spacing['8.5'], '11.5': full.theme.spacing['11.5'], '13': full.theme.spacing['13'] }));"
-```
-Verbatim CLI Output:
-```json
-{"13":"3.25rem","7.5":"1.875rem","8.5":"2.125rem","11.5":"2.875rem"}
-```
-Resolution checks:
-- `spacing['7.5']`: `1.875rem` = 30px (exact micro icon button height `w-7.5 h-7.5`)
-- `spacing['8.5']`: `2.125rem` = 34px (exact standard action button height `h-8.5`)
-- `spacing['11.5']`: `2.875rem` = 46px (exact mobile center elevated CTA `h-11.5`)
-- `spacing['13']`: `3.25rem` = 52px (exact desktop command bar height `h-13`)
+### 1.2 `src/pages/crm/RoleManagement.tsx` Code Inspection
+- Inspected lines 1710–1735:
+  ```tsx
+  {isExpanded && (
+    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 sm:divide-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 pt-1 rounded-xl sm:rounded-none overflow-hidden sm:overflow-visible">
+      {mod.actions.map((act) => {
+        const key = `${mod.id}:${act.id}`;
+        const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
 
-### 1.2. Typography Resolution
-Execution of the font-family resolver command:
-```bash
-node -e "const resolveConfig = require('tailwindcss/resolveConfig'); const config = require('./tailwind.config.ts'); const full = resolveConfig(config.default || config); console.log(JSON.stringify(full.theme.fontFamily));"
-```
-Verbatim CLI Output:
-```json
-{"sans":["'Inter'","-apple-system","BlinkMacSystemFont","'Segoe UI'","Roboto","sans-serif"],"serif":["ui-serif","Georgia","Cambria","\"Times New Roman\"","Times","serif"],"mono":["'IBM Plex Mono'","ui-monospace","SFMono-Regular","monospace"],"display":["'Inter'","-apple-system","BlinkMacSystemFont","'Segoe UI'","Roboto","sans-serif"]}
-```
-Direct inspection of `src/index.css`:
-- Lines 185-187:
-  ```css
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04';
+        return (
+          <div
+            key={act.id}
+            onClick={() => !selectedRole.is_super_admin && handleToggleAction(mod.id, act.id)}
+            className={cn(
+              "px-3.5 py-3 flex items-center justify-between gap-3 min-h-[44px] transition-colors sm:rounded-xl sm:border sm:p-3",
+              selectedRole.is_super_admin
+                ? "bg-slate-50/70 dark:bg-slate-800/40 sm:border-slate-200/80 cursor-default"
+                : "bg-white dark:bg-slate-900 sm:border-slate-200 hover:border-slate-300 cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
+              isAllowed && "bg-blue-50/25 dark:bg-blue-950/20 sm:border-blue-200"
+            )}
+          >
   ```
-- Lines 192-195:
-  ```css
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    letter-spacing: -0.02em;
-  }
+- Observations:
+  - Mobile (< `sm:`): Outer container applies `divide-y divide-slate-100 dark:divide-slate-800/60 rounded-xl overflow-hidden`. Flat rows use `px-3.5 py-3`. Zero individual per-row borders, shadows, or rounded corners on mobile.
+  - Desktop (`sm:` and above): Applies `sm:divide-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 sm:rounded-none sm:overflow-visible` on the container, and `sm:rounded-xl sm:border sm:p-3` on the action tiles.
+  - Touch target: Row has explicit `min-h-[44px]`.
+  - Typography: Label has `text-xs font-semibold` (12px), description has `text-[11px]` (11px). Zero sub-11px font classes.
+
+### 1.3 `src/pages/crm/Tasks.tsx` Code Inspection
+- Inspected lines 873–905 & 978–1026:
+  ```tsx
+  <div
+    key={col.status}
+    className="flex flex-col rounded-xl md:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-3 min-h-0 md:min-h-[380px]"
+  >
+  ...
+    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 md:divide-y-0 md:space-y-2.5 flex-1 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-xl md:rounded-none border border-slate-200/80 dark:border-slate-800 md:border-0 overflow-hidden md:overflow-visible">
+  ...
+      colTasks.map((task) => (
+        <div
+          key={task.id}
+          className="px-3.5 py-3 md:p-3.5 space-y-2 md:space-y-2.5 bg-white dark:bg-slate-900 md:rounded-xl md:border md:border-slate-200/80 md:dark:border-slate-800 md:shadow-2xs hover:shadow-xs transition-all"
+        >
   ```
-- Lines 197-201:
-  ```css
-  code, kbd, pre, .font-mono, .tabular-nums {
-    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-    font-feature-settings: "tnum" on, "cv02", "cv03", "cv04";
-    font-variant-numeric: tabular-nums;
-  }
-  ```
+- Observations:
+  - Mobile (< `md:`): Column contains tasks inside a single unified `rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden` container. Task items are flat rows (`px-3.5 py-3 space-y-2`). Zero nested floating card borders or shadows on mobile.
+  - Desktop (`md:`): Container restores `md:divide-y-0 md:space-y-2.5 md:bg-transparent md:rounded-none md:border-0 md:overflow-visible`, and task items restore `md:rounded-xl md:border md:shadow-2xs md:p-3.5 md:space-y-2.5`.
+  - Empty state: Clean `py-6 text-center text-xs text-slate-400` on mobile, restoring `md:h-28 md:flex md:items-center md:justify-center md:rounded-xl md:border md:border-dashed` on desktop.
+  - Action buttons: All interactive action buttons (`Start Job`, `Submit Proof`, `Request Revision`, `Approve`) have `min-h-[44px] h-11 px-3 flex items-center text-[11px]`.
+  - Typography: Title `text-xs font-bold`, descriptions/proof `text-[11px]`. Zero sub-11px font classes.
 
-### 1.3. Micro-Shadows and Border-Radius Constraints
-Execution of theme boxShadow and borderRadius resolver command:
-```bash
-node -e "const resolveConfig = require('tailwindcss/resolveConfig'); const config = require('./tailwind.config.ts'); const full = resolveConfig(config.default || config); console.log('boxShadow:', JSON.stringify(full.theme.boxShadow)); console.log('borderRadius:', JSON.stringify(full.theme.borderRadius));"
-```
-Verbatim CLI Output:
-```json
-boxShadow: {"sm":"0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08)","DEFAULT":"0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)","md":"0 4px 6px -1px rgba(15, 23, 42, 0.08)","lg":"0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)","xl":"0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)","2xl":"0 25px 50px -12px rgb(0 0 0 / 0.25)","inner":"inset 0 2px 4px 0 rgb(0 0 0 / 0.05)","none":"none","2xs":"0 1px 2px 0 rgba(0, 0, 0, 0.02)","xs":"0 1px 2px 0 rgba(15, 23, 42, 0.04)","soft":"0 1px 3px 0 rgba(15, 23, 42, 0.06)","lift":"0 2px 6px 0 rgba(15, 23, 42, 0.08)","glow":"none","glow-gold":"none"}
-borderRadius: {"none":"0px","sm":"calc(var(--radius) - 4px)","DEFAULT":"0.25rem","md":"calc(var(--radius) - 2px)","lg":"var(--radius)","xl":"calc(var(--radius) + 4px)","2xl":"calc(var(--radius) + 10px)","3xl":"1.25rem","full":"9999px"}
-```
-Observed constraints:
-- `glow`: `'none'`, `glow-gold`: `'none'`. Skeuomorphic neon drop-shadows have been completely eradicated.
-- `borderRadius['3xl']`: `1.25rem` (20px), preventing bloated bubble buttons.
+### 1.4 Empirical Compiler & Build Execution
+1. **TypeScript Check**:
+   - Command: `node node_modules/typescript/bin/tsc --noEmit`
+   - Result: Exited with code 0 (zero errors).
+2. **Vite Production Build**:
+   - Command: `node node_modules/vite/bin/vite.js build`
+   - Result: Exited with code 0.
+   - Verbatim Output:
+     ```
+     ✓ 3662 modules transformed.
+     dist/index.html 8.31 kB │ gzip: 2.69 kB
+     dist/assets/index-B5IPkreH.css 275.30 kB │ gzip: 39.66 kB
+     dist/assets/index-DsjFW-ds.js 4,853.32 kB │ gzip: 1,235.21 kB
+     ✓ built in 3m 22s
+     ```
 
-### 1.4. CSS Surface Color Tokens & WCAG Contrast Oracle
-Relative luminance and contrast ratio calculations following WCAG 2.1 formulas:
-```
-=== LIGHT MODE HEX & CONTRAST ===
-bg             #F9FAFB [ 249, 250, 251 ]
-fg             #0F1729 [ 15, 23, 41 ]
-card           #FFFFFF [ 255, 255, 255 ]
-cardFg         #0F1729 [ 15, 23, 41 ]
-primary        #2463EB [ 36, 99, 235 ]
-primaryFg      #FFFFFF [ 255, 255, 255 ]
-muted          #F1F5F9 [ 241, 245, 249 ]
-mutedFg        #65758B [ 101, 117, 139 ]
-success        #27B07D [ 39, 176, 125 ]
-successFg      #FFFFFF [ 255, 255, 255 ]
-destructive    #D70F3E [ 215, 15, 62 ]
-destructiveFg  #FFFFFF [ 255, 255, 255 ]
-warning        #F59F0A [ 245, 159, 10 ]
-warningFg      #0F1729 [ 15, 23, 41 ]
-
-Light Foreground on Background: 17.10:1 (Exceeds WCAG AAA >= 7.0:1)
-Light Card Foreground on Card: 17.87:1 (Exceeds WCAG AAA >= 7.0:1)
-Light Primary Fg on Primary: 5.17:1 (Exceeds WCAG AA >= 4.5:1)
-Light Muted Fg on Card: 4.70:1 (Exceeds WCAG AA >= 4.5:1)
-Light Destructive Fg on Destructive: 5.21:1 (Exceeds WCAG AA >= 4.5:1)
-Light Warning Fg on Warning: 8.38:1 (Exceeds WCAG AAA >= 7.0:1)
-
-=== DARK MODE HEX & CONTRAST ===
-bg             #080C16 [ 8, 12, 22 ]
-fg             #F8FAFC [ 248, 250, 252 ]
-card           #111522 [ 17, 21, 34 ]
-cardFg         #F8FAFC [ 248, 250, 252 ]
-primary        #3C83F6 [ 60, 131, 246 ]
-primaryFg      #FFFFFF [ 255, 255, 255 ]
-mutedFg        #94A3B8 [ 148, 163, 184 ]
-success        #27B07D [ 39, 176, 125 ]
-destructive    #F2406A [ 242, 64, 106 ]
-warning        #F59F0A [ 245, 159, 10 ]
-warningFg      #F8FAFC [ 248, 250, 252 ]
-
-Dark Foreground on Background: 18.68:1 (Exceeds WCAG AAA >= 7.0:1)
-Dark Card Foreground on Card: 17.39:1 (Exceeds WCAG AAA >= 7.0:1)
-Dark Primary Fg on Primary: 3.64:1 (Exceeds WCAG AA UI component >= 3.0:1)
-Dark Muted Fg on Background: 7.62:1 (Exceeds WCAG AAA >= 7.0:1)
-Dark Muted Fg on Card: 7.10:1 (Exceeds WCAG AAA >= 7.0:1)
-```
-
-### 1.5. TypeScript Compilation Check
-Execution of the strict TypeScript compiler:
-```bash
-cmd /c npx tsc --noEmit
-```
-Verbatim CLI Output:
-```
-Exit code: 0
-Stdout: (empty)
-Stderr: (empty)
-```
-Zero errors across all modified primitives and application modules.
-
-### 1.6. Automated Test Suites Execution
-1. Authored `src/test/designTokensM1.challenger.test.ts` (20 tests).
-   Execution command:
-   ```bash
-   cmd /c npx vitest run src/test/designTokensM1.challenger.test.ts
-   ```
-   Verbatim CLI Output:
-   ```
-    ✓ src/test/designTokensM1.challenger.test.ts (20 tests) 51ms
-
-    Test Files  1 passed (1)
-         Tests  20 passed (20)
-      Duration  10.94s
-   ```
-2. Executed existing component verification suite:
-   ```bash
-   cmd /c npx vitest run src/test/crmComponents.test.tsx
-   ```
-   Verbatim CLI Output:
-   ```
-    ✓ src/test/crmComponents.test.tsx (55 tests) 2919ms
-
-    Test Files  1 passed (1)
-         Tests  55 passed (55)
-      Duration  13.32s
-   ```
-3. Executed ESLint check:
-   ```bash
-   cmd /c npx eslint src/test/designTokensM1.challenger.test.ts
-   ```
-   Verbatim CLI Output:
-   ```
-   Exit code: 0
-   Stdout: (empty)
-   Stderr: (empty)
-   ```
+### 1.5 Vitest Automated Test Runs
+1. **Existing CRM Test Suites**:
+   - Command: `node node_modules/vitest/vitest.mjs run src/test/crmTasksView.test.tsx src/test/crmTaskLifecycle.test.ts src/test/crmPermissionRbac.test.ts`
+   - Result: 3 passed (3), 65 passed (65).
+2. **Milestone 1 Empirical Challenger Suite**:
+   - Test File: `src/test/crmRolesTasksModernization.challenger.test.ts`
+   - Command: `node node_modules/vitest/vitest.mjs run src/test/crmRolesTasksModernization.challenger.test.ts`
+   - Result: 1 passed (1), 11 passed (11).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Premise 1 (Tailwind Spacing Token Availability)**:
-   - Observation 1.1 proves that `tailwindcss/resolveConfig` successfully evaluates `'7.5'`, `'8.5'`, `'11.5'`, and `'13'` to `'1.875rem'`, `'2.125rem'`, `'2.875rem'`, and `'3.25rem'`.
-   - Therefore, Tailwind utility classes `h-8.5`, `h-7`, `w-7.5 h-7.5`, and `h-13` will compile directly without runtime syntax failures or falling back to unstyled blocks in Milestones 2, 3, and 4.
-
-2. **Premise 2 (Typography & OpenType Tabular Numerals Compliance)**:
-   - Observation 1.2 proves that `theme.fontFamily.sans` maps to `'Inter'` and `theme.fontFamily.mono` maps to `'IBM Plex Mono'`.
-   - Observation 1.2 further proves that `.font-mono` and `.tabular-nums` in `src/index.css` enforce `font-feature-settings: "tnum" on, "cv02", "cv03", "cv04"` and `font-variant-numeric: tabular-nums`.
-   - Therefore, currency figures (₹), numbers, timestamps, and barcodes will align cleanly with monospaced tabular figures across all platforms.
-
-3. **Premise 3 (Accessible Neutral Palette & WCAG Ratios)**:
-   - Observation 1.4 proves that text-to-background contrast in Light mode is 17.10:1 and Dark mode is 18.68:1 (both comfortably exceeding the WCAG AAA threshold of 7.0:1).
-   - In addition, the light warning token employs dark foreground text (`--warning-foreground: 222 47% 11%`), achieving an 8.38:1 contrast ratio and avoiding the common pitfall of white-on-amber illegibility.
-   - Therefore, the color token architecture satisfies all accessibility requirements under `.agents/rules/minimal-design-system.md`.
-
-4. **Premise 4 (Elimination of Skeuomorphic Bloat & Button Proportions)**:
-   - Observation 1.3 proves that `glow` and `glow-gold` are set to `none`, and `3xl` border radius is constrained to `1.25rem`.
-   - Observation 1.6 and tests in `designTokensM1.challenger.test.ts` demonstrate that `<Button>` variants correctly apply 34px default, 28px sm/table, 30px icon, and 46px mobile CTA, while backward compatibility aliases (`ruby`, `gold`, `glass`, `pill`, `lg`) continue to render cleanly.
-   - Therefore, the system completely deprecates bloated buttons without breaking existing JSX references.
-
-5. **Premise 5 (Zero Regression Across Application)**:
-   - Observation 1.5 proves that `tsc --noEmit` exited with 0 errors across the entire codebase.
-   - Observation 1.6 proves that existing test suites (`crmComponents.test.tsx` with 55 tests) continue to pass with a 100% success rate.
-   - No files in the protected create invoice quarantine were modified.
-   - Therefore, Milestone 1 introduces zero architectural or type regressions.
+1. **Anti-Pattern Elimination**:
+   - In `RoleManagement.tsx`, individual permission toggles previously each had `rounded-xl border p-3`. When expanding a module, up to 4 toggles per module (32 total across 8 modules) rendered as floating cards inside an accordion card. With Worker 1's changes, mobile viewports (< `sm:`) render these as flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60`, successfully eliminating the card-in-a-card anti-pattern.
+   - In `Tasks.tsx`, Kanban columns previously had floating `rounded-xl border shadow-2xs` cards inside a `rounded-2xl border` column box. On mobile (< `md:`), tasks are now housed in a single bordered `divide-y divide-slate-100 dark:divide-slate-800/60` container with flat `px-3.5 py-3` rows, eliminating nested floating card boundaries.
+2. **Desktop Preservation**:
+   - Responsive Tailwind prefixes ensure desktop views are unaffected:
+     - `RoleManagement.tsx`: `sm:divide-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 sm:rounded-xl sm:border sm:p-3` preserves the multi-column bordered tile matrix.
+     - `Tasks.tsx`: `md:divide-y-0 md:space-y-2.5 md:rounded-xl md:border md:shadow-2xs md:p-3.5` preserves the individual Kanban cards on desktop.
+3. **Ergonomic Standards**:
+   - `min-h-[44px]` is present on all interactive rows in `RoleManagement.tsx` and all interactive action buttons in `Tasks.tsx`.
+   - Typography strictly adheres to the design system rule: no sub-11px text classes found in AST search.
+4. **Regression Safeguards**:
+   - Zero changes to business logic, handlers, state, or hooks.
+   - Zero changes to any of the 19 quarantine files.
+   - `tsc --noEmit` and `vite build` completed cleanly with exit code 0.
 
 ---
 
 ## 3. Caveats
 
-1. **Downstream Page Integration**:
-   - Milestone 1 focused strictly on tokens, CSS variables, and base primitives in `tailwind.config.ts`, `src/index.css`, and `src/components/ui/`.
-   - Layout-level integration (desktop 52px header, POS split workbench, mobile bottom navigation dock, and individual dashboard/sales pages) belongs to Milestones 2, 3, and 4.
-2. **Third-Party Landing Page Hero CTAs**:
-   - Standalone marketing landing pages (`src/pages/Landing.tsx`) contain marketing-specific hero buttons (`h-12`) that will be unified when landing pages are reviewed. Core application primitives in `src/components/ui/` adhere 100% to the 34px/28px/46px standards.
-3. **No other caveats**: All core tokens and primitives have been directly and empirically validated.
+- Subsequent pages (`Sales.tsx`, `Purchases.tsx`, `Items.tsx`, `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, `Attendance.tsx`) are scheduled for Milestones 2 and 3 and were not modified or certified under Milestone 1.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 satisfies every requirement set forth in the dispatch directive, `ORIGINAL_REQUEST.md`, and `.agents/rules/minimal-design-system.md`.
-- Spacing scale resolves with exact rem equivalents.
-- Fonts and OpenType `tnum` features are active.
-- WCAG AA/AAA contrast ratios are met.
-- TypeScript compilation is 100% clean.
-- All 20 empirical challenger tests and 55 existing component tests pass cleanly.
+**VERDICT: APPROVE**
 
-**Final Gate Assessment**: **`VERDICT: APPROVE`**
-
-Milestone 1 is ready to be merged, and the orchestrator can proceed with Milestone 2 (Screen-Fitted Desktop Shell & Layouts).
+Worker 1's modifications in `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` strictly satisfy all Milestone 1 requirements:
+- The card-inside-a-card anti-pattern is fully eliminated on mobile viewports using `divide-y divide-slate-100 dark:divide-slate-800/60` and flat rows.
+- Desktop grid and card styling are 100% preserved with responsive classes.
+- Touch targets meet or exceed 44px (`min-h-[44px]`).
+- Typography adheres to the >=11px scale.
+- All 19 quarantine files remain pristine.
+- TypeScript compilation and Vite production build pass with 0 errors.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify the challenger's findings, run the following commands:
+To independently reproduce the empirical verification:
 
-1. **Verify Tailwind Spacing Scale**:
-   ```bash
-   node -e "const resolveConfig = require('tailwindcss/resolveConfig'); const config = require('./tailwind.config.ts'); const full = resolveConfig(config.default || config); console.log(JSON.stringify({ '7.5': full.theme.spacing['7.5'], '8.5': full.theme.spacing['8.5'], '11.5': full.theme.spacing['11.5'], '13': full.theme.spacing['13'] }));"
+1. **TypeScript Typecheck**:
+   ```powershell
+   node node_modules/typescript/bin/tsc --noEmit
    ```
-   *Expected Output*: `{"13":"3.25rem","7.5":"1.875rem","8.5":"2.125rem","11.5":"2.875rem"}`
+   *Expected*: Exit code 0, no errors.
 
-2. **Run Challenger Automated Stress Suite**:
-   ```bash
-   cmd /c npx vitest run src/test/designTokensM1.challenger.test.ts
+2. **Vite Production Build**:
+   ```powershell
+   node node_modules/vite/bin/vite.js build
    ```
-   *Expected Output*: 20 passed out of 20 tests.
+   *Expected*: `✓ built in ...` with exit code 0.
 
-3. **Run TypeScript Compilation**:
-   ```bash
-   cmd /c npx tsc --noEmit
+3. **Empirical Challenger Test Suite**:
+   ```powershell
+   node node_modules/vitest/vitest.mjs run src/test/crmRolesTasksModernization.challenger.test.ts
    ```
-   *Expected Output*: Exit code 0, 0 errors.
+   *Expected*: 11 passed (11).
 
-4. **Run Existing Component Suite**:
-   ```bash
-   cmd /c npx vitest run src/test/crmComponents.test.tsx
+4. **Quarantine & Diff Verification**:
+   ```powershell
+   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" status --porcelain
    ```
-   *Expected Output*: 55 passed out of 55 tests.
+   *Expected*: Only `RoleManagement.tsx` and `Tasks.tsx` modified under `src/`.
 
-5. **Run ESLint on Test File**:
-   ```bash
-   cmd /c npx eslint src/test/designTokensM1.challenger.test.ts
-   ```
-   *Expected Output*: Exit code 0, 0 warnings, 0 errors.
+5. **Invalidation Conditions**:
+   - Any compiler error in `tsc --noEmit`.
+   - Any failure in `vite build`.
+   - Re-introduction of per-row `border` or `shadow` on mobile (< `sm:` in roles, < `md:` in tasks).
+   - Any modification to the 19 quarantine files.

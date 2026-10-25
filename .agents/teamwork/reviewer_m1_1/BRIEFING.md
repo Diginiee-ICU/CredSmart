@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:30:00Z
+# BRIEFING — 2026-10-25T09:35:00Z
 
 ## Mission
-Independently review and adversarially challenge Milestone 1: Minimal & Fast-Access Design Tokens & CSS Architecture (`tailwind.config.ts`, `src/index.css`, UI primitives in `src/components/ui/`), verifying design system conformance, zero regressions, type-check integrity, and protected invoice file invariance.
+Independently review and adversarially challenge Milestone 1: CRM Roles & Tasks Modernization (`src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`), verifying the complete elimination of nested/boxy mobile cards, clean divide-y hairlines, 44px touch targets, >=11px typography, 100% desktop preservation, and 19 quarantine files untouched.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -16,6 +16,8 @@ Independently review and adversarially challenge Milestone 1: Minimal & Fast-Acc
 - Project (Current): CredSmart Minimal & Fast-Access Redesign
 - Milestone (Current): Milestone 1 - Design Tokens & CSS Architecture
 - Current Parent (Current): 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Milestone (Active): Milestone 1 — CRM Roles & Tasks Modernization (Nested Boxy Card Elimination)
+- Parent (Active): 24d614cb-853d-49d4-9ac2-cf0090c93a62
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -26,64 +28,49 @@ Independently review and adversarially challenge Milestone 1: Minimal & Fast-Acc
 - Review-only: do NOT modify tailwind.config.ts, src/index.css, or any app code
 - Strictly enforce CredSmart Minimal & Fast-Access Design System rules (minimal-design-system.md)
 - Verify 19 protected invoice files remain 100% untouched
+- Eliminate box-in-box anti-patterns on mobile; verify divide-y hairlines
+- Verify minimum 44px touch targets and >= 11px typography
+- Preserve desktop layouts (sm: / md:) 100%
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:30:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:35:00Z
 
 ## Review Scope
 - **Files reviewed**:
-  - `tailwind.config.ts` (Spacing scale, fonts, shadows, border radii)
-  - `src/index.css` (:root, .dark tokens, font families, tabular figures, utility sanitization, body background)
-  - `src/components/ui/button.tsx` (34px default, 28px sm/table, 30px icon, 46px cta)
-  - `src/components/ui/card.tsx` (p-3.5 padding, border-border/80, shadow-xs)
-  - `src/components/ui/badge.tsx` (text-[11px] font-mono, semantic status variants)
-  - `src/components/ui/table.tsx` (sticky thead h-8.5, py-2 px-3 compact cells)
-  - `src/components/ui/dialog.tsx` (sm:rounded-2xl, accessible title fallback, backdrop-blur-xs)
-  - 19 Protected Invoice Files (invariance check via git diff)
+  - `src/pages/crm/RoleManagement.tsx` (Lines 1712–1748: flat divide-y container for permission toggles)
+  - `src/pages/crm/Tasks.tsx` (Lines 874–905: flat divide-y container for mobile Kanban column tasks)
+  - 19 Protected Invoice Files (invariance check via git status / diff)
 - **Interface contracts**:
-  - `.agents/rules/minimal-design-system.md`
-  - `PROJECT.md`
-  - `ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+  - `ORIGINAL_REQUEST.md` (section `## 2026-10-25T08:53:34Z`)
   - `worker_m1/handoff.md`
 
 ## Review Checklist
 - **Items reviewed**:
-  - `tailwind.config.ts` (177 lines)
-  - `src/index.css` (1213 lines)
-  - `src/components/ui/button.tsx` (72 lines)
-  - `src/components/ui/card.tsx` (49 lines)
-  - `src/components/ui/badge.tsx` (34 lines)
-  - `src/components/ui/table.tsx` (73 lines)
-  - `src/components/ui/dialog.tsx` (145 lines)
-  - `cmd /c npx tsc --noEmit` (Exit code 0)
-  - `cmd /c npx vitest run src/test/crmComponents.test.tsx src/test/componentPrimitivesAdversarial.challenger.test.tsx` (87/87 tests passed)
-  - `cmd /c npx eslint ...` (0 violations)
-  - `cmd /c npm run build` (Exit code 0, built in 2m 40s)
+  - `src/pages/crm/RoleManagement.tsx` (verified flat divide-y mobile rows, sm: grid desktop layout)
+  - `src/pages/crm/Tasks.tsx` (verified flat divide-y mobile tasks, md: cards desktop layout)
+  - `node node_modules/typescript/bin/tsc --noEmit` (Exit code 0, 0 compiler errors)
+  - `node node_modules/vite/bin/vite.js build` (Exit code 0, built in 2m 31s)
+  - Vitest test suites (`crmTasksView.test.tsx`, `crmStaffTasksIntegration.test.tsx`, `crmStaffProvisioningUI.test.tsx`: 25/25 tests passed)
   - Protected Invoice Files Invariance check (19/19 files untouched)
 - **Verdict**: APPROVE
 - **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Tailwind spacing resolution for '7.5', '8.5', '11.5', '13': Confirmed via resolveConfig (1.875rem, 2.125rem, 2.875rem, 3.25rem).
-  - Primary sans font-family: Confirmed 'Inter' with system fallbacks across Tailwind and body/headings.
-  - Tabular numerals: Confirmed OpenType 'tnum' activated on `.font-mono` and `.tabular-nums`.
-  - Body wallpaper gradient: Confirmed 4-stop radial gradient was completely stripped; flat `hsl(var(--background))` active.
-  - Skeuomorphic utility sanitization: Verified `.hover-3d-glow`, `.liquid-glass`, `.glowing-btn-*`, `.glass-card-3d`, `.glass-sidebar-midnight` stripped of neon glows and replaced with hairline borders and micro-shadows (`shadow-xs` / `shadow-2xs`).
-  - Protected invoice files modification: Confirmed zero changes to all 19 protected billing files.
-  - Button 81-permutation stability: Verified all 9 variants x 9 sizes render and handle clicks without error.
-  - Dialog accessibility: Verified fallback `<VisuallyHidden><DialogTitle>Dialog</DialogTitle></VisuallyHidden>` prevents Radix warnings when title omitted, and doesn't duplicate when title provided.
-- **Vulnerabilities found**:
-  - Minor (Advisory for M2/M4): Legacy unlayered `.glass-panel, .glass` definition at line 861 in `src/index.css` has higher cascade precedence than layered `.glass-panel` at line 259. Mitigated by `--shadow-glow: none` and `--glass-blur: 8px`.
-  - Minor (Advisory for M4): Legacy `.page-subtitle` and `.data-table thead` in `src/index.css` contain `text-[10px]` on mobile (< 640px). When refactoring pages in M4, ensure mobile sizes conform to minimum `text-[11px]`.
-- **Untested angles**:
-  - Full mobile screen gestures and drawer animations (scheduled for Milestone 3).
+  - Mobile box-in-box removal: verified individual per-item borders, shadows, and rounded corners removed on mobile.
+  - Desktop view preservation: verified `sm:grid sm:grid-cols-2 md:grid-cols-3` and `md:rounded-xl md:border md:shadow-2xs` intact.
+  - Touch target ergonomics: verified `min-h-[44px]` on all interactive rows and task action buttons.
+  - Typography scale: verified no text smaller than 11px (`text-xs`, `text-[11px]`).
+  - Dark mode support: verified all dark mode tokens (`dark:divide-slate-800/60`, `dark:bg-slate-900`) present and active.
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within Milestone 1 scope.
 
 ## Key Decisions Made
 - Confirmed full build, test, and typecheck passes.
 - Confirmed zero integrity violations or dummy code.
-- Issued verdict: VERDICT: APPROVE.
+- Issued verdict: APPROVE.
 
 ## Artifact Index
 - `handoff.md` — Final review and adversarial challenge report

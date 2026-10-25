@@ -1016,9 +1016,9 @@ return (
       {/* ------------------------------------------------------------- */}
       {/* ITEMS TABLE / MOBILE CARDS STREAM - Fits Remaining Height */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 min-h-0 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs flex flex-col">
+      <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
         {/* MOBILE VIEW: Touch Item Cards (Visible on screens < md) */}
-        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] space-y-2 scrollbar-thin overscroll-y-contain">
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
           {loading ? (
             <div className="py-12 text-center text-slate-400">
               <div className="w-6 h-6 border-2 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin mx-auto mb-2" />
@@ -1054,8 +1054,10 @@ return (
                 <div
                   key={item.id}
                   className={cn(
-                    "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2 shadow-2xs active:scale-[0.99]",
-                    isSelected ? "border-slate-900 dark:border-white ring-1.5 ring-slate-900/20 dark:ring-white/20 bg-slate-50/50 dark:bg-slate-800/40" : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+                    "px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2",
+                    isSelected
+                      ? "bg-blue-50/30 dark:bg-blue-950/20"
+                      : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                   )}
                 >
                   {/* Top Line: Thumbnail + Name + Status Micro-Dot Badge */}

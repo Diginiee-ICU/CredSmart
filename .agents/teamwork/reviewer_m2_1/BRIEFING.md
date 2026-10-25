@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:50:00Z
+# BRIEFING — 2026-10-25T09:47:00Z
 
 ## Mission
-Objective review and adversarial challenge of Milestone 2 (Screen-Fitted Desktop Shell & Layouts) in `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, and `src/pages/POSBilling.tsx`.
+Objective review and adversarial challenge of Milestone 2 (Core Billing & Inventory Modernization) in `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, and `src/pages/Items.tsx`, verifying the complete elimination of nested/boxy mobile cards, double-border outer wrappers, and checking touch targets, typography, desktop invariance, quarantine preservation, and build integrity.
 
 ## 🔒 My Identity
 - Archetype: reviewer_m2_1
@@ -20,6 +20,11 @@ Objective review and adversarial challenge of Milestone 2 (Screen-Fitted Desktop
   - Project: CredSmart Minimal & Fast-Access Redesign
   - Milestone: M2 (Screen-Fitted Desktop Shell & Layouts)
   - Instance: 1 of 2
+- Appended Identity (2026-10-25):
+  - Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+  - Project: CredSmart Mobile Card Anti-Pattern Modernization
+  - Milestone: M2 (Core Billing & Inventory Modernization — Sales.tsx, Purchases.tsx, Items.tsx)
+  - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -36,43 +41,40 @@ Objective review and adversarial challenge of Milestone 2 (Screen-Fitted Desktop
   - Verify `SuiteSwitcher.tsx` neutral segmented styling
   - Verify screen-fitted layout containment in `<main>`
   - Run `cmd /c npx tsc --noEmit` and check that 0 protected invoice files were touched
+- Appended Constraints (2026-10-25):
+  - Strictly verify elimination of boxy cards on mobile in `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`
+  - Outer wrapper double border removed (`flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`)
+  - Mobile stream uses `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`
+  - Item rows are flat `px-3.5 py-3` rows with no individual border, shadow, or margin
+  - Minimum touch targets: `min-h-[44px]` on all action buttons and interactive rows
+  - Typography: No font class below `text-[11px]`
+  - Desktop layouts (`hidden md:...`) are 100% untouched
+  - All 19 quarantine files are 100% untouched
+  - Run `node node_modules/typescript/bin/tsc --noEmit` and `node node_modules/vite/bin/vite.js build`
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:44:41Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:46:21Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/components/AppLayout.tsx`
-  - `src/components/SuiteSwitcher.tsx`
-  - `src/pages/POSBilling.tsx`
-  - `PROJECT.md`
-  - `.agents/rules/minimal-design-system.md`
-  - 19 Protected invoice files (invariance check)
+  - `src/pages/Sales.tsx`
+  - `src/pages/Purchases.tsx`
+  - `src/pages/Items.tsx`
+  - 19 Protected quarantine files (invariance check)
 - **Review criteria**:
-  - Exact 52px header height (`h-13`)
-  - Compact 28px brand mark (`w-7 h-7`)
-  - Dedicated Organization Switcher dropdown pill
-  - Centered Command Palette trigger (`⌘K`) available on `md:` and above
-  - Royal Blue split action button with dropdown creation menu
-  - Emerald Live Sync status dot
-  - Complete elimination of 3D perspective (`perspective: 2000px`, `rotateX(3deg)`) and floating watermark (`/logo-static.jpeg`)
-  - Neutral segmented `SuiteSwitcher` (`bg-slate-100` / `bg-white`)
-  - Viewport containment in outer wrapper and `<main>`
-  - Strict preservation of all 19 protected invoice files
-  - Zero TypeScript compiler errors (`tsc --noEmit`)
+  - Elimination of card-in-card anti-pattern on mobile
+  - Outer wrapper double border removal
+  - Hairline `divide-y divide-slate-100 dark:divide-slate-800/60` mobile stream container
+  - Flat `px-3.5 py-3` list rows with subtle background selection highlights
+  - Ergonomic touch targets (`min-h-[44px] min-w-[44px]`)
+  - Readable typography (no font sizes < 11px)
+  - Strict preservation of desktop views (`hidden md:...`)
+  - Zero modifications to 19 protected invoice/modal files
+  - Clean TypeScript compilation & Vite production build
 
 ## Key Decisions Made
-- Executed `cmd /c npx tsc --noEmit`: 0 errors (exited with code 0).
-- Verified all 19 protected invoice files timestamps: 0 protected files touched (all timestamps prior to 2026-10-25).
-- Executed Vitest test suites:
-  - `billingLifecycleEngine.test.ts` & `MobileInvoiceSuccessView.test.tsx`: 41/41 passed.
-  - `crmShellNavigation.audit.test.ts` & `componentPrimitivesAdversarial.challenger.test.tsx`: 40/40 passed.
-  - `decoupleShells.test.tsx` & `decoupleIntegration.test.tsx`: 199/199 passed.
-- Executed ESLint check on modified files: 0 errors (3 pre-existing fast-refresh warnings in SuiteSwitcher).
-- Confirmed total elimination of 3D perspective distortion (`rotateX`, `perspective`) and `/logo-static.jpeg` watermark.
-- Confirmed viewport containment with `<main>` `min-h-0` and dedicated POS `h-full overflow-hidden`.
-- Rendered Verdict: APPROVE.
+- [In progress] Reviewing git status and diffs for assigned files.
 
 ## Artifact Index
 - `.agents/teamwork/reviewer_m2_1/DISPATCH.md` — Incoming directives
@@ -81,22 +83,11 @@ Objective review and adversarial challenge of Milestone 2 (Screen-Fitted Desktop
 - `.agents/teamwork/reviewer_m2_1/handoff.md` — Comprehensive review & adversarial report
 
 ## Review Checklist
-- **Items reviewed**:
-  - `src/components/AppLayout.tsx` (verified compliant with all M2 criteria)
-  - `src/components/SuiteSwitcher.tsx` (verified neutral segmented control)
-  - `src/pages/POSBilling.tsx` (verified monochromatic hotkey ribbon and 3-region right panel)
-  - 19 Protected invoice files (verified 100% untouched)
-- **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified through code inspection, compilation, and test execution.
+- **Items reviewed**: Pending inspection
+- **Verdict**: Pending
+- **Unverified claims**: Worker 2 claims regarding Purchases.tsx, Items.tsx, and Sales.tsx
 
 ## Attack Surface
-- **Hypotheses tested**:
-  - Height of desktop command header: verified `md:h-13` maps to `3.25rem` (52px) in `tailwind.config.ts`.
-  - Command palette visibility: verified `hidden md:flex` shows search on viewports >= 768px, with `md:hidden` mobile button.
-  - Keyboard listeners: verified `⌘K` / `Ctrl+K` listener captures metaKey and ctrlKey without conflicts.
-  - Organization switcher fallback: verified graceful handling of null/empty organization arrays with truncation.
-  - Suite switcher keyboard accessibility: verified `Enter` and `Space` key handlers and radio group ARIA roles.
-  - POS right panel containment: verified Region 1 (Net Total fixed), Region 2 (middle scroll), Region 3 (fixed bottom action dock).
-  - Screen-fitted containment: verified outer wrapper and `<main>` have `min-h-0` and `overflow-hidden`.
-- **Vulnerabilities found**: None.
-- **Untested angles**: None within Milestone 2 scope.
+- **Hypotheses tested**: Pending testing
+- **Vulnerabilities found**: None yet
+- **Untested angles**: Layout responsiveness, touch ergonomics, edge cases in selection state, double-border regressions

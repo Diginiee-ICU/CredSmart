@@ -1,13 +1,14 @@
-# Progress Log — explorer_survey_3
+# Progress — Explorer 3 (Survey: Dashboard, Parties, & CRM HR)
 
-Last visited: 2026-10-20T11:00:00Z
-Status: Completed
-Current Step: Task complete. Full survey, tracing, and decoupling/hydration recommendations delivered to handoff.md. Ready for orchestrator review.
-
-Summary of Work:
-1. Traced `downloadExactInvoicePdf` (`html2canvas`) invocation during "Generate Bill" in `MobileCreateInvoice.tsx` (`props.onSave(true, false)`) and `SalesInvoiceModal.tsx:1131`. Traced decoupling solution to pass `onSave(false, false)` and guard with `!isMobile`, cutting 2-6s of main-thread freeze.
-2. Traced `networkInvoicingService.sendSalesInvoiceToNetwork` in `SalesInvoiceModal.tsx:1109`. Identified blocking DB calls and 3,000ms realtime channel timeout loop. Traced unawaited background dispatch (`void (async () => { ... })()`), saving 500-3500ms on the save path.
-3. Traced `documentsService.saveDocument` multiple round-trips (`createSale` + `createSaleItems`) and compared with `backend-api/src/routes/invoices.js:89-161`. Identified that `POST /api/sales` already supports atomic single-request insertion with `items` in a single PostgreSQL transaction.
-4. Traced `ProductsContext.tsx`, `Customers.tsx`, and `Parties.tsx` error states. Identified that `Customers.tsx` and `Parties.tsx` unconditionally wiped their tables to `[]` on transient server/network errors. Designed `localStorage` optimistic cache hydration, non-blocking warning toasts, and fallback logic.
-5. Traced newly created entity lifecycle. Designed immediate 0ms in-memory state updates (`setCustomers`, `setParties`, `addOrUpdateProduct`) so newly created items and parties appear instantly without waiting for slow cloud refetches.
-6. Authored comprehensive, self-contained 5-component handoff report at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`.
+- **Status**: Investigation completed, running verification tests and drafting report
+- **Last visited**: 2026-10-25T09:12:00Z
+- **Tasks**:
+  - [x] Review dispatch instructions, original request, and design system rules
+  - [x] Update DISPATCH.md and BRIEFING.md
+  - [x] Investigate `src/pages/Dashboard.tsx` (lines 881-966: mobile recent activity transaction rows)
+  - [x] Investigate `src/pages/Parties.tsx` (lines 1195-1418: mobile party directory rows)
+  - [x] Investigate `src/pages/crm/SalaryManagement.tsx` (lines 1450-1496, 1745-1800, 1915-1968: mobile salary profiles, payroll, adjustments)
+  - [x] Investigate `src/pages/crm/Attendance.tsx` (lines 1818-1955, 2150-2165, 2190-2250, 2270-2330: shift pods, attendance logs, geofences, requests)
+  - [x] Verify against 19 protected files, touch targets (>=44px), font sizes (>=11px), desktop invariance
+  - [ ] Synthesize findings into `handoff.md`
+  - [ ] Send message to orchestrator

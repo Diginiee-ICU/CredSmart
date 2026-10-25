@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T18:51:21Z
+# BRIEFING — 2026-10-25T08:55:00Z
 
 ## Mission
-Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from scratch into a modern, attractive, minimalist, lightning-fast, and user-friendly experience across both mobile (< 768px) and desktop (>= 768px) views, strictly prohibiting visual crowding, bloated buttons, and long scrollable pages, ensuring screen-fitted data density with zero business logic regression.
+Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages in 9 files. Replace individual floating bordered item cards (`rounded-xl border shadow-2xs`) with clean minimal divide-y list rows (`divide-y divide-slate-100 dark:divide-slate-800/60`) throughout mobile views.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -46,6 +46,8 @@ Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from sc
 - Victory Auditor (Decouple Portals): [to be spawned on victory claim]
 - Active Orchestrator (Minimal Redesign): 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Victory Auditor (Minimal Redesign): [to be spawned on victory claim]
+- Active Orchestrator (Mobile Cards Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Victory Auditor (Mobile Cards Modernization): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -67,19 +69,20 @@ Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from sc
 - 44x44px minimum touch targets and bottom thumb zone optimization
 - Zero TypeScript compiler errors (`tsc --noEmit`)
 - All Vitest test suites must pass without regression
-- Strict exclusion: Create Invoice flow (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, `SelectPartyModal.tsx`, `EditItemModal.tsx`) must remain 100% untouched and functional
+- Strict exclusion: 19 quarantine files must remain 100% untouched
 - Minimal design system rules: 34px standard action, 28px table action, 46px mobile CTA, hairline borders, no 3D glass / neon halos / bubble buttons, screen-fitted 52px top bar, sticky headers and bounded scroll tables
+- Flat minimal list rows with divide-y divide-slate-100 dark:divide-slate-800/60 replacing boxy nested card containers
 
 ## User Context
-- **Last user request**: Redesign CredSmart Theme, Fonts, Style, Structure, and Layout into a modern, minimalist, lightning-fast experience across mobile (< 768px) and desktop (>= 768px) with zero visual crowding, zero bloated buttons, screen-fitted data density, and zero regression.
+- **Last user request**: Replace boxy nested cards across 9 mobile pages with clean minimal divide-y list rows.
 - **Pending clarifications**: none
-- **Delivered results**: Project Orchestrator launched (ID: `3044c8ce-523a-4157-917d-31b6f5d55c6a`).
+- **Delivered results**: Project Orchestrator launched (`24d614cb-853d-49d4-9ac2-cf0090c93a62`).
 
 ## Project Status
-- **Phase**: in progress (M1-M3: COMPLETE & AUDITED CLEAN; M4 Core Application Pages Overhaul: ACTIVE under Worker `73d7344a`)
+- **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_minimal_redesign
+- **Active Orchestrator ID**: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards
 - **Cron 1 (Reporting)**: task-26
 - **Cron 2 (Liveness)**: task-28
 
@@ -92,6 +95,5 @@ Redesign CredSmart's complete Theme, Fonts, Style, Structure, and Layout from sc
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_minimal_redesign\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\DISPATCH.md — Orchestrator dispatch instructions
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md — Master design system rules
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md — Master design system skill specification

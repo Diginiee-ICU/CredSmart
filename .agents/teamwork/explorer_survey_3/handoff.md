@@ -1,603 +1,250 @@
-# 5-Component Handoff Report: Frontend Billing Performance & Cache Hydration
-
-**Explorer ID**: Explorer Survey 3  
-**Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3`  
-**Target Milestone**: Frontend Billing Optimization (<500ms) & Resilient Cache Hydration  
-**Date**: 2026-10-20T11:00:00Z  
-
----
+# Handoff Report: Explorer Survey 3 (Dashboard, Parties, & CRM HR)
 
 ## 1. Observation
 
-Direct observations from codebase inspection, tracing exact file paths, line numbers, and code blocks:
+A comprehensive codebase audit was conducted across the four assigned files to map the "nested/boxy card container" anti-pattern in mobile views:
+1. `src/pages/Dashboard.tsx`
+2. `src/pages/Parties.tsx`
+3. `src/pages/crm/SalaryManagement.tsx`
+4. `src/pages/crm/Attendance.tsx`
 
-### 1.1 Decoupling `downloadExactInvoicePdf` (`html2canvas`) from Mobile Bill Generation
-- **`src/components/invoices/mobile/MobileCreateInvoice.tsx` Lines 78–80**:
-  ```typescript
-  const handleGenerateBill = () => {
-    props.onSave(true, false);
-  };
-  ```
-  `MobileCreateInvoice`'s bottom primary action button "Generate Bill" calls `props.onSave(true, false)` with `andPrint = true` and `saveAndNew = false`.
-- **`src/components/SalesInvoiceModal.tsx` Lines 1031 & 1127–1170**:
-  ```typescript
-  const handleSave = async (andPrint = false, saveAndNew = false) => {
-    ...
-    const saved = await documentsService.saveDocument(finalDoc, user?.id);
-    ...
-    if (andPrint) {
-      if (onPrintRequest) {
-        onPrintRequest(saved);
-      } else {
-        downloadExactInvoicePdf({
-          invoiceNumber: saved.documentNumber,
-          referenceNumber: saved.referenceNumber,
-          docType: saved.docType as any,
-          ...
-          items: saved.items.map((it) => ({ ... })),
-        });
-      }
-    }
-  ```
-  Lines 1209–1213:
-  ```typescript
-    } else if (window.innerWidth < 1024) {
-      setMobileSuccessInvoice(saved);
-    } else {
-      onOpenChange(false);
-    }
-  ```
-- **`src/utils/downloadExactInvoice.ts` Lines 74–125**:
-  `downloadExactInvoicePdf` mounts `UnifiedInvoiceRenderer` into a hidden DOM element (`captureContainer` with `position: fixed, left: -9999px`), queries layout dimensions, renders all images/styles, and calls `html2canvas(captureContainer, { scale: 2, useCORS: true, ... })`.
-- **`src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` Lines 93–99**:
-  ```typescript
-  const handleDownload = () => {
-    downloadExactInvoicePdf(buildPdfPayload());
-  };
+### 1.1 `src/pages/Dashboard.tsx` — Recent Activity Transaction Rows
 
-  const handlePrint = () => {
-    downloadExactInvoicePdf(buildPdfPayload());
-  };
-  ```
-  `MobileInvoiceSuccessView` ALREADY exposes dedicated, touch-optimized on-demand buttons for `Download` and `Print` with the full `buildPdfPayload()` helper.
-
-### 1.2 Unawaited Background Execution of `networkInvoicingService.sendSalesInvoiceToNetwork`
-- **`src/components/SalesInvoiceModal.tsx` Lines 1107–1121**:
-  ```typescript
-  } else if (docType === "sales_invoice") {
-    try {
-      const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
-      if (netInvoice) {
-        toast.success(
-          `⚡ Sales Invoice #${fullDocumentNumber} saved & shared with ${netInvoice.recipientOrgName} for purchase approval!`,
-          { duration: 5000 }
-        );
-      } else {
-        toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-      }
-    } catch (netErr) {
-      console.warn("Network dispatch notice:", netErr);
-      toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-    }
-  }
-  ```
-- **`src/services/networkInvoicingService.ts` Lines 608–770 and 88–98**:
-  - `sendSalesInvoiceToNetwork` runs multiple sequential database operations: `findConnectedOrganization`, `safeDbCall` to insert into `network_invoices`, `safeDbCall` to insert into `network_notifications`, and invokes `broadcastViaSupabase`.
-  - In `broadcastViaSupabase` (lines 92–98):
-    ```typescript
-    const start = Date.now();
-    while (channel.state !== "joined" && Date.now() - start < 3000) {
-      await new Promise((r) => setTimeout(r, 60));
-    }
+- **Location**: Lines 881–966 in `src/pages/Dashboard.tsx` within the mobile viewport (`block md:hidden`).
+- **Current Container Hierarchy**:
+  - Section wrapper (Line 882): `<div className="space-y-2">`
+  - Empty state (Lines 894–899): `<div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center">`
+  - List container (Line 901): `<div className="space-y-2">`
+  - Per-item floating card (Lines 913–917):
+    ```tsx
+    <div
+      key={txn.id}
+      onClick={() => navigate(ROUTE_PATHS.sales)}
+      className="p-3 min-h-[56px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
+    >
     ```
-    If the Supabase realtime channel is reconnecting or idle, this synchronous polling loop pauses execution for up to **3,000ms (3 full seconds)** on the main save thread!
+- **Anti-Pattern Identified**:
+  Each transaction row is wrapped in its own individual floating card with `rounded-xl`, `border border-slate-200/80 dark:border-slate-800/80`, `bg-white dark:bg-slate-900`, `shadow-2xs`, and spaced with `space-y-2`.
+- **Target Replacement**:
+  - Replace parent container at Line 901:
+    ```tsx
+    <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+    ```
+  - Replace per-item row at Line 916:
+    ```tsx
+    <div
+      key={txn.id}
+      onClick={() => navigate(ROUTE_PATHS.sales)}
+      className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
+    >
+    ```
+- **Touch Target & Font Verification**:
+  - Row touch target: `min-h-[56px]` (exceeds 44px minimum).
+  - Header "View All →" button: `min-h-[44px]` (meets 44px minimum).
+  - Typography: Initials `text-[11px]`, Party Name `text-xs font-bold`, Subtext `text-[11px]`, Amount `text-xs font-bold font-mono tabular-nums`, Status `text-[11px] font-bold font-mono`. All font sizes >= 11px.
+- **Desktop Invariance**:
+  Desktop transactions table (Lines 1265–1336, inside `<div className="hidden md:flex flex-col space-y-4">`) already uses a clean table with `divide-y divide-slate-100 dark:divide-slate-800/60` and remains 100% untouched.
 
-### 1.3 Atomic Single API Call in `documentsService.saveDocument`
-- **`src/services/documentsService.ts` Lines 663–696**:
-  ```typescript
-  const { data: saleData, error: saleErr } = await invoicesApi.createSale(
-    {
-      organization_id: orgId,
-      invoice_number: doc.documentNumber,
-      subtotal: doc.subtotal,
-      discount_amount: doc.discountTotal,
-      discount_label: doc.discountTotal > 0 ? "Discount" : null,
-      tax: doc.taxTotal,
-      total: doc.grandTotal,
-      payment_method: doc.paymentMethod || "Cash",
-      created_by: userId,
-      customer_id: doc.partyId || null,
-    },
-    orgId
-  );
+---
 
-  if (!saleErr && saleData) {
-    doc.id = saleData.id;
+### 1.2 `src/pages/Parties.tsx` — Mobile Party Directory Rows
 
-    // Save items
-    if (doc.items.length > 0) {
-      const saleItems = doc.items.map((it) => ({
-        sale_id: saleData.id,
-        product_name: it.productName,
-        product_id: it.productId || null,
-        batch_number: it.batchNumber || null,
-        mrp: it.rate,
-        quantity: it.quantity,
-        line_total: it.lineTotal,
-      }));
-      await invoicesApi.createSaleItems(saleItems, orgId);
-    }
-  }
-  ```
-  `saveDocument` issues `invoicesApi.createSale` (Round-trip 1), waits for the server to reply with `saleData.id`, maps line items, and then issues `invoicesApi.createSaleItems` (Round-trip 2).
-- **`backend-api/src/routes/invoices.js` Lines 89–161**:
-  ```javascript
-  router.post('/sales', async (req, res) => {
-    const client = await pool.connect();
-    try {
-      const orgId = req.orgId || req.body.org_id || req.body.organization_id;
-      const {
-        invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
-        sale_date = new Date(), subtotal = 0, discount_amount = 0, tax_amount = 0,
-        total_amount = 0, paid_amount = 0, payment_method = 'cash', payment_status = 'unpaid',
-        notes, items = []
-      } = req.body;
+- **Location**: Lines 1195–1418 in `src/pages/Parties.tsx`.
+- **Current Container Hierarchy**:
+  - Outer container (Line 1197): `<div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">`
+  - Mobile scroll container (Line 1199): `<div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">`
+  - Per-item floating card (Lines 1231–1239):
+    ```tsx
+    <div
+      key={party.id}
+      className={cn(
+        "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2.5 shadow-2xs active:scale-[0.99]",
+        isSelected
+          ? "border-blue-500 ring-1 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20"
+          : "border-slate-200/80 dark:border-slate-800"
+      )}
+    >
+    ```
+- **Anti-Pattern Identified**:
+  Classic "card-inside-a-card" anti-pattern. An outer container with `rounded-xl border shadow-2xs` contains a scrollable container with `p-2.5 space-y-2.5`, inside which each party card is an individual floating box with its own `rounded-xl`, `border`, and `shadow-2xs`.
+- **Target Replacement**:
+  - Replace mobile container at Line 1199:
+    ```tsx
+    <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin">
+    ```
+  - Replace per-item row at Lines 1231–1239:
+    ```tsx
+    <div
+      key={party.id}
+      className={cn(
+        "px-3.5 py-3 transition-colors bg-white dark:bg-slate-900 space-y-2.5",
+        isSelected
+          ? "bg-blue-50/40 dark:bg-blue-950/30"
+          : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
+      )}
+    >
+    ```
+- **Touch Target & Font Verification**:
+  - Call trigger: `min-h-[44px] h-11 px-3` (satisfies >= 44px).
+  - WhatsApp trigger: `min-h-[44px] h-11 px-3` (satisfies >= 44px).
+  - Ledger trigger: `min-h-[44px] h-11 px-3` (satisfies >= 44px).
+  - Dropdown trigger: `min-w-[44px] min-h-[44px] w-11 h-11` (satisfies >= 44px).
+  - Typography: Avatar initial `text-xs`, Party name `text-xs sm:text-sm font-bold`, Category/City/Type `text-[11px]`, Balance badge `text-xs font-mono font-bold tabular-nums`, Subtext `text-[11px] font-mono`. All font sizes >= 11px.
+- **Desktop Invariance**:
+  Desktop table container (Lines 1428–1550, `<div className="hidden md:flex flex-col flex-1 min-h-0">`) remains 100% untouched.
 
-      await client.query('BEGIN');
+---
 
-      const saleRes = await client.query(`INSERT INTO sales (...) VALUES (...) RETURNING *`, [...]);
-      const sale = saleRes.rows[0];
+### 1.3 `src/pages/crm/SalaryManagement.tsx` — Salary Profile List Rows
 
-      const insertedItems = [];
-      for (const item of items) {
-        const itemRes = await client.query(`INSERT INTO sale_items (...) VALUES (...) RETURNING *`, [...]);
-        insertedItems.push(itemRes.rows[0]);
-        if (item.batch_id) {
-          await client.query(`UPDATE product_batches SET quantity = quantity - $1 ...`, [...]);
-        }
-      }
-      ...
-      await client.query('COMMIT');
-      return res.status(201).json({ ...sale, items: insertedItems });
-  ```
-  The dedicated backend API endpoint `POST /api/sales` is ALREADY architected to receive `items = []` in the payload, executing a single atomic PostgreSQL transaction with inventory batch updates and returning `{ ...sale, items: insertedItems }`.
+- **Location**:
+  - **Tab 1 (Salary Profiles)**: Lines 1454–1495 (`block sm:hidden space-y-3`)
+  - **Tab 2 (Payroll Run)**: Lines 1745–1799 (`block sm:hidden space-y-3`)
+  - **Tab 3 (Advances & Deductions)**: Lines 1915–1967 (`block sm:hidden space-y-3`)
+- **Current Container Hierarchy**:
+  - Tab 1 Mobile Container (Line 1455): `<div className="block sm:hidden space-y-3">`
+  - Tab 1 Per-item card (Line 1462):
+    ```tsx
+    <CRMCard key={p.id} variant="default" className="p-4 space-y-3">
+    ```
+    (Note: `CRMCard` with `variant="default"` outputs `bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-2xs`).
+  - Tab 2 Mobile Container (Line 1746): `<div className="block sm:hidden space-y-3">` with `<CRMCard key={item.id} variant="default" className="p-4 space-y-2">`
+  - Tab 3 Mobile Container (Line 1916): `<div className="block sm:hidden space-y-3">` with `<CRMCard key={a.id} variant="default" className="p-4 space-y-2">`
+- **Anti-Pattern Identified**:
+  In each of Tab 1, 2, and 3, mobile items are rendered as standalone floating `CRMCard` boxes inside a `space-y-3` wrapper instead of a unified divide-y list container.
+- **Target Replacement (Tab 1 — Salary Profiles)**:
+  - Replace container at Line 1455:
+    ```tsx
+    <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+    ```
+  - Replace empty state at Lines 1456–1460:
+    ```tsx
+    {salaryProfiles.length === 0 ? (
+      <div className="p-8 text-center text-xs text-slate-500">
+        No salary profiles configured yet.
+      </div>
+    ) : (
+    ```
+  - Replace per-item CRMCard at Line 1462:
+    ```tsx
+    <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+      <div className="flex items-start justify-between">
+        <div>
+          <h4 className="font-bold text-slate-900 dark:text-white text-sm">{p.staff_name}</h4>
+          <p className="text-xs text-slate-400">{p.staff_email}</p>
+        </div>
+        <CRMBadge variant={p.is_active ? "success" : "neutral"} size="sm" dot={p.is_active}>
+          {p.salary_type.toUpperCase()}
+        </CRMBadge>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60">
+        <div>
+          <span className="text-slate-400">Base Wage:</span>
+          <p className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">{formatIndianCurrency(p.base_amount)}</p>
+        </div>
+        <div>
+          <span className="text-slate-400">Overtime:</span>
+          <p className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+            {p.hourly_overtime_rate ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr` : "None"}
+          </p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => openEditProfileDrawer(p)}
+        className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
+      >
+        Configure Profile
+      </Button>
+    </div>
+    ```
+  - Target Replacement for Tab 2 & Tab 3:
+    Apply same pattern to Line 1746 and Line 1916: convert outer container to `rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60` and replace child `<CRMCard>` elements with flat `<div>` rows.
+- **Touch Target & Font Verification**:
+  - "Configure Profile" CTA: Updated to `min-h-[44px] h-11` (satisfies >= 44px).
+  - Typography: Name `text-sm font-bold`, Email `text-xs`, Badges `text-[11px]`, Base Wage `font-mono tabular-nums font-bold text-xs`. All font sizes >= 11px.
+- **Desktop Invariance**:
+  Desktop views (`hidden sm:block`) at Lines 1353, 1613, and 1809 using `CRMDataTable` remain 100% untouched.
 
-### 1.4 Cache Hydration & Transient Network Error Handling
-- **`src/pages/Customers.tsx` Lines 220–235 & 274–277**:
-  ```typescript
-  const fetchCustomers = useCallback(async () => {
-    ...
-    const [{ data: custs, error }, { data: credits, error: creditsError }] = await Promise.all([
-      partiesApi.getCustomers(orgId, { sort: "name", order: "asc" }),
-      partiesApi.getCreditTransactions({ orgId, partyType: "customer" })
-    ]);
+---
 
-    if (error) {
-      console.error("fetchCustomers error:", error);
-      setCustomers([]);
-      setLoading(false);
-      return;
-    }
-  ...
-  } catch (err) {
-    console.error("fetchCustomers unexpected error:", err);
-    setCustomers([]);
-  }
-  ```
-  If `partiesApi.getCustomers` encounters a network glitch or a 500 error (such as the schema issue `column "org_id" does not exist`), `setCustomers([])` is called unconditionally. There is zero `localStorage` cache fallback, zero warning toast, and all existing customers vanish.
-- **`src/pages/Parties.tsx` Lines 144–165 & 283–292**:
-  ```typescript
-  const [
-    { data: dbCustomers, error: custErr },
-    { data: dbSuppliers, error: suppErr },
-    { data: credits, error: creditErr }
-  ] = await Promise.all([
-    partiesApi.getCustomers(orgId),
-    partiesApi.getSuppliers(orgId),
-    partiesApi.getCreditTransactions({ orgId })
-  ]);
-  ...
-  } catch (err) {
-    console.error("Error fetching parties:", err);
-    setParties(DEFAULT_SAMPLE_PARTIES); // DEFAULT_SAMPLE_PARTIES = []
-  ```
-  If either customer or supplier fetching returns an error object, `dbCustomers` or `dbSuppliers` is null. The loops loop over `[]`, resulting in `mergedParties = []`. In `catch`, `setParties([])` is executed. There is zero `localStorage` caching or non-blocking notification.
-- **`src/context/ProductsContext.tsx` Lines 166–178**:
-  ```typescript
-  } catch (e) {
-    console.error("Failed to refresh products from cloud, checking local cache", e);
-    try {
-      const localKey = `credsmart_cached_products_${effectiveOrg}`;
-      const raw = localStorage.getItem(localKey);
-      const localCached = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(localCached) && localCached.length > 0) {
-        setProducts(localCached.map(normalizeProduct));
-      }
-    } catch { /* empty */ }
-  }
-  ```
-  `ProductsContext` has local cache reading, but provides NO non-blocking warning toast (`toast.warning(...)`). If `localCached` is empty, no user feedback is rendered.
+### 1.4 `src/pages/crm/Attendance.tsx` — Attendance Log Rows & Modules
 
-### 1.5 In-Memory State Updates Upon Entity Creation
-- **`src/pages/Customers.tsx` Lines 369–380**:
-  ```typescript
-  const { error } = await partiesApi.createCustomer({
-    organization_id: orgId,
-    name: form.name.trim(),
-    phone: form.phone,
-    email: form.email,
-    address: form.address,
-  }, orgId);
-  if (error) throw error;
-  toast.success("Customer created successfully");
-  setShowForm(false);
-  fetchCustomers();
-  ```
-  `createCustomer` does not capture `{ data: newCustomer }`. It does not update `customers` state in memory. It immediately executes `fetchCustomers()`. If `fetchCustomers()` fails or is delayed, the customer is invisible.
-- **`src/pages/Parties.tsx` Lines 417–453**:
-  ```typescript
-  const { data: newRecord, error } = await partiesApi.savePartyRecord(
-    targetTable,
-    { ... },
-    undefined,
-    orgId
-  );
-  if (error) throw error;
-  ...
-  toast.success(`Created party "${partyData.name}"!`);
-  fetchParties();
-  ```
-  `savePartyRecord` creates the record on the server but does not update `setParties` in memory. It triggers `fetchParties()`. If `fetchParties()` hits any error, `parties` remains empty.
-- **`src/pages/Items.tsx` Lines 325–361**:
-  ```typescript
-  const { data: newProd, error } = await productsApi.createProduct({ ... }, orgId);
-  if (error) throw error;
-  ...
-  toast.success(`Created item "${itemData.name}"!`);
-  await refreshProducts(orgId);
-  ```
-  `Items.tsx` does not invoke `addOrUpdateProduct(...)` on `ProductsContext`. It awaits a full cloud refresh `refreshProducts(orgId)`.
+- **Location**:
+  - **Tab 1 (Clock-In Pod Nested Cards)**: Lines 1818, 1845, 1912, 1936 inside `Today's Shift` CRMCard.
+  - **Tab 2 (Team Attendance Logs)**: Lines 2080–2166 (renders `<CRMDataTable>` directly; lacks a dedicated mobile divide-y list view).
+  - **Tab 3 (Geofences List)**: Lines 2190–2248 (`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2`).
+  - **Tab 4 (Regularisation Requests)**: Lines 2273–2330 (`<div className="space-y-3 pt-2">` with per-request `<div key={req.id} className="p-4 rounded-xl border border-slate-200 bg-white ...">`).
+- **Anti-Pattern Identified**:
+  - In Tab 4 (Regularisation Requests, lines 2273–2330), requests are mapped as individual floating cards inside a parent CRMCard: `<div className="space-y-3 pt-2">` holding `<div className="p-4 rounded-xl border border-slate-200 bg-white ...">`.
+  - In Tab 1, nested boxes are stacked inside the `Today's Shift` CRMCard (lines 1818, 1845, 1912, 1936).
+  - In Tab 2, team attendance logs use `<CRMDataTable>`, which does not have a dedicated mobile card or flat row view.
+- **Target Replacement**:
+  - **Tab 4 (Regularisation Requests)**:
+    Replace container at Line 2273:
+    ```tsx
+    <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
+    ```
+    Replace each request row at Line 2280:
+    ```tsx
+    <div
+      key={req.id}
+      className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+    >
+    ```
+    (Remove `p-4`, `rounded-xl`, `border border-slate-200`, `bg-white`).
+  - **Tab 2 (Team Attendance Logs Mobile Experience)**:
+    Wrap the existing desktop `CRMDataTable` in `<div className="hidden sm:block">` and provide a dedicated clean mobile divide-y list in `<div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">` displaying staff name, punch times, duration, and geo-verification badge.
+- **Touch Target & Font Verification**:
+  - Action buttons (Approve / Reject / Edit): Ensure wrapped with `min-h-[44px]` touch target area.
+  - Typography: Staff name `text-sm font-bold`, Badges `text-[11px]`, Time display `font-mono text-xs`. All font sizes >= 11px.
+- **Desktop Invariance**:
+  Desktop views, geofence coordinate maps, Haversine verification algorithms, and full table layouts remain 100% untouched.
 
 ---
 
 ## 2. Logic Chain
 
-From the direct observations above, the logic chain leads to definitive solutions:
-
-### 2.1 Why Bill Generation on Mobile Takes Multiple Seconds & How to Achieve <500ms
-1. **Observation**: When "Generate Bill" is clicked on mobile, `MobileCreateInvoice.tsx:79` passes `onSave(true, false)`.
-2. **Observation**: In `SalesInvoiceModal.tsx:1127`, `if (andPrint)` triggers `downloadExactInvoicePdf({ ... })`.
-3. **Observation**: `downloadExactInvoicePdf` creates off-screen DOM nodes, applies CSS styles, loads font assets, and executes `html2canvas` rasterization.
-4. **Logic**: `html2canvas` is a CPU-intensive, synchronous canvas rasterizer running on the browser's main thread. On mobile devices, this single-thread blocking execution takes between **2,000ms and 6,000ms**.
-5. **Observation**: `MobileInvoiceSuccessView.tsx` already has its own dedicated "Print" and "Download" buttons (lines 93–99) that invoke `downloadExactInvoicePdf` on demand.
-6. **Deduction**: Triggering `downloadExactInvoicePdf` during save is redundant on mobile. Decoupling it by passing `onSave(false, false)` from `MobileCreateInvoice.tsx` or checking `!isMobile` before calling `downloadExactInvoicePdf` in `SalesInvoiceModal.tsx` eliminates the 2–6s freeze completely.
-7. **Observation**: In `SalesInvoiceModal.tsx:1109`, `await networkInvoicingService.sendSalesInvoiceToNetwork(...)` blocks on multiple DB calls and up to 3,000ms for Supabase realtime channel readiness.
-8. **Deduction**: Decoupling `sendSalesInvoiceToNetwork` into an unawaited background promise (`void (async () => { ... })()`) removes another 500ms–3,500ms of latency.
-9. **Observation**: In `documentsService.ts:663–696`, saving a sales invoice requires 2 sequential HTTP requests (`createSale` followed by `createSaleItems`).
-10. **Deduction**: Combining sale + items into a single `createSale` call eliminates 1 network round-trip (~150ms–400ms).
-11. **Conclusion**: Decoupling `html2canvas` + backgrounding network dispatches + single API roundtrip reduces the total duration of the save action on mobile from **3,000ms–9,000ms down to <350ms**, well under the 500ms requirement.
-
-### 2.2 Why Items and Parties Vanish on Failure & How to Fix Visibility
-1. **Observation**: `Customers.tsx:232` and `Parties.tsx:285` invoke `setCustomers([])` and `setParties([])` whenever the server returns an error or empty payload.
-2. **Observation**: There is no `localStorage` caching implemented in either `Customers.tsx` or `Parties.tsx`.
-3. **Logic**: Any transient cloud issue (temporary Wi-Fi drop, server restart, PostgreSQL schema column error) will cause the frontend to erase its existing state, rendering blank tables.
-4. **Deduction**: Implementing local cache reading (`localStorage.getItem("credsmart_cached_customers_" + orgId)`) on mount and falling back to it during query failures ensures zero data loss.
-5. **Logic**: Firing a non-blocking toast warning (`toast.warning("Network issue: Showing cached data", { id: "...", duration: 3000 })`) alerts the user of offline/cached operation without disrupting their workflow.
-6. **Observation**: When creating an entity in `Customers.tsx` (line 380) or `Parties.tsx` (line 453), the component closes the form and calls `fetchCustomers()` / `fetchParties()`, awaiting a full cloud round-trip before updating React state.
-7. **Deduction**: If the cloud has replication lag, schema issues, or network latency, the newly created item/party does not appear. Updating in-memory state immediately (`setCustomers(prev => [newCust, ...prev])` and `setParties(prev => [newParty, ...prev])`) provides **0ms immediate visibility**.
+1. **Premise 1**: The CredSmart Minimal Design System (`minimal-design-system.md`) and original request prohibit nested card containers ("cards-inside-a-card" with repeated `rounded-xl border shadow-2xs` inside an outer bordered or padded container).
+2. **Premise 2**: Direct observation of `Dashboard.tsx` (lines 901–965), `Parties.tsx` (lines 1199–1239), `SalaryManagement.tsx` (lines 1455–1495), and `Attendance.tsx` (lines 2273–2330) confirmed that each list item is currently styled as an independent floating box with individual borders, paddings, shadows, and rounded corners inside a `space-y-*` parent container.
+3. **Premise 3**: In `Sales.tsx` (lines 940–973), the refactoring has already demonstrated the gold standard target pattern: a single outer container with `divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3` inner rows with zero individual borders or shadows.
+4. **Premise 4**: Adopting this divide-y pattern in `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, and `Attendance.tsx` eliminates 100% of the nested box anti-patterns while preserving full event handling, state transitions, navigation hooks, and touch ergonomics (>=44px).
+5. **Premise 5**: Desktop layouts (`hidden md:flex`, `hidden sm:block`, `hidden md:block`) are structurally segregated from mobile markup, ensuring zero visual or functional regression on desktop screens.
 
 ---
 
-## 3. Concrete Architectural Recommendations
+## 3. Caveats
 
-### Recommendation 1: Decouple PDF Rendering in `MobileCreateInvoice.tsx` and `SalesInvoiceModal.tsx`
-
-#### Change in `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-- **Line 78–80**:
-  ```typescript
-  // BEFORE:
-  const handleGenerateBill = () => {
-    props.onSave(true, false);
-  };
-
-  // AFTER:
-  const handleGenerateBill = () => {
-    // Decouple PDF generation from bill creation.
-    // Mobile transitions immediately (<500ms) to MobileInvoiceSuccessView,
-    // which provides dedicated on-demand Download and Print buttons.
-    props.onSave(false, false);
-  };
-  ```
-
-#### Guard in `src/components/SalesInvoiceModal.tsx`
-- **Line 1127**:
-  ```typescript
-  // BEFORE:
-  if (andPrint) {
-    if (onPrintRequest) {
-      onPrintRequest(saved);
-    } else {
-      downloadExactInvoicePdf({ ... });
-    }
-  }
-
-  // AFTER:
-  const isMobileViewport = window.innerWidth < 1024;
-  if (andPrint && !isMobileViewport) {
-    if (onPrintRequest) {
-      onPrintRequest(saved);
-    } else {
-      downloadExactInvoicePdf({ ... });
-    }
-  }
-  ```
+- **Quarantine Boundaries**: All 19 protected quarantine files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc.) were inspected and verified as strictly untouched. No modifications are proposed or required in any of these files.
+- **CRM Tab Scope**: `SalaryManagement.tsx` has mobile lists in Tabs 1, 2, and 3. While Tab 1 (Salary Profiles) is the primary target referenced in DISPATCH.md, Tabs 2 and 3 share the exact same anti-pattern. Both primary and secondary targets have been fully documented.
+- **Attendance Tab Scope**: `Attendance.tsx` Tab 2 uses `CRMDataTable` directly without a mobile breakdown, whereas Tab 4 uses `space-y-3` with floating cards. Both areas have been scoped with exact replacement options.
+- No caveats regarding TypeScript types or build integrity.
 
 ---
 
-### Recommendation 2: Run `sendSalesInvoiceToNetwork` Asynchronously Unawaited
+## 4. Conclusion
 
-#### Change in `src/components/SalesInvoiceModal.tsx`
-- **Lines 1107–1124**:
-  ```typescript
-  // BEFORE:
-  } else if (docType === "sales_invoice") {
-    try {
-      const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
-      if (netInvoice) {
-        toast.success(
-          `⚡ Sales Invoice #${fullDocumentNumber} saved & shared with ${netInvoice.recipientOrgName} for purchase approval!`,
-          { duration: 5000 }
-        );
-      } else {
-        toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-      }
-    } catch (netErr) {
-      console.warn("Network dispatch notice:", netErr);
-      toast.success(`Sales Invoice ${fullDocumentNumber} saved successfully!`);
-    }
-  }
+The survey confirms the presence of the nested boxy card anti-pattern across all 4 assigned files. The exact line numbers, existing classes, and replacement divide-y containers have been specified:
+- `Dashboard.tsx`: Convert line 901 to `divide-y` container and line 916 to flat `px-3.5 py-3 min-h-[56px]` rows.
+- `Parties.tsx`: Convert line 1199 to `px-0 divide-y` and lines 1231–1239 to flat `px-3.5 py-3` rows.
+- `SalaryManagement.tsx`: Convert line 1455 to `divide-y` container and line 1462 `<CRMCard>` to flat `p-3.5` row with a 44px CTA.
+- `Attendance.tsx`: Convert Tab 4 line 2273 to `divide-y` container and line 2280 to flat `px-3.5 py-3` rows; optionally add a mobile divide-y view for Tab 2 attendance logs.
 
-  // AFTER:
-  } else if (docType === "sales_invoice") {
-    // Show instant success feedback immediately without blocking save thread
-    toast.success(`Sales Invoice #${fullDocumentNumber} saved successfully!`);
-
-    // Run B2B network sharing asynchronously in the background (fire-and-forget)
-    void (async () => {
-      try {
-        const netInvoice = await networkInvoicingService.sendSalesInvoiceToNetwork(saved, org, user?.id);
-        if (netInvoice) {
-          toast.success(
-            `⚡ Sales Invoice #${fullDocumentNumber} shared with ${netInvoice.recipientOrgName} for purchase approval!`,
-            { id: `b2b-share-${saved.id}`, duration: 4000 }
-          );
-        }
-      } catch (netErr) {
-        console.warn("Background B2B network dispatch notice:", netErr);
-      }
-    })();
-  }
-  ```
+All proposed replacements strictly satisfy the >=44px touch target requirement and >=11px font hierarchy requirement with zero impact on desktop layouts or business logic.
 
 ---
 
-### Recommendation 3: Single API Call (`sale + items`) in `documentsService.saveDocument`
+## 5. Verification Method
 
-#### Change in `src/services/documentsService.ts`
-- **Lines 663–696**:
-  ```typescript
-  // Map document items into backend sale_items schema
-  const lineItemsPayload = doc.items.map((it) => ({
-    product_name: it.productName,
-    product_id: it.productId || null,
-    sku: it.sku || undefined,
-    hsn_code: it.hsn || undefined,
-    quantity: Number(it.quantity || 1),
-    unit: it.unit || "PCS",
-    rate: Number(it.rate || 0),
-    mrp: Number(it.rate || 0),
-    discount_percent: Number(it.discountPercent || 0),
-    discount_amount: Number(it.discountAmount || 0),
-    gst_rate: Number(it.taxRate || 0),
-    gst_amount: Number(it.taxAmount || 0),
-    total: Number(it.lineTotal || 0),
-    batch_id: it.batchId || null,
-    batch_number: it.batchNumber || null,
-  }));
-
-  // SINGLE ATOMIC POST CALL to /api/sales with items included
-  const { data: saleData, error: saleErr } = await invoicesApi.createSale(
-    {
-      organization_id: orgId,
-      invoice_number: doc.documentNumber,
-      customer_id: doc.partyId || null,
-      customer_name: doc.partyName,
-      customer_phone: doc.partyPhone || undefined,
-      customer_gstin: doc.partyGstin || undefined,
-      sale_date: doc.docDate,
-      subtotal: doc.subtotal,
-      discount_amount: doc.discountTotal,
-      tax: doc.taxTotal,
-      tax_amount: doc.taxTotal,
-      total: doc.grandTotal,
-      total_amount: doc.grandTotal,
-      paid_amount: doc.paidAmount || 0,
-      payment_method: doc.paymentMethod || "Cash",
-      payment_status: doc.paidAmount >= doc.grandTotal ? "paid" : doc.paidAmount > 0 ? "partial" : "unpaid",
-      notes: doc.notes || undefined,
-      created_by: userId,
-      items: lineItemsPayload, // Handled atomically by backend transaction!
-    },
-    orgId
-  );
-
-  if (!saleErr && saleData) {
-    doc.id = saleData.id;
-    // No second HTTP round-trip createSaleItems needed!
-  }
-  ```
-
----
-
-### Recommendation 4: Resilient Cache Hydration & Toast Warnings in `Customers.tsx` & `Parties.tsx`
-
-#### In `src/pages/Customers.tsx`:
-1. **Cache Constants**:
-   ```typescript
-   const getCustomerCacheKey = (id: string) => `credsmart_cached_customers_${id}`;
-   ```
-2. **Mount Optimistic Hydration**:
-   ```typescript
-   useEffect(() => {
-     if (!orgId) return;
-     try {
-       const cached = localStorage.getItem(getCustomerCacheKey(orgId));
-       if (cached) {
-         const parsed = JSON.parse(cached);
-         if (Array.isArray(parsed) && parsed.length > 0) {
-           setCustomers(parsed);
-           setLoading(false);
-         }
-       }
-     } catch {}
-   }, [orgId]);
-   ```
-3. **Resilient `fetchCustomers` with Fallback**:
-   ```typescript
-   if (error) {
-     console.warn("fetchCustomers API notice:", error);
-     try {
-       const cached = localStorage.getItem(getCustomerCacheKey(orgId));
-       if (cached) {
-         const parsed = JSON.parse(cached);
-         if (Array.isArray(parsed) && parsed.length > 0) {
-           setCustomers(parsed);
-           toast.warning("Network issue: Showing cached customers", {
-             id: "cust-cache-warning",
-             duration: 3500,
-           });
-           setLoading(false);
-           return;
-         }
-       }
-     } catch {}
-     // Only wipe if completely devoid of cache
-     setCustomers([]);
-     toast.error("Could not load customers from server", { id: "cust-fetch-err" });
-     setLoading(false);
-     return;
-   }
-
-   // On success: update localStorage
-   if (custs) {
-     const mapped = custs.map(...);
-     setCustomers(mapped);
-     try {
-       localStorage.setItem(getCustomerCacheKey(orgId), JSON.stringify(mapped));
-     } catch {}
-   }
-   ```
-4. **Immediate In-Memory State on Creation**:
-   ```typescript
-   const { data: newRecord, error } = await partiesApi.createCustomer({
-     organization_id: orgId,
-     name: form.name.trim(),
-     phone: form.phone || null,
-     email: form.email || null,
-     address: form.address || null,
-   }, orgId);
-   if (error) throw error;
-
-   const createdCust: Customer = {
-     id: newRecord?.id || `cust_${Date.now()}`,
-     name: form.name.trim(),
-     phone: form.phone || null,
-     email: form.email || null,
-     address: form.address || null,
-     created_at: newRecord?.created_at || new Date().toISOString(),
-     balance: 0,
-     custom_fields: {},
-     customItems: [],
-     keepSamePrice: true,
-     keepSameInventory: true,
-   };
-
-   // 1. Instant 0ms UI update
-   setCustomers((prev) => [createdCust, ...prev.filter((c) => c.id !== createdCust.id)]);
-
-   // 2. Instant cache update
-   try {
-     const raw = localStorage.getItem(getCustomerCacheKey(orgId));
-     const list = raw ? JSON.parse(raw) : [];
-     localStorage.setItem(
-       getCustomerCacheKey(orgId),
-       JSON.stringify([createdCust, ...list.filter((c: any) => c.id !== createdCust.id)])
-     );
-   } catch {}
-
-   toast.success("Customer created successfully");
-   setShowForm(false);
-   void fetchCustomers(); // Reconcile in background
-   ```
-
-#### In `src/pages/Parties.tsx`:
-1. **Cache Constants**:
-   ```typescript
-   const getPartiesCacheKey = (id: string) => `credsmart_cached_parties_${id}`;
-   ```
-2. **Mount Optimistic Hydration**:
-   Pre-populate `setParties` from `localStorage.getItem(getPartiesCacheKey(orgId))` if available.
-3. **Resilient `fetchParties` with Fallback**:
-   On `catch (err)` or when `custErr || suppErr`:
-   Read `localStorage.getItem(getPartiesCacheKey(orgId))`. If present, call `setParties(cachedList)` and display `toast.warning("Network issue: Showing cached parties", { id: "parties-cache-warning", duration: 3500 })`.
-4. **Immediate In-Memory State on Creation**:
-   In `handleSaveParty`:
-   Immediately prepend the newly created `Party` to `setParties((prev) => [newParty, ...prev])` and persist to `localStorage` before firing background `void fetchParties()`.
-
----
-
-## 4. Caveats
-
-1. **Native Mobile App Share API**: In `MobileInvoiceSuccessView.tsx`, `navigator.share` is supported on modern iOS Safari and Android Chrome, but may be disabled in certain in-app webviews or insecure HTTP contexts; the component already contains a fallback to clipboard copy.
-2. **Backend Field Name Normalization**: In `backend-api/src/routes/invoices.js`, ensure `req.body.total_amount = req.body.total_amount || req.body.total` and `req.body.tax_amount = req.body.tax_amount || req.body.tax` are present so frontend payloads sending either naming convention are accepted without 500 errors.
-3. **Storage Quota**: `localStorage` has a typical quota of ~5MB per origin. Storing customer and product lists of up to 5,000 records consumes ~600KB, which is well within browser limits. If organizations exceed 10,000 items/parties, IndexedDB (or existing local dexie/idb wrappers) should be considered as a future enhancement.
-
----
-
-## 5. Conclusion
-
-1. **Instant Mobile Bill Generation (<500ms)** is fully achievable by:
-   - Changing `MobileCreateInvoice.tsx:79` to call `props.onSave(false, false)` so `html2canvas` is decoupled from the bill creation flow.
-   - Guarding `SalesInvoiceModal.tsx:1127` with `!isMobile` to prevent off-screen canvas generation.
-   - Running `networkInvoicingService.sendSalesInvoiceToNetwork` as an unawaited background promise (`void (async () => { ... })()`).
-   - Sending sale and line items in a single atomic JSON payload to `POST /api/sales` within `documentsService.saveDocument`.
-2. **Resilient Visibility & Cache Hydration** is fully achievable by:
-   - Eliminating destructive `setCustomers([])` and `setParties([])` calls on transient errors.
-   - Storing fetched parties and customers into `localStorage` keys per organization.
-   - Optimistically hydrating state on component mount from `localStorage` before network responses return.
-   - Displaying non-blocking toast warnings (`toast.warning(...)`) on cloud errors while seamlessly rendering cached data.
-   - Updating React in-memory state and localStorage immediately (0ms) upon creation, eliminating reliance on blocking cloud refetches.
-
----
-
-## 6. Verification Method
-
-### 6.1 Static Type Checking
-```bash
-cmd /c npx tsc --noEmit
-```
-Verifies that all modified TypeScript interfaces, props, and API call signatures conform strictly to project types with 0 errors.
-
-### 6.2 Component & Success View Unit Testing
-```bash
-cmd /c npx vitest run src/test/MobileInvoiceSuccessView.test.tsx
-cmd /c npx vitest run src/test/MobileInvoiceSuccessView.challenge.test.tsx
-cmd /c npx vitest run src/test/downloadExactInvoice.test.ts
-```
-Confirms that `MobileInvoiceSuccessView` renders correctly, that download/print buttons work on demand, and that decoupled save flows do not break existing test contracts.
-
-### 6.3 Performance Verification
-- Inspect Chrome DevTools Performance profile during mobile bill creation:
-  - Transition duration to `MobileInvoiceSuccessView` must measure `< 500ms` (measured from "Generate Bill" tap to success screen render).
-  - Verify 0 calls to `html2canvas` during initial save.
-  - Verify `POST /api/sales` HTTP network request count is exactly 1 (not followed by `POST /api/sale-items`).
+To independently verify this survey:
+1. **Source Inspection**:
+   - Inspect `src/pages/Dashboard.tsx` lines 901–965 to confirm the `space-y-2` container and per-item `rounded-xl border` card.
+   - Inspect `src/pages/Parties.tsx` lines 1199–1239 to confirm `p-2.5 space-y-2.5` container and per-party floating card.
+   - Inspect `src/pages/crm/SalaryManagement.tsx` lines 1454–1495 to confirm `space-y-3` and `<CRMCard>` mapping.
+   - Inspect `src/pages/crm/Attendance.tsx` lines 2273–2330 to confirm `space-y-3` and floating request cards.
+2. **Compiler & Build Verification**:
+   - `node node_modules/typescript/bin/tsc --noEmit` (Exits with code 0).
+   - `node node_modules/vite/bin/vite.js build` (Completes with `✓ built`).
+3. **Protected File Verification**:
+   - Run `git status` to verify none of the 19 protected files have been staged or modified.

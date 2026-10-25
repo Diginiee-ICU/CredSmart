@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:43:30Z
+# BRIEFING — 2026-10-25T09:44:00Z
 
 ## Mission
-Implement Milestone 2 of CredSmart Minimal & Fast-Access Redesign: screen-fitted 52px desktop shell in `AppLayout.tsx`, segmented control in `SuiteSwitcher.tsx`, and monochromatic hotkey ribbon + 3-region decoupled split workbench containment in `POSBilling.tsx`.
+Modernize mobile list item containers across the core billing and inventory modules (`Sales.tsx`, `Purchases.tsx`, `Items.tsx`) by eliminating nested double borders and floating cards, replacing them with flat rows in clean divide-y containers while strictly preserving desktop views and quarantine files.
 
 ## 🔒 My Identity
 - Archetype: worker
@@ -9,6 +9,8 @@ Implement Milestone 2 of CredSmart Minimal & Fast-Access Redesign: screen-fitted
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
 - Original parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Milestone: Milestone 2 — Screen-Fitted Desktop Shell & Productivity Layouts
+- Milestone: Milestone 2 — Core Billing & Inventory Modernization (2026-10-25)
+- Parent Orchestrator: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 
 ## 🔒 Key Constraints
 - DO NOT CHEAT: Genuine implementation, no hardcoded test results, no dummy facade.
@@ -19,52 +21,56 @@ Implement Milestone 2 of CredSmart Minimal & Fast-Access Redesign: screen-fitted
 - Monochromatic POS ribbon (`border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700`) with monospace badges.
 - Split POS right panel into 3 regions: Fixed Top Total, Scrollable Middle Body, Fixed Bottom Action Dock (Print [F6], Save [F7], WA).
 - Ensure 0 TypeScript errors (`cmd /c npx tsc --noEmit`), pass vitest suite, 0 eslint errors.
+- Milestone 2 (Core Billing & Inventory Modernization):
+  - Exclusive write ownership: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`.
+  - NEVER touch or modify any of the 19 quarantine files.
+  - Zero double borders on mobile outer wrappers.
+  - Mobile stream containers must use flat divide-y (`divide-y divide-slate-100 dark:divide-slate-800/60`).
+  - Mobile list rows must be flat `px-3.5 py-3` (zero individual border, zero rounded-xl, zero shadow-2xs).
+  - Touch targets must be >= 44px (`min-h-[44px]`).
+  - All typography >= 11px.
+  - 100% desktop invariance (`hidden md:...` completely preserved).
+  - Verify `tsc --noEmit` exits 0, `vite build` exits 0, `git status` verifies only assigned files modified.
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:43:30Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:44:00Z
 
 ## Task Summary
-- **What to build**: Screen-fitted desktop command header and layout containment in `AppLayout.tsx`, calm segmented suite switcher pill in `SuiteSwitcher.tsx`, and monochromatic hotkey ribbon + decoupled 3-region POS checkout dock in `POSBilling.tsx`.
-- **Success criteria**: 52px header, 28px mark, left org switcher, central `⌘K`, royal blue split button, live sync dot, no 3D tilt, no watermark, POS checkout visible without scroll on 768px-900px displays, all tests passing.
-- **Interface contracts**: `PROJECT.md`, `.agents/rules/minimal-design-system.md`, `survey_explorer_desktop/handoff.md`.
-- **Code layout**: `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, `src/pages/POSBilling.tsx`.
+- **What to build**: Modernize mobile view list item containers in `Purchases.tsx` and `Items.tsx`, and verify `Sales.tsx`.
+- **Success criteria**: Flat divide-y mobile list rows, zero nested double borders, >=44px touch targets, zero desktop regressions, `tsc --noEmit` exits 0, `vite build` exits 0.
+- **Interface contracts**: `orchestrator_mobile_cards/PROJECT.md`, `explorer_survey_2/handoff.md`, `minimal-design-system.md`.
+- **Code layout**: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`.
 
 ## Key Decisions Made
-- `src/components/SuiteSwitcher.tsx`: Re-engineered into a calm segmented control pill on a neutral slate surface with active selection card (`bg-white dark:bg-slate-900 shadow-2xs text-slate-900 dark:text-white font-bold`) and inactive slate text. Eliminated saturated amber/emerald fills while preserving all testids and ARIA semantics.
-- `src/components/AppLayout.tsx`:
-  - Set desktop header to exact 52px (`h-13`), mobile to 48px (`h-[calc(3rem+env(safe-area-inset-top,0px))]`).
-  - Implemented 28px brand mark (`w-7 h-7 rounded-lg bg-blue-600`) with Inter wordmark.
-  - Added dedicated Organization Switcher dropdown pill on left command strip (`h-8 px-2.5 rounded-lg border border-slate-200/80 bg-slate-50 text-xs font-semibold`).
-  - Positioned central Command Palette trigger (`⌘K`) across all desktop viewports (`md:` and above).
-  - Standardized `+ New Invoice` and CRM Quick Action to Royal Blue split buttons (`h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs`).
-  - Added `● Live Sync` dot indicator on right command strip.
-  - Eliminated 3D perspective distortion (`perspective: 2000px`, `rotateX(3deg)`).
-  - Eliminated floating bottom-right watermark (`/logo-static.jpeg` overlay).
-  - Enforced screen-fitted viewport containment (`min-h-0 overflow-hidden` wrapper and `<main>` with `min-h-0`).
-- `src/pages/POSBilling.tsx`:
-  - Standardized hotkey ribbon to monochromatic hairline borders (`border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700`) with clean monospace badges (`[F1]`, `[CTRL+I]`, `[CTRL+B]`, `[P]`, `[Q]`, `[D]`, `[V]`, `[DEL]`).
-  - Decoupled right checkout column into 3 screen-fitted regions: Region 1 (Fixed Top Net Payable Total in blue-600), Region 2 (Scrollable breakdown, payment mode selector, received amount/change due, customer profile), Region 3 (Fixed Bottom Action Dock with Print [F6], Save [F7], WA).
-  - Zero vertical scroll needed on standard 768px-900px monitors.
+- `src/pages/Sales.tsx`: Verified line 940 (outer wrapper has no double border), line 942 (stream container is divide-y), lines 965-973 (flat rows with px-3.5 py-3), and lines 984, 1034-1065 (touch targets >= 44px). Left 100% intact as reference gold standard.
+- `src/pages/Purchases.tsx`:
+  - Outer wrapper (line 864): Replaced boxed container `rounded-xl border border-slate-200/80 dark:border-slate-800 ... shadow-2xs` with unbordered `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`.
+  - Mobile stream container (line 866): Replaced `p-2.5 pb-24 space-y-2.5` with flat hairline stream `px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60`.
+  - Mobile item row (lines 897-905): Replaced floating box `p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]` with flat row `px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2` (selected: `bg-amber-50/30 dark:bg-amber-950/20`, hover: `hover:bg-slate-50/50 dark:hover:bg-slate-800/30`).
+  - Action buttons (lines 958, 966, 1029, 1038): Refined `w-11 h-8.5 min-w-[44px] min-h-[44px]` to `w-11 h-11 min-w-[44px] min-h-[44px]` ensuring standard 44x44px touch target ergonomics.
+- `src/pages/Items.tsx`:
+  - Outer wrapper (line 1019): Replaced boxed container `border border-slate-200/80 dark:border-slate-800 rounded-xl ... shadow-2xs` with unbordered `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`.
+  - Mobile stream container (line 1021): Replaced `p-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] space-y-2` with flat hairline stream `px-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] divide-y divide-slate-100 dark:divide-slate-800/60`.
+  - Mobile item row (lines 1054-1060): Replaced floating box `p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]` with flat row `px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2` (selected: `bg-blue-50/30 dark:bg-blue-950/20`, hover: `hover:bg-slate-50/50 dark:hover:bg-slate-800/30`).
 
 ## Artifact Index
-- `.agents/teamwork/worker_m2/DISPATCH.md` — Dispatch message
-- `.agents/teamwork/worker_m2/BRIEFING.md` — Situational awareness
+- `.agents/teamwork/worker_m2/DISPATCH.md` — Dispatch assignment and logs
+- `.agents/teamwork/worker_m2/BRIEFING.md` — Working memory and status
 - `.agents/teamwork/worker_m2/progress.md` — Heartbeat and step tracking
 - `.agents/teamwork/worker_m2/handoff.md` — 5-component handoff report
 
 ## Change Tracker
 - **Files modified**:
-  - `src/components/SuiteSwitcher.tsx` — Neutral segmented control pill
-  - `src/components/AppLayout.tsx` — 52px header, 28px brand, org switcher, central ⌘K, royal blue split action, live sync dot, removed 3D tilt & watermark, screen-fitted containment
-  - `src/pages/POSBilling.tsx` — Monochromatic ribbon + 3-region decoupled split workbench checkout dock
-- **Build status**: Pass (`cmd /c npx tsc --noEmit` -> 0 errors)
+  - `src/pages/Purchases.tsx`: Modernized mobile wrapper, stream container to divide-y, item rows to flat rows, and action button touch targets to 44x44px.
+  - `src/pages/Items.tsx`: Modernized mobile wrapper, stream container to divide-y, and item rows to flat rows.
+- **Build status**: Pass (`tsc --noEmit` -> 0 errors, `vite build` -> ✓ built in 32.87s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (41/41 vitest tests in `billingLifecycleEngine.test.ts` & `MobileInvoiceSuccessView.test.tsx`; 40/40 tests in `crmShellNavigation.audit.test.ts` & `componentPrimitivesAdversarial.challenger.test.tsx`)
-- **Lint status**: Clean (0 errors, 3 existing warnings in SuiteSwitcher)
-- **Tests added/modified**: Full suite validation
+- **Build/test result**: Pass (41/41 vitest tests in `billingLifecycleEngine.test.ts` & `MobileInvoiceSuccessView.test.tsx`)
+- **Lint status**: Clean
+- **Tests added/modified**: Verified against existing test suite
 
 ## Loaded Skills
-- `credsmart-minimal-design-system`: Minimal & fast-access tokens, screen-fitted viewports, 52px command header, monochromatic POS ribbon.
+- `credsmart-minimal-design-system`: Minimal & fast-access tokens, screen-fitted viewports, mobile list modernization.

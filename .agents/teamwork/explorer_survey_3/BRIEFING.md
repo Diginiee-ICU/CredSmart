@@ -1,14 +1,12 @@
-# BRIEFING — 2026-10-20T10:55:00Z
+# BRIEFING — 2026-10-25T09:14:00Z
 
 ## Mission
-Investigate frontend billing performance (<500ms) and cache hydration for CredSmart:
-1. Bill Generation Performance (<500ms):
-   - Trace where `downloadExactInvoicePdf` (`html2canvas`) is called during bill generation and decouple it so mobile transitions instantly (<500ms) to `MobileInvoiceSuccessView`.
-   - Trace how `sendSalesInvoiceToNetwork` can be run in the background unawaited (`void sendSalesInvoiceToNetwork(...)`).
-   - Trace how `documentsService.saveDocument` can send sale + items in a single API call to `POST /api/sales`.
-2. List Visibility & Cache Hydration:
-   - Trace how `ProductsContext.tsx`, `Customers.tsx`, `Parties.tsx`, and `documentsService.ts` fall back to cached data with non-blocking toast warning on network failure.
-   - Trace how to update local in-memory state immediately upon creation so newly created entities appear instantly (0ms latency).
+Survey and map all occurrences of the "nested/boxy card container" anti-pattern in assigned dashboard, party, and CRM HR files:
+1. `src/pages/Dashboard.tsx` (recent activity transaction rows)
+2. `src/pages/Parties.tsx` (mobile party directory rows)
+3. `src/pages/crm/SalaryManagement.tsx` (salary profile list rows)
+4. `src/pages/crm/Attendance.tsx` (attendance log rows)
+Document exact line numbers, current classes, proposed minimal divide-y replacements, touch targets (>=44px), and font sizes (>=11px), strictly preserving the 19 protected quarantine files and desktop views.
 
 ## 🔒 My Identity
 - Archetype: explorer
@@ -16,6 +14,7 @@ Investigate frontend billing performance (<500ms) and cache hydration for CredSm
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3
 - Original parent: c0d1864a-d589-4172-80be-9e95a059559c
 - Milestone: Explorer Survey Phase
+- 2026-10-25: Explorer 3 (Survey: Dashboard, Parties, & CRM HR)
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
@@ -28,40 +27,34 @@ Investigate frontend billing performance (<500ms) and cache hydration for CredSm
 - Maintain 5-component handoff report standard.
 - Do NOT modify application source code during investigation.
 - 2026-10-20: Read-only investigation of frontend billing latency (<500ms transition), unawaited network invoicing dispatches, single-call sale+items transactional payloads, and cache hydration/immediate in-memory state reflection across ProductsContext, Customers, Parties, and documentsService.
+- 2026-10-25: Never modify or suggest modifying any of the 19 protected quarantine files.
+- 2026-10-25: Desktop views (`md:` and above) must remain 100% untouched.
+- 2026-10-25: Touch targets >=44px, font sizes >=11px, Royal Blue `bg-blue-600` single accent.
+- 2026-10-25: Read-only investigation; produce structured survey in handoff.md.
 
 ## Current Parent
-- Conversation ID: 47768107-cdc6-46b5-a415-7ea52564fffb
-- Updated: 2026-10-20T10:55:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T09:14:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/components/SalesInvoiceModal.tsx` (lines 1030-1290: handleSave, andPrint trigger, networkInvoicingService await, mobile success transition)
-  - `src/components/invoices/mobile/MobileCreateInvoice.tsx` (lines 65-110: handleGenerateBill calling `props.onSave(true, false)`)
-  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx` (lines 40-120: existing on-demand download/print buttons)
-  - `src/services/documentsService.ts` (lines 135-265: getLocalDocuments, fetchSalesDocuments merge/fallback; lines 583-700: sequential createSale + createSaleItems round-trips)
-  - `src/services/networkInvoicingService.ts` (lines 48-100: realtime broadcast loop 3000ms delay; lines 608-770: sendSalesInvoiceToNetwork multiple DB queries + local storage)
-  - `src/services/invoicesApi.ts` (lines 185-265: createSale, updateSale, createSaleItems)
-  - `backend-api/src/routes/invoices.js` (lines 89-160: POST /sales already accepts atomic `items` array with BEGIN/COMMIT transaction)
-  - `src/context/ProductsContext.tsx` (lines 120-220: refreshProducts error handling, localStorage cache, addOrUpdateProduct)
-  - `src/pages/Customers.tsx` (lines 220-280: fetchCustomers wiping `setCustomers([])` on error; lines 360-385: handleSave ignoring response and awaiting fetch)
-  - `src/pages/Parties.tsx` (lines 140-300: fetchParties wiping `setParties([])` on error; lines 345-455: handleSaveParty awaiting fetch without in-memory state update)
-  - `backend-api/src/routes/parties.js` (lines 10-120: POST /customers schema mismatch)
+  - `src/pages/Dashboard.tsx` (lines 881-966: mobile recent activity transaction rows)
+  - `src/pages/Parties.tsx` (lines 1195-1418: mobile party directory rows)
+  - `src/pages/crm/SalaryManagement.tsx` (lines 1450-1496, 1745-1800, 1915-1968: mobile salary profiles, payroll, adjustments)
+  - `src/pages/crm/Attendance.tsx` (lines 1818-1955, 2080-2166, 2190-2250, 2270-2330: shift pods, attendance logs, geofences, requests)
 - **Key findings**:
-  1. `MobileCreateInvoice.tsx:79` calls `props.onSave(true, false)` (`andPrint=true`), causing `SalesInvoiceModal.tsx:1131` to invoke `downloadExactInvoicePdf` with heavy `html2canvas` off-screen rendering before mobile transition. This freezes the UI for 2-6s. Decoupling to `onSave(false, false)` allows instant (<500ms) transition, since `MobileInvoiceSuccessView` already has on-demand Download/Print triggers.
-  2. `SalesInvoiceModal.tsx:1109` awaits `networkInvoicingService.sendSalesInvoiceToNetwork`, which runs multiple DB queries and waits up to 3,000ms for Supabase realtime channel join. Converting to unawaited background task (`void (async () => { ... })()`) shaves off 500-3500ms from the save path.
-  3. `documentsService.saveDocument` executes 2-3 sequential round-trips (`createSale` followed by `createSaleItems`). However, `backend-api/src/routes/invoices.js` already supports receiving `items` in `POST /api/sales` within a single atomic PostgreSQL transaction. Sending `items` directly cuts roundtrips in half and prevents orphaned sales.
-  4. `Customers.tsx` and `Parties.tsx` unconditionally reset their state to `[]` whenever `fetchCustomers`/`fetchParties` fails, and have no local cache fallback. Adding `localStorage` caching + non-blocking warning toasts preserves list visibility.
-  5. Newly created items and parties do not update in-memory state immediately; they await slow cloud re-fetch. Adding 0ms in-memory state updates (`setCustomers`, `setParties`, `addOrUpdateProduct`) makes new entities appear immediately.
-- **Unexplored areas**: None. All requested components, services, and backend endpoints have been traced to exact line numbers.
+  1. `Dashboard.tsx`: Mobile recent activity rows (line 916) are individual floating cards (`rounded-xl border shadow-2xs active:scale-[0.99]`) inside `space-y-2` (line 901). Target replacement: single `rounded-xl border shadow-2xs divide-y` container with flat `px-3.5 py-3 min-h-[56px]` rows.
+  2. `Parties.tsx`: Mobile party directory (line 1231) has nested floating cards (`rounded-xl border shadow-2xs`) inside a padded container (`p-2.5 space-y-2.5`, line 1199) which is inside another bordered container (line 1197). Target replacement: outer container with `px-0 divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3` rows with >=44px call/WhatsApp/ledger actions.
+  3. `SalaryManagement.tsx`: Tab 1 salary profiles (line 1455), Tab 2 payroll (line 1746), and Tab 3 adjustments (line 1916) wrap each item in `<CRMCard variant="default">` inside `space-y-3`. Target replacement: single `divide-y` container with flat `p-3.5` rows and 44px "Configure Profile" CTA.
+  4. `Attendance.tsx`: Tab 4 regularisation requests (line 2280) use floating cards (`rounded-xl border`) inside `<div className="space-y-3 pt-2">` inside CRMCard. Target replacement: single `divide-y` container with flat `px-3.5 py-3` rows. Tab 2 logs can be enhanced with a mobile divide-y list mirroring SalaryManagement.
+- **Unexplored areas**: None. All 4 files surveyed and verified with exact line numbers and proposed code replacements.
 
 ## Key Decisions Made
-- Fully decoupled `html2canvas` PDF generation on mobile, relying on `MobileInvoiceSuccessView` on-demand action buttons.
-- Isolated B2B network dispatch into an asynchronous unawaited Promise with non-blocking toast follow-up.
-- Unified sale + items into a single atomic JSON request to `POST /api/sales`.
-- Standardized local cache hydration + non-blocking warning toast pattern across Products, Customers, and Parties.
-- Formulated 0ms in-memory optimistic updates for customer and party creation.
+- Adhere strictly to the clean minimal divide-y pattern: single clean container with `divide-y divide-slate-100 dark:divide-slate-800/60`, flat rows inside without per-item borders, shadows, or rounded corners.
+- Confirmed zero modifications to the 19 protected quarantine files.
+- Preserved desktop views (`hidden md:flex`, `hidden sm:block`) with 100% invariance.
 
 ## Artifact Index
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md` — Final 5-Component Handoff Report
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md` — Survey handoff report
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\progress.md` — Liveness & Progress Log
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\DISPATCH.md` — Dispatch Audit Log

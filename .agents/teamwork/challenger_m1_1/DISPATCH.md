@@ -1,47 +1,45 @@
-# Dispatch Directive: Challenger 1 — Milestone 1 (Theme & Spacing Stress Tester)
+# Dispatch Assignment: Challenger 1 (Milestone 1 — CRM Roles & Tasks Empiric Verification)
 
 ## Mission
-Empirically stress-test the Tailwind theme and CSS tokens implemented in Milestone 1:
-1. Write and execute node/test scripts to verify resolution of Tailwind spacing scale (`spacing['8.5']`, `['7.5']`, `['11.5']`, `['13']`), font-family (`sans`, `display`, `mono`), boxShadows, and border-radius.
-2. Verify CSS token variables in `:root` and `.dark` conform to contrast requirements and expected hex values.
-3. Verify `font-feature-settings: "tnum" on` is active on `.font-mono` and `.tabular-nums`.
-4. Run `cmd /c npx tsc --noEmit` and verify zero errors.
+Empirically verify the Milestone 1 changes in:
+1. `src/pages/crm/RoleManagement.tsx`
+2. `src/pages/crm/Tasks.tsx`
 
-## References to Read
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+Stress-test responsive classes, touch targets, DOM structure, and verify zero regressions.
 
-## Expected Output
-Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` with your verdict (APPROVE or REQUEST_CHANGES), stress test scripts/outputs, and empirical evidence. Send message when done.
-
-## 2026-10-24T19:19:48Z
-You are Challenger 1 for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project.
-
-Your dedicated working directory is:
+## Working Directory
 `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1`
 
-Read your dispatch directive:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md`
+## Mandatory Reference Documents
+- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
+- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
+- Worker 1 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
 
-Read the authoritative user request:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
+## 19 Protected Quarantine Files:
+- NEVER MODIFY. Verify they are completely untouched.
 
-Read the Worker's handoff report:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
+## Challenge Tasks
+1. Inspect `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` code diffs.
+2. Verify touch targets: `min-h-[44px]` on all interactive rows, switches, buttons.
+3. Verify typography: No font class below `text-[11px]`.
+4. Verify responsive integrity:
+   - On mobile (`< sm:` or `< md:`): No floating card borders, no individual shadows. Uses `divide-y divide-slate-100 dark:divide-slate-800/60`.
+   - On desktop (`>= sm:` or `>= md:`): Multi-column grid/board styles intact.
+5. Verify build integrity:
+   - Run `node node_modules/typescript/bin/tsc --noEmit`
+   - Run `node node_modules/vite/bin/vite.js build`
+6. Write your report and verdict (`APPROVE` or `FAIL`) to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md`.
 
-Read the design rules and master project document:
-- `.agents/rules/minimal-design-system.md`
-- `PROJECT.md`
 
-Your tasks:
-Empirically stress-test the Tailwind theme and CSS tokens implemented in Milestone 1:
-1. Write and execute node/test scripts to verify resolution of Tailwind spacing scale (`spacing['8.5']`, `['7.5']`, `['11.5']`, `['13']`), font-family (`sans`, `display`, `mono`), boxShadows, and border-radius.
-2. Verify CSS token variables in `:root` and `.dark` conform to contrast requirements and expected hex values.
-3. Verify `font-feature-settings: "tnum" on` is active on `.font-mono` and `.tabular-nums`.
-4. Run `cmd /c npx tsc --noEmit` and verify zero errors.
-5. Record your clear verdict: `VERDICT: APPROVE` or `VERDICT: REQUEST_CHANGES` with empirical outputs.
+## 2026-10-25T09:24:24Z
+You are Challenger 1 for Milestone 1 (CRM Roles & Tasks Empiric Verification).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md
+Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read Worker 1 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
 
-Write your handoff report to:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md`
-When complete, send a message to the orchestrator with your verdict.
+Empirically verify the Milestone 1 changes in src/pages/crm/RoleManagement.tsx and src/pages/crm/Tasks.tsx.
+Check responsive behavior, touch targets (>=44px), typography (>=11px), run tsc and vite build.
+Write your verdict (APPROVE or FAIL) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md and notify parent via send_message.

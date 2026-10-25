@@ -1,30 +1,18 @@
-# Progress — Challenger 1 (Milestone 1: Theme & Spacing Stress Tester)
+# Progress — Challenger 1 (Milestone 1: CRM Roles & Tasks Modernization Verification)
 
-- **Status**: Adversarial challenge complete. Verdict rendered: VERDICT: APPROVE.
-- **Last visited**: 2026-10-24T19:27:00Z
-- **Active Task**: Writing final handoff report `handoff.md` and notifying orchestrator.
+- **Status**: Empirical verification complete. Verdict rendered: VERDICT: APPROVE.
+- **Last visited**: 2026-10-25T09:35:00Z
+- **Active Task**: Handoff report submitted and notifying parent agent.
 - **Completed Steps**:
-  1. Ran Node resolveConfig verification script for Tailwind theme:
-     - `spacing['7.5'] === '1.875rem'` (30px)
-     - `spacing['8.5'] === '2.125rem'` (34px)
-     - `spacing['11.5'] === '2.875rem'` (46px)
-     - `spacing['13'] === '3.25rem'` (52px)
-     - `fontFamily.sans[0] === "'Inter'"`
-     - `fontFamily.display[0] === "'Inter'"`
-     - `fontFamily.mono[0] === "'IBM Plex Mono'"`
-     - `boxShadow['2xs']`, `['xs']`, `['soft']`, `['lift']` verified; `glow: 'none'`
-     - `borderRadius['3xl'] === '1.25rem'`
-  2. Executed Node WCAG 2.1 contrast calculation oracle:
-     - Light mode text on background: 17.10:1 (AAA)
-     - Light mode card text on card: 17.87:1 (AAA)
-     - Light mode primary button text: 5.17:1 (AA)
-     - Light mode muted text on card: 4.70:1 (AA)
-     - Light mode warning text: 8.38:1 (AAA)
-     - Dark mode text on background: 18.68:1 (AAA)
-     - Dark mode text on card: 17.39:1 (AAA)
-  3. Verified `font-feature-settings: "tnum" on, "cv02", "cv03", "cv04"` and `font-variant-numeric: tabular-nums` in `src/index.css`.
-  4. Executed `cmd /c npx tsc --noEmit` — 0 compiler errors across entire repo.
-  5. Authored automated test suite `src/test/designTokensM1.challenger.test.ts` (20 tests).
-  6. Executed `cmd /c npx vitest run src/test/designTokensM1.challenger.test.ts` — 20/20 passed (100%).
-  7. Executed `cmd /c npx vitest run src/test/crmComponents.test.tsx` — 55/55 passed (100%).
-  8. Executed `cmd /c npx eslint src/test/designTokensM1.challenger.test.ts` — 0 warnings, 0 errors.
+  1. Inspected git status: verified strictly only `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` were modified under `src/`.
+  2. Verified all 19 quarantine files remain 100% untouched.
+  3. Inspected git diffs:
+     - `RoleManagement.tsx`: verified permission toggle container converted to `divide-y divide-slate-100 dark:divide-slate-800/60` on mobile (< `sm:`) with flat `px-3.5 py-3` rows; desktop `sm:grid sm:grid-cols-2 md:grid-cols-3` preserved.
+     - `Tasks.tsx`: verified Kanban tasks container converted to `divide-y divide-slate-100 dark:divide-slate-800/60` on mobile (< `md:`) with flat `px-3.5 py-3` rows; desktop `md:rounded-xl md:border md:shadow-2xs` preserved.
+  4. Verified touch targets: `min-h-[44px]` present on all interactive rows and action buttons.
+  5. Verified typography: zero sub-11px font classes present.
+  6. Executed `node node_modules/typescript/bin/tsc --noEmit`: exited with code 0 (zero errors).
+  7. Executed `node node_modules/vite/bin/vite.js build`: succeeded in 3m 22s with code 0.
+  8. Executed existing CRM Vitest suites: 65/65 tests passed.
+  9. Authored and executed automated test suite `src/test/crmRolesTasksModernization.challenger.test.ts`: 11/11 tests passed.
+  10. Updated `BRIEFING.md` and wrote comprehensive handoff report `handoff.md`.
