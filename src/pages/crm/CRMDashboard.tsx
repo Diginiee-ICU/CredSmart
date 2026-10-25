@@ -56,7 +56,7 @@ interface QuickActionItem {
 export default function CRMDashboard(): React.ReactElement {
   const { orgId, org } = useOrganization();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<CRMStats>({
     staffCount: 1,

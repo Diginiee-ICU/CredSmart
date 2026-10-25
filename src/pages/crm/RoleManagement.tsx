@@ -2062,7 +2062,7 @@ export default function RoleManagement(): React.ReactElement {
           <Link
             to={ROUTE_PATHS.crm}
             className="w-8.5 h-8.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex items-center justify-center shadow-2xs shrink-0 active:scale-[0.97]"
-            title="Back to CRM Command Center"
+            title="Back to CRM"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -2070,7 +2070,7 @@ export default function RoleManagement(): React.ReactElement {
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>RBAC Foundation</span>
+              <span>RBAC Matrix</span>
             </span>
 
             {isSuperAdminOrOwner && (
