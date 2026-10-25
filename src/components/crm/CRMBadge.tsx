@@ -75,7 +75,7 @@ export const CRMBadge = React.forwardRef<HTMLSpanElement, CRMBadgeProps>(
         dot: "bg-rose-500",
       },
       info: {
-        pill: "bg-blue-50 text-[#2563EB] border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
+        pill: "bg-blue-50 text-[#1D4ED8] border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
         dot: "bg-blue-600",
       },
       neutral: {

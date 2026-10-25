@@ -2484,7 +2484,7 @@ export default function Attendance(): React.ReactElement {
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                  Geo-Verified
+                  GPS Verified
                 </span>
                 <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
                   {metrics.geoVerified}

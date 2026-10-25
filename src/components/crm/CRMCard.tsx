@@ -11,7 +11,7 @@ export const CRM_BRAND_COLORS = {
   /** CredSmart Vibrant Orange — primary CTA accents and operational highlights */
   orange: "#FF6A00",
   /** Royal Action Blue — interactive links, trust buttons, and primary actions */
-  blue: "#2563EB",
+  blue: "#1D4ED8",
   /** Live Status Emerald Green — active presence, success indicators, and growth */
   emerald: "#10B981",
   /** Liquidity & Highlight Warm Gold */
@@ -82,7 +82,7 @@ export const CRMCard = React.forwardRef<HTMLDivElement, CRMCardProps>(
       elevated: "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-soft hover:shadow-lift transition-all duration-200",
       brand: "bg-white dark:bg-slate-900 border-y border-r border-slate-200/80 dark:border-slate-800 border-l-4 border-l-[#FF6A00] shadow-2xs",
       outline: "bg-transparent border-2 border-dashed border-slate-200 dark:border-slate-800",
-      glass: "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs",
+      glass: "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-2xs",
     };
 
     const hasHeader = Boolean(title || description || headerAction);
