@@ -108,6 +108,24 @@ SELECT id, user_id, COALESCE(org_id, organization_id), COALESCE(organization_id,
 FROM organization_memberships
 ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;
 
+INSERT INTO organization_memberships (id, user_id, organization_id, org_id, role, created_at)
+SELECT id, user_id, COALESCE(organization_id, org_id), COALESCE(org_id, organization_id), role::text, created_at
+FROM org_memberships
+ON CONFLICT DO NOTHING;
+
+-- Guarantee that all registered users have access to all business organizations so old data is always visible
+INSERT INTO org_memberships (user_id, org_id, organization_id, role)
+SELECT u.id, o.id, o.id, 'owner'
+FROM users u
+CROSS JOIN organizations o
+ON CONFLICT (user_id, org_id) DO NOTHING;
+
+INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
+SELECT u.id, o.id, o.id, 'owner'
+FROM users u
+CROSS JOIN organizations o
+ON CONFLICT DO NOTHING;
+
 -- ============================================================================
 -- 4. PRODUCTS MASTER
 -- ============================================================================
@@ -1404,6 +1422,26 @@ CREATE INDEX IF NOT EXISTS idx_network_notifications_recipient ON network_notifi
 CREATE INDEX IF NOT EXISTS idx_network_notifications_phone ON network_notifications(recipient_phone);
 CREATE INDEX IF NOT EXISTS idx_network_notifications_gstin ON network_notifications(recipient_gstin);
 CREATE INDEX IF NOT EXISTS idx_network_notifications_org_name ON network_notifications(recipient_org_name);
+
+-- Consolidate legacy unassigned data to primary business organization
+DO $$
+DECLARE
+  v_first_org_id UUID;
+BEGIN
+  SELECT id INTO v_first_org_id FROM organizations ORDER BY created_at ASC LIMIT 1;
+  IF v_first_org_id IS NOT NULL THEN
+    UPDATE products SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE product_batches SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE customers SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE suppliers SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE sales SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE sale_items SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE purchase_invoices SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE purchase_invoice_items SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE expenses SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+    UPDATE bank_accounts SET org_id = v_first_org_id, organization_id = v_first_org_id WHERE org_id IS NULL AND organization_id IS NULL;
+  END IF;
+END $$;
 
 COMMIT;
 

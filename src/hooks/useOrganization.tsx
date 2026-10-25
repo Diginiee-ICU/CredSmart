@@ -250,10 +250,12 @@ const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => 
       return localMemberships;
     }
 
-    const remoteMemberships = (data || []).map((d) => ({
-      organization_id: d.organization_id,
-      role: d.role === "cashier" ? "cashier" : "store_owner",
-    }));
+    const remoteMemberships = (data || [])
+      .map((d) => ({
+        organization_id: d.organization_id || (d as any).org_id,
+        role: d.role === "cashier" ? "cashier" : "store_owner",
+      }))
+      .filter((m) => Boolean(m.organization_id));
 
     // Merge remote and local without duplicates
     const map = new Map<string, MembershipRow>();

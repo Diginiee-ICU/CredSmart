@@ -59,7 +59,8 @@ const ALLOWED_TABLES = new Set([
 ]);
 
 const TABLES_WITHOUT_ORG_ID = new Set([
-  'users', 'profiles', 'crm_permissions', 'crm_role_permissions', 'crm_staff_roles'
+  'users', 'profiles', 'organizations', 'crm_permissions', 'crm_role_permissions', 'crm_staff_roles',
+  'network_invoices', 'network_notifications'
 ]);
 
 function splitClauses(str) {
@@ -300,7 +301,13 @@ router.post('/rest/v1/:table', async (req, res) => {
       if (cols.length === 0) continue;
 
       const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
-      const values = cols.map(c => body[c]);
+      const values = cols.map(c => {
+        const val = body[c];
+        if (val !== null && typeof val === 'object' && !(val instanceof Date)) {
+          return JSON.stringify(val);
+        }
+        return val;
+      });
 
       const result = await pool.query(
         `INSERT INTO "${actualTable}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${placeholders}) RETURNING *`,
@@ -334,7 +341,12 @@ router.patch('/rest/v1/:table', async (req, res) => {
     const params = [];
 
     fields.forEach((f, i) => {
-      params.push(updates[f]);
+      const val = updates[f];
+      if (val !== null && typeof val === 'object' && !(val instanceof Date)) {
+        params.push(JSON.stringify(val));
+      } else {
+        params.push(val);
+      }
       query += `"${f}" = $${params.length}${i < fields.length - 1 ? ', ' : ''}`;
     });
 

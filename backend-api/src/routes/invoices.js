@@ -35,27 +35,41 @@ router.get('/sales', async (req, res) => {
     if (!orgId) return res.json([]);
 
     const { customer_id, start_date, end_date, payment_status } = req.query;
-    let query = 'SELECT * FROM sales WHERE (org_id = $1 OR organization_id = $1)';
+    let query = `
+      SELECT s.*,
+             COALESCE(
+               (SELECT json_agg(si.* ORDER BY si.created_at ASC)
+                FROM sale_items si
+                WHERE si.sale_id = s.id),
+               '[]'::json
+             ) AS sale_items,
+             (SELECT json_build_object('id', c.id, 'name', c.name, 'phone', c.phone, 'gstin', c.gstin, 'email', c.email, 'address', c.address)
+              FROM customers c
+              WHERE c.id = s.customer_id
+              LIMIT 1) AS customers
+      FROM sales s
+      WHERE (s.org_id = $1 OR s.organization_id = $1)
+    `;
     const params = [orgId];
 
     if (customer_id) {
       params.push(customer_id);
-      query += ` AND customer_id = $${params.length}`;
+      query += ` AND s.customer_id = $${params.length}`;
     }
     if (start_date) {
       params.push(start_date);
-      query += ` AND sale_date >= $${params.length}`;
+      query += ` AND s.sale_date >= $${params.length}`;
     }
     if (end_date) {
       params.push(end_date);
-      query += ` AND sale_date <= $${params.length}`;
+      query += ` AND s.sale_date <= $${params.length}`;
     }
     if (payment_status) {
       params.push(payment_status);
-      query += ` AND payment_status = $${params.length}`;
+      query += ` AND s.payment_status = $${params.length}`;
     }
 
-    query += ' ORDER BY sale_date DESC, created_at DESC';
+    query += ' ORDER BY s.sale_date DESC, s.created_at DESC';
     const result = await pool.query(query, params);
     return res.json(result.rows);
   } catch (err) {
@@ -980,14 +994,28 @@ const getPurchasesHandler = async (req, res) => {
   try {
     const orgId = req.orgId || req.query.org_id || req.query.organization_id;
     const { supplier_id } = req.query;
-    let query = 'SELECT * FROM purchase_invoices WHERE (org_id = $1 OR organization_id = $1)';
+    let query = `
+      SELECT pi.*,
+             COALESCE(
+               (SELECT json_agg(pii.* ORDER BY pii.created_at ASC)
+                FROM purchase_invoice_items pii
+                WHERE pii.purchase_invoice_id = pi.id),
+               '[]'::json
+             ) AS purchase_invoice_items,
+             (SELECT json_build_object('id', sup.id, 'name', sup.name, 'phone', sup.phone, 'gstin', sup.gstin, 'email', sup.email, 'address', sup.address)
+              FROM suppliers sup
+              WHERE sup.id = pi.supplier_id
+              LIMIT 1) AS suppliers
+      FROM purchase_invoices pi
+      WHERE (pi.org_id = $1 OR pi.organization_id = $1)
+    `;
     const params = [orgId];
 
     if (supplier_id) {
       params.push(supplier_id);
-      query += ` AND supplier_id = $${params.length}`;
+      query += ` AND pi.supplier_id = $${params.length}`;
     }
-    query += ' ORDER BY purchase_date DESC';
+    query += ' ORDER BY pi.purchase_date DESC';
     const result = await pool.query(query, params);
     return res.json(result.rows);
   } catch (err) {

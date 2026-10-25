@@ -57,19 +57,40 @@ async function main() {
       orgId = orgRes.rows[0].org_id;
       console.log(`[OK] User already belongs to organization: ${orgId}`);
     } else {
-      const newOrgRes = await client.query(
-        `INSERT INTO organizations (name, email)
-         VALUES ($1, $2)
-         RETURNING id`,
-        [orgName, cleanEmail]
+      // Check if an organization with data already exists
+      const existingOrgRes = await client.query(
+        `SELECT id, name FROM organizations
+         ORDER BY (
+           SELECT COUNT(*) FROM products p WHERE p.org_id = organizations.id OR p.organization_id = organizations.id
+         ) DESC, created_at ASC
+         LIMIT 1`
       );
-      orgId = newOrgRes.rows[0].id;
-      console.log(`[OK] Created organization "${orgName}" (ID: ${orgId})`);
+
+      if (existingOrgRes.rows.length > 0) {
+        orgId = existingOrgRes.rows[0].id;
+        console.log(`[OK] Linked user to existing business organization "${existingOrgRes.rows[0].name}" (ID: ${orgId})`);
+      } else {
+        const newOrgRes = await client.query(
+          `INSERT INTO organizations (name, email)
+           VALUES ($1, $2)
+           RETURNING id`,
+          [orgName, cleanEmail]
+        );
+        orgId = newOrgRes.rows[0].id;
+        console.log(`[OK] Created organization "${orgName}" (ID: ${orgId})`);
+      }
 
       await client.query(
         `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
          VALUES ($1, $2, $2, 'owner')
          ON CONFLICT (user_id, org_id) DO NOTHING`,
+        [userId, orgId]
+      );
+
+      await client.query(
+        `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
+         VALUES ($1, $2, $2, 'owner')
+         ON CONFLICT DO NOTHING`,
         [userId, orgId]
       );
 

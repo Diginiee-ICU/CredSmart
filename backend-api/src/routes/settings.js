@@ -136,7 +136,10 @@ const getMembershipsHandler = async (req, res) => {
     // Try org_memberships first
     try {
       let query = `
-        SELECT m.*, u.email, u.full_name, u.phone, u.avatar_url
+        SELECT m.*,
+               COALESCE(m.org_id, m.organization_id) AS org_id,
+               COALESCE(m.organization_id, m.org_id) AS organization_id,
+               u.email, u.full_name, u.phone, u.avatar_url
         FROM org_memberships m
         LEFT JOIN users u ON u.id = m.user_id
         WHERE 1=1
@@ -166,7 +169,10 @@ const getMembershipsHandler = async (req, res) => {
       // Fallback: try organization_memberships
       try {
         let query2 = `
-          SELECT m.*, u.email, u.full_name, u.phone, u.avatar_url
+          SELECT m.*,
+                 COALESCE(m.org_id, m.organization_id) AS org_id,
+                 COALESCE(m.organization_id, m.org_id) AS organization_id,
+                 u.email, u.full_name, u.phone, u.avatar_url
           FROM organization_memberships m
           LEFT JOIN users u ON u.id = m.user_id
           WHERE 1=1

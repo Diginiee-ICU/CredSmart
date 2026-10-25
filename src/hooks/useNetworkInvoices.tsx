@@ -113,6 +113,71 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
 
   // Deduplication cache to prevent duplicate alerts across multiple transports (DOM, BroadcastChannel, Realtime, CDC)
   const handledEventInvoiceIdsRef = useRef<Map<string, number>>(new Map());
+  const knownPendingIdsRef = useRef<Set<string>>(new Set());
+  const initialLoadedRef = useRef<boolean>(false);
+
+  // Centralized incoming invoice handler across all realtime transports
+  const handleIncomingInvoiceEvent = useCallback((
+    networkInvoice?: NetworkInvoice,
+    notification?: NetworkNotification
+  ) => {
+    const currentOrg = orgRef.current;
+    if (!networkInvoice || !currentOrg) return;
+
+    const u = userRef.current;
+    // Check if invoice is addressed to this organization or user
+    const isTargetRecipient = networkInvoicingService.isInvoiceForOrg(
+      networkInvoice,
+      currentOrg.id,
+      currentOrg.phone,
+      currentOrg.gstin,
+      currentOrg.name,
+      u.userName,
+      u.userEmail,
+      u.userPhone
+    );
+
+    // Only alert if we are the recipient and NOT the sender
+    if (isTargetRecipient && networkInvoice.senderOrgId !== currentOrg.id) {
+      // Ingest immediately into local storage
+      networkInvoicingService.ingestIncomingNetworkInvoice(networkInvoice, notification, currentOrg.id);
+
+      const now = Date.now();
+      const invNumKey = networkInvoice.invoiceNumber ? networkInvoice.invoiceNumber.trim().toLowerCase() : undefined;
+      const scopedInvKey = networkInvoice.senderOrgId && invNumKey ? `${networkInvoice.senderOrgId}_${invNumKey}` : invNumKey;
+      const lastNotified = (networkInvoice.id && handledEventInvoiceIdsRef.current.get(networkInvoice.id)) ||
+                           (scopedInvKey && handledEventInvoiceIdsRef.current.get(scopedInvKey)) ||
+                           (notification?.id && handledEventInvoiceIdsRef.current.get(notification.id));
+      const shouldShowToast = !lastNotified || (now - lastNotified > 10000);
+
+      if (shouldShowToast) {
+        if (networkInvoice.id) handledEventInvoiceIdsRef.current.set(networkInvoice.id, now);
+        if (scopedInvKey) handledEventInvoiceIdsRef.current.set(scopedInvKey, now);
+        if (notification?.id) handledEventInvoiceIdsRef.current.set(notification.id, now);
+        // Prune stale cache entries
+        for (const [k, ts] of handledEventInvoiceIdsRef.current.entries()) {
+          if (now - ts > 30000) handledEventInvoiceIdsRef.current.delete(k);
+        }
+
+        // Play pleasant sound chime & haptic feedback
+        playChimeAndVibrate();
+
+        // Show real-time actionable toast notification
+        toast.info(`⚡ New Sales Invoice on your name!`, {
+          description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+          duration: 9000,
+          action: {
+            label: "Review & Inward",
+            onClick: () => {
+              window.dispatchEvent(
+                new CustomEvent("credsmart_open_notifications", { detail: { tab: "inward" } })
+              );
+            },
+          },
+        });
+      }
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     const currentOrg = orgRef.current;
@@ -134,10 +199,23 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
       setPendingInvoices(pending);
       setAllInvoices(all);
       setNotifications(notifs);
+
+      // Detect newly arrived pending invoices and notify in real-time
+      if (initialLoadedRef.current) {
+        for (const inv of pending) {
+          if (!knownPendingIdsRef.current.has(inv.id)) {
+            knownPendingIdsRef.current.add(inv.id);
+            handleIncomingInvoiceEvent(inv);
+          }
+        }
+      } else {
+        pending.forEach((inv) => knownPendingIdsRef.current.add(inv.id));
+        initialLoadedRef.current = true;
+      }
     } catch (e) {
       console.warn("Failed to load network invoice notifications:", e);
     }
-  }, [orgId]);
+  }, [orgId, handleIncomingInvoiceEvent]);
 
   useEffect(() => {
     loadData();

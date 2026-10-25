@@ -751,6 +751,16 @@ export const documentsService = {
                   notifyDocumentChange(orgId, docType, "save", cur[curIdx]);
                 }
               }
+
+              // Auto-dispatch Sales Invoice to B2B Network
+              try {
+                const { networkInvoicingService } = await import("@/services/networkInvoicingService");
+                const { settingsApi } = await import("@/services/settingsApi");
+                const { data: orgData } = await settingsApi.getOrganizationById(orgId);
+                if (orgData) {
+                  networkInvoicingService.sendSalesInvoiceToNetwork(doc, orgData as any, userId).catch(() => {});
+                }
+              } catch { /* empty */ }
             }
           } catch (err) {
             console.warn("Supabase sales save fallback to local storage:", err);

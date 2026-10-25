@@ -12,27 +12,66 @@ router.get('/', async (req, res) => {
     if (!orgId) return res.json([]);
 
     const { search, category, is_active } = req.query;
-    let query = 'SELECT * FROM products WHERE (org_id = $1 OR organization_id = $1)';
+    let query = `
+      SELECT p.*,
+             COALESCE(
+               (SELECT json_agg(b.* ORDER BY b.created_at ASC)
+                FROM product_batches b
+                WHERE b.product_id = p.id),
+               '[]'::json
+             ) AS product_batches
+      FROM products p
+      WHERE (p.org_id = $1 OR p.organization_id = $1)
+    `;
     const params = [orgId];
 
     if (search) {
       params.push(`%${search}%`);
-      query += ` AND (name ILIKE $${params.length} OR sku ILIKE $${params.length} OR barcode ILIKE $${params.length})`;
+      query += ` AND (p.name ILIKE $${params.length} OR p.sku ILIKE $${params.length} OR p.barcode ILIKE $${params.length})`;
     }
     if (category) {
       params.push(category);
-      query += ` AND category = $${params.length}`;
+      query += ` AND p.category = $${params.length}`;
     }
     if (is_active !== undefined) {
       params.push(is_active === 'true' || is_active === true);
-      query += ` AND is_active = $${params.length}`;
+      query += ` AND p.is_active = $${params.length}`;
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY p.created_at DESC';
     const result = await pool.query(query, params);
     return res.json(result.rows);
   } catch (err) {
     console.error('Get products error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/products/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const orgId = req.orgId || req.query.org_id || req.query.organization_id;
+    const { id } = req.params;
+    let query = `
+      SELECT p.*,
+             COALESCE(
+               (SELECT json_agg(b.* ORDER BY b.created_at ASC)
+                FROM product_batches b
+                WHERE b.product_id = p.id),
+               '[]'::json
+             ) AS product_batches
+      FROM products p
+      WHERE p.id = $1
+    `;
+    const params = [id];
+    if (orgId) {
+      params.push(orgId);
+      query += ` AND (p.org_id = $2 OR p.organization_id = $2)`;
+    }
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+    return res.json(result.rows[0]);
+  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
