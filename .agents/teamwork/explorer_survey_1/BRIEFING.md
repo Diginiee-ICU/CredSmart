@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-25T09:08:00Z
+# BRIEFING — 2026-10-25T10:19:00Z
 
 ## Mission
-Survey and map all occurrences of the boxy/nested card container anti-pattern in `src/pages/crm/RoleManagement.tsx` (permission toggle rows) and `src/pages/crm/Tasks.tsx` (task cards in Kanban groups). Produce exact line-level findings, existing CSS classes, proposed minimal divide-y replacements, touch target compliance (>=44px), and font size compliance (>=11px).
+Deep survey and structural mapping of `src/pages/crm/SalaryManagement.tsx` and `src/pages/crm/RoleManagement.tsx` against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager) specifications, producing an actionable blueprint for the worker while preserving all state, handlers, queries, and desktop views.
 
 ## 🔒 My Identity
 - Archetype: explorer
@@ -9,33 +9,35 @@ Survey and map all occurrences of the boxy/nested card container anti-pattern in
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
 - Original parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Milestone: survey_crm_roles_and_tasks
+- Parent (CRM Mobile Redesign): 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Milestone (CRM Mobile Redesign): survey_salary_and_roles_mockups
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
 - Never modify or suggest modifying any of the 19 protected quarantine files
 - Document exact line numbers, existing classes, proposed minimal divide-y replacements, touch targets (>=44px), and font sizes (>=11px)
 - Desktop view preservation (zero regressions)
+- Mobile redesign fidelity against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager)
+- Master design system rules (minimal-design-system.md)
+- Preserve all state, Supabase queries, and action handlers without dropping functionality
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T08:58:31Z
+- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Updated: 2026-10-25T10:17:14Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/pages/crm/RoleManagement.tsx` (all 2,777 lines examined, exact lines 1599–1755 mapped)
-  - `src/pages/crm/Tasks.tsx` (all 1,299 lines examined, exact lines 861–1035 mapped)
-  - Baseline health check: `node node_modules/typescript/bin/tsc --noEmit` verified clean (exit code 0)
-  - 19 protected quarantine files verified (none touched)
+  - `ORIGINAL_REQUEST.md` (lines 1150-1373, specifically section 2026-10-25T10:11:33Z R1 & R2)
+  - `DISPATCH.md` (updated)
 - **Key findings**:
-  - `RoleManagement.tsx` line 1713–1748: module action toggle cards rendered in `grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1` with individual `rounded-xl border p-3 flex items-center justify-between gap-3` cards inside outer card `rounded-2xl border`. Replacement: single container with `divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3 min-h-[44px]` rows.
-  - `Tasks.tsx` lines 874–905: Kanban columns on mobile render individual task items with `p-3.5 rounded-xl border border-slate-200/80 shadow-2xs` inside column card `rounded-2xl border bg-slate-100/60 p-3`. Replacement: `divide-y divide-slate-100 dark:divide-slate-800/60` container with flat `px-3.5 py-3` rows.
-  - Sizing & typography: all fonts >= 11px; touch targets >= 44px verified.
+  - Initialized exploration for SalaryManagement and RoleManagement
 - **Unexplored areas**:
-  - Implementation of proposed code changes (assigned to implementer agents).
+  - Exact lines, state, queries, and action handlers of `SalaryManagement.tsx`
+  - Exact lines, state, queries, and action handlers of `RoleManagement.tsx`
+  - Blueprint for mobile views (`block md:hidden`) vs desktop views (`hidden md:block`)
 
 ## Key Decisions Made
-- Provided both responsive utility replacement (Pattern A) and dedicated breakpoint blocks (Pattern B) in handoff report.
-- Ensured zero regressions to desktop multi-column layouts (`sm:` and `md:` breakpoints).
+- Start comprehensive read-only code analysis of `SalaryManagement.tsx` and `RoleManagement.tsx`.
 
 ## Artifact Index
 - `DISPATCH.md` — Incoming dispatch messages

@@ -1,10 +1,7 @@
-# BRIEFING — 2026-10-25T09:07:00Z
+# BRIEFING — 2026-10-25T10:18:00Z
 
 ## Mission
-Survey and map all occurrences of the "nested/boxy card container" anti-pattern in:
-1. `src/pages/Sales.tsx` (mobile invoice list cards + outer wrapper double border)
-2. `src/pages/Purchases.tsx` (mobile purchase invoice list cards)
-3. `src/pages/Items.tsx` (mobile product list cards)
+Conduct in-depth survey of `src/pages/crm/Attendance.tsx` and `src/pages/crm/Tasks.tsx` against Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) from ORIGINAL_REQUEST.md (## 2026-10-25T10:11:33Z). Deliver comprehensive blueprint and handoff for worker implementation.
 
 ## 🔒 My Identity
 - Archetype: explorer
@@ -23,6 +20,9 @@ Survey and map all occurrences of the "nested/boxy card container" anti-pattern 
 - Current Roles: Explorer 2 (Survey: Core Billing & Inventory - Sales, Purchases, Items)
 - Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Current Milestone: Mobile Boxy Card Container Survey (Sales, Purchases, Items)
+- Active Roles: Survey Explorer 2 (CredSmart CRM Mobile Redesign - Attendance & Tasks)
+- Active Parent: 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Active Milestone: CRM Mobile Redesign Survey (R3: Attendance Hub & R4: Task Workflows)
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
@@ -38,26 +38,30 @@ Survey and map all occurrences of the "nested/boxy card container" anti-pattern 
 - Business logic, handlers, modals, filters remain 100% untouched
 - Minimum touch targets >= 44px
 - Minimum font sizes >= 11px
+- Follow Master Design System: `minimal-design-system.md`
+- Preserve all geolocation calculations, timer logic, Supabase subscriptions & queries, and action handlers
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T09:07:00Z
+- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Updated: 2026-10-25T10:18:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/pages/Sales.tsx`
-  - `src/pages/Purchases.tsx`
-  - `src/pages/Items.tsx`
+  - `ORIGINAL_REQUEST.md` (Sections ## 2026-10-25T10:11:33Z, ## 2026-10-24T18:51:21Z, etc.)
+  - `minimal-design-system.md`
 - **Key findings**:
-  1. `Sales.tsx`: Outer wrapper double border (line 940) and mobile divide-y stream with flat rows (lines 942, 965-973) are already implemented and compliant with minimal design rules. Touch targets are >= 44px. Serves as reference implementation.
-  2. `Purchases.tsx`: Outer wrapper double border at line 864 (`rounded-xl border ... shadow-2xs`), mobile stream at line 866 (`p-2.5 pb-24 space-y-2.5`), and per-row card boxes at lines 897-905 (`p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]`). Action buttons on lines 958, 966, 1029, 1038 use `h-8.5` conflicting with `min-h-[44px]` and should be unified to `w-11 h-11`.
-  3. `Items.tsx`: Outer wrapper double border at line 1019 (`border ... rounded-xl ... shadow-2xs`), mobile stream at line 1021 (`p-2 space-y-2`), and per-row card boxes at lines 1054-1060 (`p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]`). Touch targets and typography >=11px mapped.
-  4. Build integrity: `tsc --noEmit` verified with 0 errors. All 19 quarantine files verified untouched.
-- **Unexplored areas**: None.
+  - Mockup 3 (Attendance Hub) requires: Header with 🟢 Live Sync badge, [ ⎋ ] export icon, subtitle, [ 📍 Geofences ] Royal Blue button; 2x2 stat badges (`Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`); Segmented tabs (`My Clock-In`, `Team Logs (0)`, `Locations`); Shift card with orange accent, date pill, digital clock, radar geofence widget, geofence status badge, location label, GPS accuracy pill, full-width Emerald CTA `[ ✓ Clock In Now ]`; Quick links (`View Team Logs`, `Request Correction`).
+  - Mockup 4 (Task Workflows) requires: Header with [ ☰ ] filter, subtitle; Status filter chips (`[ 🟢 Active Workflows ]`, `[ 🔴 Overdue ]`, Amber/Orange `[ + Create Task ]`); 2x2 stat badges (`Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`); Search & Priority bar; High-density task stream with 4 status emoji tags, priority pill, title, avatar chip, contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`).
+- **Unexplored areas**:
+  - `src/pages/crm/Attendance.tsx` full line-by-line inspection
+  - `src/pages/crm/Tasks.tsx` full line-by-line inspection
+  - Geolocation engine and timer logic in `Attendance.tsx`
+  - Task state machine and status transition handlers in `Tasks.tsx`
+  - 19 protected quarantine files integrity check
 
 ## Key Decisions Made
-- All three files surveyed with exact line numbers, existing classes, proposed divide-y replacements, touch target audits, and desktop view protection.
-- Reported all findings in `handoff.md`.
+- Proceeding with deep survey of `src/pages/crm/Attendance.tsx` first, followed by `src/pages/crm/Tasks.tsx`.
+- Will design exact structural blueprint separating desktop (`hidden md:block`) from mobile (`block md:hidden`) so desktop is 100% zero-regression preserved.
 
 ## Artifact Index
 - `handoff.md` — 5-component handoff report for orchestrator and implementers
