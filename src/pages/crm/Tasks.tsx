@@ -1097,7 +1097,7 @@ export default function Tasks(): React.ReactElement {
                   className="h-8.5 px-3 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1 shadow-2xs active:scale-[0.98]"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Create Task&#8203;</span>
+                  <span>Create Task</span>
                 </button>
               )}
             </div>
