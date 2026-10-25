@@ -444,34 +444,36 @@ export default function RoleManagement(): React.ReactElement {
 
       // Try primary roster endpoint: crmApi.getCRMStaff
       try {
-        const staffRes = await crmApi.getCRMStaff(orgId);
-        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
-          staffListBuilt = staffRes.data.map((m) => {
-            const sId = String(m.user_id || m.id || m.staff_id || "");
-            const assignedManager =
-              loadedHierarchy[sId] ||
-              (m.store_role !== "store_owner" && m.store_role !== "super_admin" && m.role !== "store_owner"
-                ? (user?.id ?? null)
-                : null);
+        if (typeof crmApi?.getCRMStaff === "function") {
+          const staffRes = await crmApi.getCRMStaff(orgId);
+          if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+            staffListBuilt = staffRes.data.map((m) => {
+              const sId = String(m.user_id || m.id || m.staff_id || "");
+              const assignedManager =
+                loadedHierarchy[sId] ||
+                (m.store_role !== "store_owner" && m.store_role !== "super_admin" && m.role !== "store_owner"
+                  ? (user?.id ?? null)
+                  : null);
 
-            const effectiveCrmRole = m.crm_role_id || m.role_id || undefined;
-            if (effectiveCrmRole) {
-              assignmentMap[sId] = effectiveCrmRole;
-            }
+              const effectiveCrmRole = m.crm_role_id || m.role_id || undefined;
+              if (effectiveCrmRole) {
+                assignmentMap[sId] = effectiveCrmRole;
+              }
 
-            return {
-              id: sId,
-              membershipId: String(m.membership_id || `mem-${sId}`),
-              name: m.full_name || m.name || (m.email ? m.email.split("@")[0] : `User (${sId.slice(0, 8)})`),
-              role: (m.store_role || m.role || "staff") as StoreRole,
-              crmRoleId: effectiveCrmRole,
-              email: m.email || undefined,
-              phone: m.phone || undefined,
-              parentId: assignedManager,
-              createdBy: assignedManager,
-              assignedBy: assignedManager,
-            };
-          }).filter((s) => Boolean(s.id));
+              return {
+                id: sId,
+                membershipId: String(m.membership_id || `mem-${sId}`),
+                name: m.full_name || m.name || (m.email ? m.email.split("@")[0] : `User (${sId.slice(0, 8)})`),
+                role: (m.store_role || m.role || "staff") as StoreRole,
+                crmRoleId: effectiveCrmRole,
+                email: m.email || undefined,
+                phone: m.phone || undefined,
+                parentId: assignedManager,
+                createdBy: assignedManager,
+                assignedBy: assignedManager,
+              };
+            }).filter((s) => Boolean(s.id));
+          }
         }
       } catch (staffErr) {
         console.warn("RoleManagement: getCRMStaff notice:", staffErr);

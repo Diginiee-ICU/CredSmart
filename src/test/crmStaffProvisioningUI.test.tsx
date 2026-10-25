@@ -118,6 +118,7 @@ vi.mock("@/services/crmApi", () => {
       getCRMPermissions: vi.fn().mockResolvedValue({ data: [], error: null }),
       deleteCRMPermissionsByRoleId: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
       insertCRMPermissions: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
+      getCRMStaff: vi.fn().mockResolvedValue({ data: [], error: null }),
       getCRMStaffRoles: vi.fn().mockResolvedValue({
         data: [
           { staff_id: "user-existing-1", role_id: "role-crm-manager" },
