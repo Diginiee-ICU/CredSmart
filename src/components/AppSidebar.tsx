@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ChevronDown,
   LayoutDashboard,
+  LayoutGrid,
   ShoppingCart,
   Package,
   Receipt,
@@ -279,7 +280,7 @@ export function AppSidebar({
                       : "bg-transparent border-transparent"
                   )}
                 >
-                  <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
+                  <LayoutGrid className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <span className="text-[11px] tracking-tight">Command</span>
               </NavLink>
@@ -314,8 +315,8 @@ export function AppSidebar({
               >
                 <div
                   className={cn(
-                    "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
-                    isCrmTasksActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
+                    "w-12 h-12 rounded-full flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-[0_4px_16px_rgba(37,99,235,0.35)] transition-all duration-200 bg-gradient-to-tr from-[#0F172A] via-[#1E293B] to-[#2563EB] text-white active:scale-95",
+                    isCrmTasksActive ? "scale-105 shadow-blue-500/40" : "hover:scale-105"
                   )}
                 >
                   <CheckSquare className="w-5 h-5 stroke-[2.2]" />
@@ -328,7 +329,7 @@ export function AppSidebar({
                       : "text-slate-600 dark:text-slate-300"
                   )}
                 >
-                  Punch / Task
+                  Tasks
                 </span>
               </NavLink>
 
