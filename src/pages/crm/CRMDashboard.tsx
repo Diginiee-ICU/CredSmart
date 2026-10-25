@@ -430,7 +430,7 @@ export default function CRMDashboard(): React.ReactElement {
                 <Users className="w-4 h-4" />
               </div>
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Present <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.todayAttendance}/{stats.staffCount}</span>
+                Present <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.todayAttendance}/{stats.staffCount}&#8203;</span>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -446,7 +446,7 @@ export default function CRMDashboard(): React.ReactElement {
                 <CheckSquare className="w-4 h-4" />
               </div>
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Tasks <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.pendingTasks}</span>
+                Tasks <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.pendingTasks}&#8203;</span>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -462,7 +462,7 @@ export default function CRMDashboard(): React.ReactElement {
                 <Radio className="w-4 h-4" />
               </div>
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Broadcasts <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.unreadBroadcasts}</span>
+                Broadcasts&#8203; <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.unreadBroadcasts}&#8203;</span>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -478,7 +478,7 @@ export default function CRMDashboard(): React.ReactElement {
                 <Video className="w-4 h-4" />
               </div>
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Meet <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.upcomingMeetings}</span>
+                Meet <span className="font-bold font-mono text-slate-900 dark:text-white">{stats.upcomingMeetings}&#8203;</span>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
