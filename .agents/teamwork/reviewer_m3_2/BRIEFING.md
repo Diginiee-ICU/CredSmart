@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T20:28:00Z
+# BRIEFING — 2026-10-25T10:33:00Z
 
 ## Mission
-Objective review and adversarial critique of Milestone 3: Mobile Bottom-Sheet Drawer Refactoring in `src/components/items/CreateItemModal.tsx` and `src/components/parties/CreatePartyModal.tsx`, verifying native-touch layout, visual drag handle, sticky bottom confirmation bar, independent form scroll, code quality (ESLint, TypeScript), and strict quarantine preservation of protected files.
+Independently review and adversarially challenge Milestone 3 (Dashboard, Parties & CRM HR Modernization) refactoring across `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, and `src/pages/crm/Attendance.tsx`. Verify elimination of boxy cards on mobile, replacement with clean divide-y containers, 44px touch targets, >=11px fonts, desktop preservation, 19 quarantine files 100% untouched, clean typescript compilation and vite build, and absence of integrity violations.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -16,6 +16,8 @@ Objective review and adversarial critique of Milestone 3: Mobile Bottom-Sheet Dr
 - Parent (Current - M3 Tasks): c838af97-21de-4616-9188-f0f8dfa904c9
 - Milestone (Current - M3 Mobile Ergonomics): Milestone 3: Mobile Ergonomics & Native-Touch Layouts (Bottom-Sheet Drawers Review)
 - Parent (Current - M3 Mobile Ergonomics): 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Milestone (Current - M3 Card Container Modernization): Milestone 3: Dashboard, Parties & CRM HR Modernization (Eliminating Nested Boxy Cards)
+- Parent (Current - M3 Card Container Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -32,32 +34,55 @@ Objective review and adversarial critique of Milestone 3: Mobile Bottom-Sheet Dr
 - Verify independent form scrolling inside flex-1 overflow-y-auto
 - Verify clean ESLint and TypeScript compilation
 - Verify quarantined protected files (src/components/invoices/mobile/CreatePartyModal.tsx, src/components/items/mobile/CreateNewItemModal.tsx) are 100% untouched
+- Eliminate boxy floating cards on mobile, replace with divide-y divide-slate-100 dark:divide-slate-800/60
+- Verify touch targets: min-h-[44px] on interactive elements
+- Verify typography: no font class below text-[11px]
+- Verify desktop preservation (hidden md:..., hidden sm:..., CRMDataTable)
+- Verify 19 quarantine files 100% untouched
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T20:28:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T10:33:00Z
 
 ## Review Scope
-- **Files to review**: `src/components/items/CreateItemModal.tsx`, `src/components/parties/CreatePartyModal.tsx`
-- **Quarantine verification**: `src/components/invoices/mobile/CreatePartyModal.tsx`, `src/components/items/mobile/CreateNewItemModal.tsx`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-24T18:51:21Z), `.agents/rules/minimal-design-system.md`
+- **Files to review**:
+  - `src/pages/Dashboard.tsx`
+  - `src/pages/Parties.tsx`
+  - `src/pages/crm/SalaryManagement.tsx`
+  - `src/pages/crm/Attendance.tsx`
+- **Quarantine verification (19 files)**:
+  - `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+  - `src/components/invoices/mobile/AddItemModal.tsx`
+  - `src/components/invoices/mobile/SelectPartyModal.tsx`
+  - `src/components/invoices/mobile/EditItemModal.tsx`
+  - `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+  - `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+  - `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+  - `src/components/invoices/mobile/CreatePartyModal.tsx`
+  - `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+  - `src/components/items/mobile/CreateNewItemModal.tsx`
+  - `src/components/SalesInvoiceModal.tsx`
+  - `src/components/PurchaseInvoiceModal.tsx`
+  - `src/components/invoices/AddItemsToBillModal.tsx`
+  - `src/components/invoices/InvoiceFitView.tsx`
+  - `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+  - `src/utils/downloadExactInvoice.ts`
+  - `src/utils/whatsappPdfShare.ts`
+  - `src/utils/invoiceThemeLoader.ts`
+  - `src/services/documentsService.ts`
 - **Review criteria**:
-  1. Mobile bottom-sheet presentation (`items-end sm:items-center`).
-  2. Sheet dimensions & styling (`max-h-[92dvh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl`).
-  3. Top drag handle indicator (`<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`).
-  4. Fixed bottom confirmation action bar (`sticky bottom-0 ... pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0`).
-  5. Independent form scrolling inside `flex-1 overflow-y-auto`.
-  6. Zero ESLint errors and clean TypeScript compilation.
-  7. Strict quarantine check: quarantined mobile invoice modals untouched.
+  1. Elimination of nested/boxy cards on mobile views
+  2. Single clean outer container with `divide-y divide-slate-100 dark:divide-slate-800/60`
+  3. Interactive elements and rows satisfy `min-h-[44px]` (or `min-h-[56px]`)
+  4. Typography adheres to minimal design system (no sub-11px font sizes)
+  5. Desktop views (`hidden md:...`, `hidden sm:...`, `CRMDataTable`) 100% preserved
+  6. All 19 quarantine files 100% untouched
+  7. TypeScript compilation passes (`tsc --noEmit`)
+  8. Production Vite build passes (`vite build`)
+  9. No integrity violations or facade implementations
 
 ## Key Decisions Made
-- Executed static analysis: `npx eslint src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx` (0 errors, 0 warnings).
-- Executed typecheck: `npx tsc --noEmit` (0 errors).
-- Executed vitest mobile ergonomics suite: `npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts` (43/43 passing).
-- Verified quarantine: confirmed `src/components/invoices/mobile/CreatePartyModal.tsx` (mod: 19-10-2026) and `src/components/items/mobile/CreateNewItemModal.tsx` (mod: 14-10-2026) were untouched.
-- Verified visual fidelity: exact bottom-sheet classes, drag handle, sticky footer with safe-area insets, and independent form scrolling present in both components.
-- Zero integrity violations detected.
-- Verdict: APPROVE.
+- Commenced independent audit of Worker 3's changes.
 
 ## Artifact Index
 - `DISPATCH.md` — Received dispatch instructions
@@ -66,17 +91,11 @@ Objective review and adversarial critique of Milestone 3: Mobile Bottom-Sheet Dr
 - `handoff.md` — Final review report and verdict
 
 ## Review Checklist
-- **Items reviewed**: `src/components/items/CreateItemModal.tsx`, `src/components/parties/CreatePartyModal.tsx`, `src/test/mobileErgonomicsChallenger.test.ts`, `src/components/invoices/mobile/CreatePartyModal.tsx`, `src/components/items/mobile/CreateNewItemModal.tsx`
-- **Verdict**: APPROVE
-- **Unverified claims**: None (all claims verified with empirical evidence).
+- **Items reviewed**: Pending inspection
+- **Verdict**: Pending
+- **Unverified claims**: Worker 3 claims regarding 4 files, 19 quarantine files, tsc, and vite build
 
 ## Attack Surface
-- **Hypotheses tested**:
-  - Modal alignment on mobile (<sm): `items-end` verified; on desktop (sm:): `sm:items-center` verified.
-  - Sheet height & rounding: `max-h-[92dvh]` and `rounded-t-2xl sm:rounded-2xl` verified.
-  - Drag handle presence: `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />` verified.
-  - Safe-area bottom inset: `pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]` verified.
-  - Independent form scroll: `flex-1 min-h-0 flex flex-col overflow-hidden` wrapper with `flex-1 overflow-y-auto` body and `sticky bottom-0 ... shrink-0` footer verified.
-  - Zero regression in billing lifecycle or quarantined files verified.
-- **Vulnerabilities found**: None.
-- **Untested angles**: None.
+- **Hypotheses tested**: Pending
+- **Vulnerabilities found**: None yet
+- **Untested angles**: All target files, quarantine files, build integrity

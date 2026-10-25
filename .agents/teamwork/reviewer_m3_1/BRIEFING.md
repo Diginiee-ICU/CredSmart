@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T20:27:00Z
+# BRIEFING — 2026-10-25T10:38:00Z
 
 ## Mission
-Independent quality review and adversarial challenge of Milestone 3: Mobile Bottom Navigation Dock in `src/components/AppSidebar.tsx` (Tab 5 to Parties, 46x46px Royal Blue center CTA, Royal Blue active indicators, 44px+ touch targets, clean ESLint and TypeScript).
+Independent quality review and adversarial challenge of Milestone 3: Dashboard, Parties & CRM HR Modernization in `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, and `src/pages/crm/Attendance.tsx` (Elimination of nested/boxy cards on mobile, clean divide-y containers, >=44px touch targets, >=11px typography, desktop view preservation, 19 quarantine files untouched, and clean tsc/vite builds).
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -16,12 +16,14 @@ Independent quality review and adversarial challenge of Milestone 3: Mobile Bott
 - Active Parent ID: c838af97-21de-4616-9188-f0f8dfa904c9
 - Redesign Milestone: Milestone 3 (Mobile Ergonomics & Native-Touch Layouts - AppSidebar Mobile Bottom Dock Review)
 - Redesign Parent ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Mobile Card Redesign Milestone: Milestone 3 (Dashboard, Parties & CRM HR Modernization Review)
+- Mobile Card Redesign Parent ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Enforce CRM design system components and color tokens
 - Enforce integrity checks (no facade or dummy implementations, no hardcoded cheating)
-- Run independent verification (tsc --noEmit)
+- Run independent verification (tsc --noEmit, vite build)
 - Provide self-contained handoff.md report with 5 components
 - Adversarially stress-test form validation, calculation accuracy, responsive layouts, Indian currency formatting
 - Adversarially test task state machine transitions, offline localStorage fallback, and real staff assignment
@@ -29,31 +31,35 @@ Independent quality review and adversarial challenge of Milestone 3: Mobile Bott
 - Enforce Protected Boundaries (zero edits to 19 quarantined invoice/billing files)
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T20:27:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T10:38:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/components/AppSidebar.tsx`
+  - `src/pages/Dashboard.tsx`
+  - `src/pages/Parties.tsx`
+  - `src/pages/crm/SalaryManagement.tsx`
+  - `src/pages/crm/Attendance.tsx`
   - `worker_m3/handoff.md`
-  - `src/test/mobileErgonomicsChallenger.test.ts`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-24T18:51:21Z), `.agents/rules/minimal-design-system.md`
+- **Interface contracts**: `ORIGINAL_REQUEST.md`, `minimal-design-system.md`
 - **Review criteria**:
-  1. Tab 5 destination is ROUTE_PATHS.parties with Users2 icon and 'Parties' label. Active check: isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers).
-  2. Center elevated CTA is standardized to exact 46x46px (w-[46px] h-[46px] rounded-xl font-bold) in solid Royal Blue (bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95). All skeuomorphic rainbow gradients removed.
-  3. Active tab indicator uses single cohesive Royal Blue accent (text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30), with inactive tabs text-slate-400.
-  4. Touch targets >= 44px with safe-area padding pb-[max(0.65rem,env(safe-area-inset-bottom,0px))].
-  5. Clean ESLint and TypeScript (`cmd /c npx eslint src/components/AppSidebar.tsx`, `cmd /c npx tsc --noEmit`).
+  1. Elimination of boxy cards on mobile. Replaced with clean `divide-y divide-slate-100 dark:divide-slate-800/60` containers.
+  2. List items rendered as flat rows without individual borders or drop shadows.
+  3. Touch targets: `min-h-[44px]` (or `min-h-[56px]`) on interactive rows and action buttons.
+  4. Typography: No font class below `text-[11px]`.
+  5. Desktop layouts (`hidden md:...`, `hidden sm:...`, `CRMDataTable`) 100% untouched.
+  6. Zero edits to 19 protected invoice quarantine files.
+  7. Full compilation & build pass (`tsc --noEmit` and `vite build`).
 
 ## Key Decisions Made
-- Verified Tab 5 correctly routes to `ROUTE_PATHS.parties` (`/billing/parties`), uses `Users2` icon, renders label `"Parties"`, and activates for both parties and customers.
-- Verified center elevated CTA is standardized to exact `w-[46px] h-[46px] rounded-xl font-bold` with solid Royal Blue `bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95` and zero rainbow gradients.
-- Verified active tab indicators unify on royal blue tokens `text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30`, inactive `text-slate-400`.
-- Verified minimum 44px touch targets (`min-h-[44px] min-w-[50px]`) and safe-area padding `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`.
-- Verified clean ESLint (`cmd /c npx eslint src/components/AppSidebar.tsx` exited 0).
-- Verified full TypeScript compilation (`cmd /c npx tsc --noEmit` exited 0).
-- Verified vitest execution: 43/43 tests passed across 3 suites.
-- Confirmed ZERO integrity violations and zero edits to quarantined billing files.
+- Verified `Dashboard.tsx`: Recent activity transaction rows refactored into a single container with `divide-y divide-slate-100 dark:divide-slate-800/60`, flat rows `px-3.5 py-3 min-h-[56px]`, typography >= 11px, desktop layout untouched.
+- Verified `Parties.tsx`: Mobile party directory refactored into flush flat rows inside `px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60`, action buttons (Call, WhatsApp, Ledger, More) >= 44px, typography >= 11px, desktop table untouched.
+- Verified `SalaryManagement.tsx`: Tabs 1, 2, and 3 refactored into `rounded-xl border ... divide-y` containers with flat `p-3.5` rows, action buttons upgraded to `min-h-[44px] h-11`, desktop `CRMDataTable` untouched.
+- Verified `Attendance.tsx`: Tab 4 regularisation requests refactored into `rounded-xl border ... divide-y` container with flat `px-3.5 py-3` rows, Approve and Reject buttons upgraded to `min-h-[44px] h-11`, desktop layout untouched.
+- Audited 19 quarantined files: 100% untouched.
+- Ran `tsc --noEmit`: Exited 0 with 0 errors.
+- Ran `vite build`: Exited 0, built successfully in 1m 46s.
+- Confirmed ZERO integrity violations.
 - Issued verdict: APPROVE.
 
 ## Artifact Index
@@ -63,16 +69,16 @@ Independent quality review and adversarial challenge of Milestone 3: Mobile Bott
 - `.agents/teamwork/reviewer_m3_1/handoff.md` — Reviewer & Adversarial Critic final report
 
 ## Review Checklist
-- **Items reviewed**: `src/components/AppSidebar.tsx`, `src/test/mobileErgonomicsChallenger.test.ts`, `worker_m3/handoff.md`
+- **Items reviewed**: `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, `src/pages/crm/Attendance.tsx`, `worker_m3/handoff.md`
 - **Verdict**: APPROVE
-- **Unverified claims**: None; all criteria independently verified via static inspection and automated commands.
+- **Unverified claims**: None.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Suite switching conflict → Dynamically renders CRM tabs or Billing tabs based on `isCrmSuite` with identical design system standards.
-  2. Tab 5 sub-route activation → Handled properly for `/billing/parties` and `/billing/customers` via `isPartiesActive`.
-  3. Active tab collision → All route prefixes are distinct; exactly one tab is active at a time.
-  4. Safe-area notch / home indicator clearance → `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]` handles devices with or without insets.
-  5. Desktop layout interference → Guarded by `isMobile` check; zero markup rendered on screens >= 768px.
+  1. Boxy card regressions on mobile → Eliminated across all 4 target files.
+  2. Touch target accessibility on mobile controls → All interactive rows and buttons meet `min-h-[44px]` or `min-h-[56px]`.
+  3. Desktop view corruption or layout bleed → Verified desktop wrappers and tables are 100% intact.
+  4. Micro-font degradation (< 11px) → Audited classes; smallest font is `text-[11px]`.
+  5. Quarantine file alteration → 0 of 19 files modified.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.

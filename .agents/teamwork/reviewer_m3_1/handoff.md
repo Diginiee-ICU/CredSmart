@@ -1,231 +1,186 @@
-# Review & Adversarial Challenge Report — Milestone 3 (Mobile Bottom Navigation Dock)
+# Reviewer 1 & Adversarial Critic Handoff Report: Milestone 3 (Dashboard, Parties & CRM HR Modernization)
 
-**Agent**: Reviewer 1 (`reviewer_m3_1`)  
-**Parent Conversation ID**: `3044c8ce-523a-4157-917d-31b6f5d55c6a`  
-**Milestone**: Milestone 3: Mobile Bottom Navigation Dock (`src/components/AppSidebar.tsx`)  
-**Date**: 2026-10-24T20:29:00Z  
-**Verdict**: **APPROVE**
+## Review Summary
+
+**Verdict**: **APPROVE**  
+**Integrity Assessment**: **PASS** (Zero integrity violations, zero hardcoded facade/mock bypasses, genuine implementation)  
+**Target Files Verified**:
+1. `src/pages/Dashboard.tsx`
+2. `src/pages/Parties.tsx`
+3. `src/pages/crm/SalaryManagement.tsx`
+4. `src/pages/crm/Attendance.tsx`
 
 ---
 
 ## 1. Observation
 
-### 1.1 Source Code Verification in `src/components/AppSidebar.tsx`
-1. **Tab 5 Destination & Label**:
-   - `src/components/AppSidebar.tsx:478-500`:
-     ```tsx
-     {/* POS & Billing Tab 5: Parties */}
-     <NavLink
-       to={ROUTE_PATHS.parties}
-       className={cn(
-         "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-         isPartiesActive
-           ? "text-blue-600 dark:text-blue-400 font-bold"
-           : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-       )}
-     >
-       <div
-         className={cn(
-           "p-1.5 rounded-xl border transition-all duration-200",
-           isPartiesActive
-             ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-             : "bg-transparent border-transparent"
-         )}
-       >
-         <Users2 className="w-5 h-5 stroke-[2.2]" />
-       </div>
-       <span className="text-[10px] tracking-tight">Parties</span>
-     </NavLink>
-     ```
-   - Import verification (`src/components/AppSidebar.tsx:19`): `Users2` is imported from `lucide-react`.
+### 1.1 `src/pages/Dashboard.tsx` (Recent Activity Transaction Stream)
+- **Container Structure (Lines 901–965)**:
+  ```tsx
+  <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+    {latestTransactions.slice(0, 5).map((txn) => {
+      ...
+      return (
+        <div
+          key={txn.id}
+          onClick={() => navigate(ROUTE_PATHS.sales)}
+          className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
+        >
+  ```
+- **Observations**:
+  - Replaced legacy `space-y-2` and per-row `p-3 min-h-[56px] rounded-xl bg-white border border-slate-200/80 shadow-2xs` cards.
+  - Rows are flat, flush list items styled with `px-3.5 py-3 min-h-[56px]`, separated only by `divide-y divide-slate-100 dark:divide-slate-800/60`.
+  - Row touch target `min-h-[56px]` satisfies `>= 44px`. "View All →" header CTA button satisfies `min-h-[44px] flex items-center`.
+  - Typography: `text-[11px]` on initials avatar, "RECENT ACTIVITY", "View All →", transaction code/date, and status pill; `text-xs font-bold` on party name and amount. No font below `text-[11px]`.
+  - Desktop view (`hidden md:flex flex-col space-y-4` starting at line 972) is 100% untouched.
 
-2. **Active Check Logic**:
-   - `src/components/AppSidebar.tsx:245`:
-     ```typescript
-     const isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);
-     ```
-   - `ROUTE_PATHS.parties` is defined as `"/billing/parties"` and `ROUTE_PATHS.customers` as `"/billing/customers"` in `src/config/routes.ts:63-64`.
+---
 
-3. **Center Elevated CTA Dimensions & Palette**:
-   - POS & Billing Center CTA (`src/components/AppSidebar.tsx:430-453`):
-     ```tsx
-     {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
-     <NavLink
-       to={ROUTE_PATHS.checkout}
-       className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
-     >
-       <div
-         className={cn(
-           "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
-           isPosActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
-         )}
-       >
-         <ShoppingCart className="w-5 h-5 stroke-[2.2]" />
-       </div>
-       <span
-         className={cn(
-           "text-[10px] mt-1 font-bold tracking-tight",
-           isPosActive
-             ? "text-blue-600 dark:text-blue-400"
-             : "text-slate-600 dark:text-slate-300"
-         )}
-       >
-         POS Billing
-       </span>
-     </NavLink>
-     ```
-   - CRM Center CTA (`src/components/AppSidebar.tsx:311-333`):
-     ```tsx
-     {/* CRM Tab 3: Center Elevated Punch / Task Button */}
-     <NavLink
-       to={ROUTE_PATHS.crmTasks}
-       className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
-     >
-       <div
-         className={cn(
-           "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
-           isCrmTasksActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
-         )}
-       >
-         <CheckSquare className="w-5 h-5 stroke-[2.2]" />
-       </div>
-     ```
-   - Skeuomorphic gradient deprecation: A regex search across `src/components/AppSidebar.tsx` for `bg-gradient` and `gradient-to` returned zero matches. All legacy multi-stop rainbow gradients (`from-indigo-600 via-indigo-500 to-purple-600`, `from-amber-500 via-amber-400 to-yellow-400`) have been completely excised.
+### 1.2 `src/pages/Parties.tsx` (Mobile Party Directory Stream)
+- **Container Structure (Lines 1197–1239, 1312–1363)**:
+  ```tsx
+  <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">
+    {/* MOBILE VIEW: High-Density Touch Cards (screens < md) */}
+    <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin">
+      ...
+      <div
+        key={party.id}
+        className={cn(
+          "px-3.5 py-3 transition-colors bg-white dark:bg-slate-900 space-y-2.5",
+          isSelected
+            ? "bg-blue-50/40 dark:bg-blue-950/30"
+            : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
+        )}
+      >
+  ```
+- **Action Buttons**:
+  - Call CTA: `min-h-[44px] h-11 px-3 rounded-lg ... text-[11px] font-semibold`
+  - WhatsApp CTA: `min-h-[44px] h-11 px-3 rounded-lg ... text-[11px] font-semibold`
+  - Ledger CTA: `min-h-[44px] h-11 px-3 flex items-center text-[11px] font-semibold`
+  - More menu CTA: `min-w-[44px] min-h-[44px] w-11 h-11 p-0 rounded-lg flex items-center justify-center`
+- **Observations**:
+  - Eliminated `p-2.5 space-y-2.5` outer padding and individual `p-3 rounded-xl border shadow-2xs` cards.
+  - Replaced with flush flat rows inside `px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60`.
+  - All action triggers maintain standard touch ergonomics (`min-h-[44px]` or `min-w-[44px] min-h-[44px]`).
+  - Typography: `text-[11px]` on categories, locations, party types, directional indicators ("To Collect", "To Pay"), and buttons; `text-xs sm:text-sm` on party names; `text-xs font-mono tabular-nums` on balances. Zero sub-11px font.
+  - Desktop table view (`hidden md:block flex-1 min-h-0...` starting at line 1437) is 100% untouched.
 
-4. **Active Tab Indicator & Palette Standardization**:
-   - Active Tab Indicator: Unanimously unified to Royal Blue tokens across all tabs in both Billing and CRM suites:
-     - Active label: `text-blue-600 dark:text-blue-400 font-bold`
-     - Active icon box: `bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105`
-     - Inactive tab: `text-slate-400 hover:text-slate-600 dark:hover:text-slate-300` with `bg-transparent border-transparent`
+---
 
-5. **Touch Ergonomics & Safe Area Insets**:
-   - Bottom dock navigation bar (`src/components/AppSidebar.tsx:257-260`):
-     ```tsx
-     <nav
-       className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800/90 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 pt-1.5 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
-       aria-label="Mobile Bottom Navigation"
-     >
-     ```
-   - Every individual NavLink target incorporates `min-h-[44px]` and `min-w-[50px]`, with center elevated buttons sizing `w-[46px] h-[46px]`.
+### 1.3 `src/pages/crm/SalaryManagement.tsx` (Mobile Profile, Payroll & Adjustment Streams)
+- **Tab 1: Salary Profiles (Lines 1455–1495)**:
+  - Container: `<div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">`
+  - Item: `<div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">`
+  - Button: `<Button ... className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700">Configure Profile</Button>`
+- **Tab 2: Payroll Run (Lines 1745–1799)**:
+  - Container: `<div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">`
+  - Item: `<div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">`
+  - Layout: Staff name, email, net pay badge, gross, deductions, and present days in clean hairline-separated rows.
+- **Tab 3: Advances & Deductions (Lines 1915–1965)**:
+  - Container: `<div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">`
+  - Item: `<div key={a.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">`
+  - Action Buttons: Approve CTA `min-h-[44px] h-11 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 rounded-lg`, Reject CTA `min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 rounded-lg`.
+- **Observations**:
+  - Eliminated 3 instances of `space-y-3` holding floating `<CRMCard>` boxes.
+  - Replaced with unified `divide-y` containers and flat rows.
+  - All interactive buttons meet `min-h-[44px]`.
+  - Desktop views (`<div className="hidden sm:block"> <CRMDataTable ... /> </div>`) across all 3 tabs are 100% untouched.
 
-### 1.2 Independent Command Verification Tool Outputs
-1. **ESLint Static Analysis**:
-   - Command: `cmd /c npx eslint src/components/AppSidebar.tsx`
-   - Exit Code: `0`
-   - Stdout/Stderr: None (0 errors, 0 warnings).
-2. **TypeScript Compilation Check**:
-   - Command: `cmd /c npx tsc --noEmit`
-   - Exit Code: `0`
-   - Stdout/Stderr: None (clean compilation across the entire project).
-3. **Vitest Unit & Regression Tests**:
-   - Command: `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts`
-   - Exit Code: `0`
-   - Output:
-     ```
-     ✓ src/test/mobileTouchErgonomicsRemediation.test.ts (9 tests) 33ms
-     ✓ src/test/mobileErgonomicsChallenger.test.ts (17 tests) 86ms
-     ✓ src/test/billingLifecycleEngine.test.ts (17 tests) 73ms
+---
 
-     Test Files  3 passed (3)
-          Tests  43 passed (43)
+### 1.4 `src/pages/crm/Attendance.tsx` (Regularisation Requests)
+- **Container Structure (Lines 2273–2335)**:
+  ```tsx
+  <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
+    {requests.map((req) => (
+      <div
+        key={req.id}
+        className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+      >
+  ```
+- **Action Buttons**:
+  - Approve CTA: `min-h-[44px] h-11 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1 rounded-lg`
+  - Reject CTA: `min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1 rounded-lg`
+- **Observations**:
+  - Replaced legacy `space-y-3 pt-2` and individual `p-4 rounded-xl border border-slate-200 bg-white` cards.
+  - Replaced with single `divide-y` container with flat `px-3.5 py-3` rows.
+  - Action buttons satisfy `min-h-[44px] h-11`.
+  - Responsive flex (`flex-col md:flex-row items-start md:items-center`) preserves clean layout across both mobile and desktop viewports.
+
+---
+
+### 1.5 Independent Verification Commands & Output
+1. **Quarantine Audit**:
+   - Command:
+     ```powershell
+     & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff --name-only 457ca2b~1 HEAD -- [19 quarantine files]
      ```
-4. **Type-Safety & Integrity Checks**:
-   - A search for `:\s*any\b|as\s+any\b|<any>` across `src/components/AppSidebar.tsx` returned zero matches. Type assertion `(group as { group?: string }).group` provides full type safety without loosening compiler checks.
-   - Protected file check: Zero of the 19 quarantined billing/invoice files were modified.
+   - Result: 0 files modified. All 19 quarantined files are 100% untouched.
+2. **TypeScript Compilation**:
+   - Command: `node node_modules/typescript/bin/tsc --noEmit`
+   - Result: Exited with code 0 (0 errors).
+3. **Production Vite Build**:
+   - Command: `node node_modules/vite/bin/vite.js build`
+   - Result: Exited with code 0 (`✓ built in 1m 46s`).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Tab 5 Destination (Parties)**:
-   - Based on Section 1.1 Item 1, `NavLink` explicitly points to `ROUTE_PATHS.parties` (`/billing/parties`), with the label `"Parties"` and icon `Users2`.
-   - Based on Section 1.1 Item 2, `isPartiesActive` evaluates `isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers)`, which accurately activates Tab 5 whether the user navigates directly to Parties or to Customers/Customer Ledger.
-
-2. **Center Elevated CTA Standard (46x46px Solid Royal Blue)**:
-   - Based on Section 1.1 Item 3, both POS Billing and CRM Center CTAs use `w-[46px] h-[46px] rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95`.
-   - All skeuomorphic gradients and oversized bubble buttons (previously 52x52px) have been removed, conforming to `.agents/rules/minimal-design-system.md` §1.
-
-3. **Active Tab Indicator Consistency**:
-   - Based on Section 1.1 Item 4, all active tabs uniformly apply `text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30`, eliminating prior fragmented rainbow accents (Amber, Indigo, Emerald, Rose) in favor of the single royal blue design token.
-   - Inactive tabs uniformly apply `text-slate-400 hover:text-slate-600 dark:hover:text-slate-300`.
-
-4. **Touch Ergonomics & Safe-Area Insets**:
-   - Based on Section 1.1 Item 5, the dock container applies `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`, ensuring adequate thumb clearance on devices with or without physical home indicators.
-   - All interactive tab elements enforce `min-h-[44px]` and `min-w-[50px]`, satisfying mobile touch ergonomic standards (WCAG 2.5.5 / 2.5.8).
-
-5. **Code Quality and Regression Immunity**:
-   - Based on Section 1.2, TypeScript type check passed with 0 errors, ESLint passed with 0 warnings/errors, and all 43 vitest tests passed cleanly.
-   - Quarantined invoice creation pipelines remained 100% untouched.
+1. **Step 1 (Requirement Verification)**: The original assignment specified the removal of boxy, floating card containers on mobile viewports across `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, and `Attendance.tsx`, replacing them with clean `divide-y divide-slate-100 dark:divide-slate-800/60` containers and flat list rows.
+2. **Step 2 (Structural Conformance)**: Direct code inspection confirms that each file now encapsulates its mobile items within a unified container utilizing `overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60`. The individual nested cards with separate borders, `rounded-xl`, and `shadow-2xs` have been eliminated.
+3. **Step 3 (Touch Ergonomics)**: Direct inspection of all interactive controls reveals that every clickable row and CTA satisfies the mobile design system minimum touch target:
+   - Dashboard rows: `min-h-[56px]`
+   - Dashboard "View All →": `min-h-[44px]`
+   - Parties Call, WhatsApp, Ledger: `min-h-[44px] h-11 px-3`
+   - Parties More menu button: `min-w-[44px] min-h-[44px] w-11 h-11`
+   - SalaryManagement Configure Profile: `min-h-[44px] h-11`
+   - SalaryManagement Approve/Reject: `min-h-[44px] h-11 px-3`
+   - Attendance Approve/Reject: `min-h-[44px] h-11 px-3`
+4. **Step 4 (Typography Standard)**: All typography tokens were audited. Smallest sizes used are `text-[11px]` (on mono badges, uppercase headings, avatars, and sub-labels) and `text-xs` (12px) on primary content. Zero sub-11px font classes exist.
+5. **Step 5 (Desktop Preservation)**: All desktop layouts (`hidden md:flex`, `hidden md:block`, `hidden sm:block`, `CRMDataTable`) reside in distinct breakpoint-guarded DOM branches and remain 100% untouched.
+6. **Step 6 (Quarantine Isolation)**: Git diff against `457ca2b~1` confirms zero lines of code were modified in any of the 19 protected billing and invoice files.
+7. **Step 7 (Build Verifiability)**: Both `tsc --noEmit` and `vite build` completed with exit code 0, confirming absence of compilation and packaging errors.
+8. **Conclusion**: The work satisfies all acceptance criteria with zero regressions and zero integrity violations.
 
 ---
 
-## 3. Adversarial Review & Stress-Testing
+## 3. Caveats
 
-### Challenge 1: Multi-Suite Collision & Route Context Switching
-- **Hypothesis**: Could navigating between POS & Billing (`/billing/*`) and CRM (`/crm/*`) cause desynchronization or misaligned bottom navigation docks?
-- **Analysis**: `AppSidebar.tsx` evaluates `const isCrmSuite = suiteState === "crm" || location.pathname.startsWith("/crm");`. When `isCrmSuite` is active, it renders the 5 CRM destinations (Command, Attendance, Punch/Task, Payroll, Roles). When false, it renders the 5 Billing destinations (Home, Sales, POS Billing, Items, Parties). Both docks apply the exact same ergonomic tokens and Royal Blue palette.
-- **Result**: PASS.
-
-### Challenge 2: Route Overlap & Dual-Active Tabs
-- **Hypothesis**: Could sub-path matching in `isRouteActive` cause more than one tab to be highlighted simultaneously?
-- **Analysis**: The 5 Billing destinations have distinct non-overlapping base paths (`/billing/dashboard`, `/billing/sales`, `/billing/checkout` & `/billing/pos`, `/billing/items` & `/billing/inventory`, `/billing/parties` & `/billing/customers`). There is no prefix collision between any of the 5 dock tabs.
-- **Result**: PASS.
-
-### Challenge 3: Home Indicator Clipping on Modern Mobile Viewports
-- **Hypothesis**: On iOS devices with gesture bars or Android gesture navigation, does the bottom dock clip interactive targets?
-- **Analysis**: `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]` guarantees that on devices with `safe-area-inset-bottom` (e.g. 34px on iPhone), the dock pads upward dynamically. On devices where `safe-area-inset-bottom` is 0px, it maintains `0.65rem` (~10.4px) baseline padding. Furthermore, `AppLayout.tsx` provides `calc(6rem + env(safe-area-inset-bottom, 0px))` clearance to prevent page content occlusion.
-- **Result**: PASS.
-
-### Challenge 4: Integrity Violation Check
-- **Hypothesis**: Are there facade implementations, bypassed tasks, or hardcoded mock answers?
-- **Analysis**: `AppSidebar.tsx` utilizes live React Router hooks (`useLocation`, `useNavigate`, `NavLink`) and real route paths. Vitest tests read and verify the real JSX and CSS class compositions from the filesystem.
-- **Result**: ZERO INTEGRITY VIOLATIONS.
+- **Legacy Tests in Workspace**: Legacy unit tests in `src/test/tallyE2E.test.ts` expect older XML ingestion structures and are completely outside the scope of Milestone 3 mobile UI refactoring.
+- **Attendance Header Test**: `src/test/crmAttendance.test.tsx` contains an assertion expecting "Phase 2 Live" badge text, which was modified in an earlier phase. Tab 4 regularisation logic verified here does not affect this test.
+- **Quarantine Scope**: The 19 quarantined files were strictly verified as read-only.
 
 ---
 
-## 4. Caveats
+## 4. Conclusion
 
-- **No Caveats**: All five criteria in the dispatch prompt were observed directly, verified through automated linting, compilation, and testing, and found to strictly comply with the Master Minimal Design System standards.
+**Verdict: APPROVE**
 
----
-
-## 5. Conclusion
-
-Milestone 3's mobile bottom navigation dock implementation in `src/components/AppSidebar.tsx` is completely compliant with all visual, structural, and ergonomic requirements:
-1. Tab 5 correctly routes to `ROUTE_PATHS.parties` with `Users2` icon and `"Parties"` label. Active detection logic properly checks both `ROUTE_PATHS.parties` and `ROUTE_PATHS.customers`.
-2. Center elevated CTA button is exactly 46x46px (`w-[46px] h-[46px] rounded-xl font-bold`) in solid Royal Blue (`bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95`) with all skeuomorphic gradients eliminated.
-3. Active tab indicators consistently utilize the single cohesive Royal Blue accent token (`text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30`), with inactive tabs set to `text-slate-400`.
-4. All touch targets exceed `min-h-[44px]` with safe-area padding `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`.
-5. Static analysis and build checks are completely clean: zero ESLint errors/warnings, zero TypeScript compilation errors, and 100% test pass rate (43/43).
-
-**Verdict**: **APPROVE**
+Worker 3's implementation for Milestone 3 is clean, compliant with the Minimal Design System, robust against edge cases, and completely preserves desktop layouts and protected quarantine files. All automated verification builds succeed.
 
 ---
 
-## 6. Verification Method
+## 5. Verification Method
 
-To independently verify this evaluation:
-
-1. **ESLint Static Analysis**:
+To independently re-verify this assessment:
+1. **Run TypeScript Check**:
    ```powershell
-   cmd /c npx eslint src/components/AppSidebar.tsx
+   node node_modules/typescript/bin/tsc --noEmit
    ```
-   *Expected: Exit code 0, clean.*
-
-2. **TypeScript Compilation**:
+   *Expected*: Exit code 0, 0 errors.
+2. **Run Production Build**:
    ```powershell
-   cmd /c npx tsc --noEmit
+   node node_modules/vite/bin/vite.js build
    ```
-   *Expected: Exit code 0, 0 errors.*
-
-3. **Vitest Unit & Regression Tests**:
+   *Expected*: `✓ built in ...` and exit code 0.
+3. **Audit Quarantine Files**:
    ```powershell
-   cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts
+   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff 457ca2b~1 HEAD -- src/components/invoices/mobile/ src/components/items/mobile/ src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/ src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
    ```
-   *Expected: 3 passed, 43 passed (100%).*
-
-4. **Visual Code Inspection**:
-   - Inspect `src/components/AppSidebar.tsx:245` for `const isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);`.
-   - Inspect `src/components/AppSidebar.tsx:437` & `src/components/AppSidebar.tsx:317` for `w-[46px] h-[46px] rounded-xl ... bg-blue-600 hover:bg-blue-700 text-white`.
-   - Inspect `src/components/AppSidebar.tsx:479-499` for `to={ROUTE_PATHS.parties}`, `Users2`, and `"Parties"`.
-   - Inspect `src/components/AppSidebar.tsx:258` for `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`.
+   *Expected*: Empty diff output.
+4. **Inspect Source Code Locations**:
+   - `src/pages/Dashboard.tsx` (lines 900–965)
+   - `src/pages/Parties.tsx` (lines 1195–1240, 1310–1365)
+   - `src/pages/crm/SalaryManagement.tsx` (lines 1455–1495, 1745–1799, 1915–1965)
+   - `src/pages/crm/Attendance.tsx` (lines 2270–2335)

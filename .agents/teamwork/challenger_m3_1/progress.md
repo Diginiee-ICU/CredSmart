@@ -1,31 +1,22 @@
 # Challenger M3-1 Progress
 
-**Last visited**: 2026-10-24T20:26:45Z
-**Status**: Completed
-**Verdict**: APPROVE
-**Target Milestone**: Milestone 3: Mobile Ergonomics & Native-Touch Layouts
+**Last visited**: 2026-10-25T10:36:00Z
+**Status**: In Progress
+**Target Milestone**: Milestone 3: Dashboard, Parties & CRM HR Empiric Verification
 
-## Execution Plan & Results:
-1. [x] Received dispatch instructions and synchronized BRIEFING.md / progress.md.
-2. [x] Execute Vitest test suites:
-   `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts`
-   -> PASSED: 3 test files passed, 43/43 tests passed (100%).
-3. [x] Execute TypeScript static compilation:
-   `cmd /c npx tsc --noEmit`
-   -> PASSED: Exit code 0, 0 errors.
-4. [x] Execute ESLint static analysis on modified files:
-   `cmd /c npx eslint src/components/AppSidebar.tsx src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx src/test/mobileErgonomicsChallenger.test.ts`
-   -> PASSED: Exit code 0, 0 errors, 0 warnings.
-5. [x] Perform deep static & regex inspection of `src/components/AppSidebar.tsx`:
-   - Tab 5 mapping to `ROUTE_PATHS.parties` (`Parties` label, `Users2` icon) -> VERIFIED.
-   - Center elevated CTA dimensions (`w-[46px] h-[46px] rounded-xl`) and solid Royal Blue styling (`bg-blue-600`) -> VERIFIED.
-   - Unified Royal Blue active state styling and elimination of rainbow gradients -> VERIFIED.
-   - Safe-area inset bottom padding (`pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`) -> VERIFIED.
-6. [x] Perform deep static & regex inspection of `src/components/items/CreateItemModal.tsx` & `src/components/parties/CreatePartyModal.tsx`:
-   - Bottom-sheet drawer classes (`max-h-[92dvh] rounded-t-2xl sm:rounded-2xl`) -> VERIFIED.
-   - Top drag handle indicator (`w-12 h-1.5 rounded-full`) -> VERIFIED.
-   - Fixed sticky confirmation bar with safe-area padding (`sticky bottom-0 ... pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`) -> VERIFIED.
-7. [x] Adversarial stress & regression testing:
-   - Executed `billingLifecycleEngine.adversarial.test.ts` (6/6 passed).
-   - Confirmed 0 modifications to quarantined billing/invoice files.
-8. [ ] Document findings in `handoff.md` and message orchestrator with verdict APPROVE.
+## Execution Plan:
+1. [x] Receive dispatch instructions and update DISPATCH.md, BRIEFING.md, and progress.md.
+2. [ ] Empirically check git status and verify the 19 quarantine files are untouched.
+3. [ ] Empirically inspect code diffs and lines in:
+   - `src/pages/Dashboard.tsx`
+   - `src/pages/Parties.tsx`
+   - `src/pages/crm/SalaryManagement.tsx`
+   - `src/pages/crm/Attendance.tsx`
+4. [ ] Verify anti-pattern elimination: No individual floating cards with border/shadow on mobile list rows, flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60`.
+5. [ ] Verify touch targets: `min-h-[44px]` on all mobile action buttons and interactive rows.
+6. [ ] Verify typography: No font class below `text-[11px]`.
+7. [ ] Verify desktop responsiveness: Desktop views preserved with 100% parity (`hidden md:flex`, `hidden sm:block`, `CRMDataTable`).
+8. [ ] Run TypeScript compilation: `node node_modules/typescript/bin/tsc --noEmit`.
+9. [ ] Run Vite production build: `node node_modules/vite/bin/vite.js build`.
+10. [ ] Run relevant test suites.
+11. [ ] Write verdict (APPROVE or FAIL) to `handoff.md` and send message to parent agent.

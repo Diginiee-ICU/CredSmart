@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-25T10:19:00Z
+# BRIEFING — 2026-10-25T10:29:00Z
 
 ## Mission
 Deep survey and structural mapping of `src/pages/crm/SalaryManagement.tsx` and `src/pages/crm/RoleManagement.tsx` against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager) specifications, producing an actionable blueprint for the worker while preserving all state, handlers, queries, and desktop views.
@@ -27,21 +27,25 @@ Deep survey and structural mapping of `src/pages/crm/SalaryManagement.tsx` and `
 
 ## Investigation State
 - **Explored paths**:
-  - `ORIGINAL_REQUEST.md` (lines 1150-1373, specifically section 2026-10-25T10:11:33Z R1 & R2)
-  - `DISPATCH.md` (updated)
+  - `src/pages/crm/SalaryManagement.tsx` (all 2,374 lines analyzed, mapped state, drawers, tabs, gaps)
+  - `src/pages/crm/RoleManagement.tsx` (all 2,777 lines analyzed, mapped modules, state, matrix, avatars)
+  - `ORIGINAL_REQUEST.md` (lines 1150-1373, R1 & R2 mockup specifications)
+  - System baseline: `tsc --noEmit` clean (code 0), `vite build` clean (code 0)
+  - 19 protected quarantine files: 100% verified untouched and isolated
 - **Key findings**:
-  - Initialized exploration for SalaryManagement and RoleManagement
+  - Full blueprint designed for `SalaryManagement.tsx`: Mockup 1 header "Payroll Engine", Royal Blue `+ New Profile`, `[ ⎋ ]` export button, 2x2 stat badges, inset segmented tabs, illustration empty state card, divide-y rows without `h-11`, and dual quick action pills.
+  - Full blueprint designed for `RoleManagement.tsx`: Mockup 2 header "Role Manager", horizontal action chips, Active Role card with quick stats, 2-column checkbox chips in module accordion, and horizontal colored avatar stream in Staff Assignments.
+  - Complete preservation of desktop views via `<div className="hidden md:block">` with zero logic changes.
 - **Unexplored areas**:
-  - Exact lines, state, queries, and action handlers of `SalaryManagement.tsx`
-  - Exact lines, state, queries, and action handlers of `RoleManagement.tsx`
-  - Blueprint for mobile views (`block md:hidden`) vs desktop views (`hidden md:block`)
+  - Implementation execution (ready for worker assignment).
 
 ## Key Decisions Made
-- Start comprehensive read-only code analysis of `SalaryManagement.tsx` and `RoleManagement.tsx`.
+- Fully documented the implementation blueprint and JSX templates in `analysis.md` and `handoff.md`.
+- Enforced `md:` breakpoint (768px) for desktop/mobile separation across both pages.
 
 ## Artifact Index
 - `DISPATCH.md` — Incoming dispatch messages
 - `BRIEFING.md` — Situational awareness
 - `progress.md` — Liveness and progress heartbeat
-- `analysis.md` — In-depth architectural analysis
+- `analysis.md` — In-depth architectural analysis and JSX blueprints
 - `handoff.md` — Authoritative 5-component survey report

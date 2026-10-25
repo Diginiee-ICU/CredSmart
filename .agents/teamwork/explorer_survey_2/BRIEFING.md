@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-25T10:18:00Z
+# BRIEFING — 2026-10-25T10:25:00Z
 
 ## Mission
 Conduct in-depth survey of `src/pages/crm/Attendance.tsx` and `src/pages/crm/Tasks.tsx` against Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) from ORIGINAL_REQUEST.md (## 2026-10-25T10:11:33Z). Deliver comprehensive blueprint and handoff for worker implementation.
@@ -43,28 +43,28 @@ Conduct in-depth survey of `src/pages/crm/Attendance.tsx` and `src/pages/crm/Tas
 
 ## Current Parent
 - Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Updated: 2026-10-25T10:18:00Z
+- Updated: 2026-10-25T10:25:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `ORIGINAL_REQUEST.md` (Sections ## 2026-10-25T10:11:33Z, ## 2026-10-24T18:51:21Z, etc.)
-  - `minimal-design-system.md`
+  - `src/pages/crm/Attendance.tsx` (lines 1-2613 audited)
+  - `src/pages/crm/Tasks.tsx` (lines 1-1299 audited)
+  - `ORIGINAL_REQUEST.md` (Mockup 3 & Mockup 4 specifications)
+  - `minimal-design-system.md` (Design tokens, touch targets >=44px, typography >=11px)
+  - Quarantine files list (19 files verified safe & untouched)
 - **Key findings**:
-  - Mockup 3 (Attendance Hub) requires: Header with 🟢 Live Sync badge, [ ⎋ ] export icon, subtitle, [ 📍 Geofences ] Royal Blue button; 2x2 stat badges (`Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`); Segmented tabs (`My Clock-In`, `Team Logs (0)`, `Locations`); Shift card with orange accent, date pill, digital clock, radar geofence widget, geofence status badge, location label, GPS accuracy pill, full-width Emerald CTA `[ ✓ Clock In Now ]`; Quick links (`View Team Logs`, `Request Correction`).
-  - Mockup 4 (Task Workflows) requires: Header with [ ☰ ] filter, subtitle; Status filter chips (`[ 🟢 Active Workflows ]`, `[ 🔴 Overdue ]`, Amber/Orange `[ + Create Task ]`); 2x2 stat badges (`Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`); Search & Priority bar; High-density task stream with 4 status emoji tags, priority pill, title, avatar chip, contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`).
-- **Unexplored areas**:
-  - `src/pages/crm/Attendance.tsx` full line-by-line inspection
-  - `src/pages/crm/Tasks.tsx` full line-by-line inspection
-  - Geolocation engine and timer logic in `Attendance.tsx`
-  - Task state machine and status transition handlers in `Tasks.tsx`
-  - 19 protected quarantine files integrity check
+  1. `Attendance.tsx`: Currently lacks mobile/desktop divergence. Wrapping lines 1644-2339 in `hidden md:block` preserves desktop 100%. Mobile view (`block md:hidden`) will implement Mockup 3 with Header (Live Sync, export [ ⎋ ], Geofences button), 2x2 stat pill badges (`Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`), Inset segmented tab bar, Shift card with left orange accent (`border-l-4 border-orange-500`), large digital clock, mini-radar visualizer, geofence status badge, location label, GPS accuracy pill, full-width emerald CTA (`Clock In Now`), and quick links.
+  2. `Tasks.tsx`: Currently stacks Kanban columns vertically on mobile. Wrapping desktop main & header in `hidden md:block` preserves desktop 100%. Mobile view (`block md:hidden`) will implement Mockup 4 with Header (filter [ ☰ ]), Status Filter Chips (`Active Workflows`, `Overdue`, amber `+ Create Task`), 2x2 stat badges (`Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`), Search & Priority bar, and High-Density Task Stream with 4 emoji status tags (`📌 TO DO`, `⚡ IN PROGRESS`, `🔍 UNDER REVIEW`, `✅ COMPLETED`), priority pill, title, assignee chip, and contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`).
+  3. Build health: `node node_modules/typescript/bin/tsc --noEmit` produces 0 errors.
+- **Unexplored areas**: None. Complete blueprint ready for implementation.
 
 ## Key Decisions Made
-- Proceeding with deep survey of `src/pages/crm/Attendance.tsx` first, followed by `src/pages/crm/Tasks.tsx`.
-- Will design exact structural blueprint separating desktop (`hidden md:block`) from mobile (`block md:hidden`) so desktop is 100% zero-regression preserved.
+- Clear desktop/mobile isolation pattern (`hidden md:block` / `block md:hidden`) recommended to prevent regressions.
+- State, geolocation hooks, session timer, queries, and modal triggers shared between desktop and mobile without duplication.
+- Authored 5-component handoff report in `handoff.md`.
 
 ## Artifact Index
-- `handoff.md` — 5-component handoff report for orchestrator and implementers
-- `progress.md` — Heartbeat and step tracking
+- `handoff.md` — Complete 5-component handoff report for orchestrator and workers
+- `progress.md` — Liveness heartbeat and step tracking
 - `DISPATCH.md` — Stored dispatch instructions
 - `BRIEFING.md` — Persistent working memory
