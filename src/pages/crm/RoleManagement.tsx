@@ -79,6 +79,7 @@ import { cn } from "@/lib/utils";
 import {
   validateStaffProvisioningInput,
   formatCredentialsPayload,
+  generateStaffDefaultPassword,
   type StoreRole,
 } from "@/utils/crmStaffUtils";
 
@@ -1012,7 +1013,10 @@ export default function RoleManagement(): React.ReactElement {
     e.preventDefault();
     if (!orgId) return;
 
-    const effectivePassword = passwordMode === "auto" ? staffFormAutoPassword : staffFormCustomPassword;
+    const effectivePassword =
+      passwordMode === "auto"
+        ? staffFormAutoPassword || generateStaffDefaultPassword(staffFormFullName)
+        : staffFormCustomPassword;
 
     const validation = validateStaffProvisioningInput({
       full_name: staffFormFullName,
@@ -1911,6 +1915,9 @@ export default function RoleManagement(): React.ReactElement {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-900">{staff.name}</span>
+                            {staff.email && (
+                              <span className="text-[11px] text-slate-400 font-mono">({staff.email})</span>
+                            )}
                             <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                               Store: {staff.role}
                             </span>
@@ -2885,8 +2892,7 @@ export default function RoleManagement(): React.ReactElement {
                     setStaffFormFullName(val);
                     // Auto-update password to firstName123 when in auto mode
                     if (passwordMode === "auto") {
-                      const firstName = val.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-                      setStaffFormAutoPassword(firstName ? `${firstName}123` : "");
+                      setStaffFormAutoPassword(generateStaffDefaultPassword(val));
                     }
                   }}
                   className="pl-9 h-9 text-xs rounded-xl border-slate-200"
@@ -3073,8 +3079,7 @@ export default function RoleManagement(): React.ReactElement {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const firstName = staffFormFullName.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-                        setStaffFormAutoPassword(firstName ? `${firstName}123` : "");
+                        setStaffFormAutoPassword(generateStaffDefaultPassword(staffFormFullName));
                       }}
                       className="h-9 px-3 rounded-xl border-slate-200 text-xs text-slate-700 hover:bg-slate-50 gap-1.5"
                       title="Regenerate secure password"

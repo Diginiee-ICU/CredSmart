@@ -160,6 +160,26 @@ export function generateCryptographicPassword(length = 14): string {
 }
 
 /**
+ * Generates default auto-password formatted as: {firstName}123
+ * Example: "Aman" -> "aman123", "Rahul Sharma" -> "rahul123"
+ * Guarantees minimum 6 characters for validation compliance.
+ */
+export function generateStaffDefaultPassword(fullName: string): string {
+  const clean = (fullName || "")
+    .trim()
+    .split(/\s+/)[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  if (!clean) return "staff123";
+  let pwd = `${clean}123`;
+  while (pwd.length < 6) {
+    pwd += "3";
+  }
+  return pwd;
+}
+
+/**
  * Prepares one-click clipboard text payload and WhatsApp communication template.
  */
 export function formatCredentialsPayload(params: {
