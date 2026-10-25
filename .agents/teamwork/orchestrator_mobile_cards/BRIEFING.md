@@ -22,10 +22,10 @@ Eliminate the nested/boxy card container anti-pattern across mobile views in Cre
   2. Plan & Decompose Milestones [done]
   3. Milestone 1: CRM Permission Rows & Tasks (RoleManagement.tsx, Tasks.tsx) [done]
   4. Milestone 2: Core Billing & Inventory Mobile Lists (Sales.tsx, Purchases.tsx, Items.tsx) [done]
-  5. Milestone 3: CRM HR & Directory Rows (Attendance.tsx, SalaryManagement.tsx, Parties.tsx, Dashboard.tsx) [in-verification]
-  6. Milestone 4: Final E2E Verification & Audit [pending]
-- **Current phase**: 2B (Milestone 3 Verification & Gate)
-- **Current focus**: Reviewers, Challengers, and Forensic Auditor verifying Milestone 3.
+  5. Milestone 3: CRM HR & Directory Rows (Attendance.tsx, SalaryManagement.tsx, Parties.tsx, Dashboard.tsx) [done]
+  6. Milestone 4: Final E2E Verification & Audit [in-progress]
+- **Current phase**: Milestone 4 Global Verification
+- **Current focus**: Worker M4, Reviewer M4, and Forensic Auditor M4 executing final verification.
 
 ## 🔒 Key Constraints
 - NEVER modify any of the 19 protected quarantine files!
@@ -42,24 +42,20 @@ Eliminate the nested/boxy card container anti-pattern across mobile views in Cre
 - Updated: 2026-10-25T08:56:19Z
 
 ## Key Decisions Made
-- Milestones 1 and 2 completed and verified (clean audit, 0 errors).
-- Milestone 3 implemented by Worker 3 across all 4 files (`Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, `Attendance.tsx`).
-- Dispatched 2 Reviewers, 2 Challengers, and 1 Forensic Auditor for Milestone 3 verification.
+- Milestones 1, 2, and 3 completed and verified (clean audit, 0 errors, 100% gate pass).
+- Milestone 4 dispatched with Worker M4, Reviewer M4, and Auditor M4 for final project closure.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| worker_m3 | teamwork_preview_worker | Milestone 3: Dashboard, Parties, CRM HR | completed | 688b17b9-bb9f-44ca-ad4a-fbef4ec21a87 |
-| reviewer_m3_1 | teamwork_preview_reviewer | Milestone 3 Review | in-progress | b9b8d2f6-2653-4e78-947a-01d8605ab6d5 |
-| reviewer_m3_2 | teamwork_preview_reviewer | Milestone 3 Review | in-progress | 562ff85a-ac37-46a9-9539-62f7fcd36f0f |
-| challenger_m3_1 | teamwork_preview_challenger | Milestone 3 Challenge | in-progress | 2767729b-b2c3-49ec-ad98-dfd6840b916c |
-| challenger_m3_2 | teamwork_preview_challenger | Milestone 3 Challenge | in-progress | 82c4c995-33e5-4041-9c5b-a475963f7f72 |
-| auditor_m3_1 | teamwork_preview_auditor | Milestone 3 Forensic Audit | in-progress | cb0fbf8a-e8a0-4c0f-8688-b6b40fe72181 |
+| worker_m4 | teamwork_preview_worker | Milestone 4: Full E2E Build & Verification | running | 4c3b0b50-f083-426c-8dc3-2d5dec8246b2 |
+| reviewer_m4 | teamwork_preview_reviewer | Milestone 4: Final Review & Quality Audit | running | 5873125b-68a2-4837-bee9-e2293be19faf |
+| auditor_m4 | teamwork_preview_auditor | Milestone 4: Final Forensic Integrity Audit | running | b0eac812-c1bc-497f-9304-492deff45d19 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 21 / 128
-- Pending subagents: b9b8d2f6-2653-4e78-947a-01d8605ab6d5, 562ff85a-ac37-46a9-9539-62f7fcd36f0f, 2767729b-b2c3-49ec-ad98-dfd6840b916c, 82c4c995-33e5-4041-9c5b-a475963f7f72, cb0fbf8a-e8a0-4c0f-8688-b6b40fe72181
+- Spawn count: 24 / 128
+- Pending subagents: 4c3b0b50-f083-426c-8dc3-2d5dec8246b2, 5873125b-68a2-4837-bee9-e2293be19faf, b0eac812-c1bc-497f-9304-492deff45d19
 - Predecessor: none
 - Successor: not yet spawned
 

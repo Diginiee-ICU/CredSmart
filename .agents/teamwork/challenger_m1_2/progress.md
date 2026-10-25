@@ -1,20 +1,17 @@
-# Progress: Challenger 2 (Milestone 1 — CRM Roles & Tasks Modernization)
+# Progress: Challenger 2 (Milestone 1 — SalaryManagement.tsx Redesign Challenge)
 
-Last visited: 2026-10-25T09:35:00Z
-Status: Complete — VERDICT: APPROVE
+Last visited: 2026-10-25T11:16:00Z
+Status: In Progress — Investigating `SalaryManagement.tsx`
 
 ## Steps
-- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, worker_m1/handoff.md, minimal-design-system.md
-- [x] Updated BRIEFING.md
-- [x] Inspect git status & verify 19 quarantine files are untouched (0 touched)
-- [x] Inspect git diff on `src/pages/crm/RoleManagement.tsx`
-- [x] Inspect git diff on `src/pages/crm/Tasks.tsx`
-- [x] Empirically check touch targets (`min-h-[44px]`)
-- [x] Empirically check typography (no `< text-[11px]`)
-- [x] Empirically check responsive divergence (mobile flat divide-y vs desktop grid/cards)
-- [x] Run `node node_modules/typescript/bin/tsc --noEmit` (exit code 0)
-- [x] Run `node node_modules/vite/bin/vite.js build` (exit code 0, ✓ built in 2m 45s)
-- [x] Authored and passed test suite `src/test/crmRolesTasksEmpiricChallenger2.test.ts` (13 tests passed)
-- [x] Executed full CRM task test suite (32 passed tests)
-- [x] Authored handoff.md with verdict (APPROVE)
-- [x] Send message to orchestrator
+- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, worker_m1_salary/handoff.md
+- [x] Updated BRIEFING.md and DISPATCH.md
+- [/] Inspect git status & verify 19 quarantine files are untouched
+- [ ] Inspect JSX structure in `src/pages/crm/SalaryManagement.tsx` (Mockup 1 mobile requirements)
+- [ ] Stress-test empty vs populated salary profiles logic
+- [ ] Verify touch targets & typography in `SalaryManagement.tsx`
+- [ ] Run typecheck: `node node_modules/typescript/bin/tsc --noEmit`
+- [ ] Run Vitest suites: `node node_modules/vitest/vitest.mjs run src/test/crmSalaryManagement.test.tsx`
+- [ ] Write dedicated empirical stress test suite if appropriate
+- [ ] Author handoff.md with explicit verdict APPROVE or REJECT
+- [ ] Notify orchestrator via send_message

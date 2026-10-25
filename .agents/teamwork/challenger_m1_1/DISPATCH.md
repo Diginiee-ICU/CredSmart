@@ -1,45 +1,30 @@
-# Dispatch Assignment: Challenger 1 (Milestone 1 — CRM Roles & Tasks Empiric Verification)
+# DISPATCH: Challenger 1 - Milestone 1 (`SalaryManagement.tsx`)
 
-## Mission
-Empirically verify the Milestone 1 changes in:
-1. `src/pages/crm/RoleManagement.tsx`
-2. `src/pages/crm/Tasks.tsx`
+## Objective
+Empirically verify correctness, type soundness, production build, and test suite pass rate for Milestone 1 (`SalaryManagement.tsx`).
 
-Stress-test responsive classes, touch targets, DOM structure, and verify zero regressions.
+## Scope & Actions
+- Target File: `src/pages/crm/SalaryManagement.tsx`
+- Run typecheck: `node node_modules/typescript/bin/tsc --noEmit`
+- Run production build: `node node_modules/vite/bin/vite.js build`
+- Run Vitest tests: `node node_modules/vitest/vitest.mjs run src/test/crmSalaryManagement.test.tsx`
+- Stress-test mobile layout rendering & verify desktop view is untouched in `hidden md:block`
+- Verify the 19 quarantine files are untouched
+- Provide clear verdict: APPROVE or REJECT
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1`
-
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Worker 1 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-
-## 19 Protected Quarantine Files:
-- NEVER MODIFY. Verify they are completely untouched.
-
-## Challenge Tasks
-1. Inspect `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` code diffs.
-2. Verify touch targets: `min-h-[44px]` on all interactive rows, switches, buttons.
-3. Verify typography: No font class below `text-[11px]`.
-4. Verify responsive integrity:
-   - On mobile (`< sm:` or `< md:`): No floating card borders, no individual shadows. Uses `divide-y divide-slate-100 dark:divide-slate-800/60`.
-   - On desktop (`>= sm:` or `>= md:`): Multi-column grid/board styles intact.
-5. Verify build integrity:
-   - Run `node node_modules/typescript/bin/tsc --noEmit`
-   - Run `node node_modules/vite/bin/vite.js build`
-6. Write your report and verdict (`APPROVE` or `FAIL`) to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md`.
+## Output
+Write your report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` and notify orchestrator.
 
 
-## 2026-10-25T09:24:24Z
-You are Challenger 1 for Milestone 1 (CRM Roles & Tasks Empiric Verification).
+## 2026-10-25T11:08:13Z
+You are Challenger 1 for Milestone 1 (`SalaryManagement.tsx`).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read Worker 1 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
-Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md
+MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z).
 
-Empirically verify the Milestone 1 changes in src/pages/crm/RoleManagement.tsx and src/pages/crm/Tasks.tsx.
-Check responsive behavior, touch targets (>=44px), typography (>=11px), run tsc and vite build.
-Write your verdict (APPROVE or FAIL) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md and notify parent via send_message.
+Empirically challenge `src/pages/crm/SalaryManagement.tsx`:
+1. Run `node node_modules/typescript/bin/tsc --noEmit`
+2. Run `node node_modules/vite/bin/vite.js build`
+3. Run `node node_modules/vitest/vitest.mjs run src/test/crmSalaryManagement.test.tsx`
+4. Confirm desktop view preservation and verify the 19 quarantine files are untouched.
+Write your report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` with explicit verdict APPROVE or REJECT, and notify orchestrator with send_message.

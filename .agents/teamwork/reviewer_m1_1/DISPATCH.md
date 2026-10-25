@@ -1,71 +1,44 @@
-# Dispatch Assignment: Reviewer 1 (Milestone 1 — CRM Roles & Tasks Modernization)
+# DISPATCH: Reviewer 1 - Milestone 1 (`SalaryManagement.tsx`)
 
-## Mission
-Independently review the Milestone 1 changes implemented by Worker 1 in:
-1. `src/pages/crm/RoleManagement.tsx`
-2. `src/pages/crm/Tasks.tsx`
+## Objective
+Review the implementation of Milestone 1 in `src/pages/crm/SalaryManagement.tsx` against Mockup 1 specifications in `ORIGINAL_REQUEST.md` (lines 1324-1331) and design system rules in `minimal-design-system.md`.
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1`
+## Target File
+`src/pages/crm/SalaryManagement.tsx`
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture & Feature Inventory: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Worker 1 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+## Reference Documents
+1. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+2. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+3. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\handoff.md`
 
-## 19 Protected Quarantine Files — NEVER MODIFY OR APPROVE MODIFICATIONS:
-- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-- `src/components/invoices/mobile/AddItemModal.tsx`
-- `src/components/invoices/mobile/SelectPartyModal.tsx`
-- `src/components/invoices/mobile/EditItemModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-- `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
-- `src/components/invoices/mobile/CreatePartyModal.tsx`
-- `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
-- `src/components/items/mobile/CreateNewItemModal.tsx`
-- `src/components/SalesInvoiceModal.tsx`
-- `src/components/PurchaseInvoiceModal.tsx`
-- `src/components/invoices/AddItemsToBillModal.tsx`
-- `src/components/invoices/InvoiceFitView.tsx`
-- `src/components/invoices/UnifiedInvoiceRenderer.tsx`
-- `src/utils/downloadExactInvoice.ts`
-- `src/utils/whatsappPdfShare.ts`
-- `src/utils/invoiceThemeLoader.ts`
-- `src/services/documentsService.ts`
+## Review Scope
+- Check that Mockup 1 layout is fully implemented on mobile (`block md:hidden`):
+  * Header: "Payroll Engine", subtitle, Royal Blue `+ New Profile` CTA, export `[ ⎋ ]`
+  * 2x2 Stat Badges: Compact horizontal pill badges with subtle colored icons & chevrons
+  * Segmented Tab Bar: Inset pill switcher
+  * Empty State Card: Clean white card with illustration, prompt, and CTA
+  * Minimal flat list rows with standard sizing (no bloated `h-11` buttons)
+  * Dual bottom quick action pills (`View Past Runs`, `Pay Settings`)
+- Check that desktop layout is 100% preserved in `hidden md:block`
+- Verify the 19 quarantine files are untouched
+- Run verification: `node node_modules/typescript/bin/tsc --noEmit` and Vitest suites
+- Provide clear verdict: APPROVE or REQUEST_CHANGES
 
-## Review Checklist
-1. Anti-Pattern Fix Verification:
-   - In `RoleManagement.tsx`: on mobile, are permission actions rendered as flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60` without individual card borders or shadows?
-   - In `Tasks.tsx`: on mobile, are Kanban tasks rendered as flat rows inside `divide-y divide-slate-100 dark:divide-slate-800/60`?
-2. Desktop Preservation:
-   - Are desktop views (`sm:` in RoleManagement, `md:` in Tasks) 100% preserved?
-3. Touch & Typography:
-   - Are touch targets >= 44px (`min-h-[44px]`)?
-   - Are all fonts >= 11px?
-4. Quarantine Integrity:
-   - Are all 19 quarantine files 100% untouched?
-5. Independent Build Verification:
-   - Run `node node_modules/typescript/bin/tsc --noEmit`
-   - Run `node node_modules/vite/bin/vite.js build`
-6. Output:
-   - Write your review verdict (`APPROVE` or `REQUEST_CHANGES`) and findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md`.
-   - Notify parent via `send_message`.
+## Output
+Write your review report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` and notify orchestrator.
 
 
-## 2026-10-25T09:24:23Z
-You are Reviewer 1 for Milestone 1 (CRM Roles & Tasks Modernization).
+## 2026-10-25T11:08:12Z
+You are Reviewer 1 for Milestone 1 (`SalaryManagement.tsx`).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read Worker 1 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
-Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md
+MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z).
+Read the design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+Read the worker's handoff report at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\handoff.md.
 
-Independently review the changes in src/pages/crm/RoleManagement.tsx and src/pages/crm/Tasks.tsx.
-Verify the elimination of boxy cards on mobile, clean divide-y containers, 44px touch targets, >=11px fonts, desktop preservation, and that all 19 quarantine files are untouched.
-Run:
-- node node_modules/typescript/bin/tsc --noEmit
-- node node_modules/vite/bin/vite.js build
-
-Write your review verdict (APPROVE or REQUEST_CHANGES) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md and notify the parent orchestrator via send_message.
+Examine `src/pages/crm/SalaryManagement.tsx`:
+1. Check Mockup 1 mobile requirements (Header, 2x2 stat badges, segmented tabs, empty state card, divide-y rows, bottom quick actions).
+2. Check desktop preservation (`hidden md:block`).
+3. Verify the 19 quarantine files are untouched.
+4. Run verification (`tsc --noEmit`, Vitest suites).
+Write your review report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit verdict APPROVE or REQUEST_CHANGES, and notify orchestrator with send_message.

@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-25T10:35:00Z
+# BRIEFING — 2026-10-25T11:04:00Z
 
 ## Mission
 Implement the Mockup 1 mobile redesign for Payroll Engine in `src/pages/crm/SalaryManagement.tsx`, strictly preserving 100% desktop functionality via `hidden md:block` and adhering to CredSmart Minimal Design System rules and quarantine isolation.
@@ -25,7 +25,7 @@ Implement the Mockup 1 mobile redesign for Payroll Engine in `src/pages/crm/Sala
 
 ## Current Parent
 - Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Updated: not yet
+- Updated: 2026-10-25T11:00:54Z
 
 ## Task Summary
 - **What to build**: Mobile-optimized viewport for `SalaryManagement.tsx` matching Mockup 1 while encapsulating desktop layout in `hidden md:block`.
@@ -38,6 +38,7 @@ Implement the Mockup 1 mobile redesign for Payroll Engine in `src/pages/crm/Sala
 - Connect mobile elements directly to existing state and handlers (`salaryProfiles`, `payrollRuns`, `adjustments`, `payslips`, `openCreateProfileDrawer`, `handleRefresh`, `setActiveTab`, `handleLockPayroll`, `handleMarkAsDisbursed`, etc.).
 - Comply strictly with button sizing rules (`h-8.5` standard CTA, `h-7` small CTA, `w-8.5 h-8.5` micro icon buttons).
 - Use `divide-y divide-slate-100 dark:divide-slate-800/60` for clean list row separation without double borders.
+- Keep drawers `<Sheet>` outside both desktop and mobile containers so they work seamlessly on both viewports.
 
 ## Artifact Index
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\DISPATCH.md` — Dispatch orders
@@ -46,14 +47,14 @@ Implement the Mockup 1 mobile redesign for Payroll Engine in `src/pages/crm/Sala
 - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\handoff.md` — 5-component handoff report
 
 ## Change Tracker
-- **Files modified**: `src/pages/crm/SalaryManagement.tsx` [TBD]
-- **Build status**: Pending
-- **Pending issues**: None
+- **Files modified**: `src/pages/crm/SalaryManagement.tsx` — Desktop encapsulated in `hidden md:block`; Mockup 1 mobile view implemented in `block md:hidden`.
+- **Build status**: Pass (`tsc --noEmit` code 0; `vite build` code 0 in 1m 42s).
+- **Pending issues**: None.
 
 ## Quality Status
-- **Build/test result**: Baseline verified passing in surveys; pending implementation verification.
-- **Lint status**: Clean
-- **Tests added/modified**: TBD
+- **Build/test result**: PASS — 115/115 CRM Vitest tests passed (26/26 in `crmSalaryManagement.test.tsx`).
+- **Lint status**: Clean.
+- **Tests added/modified**: Verified against all 26 test cases in `crmSalaryManagement.test.tsx` plus `crmPayrollUtils.test.ts`, `crmGeoUtils.test.ts`, `crmPermissionGate.test.tsx`.
 
 ## Loaded Skills
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md`

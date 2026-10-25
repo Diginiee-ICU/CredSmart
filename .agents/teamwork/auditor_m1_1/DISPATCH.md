@@ -1,49 +1,30 @@
-# Dispatch Assignment: Forensic Auditor (Milestone 1 — CRM Roles & Tasks Integrity Forensics)
+# DISPATCH: Forensic Auditor - Milestone 1 (`SalaryManagement.tsx`)
 
-## Mission
-Perform comprehensive forensic integrity verification of the Milestone 1 changes in:
-1. `src/pages/crm/RoleManagement.tsx`
-2. `src/pages/crm/Tasks.tsx`
+## Objective
+Perform forensic integrity verification of the Milestone 1 implementation in `src/pages/crm/SalaryManagement.tsx`.
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1`
+## Scope & Integrity Checks
+- Verify implementation authenticity: NO hardcoded test results, NO dummy/facade implementations, NO mock return cheats.
+- Verify that genuine business logic and Supabase queries are bound to the mobile UI components.
+- Verify that all 19 protected invoice quarantine files have unmodified timestamps and zero git diffs.
+- Verify that desktop view is preserved in `hidden md:block` without regressions.
+- Verify that minimal design system rules are genuinely adhered to (no bloated buttons, Inter typography, tabular monospace for numbers, royal blue accent).
+- Provide binary verdict: CLEAN or INTEGRITY VIOLATION.
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Worker 1 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-
-## 19 Protected Quarantine Files:
-- NEVER MODIFY. Verify they are 100% untouched.
-
-## Integrity Audit Requirements
-1. Static Analysis:
-   - Check git diff for `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`.
-   - Verify changes are genuine UI refactorings (proper Tailwind classes, genuine components, proper event binding).
-   - Verify NO mock or dummy implementations, hardcoded states, fake strings, or logic bypasses were introduced.
-2. Quarantine Enforcement:
-   - Verify that none of the 19 quarantine files were touched or altered in git status.
-3. Build & Compiler Verification:
-   - Run `node node_modules/typescript/bin/tsc --noEmit`
-   - Run `node node_modules/vite/bin/vite.js build`
-4. Verdict:
-   - If ANY cheating, dummy code, or quarantine violation is found: `INTEGRITY VIOLATION` (with full evidence).
-   - If clean, genuine, and verified: `CLEAN`.
-5. Deliverables:
-   - Write your forensic audit report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\handoff.md`.
-   - Notify parent via `send_message`.
+## Output
+Write your full forensic audit evidence report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\handoff.md` and notify orchestrator.
 
 
-## 2026-10-25T09:24:25Z
-You are Forensic Auditor for Milestone 1 (CRM Roles & Tasks Integrity Forensics).
+## 2026-10-25T11:08:14Z
+From: 9b37b911-3daf-458a-8cd7-5e836d72b751
+Content: You are the Forensic Auditor for Milestone 1 (`SalaryManagement.tsx`).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read Worker 1 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\DISPATCH.md
+MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z).
 
-Conduct forensic integrity audit on the changes made to src/pages/crm/RoleManagement.tsx and src/pages/crm/Tasks.tsx.
-Verify that:
-1. Changes are genuine UI improvements, not hardcoded mocks or dummy code.
-2. All 19 quarantine files remain 100% untouched.
-3. Build and tsc pass cleanly.
-Write your verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\handoff.md and notify parent via send_message.
+Audit `src/pages/crm/SalaryManagement.tsx`:
+1. Check for genuine implementation (NO hardcoded test results, NO dummy facades, genuine Supabase/state connections).
+2. Check that the 19 quarantine files have unmodified timestamps and zero git diffs.
+3. Check desktop view preservation (`hidden md:block`).
+4. Check design system token adherence.
+Write your full forensic audit evidence report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1_1\handoff.md` with binary verdict CLEAN or INTEGRITY VIOLATION, and notify orchestrator with send_message.

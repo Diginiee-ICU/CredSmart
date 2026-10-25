@@ -1,15 +1,19 @@
-# Progress Heartbeat: Reviewer 2 (Milestone 1 — CRM Roles & Tasks Modernization)
+# Progress Heartbeat: Reviewer 2 (Milestone 1 — SalaryManagement.tsx Redesign)
 
-**Last visited**: 2026-10-25T09:32:30Z  
-**Status**: COMPLETED  
-**Verdict**: APPROVE  
+**Last visited**: 2026-10-25T11:10:00Z  
+**Status**: IN_PROGRESS  
+**Verdict**: PENDING  
 
-## Completed Steps
-1. [x] Received dispatch from Parent `24d614cb-853d-49d4-9ac2-cf0090c93a62` and logged into `DISPATCH.md`.
+## Current Steps
+1. [x] Received dispatch from Parent `9b37b911-3daf-458a-8cd7-5e836d72b751` and logged into `DISPATCH.md`.
 2. [x] Updated `BRIEFING.md` preserving all append-only 🔒 sections.
-3. [x] Audited git status: verified 0 of 19 quarantine files touched.
-4. [x] Detailed code review and diff inspection of `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`.
-5. [x] Executed `node node_modules/typescript/bin/tsc --noEmit`: PASS (exit code 0).
-6. [x] Executed `node node_modules/vite/bin/vite.js build`: PASS (✓ built in 2m 33s, exit code 0).
-7. [x] Executed Vitest CRM tests: PASS (20/20 tests passed).
-8. [x] Authored comprehensive Review & Adversarial Challenge Report in `handoff.md` with gate verdict APPROVE.
+3. [ ] Audit git status: verify 0 of 19 quarantine files touched.
+4. [ ] Independent code inspection of `src/pages/crm/SalaryManagement.tsx`:
+   - Mobile Mockup 1 requirements (Header, 2x2 stat badges, tabs, empty state, quick actions footer)
+   - Desktop preservation (`hidden md:block`)
+   - Button sizes, touch targets (>=44px), typography (no sub-11px)
+   - Integrity violation checks
+5. [ ] Execute `node node_modules/typescript/bin/tsc --noEmit`.
+6. [ ] Execute Vitest test suites.
+7. [ ] Author comprehensive Review & Adversarial Challenge Report in `handoff.md` with gate verdict.
+8. [ ] Notify parent orchestrator via `send_message`.

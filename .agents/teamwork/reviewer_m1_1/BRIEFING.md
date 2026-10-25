@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-25T09:35:00Z
+# BRIEFING — 2026-10-25T11:20:00Z
 
 ## Mission
-Independently review and adversarially challenge Milestone 1: CRM Roles & Tasks Modernization (`src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`), verifying the complete elimination of nested/boxy mobile cards, clean divide-y hairlines, 44px touch targets, >=11px typography, 100% desktop preservation, and 19 quarantine files untouched.
+Independently review and adversarially challenge Milestone 1: Payroll Engine Mobile Redesign (`src/pages/crm/SalaryManagement.tsx`), verifying 1:1 fidelity with Mockup 1 (Header, 2x2 stat badges, segmented tabs, empty state card, divide-y rows, bottom quick actions), 100% desktop preservation, untouched 19 quarantine files, and full build/test verification.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -18,6 +18,8 @@ Independently review and adversarially challenge Milestone 1: CRM Roles & Tasks 
 - Current Parent (Current): 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Milestone (Active): Milestone 1 — CRM Roles & Tasks Modernization (Nested Boxy Card Elimination)
 - Parent (Active): 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Milestone (M1 Payroll Engine): Milestone 1 - Payroll Engine Mobile Redesign (`SalaryManagement.tsx`)
+- Parent (M1 Payroll Engine): 9b37b911-3daf-458a-8cd7-5e836d72b751
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -31,46 +33,51 @@ Independently review and adversarially challenge Milestone 1: CRM Roles & Tasks 
 - Eliminate box-in-box anti-patterns on mobile; verify divide-y hairlines
 - Verify minimum 44px touch targets and >= 11px typography
 - Preserve desktop layouts (sm: / md:) 100%
+- Enforce Mockup 1 visual fidelity: Header, 2x2 stat badges, segmented tabs, empty state card, bottom quick actions
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T09:35:00Z
+- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Updated: 2026-10-25T11:20:00Z
 
 ## Review Scope
 - **Files reviewed**:
-  - `src/pages/crm/RoleManagement.tsx` (Lines 1712–1748: flat divide-y container for permission toggles)
-  - `src/pages/crm/Tasks.tsx` (Lines 874–905: flat divide-y container for mobile Kanban column tasks)
-  - 19 Protected Invoice Files (invariance check via git status / diff)
+  - `src/pages/crm/SalaryManagement.tsx` (Mobile View lines 2074–2647; Desktop View lines 1179–2072)
+  - 19 Protected Quarantine Files (audited via node fs.statSync)
 - **Interface contracts**:
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-  - `ORIGINAL_REQUEST.md` (section `## 2026-10-25T08:53:34Z`)
-  - `worker_m1/handoff.md`
+  - `minimal-design-system.md`
+  - `ORIGINAL_REQUEST.md` (R1 & R5, lines 1324–1331, 1355–1359)
+  - `worker_m1_salary/handoff.md`
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/pages/crm/RoleManagement.tsx` (verified flat divide-y mobile rows, sm: grid desktop layout)
-  - `src/pages/crm/Tasks.tsx` (verified flat divide-y mobile tasks, md: cards desktop layout)
-  - `node node_modules/typescript/bin/tsc --noEmit` (Exit code 0, 0 compiler errors)
-  - `node node_modules/vite/bin/vite.js build` (Exit code 0, built in 2m 31s)
-  - Vitest test suites (`crmTasksView.test.tsx`, `crmStaffTasksIntegration.test.tsx`, `crmStaffProvisioningUI.test.tsx`: 25/25 tests passed)
-  - Protected Invoice Files Invariance check (19/19 files untouched)
+  - Mockup 1 Header ("Payroll Engine", subtitle, Royal Blue `+ New Profile` CTA, export `[ ⎋ ]`) -> VERIFIED
+  - 2x2 Stat Badges (Active Profiles, Current Month, Pending Advances, Available Payslips with right chevrons & active tab triggers) -> VERIFIED
+  - Segmented Tab Bar (Inset pill switcher for 4 tabs) -> VERIFIED
+  - Empty State Card (Circular vector pod, "No salary profiles configured yet.", helper text, `+ Add First Profile` CTA) -> VERIFIED
+  - Flat divide-y rows (hairline dividers, `h-7` configure button, font-mono tabular-nums) -> VERIFIED
+  - Quick Actions Footer (Dual white pill buttons `[ 📋 View Past Runs ]` and `[ ⚙️ Pay Settings ]`) -> VERIFIED
+  - Desktop Preservation (`hidden md:block` containing entire desktop layout 100% intact) -> VERIFIED
+  - 19 Quarantine Files (0 modified) -> VERIFIED
+  - `node node_modules/typescript/bin/tsc --noEmit` -> Exit code 0, 0 errors -> VERIFIED
+  - `node node_modules/vite/bin/vite.js build` -> Exit code 0, built in 3m -> VERIFIED
+  - Vitest test suites (4 files, 115/115 tests passed) -> VERIFIED
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified.
+- **Unverified claims**: None.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Mobile box-in-box removal: verified individual per-item borders, shadows, and rounded corners removed on mobile.
-  - Desktop view preservation: verified `sm:grid sm:grid-cols-2 md:grid-cols-3` and `md:rounded-xl md:border md:shadow-2xs` intact.
-  - Touch target ergonomics: verified `min-h-[44px]` on all interactive rows and task action buttons.
-  - Typography scale: verified no text smaller than 11px (`text-xs`, `text-[11px]`).
-  - Dark mode support: verified all dark mode tokens (`dark:divide-slate-800/60`, `dark:bg-slate-900`) present and active.
+  - Empty state vs populated state: Both branches verified (empty state card rendered when length === 0, divide-y rows when > 0).
+  - Button sizing: Verified no bloated `h-11` or `h-12` buttons on mobile; standard `h-8.5` and `h-7` used.
+  - Touch target ergonomics: Verified all interactive badge buttons, list actions, and bottom pill buttons meet or exceed `min-h-[44px]`.
+  - Typography scale: No sub-11px font sizes detected; numbers formatted in tabular monospace.
+  - State & logic sharing: Verified mobile and desktop share the exact same React state hooks, handlers, and Sheet slide-overs.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None within Milestone 1 scope.
 
 ## Key Decisions Made
-- Confirmed full build, test, and typecheck passes.
-- Confirmed zero integrity violations or dummy code.
-- Issued verdict: APPROVE.
+- Independent verification confirmed full compliance with Mockup 1 and design system rules.
+- Confirmed zero regressions and zero integrity violations.
+- Verdict: APPROVE.
 
 ## Artifact Index
 - `handoff.md` — Final review and adversarial challenge report

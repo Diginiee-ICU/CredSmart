@@ -1,6 +1,6 @@
 # Progress — CredSmart CRM Mobile Redesign
 
-Last visited: 2026-10-25T10:40:45Z
+Last visited: 2026-10-25T11:10:35Z
 
 ## Current Status
 - [x] Initialized Project Orchestrator state and BRIEFING.md
@@ -10,7 +10,12 @@ Last visited: 2026-10-25T10:40:45Z
   - `explorer_survey_3` (Shared Tokens, Quarantine & Verification): COMPLETED
 - [x] Aggregate survey findings into `SCOPE.md` Feature Inventory (21 features mapped)
 - [/] Milestone 1: Payroll Engine Mobile Redesign (`src/pages/crm/SalaryManagement.tsx`):
-  - Worker `worker_m1_salary` (Conv ID `f67b12b2-ce30-4325-8b34-dd4303003f6e`): [in-progress - inspecting and implementing layout]
+  - Worker `worker_m1_salary`: COMPLETED
+  - Reviewer 1 (`9b43fd27...`): [in-progress - inspecting JSX]
+  - Reviewer 2 (`5a979352...`): [in-progress - auditing tokens]
+  - Challenger 1 (`417f2d0b...`): [in-progress - executing tests]
+  - Challenger 2 (`76f5f6c8...`): [in-progress - testing git & boundary]
+  - Auditor (`39bf31bf...`): [in-progress - auditing integrity]
 - [ ] Milestone 2: Role Manager Mobile Redesign (`src/pages/crm/RoleManagement.tsx`)
 - [ ] Milestone 3: Attendance Hub Mobile Redesign (`src/pages/crm/Attendance.tsx`)
 - [ ] Milestone 4: Task Workflows Mobile Redesign (`src/pages/crm/Tasks.tsx`)
@@ -18,4 +23,4 @@ Last visited: 2026-10-25T10:40:45Z
 
 ## Iteration Status
 Current iteration: 1 / 32
-Heartbeat 3: Worker 1 actively progressing on SalaryManagement.tsx redesign.
+Heartbeat 6: All 5 M1 verification agents running actively.

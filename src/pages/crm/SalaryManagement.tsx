@@ -25,6 +25,9 @@ import {
   ShieldAlert,
   Users,
   Wallet,
+  ChevronRight,
+  ClipboardList,
+  Settings,
 } from "lucide-react";
 import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
@@ -1169,10 +1172,14 @@ export default function SalaryManagement(): React.ReactElement {
       action="view"
       fallback={<SalaryAccessRestrictedFallback />}
     >
-      <div className="space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-3 sm:px-6">
+      <div className="w-full">
         {/* ================================================================== */}
-        {/* CRM Page Header                                                    */}
+        {/* DESKTOP VIEW (>= 768px): 100% Preserved Architecture               */}
         {/* ================================================================== */}
+        <div className="hidden md:block space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-3 sm:px-6">
+          {/* ================================================================== */}
+          {/* CRM Page Header                                                    */}
+          {/* ================================================================== */}
         <CRMPageHeader
           title="Salary Management & Payroll Engine"
           subtitle="Staff compensation, monthly payroll runs, advances, and payslips"
@@ -2062,6 +2069,582 @@ export default function SalaryManagement(): React.ReactElement {
             )}
           </div>
         )}
+        </div>
+
+        {/* ================================================================== */}
+        {/* MOBILE VIEW (< 768px): Dedicated Native Touch Experience (Mockup 1) */}
+        {/* ================================================================== */}
+        <div className="block md:hidden pb-24 px-3.5 pt-3 space-y-3.5 max-w-lg mx-auto">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                Payroll Engine
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Staff compensation &amp; payroll runs
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                aria-label="Refresh &amp; Export Data"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="w-8.5 h-8.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs flex items-center justify-center active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50"
+                title="Refresh / Export Data"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+              </button>
+              {canEdit && (
+                <Button
+                  size="sm"
+                  onClick={openCreateProfileDrawer}
+                  className="h-8.5 px-3 rounded-lg gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-2xs cursor-pointer active:scale-[0.98] transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Profile</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* 2x2 Stat Badges */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Active Profiles */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("profiles")}
+              className={cn(
+                "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+                activeTab === "profiles"
+                  ? "border-blue-500/80 ring-1 ring-blue-500/30"
+                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                  <Briefcase className="w-3.5 h-3.5 stroke-[2.2]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    Active Profiles
+                  </span>
+                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                    {activeProfilesCount}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </button>
+
+            {/* Current Month */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("payroll")}
+              className={cn(
+                "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+                activeTab === "payroll"
+                  ? "border-emerald-500/80 ring-1 ring-emerald-500/30"
+                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                  <Calculator className="w-3.5 h-3.5 stroke-[2.2]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    Current Month
+                  </span>
+                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums truncate">
+                    {formatIndianCurrency(currentRun?.total_payout || 0)}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </button>
+
+            {/* Pending Advances */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("adjustments")}
+              className={cn(
+                "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+                activeTab === "adjustments"
+                  ? "border-amber-500/80 ring-1 ring-amber-500/30"
+                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                  <Receipt className="w-3.5 h-3.5 stroke-[2.2]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    Pending Advances
+                  </span>
+                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums truncate">
+                    {formatIndianCurrency(totalPendingAdvanceAmount)}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </button>
+
+            {/* Available Payslips */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("payslips")}
+              className={cn(
+                "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+                activeTab === "payslips"
+                  ? "border-indigo-500/80 ring-1 ring-indigo-500/30"
+                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                  <FileText className="w-3.5 h-3.5 stroke-[2.2]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    Available Payslips
+                  </span>
+                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                    {myPayslips.length || payslips.length}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </button>
+          </div>
+
+          {/* Segmented Tab Bar */}
+          <div
+            className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-800 w-full overflow-x-auto scrollbar-none gap-1"
+          >
+            {[
+              { id: "profiles", label: `Salary Profiles (${salaryProfiles.length})` },
+              { id: "payroll", label: "Payroll Run" },
+              { id: "adjustments", label: "Advances & Deductions" },
+              { id: "payslips", label: `My Payslips (${myPayslips.length})` },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as SalaryTab)}
+                  className={cn(
+                    "flex-1 py-1.5 px-2.5 rounded-lg text-xs text-center transition-all cursor-pointer whitespace-nowrap min-h-[36px] flex items-center justify-center font-medium",
+                    isActive
+                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab 1: Salary Profiles Mobile Content */}
+          {activeTab === "profiles" && (
+            <div className="space-y-3">
+              {salaryProfiles.length === 0 ? (
+                /* Empty State Card (Mockup 1) */
+                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs text-center p-8 space-y-3">
+                  <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto border border-blue-100 dark:border-blue-900/50">
+                    <Briefcase className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      No salary profiles configured yet.
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                      Create compensation structures for staff to automate payroll calculations, attendance prorations, and tax deductions.
+                    </p>
+                  </div>
+                  {canEdit && (
+                    <div className="pt-1">
+                      <Button
+                        size="sm"
+                        onClick={openCreateProfileDrawer}
+                        className="h-8.5 px-3.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs inline-flex items-center gap-1.5 cursor-pointer active:scale-[0.98] transition-all"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add First Profile</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Flat divide-y list rows without bloated h-11 buttons */
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {salaryProfiles.map((p) => (
+                    <div key={p.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{p.staff_name}</h4>
+                            <CRMRolePill name={p.staff_role || "Staff"} color="#2563EB" />
+                          </div>
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{p.staff_email}</p>
+                        </div>
+                        <CRMBadge variant={p.is_active ? "success" : "neutral"} size="sm" dot={p.is_active}>
+                          {p.salary_type.toUpperCase()}
+                        </CRMBadge>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                        <div>
+                          <span className="text-[11px] text-slate-400">Base Wage: </span>
+                          <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">
+                            {formatIndianCurrency(p.base_amount)}
+                          </span>
+                        </div>
+                        {canEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditProfileDrawer(p)}
+                            className="h-7 px-2.5 rounded-md text-[11px] font-medium border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                          >
+                            Configure
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 2: Payroll Run Mobile Content */}
+          {activeTab === "payroll" && (
+            <div className="space-y-3">
+              {/* Controls Card */}
+              <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <label htmlFor="mobile-payroll-month" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                      Month
+                    </label>
+                    <Input
+                      id="mobile-payroll-month"
+                      aria-label="Month"
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="h-8 w-36 text-xs font-mono rounded-lg bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                    />
+                  </div>
+                  <div className="text-right space-y-0.5">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                      Working Days
+                    </span>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                      {getWorkingDaysInMonth(selectedMonth)} Days
+                    </p>
+                    {currentRun?.status && (
+                      <CRMBadge
+                        variant={
+                          currentRun.status === "disbursed"
+                            ? "success"
+                            : currentRun.status === "locked"
+                            ? "info"
+                            : "warning"
+                        }
+                        size="sm"
+                        dot
+                      >
+                        {currentRun.status.toUpperCase()}
+                      </CRMBadge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <Button
+                    size="sm"
+                    onClick={handleGeneratePayroll}
+                    disabled={isCurrentRunLocked || !canApprove}
+                    className="flex-1 h-8 px-2.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-2xs"
+                  >
+                    <Calculator className="w-3.5 h-3.5 mr-1" />
+                    <span>Generate</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleLockPayroll}
+                    disabled={isCurrentRunLocked || !canApprove || (!hasGeneratedPreview && currentMonthPayslips.length === 0)}
+                    className="flex-1 h-8 px-2.5 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1" />
+                    <span>Lock</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    onClick={handleMarkAsDisbursed}
+                    disabled={!currentRun || currentRun.status !== "locked" || !canApprove}
+                    className="flex-1 h-8 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-2xs"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                    <span>Disburse</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Warning if unconfigured staff exists */}
+              {unconfiguredStaff.length > 0 && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>
+                    <strong>Notice:</strong> {unconfiguredStaff.length} active staff member(s) missing salary profile.
+                  </span>
+                </div>
+              )}
+
+              {/* Summary KPI Bar */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Staff</span>
+                  <p className="text-sm font-black font-mono text-slate-900 dark:text-white tabular-nums">{summaryTotals.totalStaff}</p>
+                </div>
+                <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Gross</span>
+                  <p className="text-sm font-black font-mono text-slate-900 dark:text-white tabular-nums">{formatIndianCurrency(summaryTotals.totalGross)}</p>
+                </div>
+                <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Deductions</span>
+                  <p className="text-sm font-black font-mono text-rose-600 tabular-nums">{formatIndianCurrency(summaryTotals.totalDeductions)}</p>
+                </div>
+                <div className="p-2.5 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                  <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">Total Payout</span>
+                  <p className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">{formatIndianCurrency(summaryTotals.totalPayout)}</p>
+                </div>
+              </div>
+
+              {/* Payslip Cards List */}
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                {(hasGeneratedPreview ? previewPayslips : currentMonthPayslips).length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">
+                    No payroll runs generated for this month. Click &apos;Generate&apos; to calculate.
+                  </div>
+                ) : (
+                  (hasGeneratedPreview
+                    ? previewPayslips.map((p) => ({
+                        id: p.staffId,
+                        name: staffDirectory[p.staffId]?.name || p.staffId,
+                        email: staffDirectory[p.staffId]?.email || "",
+                        gross: p.grossSalary,
+                        net: p.netSalary,
+                        deductions: p.lopDeduction + p.pfDeduction + p.esiDeduction + p.advanceDeduction,
+                        present: p.presentDays,
+                      }))
+                    : currentMonthPayslips.map((s) => ({
+                        id: s.id,
+                        name: s.staff_name || "Staff Member",
+                        email: s.staff_email || "",
+                        gross: Number(s.gross_salary || 0),
+                        net: Number(s.net_salary || 0),
+                        deductions: Number(s.lop_deduction || 0) + Number(s.pf_deduction || 0) + Number(s.esi_deduction || 0) + Number(s.advance_deduction || 0),
+                        present: s.present_days,
+                      }))
+                  ).map((item) => (
+                    <div key={item.id} className="p-3 space-y-1.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{item.name}</h4>
+                          <p className="text-[11px] text-slate-400 truncate">{item.email}</p>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded text-xs border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                          {formatIndianCurrency(item.net)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                        <div>
+                          <span className="text-slate-400">Gross: </span>
+                          <span className="font-mono font-semibold text-slate-900 dark:text-white">{formatIndianCurrency(item.gross)}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Ded: </span>
+                          <span className="font-mono text-rose-600 font-semibold">{formatIndianCurrency(item.deductions)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-slate-400">Present: </span>
+                          <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.present}d</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Advances & Deductions Mobile Content */}
+          {activeTab === "adjustments" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Advances &amp; Adjustments
+                </h3>
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    onClick={handleOpenAdjustmentDrawer}
+                    className="h-7 px-2.5 rounded-lg text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-2xs gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>+ Add Advance</span>
+                  </Button>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                {adjustments.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">
+                    No advances or adjustments recorded.
+                  </div>
+                ) : (
+                  adjustments.map((a) => (
+                    <div key={a.id} className="p-3 space-y-1.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{a.staff_name}</h4>
+                          <p className="text-[11px] text-slate-400 truncate">{a.description || a.month_year || "Adjustment"}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <CRMBadge variant="warning" size="sm">
+                            {a.type.toUpperCase()}
+                          </CRMBadge>
+                          <CRMBadge
+                            variant={a.status === "approved" ? "success" : a.status === "rejected" ? "error" : "warning"}
+                            size="sm"
+                          >
+                            {a.status.toUpperCase()}
+                          </CRMBadge>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">{formatIndianCurrency(a.amount)}</span>
+                        {canApprove && a.status === "pending" && (
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleApproveAdjustment(a.id)}
+                              className="h-7 px-2 text-[11px] text-emerald-600 border-emerald-200 dark:border-emerald-800/60 rounded-md font-medium"
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRejectAdjustment(a.id)}
+                              className="h-7 px-2 text-[11px] text-rose-600 border-rose-200 dark:border-rose-800/60 rounded-md font-medium"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: My Payslips Mobile Content */}
+          {activeTab === "payslips" && (
+            <div className="space-y-3">
+              {myPayslips.length === 0 ? (
+                <div className="p-8 text-center border border-slate-200/80 dark:border-slate-800 rounded-xl space-y-2 bg-white dark:bg-slate-900 shadow-2xs">
+                  <FileText className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">
+                    No personal payslips issued
+                  </h3>
+                  <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                    Your monthly salary slips will appear here once payroll is locked and disbursed.
+                  </p>
+                </div>
+              ) : (
+                myPayslips.map((slip) => (
+                  <div
+                    key={slip.id}
+                    className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">
+                        {slip.month_year ? `${slip.month_year.split("-")[1]}/${slip.month_year.split("-")[0]}` : "N/A"}
+                      </span>
+                      <CRMBadge
+                        variant={slip.payment_status === "paid" ? "success" : "warning"}
+                        size="sm"
+                        dot={slip.payment_status === "paid"}
+                      >
+                        {slip.payment_status.toUpperCase()}
+                      </CRMBadge>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[11px] text-slate-400 font-medium">Net Take-Home Pay</span>
+                      <span className="text-base font-black font-mono text-slate-900 dark:text-white tabular-nums">
+                        {formatIndianCurrency(slip.net_salary)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                      <div>
+                        <span className="text-slate-400">Gross: </span>
+                        <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{formatIndianCurrency(slip.gross_salary)}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Present: </span>
+                        <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{slip.present_days} / {slip.working_days_in_month}d</span>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label="Export Payslip"
+                      onClick={() => handleDownloadPayslip(slip)}
+                      className="w-full h-8 gap-1.5 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export Payslip</span>
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Quick Actions Footer (Mockup 1) */}
+          <div className="grid grid-cols-2 gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("payroll")}
+              className="h-9 min-h-[44px] px-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
+              <span>View Past Runs</span>
+            </button>
+            <button
+              type="button"
+              onClick={openCreateProfileDrawer}
+              className="h-9 min-h-[44px] px-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5 text-slate-500" />
+              <span>Pay Settings</span>
+            </button>
+          </div>
+        </div>
 
         {/* ================================================================== */}
         {/* Slide-over Drawer: Add / Configure Salary Profile                  */}

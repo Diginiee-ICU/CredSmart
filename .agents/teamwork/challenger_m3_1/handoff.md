@@ -1,181 +1,179 @@
-# Challenger Handoff Report — Milestone 3 (Mobile Ergonomics & Native-Touch Layouts)
-
-**Agent**: Challenger 1 (`challenger_m3_1`)  
-**Parent Conversation ID**: `3044c8ce-523a-4157-917d-31b6f5d55c6a`  
-**Milestone**: Milestone 3: Mobile Bottom Navigation Dock & Modal Bottom-Sheet Drawer Refactoring  
-**Timestamp**: 2026-10-24T20:27:00Z  
-**Verdict**: **APPROVE**  
-
----
+# Handoff Report: Challenger 1 (Milestone 3 — Dashboard, Parties & CRM HR Empiric Verification)
 
 ## 1. Observation
 
-### 1.1 Empirical Command & Test Executions
+Direct empiric verification was executed across the four target files, quarantine files, and full build pipelines:
+- `src/pages/Dashboard.tsx`
+- `src/pages/Parties.tsx`
+- `src/pages/crm/SalaryManagement.tsx`
+- `src/pages/crm/Attendance.tsx`
 
-1. **Vitest Mobile Ergonomics & Regression Test Suite**:
-   - Command:
-     ```powershell
-     cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts
-     ```
-   - Exit code: `0`
-   - Verbatim Output:
-     ```text
-      RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
+### 1.1 Quarantine Isolation Verification
+- **Observation**: Checked git diff status for all 19 protected files against base:
+  ```powershell
+  & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff bfe5dcd HEAD -- src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx src/components/invoices/mobile/MobileInvoiceSuccessView.tsx src/components/invoices/mobile/MobileBillPreviewModal.tsx src/components/invoices/mobile/MobileInvoiceFitViewer.tsx src/components/invoices/mobile/CreatePartyModal.tsx src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx src/components/items/mobile/CreateNewItemModal.tsx src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/AddItemsToBillModal.tsx src/components/invoices/InvoiceFitView.tsx src/components/invoices/UnifiedInvoiceRenderer.tsx src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
+  ```
+  Result: Empty output (exit code 0). Zero changes were introduced to any of the 19 quarantine files.
 
-      ✓ src/test/mobileErgonomicsChallenger.test.ts (17 tests) 103ms
-      ✓ src/test/mobileTouchErgonomicsRemediation.test.ts (9 tests) 30ms
-      ✓ src/test/billingLifecycleEngine.test.ts (17 tests) 207ms
-
-      Test Files  3 passed (3)
-           Tests  43 passed (43)
-        Start at  01:53:14
-        Duration  11.36s (transform 1.01s, setup 2.62s, collect 1.40s, tests 340ms, environment 16.37s, prepare 4.07s)
-     ```
-
-2. **TypeScript Static Compilation**:
-   - Command:
-     ```powershell
-     cmd /c npx tsc --noEmit
-     ```
-   - Exit code: `0`
-   - Output: 0 errors, 0 warnings.
-
-3. **ESLint Static Analysis**:
-   - Command:
-     ```powershell
-     cmd /c npx eslint src/components/AppSidebar.tsx src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx src/test/mobileErgonomicsChallenger.test.ts
-     ```
-   - Exit code: `0`
-   - Output: 0 errors, 0 warnings.
-
-4. **Adversarial Billing Lifecycle Verification**:
-   - Command:
-     ```powershell
-     cmd /c npx vitest run src/test/billingLifecycleEngine.adversarial.test.ts
-     ```
-   - Exit code: `0`
-   - Verbatim Output:
-     ```text
-      RUN  v3.2.4 C:/Users/bishn/OneDrive/Documents/GitHub/CredSmart
-
-      ✓ src/test/billingLifecycleEngine.adversarial.test.ts (6 tests) 86ms
-
-      Test Files  1 passed (1)
-           Tests  6 passed (6)
-     ```
-
----
-
-### 1.2 Codebase Assertions & Inspection
-
-1. **`src/components/AppSidebar.tsx` (Mobile Bottom Navigation Dock)**:
-   - **Tab 5 Destination**: Lines 479–499 configure Tab 5 as `<NavLink to={ROUTE_PATHS.parties} ...>`, displaying `<Users2 className="w-5 h-5 stroke-[2.2]" />` with label `<span className="text-[10px] tracking-tight">Parties</span>`. Active route state is computed on line 245:
+### 1.2 Anti-Pattern Elimination & Container Structure
+1. `src/pages/Dashboard.tsx` (Lines 901-917):
+   - Outer container:
      ```tsx
-     const isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);
+     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
      ```
-   - **Center Elevated CTA**: Lines 431–453 define the center button with dimensions:
+   - Row element:
      ```tsx
-     <div className={cn(
-       "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
-       isPosActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
-     )}>
+     <div
+       key={txn.id}
+       onClick={() => navigate(ROUTE_PATHS.sales)}
+       className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
+     >
      ```
-     Skeuomorphic rainbow gradients (`from-indigo-600`, `from-amber-500`, `to-purple-600`) have been completely eliminated.
-   - **Single Royal Blue Accent**: Active dock tabs across POS & Billing (lines 384–500) and CRM (lines 264–380) consistently apply the single cohesive accent tokens:
+   - Verbatim check: Standalone border and shadow-2xs on individual rows were eliminated. Item touch target is `min-h-[56px]`.
+
+2. `src/pages/Parties.tsx` (Lines 1199, 1231-1365):
+   - Outer container:
      ```tsx
-     text-blue-600 dark:text-blue-400 font-bold
-     bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105
+     <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin">
      ```
-     Inactive tabs apply neutral tokens `text-slate-400 hover:text-slate-600 dark:hover:text-slate-300`.
-   - **Touch Ergonomics & Safe-Area Inset**: The nav container on line 258 applies `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]` with `fixed bottom-0 left-0 right-0 z-50`. All 5 tab targets provide `min-h-[44px]` and `min-w-[50px]`, strictly exceeding the 44px threshold.
+   - Row element:
+     ```tsx
+     <div
+       key={party.id}
+       className={cn(
+         "px-3.5 py-3 transition-colors bg-white dark:bg-slate-900 space-y-2.5",
+         isSelected
+           ? "bg-blue-50/40 dark:bg-blue-950/30"
+           : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
+       )}
+     >
+     ```
+   - Touch targets for interactive elements:
+     - Phone: `min-h-[44px] h-11 px-3`
+     - WhatsApp: `min-h-[44px] h-11 px-3`
+     - Ledger: `min-h-[44px] h-11 px-3`
+     - MoreVertical dropdown trigger: `min-w-[44px] min-h-[44px] w-11 h-11 p-0 rounded-lg`
 
-2. **`src/components/items/CreateItemModal.tsx` (Bottom-Sheet Drawer)**:
-   - Outer container on line 335 enforces drawer alignment on mobile:
-     `fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150`.
-   - Sheet container on line 336:
-     `w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl`.
-   - Drag handle on line 338:
-     `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`.
-   - Independent scrolling body: `<div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">`.
-   - Sticky confirmation bar on line 900:
-     `sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0`.
+3. `src/pages/crm/SalaryManagement.tsx`:
+   - Tab 1 (Salary Profiles) lines 1455-1492:
+     ```tsx
+     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+       ...
+       <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+       ...
+       <Button ... className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700">
+     ```
+   - Tab 2 (Payroll Run) lines 1746-1798:
+     ```tsx
+     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+       ...
+       <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+     ```
+   - Tab 3 (Advances & Deductions) lines 1916-1965:
+     ```tsx
+     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+       ...
+       <div key={a.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+       ...
+       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 rounded-lg">
+       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 rounded-lg">
+     ```
 
-3. **`src/components/parties/CreatePartyModal.tsx` (Bottom-Sheet Drawer)**:
-   - Outer container on line 625:
-     `fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150`.
-   - Sheet container on line 626:
-     `w-full max-w-full max-h-[92dvh] sm:max-w-5xl sm:h-auto sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150 shadow-2xl`.
-   - Drag handle on line 628:
-     `<div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto my-2 sm:hidden shrink-0" />`.
-   - Form and independent scrolling body on lines 689–690:
-     `<form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">`
-     `<div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scrollbar-thin">`.
-   - Sticky confirmation bar on line 1573:
-     `sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-2 shrink-0`.
+4. `src/pages/crm/Attendance.tsx` (Lines 2273-2335):
+   - Tab 4 (Regularisation Requests):
+     ```tsx
+     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
+       ...
+       <div key={req.id} className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+       ...
+       <Button ... className="min-h-[44px] h-11 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1 rounded-lg">
+       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1 rounded-lg">
+     ```
+
+### 1.3 Typography Hierarchy Check
+- Automated regex audit for sub-11px font sizes (`text-\[(?:[0-9]|10)px\]`):
+  - `src/pages/Dashboard.tsx`: 0 matches found.
+  - `src/pages/Parties.tsx`: 0 matches found.
+  - `src/pages/crm/SalaryManagement.tsx`: 0 matches found.
+  - `src/pages/crm/Attendance.tsx`: 0 matches found.
+
+### 1.4 Desktop Breakpoint Parity
+- `Dashboard.tsx`: Preserves `hidden md:flex flex-col space-y-4` holding the 4 KPI cards, real-time spline chart, and `LATEST INVOICES & TRANSACTIONS` table.
+- `Parties.tsx`: Preserves `hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin` 36px data table with sticky header.
+- `SalaryManagement.tsx`: Preserves `hidden sm:block` with `CRMDataTable` instances for all salary profiles, calculated previews, and adjustments.
+- `Attendance.tsx`: Preserves `CRMDataTable` logs and the telemetry shift management cards.
+
+### 1.5 TypeScript Compilation & Vite Production Build
+1. TypeScript Static Typecheck:
+   ```powershell
+   node node_modules/typescript/bin/tsc --noEmit
+   ```
+   Output: Exited with code 0. Zero errors.
+2. Vite Production Build:
+   ```powershell
+   node node_modules/vite/bin/vite.js build
+   ```
+   Output: `✓ 3662 modules transformed. ✓ built in 1m 33s`. Exited with code 0.
+3. Empiric Automated Challenger Test Suite:
+   ```powershell
+   cmd /c npx vitest run src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts
+   ```
+   Output: `✓ src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts (22 tests) 250ms. Test Files 1 passed (1). Tests 22 passed (22)`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Mobile Bottom Navigation Conformance**:
-   - *Observation*: `AppSidebar.tsx` lines 479–499 render Tab 5 pointing to `ROUTE_PATHS.parties` with `Users2` icon and `Parties` label, with active check covering `parties` and `customers`.
-   - *Observation*: Center elevated CTA button is exactly `w-[46px] h-[46px] rounded-xl` in solid Royal Blue (`bg-blue-600 hover:bg-blue-700`), with 0 rainbow gradients.
-   - *Observation*: All 5 navigation items satisfy `min-h-[44px]` with safe-area padding `pb-[max(0.65rem,env(safe-area-inset-bottom,0px))]`.
-   - *Inference*: The navigation dock satisfies R3 of `ORIGINAL_REQUEST.md` and Rule 1, 5, and 6 of `minimal-design-system.md`.
-
-2. **Bottom-Sheet Drawer Ergonomics**:
-   - *Observation*: Both `CreateItemModal.tsx` and `CreatePartyModal.tsx` wrap dialogs in `items-end sm:items-center`, anchoring to the bottom on mobile viewports (< 768px) and centering on desktop (>= 768px).
-   - *Observation*: Both dialog containers declare `max-h-[92dvh] sm:max-h-[92vh] rounded-t-2xl sm:rounded-2xl` with a `w-12 h-1.5 rounded-full` top drag handle on mobile.
-   - *Observation*: Both dialogs feature an independent scrollable container (`flex-1 overflow-y-auto`) and anchor actions in a sticky bottom bar (`sticky bottom-0 ... pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`).
-   - *Inference*: Mobile users can interact with form controls and confirm/submit modals via thumb-accessible bottom bars without requiring awkward full-screen vertical scrolling.
-
-3. **Empirical Quality & Regression-Free Status**:
-   - *Observation*: `tsc --noEmit` exited with code 0 and 0 errors.
-   - *Observation*: `eslint` executed cleanly with 0 errors and 0 warnings.
-   - *Observation*: All 43 Vitest tests passed across `mobileErgonomicsChallenger.test.ts`, `mobileTouchErgonomicsRemediation.test.ts`, and `billingLifecycleEngine.test.ts`.
-   - *Observation*: Adversarial billing lifecycle tests passed with 6/6 tests passing.
-   - *Observation*: Quarantined billing and invoice lifecycle files remain untouched.
-   - *Inference*: Zero regressions were introduced to business logic, GST tax engines, or PDF rendering pipelines.
+1. **Premise 1**: The anti-pattern specification in `ORIGINAL_REQUEST.md` (2026-10-25T08:53:34Z) and the minimal design system require removing per-row floating borders and shadows (`rounded-xl border shadow-2xs`) inside nested containers, replacing them with a single clean container using `divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3` rows.
+2. **Premise 2**: Direct inspection of `Dashboard.tsx` confirms that the recent activity list now uses a single `overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60` wrapper with flat `px-3.5 py-3 min-h-[56px]` items.
+3. **Premise 3**: Direct inspection of `Parties.tsx` confirms that the outer padding (`p-2.5 space-y-2.5`) was removed in favor of `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`, and all rows are flat with `min-h-[44px] h-11` or `44x44px` interactive buttons.
+4. **Premise 4**: Direct inspection of `SalaryManagement.tsx` confirms that all 3 tabs (Salary Profiles, Payroll Run, Advances & Deductions) now use `divide-y` containers with flat rows, eliminating the floating `<CRMCard>` wrappers, and all action triggers comply with `min-h-[44px] h-11`.
+5. **Premise 5**: Direct inspection of `Attendance.tsx` confirms that Tab 4 regularisation requests are contained in a single `divide-y` wrapper with flat rows and `min-h-[44px] h-11` Approve/Reject buttons.
+6. **Premise 6**: Grep and regex inspection confirm 0 instances of sub-11px font sizes across all 4 files.
+7. **Premise 7**: Both TypeScript compiler (`tsc --noEmit`) and Vite production bundler (`vite build`) complete cleanly with 0 errors.
+8. **Premise 8**: Git diff and automated test suite confirm 100% untouched status across all 19 quarantined billing/invoice files.
+9. **Conclusion**: Milestone 3 refactoring passes all functional, visual, architectural, and production criteria without regression.
 
 ---
 
 ## 3. Caveats
 
-- **No Caveats**: All dispatch requirements, design rules, and test suites have been directly executed and empirically verified. Zero failures or unhandled edge cases were observed.
+- **No Caveats**: All 4 assigned target files were empirically verified; no regressions, no type errors, and zero changes to protected quarantine files were detected.
 
 ---
 
 ## 4. Conclusion
 
-The implementation produced by Worker Milestone 3 (`worker_m3`) satisfies all design system rules, mobile touch target thresholds, and regression constraints.
-- **Verdict**: **`APPROVE`**.
+**Verdict: APPROVE**
+
+Milestone 3 successfully eliminates the box-in-box anti-pattern across `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, and `Attendance.tsx`. All mobile interactive targets satisfy `>= 44px`, all typography satisfies `>= 11px`, desktop views are completely preserved, and production builds (`tsc` + `vite build`) pass with exit code 0.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce this verification:
+To independently verify this verdict:
 
-1. **Vitest Mobile Ergonomics Suite**:
+1. **Run the dedicated Empiric Challenger Test Suite**:
    ```powershell
-   cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts src/test/mobileTouchErgonomicsRemediation.test.ts src/test/billingLifecycleEngine.test.ts
+   cmd /c npx vitest run src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts
    ```
-   *Expected: 3 test files passed, 43 passed (100%).*
+   Asserts 22 test cases validating container structure, touch targets, typography, desktop view retention, and quarantine preservation. Must pass with 22/22 (100%).
 
-2. **TypeScript Compilation Check**:
+2. **Run TypeScript Compiler**:
    ```powershell
-   cmd /c npx tsc --noEmit
+   node node_modules/typescript/bin/tsc --noEmit
    ```
-   *Expected: Exit code 0, 0 errors.*
+   Must exit with code 0.
 
-3. **ESLint Verification**:
+3. **Run Vite Production Build**:
    ```powershell
-   cmd /c npx eslint src/components/AppSidebar.tsx src/components/items/CreateItemModal.tsx src/components/parties/CreatePartyModal.tsx src/test/mobileErgonomicsChallenger.test.ts
+   node node_modules/vite/bin/vite.js build
    ```
-   *Expected: Exit code 0, 0 errors, 0 warnings.*
+   Must output `✓ built` with exit code 0.
 
-4. **Adversarial Billing Verification**:
+4. **Verify Quarantine Integrity via Git**:
    ```powershell
-   cmd /c npx vitest run src/test/billingLifecycleEngine.adversarial.test.ts
+   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff bfe5dcd HEAD -- src/components/invoices/mobile/ src/components/items/mobile/ src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/ src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
    ```
-   *Expected: 1 test file passed, 6 passed (100%).*
+   Must return 0 diffs.
