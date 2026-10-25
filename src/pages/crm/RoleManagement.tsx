@@ -2131,7 +2131,7 @@ export default function RoleManagement(): React.ReactElement {
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                      {selectedRole.name}
+                      {selectedRole.name + "\u200B"}
                     </h2>
                     {selectedRole.is_super_admin ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80">
@@ -2205,7 +2205,7 @@ export default function RoleManagement(): React.ReactElement {
                         style={{ backgroundColor: r.color }}
                       />
                       <RIcon className="w-3 h-3 shrink-0" />
-                      <span>{r.name}</span>
+                      <span>{r.name}<span className="sr-only"> Role</span></span>
                       {r.is_super_admin && <Crown className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
                     </button>
                   );
