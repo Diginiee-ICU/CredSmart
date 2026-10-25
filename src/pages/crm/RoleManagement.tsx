@@ -77,7 +77,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  generateCryptographicPassword,
   validateStaffProvisioningInput,
   formatCredentialsPayload,
   type StoreRole,
@@ -977,7 +976,7 @@ export default function RoleManagement(): React.ReactElement {
     );
     setStaffFormManagerId(preselectedManagerId || user?.id || (staffList[0]?.id ?? "none"));
     setPasswordMode("auto");
-    setStaffFormAutoPassword(generateCryptographicPassword(14));
+    setStaffFormAutoPassword(""); // Will be set to firstName123 as user types name
     setStaffFormCustomPassword("");
     setShowPassword(false);
     setAddStaffModalOpen(true);
@@ -2881,7 +2880,15 @@ export default function RoleManagement(): React.ReactElement {
                   required
                   placeholder="e.g. Rahul Sharma"
                   value={staffFormFullName}
-                  onChange={(e) => setStaffFormFullName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setStaffFormFullName(val);
+                    // Auto-update password to firstName123 when in auto mode
+                    if (passwordMode === "auto") {
+                      const firstName = val.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+                      setStaffFormAutoPassword(firstName ? `${firstName}123` : "");
+                    }
+                  }}
                   className="pl-9 h-9 text-xs rounded-xl border-slate-200"
                 />
               </div>
@@ -3049,6 +3056,7 @@ export default function RoleManagement(): React.ReactElement {
                         type={showPassword ? "text" : "password"}
                         readOnly
                         value={staffFormAutoPassword}
+                        placeholder="Type name above to auto-set"
                         className="h-9 font-mono text-xs font-bold text-blue-800 bg-blue-50/50 border-blue-200 tracking-wider pr-10"
                       />
                       <button
@@ -3064,7 +3072,10 @@ export default function RoleManagement(): React.ReactElement {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setStaffFormAutoPassword(generateCryptographicPassword(14))}
+                      onClick={() => {
+                        const firstName = staffFormFullName.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+                        setStaffFormAutoPassword(firstName ? `${firstName}123` : "");
+                      }}
                       className="h-9 px-3 rounded-xl border-slate-200 text-xs text-slate-700 hover:bg-slate-50 gap-1.5"
                       title="Regenerate secure password"
                     >
@@ -3074,7 +3085,7 @@ export default function RoleManagement(): React.ReactElement {
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60 font-medium">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Cryptographic 14-char high-entropy password (A-Z, a-z, 0-9, symbols)</span>
+                    <span>Default: <span className="font-mono font-bold">firstname123</span> — staff can change after first login</span>
                   </div>
                 </div>
               ) : (
