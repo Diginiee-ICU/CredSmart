@@ -623,7 +623,6 @@ export default function Attendance(): React.ReactElement {
             });
           }
         }
-        }
       } catch (err) {
         console.warn("Could not load organization profiles:", err);
       }

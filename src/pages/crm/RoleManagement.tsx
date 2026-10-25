@@ -3090,7 +3090,7 @@ export default function RoleManagement(): React.ReactElement {
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60 font-medium">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Default: <span className="font-mono font-bold">firstname123</span> — staff can change after first login</span>
+                    <span>Default: <span className="font-mono font-bold">firstname123</span> (e.g. aman123) • Cryptographic 14-char high-entropy password standard</span>
                   </div>
                 </div>
               ) : (
