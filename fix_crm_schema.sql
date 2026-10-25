@@ -3,11 +3,15 @@
 -- Run on Ubuntu PostgreSQL: docker exec -i postgres-db psql -U postgres -d app_db < fix_crm_schema.sql
 -- ============================================================================
 
--- 1. Memberships status column
+-- 1. Memberships status column and organization alignment
 ALTER TABLE public.organization_memberships ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
 ALTER TABLE public.org_memberships ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+ALTER TABLE public.org_memberships ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE public.organization_memberships ADD COLUMN IF NOT EXISTS org_id UUID;
 UPDATE public.organization_memberships SET status = 'active' WHERE status IS NULL;
 UPDATE public.org_memberships SET status = 'active' WHERE status IS NULL;
+UPDATE public.org_memberships SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE public.organization_memberships SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 
 -- 2. CRM Roles Table
 CREATE TABLE IF NOT EXISTS public.crm_roles (
@@ -97,6 +101,29 @@ CREATE TABLE IF NOT EXISTS public.crm_broadcasts (
 );
 ALTER TABLE public.crm_broadcasts ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 
+-- 7b. CRM Meetings Table
+CREATE TABLE IF NOT EXISTS public.crm_meetings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  organization_id UUID,
+  title VARCHAR(255) NOT NULL,
+  agenda TEXT DEFAULT '',
+  scheduled_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  scheduled_time VARCHAR(50) DEFAULT '10:00 AM',
+  duration_minutes INTEGER DEFAULT 30,
+  host_name VARCHAR(255) DEFAULT 'Host',
+  room_code VARCHAR(100) DEFAULT 'room-01',
+  attendees_count INTEGER DEFAULT 0,
+  status VARCHAR(50) DEFAULT 'upcoming',
+  department VARCHAR(100) DEFAULT 'General',
+  created_by UUID,
+  scheduled_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.crm_meetings ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ DEFAULT NOW();
+CREATE INDEX IF NOT EXISTS idx_crm_meetings_org_date ON public.crm_meetings(org_id, scheduled_date);
+
 -- 8. CRM Attendance Table
 CREATE TABLE IF NOT EXISTS public.crm_attendance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -152,3 +179,41 @@ CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_org_user ON public.crm_staf
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_org_status ON public.staff_tasks(org_id, status);
 CREATE INDEX IF NOT EXISTS idx_crm_broadcasts_org_active ON public.crm_broadcasts(org_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_crm_attendance_org_date ON public.crm_attendance(org_id, date);
+
+-- 11. CRM Geolocations Table
+CREATE TABLE IF NOT EXISTS public.crm_geolocations (
+  id VARCHAR(100) PRIMARY KEY,
+  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  organization_id UUID,
+  name VARCHAR(255) NOT NULL,
+  latitude NUMERIC(10, 7) NOT NULL,
+  longitude NUMERIC(10, 7) NOT NULL,
+  radius_meters NUMERIC(10, 2) DEFAULT 150,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_crm_geolocations_org ON public.crm_geolocations(org_id);
+
+-- 12. CRM Attendance Requests Table
+CREATE TABLE IF NOT EXISTS public.crm_attendance_requests (
+  id VARCHAR(100) PRIMARY KEY,
+  org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  organization_id UUID,
+  staff_id UUID,
+  user_id UUID,
+  attendance_id VARCHAR(100),
+  date DATE NOT NULL,
+  requested_clock_in TIMESTAMPTZ,
+  requested_clock_out TIMESTAMPTZ,
+  requested_status VARCHAR(50) DEFAULT 'present',
+  reason TEXT,
+  status VARCHAR(50) DEFAULT 'pending',
+  reviewer_id UUID,
+  reviewer_notes TEXT,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_crm_attendance_requests_org_status ON public.crm_attendance_requests(org_id, status);
+

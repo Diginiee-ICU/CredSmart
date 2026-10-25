@@ -573,7 +573,8 @@ export default function Attendance(): React.ReactElement {
             try {
               const { data } = await supabase
                 .from("crm_staff_roles")
-                .select("staff_id, role_id");
+                .select("staff_id, role_id")
+                .in("staff_id", userIds);
               if (data) staffRoles = data;
             } catch (_err) {
               void _err;
@@ -1128,7 +1129,7 @@ export default function Attendance(): React.ReactElement {
 
   const handleDeleteGeofence = async (id: string, name: string) => {
     try {
-      await supabase.from("crm_geolocations").delete().eq("id", id);
+      await supabase.from("crm_geolocations").delete().eq("id", id).eq("org_id", effectiveOrgId);
     } catch (_err) {
       void _err;
     }
@@ -1353,7 +1354,8 @@ export default function Attendance(): React.ReactElement {
           reviewed_at: nowIso,
           updated_at: nowIso,
         })
-        .eq("id", req.id);
+        .eq("id", req.id)
+        .eq("org_id", effectiveOrgId);
     } catch (err) {
       console.warn("Supabase request review update failed:", err);
     }

@@ -279,18 +279,33 @@ export default function SalaryManagement(): React.ReactElement {
 
       if (!staffData) {
         try {
-          const { data } = await supabase.from("profiles").select("*");
-          if (data && Array.isArray(data) && data.length > 0) {
-            staffData = data as Record<string, unknown>[];
+          let memberUserIds: string[] = [];
+          const { data: memberRows } = await supabase
+            .from("organization_memberships")
+            .select("user_id")
+            .eq("organization_id", effectiveOrgId);
+          if (memberRows && memberRows.length > 0) {
+            memberUserIds = memberRows.map((m: any) => m.user_id).filter(Boolean);
+          } else {
+            const memRes = await settingsApi.getMemberships(effectiveOrgId);
+            if (memRes.data && Array.isArray(memRes.data)) {
+              memberUserIds = memRes.data.map((m: any) => m.user_id).filter(Boolean);
+            }
           }
-        } catch {}
-      }
 
-      if (!staffData) {
-        try {
-          const res = await settingsApi.getProfiles();
-          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-            staffData = res.data as Record<string, unknown>[];
+          if (memberUserIds.length > 0) {
+            const { data: profs } = await supabase
+              .from("profiles")
+              .select("*")
+              .in("id", memberUserIds);
+            if (profs && Array.isArray(profs) && profs.length > 0) {
+              staffData = profs as Record<string, unknown>[];
+            } else {
+              const res = await settingsApi.getProfiles({ ids: memberUserIds });
+              if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                staffData = res.data as Record<string, unknown>[];
+              }
+            }
           }
         } catch {}
       }
@@ -308,13 +323,14 @@ export default function SalaryManagement(): React.ReactElement {
         setStaffDirectory(dirMap);
       }
 
-      // 2. Fetch Salary Profiles
+      // 2. Fetch Salary Profiles strictly scoped to organization
       let profiles: CrmSalaryProfile[] | null = null;
       let profErr: any = null;
       try {
         const { data, error } = await supabase
           .from("crm_salary_profiles")
           .select("*")
+          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
           .order("created_at", { ascending: false });
         if (!error && data) {
           profiles = data as unknown as CrmSalaryProfile[];
@@ -354,13 +370,14 @@ export default function SalaryManagement(): React.ReactElement {
         localStorage.setItem(`${STORAGE_PROFILES_PREFIX}${effectiveOrgId}`, JSON.stringify(enriched));
       }
 
-      // 3. Fetch Payroll Runs
+      // 3. Fetch Payroll Runs strictly scoped to organization
       let runs: CrmPayrollRun[] | null = null;
       let runsErr: any = null;
       try {
         const { data, error } = await supabase
           .from("crm_payroll_runs")
           .select("*")
+          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
           .order("month_year", { ascending: false });
         if (!error && data) {
           runs = data as unknown as CrmPayrollRun[];
@@ -394,13 +411,14 @@ export default function SalaryManagement(): React.ReactElement {
         localStorage.setItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`, JSON.stringify(runs));
       }
 
-      // 4. Fetch Payslips
+      // 4. Fetch Payslips strictly scoped to organization
       let slips: CrmPayslip[] | null = null;
       let slipsErr: any = null;
       try {
         const { data, error } = await supabase
           .from("crm_payslips")
           .select("*")
+          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
           .order("month_year", { ascending: false });
         if (!error && data) {
           slips = data as unknown as CrmPayslip[];
@@ -440,13 +458,14 @@ export default function SalaryManagement(): React.ReactElement {
         localStorage.setItem(`${STORAGE_PAYSLIPS_PREFIX}${effectiveOrgId}`, JSON.stringify(enrichedSlips));
       }
 
-      // 5. Fetch Salary Adjustments
+      // 5. Fetch Salary Adjustments strictly scoped to organization
       let adjs: CrmSalaryAdjustment[] | null = null;
       let adjErr: any = null;
       try {
         const { data, error } = await supabase
           .from("crm_salary_adjustments")
           .select("*")
+          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
           .order("created_at", { ascending: false });
         if (!error && data) {
           adjs = data as unknown as CrmSalaryAdjustment[];
@@ -484,10 +503,13 @@ export default function SalaryManagement(): React.ReactElement {
         localStorage.setItem(`${STORAGE_ADJUSTMENTS_PREFIX}${effectiveOrgId}`, JSON.stringify(enrichedAdjs));
       }
 
-      // 6. Fetch Attendance Records for Calculations
+      // 6. Fetch Attendance Records strictly scoped to organization
       let attData: CrmAttendanceRecord[] | null = null;
       try {
-        const { data, error } = await supabase.from("crm_attendance").select("*");
+        const { data, error } = await supabase
+          .from("crm_attendance")
+          .select("*")
+          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
         if (!error && data) {
           attData = data as unknown as CrmAttendanceRecord[];
         }
@@ -909,7 +931,8 @@ export default function SalaryManagement(): React.ReactElement {
       await supabase
         .from("crm_payroll_runs")
         .update({ status: "disbursed", updated_at: new Date().toISOString() })
-        .eq("month_year", selectedMonth);
+        .eq("month_year", selectedMonth)
+        .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
     } catch {}
     try {
       await crmApi.updateCRMPayrollRun(
@@ -923,7 +946,8 @@ export default function SalaryManagement(): React.ReactElement {
       await supabase
         .from("crm_payslips")
         .update({ payment_status: "paid", paid_at: new Date().toISOString() })
-        .eq("month_year", selectedMonth);
+        .eq("month_year", selectedMonth)
+        .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
     } catch {}
     try {
       await crmApi.updateCRMPayslips(
@@ -1047,7 +1071,8 @@ export default function SalaryManagement(): React.ReactElement {
           approved_by: effectiveUserId,
           approved_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
     } catch {}
     try {
       await crmApi.updateCRMSalaryAdjustment(
@@ -1090,7 +1115,8 @@ export default function SalaryManagement(): React.ReactElement {
           approved_by: effectiveUserId,
           approved_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
     } catch {}
     try {
       await crmApi.updateCRMSalaryAdjustment(

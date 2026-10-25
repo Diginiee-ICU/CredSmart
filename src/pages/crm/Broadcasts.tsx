@@ -150,7 +150,18 @@ export default function Broadcasts(): React.ReactElement {
   const [newPinned, setNewPinned] = useState(false);
 
   useEffect(() => {
-    if (orgId) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setBroadcasts(JSON.parse(saved));
+        return;
+      }
+    } catch {}
+    setBroadcasts(INITIAL_BROADCASTS.map((b) => ({ ...b, org_id: orgId || "" })));
+  }, [storageKey, orgId]);
+
+  useEffect(() => {
+    if (orgId && broadcasts.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(broadcasts));
     }
   }, [broadcasts, storageKey, orgId]);

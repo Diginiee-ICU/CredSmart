@@ -185,9 +185,21 @@ export default function Tasks(): React.ReactElement {
   );
   const [newRequiresProof, setNewRequiresProof] = useState(true);
 
+  // Reload tasks on storageKey / orgId change
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setTasks(JSON.parse(saved));
+        return;
+      }
+    } catch {}
+    setTasks(INITIAL_TASKS.map((t) => ({ ...t, org_id: orgId || "" })));
+  }, [storageKey, orgId]);
+
   // Sync to localStorage
   useEffect(() => {
-    if (orgId) {
+    if (orgId && tasks.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(tasks));
     }
   }, [tasks, storageKey, orgId]);

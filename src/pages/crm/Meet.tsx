@@ -153,7 +153,18 @@ export default function Meet(): React.ReactElement {
   const [newDepartment, setNewDepartment] = useState("Retail Counter");
 
   useEffect(() => {
-    if (orgId) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setMeetings(JSON.parse(saved));
+        return;
+      }
+    } catch {}
+    setMeetings(INITIAL_MEETINGS.map((m) => ({ ...m, org_id: orgId || "" })));
+  }, [storageKey, orgId]);
+
+  useEffect(() => {
+    if (orgId && meetings.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(meetings));
     }
   }, [meetings, storageKey, orgId]);
