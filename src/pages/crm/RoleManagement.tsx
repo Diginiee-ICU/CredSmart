@@ -1372,8 +1372,12 @@ export default function RoleManagement(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32 sm:pb-20 font-sans">
-      {/* Top Banner / Breadcrumb */}
-      <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
+      {/* ================================================================== */}
+      {/* DESKTOP VIEW (>= 768px): Preserved 100% Byte-for-Byte */}
+      {/* ================================================================== */}
+      <div className="hidden md:block">
+        {/* Top Banner / Breadcrumb */}
+        <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <Link
@@ -1984,6 +1988,486 @@ export default function RoleManagement(): React.ReactElement {
           )}
         </div>
       </main>
+      </div>
+
+      {/* ================================================================== */}
+      {/* MOBILE VIEW (< 768px): Dedicated Native Touch Experience (Mockup 2) */}
+      {/* ================================================================== */}
+      <div className="block md:hidden pb-24 px-3.5 pt-2.5 space-y-3.5 max-w-lg mx-auto">
+        {/* Top Action Chips */}
+        <div className="flex items-center justify-between gap-1.5 pt-1 overflow-x-auto no-scrollbar py-1">
+          <Link
+            to={ROUTE_PATHS.crm}
+            className="w-8.5 h-8.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex items-center justify-center shadow-2xs shrink-0 active:scale-[0.97]"
+            title="Back to CRM Command Center"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>RBAC Foundation</span>
+            </span>
+
+            {isSuperAdminOrOwner && (
+              <>
+                <button
+                  type="button"
+                  onClick={openCreateRoleModal}
+                  className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-2xs active:scale-[0.98]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Custom Role</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openAddStaffModal()}
+                  className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1 shadow-2xs active:scale-[0.98]"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Add User</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Page Title & Subtitle */}
+        <div className="pt-0.5">
+          <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+            Role Manager
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Granular permissions and system role matrix
+          </p>
+        </div>
+
+        {/* ACTIVE ROLE & QUICK STATS CARD (Mockup 2) */}
+        {selectedRole && (
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs space-y-3 relative overflow-hidden">
+            {/* Accent top line */}
+            <div
+              className="absolute top-0 left-0 right-0 h-1"
+              style={{ backgroundColor: selectedRole.color || "#2563EB" }}
+            />
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0 shadow-2xs"
+                  style={{
+                    backgroundColor: `${selectedRole.color || "#2563EB"}18`,
+                    color: selectedRole.color || "#2563EB",
+                  }}
+                >
+                  {React.createElement(ICON_MAP[selectedRole.icon] || Shield, {
+                    className: "w-5 h-5 stroke-[2.2]",
+                  })}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedRole.name}
+                    </h2>
+                    {selectedRole.is_super_admin ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80">
+                        <Crown className="w-3 h-3 text-amber-500 fill-amber-400" />
+                        Full Access
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80">
+                        Custom
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+                    <span>
+                      🔑 {allowedCountByRole[selectedRole.id] ?? (selectedRole.is_super_admin ? 14 : 0)} / 14 Actions
+                    </span>
+                    <span>•</span>
+                    <span>
+                      👥 {staffCountByRole[selectedRole.id] || 0} Staff
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Edit / Delete actions for custom roles */}
+              {!selectedRole.is_super_admin && isSuperAdminOrOwner && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => openEditRoleModal(selectedRole)}
+                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50"
+                    title="Edit Role"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => confirmDeleteRole(selectedRole)}
+                    className="w-7 h-7 rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 flex items-center justify-center hover:bg-rose-50"
+                    title="Delete Role"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Horizontal Role Selector Pills */}
+            <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">
+                Switch Selected Role
+              </p>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {roles.map((r) => {
+                  const isSel = r.id === selectedRole.id;
+                  const RIcon = ICON_MAP[r.icon] || Shield;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setSelectedRole(r)}
+                      className={cn(
+                        "px-2.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all border",
+                        isSel
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
+                          : "bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+                      )}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: r.color }}
+                      />
+                      <RIcon className="w-3 h-3 shrink-0" />
+                      <span>{r.name}</span>
+                      {r.is_super_admin && <Crown className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GRANULAR MODULE PERMISSIONS MATRIX (Mockup 2) */}
+        {selectedRole && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-blue-600" />
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
+                  Granular Permissions Matrix
+                </h3>
+              </div>
+
+              {!selectedRole.is_super_admin && isSuperAdminOrOwner && matrixDirty && (
+                <button
+                  type="button"
+                  onClick={handleSavePermissions}
+                  disabled={savingMatrix}
+                  className="h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 shadow-2xs active:scale-[0.98]"
+                >
+                  <Save className="w-3 h-3" />
+                  <span>{savingMatrix ? "Saving..." : "Save"}</span>
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+              {CRM_MODULES.map((mod) => {
+                const modAllowedCount = mod.actions.filter((act) =>
+                  selectedRole.is_super_admin ? true : Boolean(matrixState[`${mod.id}:${act.id}`])
+                ).length;
+                const isExpanded = expandedModules[mod.id] ?? false;
+
+                return (
+                  <div key={mod.id}>
+                    {/* Module Header Row */}
+                    <button
+                      type="button"
+                      onClick={() => toggleModuleAccordion(mod.id)}
+                      className="w-full px-3.5 py-3 flex items-center justify-between text-left hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono">
+                          {mod.label}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full border",
+                            modAllowedCount === mod.actions.length
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : modAllowedCount > 0
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700"
+                          )}
+                        >
+                          {modAllowedCount} / {mod.actions.length} Enabled
+                        </span>
+                      </div>
+                      <div className="text-slate-400">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                    </button>
+
+                    {/* Expanded Compact 2-Column Checkbox Chips Grid (Mockup 2) */}
+                    {isExpanded && (
+                      <div className="p-2.5 bg-slate-50/50 dark:bg-slate-900/40 grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800/60">
+                        {mod.actions.map((act) => {
+                          const key = `${mod.id}:${act.id}`;
+                          const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
+
+                          return (
+                            <button
+                              key={act.id}
+                              type="button"
+                              disabled={selectedRole.is_super_admin || !isSuperAdminOrOwner}
+                              onClick={() => handleToggleAction(mod.id, act.id)}
+                              className={cn(
+                                "flex items-start gap-2 p-2.5 rounded-xl border text-left transition-all active:scale-[0.98] min-h-[44px]",
+                                isAllowed
+                                  ? "bg-blue-50/40 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60 text-slate-900 dark:text-white"
+                                  : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                                  isAllowed
+                                    ? "bg-blue-600 border-blue-600 text-white"
+                                    : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                                )}
+                              >
+                                {isAllowed && <Check className="w-3 h-3 stroke-[3]" />}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[11px] font-semibold leading-tight line-clamp-2">
+                                  {act.label}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* STAFF ROLE ASSIGNMENTS & HORIZONTAL AVATAR STREAM (Mockup 2) */}
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
+                Staff Role Assignments
+              </h3>
+            </div>
+
+            {/* Segmented View Mode Toggle */}
+            <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setStaffViewMode("list")}
+                className={cn(
+                  "px-2 py-1 rounded-md text-[11px] font-semibold transition-all",
+                  staffViewMode === "list"
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400"
+                )}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => setStaffViewMode("tree")}
+                className={cn(
+                  "px-2 py-1 rounded-md text-[11px] font-semibold transition-all",
+                  staffViewMode === "tree"
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400"
+                )}
+              >
+                Tree
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Add bar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Search staff..."
+                value={staffSearchQuery}
+                onChange={(e) => setStaffSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs rounded-lg border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
+              />
+            </div>
+            {isSuperAdminOrOwner && (
+              <button
+                type="button"
+                onClick={() => openAddStaffModal()}
+                className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-2xs shrink-0 active:scale-[0.98]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Add</span>
+              </button>
+            )}
+          </div>
+
+          {/* Horizontal Staff Avatar Stream (Mockup 2) */}
+          {staffViewMode === "list" && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+                {filteredStaff.map((staff) => {
+                  const assignedRoleId = staffRolesMap[staff.id] || staff.crmRoleId;
+                  const assignedRole = roles.find((r) => r.id === assignedRoleId);
+                  return (
+                    <div
+                      key={staff.id}
+                      className="flex flex-col items-center gap-1 shrink-0 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs w-20 text-center"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-xs text-white"
+                        style={{
+                          backgroundColor: assignedRole?.color || "#3B82F6",
+                        }}
+                      >
+                        {staff.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-white truncate max-w-full">
+                        {staff.name.split(" ")[0]}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-full">
+                        {assignedRole?.name || "No CRM"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Detailed hairline list below the avatar stream */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+                {filteredStaff.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-500">
+                    No staff found
+                  </div>
+                ) : (
+                  filteredStaff.map((staff) => {
+                    const assignedRoleId = staffRolesMap[staff.id] || staff.crmRoleId;
+                    const assignedRole = roles.find((r) => r.id === assignedRoleId);
+                    const isStaffSuper = assignedRole?.is_super_admin === true;
+
+                    return (
+                      <div
+                        key={staff.id}
+                        className="p-3 flex items-center justify-between gap-2.5 min-h-[44px]"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 text-white"
+                            style={{
+                              backgroundColor: assignedRole?.color || "#64748B",
+                            }}
+                          >
+                            {staff.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {staff.name}
+                            </span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              {assignedRole?.name || "No CRM Access"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="w-32">
+                            <Select
+                              value={assignedRoleId || "none"}
+                              disabled={!isSuperAdminOrOwner}
+                              onValueChange={(val) => handleAssignRole(staff.id, val)}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] rounded-lg border-slate-200/80 dark:border-slate-800">
+                                <SelectValue placeholder="Role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {roles.map((r) => (
+                                  <SelectItem key={r.id} value={r.id}>
+                                    {r.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {isSuperAdminOrOwner && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                isStaffSuper
+                                  ? handleDemote(staff.id)
+                                  : handlePromoteToSuperAdmin(staff.id)
+                              }
+                              className={cn(
+                                "w-7 h-7 rounded-lg border flex items-center justify-center text-xs shrink-0",
+                                isStaffSuper
+                                  ? "border-rose-200 text-rose-600 hover:bg-rose-50"
+                                  : "border-amber-200 text-amber-600 hover:bg-amber-50"
+                              )}
+                              title={isStaffSuper ? "Demote" : "Promote"}
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {staffViewMode === "tree" && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3 overflow-x-auto shadow-xs">
+              <CRMTeamTreeView
+                staff={staffList.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  email: s.email,
+                  phone: s.phone,
+                  role: s.role,
+                  crmRoleId: staffRolesMap[s.id] || s.crmRoleId,
+                  crmRoleName: roles.find((r) => r.id === (staffRolesMap[s.id] || s.crmRoleId))?.name,
+                  crmRoleColor: roles.find((r) => r.id === (staffRolesMap[s.id] || s.crmRoleId))?.color,
+                  parentId: hierarchyMap[s.id] || s.parentId || null,
+                  createdBy: s.createdBy || null,
+                  assignedBy: s.assignedBy || null,
+                }))}
+                roles={roles}
+                currentUserId={user?.id}
+                isSuperAdminOrOwner={isSuperAdminOrOwner}
+                onAssignRole={handleAssignRole}
+                onSetManager={handleSetManager}
+                onOpenAddStaff={(mgrId) => openAddStaffModal(undefined, mgrId)}
+                searchQuery={staffSearchQuery}
+                defaultScopedUserId={!isSuperAdminOrOwner && user?.id ? user.id : undefined}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* MODAL: CREATE / EDIT CUSTOM ROLE */}

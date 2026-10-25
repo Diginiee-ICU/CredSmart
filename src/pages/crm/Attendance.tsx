@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   Clock,
   MapPin,
   CheckCircle2,
@@ -1637,7 +1639,10 @@ export default function Attendance(): React.ReactElement {
         </div>
       }
     >
-      <div className="space-y-4 sm:space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-2.5 sm:px-6">
+      {/* ====================================================================== */}
+      {/* DESKTOP VIEW (>= 768px): Preserved 100% Byte-for-Byte                  */}
+      {/* ====================================================================== */}
+      <div className="hidden md:block space-y-4 sm:space-y-6 pb-32 sm:pb-20 max-w-7xl mx-auto px-2.5 sm:px-6">
         {/* ====================================================================== */}
         {/* Page Header                                                            */}
         {/* ====================================================================== */}
@@ -2337,6 +2342,461 @@ export default function Attendance(): React.ReactElement {
             </div>
           </CRMCard>
         )}
+      </div>
+
+      {/* ====================================================================== */}
+      {/* MOBILE VIEW (< 768px): Dedicated Native Touch Experience (Mockup 3)   */}
+      {/* ====================================================================== */}
+      <div className="block md:hidden pb-24 px-3.5 pt-2.5 space-y-3.5 max-w-lg mx-auto">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-2">
+            <Link
+              to={ROUTE_PATHS.crm}
+              className="w-8.5 h-8.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex items-center justify-center shadow-2xs shrink-0 active:scale-[0.97]"
+              title="Back to CRM Command Center"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  Attendance Hub
+                </h1>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Sync
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Real-time shift clock, GPS geofencing &amp; staff logs
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={refreshLocation}
+              disabled={gpsStatus === "acquiring"}
+              className="w-8.5 h-8.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex items-center justify-center shadow-2xs active:scale-[0.97] transition-all disabled:opacity-50"
+              title="Sync GPS"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", gpsStatus === "acquiring" && "animate-spin")} />
+            </button>
+
+            {canEdit && (
+              <button
+                type="button"
+                onClick={handleOpenAddGeofence}
+                className="h-8.5 px-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-2xs active:scale-[0.98]"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>Geofences</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 2x2 Stat Badges (Mockup 3) */}
+        <div className="grid grid-cols-2 gap-2">
+          {/* Present */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("logs")}
+            className={cn(
+              "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+              activeTab === "logs"
+                ? "border-emerald-500/80 ring-1 ring-emerald-500/30"
+                : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                <CalendarCheck className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  Present
+                </span>
+                <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                  {metrics.presentToday}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+          </button>
+
+          {/* Geo-Verified */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("logs")}
+            className={cn(
+              "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+              activeTab === "logs"
+                ? "border-blue-500/80 ring-1 ring-blue-500/30"
+                : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                <Shield className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  Geo-Verified
+                </span>
+                <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                  {metrics.geoVerified}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+          </button>
+
+          {/* Regularised */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("requests")}
+            className={cn(
+              "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+              activeTab === "requests"
+                ? "border-amber-500/80 ring-1 ring-amber-500/30"
+                : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                <AlertTriangle className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  Regularised
+                </span>
+                <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                  {metrics.manualPending}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+          </button>
+
+          {/* Geofences */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("geofences")}
+            className={cn(
+              "flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-slate-900 shadow-2xs min-h-[44px] text-left transition-colors cursor-pointer",
+              activeTab === "geofences"
+                ? "border-purple-500/80 ring-1 ring-purple-500/30"
+                : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
+                <MapPin className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  Geofences
+                </span>
+                <span className="text-xs font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                  {metrics.totalLocations}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+          </button>
+        </div>
+
+        {/* Segmented Pill Tabs (Mockup 3) */}
+        <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("pod")}
+            className={cn(
+              "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center",
+              activeTab === "pod"
+                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            )}
+          >
+            My Clock-In
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("logs")}
+            className={cn(
+              "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center",
+              activeTab === "logs"
+                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            )}
+          >
+            Team Logs ({attendanceRecords.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("geofences")}
+            className={cn(
+              "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center",
+              activeTab === "geofences"
+                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            )}
+          >
+            Locations
+          </button>
+        </div>
+
+        {/* TAB 1: My Clock-In (Shift & Telemetry Card) */}
+        {activeTab === "pod" && (
+          <div className="space-y-3">
+            <div className="rounded-2xl border-l-4 border-l-orange-500 border-y border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xs space-y-3">
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  Today's Shift
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {currentTime.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}
+                </span>
+              </div>
+
+              {/* Digital Clock */}
+              <div className="text-center py-1">
+                <div className="font-mono text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-center gap-1 font-mono">
+                  <Clock className="w-3 h-3 text-emerald-600" />
+                  <span>General Shift • 09:00 AM - 06:00 PM</span>
+                </div>
+              </div>
+
+              {/* Radar Scanner Widget (Mockup 3) */}
+              <div className="py-2 flex flex-col items-center justify-center">
+                <div className="relative w-36 h-36 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden shadow-inner">
+                  {/* Concentric rings */}
+                  <div className="absolute inset-2 rounded-full border border-emerald-500/20" />
+                  <div className="absolute inset-6 rounded-full border border-emerald-500/30" />
+                  <div className="absolute inset-10 rounded-full border border-emerald-500/40" />
+                  <div className="absolute w-full h-[1px] bg-emerald-500/20" />
+                  <div className="absolute h-full w-[1px] bg-emerald-500/20" />
+
+                  {/* Radar Sweep Animation */}
+                  <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0deg,rgba(16,185,129,0.25)_360deg)] animate-spin [animation-duration:4s]" />
+
+                  {/* Center Target & Distance */}
+                  <div className="relative z-10 text-center px-2 flex flex-col items-center">
+                    <div
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full mb-1 animate-ping",
+                        gpsStatus === "inside" ? "bg-emerald-400" : "bg-amber-400"
+                      )}
+                    />
+                    <span className="font-mono text-xs font-bold text-emerald-400 tracking-tight">
+                      {nearestGeofence ? `${Math.round(nearestGeofence.distance)}m` : "GPS Sync"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {gpsStatus === "inside" ? "In Zone" : "Radar Scan"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Geofence Status Badge & Telemetry */}
+                <div className="mt-3 text-center space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-2xs">
+                    {gpsStatus === "inside" ? (
+                      <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200">
+                        ✓ Inside Geofence
+                      </span>
+                    ) : (
+                      <span className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200">
+                        ⚠️ Outside Geofence ({nearestGeofence ? `${Math.round(nearestGeofence.distance)}m` : "No Office"})
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                    📍 {nearestGeofence?.geofence.name || "Main Office / HQ"}
+                  </p>
+
+                  <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                    GPS Accuracy: ±{currentCoords?.accuracy ? Math.round(currentCoords.accuracy) : 4}m • Protocol: Verified
+                  </div>
+                </div>
+              </div>
+
+              {/* Clock In / Out CTA Button */}
+              <div className="pt-2">
+                {!todayRecord ? (
+                  <button
+                    type="button"
+                    onClick={handleClockIn}
+                    disabled={actionLoading}
+                    className="w-full min-h-[46px] rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{actionLoading ? "Punching In..." : "Clock In Now"}</span>
+                  </button>
+                ) : !todayRecord.clock_out ? (
+                  <div className="space-y-2">
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 text-center">
+                      <span className="text-[11px] font-mono font-semibold text-orange-600 uppercase tracking-wider">
+                        Active Session:{" "}
+                      </span>
+                      <span className="font-mono text-base font-black text-orange-950 dark:text-orange-200 tabular-nums">
+                        {formatSecondsToHMS(elapsedSeconds)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClockOut}
+                      disabled={actionLoading}
+                      className="w-full min-h-[46px] rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>{actionLoading ? "Punching Out..." : "Clock Out"}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 text-center text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+                    ✓ Completed for today ({formatMinutesToHM(todayRecord.work_duration_minutes)})
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Quick Links (Mockup 3) */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("logs")}
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-slate-50 min-h-[44px] active:scale-[0.98]"
+              >
+                <span>📋 View Team Logs</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRequestModalOpen(true)}
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-slate-50 min-h-[44px] active:scale-[0.98]"
+              >
+                <span>✏️ Request Correction</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: Team Logs (Stream Container) */}
+        {activeTab === "logs" && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+            {attendanceRecords.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500">
+                No attendance logs found for this period.
+              </div>
+            ) : (
+              attendanceRecords.map((rec) => {
+                const isVerified = rec.verification_method === "geo_verified";
+                const isActive = !rec.clock_out && rec.clock_in && rec.date === todayDateStr;
+
+                return (
+                  <div
+                    key={rec.id}
+                    onClick={() => setSelectedRecordForDetails(rec)}
+                    className="p-3 flex items-center justify-between gap-2.5 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 cursor-pointer min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center shrink-0">
+                        {(rec.staff_name || "S").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {rec.staff_name || "Staff"}
+                        </span>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                          <span>In: {formatTimeDisplay(rec.clock_in)}</span>
+                          <span>•</span>
+                          <span>Out: {formatTimeDisplay(rec.clock_out)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isActive ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          Active
+                        </span>
+                      ) : isVerified ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Geo-Verified
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          Manual
+                        </span>
+                      )}
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: Locations (Geofences Stream) */}
+        {activeTab === "geofences" && (
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white font-mono uppercase tracking-wider">
+                Configured Boundaries ({geofences.length})
+              </span>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={handleOpenAddGeofence}
+                  className="h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-2xs"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Add Boundary</span>
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden">
+              {geofences.map((geo) => (
+                <div key={geo.id} className="p-3 flex items-center justify-between gap-2.5 min-h-[44px]">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {geo.name}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                        Radius: {geo.radius_meters}m • {geo.latitude.toFixed(4)}, {geo.longitude.toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditGeofence(geo)}
+                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50"
+                      title="Edit Geofence"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
         {/* ====================================================================== */}
         {/* MODAL 1: Geofence Management Dialog                                    */}
