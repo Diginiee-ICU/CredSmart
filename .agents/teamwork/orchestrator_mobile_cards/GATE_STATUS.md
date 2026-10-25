@@ -21,3 +21,16 @@ Gate Result: **PASS** (Survey phase complete, ready for Milestone 1)
 
 Gate Result: **PASS** (All criteria satisfied: 0 errors, 2/2 APPROVE, 2/2 Challenger APPROVE, CLEAN audit)
 Milestone 1 (`RoleManagement.tsx`, `Tasks.tsx`) is marked **DONE**.
+
+## Gate — Milestone 2 (Core Billing & Inventory Modernization)
+| Agent | Role | Verdict | Source |
+|-------|------|---------|--------|
+| worker_m2 | teamwork_preview_worker | DONE (tsc & vite build pass) | handoff.md |
+| reviewer_m2_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
+| reviewer_m2_2 | teamwork_preview_reviewer | APPROVE | handoff.md |
+| challenger_m2_1 | teamwork_preview_challenger | APPROVE | handoff.md |
+| challenger_m2_2 | teamwork_preview_challenger | APPROVE | handoff.md |
+| auditor_m2_1 | teamwork_preview_auditor | CLEAN | handoff.md |
+
+Gate Result: **PASS** (All criteria satisfied: 0 errors, 2/2 APPROVE, 2/2 Challenger APPROVE, CLEAN audit)
+Milestone 2 (`Sales.tsx`, `Purchases.tsx`, `Items.tsx`) is marked **DONE**.

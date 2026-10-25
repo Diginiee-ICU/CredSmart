@@ -1,77 +1,51 @@
-# Dispatch Assignment: Survey Explorer 2 (Core Billing & Inventory)
+# DISPATCH: Survey Explorer 2 - Attendance & Tasks
 
-## Mission
-Investigate and map all occurrences of the "nested/boxy card container" anti-pattern in the assigned billing and inventory files:
-1. `src/pages/Sales.tsx` (~9 hits: mobile invoice list cards + outer wrapper double border)
-2. `src/pages/Purchases.tsx` (~6 hits: mobile purchase invoice list cards)
-3. `src/pages/Items.tsx` (~13 hits: mobile product list cards)
+## Objective
+Analyze `src/pages/crm/Attendance.tsx` and `src/pages/crm/Tasks.tsx` in depth.
+Compare current implementation with Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) specifications from `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-25T10:11:33Z`).
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2`
+## Scope & Boundaries
+- DO NOT write or edit source code.
+- Analyze:
+  1. Current layout structure (where are `block md:hidden` vs `hidden md:block` or responsive classes).
+  2. State management, hooks, geolocation calculations, timer, Supabase queries, and action handlers that must be preserved.
+  3. Exact visual requirements for Mockup 3 (Attendance Hub):
+     - Header, badge `🟢 Live Sync`, `[ ⎋ ]`, subtitle, `[ 📍 Geofences ]` button
+     - 2x2 Stat Badges: `Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`
+     - Segmented Tabs: `[ My Clock-In ]`, `[ Team Logs (0) ]`, `[ Locations ]`
+     - Shift Card: "Today's Shift • General", date pill `Sun, Oct 25`, left orange hairline accent (`border-l-4 border-orange-500`), large digital clock (`02:45:48 PM`), radar geofence widget on the right, status badge `⚠️ Outside Geofence`, location label `📍 Nearest: HQ (Radius: 150m)`, GPS accuracy pill, and full-width Emerald CTA `[ ✓ Clock In Now ]`
+     - Quick Links: Dual pill buttons (`[ 📋 View Team Logs ]`, `[ ✏️ Request Correction ]`)
+  4. Exact visual requirements for Mockup 4 (Task Workflows):
+     - Header, filter icon `[ ☰ ]`, subtitle
+     - Status Filter Chips: `[ 🟢 Active Workflows ]`, `[ 🔴 Overdue ]`, primary CTA `[ + Create Task ]` (Amber/Orange)
+     - 2x2 Stat Badges: `Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`
+     - Search & Priority Bar: `🔍 Search tasks or assignees...`, dropdown `All Priorities ⌵`
+     - High-Density Task Stream: Status Emoji Tags (`📌 TO DO`, `⚡ IN PROGRESS`, `🔍 UNDER REVIEW`, `✅ COMPLETED`), Priority Pill (`Urgent`, `High`, `Normal`, `Low`), bold task title, assignee avatar chip, and contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`)
+  5. Verification that the 19 protected quarantine files are not touched.
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST read before starting)
-- Dispatch Instructions: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\DISPATCH.md`
-- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-
-## 19 Protected Quarantine Files — NEVER MODIFY OR SUGGEST MODIFYING:
-- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-- `src/components/invoices/mobile/AddItemModal.tsx`
-- `src/components/invoices/mobile/SelectPartyModal.tsx`
-- `src/components/invoices/mobile/EditItemModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-- `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
-- `src/components/invoices/mobile/CreatePartyModal.tsx`
-- `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
-- `src/components/items/mobile/CreateNewItemModal.tsx`
-- `src/components/SalesInvoiceModal.tsx`
-- `src/components/PurchaseInvoiceModal.tsx`
-- `src/components/invoices/AddItemsToBillModal.tsx`
-- `src/components/invoices/InvoiceFitView.tsx`
-- `src/components/invoices/UnifiedInvoiceRenderer.tsx`
-- `src/utils/downloadExactInvoice.ts`
-- `src/utils/whatsappPdfShare.ts`
-- `src/utils/invoiceThemeLoader.ts`
-- `src/services/documentsService.ts`
-
-## Tasks & Investigation Requirements
-1. In `src/pages/Sales.tsx`:
-   - Identify the outer wrapper double border:
-     `flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden` -> `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`
-   - Identify all mobile invoice list cards (`rounded-xl border shadow-2xs` or similar) in the mobile view (`block md:hidden`).
-   - Exact line numbers and snippets.
-   - Proposed replacement with flat rows in a `divide-y divide-slate-100 dark:divide-slate-800/60` container.
-2. In `src/pages/Purchases.tsx`:
-   - Identify all mobile purchase invoice list cards in the mobile view (`block md:hidden`).
-   - Exact line numbers and snippets.
-   - Proposed replacement with flat rows in a `divide-y divide-slate-100 dark:divide-slate-800/60` container.
-3. In `src/pages/Items.tsx`:
-   - Identify all mobile product list cards (~13 hits) in the mobile view (`block md:hidden`).
-   - Exact line numbers and snippets.
-   - Proposed replacement with flat rows in a `divide-y divide-slate-100 dark:divide-slate-800/60` container.
-4. Verify:
-   - Minimum 44px touch targets on interactive rows.
-   - No sub-11px fonts.
-   - Desktop views (`hidden md:...` or table views) remain 100% untouched.
-   - Business logic, handlers, modals, filters remain 100% untouched.
-5. Write survey report to `handoff.md` in your working directory and notify parent via `send_message`.
+## Output
+Write your comprehensive findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md`.
+Include:
+- Executive Summary
+- Current Attendance.tsx analysis & mobile gap
+- Current Tasks.tsx analysis & mobile gap
+- Implementation strategy for R3 (Attendance) and R4 (Tasks)
+- Preservation checklist (geolocation engine, timer, task state mutations, desktop views)
 
 
-## 2026-10-25T08:58:31Z
-You are Explorer 2 (Survey: Core Billing & Inventory).
+## 2026-10-25T10:17:14Z
+From parent:
+You are Survey Explorer 2 for the CredSmart CRM Mobile Redesign.
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
-Read your dispatch assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\DISPATCH.md
-Read the authoritative original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read the design system rules: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\DISPATCH.md
+MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z and background sections).
+Read the master design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
 
-Your task:
-Survey and investigate the boxy/nested card container anti-pattern in:
-1. src/pages/Sales.tsx (mobile invoice list cards + outer wrapper double border)
-2. src/pages/Purchases.tsx (mobile purchase invoice list cards)
-3. src/pages/Items.tsx (mobile product list cards)
+Analyze in detail:
+1. `src/pages/crm/Attendance.tsx`
+2. `src/pages/crm/Tasks.tsx`
 
-Never modify or suggest modifying any of the 19 protected quarantine files listed in DISPATCH.md.
-Document exact line numbers, existing classes, proposed minimal divide-y replacements, outer wrapper fix for Sales.tsx, touch targets (>=44px), and font sizes (>=11px).
-Write your survey findings to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md.
-When finished, notify the orchestrator using send_message.
+Compare their current implementations against Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) specifications in ORIGINAL_REQUEST.md.
+Document how to structure the mobile view (`block md:hidden`) vs desktop view (`hidden md:block`), how all state, geolocation engines, timer logic, Supabase queries, and action handlers are preserved, and provide an exact blueprint for the worker.
+Maintain liveness in your `progress.md` and write your complete handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md`.
+When done, notify the orchestrator with send_message.

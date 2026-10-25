@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-25T08:55:00Z
+# BRIEFING — 2026-10-25T10:15:00Z
 
 ## Mission
-Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages in 9 files. Replace individual floating bordered item cards (`rounded-xl border shadow-2xs`) with clean minimal divide-y list rows (`divide-y divide-slate-100 dark:divide-slate-800/60`) throughout mobile views.
+Redesign CredSmart CRM mobile pages (SalaryManagement, RoleManagement, Attendance, Tasks) to match reference mockups with exact visual fidelity, typography hierarchy, compact 2x2 stat badges, streamlined segmented controls, and native-feeling mobile ergonomics while preserving 100% of underlying business logic and protected invoice quarantine files.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -48,6 +48,8 @@ Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages 
 - Victory Auditor (Minimal Redesign): [to be spawned on victory claim]
 - Active Orchestrator (Mobile Cards Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Victory Auditor (Mobile Cards Modernization): [to be spawned on victory claim]
+- Active Orchestrator (CRM Mobile Redesign): 9b37b911-3daf-458a-8cd7-5e836d72b751
+- Victory Auditor (CRM Mobile Redesign): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -72,19 +74,21 @@ Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages 
 - Strict exclusion: 19 quarantine files must remain 100% untouched
 - Minimal design system rules: 34px standard action, 28px table action, 46px mobile CTA, hairline borders, no 3D glass / neon halos / bubble buttons, screen-fitted 52px top bar, sticky headers and bounded scroll tables
 - Flat minimal list rows with divide-y divide-slate-100 dark:divide-slate-800/60 replacing boxy nested card containers
+- Redesign CredSmart CRM mobile pages (SalaryManagement, RoleManagement, Attendance, Tasks) with 1:1 fidelity to reference mockups, 2x2 stat badges, segmented controls, native mobile ergonomics
+- Preserve 19 quarantine files 100% untouched
 
 ## User Context
-- **Last user request**: Replace boxy nested cards across 9 mobile pages with clean minimal divide-y list rows.
+- **Last user request**: Redesign CredSmart CRM mobile pages (SalaryManagement, RoleManagement, Attendance, Tasks) to match reference mockups with exact visual fidelity, typography hierarchy, compact 2x2 stat badges, streamlined segmented controls, and native-feeling ergonomics while preserving 100% of underlying business logic and protected invoice quarantine files.
 - **Pending clarifications**: none
-- **Delivered results**: Project Orchestrator launched (`24d614cb-853d-49d4-9ac2-cf0090c93a62`).
+- **Delivered results**: Project Orchestrator spawned (`9b37b911-3daf-458a-8cd7-5e836d72b751`).
 
 ## Project Status
 - **Phase**: in progress
 - **Routing Decision**: General path -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards
-- **Cron 1 (Reporting)**: task-26
-- **Cron 2 (Liveness)**: task-28
+- **Active Orchestrator ID**: 9b37b911-3daf-458a-8cd7-5e836d72b751
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_mobile
+- **Cron 1 (Reporting)**: task-30
+- **Cron 2 (Liveness)**: task-32
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -95,5 +99,5 @@ Fix the "nested/boxy card container" anti-pattern across CredSmart mobile pages 
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\DISPATCH.md — Orchestrator dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_mobile\DISPATCH.md — Orchestrator dispatch instructions
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md — Master design system rules

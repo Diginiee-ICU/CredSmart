@@ -1196,7 +1196,7 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       <div className="flex-1 min-h-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden">
         {/* MOBILE VIEW: High-Density Touch Cards (screens < md) */}
-        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto p-2.5 pb-28 space-y-2.5 scrollbar-thin">
+        <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin">
           {loading ? (
             <div className="py-12 text-center text-slate-400">
               <div className="w-6 h-6 border-2 border-slate-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
@@ -1231,10 +1231,10 @@ setSortDirection("asc");
                 <div
                   key={party.id}
                   className={cn(
-                    "p-3 rounded-xl border transition-all bg-white dark:bg-slate-900 space-y-2.5 shadow-2xs active:scale-[0.99]",
+                    "px-3.5 py-3 transition-colors bg-white dark:bg-slate-900 space-y-2.5",
                     isSelected
-                      ? "border-blue-500 ring-1 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20"
-                      : "border-slate-200/80 dark:border-slate-800"
+                      ? "bg-blue-50/40 dark:bg-blue-950/30"
+                      : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">

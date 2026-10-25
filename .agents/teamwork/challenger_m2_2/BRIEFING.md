@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T19:55:00Z
+# BRIEFING — 2026-10-25T15:27:00Z
 
 ## Mission
-Empirically stress-test the POS Billing workbench (`src/pages/POSBilling.tsx`), verifying all hotkey shortcuts (F1, F2, F3, F6, F7, P, Q, D, V, DEL), input isolation, and the 3-region decoupled checkout panel containment architecture. Run test suites and TypeScript verification, and render a final verdict.
+Empirically stress-test and verify Milestone 2 changes in `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, and `src/pages/Items.tsx` for elimination of the nested card container anti-pattern, edge-to-edge `divide-y` hairlines, flat list rows, touch targets (>= 44px), typography (>= 11px), desktop table parity, and zero regressions across the 19 quarantine files.
 
 ## 🔒 My Identity
 - Archetype: challenger (Empirical Challenger)
@@ -13,6 +13,8 @@ Empirically stress-test the POS Billing workbench (`src/pages/POSBilling.tsx`), 
 - Current Parent: c838af97-21de-4616-9188-f0f8dfa904c9 (CredSmart Enterprise CRM Staff Provisioning & Task Management M2)
 - Updated Identity: Milestone 2 — CredSmart Minimal & Fast-Access Redesign (POS Billing Hotkeys & Containment Challenger)
 - Orchestrator ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
+- Current Milestone Identity: Milestone 2 — Core Billing & Inventory Modernization Challenger 2
+- Current Orchestrator ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -21,34 +23,40 @@ Empirically stress-test the POS Billing workbench (`src/pages/POSBilling.tsx`), 
 - If a bug cannot be reproduced empirically, it does not count
 - Do not modify any of the 19 protected invoice flow files
 - All test artifacts must be co-located in src/test/ (never in .agents/teamwork/)
+- Empirically verify Milestone 2 changes in Sales.tsx, Purchases.tsx, Items.tsx
+- Check responsive behavior, touch targets (>=44px), typography (>=11px), build and tests
+- Verify 19 quarantine files 100% untouched
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T19:55:00Z
+- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Updated: 2026-10-25T15:27:00Z
 
 ## Review Scope
 - **Files under test**:
-  - `src/pages/POSBilling.tsx` (Hotkeys ribbon, keyboard event listeners, 3-region decoupled checkout panel)
-  - `src/components/AppLayout.tsx` (Desktop 52px command header containment)
-  - `src/components/SuiteSwitcher.tsx` (Segmented control pill)
+  - `src/pages/Sales.tsx` (Outer container, mobile stream, flat rows, touch targets, desktop parity)
+  - `src/pages/Purchases.tsx` (Outer container, mobile stream, flat rows, touch targets, desktop parity)
+  - `src/pages/Items.tsx` (Outer container, mobile stream, flat rows, touch targets, desktop parity)
 - **Protected routes & files** (Verified 100% untouched):
   - All 19 invoice files (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, `AddItemModal.tsx`, etc.)
 - **Test targets**:
-  - `src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` (10 adversarial unit tests)
+  - `src/test/coreBillingInventoryModernizationEmpiric.challenger.test.ts` (22 empiric verification tests)
   - `src/test/billingLifecycleEngine.test.ts` (17 tests)
   - `src/test/MobileInvoiceSuccessView.test.tsx` (24 tests)
 - **Verification criteria**:
-  1. `cmd /c npx tsc --noEmit` exits with code 0 (0 errors).
-  2. All 51/51 vitest tests pass cleanly.
-  3. All hotkeys (F1, F2, F3, F6, F7, P, Q, D, V, DEL) empirically verified.
-  4. 3-region decoupled checkout panel containment verified.
-  5. Monochromatic ribbon conforms to minimal design system.
+  1. `node node_modules/typescript/bin/tsc --noEmit` exits with code 0.
+  2. `node node_modules/vite/bin/vite.js build` succeeds (`✓ built in 52.10s`).
+  3. All 63/63 vitest tests pass cleanly.
+  4. Mobile views have zero floating cards, zero individual borders, and use `divide-y divide-slate-100 dark:divide-slate-800/60`.
+  5. All interactive targets meet ergonomic >= 44px.
+  6. Typography meets minimum text-[11px] (zero sub-11px font sizes).
+  7. All 19 quarantine files 100% untouched.
 
 ## Key Decisions Made
-- Authored dedicated adversarial stress harness `src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` covering all 10 hotkey operations, input focus shielding, and the 3-region panel containment architecture.
-- Verified that single-key shortcuts (`P`, `Q`, `D`, `V`, `DEL`) are safely shielded when the cashier is typing inside an `<input>` element (`isInputActive === true`), while function keys (`F1`, `F2`, `F3`, `F6`, `F7`) remain globally responsive.
-- Verified that the right checkout column architecture decouples Region 1 (Fixed Net Total, `shrink-0`), Region 2 (Scrollable Body, `flex-1 min-h-0 overflow-y-auto`), and Region 3 (Fixed Bottom Dock, `shrink-0 border-t`), preventing scroll drift of totals or checkout buttons.
-- Executed `tsc --noEmit` and all Vitest suites directly; all 51 tests passed with 0 failures.
+- Authored dedicated empirical verification harness `src/test/coreBillingInventoryModernizationEmpiric.challenger.test.ts` with 22 tests validating DOM structure, class tokens, touch targets, sub-11px font absence, desktop invariance, and quarantine integrity.
+- Verified that `Sales.tsx`, `Purchases.tsx`, and `Items.tsx` completely eliminate the nested double-box anti-pattern and use clean `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden` wrappers with flat `px-3.5 py-3` rows inside `divide-y divide-slate-100 dark:divide-slate-800/60`.
+- Verified that all interactive action buttons in all three files feature full `min-h-[44px]` touch targets.
+- Verified that desktop table views in all three files are 100% preserved inside `hidden md:flex` and `hidden md:block`.
+- Executed `tsc --noEmit`, `vite build`, and vitest suites directly; all 63 tests passed with 0 failures.
 - Rendered explicit gate verdict: `VERDICT: APPROVE`.
 
 ## Artifact Index
@@ -56,16 +64,19 @@ Empirically stress-test the POS Billing workbench (`src/pages/POSBilling.tsx`), 
 - `BRIEFING.md` — Persistent agent memory and context
 - `progress.md` — Liveness heartbeat and milestone tracker
 - `handoff.md` — Final verification report and gate verdict
-- `src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` — Adversarial stress harness
+- `src/test/coreBillingInventoryModernizationEmpiric.challenger.test.ts` — Milestone 2 empirical test suite
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Hotkeys fail or collide when typing in search / text inputs -> Disproven (shielding via `isInputActive` prevents accidental single-key activation; function keys remain available).
-  2. Empty cart allows saving or printing bills -> Disproven (empty cart triggers destructive toast and error beep; buttons are disabled in Region 3).
-  3. Decoupled 3-region panel scrolls away or buries buttons on long breakdown lists -> Disproven (Region 1 and Region 3 have `shrink-0` and are direct siblings of Region 2, guaranteeing permanent visibility).
-  4. Monochromatic ribbon retains saturated pastel fills -> Disproven (buttons use `border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700` and monospace kbd badges).
-- **Vulnerabilities found**: None in production code. Minor test hoisting in Vitest resolved with `vi.hoisted`.
-- **Untested angles**: Hardware USB thermal printer device communication (covered by software mock and ESC/POS binary stream generator tests).
+  1. Double border anti-pattern or floating card wrappers remain in mobile views -> Disproven (all three files use unbordered outer container and flat `px-3.5 py-3` rows in `divide-y`).
+  2. Sub-11px typography (`text-[10px]`, `text-[9px]`) exists -> Disproven (scanned all three files with regex, 0 matches found).
+  3. Action buttons lack 44px touch targets -> Disproven (all mobile buttons explicitly include `min-h-[44px]`).
+  4. Desktop tables regressed or hidden -> Disproven (desktop table structures remain intact in `hidden md:flex` / `hidden md:block`).
+  5. Quarantine files modified -> Disproven (git diff verifies 0 changes across all 19 files).
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within Milestone 2 scope.
 
 ## Loaded Skills
-- None
+- `credsmart-minimal-design-system`
+  - Source: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md`
+  - Core methodology: Master standard for minimal UI tokens, typography hierarchy, neutral surfaces, touch-first mobile ergonomics, and desktop preservation.

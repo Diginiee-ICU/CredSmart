@@ -1310,3 +1310,63 @@ After all changes:
 - [ ] Desktop table views (`hidden md:block` sections) are unchanged
 - [ ] All click handlers, navigation, state, and data logic intact
 - [ ] No new design system violations introduced (no sub-11px fonts, no oversized buttons)
+
+
+## 2026-10-25T10:11:33Z
+
+Redesign CredSmart CRM mobile pages (SalaryManagement, RoleManagement, Attendance, Tasks) to match the attached mobile reference mockups with exact visual fidelity, typography hierarchy, compact 2x2 stat badges, streamlined segmented controls, and native-feeling mobile ergonomics while preserving 100% of underlying business logic and protected invoice quarantine files.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Requirements
+
+### R1. Payroll Engine Mobile Redesign (`SalaryManagement.tsx`)
+- Implement the exact layout from Mockup 1:
+  - Header: Large bold "Payroll Engine", subtitle "Staff compensation & payroll runs", primary action `+ New Profile` (Royal Blue) + export icon button `[ ⎋ ]`.
+  - 2x2 Stat Badges: Compact horizontal pill badges with subtle colored icon containers (`Active Profiles: 0 >`, `Current Month: ₹0.00`, `Pending Advances: ₹0.00 >`, `Available Payslips: ...`).
+  - Segmented Tab Bar: Inset pill switcher (`Salary Profiles (0)`, `Payroll Run`, `Advances & Deductions`).
+  - Empty State Card: Clean white card (`rounded-2xl border border-slate-200/80 shadow-xs text-center p-8`) with vector illustration, "No salary profiles configured yet.", and helper prompt.
+  - Quick Actions Footer: Dual white pill buttons (`[ 📋 View Past Runs ]` and `[ ⚙️ Pay Settings ]`).
+
+### R2. Role Manager Mobile Redesign (`RoleManagement.tsx`)
+- Implement the exact layout from Mockup 2:
+  - Header: "Role Manager", subtitle "Configure user permissions & teams", horizontal action chips (`[ ← ]`, `[ 🛡 RBAC Foundation ]`, `[ + Custom Role ]` (Royal Blue), `[ 👤+ Add User ]`).
+  - Active Role & Quick Stats Card: Crown icon `Super Admin`, `👑 Full Access` badge, `🔑 14 / 14 Actions • 👥 1 Staff`.
+  - Granular Module Permissions Matrix: Grouped accordion card with hairline row dividers (`divide-y divide-slate-100`). Each module header shows an icon, title, counter pill (e.g. `2 / 2 Enabled`), and expand chevron. Expanded state renders a clean 2-column grid of compact checkbox chips (`[ ☑ View self and team daily records ]`, `[ ☑ Edit clock-in & approvals ]`).
+  - Staff Role Assignments: Segmented toggle (`List View` / `Team Tree View`), search input with `[ + Add ]` button, and horizontal colored avatar stream (`Suresh`, `Pushpa`, `Rahul`, etc.).
+
+### R3. Attendance Hub Mobile Redesign (`Attendance.tsx`)
+- Implement the exact layout from Mockup 3:
+  - Header: "Attendance Hub", badge `🟢 Live Sync`, `[ ⎋ ]`, subtitle "GPS verified clock-in, active work sessions, and shift tracking", button `[ 📍 Geofences ]` (Royal Blue).
+  - 2x2 Stat Badges: `Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`.
+  - Segmented Tabs: `[ My Clock-In ]`, `[ Team Logs (0) ]`, `[ Locations ]`.
+  - Shift Card: "Today's Shift • General", date pill `Sun, Oct 25`, left orange hairline accent (`border-l-4 border-orange-500`), large digital clock (`02:45:48 PM`), radar geofence widget on the right, status badge `⚠️ Outside Geofence`, location label `📍 Nearest: HQ (Radius: 150m)`, GPS accuracy pill (`GPS Accuracy: ±4m • Protocol: Verified`), and full-width Emerald CTA `[ ✓ Clock In Now ]`.
+  - Quick Links: Dual pill buttons (`[ 📋 View Team Logs ]`, `[ ✏️ Request Correction ]`).
+
+### R4. Task Workflows Mobile Redesign (`Tasks.tsx`)
+- Implement the exact layout from Mockup 4:
+  - Header: "Task Workflows", filter icon `[ ☰ ]`, subtitle "All Assignees • Live Status".
+  - Status Filter Chips: `[ 🟢 Active Workflows ]`, `[ 🔴 Overdue ]`, and primary CTA `[ + Create Task ]` (Amber/Orange).
+  - 2x2 Stat Badges: `Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`.
+  - Search & Priority Bar: `🔍 Search tasks or assignees...`, dropdown `All Priorities ⌵`.
+  - High-Density Task Stream: Clean task cards with Status Emoji Tag (`📌 TO DO`, `⚡ IN PROGRESS`, `🔍 UNDER REVIEW`, `✅ COMPLETED`), Priority Pill (`Urgent`, `High`, `Normal`, `Low`), bold task title, assignee avatar chip, and contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`).
+
+### R5. Zero Regression & Quarantined Isolation
+- Do NOT touch the 19 quarantine files (invoicing, documentsService, print pipeline, etc.).
+- Maintain all underlying Supabase mutations, real-time sync, geolocation calculations, and role-checking hooks.
+- Desktop breakpoint views (`md:` and above) must remain clean, functional, and regression-free.
+
+## Acceptance Criteria
+
+### Visual & Functional Match
+- [ ] Mobile screens (<768px) match the attached 4 mockups with 1:1 fidelity for headers, 2x2 stat badges, tabs, cards, and CTA buttons.
+- [ ] Role Management granular matrix displays compact 2-column checkbox chips inside a grouped accordion rather than isolated boxy cards.
+- [ ] Attendance shift card displays live digital clock, radar geofence telemetry indicator, and emerald `Clock In Now` CTA.
+- [ ] Task cards feature the exact 4 status tags (`TO DO`, `IN PROGRESS`, `UNDER REVIEW`, `COMPLETED`) with contextual action buttons.
+- [ ] Payroll Engine displays clean empty-state illustration, 2x2 stat chips, and bottom quick links.
+
+### Code Integrity & Build
+- [ ] TypeScript compilation (`tsc --noEmit`) passes with 0 errors.
+- [ ] Vite production build (`vite build`) completes successfully (`✓ built`).
+- [ ] All 19 quarantined files remain 100% untouched.

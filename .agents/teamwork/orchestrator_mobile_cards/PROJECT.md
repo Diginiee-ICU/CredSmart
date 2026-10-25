@@ -57,8 +57,8 @@
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
 | 1 | CRM Roles & Tasks Modernization | `RoleManagement.tsx`, `Tasks.tsx` | none | DONE (Verified: tsc 0, vite build 0, 2 Reviewers APPROVE, 2 Challengers APPROVE, Auditor CLEAN) |
-| 2 | Core Billing & Inventory Modernization | `Sales.tsx`, `Purchases.tsx`, `Items.tsx` | M1 | IN_PROGRESS (Worker 2: c7c78ea4-29c8-4fe6-a948-0b1ac7633b9a) |
-| 3 | Dashboard, Parties & CRM HR Modernization | `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, `Attendance.tsx` | M2 | PLANNED |
+| 2 | Core Billing & Inventory Modernization | `Sales.tsx`, `Purchases.tsx`, `Items.tsx` | M1 | DONE (Verified: tsc 0, vite build 0, 2 Reviewers APPROVE, 2 Challengers APPROVE, Auditor CLEAN) |
+| 3 | Dashboard, Parties & CRM HR Modernization | `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, `Attendance.tsx` | M2 | IN_PROGRESS (Worker 3: 688b17b9-bb9f-44ca-ad4a-fbef4ec21a87) |
 | 4 | Full E2E Build, Verification & Forensic Audit | Global build, static analysis, quarantine check, audit | M3 | PLANNED |
 
 ## Interface Contracts

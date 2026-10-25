@@ -2270,7 +2270,7 @@ export default function Attendance(): React.ReactElement {
               </Button>
             }
           >
-            <div className="space-y-3 pt-2">
+            <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
               {requests.length === 0 ? (
                 <div className="text-center py-10 text-slate-500 text-sm">
                   No regularisation requests recorded.
@@ -2279,11 +2279,11 @@ export default function Attendance(): React.ReactElement {
                 requests.map((req) => (
                   <div
                     key={req.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                    className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900">{req.staff_name || "Staff Member"}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white">{req.staff_name || "Staff Member"}</span>
                         <Badge variant="outline" className="text-[11px] font-mono">
                           {req.date}
                         </Badge>
@@ -2303,21 +2303,21 @@ export default function Attendance(): React.ReactElement {
                           </CRMBadge>
                         )}
                       </div>
-                      <div className="text-xs text-slate-600">
-                        Requested: <strong className="font-mono text-slate-800">{formatTimeDisplay(req.requested_clock_in)}</strong> to{" "}
-                        <strong className="font-mono text-slate-800">{formatTimeDisplay(req.requested_clock_out)}</strong>
+                      <div className="text-xs text-slate-600 dark:text-slate-300">
+                        Requested: <strong className="font-mono text-slate-800 dark:text-slate-200">{formatTimeDisplay(req.requested_clock_in)}</strong> to{" "}
+                        <strong className="font-mono text-slate-800 dark:text-slate-200">{formatTimeDisplay(req.requested_clock_out)}</strong>
                       </div>
-                      <div className="text-xs text-slate-500 italic">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 italic">
                         "{req.reason}"
                       </div>
                     </div>
 
                     {req.status === "pending" && canEdit && (
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0">
                         <Button
                           size="sm"
                           onClick={() => handleReviewRequest(req, "approved")}
-                          className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                          className="min-h-[44px] h-11 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1 rounded-lg"
                         >
                           <Check className="w-3.5 h-3.5" /> Approve
                         </Button>
@@ -2325,7 +2325,7 @@ export default function Attendance(): React.ReactElement {
                           size="sm"
                           variant="outline"
                           onClick={() => handleReviewRequest(req, "rejected")}
-                          className="h-8 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 gap-1"
+                          className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1 rounded-lg"
                         >
                           <X className="w-3.5 h-3.5" /> Reject
                         </Button>

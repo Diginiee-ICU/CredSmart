@@ -898,7 +898,7 @@ export default function Dashboard() {
               <span className="text-[11px] text-slate-400">Bills will appear here</span>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
               {latestTransactions.slice(0, 5).map((txn) => {
                 const displayName = (txn.partyName || "").trim() || "Walk-in Customer";
                 const initials = displayName
@@ -913,7 +913,7 @@ export default function Dashboard() {
                   <div
                     key={txn.id}
                     onClick={() => navigate(ROUTE_PATHS.sales)}
-                    className="p-3 min-h-[56px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99] transition-all cursor-pointer touch-manipulation"
+                    className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center justify-center shrink-0 font-mono">

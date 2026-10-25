@@ -1,81 +1,37 @@
-# Dispatch Assignment: Survey Explorer 3 (Dashboard, Parties, & CRM HR)
+# DISPATCH: Survey Explorer 3 - Shared Design Tokens, Quarantine Files & Verification Architecture
 
-## Mission
-Investigate and map all occurrences of the "nested/boxy card container" anti-pattern in the assigned dashboard, party, and HR files:
-1. `src/pages/Dashboard.tsx` (~9 hits: recent activity transaction rows)
-2. `src/pages/Parties.tsx` (~6 hits: mobile party directory rows)
-3. `src/pages/crm/SalaryManagement.tsx` (~4 hits: salary profile list rows)
-4. `src/pages/crm/Attendance.tsx` (~4 hits: attendance log rows)
+## Objective
+Analyze shared design components (`src/components/crm/`), design system rules (`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`), the 19 protected invoice quarantine files, and build/test commands.
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3`
+## Scope & Boundaries
+- DO NOT write or edit source code.
+- Analyze:
+  1. The 19 protected quarantine files: list them, confirm their status, verify that none of them are imported or altered by CRM modules.
+  2. The shared CRM component library in `src/components/crm/` (`CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMPageHeader`, `CRMStatCard`, `CRMPermissionGate`, `CRMRolePill`). Check if any new primitives or styles are needed for the 2x2 stat badges, segmented tab bars, radar indicators, and pill action buttons.
+  3. Design system constraints from `minimal-design-system.md` (button heights: 34px standard, 28px sm, 30px icon, 46px mobile cta; typography: Inter sans, IBM Plex Mono for numbers/currency; neutral palette `#F8FAFC` / `#090D16` / `#2563EB` royal blue / `#10B981` emerald / `#FF6A00` or `#F59E0B` amber-orange; no sub-11px micro-fonts; no bloated buttons).
+  4. Build & verification setup: inspect package.json, TypeScript config, test commands, and confirm how `tsc --noEmit` and `vite build` are executed.
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST read before starting)
-- Dispatch Instructions: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\DISPATCH.md`
-- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-
-## 19 Protected Quarantine Files — NEVER MODIFY OR SUGGEST MODIFYING:
-- `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-- `src/components/invoices/mobile/AddItemModal.tsx`
-- `src/components/invoices/mobile/SelectPartyModal.tsx`
-- `src/components/invoices/mobile/EditItemModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-- `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
-- `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
-- `src/components/invoices/mobile/CreatePartyModal.tsx`
-- `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
-- `src/components/items/mobile/CreateNewItemModal.tsx`
-- `src/components/SalesInvoiceModal.tsx`
-- `src/components/PurchaseInvoiceModal.tsx`
-- `src/components/invoices/AddItemsToBillModal.tsx`
-- `src/components/invoices/InvoiceFitView.tsx`
-- `src/components/invoices/UnifiedInvoiceRenderer.tsx`
-- `src/utils/downloadExactInvoice.ts`
-- `src/utils/whatsappPdfShare.ts`
-- `src/utils/invoiceThemeLoader.ts`
-- `src/services/documentsService.ts`
-
-## Tasks & Investigation Requirements
-1. In `src/pages/Dashboard.tsx`:
-   - Identify recent activity transaction rows in mobile view (`block md:hidden`).
-   - Exact line numbers, current container classes, row classes.
-   - Proposed replacement with flat rows in `divide-y divide-slate-100 dark:divide-slate-800/60`.
-2. In `src/pages/Parties.tsx`:
-   - Identify mobile party directory rows (`block md:hidden`).
-   - Exact line numbers, current container classes, row classes.
-   - Proposed replacement with flat rows in `divide-y divide-slate-100 dark:divide-slate-800/60`.
-3. In `src/pages/crm/SalaryManagement.tsx`:
-   - Identify salary profile list rows in mobile view.
-   - Exact line numbers, current container classes, row classes.
-   - Proposed replacement with flat rows in `divide-y divide-slate-100 dark:divide-slate-800/60`.
-4. In `src/pages/crm/Attendance.tsx`:
-   - Identify attendance log rows in mobile view.
-   - Exact line numbers, current container classes, row classes.
-   - Proposed replacement with flat rows in `divide-y divide-slate-100 dark:divide-slate-800/60`.
-5. Verify:
-   - Minimum 44px touch targets on interactive rows.
-   - No sub-11px fonts.
-   - Desktop views (`hidden md:...` or table views) remain 100% untouched.
-   - Business logic, handlers, data fetching remain 100% untouched.
-6. Write survey report to `handoff.md` in your working directory and notify parent via `send_message`.
+## Output
+Write your comprehensive findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`.
+Include:
+- Quarantine verification status of all 19 files
+- CRM shared components inventory & reusable mobile design patterns
+- Design system token compliance matrix
+- Verification and build pipeline instructions
 
 
-## 2026-10-25T08:58:32Z
-You are Explorer 3 (Survey: Dashboard, Parties, & CRM HR).
+## 2026-10-25T10:17:15Z
+[Message] sender=9b37b911-3daf-458a-8cd7-5e836d72b751 priority=MESSAGE_PRIORITY_HIGH
+You are Survey Explorer 3 for the CredSmart CRM Mobile Redesign.
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3
-Read your dispatch assignment: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\DISPATCH.md
-Read the authoritative original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read the design system rules: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\DISPATCH.md
+MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z and background sections).
+Read the master design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
 
-Your task:
-Survey and investigate the boxy/nested card container anti-pattern in:
-1. src/pages/Dashboard.tsx (recent activity transaction rows)
-2. src/pages/Parties.tsx (mobile party directory rows)
-3. src/pages/crm/SalaryManagement.tsx (salary profile list rows)
-4. src/pages/crm/Attendance.tsx (attendance log rows)
-
-Never modify or suggest modifying any of the 19 protected quarantine files listed in DISPATCH.md.
-Document exact line numbers, existing classes, proposed minimal divide-y replacements, touch targets (>=44px), and font sizes (>=11px).
-Write your survey findings to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md.
-When finished, notify the orchestrator using send_message.
+Analyze in detail:
+1. Verify the 19 protected invoice quarantine files and confirm none are touched.
+2. Shared CRM components in `src/components/crm/` and check what reusable patterns/tokens are needed for 2x2 stat badges, tabs, radar indicators, and pill buttons.
+3. Design system constraints from `minimal-design-system.md`.
+4. Verification pipeline commands (`tsc --noEmit`, `vite build`, Vitest suites).
+Maintain liveness in your `progress.md` and write your complete handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`.
+When done, notify the orchestrator with send_message.

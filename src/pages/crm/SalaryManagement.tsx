@@ -1452,31 +1452,31 @@ export default function SalaryManagement(): React.ReactElement {
             </div>
 
             {/* Mobile Cards View (375px) */}
-            <div className="block sm:hidden space-y-3">
+            <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
               {salaryProfiles.length === 0 ? (
-                <div className="p-8 text-center bg-white border border-slate-200/80 rounded-2xl text-xs text-slate-500">
+                <div className="p-8 text-center text-xs text-slate-500">
                   No salary profiles configured yet.
                 </div>
               ) : (
                 salaryProfiles.map((p) => (
-                  <CRMCard key={p.id} variant="default" className="p-4 space-y-3">
+                  <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{p.staff_name}</h4>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{p.staff_name}</h4>
                         <p className="text-xs text-slate-400">{p.staff_email}</p>
                       </div>
                       <CRMBadge variant={p.is_active ? "success" : "neutral"} size="sm" dot={p.is_active}>
                         {p.salary_type.toUpperCase()}
                       </CRMBadge>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60">
                       <div>
                         <span className="text-slate-400">Base Wage:</span>
-                        <p className="font-mono tabular-nums font-bold text-slate-900">{formatIndianCurrency(p.base_amount)}</p>
+                        <p className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">{formatIndianCurrency(p.base_amount)}</p>
                       </div>
                       <div>
                         <span className="text-slate-400">Overtime:</span>
-                        <p className="font-mono tabular-nums text-slate-700">
+                        <p className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
                           {p.hourly_overtime_rate ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr` : "None"}
                         </p>
                       </div>
@@ -1485,11 +1485,11 @@ export default function SalaryManagement(): React.ReactElement {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditProfileDrawer(p)}
-                      className="w-full text-xs font-semibold rounded-lg border-slate-200 h-8.5 shadow-2xs"
+                      className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
                     >
                       Configure Profile
                     </Button>
-                  </CRMCard>
+                  </div>
                 ))
               )}
             </div>
@@ -1743,9 +1743,9 @@ export default function SalaryManagement(): React.ReactElement {
             </div>
 
             {/* Mobile Cards View for Payroll Run */}
-            <div className="block sm:hidden space-y-3">
+            <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
               {(hasGeneratedPreview ? previewPayslips : currentMonthPayslips).length === 0 ? (
-                <div className="p-8 text-center bg-white border border-slate-200/80 rounded-2xl text-xs text-slate-500">
+                <div className="p-8 text-center text-xs text-slate-500">
                   No payroll runs generated for this month. Click &apos;Generate Payroll&apos; to calculate.
                 </div>
               ) : (
@@ -1769,31 +1769,31 @@ export default function SalaryManagement(): React.ReactElement {
                       present: s.present_days,
                     }))
                 ).map((item) => (
-                  <CRMCard key={item.id} variant="default" className="p-4 space-y-2">
+                  <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{item.name}</h4>
                         <p className="text-xs text-slate-400">{item.email}</p>
                       </div>
-                      <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-xs">
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded text-xs border border-emerald-200/60 dark:border-emerald-800/60">
                         {formatIndianCurrency(item.net)}
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100">
+                    <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60">
                       <div>
                         <span className="text-slate-400">Gross:</span>
-                        <p className="font-mono font-bold text-slate-900">{formatIndianCurrency(item.gross)}</p>
+                        <p className="font-mono font-bold text-slate-900 dark:text-white">{formatIndianCurrency(item.gross)}</p>
                       </div>
                       <div>
                         <span className="text-slate-400">Deductions:</span>
-                        <p className="font-mono text-rose-600">{formatIndianCurrency(item.deductions)}</p>
+                        <p className="font-mono text-rose-600 dark:text-rose-400 font-semibold">{formatIndianCurrency(item.deductions)}</p>
                       </div>
                       <div>
                         <span className="text-slate-400">Present:</span>
-                        <p className="font-mono text-slate-700">{item.present}d</p>
+                        <p className="font-mono text-slate-700 dark:text-slate-300">{item.present}d</p>
                       </div>
                     </div>
-                  </CRMCard>
+                  </div>
                 ))
               )}
             </div>
@@ -1913,17 +1913,17 @@ export default function SalaryManagement(): React.ReactElement {
             </div>
 
             {/* Mobile Cards View for Adjustments */}
-            <div className="block sm:hidden space-y-3">
+            <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
               {adjustments.length === 0 ? (
-                <div className="p-8 text-center bg-white border border-slate-200/80 rounded-2xl text-xs text-slate-500">
+                <div className="p-8 text-center text-xs text-slate-500">
                   No advances or adjustments recorded.
                 </div>
               ) : (
                 adjustments.map((a) => (
-                  <CRMCard key={a.id} variant="default" className="p-4 space-y-2">
+                  <div key={a.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{a.staff_name}</h4>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{a.staff_name}</h4>
                         <p className="text-xs text-slate-400">{a.description || a.month_year || "Adjustment"}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -1938,15 +1938,15 @@ export default function SalaryManagement(): React.ReactElement {
                         </CRMBadge>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                      <span className="font-mono font-bold text-slate-900">{formatIndianCurrency(a.amount)}</span>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">{formatIndianCurrency(a.amount)}</span>
                       {canApprove && a.status === "pending" && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleApproveAdjustment(a.id)}
-                            className="h-7 text-xs text-emerald-600 border-emerald-200"
+                            className="min-h-[44px] h-11 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 rounded-lg"
                           >
                             Approve
                           </Button>
@@ -1954,14 +1954,14 @@ export default function SalaryManagement(): React.ReactElement {
                             size="sm"
                             variant="outline"
                             onClick={() => handleRejectAdjustment(a.id)}
-                            className="h-7 text-xs text-rose-600 border-rose-200"
+                            className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 rounded-lg"
                           >
                             Reject
                           </Button>
                         </div>
                       )}
                     </div>
-                  </CRMCard>
+                  </div>
                 ))
               )}
             </div>
