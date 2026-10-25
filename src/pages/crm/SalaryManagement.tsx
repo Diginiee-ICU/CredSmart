@@ -266,20 +266,30 @@ export default function SalaryManagement(): React.ReactElement {
   const loadSalaryData = useCallback(async () => {
     setDataLoading(true);
     try {
-      // 1. Fetch Staff Directory
+      // 1. Fetch Staff Directory via crmApi.getCRMStaff (primary) or fallbacks
       const dirMap: Record<string, StaffDirectoryMember> = {};
       let staffData: Record<string, unknown>[] | null = null;
+
       try {
-        const { data } = await supabase.from("profiles").select("*");
-        if (data && data.length > 0) {
-          staffData = data as Record<string, unknown>[];
+        const staffRes = await crmApi.getCRMStaff(effectiveOrgId);
+        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+          staffData = staffRes.data as unknown as Record<string, unknown>[];
         }
       } catch {}
 
       if (!staffData) {
         try {
+          const { data } = await supabase.from("profiles").select("*");
+          if (data && Array.isArray(data) && data.length > 0) {
+            staffData = data as Record<string, unknown>[];
+          }
+        } catch {}
+      }
+
+      if (!staffData) {
+        try {
           const res = await settingsApi.getProfiles();
-          if (res.data && res.data.length > 0) {
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
             staffData = res.data as Record<string, unknown>[];
           }
         } catch {}
@@ -287,11 +297,13 @@ export default function SalaryManagement(): React.ReactElement {
 
       if (staffData && staffData.length > 0) {
         staffData.forEach((s: Record<string, unknown>) => {
-          const id = String(s.id || "");
-          const name = String(s.name || s.full_name || "Team Member");
+          const id = String(s.id || s.user_id || s.staff_id || "");
+          const name = String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member"));
           const email = String(s.email || "");
-          const roleName = String(s.roleName || s.role_name || s.role || "Staff");
-          dirMap[id] = { id, name, email, roleName };
+          const roleName = String(s.crm_role_name || s.role_name || s.roleName || s.role || s.store_role || "Staff");
+          if (id) {
+            dirMap[id] = { id, name, email, roleName };
+          }
         });
         setStaffDirectory(dirMap);
       }

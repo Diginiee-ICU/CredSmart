@@ -199,10 +199,7 @@ export default function Tasks(): React.ReactElement {
 
     // 1. Fetch Real Staff Members
     try {
-      const staffRes =
-        typeof (crmApi as unknown as { getCRMStaff?: (id: string) => Promise<{ data?: unknown[] }> }).getCRMStaff === "function"
-          ? await (crmApi as unknown as { getCRMStaff: (id: string) => Promise<{ data?: unknown[] }> }).getCRMStaff(orgId)
-          : await crmApi.getCRMStaffRoles(orgId);
+      const staffRes = await crmApi.getCRMStaff(orgId);
 
       if (staffRes?.data && Array.isArray(staffRes.data)) {
         const staffParsed: StaffOption[] = staffRes.data.map((item: unknown) => {
