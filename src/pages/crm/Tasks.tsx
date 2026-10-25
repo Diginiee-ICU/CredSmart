@@ -304,6 +304,9 @@ export default function Tasks(): React.ReactElement {
       description: `Task marked as ${nextStatus.replace("_", " ")}.`,
     });
 
+    // Notify CRM dashboard to refresh task count
+    window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
+
     try {
       await crmApi.transitionCRMTaskStatus(taskId, nextStatus, { orgId });
     } catch (err) {
@@ -334,6 +337,9 @@ export default function Tasks(): React.ReactElement {
       title: "Task Approved",
       description: "Task marked as completed and signed off.",
     });
+
+    // Notify CRM dashboard to refresh task count
+    window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
 
     try {
       await crmApi.transitionCRMTaskStatus(taskId, "done", { orgId });
@@ -374,16 +380,24 @@ export default function Tasks(): React.ReactElement {
 
     setTasks((prev) => [created, ...prev]);
     setIsCreateOpen(false);
+
+    // Reset form
     setNewTitle("");
     setNewDescription("");
+    setNewPriority("normal");
     setNewAssigneeName("");
     setNewAssigneeId(undefined);
     setNewAssigneeRole(undefined);
+    setNewDueDate(new Date(Date.now() + 86400000).toISOString().split("T")[0]);
+    setNewRequiresProof(true);
 
     toast({
       title: "Task Created",
       description: `"${created.title}" assigned to ${created.assignee_name}.`,
     });
+
+    // Notify CRM dashboard to refresh task count
+    window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
 
     try {
       const res = await crmApi.createCRMTask(
@@ -401,9 +415,19 @@ export default function Tasks(): React.ReactElement {
       );
 
       if (res?.data && res.data.id) {
+        // Merge backend response — it has the real UUID id + assignee_name from DB join
+        const serverTask: CRMTask = {
+          ...created,
+          id: res.data.id,
+          assignee_name: res.data.assignee_name || created.assignee_name,
+          assignee_id: res.data.assigned_to || res.data.assignee_id || created.assignee_id,
+          assigned_to: res.data.assigned_to || created.assigned_to,
+        };
         setTasks((prev) =>
-          prev.map((t) => (t.id === tempId ? { ...t, ...res.data, id: res.data.id } : t))
+          prev.map((t) => (t.id === tempId ? serverTask : t))
         );
+        // Fire event again after server confirms with real data
+        window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
       }
     } catch (err) {
       console.warn("Backend task creation notice:", err);
@@ -444,6 +468,9 @@ export default function Tasks(): React.ReactElement {
       title: "Submitted for Review",
       description: "Manager will verify proof of work.",
     });
+
+    // Notify CRM dashboard
+    window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
 
     try {
       await crmApi.transitionCRMTaskStatus(taskId, "review", {
@@ -493,6 +520,9 @@ export default function Tasks(): React.ReactElement {
       title: "Revision Requested",
       description: "Task returned to In Progress with feedback.",
     });
+
+    // Notify CRM dashboard
+    window.dispatchEvent(new CustomEvent("credsmart:crm_tasks_updated"));
 
     try {
       await crmApi.transitionCRMTaskStatus(taskId, "in_progress", {
