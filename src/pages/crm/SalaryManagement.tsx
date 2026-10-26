@@ -179,52 +179,52 @@ export default function SalaryManagement(): React.ReactElement {
   // Synchronous cache hydration
   const [salaryProfiles, setSalaryProfiles] = useState<CrmSalaryProfile[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_PROFILES_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_PROFILES_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored) as CrmSalaryProfile[];
           if (Array.isArray(parsed)) return parsed;
-        } catch { /* ignore */ }
-      }
+        }
+      } catch { /* ignore */ }
     }
     return [];
   });
 
   const [payrollRuns, setPayrollRuns] = useState<CrmPayrollRun[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored) as CrmPayrollRun[];
           if (Array.isArray(parsed)) return parsed;
-        } catch { /* ignore */ }
-      }
+        }
+      } catch { /* ignore */ }
     }
     return [];
   });
 
   const [payslips, setPayslips] = useState<CrmPayslip[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_PAYSLIPS_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_PAYSLIPS_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored) as CrmPayslip[];
           if (Array.isArray(parsed)) return parsed;
-        } catch { /* ignore */ }
-      }
+        }
+      } catch { /* ignore */ }
     }
     return [];
   });
 
   const [adjustments, setAdjustments] = useState<CrmSalaryAdjustment[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_ADJUSTMENTS_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_ADJUSTMENTS_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored) as CrmSalaryAdjustment[];
           if (Array.isArray(parsed)) return parsed;
-        } catch { /* ignore */ }
-      }
+        }
+      } catch { /* ignore */ }
     }
     return [];
   });
