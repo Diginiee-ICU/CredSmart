@@ -8,7 +8,7 @@
  * Indian currency formatting (₹X,XX,XXX.XX), and offline cache synchronization.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Briefcase,
   Calculator,
@@ -231,6 +231,41 @@ export default function SalaryManagement(): React.ReactElement {
 
   const [attendanceRecords, setAttendanceRecords] = useState<CrmAttendanceRecord[]>([]);
   const [staffDirectory, setStaffDirectory] = useState<Record<string, StaffDirectoryMember>>({});
+
+  const loadedOrgRef = useRef<string | null>(effectiveOrgId);
+
+  // Synchronous cache rehydration when organization context changes (OI-2, OI-8)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedProfiles = localStorage.getItem(`${STORAGE_PROFILES_PREFIX}${effectiveOrgId}`);
+        setSalaryProfiles(storedProfiles ? JSON.parse(storedProfiles) : []);
+      } catch {
+        setSalaryProfiles([]);
+      }
+      try {
+        const storedRuns = localStorage.getItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`);
+        setPayrollRuns(storedRuns ? JSON.parse(storedRuns) : []);
+      } catch {
+        setPayrollRuns([]);
+      }
+      try {
+        const storedSlips = localStorage.getItem(`${STORAGE_PAYSLIPS_PREFIX}${effectiveOrgId}`);
+        setPayslips(storedSlips ? JSON.parse(storedSlips) : []);
+      } catch {
+        setPayslips([]);
+      }
+      try {
+        const storedAdjs = localStorage.getItem(`${STORAGE_ADJUSTMENTS_PREFIX}${effectiveOrgId}`);
+        setAdjustments(storedAdjs ? JSON.parse(storedAdjs) : []);
+      } catch {
+        setAdjustments([]);
+      }
+      setAttendanceRecords([]);
+      setStaffDirectory({});
+    }
+    loadedOrgRef.current = effectiveOrgId;
+  }, [effectiveOrgId]);
 
   // Slide-over Drawers state
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState<boolean>(false);

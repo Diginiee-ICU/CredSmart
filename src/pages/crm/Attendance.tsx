@@ -232,6 +232,63 @@ export default function Attendance(): React.ReactElement {
   const [dataLoading, setDataLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
+  const loadedOrgRef = useRef<string | null>(effectiveOrgId);
+
+  // Synchronous cache rehydration when organization context changes (OI-2, OI-8)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_GEOFENCES_PREFIX}${effectiveOrgId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setGeofences(Array.isArray(parsed) && parsed.length > 0 ? parsed : [
+            {
+              id: "geo-hq-default",
+              org_id: effectiveOrgId,
+              name: org?.name ? `${org.name} HQ` : "Main Office / HQ",
+              latitude: 28.6139,
+              longitude: 77.2090,
+              radius_meters: 150,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        } else {
+          setGeofences([
+            {
+              id: "geo-hq-default",
+              org_id: effectiveOrgId,
+              name: org?.name ? `${org.name} HQ` : "Main Office / HQ",
+              latitude: 28.6139,
+              longitude: 77.2090,
+              radius_meters: 150,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        }
+      } catch {
+        // ignore
+      }
+
+      try {
+        const storedAtt = localStorage.getItem(`${STORAGE_ATTENDANCE_PREFIX}${effectiveOrgId}`);
+        setAttendanceRecords(storedAtt ? JSON.parse(storedAtt) : []);
+      } catch {
+        setAttendanceRecords([]);
+      }
+
+      try {
+        const storedReq = localStorage.getItem(`${STORAGE_REQUESTS_PREFIX}${effectiveOrgId}`);
+        setRequests(storedReq ? JSON.parse(storedReq) : []);
+      } catch {
+        setRequests([]);
+      }
+      setStaffProfiles({});
+    }
+    loadedOrgRef.current = effectiveOrgId;
+  }, [effectiveOrgId, org?.name]);
+
   // Live Clock & Session Timer
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -683,6 +740,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist attendance changes locally and in Supabase
   const persistAttendance = useCallback(
     async (updatedRecords: CRMAttendanceRecord[]) => {
+      if (loadedOrgRef.current !== effectiveOrgId) return;
       setAttendanceRecords(updatedRecords);
       try {
         localStorage.setItem(
@@ -699,6 +757,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist geofences locally and in Supabase
   const persistGeofences = useCallback(
     async (updatedGeofences: CRMGeolocation[]) => {
+      if (loadedOrgRef.current !== effectiveOrgId) return;
       setGeofences(updatedGeofences);
       try {
         localStorage.setItem(
@@ -715,6 +774,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist requests locally
   const persistRequests = useCallback(
     async (updatedRequests: CRMAttendanceRequest[]) => {
+      if (loadedOrgRef.current !== effectiveOrgId) return;
       setRequests(updatedRequests);
       try {
         localStorage.setItem(

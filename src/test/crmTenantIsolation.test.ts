@@ -1066,5 +1066,201 @@ describe("CRM Multi-Tenant Organization Isolation Verification", () => {
       expect(res.body.success).toBe(true);
       expect(baselineAssignmentInserted).toBe(true);
     });
+
+    it("strictly preserves external auth and hides password for existing users with NULL password_hash during provisioning (OI-3)", async () => {
+      let passwordUpdated = false;
+      mockClientQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT id, email, full_name, phone FROM users")) {
+          // User exists in DB (e.g. created via Supabase Auth / OAuth with NULL password_hash in public.users)
+          return Promise.resolve({
+            rows: [{ id: "user-oauth-1", email: "oauth.user@cred.com", full_name: "OAuth User", phone: "" }]
+          });
+        }
+        if (sql.includes("SELECT password_hash FROM users")) {
+          return Promise.resolve({ rows: [{ password_hash: null }] });
+        }
+        if (sql.includes("UPDATE users SET password_hash")) {
+          passwordUpdated = true;
+          return Promise.resolve({ rowCount: 1 });
+        }
+        if (sql.includes("INSERT INTO org_memberships") || sql.includes("INSERT INTO organization_memberships") || sql.includes("INSERT INTO crm_staff_assignments")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/staff/provision",
+        headers: { "x-organization-id": "org-cred-B" },
+        body: {
+          full_name: "OAuth User",
+          email: "oauth.user@cred.com",
+          store_role: "staff",
+          password: "MaliciousPassword123!",
+        },
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      // OI-3: Tenant B must NEVER update the password hash of an existing user!
+      expect(passwordUpdated).toBe(false);
+      // OI-3: Credentials response must NEVER reveal or return a new password for existing user!
+      expect(res.body.credentials.password).toBe("(existing account password)");
+    });
+
+    it("resolves task assignee name for users assigned via crm_staff_assignments in GET /tasks", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("FROM staff_tasks t") && sql.includes("crm_staff_assignments")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-assigned-1",
+                org_id: "org-cred-A",
+                title: "Stock Audit",
+                status: "todo",
+                priority: "normal",
+                assigned_to: "user-legacy-assignee",
+                assignee_id: "user-legacy-assignee",
+                assignee_name: "Legacy Staff",
+                assignee_email: "legacy@credsmart.online",
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/tasks",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].assignee_name).toBe("Legacy Staff");
+    });
+
+    it("resiliently returns tasks when org_memberships table is missing (42P01) in GET /tasks", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("FROM staff_tasks t") && sql.includes("org_memberships")) {
+          const err: any = new Error("relation org_memberships does not exist");
+          err.code = "42P01";
+          return Promise.reject(err);
+        }
+        if (sql.includes("fallbackTasksQuery") || (sql.includes("FROM staff_tasks t") && !sql.includes("org_memberships"))) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-fallback-1",
+                org_id: "org-cred-A",
+                title: "Fallback Task",
+                status: "todo",
+                priority: "normal",
+                assignee_name: "Unassigned",
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/tasks",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].title).toBe("Fallback Task");
+    });
+
+    it("strictly rejects foreign tenant assignee in POST /tasks with 400 even for non-UUID user IDs", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // Mock verifyUserInOrg query -> returns empty (user does not belong to active org)
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/tasks",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          title: "Secret Audit",
+          assigned_to: "foreign-user-custom-string-id",
+        },
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("strictly rejects foreign tenant assignee in PATCH /tasks/:id with 400 even for non-UUID user IDs", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT * FROM staff_tasks WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [{ id: "task-local-1", org_id: "org-cred-A", title: "Local Task", status: "todo" }]
+          });
+        }
+        // Membership check fails
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "PATCH",
+        url: "/tasks/task-local-1",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          assigned_to: "foreign-user-custom-string-id",
+        },
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("strictly isolates staff role in GET /staff when user has different roles in Org A and Org B without cross-tenant role shadowing", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT DISTINCT ON (u.id)") && sql.includes("crm_staff_roles")) {
+          expect(params[0]).toBe("org-cred-A");
+          return Promise.resolve({
+            rows: [
+              {
+                id: "user-multi-org",
+                user_id: "user-multi-org",
+                email: "multiorg@credsmart.online",
+                full_name: "Multi-Org Staff",
+                store_role: "staff",
+                role_name: "Org A Manager",
+                crm_role_id: "role-orgA-123",
+                crm_role_color: "#2563EB",
+                is_super_admin: false,
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/staff",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].role_name).toBe("Org A Manager");
+      expect(res.body[0].crm_role_id).toBe("role-orgA-123");
+    });
   });
 });
+
