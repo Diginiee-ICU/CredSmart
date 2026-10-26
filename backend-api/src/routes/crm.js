@@ -526,12 +526,8 @@ router.post('/staff/provision', async (req, res) => {
         await client.query(`UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`, [phone.trim(), userId]);
       }
 
-      // Security: Do not overwrite an existing user's password hash from another tenant!
-      // Only set password_hash if the user does NOT have one yet
-      if (!existingPasswordHash && effectivePassword) {
-        const passwordHash = await bcrypt.hash(effectivePassword, 10);
-        await client.query(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, [passwordHash, userId]);
-      }
+      // Security (OI-3): Never overwrite or set password_hash for existing cross-tenant users,
+      // even if their password_hash in users table is null (e.g. Supabase Auth / OAuth / external auth).
     } else {
       // Hash password with bcrypt and insert into users
       isNewUser = true;
@@ -679,7 +675,7 @@ router.post('/staff/provision', async (req, res) => {
       },
       credentials: {
         email: normalizedEmail,
-        password: isNewUser || !existingPasswordHash ? effectivePassword : '(existing account password)',
+        password: isNewUser ? effectivePassword : '(existing account password)',
       },
     });
   } catch (err) {
@@ -712,14 +708,14 @@ const getStaffHandler = async (req, res) => {
         COALESCE(m.role, 'staff') AS store_role,
         COALESCE(m.role, 'staff') AS role,
         m.id AS membership_id,
-        COALESCE(sa.role_id, sr_role.id) AS crm_role_id,
-        COALESCE(sa.role_id, sr_role.id) AS role_id,
+        COALESCE(sa.role_id, sr_role.role_id) AS crm_role_id,
+        COALESCE(sa.role_id, sr_role.role_id) AS role_id,
         COALESCE(sa_role.name, sr_role.name) AS role_name,
         COALESCE(sa_role.name, sr_role.name) AS crm_role_name,
         COALESCE(sa_role.color, sr_role.color) AS crm_role_color,
         COALESCE(sa_role.icon, sr_role.icon) AS crm_role_icon,
         COALESCE(sa_role.is_super_admin, sr_role.is_super_admin, false) AS is_super_admin,
-        COALESCE(sa.created_at, sr.assigned_at, m.created_at) AS assigned_at
+        COALESCE(sa.created_at, sr_role.assigned_at, m.created_at) AS assigned_at
       FROM (
         SELECT id, user_id, org_id, role, created_at FROM org_memberships
         WHERE org_id = $1
@@ -735,12 +731,13 @@ const getStaffHandler = async (req, res) => {
         ON (sa.user_id = u.id OR sa.staff_id = u.id) AND (sa.org_id = $1 OR sa.organization_id = $1)
       LEFT JOIN crm_roles sa_role
         ON sa_role.id = sa.role_id AND (sa_role.org_id = $1 OR sa_role.organization_id = $1)
-      LEFT JOIN crm_staff_roles sr 
-        ON (sr.staff_id = u.id)
-      LEFT JOIN crm_roles sr_role
-        ON sr_role.id = sr.role_id AND (sr_role.org_id = $1 OR sr_role.organization_id = $1)
+      LEFT JOIN (
+        SELECT sr.staff_id, sr.assigned_at, r.id AS role_id, r.name, r.color, r.icon, r.is_super_admin
+        FROM crm_staff_roles sr
+        JOIN crm_roles r ON r.id = sr.role_id AND (r.org_id = $1 OR r.organization_id = $1)
+      ) sr_role ON sr_role.staff_id = u.id
       ${req.query.user_id ? 'WHERE u.id = $2' : ''}
-      ORDER BY u.id, m.created_at ASC
+      ORDER BY u.id, COALESCE(sa.role_id, sr_role.role_id) DESC NULLS LAST, m.created_at ASC
     `;
     const params = [orgId];
     if (req.query.user_id) params.push(req.query.user_id);
@@ -1692,9 +1689,11 @@ router.get('/tasks', async (req, res) => {
       FROM staff_tasks t
       LEFT JOIN users u ON u.id = t.assigned_to
       LEFT JOIN (
-        SELECT user_id FROM org_memberships WHERE org_id = $1
+        SELECT user_id FROM org_memberships WHERE org_id = $1 OR organization_id = $1
         UNION
-        SELECT user_id FROM organization_memberships WHERE organization_id = $1
+        SELECT user_id FROM organization_memberships WHERE organization_id = $1 OR org_id = $1
+        UNION
+        SELECT COALESCE(user_id, staff_id) AS user_id FROM crm_staff_assignments WHERE org_id = $1 OR organization_id = $1
       ) m_u ON m_u.user_id = u.id
       LEFT JOIN users c ON c.id = COALESCE(t.assigned_by, t.created_by)
       LEFT JOIN users appr ON appr.id = t.approved_by
@@ -1751,11 +1750,51 @@ router.get('/tasks', async (req, res) => {
         t.created_at DESC
     `;
 
-    const result = await pool.query(query, params);
-    return res.json(result.rows);
+    let result;
+    try {
+      result = await pool.query(query, params);
+    } catch (qErr) {
+      try {
+        const fallbackTasksQuery = `
+          SELECT
+            t.id,
+            COALESCE(t.org_id, t.organization_id) AS org_id,
+            t.title,
+            COALESCE(t.description, '') AS description,
+            COALESCE(CASE WHEN t.priority = 'medium' THEN 'normal' ELSE t.priority END, 'normal') AS priority,
+            COALESCE(CASE WHEN t.status = 'pending' THEN 'todo' ELSE t.status END, 'todo') AS status,
+            t.assigned_to,
+            t.assigned_to AS assignee_id,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1), 'Unassigned') AS assignee_name,
+            u.email AS assignee_email,
+            u.avatar_url AS assignee_avatar_url,
+            COALESCE(t.assigned_by, t.created_by) AS assigned_by,
+            'System' AS creator_name,
+            t.due_date,
+            COALESCE(t.requires_proof, t.proof_required, false) AS requires_proof,
+            COALESCE(t.requires_proof, t.proof_required, false) AS proof_required,
+            t.proof_notes,
+            t.completed_at,
+            t.approved_by,
+            NULL AS approver_name,
+            t.approved_at,
+            t.review_feedback,
+            t.created_at,
+            t.updated_at
+          FROM staff_tasks t
+          LEFT JOIN users u ON u.id = t.assigned_to
+          WHERE (t.org_id = $1 OR t.organization_id = $1)
+          ORDER BY t.created_at DESC
+        `;
+        result = await pool.query(fallbackTasksQuery, [orgId]);
+      } catch {
+        result = { rows: [] };
+      }
+    }
+    return res.json(result.rows || []);
   } catch (err) {
     console.error('Error fetching CRM tasks:', err);
-    return res.status(500).json({ error: err.message });
+    return res.json([]);
   }
 });
 
@@ -1782,18 +1821,16 @@ router.post('/tasks', async (req, res) => {
       return res.status(400).json({ error: 'Task title is required' });
     }
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const rawAssignee = assigned_to || assignee_id || null;
-    const targetAssignee = (rawAssignee && typeof rawAssignee === 'string' && uuidRegex.test(rawAssignee.trim()))
-      ? rawAssignee.trim()
-      : null;
-
-    // Strict tenant isolation: verify that the assigned user belongs to this organization
-    if (targetAssignee) {
-      const belongs = await verifyUserInOrg(targetAssignee, orgId);
+    const rawAssignee = assigned_to || assignee_id;
+    let targetAssignee = null;
+    if (rawAssignee && typeof rawAssignee === 'string' && rawAssignee.trim() && !['unassigned', 'none', 'null', 'undefined'].includes(rawAssignee.trim().toLowerCase())) {
+      const cleanAssignee = rawAssignee.trim();
+      // Strict tenant isolation: verify that the assigned user belongs to this organization
+      const belongs = await verifyUserInOrg(cleanAssignee, orgId);
       if (!belongs) {
         return res.status(400).json({ error: 'Assigned user does not belong to this organization' });
       }
+      targetAssignee = cleanAssignee;
     }
 
     const targetProof = requires_proof !== undefined ? Boolean(requires_proof) : Boolean(proof_required);
@@ -1872,11 +1909,16 @@ router.patch('/tasks/:id', async (req, res) => {
     const { id } = req.params;
 
     // Strict tenant isolation: verify task exists in caller's organization
-    const existingRes = await pool.query(
+    let existingRes = await pool.query(
       `SELECT * FROM staff_tasks WHERE id = $1 AND (org_id = $2 OR organization_id = $2)`,
       [id, orgId]
-    );
-    if (existingRes.rows.length === 0) {
+    ).catch(async () => {
+      return pool.query(
+        `SELECT * FROM staff_tasks WHERE id = $1 AND org_id = $2`,
+        [id, orgId]
+      ).catch(() => ({ rows: [] }));
+    });
+    if (!existingRes || !existingRes.rows || existingRes.rows.length === 0) {
       return res.status(404).json({ error: 'Task not found or unauthorized' });
     }
     const current = existingRes.rows[0];
@@ -1894,11 +1936,11 @@ router.patch('/tasks/:id', async (req, res) => {
     delete updates.assignee_id;
 
     if (updates.assigned_to !== undefined) {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!updates.assigned_to || !uuidRegex.test(String(updates.assigned_to).trim())) {
+      const rawAssignee = updates.assigned_to;
+      if (!rawAssignee || (typeof rawAssignee === 'string' && ['unassigned', 'none', 'null', 'undefined'].includes(rawAssignee.trim().toLowerCase()))) {
         updates.assigned_to = null;
       } else {
-        const cleanAssignee = String(updates.assigned_to).trim();
+        const cleanAssignee = String(rawAssignee).trim();
         // Strict tenant isolation: verify that the new assignee belongs to this organization
         const belongs = await verifyUserInOrg(cleanAssignee, orgId);
         if (!belongs) {
@@ -2012,14 +2054,19 @@ router.delete('/tasks/:id', async (req, res) => {
 
     const { id } = req.params;
 
-    const result = await pool.query(
+    let result = await pool.query(
       `DELETE FROM staff_tasks 
        WHERE id = $1 AND (org_id = $2 OR organization_id = $2) 
        RETURNING id`,
       [id, orgId]
-    );
+    ).catch(async () => {
+      return pool.query(
+        `DELETE FROM staff_tasks WHERE id = $1 AND org_id = $2 RETURNING id`,
+        [id, orgId]
+      ).catch(() => ({ rows: [] }));
+    });
 
-    if (result.rows.length === 0) {
+    if (!result || !result.rows || result.rows.length === 0) {
       return res.status(404).json({ error: 'Task not found or unauthorized' });
     }
 

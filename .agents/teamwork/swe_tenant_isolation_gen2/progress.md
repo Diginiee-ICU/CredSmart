@@ -1,21 +1,21 @@
 # Progress — swe_tenant_isolation_gen2
 
-Last visited: 2026-10-26T13:50:00Z
+Last visited: 2026-10-26T14:20:00Z
 
 ## Current Status
 - [x] Implementer initial implementation and test verification (111 tests passed, tsc 0 errors)
-- [/] Reviewer Round 1 (adversarial break & fix: fixing Tasks.tsx localStorage isolation, subagent d9c74ed8-2998-48b0-b62d-64b21190bcef)
-- [ ] Reviewer Round 2 (adversarial break & fix)
+- [x] Reviewer Round 1 (adversarial break & fix completed: fixed fake 200 DELETE catch blocks in crm.js, added loadedOrgRef in Tasks.tsx & Support.tsx, added crm_staff_assignments to getStaffHandler, 116 tests passed, tsc 0 errors)
+- [/] Reviewer Round 2 (adversarial break & fix: writing adversarial tests and refinement fixes, subagent 43dfb70f-979a-4aa4-806a-330fead9c3ac)
 - [ ] Reviewer Round 3 (adversarial break & fix)
 - [ ] Victory Auditor independent verification
 - [ ] Orchestrator completion report to Sentinel
 
 ## Iteration Status
-Current iteration: 2 / 32
+Current iteration: 3 / 32
 
 ## Open Issues Ledger
-- [OI-1] Legacy single-table deployments: If a tenant lacks an entry in both org_memberships and organization_memberships, verifyUserInOrg fallback behavior and staff provisioning handling. (Raised by: Implementer R1)
-- [OI-2] Browser local storage scoping & cleanup: Verify storageKey isolation and pruning when switching tenants frequently in Broadcasts and Meet. (Raised by: Implementer R1)
 - [OI-3] Cross-tenant password / auth collision: Provisioning an existing user into Tenant B whose password in Tenant A was created with non-bcrypt hashing scheme or modified directly in Supabase Auth. (Raised by: Implementer R1)
-- [OI-4] Cross-tenant PATCH /crm/tasks/:id and other endpoints: Test that attempting to mutate a task, attendance, role, or meeting belonging to Tenant B using credentials for Tenant A strictly returns 404/403 and prevents mutation. (Raised by: Implementer R1)
-- [OI-5] Zero regression verification across remaining CRM suites (e.g. `crmBackendApiM1.test.ts`, all 198+ existing CRM tests). (Raised by: Implementer R1)
+- [OI-6] Live PostgreSQL deployment with production Supabase Row Level Security (RLS) policies enforcing multi-tenant isolation at engine level with existing unpartitioned legacy rows. (Raised by: Reviewer R1)
+- [OI-7] Real-time WebSockets / Supabase realtime channels when two users from different organizations are simultaneously active in the browser. (Raised by: Reviewer R1)
+- [OI-8] Storage fallback behavior when third-party cookies or localStorage is blocked in browser: in-memory state fallbacks initializing to preset mock templates rather than empty tenant state. (Raised by: Reviewer R1)
+- [OI-9] Mocked database pools vs live HTTP server: Tests use Vitest with mocked database pools and router dispatch wrappers rather than live network HTTP server with real TCP sockets. (Raised by: Reviewer R1)

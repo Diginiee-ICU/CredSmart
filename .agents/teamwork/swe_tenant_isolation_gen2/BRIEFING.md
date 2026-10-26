@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-26T13:28:00Z
+# BRIEFING — 2026-10-26T14:02:00Z
 
 ## Mission
 Enforce strict multi-tenant organization isolation for CredSmart CRM across staff directory, attendance, tasks, salary profiles, roles, and CRM endpoints through 3 sequential reviewer rounds and victory audit.
@@ -16,7 +16,7 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM across staf
 1. **Decompose**: SWE Light does NOT decompose. Whole task given to each worker sequentially.
 2. **Dispatch & Execute**:
    - teamwork_preview_implementer -> produces working diff and test results (completed in Gen 1)
-   - teamwork_preview_reviewer -> tries to break diff and fixes it (minimum 3 review rounds: R1, R2, R3)
+   - teamwork_preview_reviewer -> tries to break diff and fixes it (minimum 3 review rounds: R1 [done], R2 [in-progress], R3 [pending])
    - teamwork_preview_victory_auditor -> independent verification
 3. **On failure**:
    - Carry cumulative open-issues ledger across all rounds
@@ -24,12 +24,12 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM across staf
 4. **Succession**: At threshold >= 16 spawns, soft handoff and self-succession.
 - **Work items**:
   1. Implementer Milestone [done]
-  2. Reviewer Round 1 [in-progress]
-  3. Reviewer Round 2 [pending]
+  2. Reviewer Round 1 [done]
+  3. Reviewer Round 2 [in-progress]
   4. Reviewer Round 3 [pending]
   5. Victory Audit [pending]
 - **Current phase**: 2
-- **Current focus**: Reviewer Round 1
+- **Current focus**: Reviewer Round 2
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files yourself. Delegate all implementation and repair to teamwork_preview_implementer and teamwork_preview_reviewer.
@@ -44,19 +44,19 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM across staf
 - Updated: 2026-10-26T13:25:27Z
 
 ## Key Decisions Made
-- Resuming SWE Light lifecycle at Reviewer Round 1 after predecessor session was interrupted.
-- Baseline: 111 CRM tests passing, 0 tsc errors.
-- Dispatched Reviewer Round 1 (conv ID: d9c74ed8-2998-48b0-b62d-64b21190bcef).
+- Reviewer Round 1 completed: fixed DELETE fake 200 bug, added loadedOrgRef in Tasks & Support, added crm_staff_assignments to getStaffHandler. 116 tests passing, 0 tsc errors.
+- Dispatched Reviewer Round 2 (conv ID: 43dfb70f-979a-4aa4-806a-330fead9c3ac) with updated open-issues ledger.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |---|---|---|---|---|
-| Reviewer R1 | teamwork_preview_reviewer | Adversarial Break & Fix Review Round 1 | in-progress | d9c74ed8-2998-48b0-b62d-64b21190bcef |
+| Reviewer R1 | teamwork_preview_reviewer | Adversarial Break & Fix Review Round 1 | completed | d9c74ed8-2998-48b0-b62d-64b21190bcef |
+| Reviewer R2 | teamwork_preview_reviewer | Adversarial Break & Fix Review Round 2 | in-progress | 43dfb70f-979a-4aa4-806a-330fead9c3ac |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 1 / 16
-- Pending subagents: d9c74ed8-2998-48b0-b62d-64b21190bcef
+- Spawn count: 2 / 16
+- Pending subagents: 43dfb70f-979a-4aa4-806a-330fead9c3ac
 - Predecessor: swe_tenant_isolation
 - Successor: not yet spawned
 
@@ -69,5 +69,5 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM across staf
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2\progress.md — progress tracking
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2\DISPATCH.md — dispatch instructions
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\implementer_tenant_iso_1\handoff.md — implementer handoff report
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_ti_gen2_r1\DISPATCH.md — Reviewer R1 dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_ti_gen2_r1\handoff.md — Reviewer R1 handoff report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_ti_gen2_r2\DISPATCH.md — Reviewer R2 dispatch instructions
