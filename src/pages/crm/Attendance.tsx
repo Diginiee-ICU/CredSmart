@@ -200,14 +200,14 @@ export default function Attendance(): React.ReactElement {
 
   const [attendanceRecords, setAttendanceRecords] = useState<CRMAttendanceRecord[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_ATTENDANCE_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_ATTENDANCE_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) return parsed;
-        } catch {
-          // ignore
         }
+      } catch {
+        // ignore
       }
     }
     return [];
@@ -215,14 +215,14 @@ export default function Attendance(): React.ReactElement {
 
   const [requests, setRequests] = useState<CRMAttendanceRequest[]>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`${STORAGE_REQUESTS_PREFIX}${effectiveOrgId}`);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(`${STORAGE_REQUESTS_PREFIX}${effectiveOrgId}`);
+        if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) return parsed;
-        } catch {
-          // ignore
         }
+      } catch {
+        // ignore
       }
     }
     return [];
