@@ -93,8 +93,23 @@ export default function AIAssistant(): React.ReactElement {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const loadedOrgRef = useRef<string | null>(orgId);
+
   useEffect(() => {
-    if (orgId) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setMessages(JSON.parse(saved));
+        loadedOrgRef.current = orgId;
+        return;
+      }
+    } catch {}
+    setMessages(INITIAL_MESSAGES);
+    loadedOrgRef.current = orgId;
+  }, [storageKey, orgId]);
+
+  useEffect(() => {
+    if (orgId && loadedOrgRef.current === orgId && messages.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     }
   }, [messages, storageKey, orgId]);

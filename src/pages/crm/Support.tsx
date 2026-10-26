@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   LifeBuoy,
   Plus,
@@ -226,8 +226,23 @@ export default function Support(): React.ReactElement {
   const [newPriority, setNewPriority] = useState<TicketPriority>("normal");
   const [newDescription, setNewDescription] = useState("");
 
+  const loadedOrgRef = useRef<string | null>(orgId);
+
   useEffect(() => {
-    if (orgId) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setTickets(JSON.parse(saved));
+        loadedOrgRef.current = orgId;
+        return;
+      }
+    } catch {}
+    setTickets(INITIAL_TICKETS.map((t) => ({ ...t, org_id: orgId || "" })));
+    loadedOrgRef.current = orgId;
+  }, [storageKey, orgId]);
+
+  useEffect(() => {
+    if (orgId && loadedOrgRef.current === orgId && tickets.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(tickets));
     }
   }, [tickets, storageKey, orgId]);

@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-25T20:34:00Z
+# BRIEFING — 2026-10-26T13:26:00Z
 
 ## Mission
 Enforce strict multi-tenant organization isolation for CredSmart CRM so that staff members, attendance, tasks, salary profiles, roles, and CRM operations are strictly scoped to the active organization (e.g., "Cred"), preventing any cross-tenant data or user visibility across different organizations.
@@ -48,8 +48,10 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM so that sta
 - Victory Auditor (Minimal Redesign): [to be spawned on victory claim]
 - Active Orchestrator (Mobile Cards Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Victory Auditor (Mobile Cards Modernization): 2a8e0dab-ae50-4423-aa41-e1b25238be9a
-- Active Orchestrator (SWE Tenant Isolation): 2c379784-fe44-4a5a-926c-fb71ccfb2a72
+- Active Orchestrator (SWE Tenant Isolation): 2c379784-fe44-4a5a-926c-fb71ccfb2a72 (terminated due to network outage)
 - Victory Auditor (SWE Tenant Isolation): [to be spawned on victory claim]
+- Active Orchestrator (SWE Tenant Isolation Gen 2): ddaf2611-f7a9-49ac-a76c-95a53bfa1d39
+- Victory Auditor (SWE Tenant Isolation Gen 2): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -80,23 +82,24 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM so that sta
 ## User Context
 - **Last user request**: Enforce strict multi-tenant organization isolation for CredSmart CRM across staff, attendance, tasks, salary profiles, roles, and endpoints.
 - **Pending clarifications**: none
-- **Delivered results**: SWE Light Orchestrator dispatched; crons active.
+- **Delivered results**: Gen 1 finished implementation with 111 passing tests. Gen 2 re-spawned to resume adversarial review rounds.
 
 ## Project Status
 - **Phase**: in progress
 - **Routing Decision**: SWE Light -> teamwork_preview_swe
-- **Active Orchestrator ID**: 2c379784-fe44-4a5a-926c-fb71ccfb2a72
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation
-- **Cron 1 (Reporting)**: task-28
-- **Cron 2 (Liveness)**: task-30
+- **Active Orchestrator ID**: ddaf2611-f7a9-49ac-a76c-95a53bfa1d39
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2
+- **Cron 1 (Reporting)**: task-338
+- **Cron 2 (Liveness)**: task-340
 
 ## Victory Audit Status
 - **Triggered**: no
 - **Verdict**: pending
 - **Auditor ID**: [to be spawned on victory claim]
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe_tenant_isolation
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\victory_auditor_swe_tenant_isolation_gen2
 - **Retry count**: 0
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation\DISPATCH.md — Dispatch instructions for SWE Light orchestrator
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2\DISPATCH.md — Dispatch instructions for SWE Light Gen 2 orchestrator
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2\progress.md — Progress tracking for Gen 2

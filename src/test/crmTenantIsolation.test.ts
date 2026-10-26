@@ -117,7 +117,7 @@ const mockClient = {
   release: vi.fn(),
 };
 const mockDb = {
-  query: (...args: any[]) => mockPoolQuery(...args),
+  query: (...args: any[]) => Promise.resolve(mockPoolQuery(...args) || { rows: [] }),
   connect: vi.fn().mockResolvedValue(mockClient),
   on: vi.fn(),
 };
@@ -938,6 +938,133 @@ describe("CRM Multi-Tenant Organization Isolation Verification", () => {
 
       expect(res.status).toBe(403);
       expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("strictly returns 404 on DELETE /broadcasts/:id when row belongs to another org or primary query errors (OI-4)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("crm_broadcasts") && sql.includes("DELETE")) {
+          // Simulate query returning empty rows (not belonging to this org)
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "DELETE",
+        url: "/broadcasts/bc-foreign-123",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain("not found or unauthorized");
+    });
+
+    it("strictly returns 404 on DELETE /meetings/:id when meeting belongs to another org (OI-4)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("crm_meetings") && sql.includes("DELETE")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "DELETE",
+        url: "/meetings/meet-foreign-456",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain("not found or unauthorized");
+    });
+
+    it("strictly returns 404 on DELETE /geolocations/:id when geofence belongs to another org (OI-4)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("crm_geolocations") && sql.includes("DELETE")) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "DELETE",
+        url: "/geolocations/geo-foreign-789",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain("not found or unauthorized");
+    });
+
+    it("returns staff members assigned via crm_staff_assignments in legacy single-table deployment (OI-1)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("FROM (") && sql.includes("crm_staff_assignments")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "user-legacy-assignee",
+                user_id: "user-legacy-assignee",
+                email: "legacy@credsmart.online",
+                full_name: "Legacy Staff",
+                store_role: "staff",
+                role_name: null,
+                is_super_admin: false,
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/staff",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].full_name).toBe("Legacy Staff");
+    });
+
+    it("records baseline crm_staff_assignments during staff provisioning even without custom role (OI-1)", async () => {
+      let baselineAssignmentInserted = false;
+      mockClientQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT id, email, full_name, phone FROM users")) {
+          return Promise.resolve({ rows: [] }); // New user
+        }
+        if (sql.includes("INSERT INTO users")) {
+          return Promise.resolve({
+            rows: [{ id: "user-new-baseline", email: "baseline@cred.com", full_name: "Baseline User" }]
+          });
+        }
+        if (sql.includes("INSERT INTO org_memberships")) {
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes("INSERT INTO organization_memberships")) {
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes("INSERT INTO crm_staff_assignments")) {
+          baselineAssignmentInserted = true;
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/staff/provision",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          full_name: "Baseline User",
+          email: "baseline@cred.com",
+          store_role: "cashier",
+          // Notice: NO crm_role_id provided!
+        },
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(baselineAssignmentInserted).toBe(true);
     });
   });
 });

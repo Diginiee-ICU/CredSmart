@@ -149,19 +149,23 @@ export default function Broadcasts(): React.ReactElement {
   const [newAudience, setNewAudience] = useState<TargetAudience>("all");
   const [newPinned, setNewPinned] = useState(false);
 
+  const loadedOrgRef = useRef<string | null>(orgId);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         setBroadcasts(JSON.parse(saved));
+        loadedOrgRef.current = orgId;
         return;
       }
     } catch {}
     setBroadcasts(INITIAL_BROADCASTS.map((b) => ({ ...b, org_id: orgId || "" })));
+    loadedOrgRef.current = orgId;
   }, [storageKey, orgId]);
 
   useEffect(() => {
-    if (orgId && broadcasts.length > 0) {
+    if (orgId && loadedOrgRef.current === orgId && broadcasts.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(broadcasts));
     }
   }, [broadcasts, storageKey, orgId]);

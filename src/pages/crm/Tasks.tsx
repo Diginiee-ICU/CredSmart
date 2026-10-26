@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -185,21 +185,25 @@ export default function Tasks(): React.ReactElement {
   );
   const [newRequiresProof, setNewRequiresProof] = useState(true);
 
+  const loadedOrgRef = useRef<string | null>(orgId);
+
   // Reload tasks on storageKey / orgId change
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         setTasks(JSON.parse(saved));
+        loadedOrgRef.current = orgId;
         return;
       }
     } catch {}
     setTasks(INITIAL_TASKS.map((t) => ({ ...t, org_id: orgId || "" })));
+    loadedOrgRef.current = orgId;
   }, [storageKey, orgId]);
 
-  // Sync to localStorage
+  // Sync to localStorage (guarded by loadedOrgRef so old org tasks never overwrite new org storage)
   useEffect(() => {
-    if (orgId && tasks.length > 0) {
+    if (orgId && loadedOrgRef.current === orgId && tasks.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(tasks));
     }
   }, [tasks, storageKey, orgId]);

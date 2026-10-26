@@ -12,20 +12,24 @@ router.use(authenticate);
  * Resolves the active organization ID strictly from request headers, query, or body.
  */
 const resolveOrgId = (req) => {
-  return (
+  const raw =
     req.headers['x-organization-id'] ||
     req.query.organization_id ||
     req.query.org_id ||
     req.body?.organization_id ||
     req.body?.org_id ||
     req.orgId ||
-    null
-  );
+    null;
+  if (!raw || raw === 'undefined' || raw === 'null' || !String(raw).trim()) {
+    return null;
+  }
+  return String(raw).trim();
 };
 
 /**
  * Verifies that a user is an active member of the specified organization.
  * Prevents cross-organization user references in tasks, attendance, and payroll.
+ * Supports org_memberships, organization_memberships, and crm_staff_assignments.
  */
 const verifyUserInOrg = async (userId, orgId) => {
   if (!userId || !orgId) return false;
@@ -35,6 +39,8 @@ const verifyUserInOrg = async (userId, orgId) => {
          SELECT user_id FROM org_memberships WHERE user_id = $1 AND org_id = $2
          UNION
          SELECT user_id FROM organization_memberships WHERE user_id = $1 AND organization_id = $2
+         UNION
+         SELECT COALESCE(user_id, staff_id) AS user_id FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1) AND (org_id = $2 OR organization_id = $2)
        ) m LIMIT 1`,
       [userId, orgId]
     );
@@ -71,6 +77,14 @@ const verifyUserInOrg = async (userId, orgId) => {
         if (r2b.rows.length > 0) return true;
       } catch {}
     }
+
+    try {
+      const r3 = await pool.query(
+        `SELECT 1 FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1) AND (org_id = $2 OR organization_id = $2) LIMIT 1`,
+        [userId, orgId]
+      );
+      if (r3.rows.length > 0) return true;
+    } catch {}
 
     return false;
   }
@@ -431,7 +445,7 @@ router.post('/staff/provision', async (req, res) => {
 
     // 1. Check if user exists in database
     const existingUserRes = await client.query(
-      `SELECT id, email, full_name, phone, password_hash FROM users WHERE LOWER(TRIM(email)) = $1`,
+      `SELECT id, email, full_name, phone FROM users WHERE LOWER(TRIM(email)) = $1`,
       [normalizedEmail]
     );
 
@@ -439,10 +453,22 @@ router.post('/staff/provision', async (req, res) => {
     let isNewUser = false;
     let existingPasswordHash = null;
 
-    if (existingUserRes.rows.length > 0) {
+    if (existingUserRes && existingUserRes.rows && existingUserRes.rows.length > 0) {
       const existingUser = existingUserRes.rows[0];
       userId = existingUser.id;
-      existingPasswordHash = existingUser.password_hash;
+      existingPasswordHash = existingUser.password_hash || null;
+
+      if (!existingPasswordHash) {
+        try {
+          const pwdRes = await client.query(
+            `SELECT password_hash FROM users WHERE id = $1`,
+            [userId]
+          );
+          if (pwdRes && pwdRes.rows && pwdRes.rows[0] && pwdRes.rows[0].password_hash) {
+            existingPasswordHash = pwdRes.rows[0].password_hash;
+          }
+        } catch {}
+      }
 
       // Check if already a member of this specific organization
       let existingMember = false;
@@ -452,23 +478,33 @@ router.post('/staff/provision', async (req, res) => {
              SELECT user_id FROM org_memberships WHERE user_id = $1 AND org_id = $2
              UNION
              SELECT user_id FROM organization_memberships WHERE user_id = $1 AND organization_id = $2
+             UNION
+             SELECT COALESCE(user_id, staff_id) AS user_id FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1) AND (org_id = $2 OR organization_id = $2)
            ) m LIMIT 1`,
           [userId, orgId]
         );
-        existingMember = existingMemberRes.rows.length > 0;
+        existingMember = existingMemberRes && existingMemberRes.rows && existingMemberRes.rows.length > 0;
       } catch {
         const m1 = await client.query(
           `SELECT 1 FROM org_memberships WHERE user_id = $1 AND org_id = $2 LIMIT 1`,
           [userId, orgId]
         ).catch(() => ({ rows: [] }));
-        if (m1.rows.length > 0) {
+        if (m1 && m1.rows && m1.rows.length > 0) {
           existingMember = true;
         } else {
           const m2 = await client.query(
             `SELECT 1 FROM organization_memberships WHERE user_id = $1 AND organization_id = $2 LIMIT 1`,
             [userId, orgId]
           ).catch(() => ({ rows: [] }));
-          existingMember = m2.rows.length > 0;
+          if (m2 && m2.rows && m2.rows.length > 0) {
+            existingMember = true;
+          } else {
+            const m3 = await client.query(
+              `SELECT 1 FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1) AND (org_id = $2 OR organization_id = $2) LIMIT 1`,
+              [userId, orgId]
+            ).catch(() => ({ rows: [] }));
+            existingMember = m3 && m3.rows && m3.rows.length > 0;
+          }
         }
       }
 
@@ -541,6 +577,16 @@ router.post('/staff/provision', async (req, res) => {
         [userId, orgId, finalStoreRole, req.user?.id || null]
       ).catch(() => {});
     }
+
+    // Baseline CRM staff assignment to guarantee org scoping in single-table deployments
+    try {
+      await client.query(
+        `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, assigned_by)
+         VALUES ($1, $1, $2, $2, $3)
+         ON CONFLICT (user_id, org_id) DO NOTHING`,
+        [orgId, userId, req.user?.id || null]
+      );
+    } catch {}
 
     // 3. Assign CRM Role strictly scoped to this organization if provided
     let assignedRole = null;
@@ -680,6 +726,9 @@ const getStaffHandler = async (req, res) => {
         UNION
         SELECT id, user_id, organization_id AS org_id, role, created_at FROM organization_memberships
         WHERE organization_id = $1
+        UNION
+        SELECT id, COALESCE(user_id, staff_id) AS user_id, COALESCE(org_id, organization_id) AS org_id, 'staff' AS role, created_at FROM crm_staff_assignments
+        WHERE org_id = $1 OR organization_id = $1
       ) m
       JOIN users u ON u.id = m.user_id
       LEFT JOIN crm_staff_assignments sa 
@@ -749,7 +798,28 @@ const getStaffHandler = async (req, res) => {
           ${req.query.user_id ? 'WHERE u.id = $2' : ''}
           ORDER BY u.id, m.created_at ASC
         `;
-        result = await pool.query(fallback2, params).catch(() => ({ rows: [] }));
+        try {
+          result = await pool.query(fallback2, params);
+        } catch {
+          const fallback3 = `
+            SELECT DISTINCT ON (u.id)
+              u.id, u.id AS user_id, u.id AS staff_id, u.email,
+              COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+              COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS name,
+              u.phone, u.avatar_url,
+              'staff' AS store_role, 'staff' AS role,
+              m.id AS membership_id, NULL AS crm_role_id, NULL AS role_id, NULL AS role_name,
+              NULL AS crm_role_name, NULL AS crm_role_color, NULL AS crm_role_icon,
+              FALSE AS is_super_admin, m.created_at AS assigned_at
+            FROM (
+              SELECT id, COALESCE(user_id, staff_id) AS user_id, created_at FROM crm_staff_assignments WHERE org_id = $1 OR organization_id = $1
+            ) m
+            JOIN users u ON u.id = m.user_id
+            ${req.query.user_id ? 'WHERE u.id = $2' : ''}
+            ORDER BY u.id, m.created_at ASC
+          `;
+          result = await pool.query(fallback3, params).catch(() => ({ rows: [] }));
+        }
       }
     }
 
@@ -815,7 +885,14 @@ const assignStaffRoleHandler = async (req, res) => {
       }
     }
 
-    // Sync crm_staff_roles
+    // Sync crm_staff_roles (prune prior roles for this org first to prevent role bleeding)
+    await pool.query(
+      `DELETE FROM crm_staff_roles 
+       WHERE (staff_id = $1)
+         AND role_id IN (SELECT id FROM crm_roles WHERE (org_id = $2 OR organization_id = $2) AND id != $3)`,
+      [userId, orgId, roleId]
+    ).catch(() => {});
+
     await pool.query(
       `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by)
        VALUES ($1, $2, $3)
@@ -2010,12 +2087,17 @@ router.delete('/broadcasts/:id', async (req, res) => {
     if (!orgId) return res.status(400).json({ error: 'Organization context is required' });
 
     const { id } = req.params;
-    const result = await pool.query(
+    let result = await pool.query(
       `DELETE FROM crm_broadcasts WHERE id = $1 AND (org_id = $2 OR organization_id = $2) RETURNING id`,
       [id, orgId]
-    ).catch(() => ({ rows: [{ id }] }));
+    ).catch(async () => {
+      return pool.query(
+        `DELETE FROM crm_broadcasts WHERE id = $1 AND org_id = $2 RETURNING id`,
+        [id, orgId]
+      ).catch(() => ({ rows: [] }));
+    });
 
-    if (result.rows.length === 0) {
+    if (!result || !result.rows || result.rows.length === 0) {
       return res.status(404).json({ error: 'Broadcast not found or unauthorized' });
     }
 
@@ -2091,12 +2173,17 @@ router.delete('/meetings/:id', async (req, res) => {
     if (!orgId) return res.status(400).json({ error: 'Organization context is required' });
 
     const { id } = req.params;
-    const result = await pool.query(
+    let result = await pool.query(
       `DELETE FROM crm_meetings WHERE id = $1 AND (org_id = $2 OR organization_id = $2) RETURNING id`,
       [id, orgId]
-    ).catch(() => ({ rows: [{ id }] }));
+    ).catch(async () => {
+      return pool.query(
+        `DELETE FROM crm_meetings WHERE id = $1 AND org_id = $2 RETURNING id`,
+        [id, orgId]
+      ).catch(() => ({ rows: [] }));
+    });
 
-    if (result.rows.length === 0) {
+    if (!result || !result.rows || result.rows.length === 0) {
       return res.status(404).json({ error: 'Meeting not found or unauthorized' });
     }
 
@@ -2229,14 +2316,19 @@ router.delete('/geolocations/:id', async (req, res) => {
     if (!orgId) return res.status(400).json({ error: 'Organization context is required' });
 
     const { id } = req.params;
-    const result = await pool.query(
+    let result = await pool.query(
       `DELETE FROM crm_geolocations
        WHERE id = $1 AND (org_id = $2 OR organization_id = $2)
        RETURNING id`,
       [id, orgId]
-    ).catch(() => ({ rows: [{ id }] }));
+    ).catch(async () => {
+      return pool.query(
+        `DELETE FROM crm_geolocations WHERE id = $1 AND org_id = $2 RETURNING id`,
+        [id, orgId]
+      ).catch(() => ({ rows: [] }));
+    });
 
-    if (result.rows.length === 0) {
+    if (!result || !result.rows || result.rows.length === 0) {
       return res.status(404).json({ error: 'Geolocation not found or unauthorized' });
     }
 

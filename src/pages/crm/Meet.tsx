@@ -152,19 +152,23 @@ export default function Meet(): React.ReactElement {
   const [newDuration, setNewDuration] = useState("30");
   const [newDepartment, setNewDepartment] = useState("Retail Counter");
 
+  const loadedOrgRef = useRef<string | null>(orgId);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         setMeetings(JSON.parse(saved));
+        loadedOrgRef.current = orgId;
         return;
       }
     } catch {}
     setMeetings(INITIAL_MEETINGS.map((m) => ({ ...m, org_id: orgId || "" })));
+    loadedOrgRef.current = orgId;
   }, [storageKey, orgId]);
 
   useEffect(() => {
-    if (orgId && meetings.length > 0) {
+    if (orgId && loadedOrgRef.current === orgId && meetings.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(meetings));
     }
   }, [meetings, storageKey, orgId]);

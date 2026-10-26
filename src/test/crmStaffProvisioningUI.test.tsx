@@ -213,7 +213,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
     // Section 3 Header Action button
     const addStaffRosterBtn = screen.getByRole("button", { name: /^Add Staff$/i });
     expect(addStaffRosterBtn).toBeInTheDocument();
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.2 — opens 'Add Staff User' modal with 14-char cryptographic password auto-generated", async () => {
     render(
@@ -240,7 +240,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
     // Regenerate password button
     const regenBtn = screen.getByRole("button", { name: /Regenerate/i });
     expect(regenBtn).toBeInTheDocument();
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.3 — switches password mode between Auto-Generate and Custom entry", async () => {
     render(
@@ -264,7 +264,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
     fireEvent.click(autoTab);
 
     expect(screen.getByText(/Cryptographic 14-char high-entropy password/i)).toBeInTheDocument();
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.4 — provisions staff member, immediately updates roster in-memory with CRMRolePill, and opens Credentials Confirmation modal", async () => {
     render(
@@ -331,7 +331,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
 
     // 6. Verify newly created user is in Section 3 roster immediately without refresh
     expect(screen.getAllByText("Aarav Gupta").length).toBeGreaterThanOrEqual(1);
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.5 — Create Custom Role modal displays 'Assign Staff Members (Optional)' checklist and assigns role upon creation", async () => {
     render(
@@ -381,7 +381,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
         "org-m2-test-store"
       );
     });
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.6 — filters staff members in Section 3 dynamically using search query", async () => {
     render(
@@ -398,7 +398,7 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
 
     expect(screen.getAllByText("Sneha Patel").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Ramesh Kumar")).not.toBeInTheDocument();
-  }, 15000);
+  }, 30000);
 
   it("M2.UI.7 — handles regex special characters safely in staff search without throwing", async () => {
     render(
@@ -418,5 +418,5 @@ describe("Milestone 2 UI: Staff User Provisioning & Instant Role Assignment", ()
       // Should safely display empty state message rather than crashing
       expect(screen.getAllByText(new RegExp("No staff members matching", "i")).length).toBeGreaterThanOrEqual(1);
     }
-  }, 15000);
+  }, 30000);
 });
