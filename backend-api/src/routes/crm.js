@@ -1866,9 +1866,13 @@ router.post('/tasks', async (req, res) => {
     let assigneeEmail = null;
     let assigneeAvatarUrl = null;
     if (targetAssignee) {
-      const uRes = await pool.query('SELECT full_name, email, avatar_url FROM users WHERE id = $1', [targetAssignee]);
+      const uRes = await pool.query('SELECT full_name, name, email, avatar_url FROM users WHERE id = $1', [targetAssignee]);
       if (uRes.rows.length > 0) {
-        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email || assigneeName;
+        assigneeName =
+          (uRes.rows[0].full_name && uRes.rows[0].full_name.trim()) ||
+          (uRes.rows[0].name && uRes.rows[0].name.trim()) ||
+          uRes.rows[0].email ||
+          assigneeName;
         assigneeEmail = uRes.rows[0].email;
         assigneeAvatarUrl = uRes.rows[0].avatar_url;
       }
@@ -1876,9 +1880,12 @@ router.post('/tasks', async (req, res) => {
 
     let creatorName = 'System';
     if (req.user?.id) {
-      const cRes = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [req.user.id]);
+      const cRes = await pool.query('SELECT full_name, name, email FROM users WHERE id = $1', [req.user.id]);
       if (cRes.rows.length > 0) {
-        creatorName = cRes.rows[0].full_name || cRes.rows[0].email;
+        creatorName =
+          (cRes.rows[0].full_name && cRes.rows[0].full_name.trim()) ||
+          (cRes.rows[0].name && cRes.rows[0].name.trim()) ||
+          cRes.rows[0].email;
       }
     }
 
@@ -2006,9 +2013,13 @@ router.patch('/tasks/:id', async (req, res) => {
     let assigneeEmail = null;
     let assigneeAvatarUrl = null;
     if (updatedTask.assigned_to) {
-      const uRes = await pool.query('SELECT full_name, email, avatar_url FROM users WHERE id = $1', [updatedTask.assigned_to]);
+      const uRes = await pool.query('SELECT full_name, name, email, avatar_url FROM users WHERE id = $1', [updatedTask.assigned_to]);
       if (uRes.rows.length > 0) {
-        assigneeName = uRes.rows[0].full_name || uRes.rows[0].email || assigneeName;
+        assigneeName =
+          (uRes.rows[0].full_name && uRes.rows[0].full_name.trim()) ||
+          (uRes.rows[0].name && uRes.rows[0].name.trim()) ||
+          uRes.rows[0].email ||
+          assigneeName;
         assigneeEmail = uRes.rows[0].email;
         assigneeAvatarUrl = uRes.rows[0].avatar_url;
       }
@@ -2016,17 +2027,23 @@ router.patch('/tasks/:id', async (req, res) => {
 
     let approverName = null;
     if (updatedTask.approved_by) {
-      const aRes = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [updatedTask.approved_by]);
+      const aRes = await pool.query('SELECT full_name, name, email FROM users WHERE id = $1', [updatedTask.approved_by]);
       if (aRes.rows.length > 0) {
-        approverName = aRes.rows[0].full_name || aRes.rows[0].email;
+        approverName =
+          (aRes.rows[0].full_name && aRes.rows[0].full_name.trim()) ||
+          (aRes.rows[0].name && aRes.rows[0].name.trim()) ||
+          aRes.rows[0].email;
       }
     }
 
     let creatorName = 'System';
     if (updatedTask.assigned_by || updatedTask.created_by) {
-      const cRes = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [updatedTask.assigned_by || updatedTask.created_by]);
+      const cRes = await pool.query('SELECT full_name, name, email FROM users WHERE id = $1', [updatedTask.assigned_by || updatedTask.created_by]);
       if (cRes.rows.length > 0) {
-        creatorName = cRes.rows[0].full_name || cRes.rows[0].email;
+        creatorName =
+          (cRes.rows[0].full_name && cRes.rows[0].full_name.trim()) ||
+          (cRes.rows[0].name && cRes.rows[0].name.trim()) ||
+          cRes.rows[0].email;
       }
     }
 

@@ -62,14 +62,6 @@ interface ShowcaseStaff {
   bgColor: string;
 }
 
-const DEFAULT_STAFF: ShowcaseStaff[] = [
-  { id: "s1", name: "Suresh", initials: "SU", bgColor: "bg-[#2563EB]" },
-  { id: "s2", name: "Pushpa", initials: "PS", bgColor: "bg-[#059669]" },
-  { id: "s3", name: "Rajesh", initials: "RA", bgColor: "bg-[#D97706]" },
-  { id: "s4", name: "Meenakshi", initials: "ME", bgColor: "bg-[#7C3AED]" },
-  { id: "s5", name: "Anjali", initials: "AN", bgColor: "bg-[#E11D48]" },
-];
-
 /**
  * CRMDashboard
  * Main CRM Command Center dashboard redesigned exactly to match reference image
@@ -83,7 +75,7 @@ export default function CRMDashboard(): React.ReactElement {
   const [refreshing, setRefreshing] = useState(false);
   const [staffSearchQuery, setStaffSearchQuery] = useState("");
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const [dynamicStaff, setDynamicStaff] = useState<ShowcaseStaff[]>(DEFAULT_STAFF);
+  const [dynamicStaff, setDynamicStaff] = useState<ShowcaseStaff[]>([]);
 
   const [stats, setStats] = useState<CRMStats>({
     staffCount: 1,
@@ -102,7 +94,7 @@ export default function CRMDashboard(): React.ReactElement {
         unreadBroadcasts: 0,
         upcomingMeetings: 0,
       });
-      setDynamicStaff(DEFAULT_STAFF);
+      setDynamicStaff([]);
       setLoading(false);
       setRefreshing(false);
       return;
@@ -221,16 +213,9 @@ export default function CRMDashboard(): React.ReactElement {
 
       if (realStaffRoster.length > 0) {
         staff = Math.max(staff, realStaffRoster.length);
-        const mergedPills = [...realStaffRoster];
-        for (const def of DEFAULT_STAFF) {
-          if (mergedPills.length >= 5) break;
-          if (!mergedPills.some((p) => p.name.toLowerCase() === def.name.toLowerCase())) {
-            mergedPills.push(def);
-          }
-        }
-        setDynamicStaff(mergedPills);
+        setDynamicStaff(realStaffRoster);
       } else {
-        setDynamicStaff(DEFAULT_STAFF);
+        setDynamicStaff([]);
       }
 
       // Fallback to localStorage for sub-metrics if Supabase returned 0
@@ -309,14 +294,9 @@ export default function CRMDashboard(): React.ReactElement {
                 ...prev,
                 staffCount: Math.max(prev.staffCount, serverRoster.length),
               }));
-              const merged = [...serverRoster];
-              for (const def of DEFAULT_STAFF) {
-                if (merged.length >= 5) break;
-                if (!merged.some((p) => p.name.toLowerCase() === def.name.toLowerCase())) {
-                  merged.push(def);
-                }
-              }
-              setDynamicStaff(merged);
+              setDynamicStaff(serverRoster);
+            } else if (realStaffRoster.length === 0) {
+              setDynamicStaff([]);
             }
           }
         }).catch(() => {});
@@ -739,9 +719,18 @@ export default function CRMDashboard(): React.ReactElement {
                   <span className="text-xs font-semibold">{staff.name}</span>
                 </button>
               ))
-            ) : (
+            ) : staffSearchQuery.trim() ? (
               <div className="text-xs text-slate-400 italic py-1">
                 No staff found matching "{staffSearchQuery}".
+              </div>
+            ) : (
+              <div className="w-full p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 text-center space-y-1">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  No staff members provisioned yet.
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Click <span className="font-semibold text-blue-600">+ Add Staff</span> to onboard your team.
+                </p>
               </div>
             )}
           </div>

@@ -551,7 +551,12 @@ export default function RoleManagement(): React.ReactElement {
         staffListBuilt.push({
           id: user.id,
           membershipId: "current-user-membership",
-          name: user.email?.split("@")[0] || "Organization Owner",
+          name:
+            (user.user_metadata?.full_name as string)?.trim() ||
+            (user.user_metadata?.name as string)?.trim() ||
+            (user as any)?.name?.trim() ||
+            user.email?.split("@")[0] ||
+            "Organization Owner",
           role: userRole || "store_owner",
           crmRoleId: resolvedRoles[0]?.id,
           email: user.email || undefined,
@@ -987,12 +992,19 @@ export default function RoleManagement(): React.ReactElement {
   useEffect(() => {
     const action = searchParams.get("action");
     const view = searchParams.get("view");
+    const prefillName = searchParams.get("name");
 
     if (action === "add-staff") {
       openAddStaffModal();
+      if (prefillName && prefillName.trim()) {
+        const clean = prefillName.trim();
+        setStaffFormFullName(clean);
+        setStaffFormAutoPassword(generateStaffDefaultPassword(clean));
+      }
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.delete("action");
+        next.delete("name");
         return next;
       }, { replace: true });
     } else if (action === "create-role") {

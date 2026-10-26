@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-26T13:26:00Z
+# BRIEFING — 2026-10-26T16:46:00Z
 
 ## Mission
-Enforce strict multi-tenant organization isolation for CredSmart CRM so that staff members, attendance, tasks, salary profiles, roles, and CRM operations are strictly scoped to the active organization (e.g., "Cred"), preventing any cross-tenant data or user visibility across different organizations.
+Perform a deep recheck and hardening of CredSmart CRM across multi-tenant isolation, real staff visibility (eliminating mock demo staff on the dashboard), human display name preservation, default password generation (name123), and task assignment features, ensuring 100% test passing and zero regressions.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -50,8 +50,10 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM so that sta
 - Victory Auditor (Mobile Cards Modernization): 2a8e0dab-ae50-4423-aa41-e1b25238be9a
 - Active Orchestrator (SWE Tenant Isolation): 2c379784-fe44-4a5a-926c-fb71ccfb2a72 (terminated due to network outage)
 - Victory Auditor (SWE Tenant Isolation): [to be spawned on victory claim]
-- Active Orchestrator (SWE Tenant Isolation Gen 2): ddaf2611-f7a9-49ac-a76c-95a53bfa1d39
-- Victory Auditor (SWE Tenant Isolation Gen 2): [to be spawned on victory claim]
+- Active Orchestrator (SWE Tenant Isolation Gen 2): ddaf2611-f7a9-49ac-a76c-95a53bfa1d39 (victory confirmed)
+- Victory Auditor (SWE Tenant Isolation Gen 2): 821cae1a-e032-4e96-b736-ebcc5a0d8bc4 (victory confirmed)
+- Active Orchestrator (SWE CRM Hardening): de9ee5f3-aa5e-4256-bde3-aa61264e04df
+- Victory Auditor (SWE CRM Hardening): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -78,29 +80,28 @@ Enforce strict multi-tenant organization isolation for CredSmart CRM so that sta
 - Flat minimal list rows with divide-y divide-slate-100 dark:divide-slate-800/60 replacing boxy nested card containers
 - Multi-tenant organization isolation: CRM staff, attendance, tasks, salary profiles, roles strictly scoped to active org
 - 0 cross-tenant visibility or bleeding between organizations
+- Strict Real Staff Visibility: eliminate DEFAULT_STAFF mock data from CRMDashboard.tsx
+- Human display name fallback (users.name if users.full_name is empty) across backend and frontend
+- Default password generation format: {firstName}123 (minimum 6 characters)
 
 ## User Context
-- **Last user request**: Enforce strict multi-tenant organization isolation for CredSmart CRM across staff, attendance, tasks, salary profiles, roles, and endpoints.
+- **Last user request**: Deep recheck and hardening of CredSmart CRM across multi-tenant isolation, real staff visibility (eliminating mock demo staff on the dashboard), human display name preservation, default password generation (name123), and task assignment features, ensuring 100% test passing and zero regressions.
 - **Pending clarifications**: none
-- **Delivered results**: Complete strict multi-tenant organization isolation across staff directory, attendance, tasks, salary profiles, roles, and CRM endpoints. 125 canonical CRM tests passed, 11 submodules tests passed, 0 tsc errors, 0 quarantine regressions.
+- **Delivered results**: In progress. Dispatched SWE Light Orchestrator (`teamwork_preview_swe`).
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
 - **Routing Decision**: SWE Light -> teamwork_preview_swe
-- **Active Orchestrator ID**: ddaf2611-f7a9-49ac-a76c-95a53bfa1d39 (terminated upon completion)
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2
-- **Cron 1 (Reporting)**: cancelled
-- **Cron 2 (Liveness)**: cancelled
+- **Active Orchestrator ID**: de9ee5f3-aa5e-4256-bde3-aa61264e04df
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_crm_hardening
+- **Cron 1 (Reporting)**: task-26 (`*/8 * * * *`)
+- **Cron 2 (Liveness)**: task-28 (`*/10 * * * *`)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
-- **Auditor ID**: 821cae1a-e032-4e96-b736-ebcc5a0d8bc4
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_swe_ti_gen2
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_tenant_isolation_gen2\handoff.md — Orchestrator completion report
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_swe_ti_gen2\handoff.md — Victory Auditor report with VERDICT: VICTORY CONFIRMED
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\sentinel\handoff.md — Sentinel final handoff report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_crm_hardening\DISPATCH.md — Dispatch instructions
