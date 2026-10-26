@@ -102,6 +102,7 @@ export default function CRMDashboard(): React.ReactElement {
         unreadBroadcasts: 0,
         upcomingMeetings: 0,
       });
+      setDynamicStaff(DEFAULT_STAFF);
       setLoading(false);
       setRefreshing(false);
       return;
@@ -127,7 +128,7 @@ export default function CRMDashboard(): React.ReactElement {
       }
       setStats((prev) => ({ ...prev, todayAttendance: attendance }));
 
-      // 2. Staff count: query organization_memberships directly with fallback
+      // 2. Staff count: query organization_memberships directly
       let staff = 1;
       try {
         const { count, error, data } = await supabase
@@ -188,6 +189,90 @@ export default function CRMDashboard(): React.ReactElement {
         meetings = 0;
       }
 
+      // Check localStorage cached staff roster (hydrated instantly when staff is provisioned)
+      const realStaffRoster: ShowcaseStaff[] = [];
+      const bgPalette = ["bg-[#2563EB]", "bg-[#059669]", "bg-[#D97706]", "bg-[#7C3AED]", "bg-[#E11D48]"];
+
+      try {
+        const cachedRaw = localStorage.getItem(`credsmart_crm_staff_${activeOrgId}`);
+        if (cachedRaw) {
+          const cachedStaff = JSON.parse(cachedRaw);
+          if (Array.isArray(cachedStaff) && cachedStaff.length > 0) {
+            cachedStaff.forEach((cs: any, idx: number) => {
+              const name = String(cs.name || cs.full_name || "").trim();
+              const sId = String(cs.id || `cached-${idx}`);
+              if (name && !realStaffRoster.some((r) => r.id === sId || r.name.toLowerCase() === name.toLowerCase())) {
+                const parts = name.split(/\s+/);
+                const initials =
+                  parts.length > 1
+                    ? (parts[0][0] + parts[1][0]).toUpperCase()
+                    : name.slice(0, 2).toUpperCase();
+                realStaffRoster.push({
+                  id: sId,
+                  name,
+                  initials,
+                  bgColor: bgPalette[realStaffRoster.length % bgPalette.length],
+                });
+              }
+            });
+          }
+        }
+      } catch {}
+
+      if (realStaffRoster.length > 0) {
+        staff = Math.max(staff, realStaffRoster.length);
+        const mergedPills = [...realStaffRoster];
+        for (const def of DEFAULT_STAFF) {
+          if (mergedPills.length >= 5) break;
+          if (!mergedPills.some((p) => p.name.toLowerCase() === def.name.toLowerCase())) {
+            mergedPills.push(def);
+          }
+        }
+        setDynamicStaff(mergedPills);
+      } else {
+        setDynamicStaff(DEFAULT_STAFF);
+      }
+
+      // Fallback to localStorage for sub-metrics if Supabase returned 0
+      if (tasks === 0) {
+        try {
+          const cachedTasksRaw = localStorage.getItem(`credsmart_crm_tasks_${activeOrgId}`);
+          if (cachedTasksRaw) {
+            const cachedTasks = JSON.parse(cachedTasksRaw);
+            if (Array.isArray(cachedTasks)) {
+              tasks = cachedTasks.filter((t: any) => t.status !== "done" && t.status !== "completed").length;
+            }
+          }
+        } catch {}
+      }
+
+      if (broadcasts === 0) {
+        try {
+          const cachedRaw = localStorage.getItem(`credsmart_crm_broadcasts_${activeOrgId}`);
+          if (cachedRaw) {
+            const cachedList = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedList)) {
+              broadcasts = cachedList.length;
+            }
+          }
+        } catch {}
+      }
+
+      if (meetings === 0) {
+        try {
+          const cachedRaw = localStorage.getItem(`credsmart_crm_meetings_${activeOrgId}`);
+          if (cachedRaw) {
+            const cachedList = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedList)) {
+              const todayStr = new Date().toISOString().split("T")[0];
+              meetings = cachedList.filter(
+                (m: any) => m.scheduled_date >= todayStr || m.status === "in_progress"
+              ).length;
+            }
+          }
+        } catch {}
+      }
+
       setStats({
         staffCount: staff,
         todayAttendance: attendance,
@@ -195,6 +280,72 @@ export default function CRMDashboard(): React.ReactElement {
         unreadBroadcasts: broadcasts,
         upcomingMeetings: meetings,
       });
+
+      // Asynchronous background hydration from authoritative crmApi endpoints
+      if (typeof crmApi?.getCRMStaff === "function") {
+        crmApi.getCRMStaff(activeOrgId).then((res) => {
+          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            const serverRoster: ShowcaseStaff[] = [];
+            res.data.forEach((m, idx) => {
+              const rawName = m.full_name || m.name || (m.email ? m.email.split("@")[0] : `Staff ${idx + 1}`);
+              const name = rawName.trim();
+              const sId = String(m.user_id || m.id || `staff-${idx}`);
+              if (name && !serverRoster.some((r) => r.id === sId || r.name.toLowerCase() === name.toLowerCase())) {
+                const parts = name.split(/\s+/);
+                const initials =
+                  parts.length > 1
+                    ? (parts[0][0] + parts[1][0]).toUpperCase()
+                    : name.slice(0, 2).toUpperCase();
+                serverRoster.push({
+                  id: sId,
+                  name,
+                  initials,
+                  bgColor: bgPalette[serverRoster.length % bgPalette.length],
+                });
+              }
+            });
+            if (serverRoster.length > 0) {
+              setStats((prev) => ({
+                ...prev,
+                staffCount: Math.max(prev.staffCount, serverRoster.length),
+              }));
+              const merged = [...serverRoster];
+              for (const def of DEFAULT_STAFF) {
+                if (merged.length >= 5) break;
+                if (!merged.some((p) => p.name.toLowerCase() === def.name.toLowerCase())) {
+                  merged.push(def);
+                }
+              }
+              setDynamicStaff(merged);
+            }
+          }
+        }).catch(() => {});
+      }
+
+      if (typeof crmApi?.getCRMAttendance === "function") {
+        crmApi.getCRMAttendance(activeOrgId, { date: today }).then((res) => {
+          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            setStats((prev) => ({
+              ...prev,
+              todayAttendance: Math.max(prev.todayAttendance, res.data.length),
+            }));
+          }
+        }).catch(() => {});
+      }
+
+      if (typeof crmApi?.getCRMTasks === "function") {
+        crmApi.getCRMTasks(activeOrgId).then((res) => {
+          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            const pending = res.data.filter((t) => t.status !== "done" && t.status !== "completed");
+            if (pending.length > 0) {
+              setStats((prev) => ({
+                ...prev,
+                pendingTasks: Math.max(prev.pendingTasks, pending.length),
+              }));
+            }
+          }
+        }).catch(() => {});
+      }
     } catch {
       // Graceful fallback defaults
       setStats({
@@ -212,6 +363,21 @@ export default function CRMDashboard(): React.ReactElement {
 
   useEffect(() => {
     fetchCRMStats();
+
+    const handleSync = () => {
+      fetchCRMStats();
+    };
+
+    window.addEventListener("credsmart:crm_staff_updated", handleSync);
+    window.addEventListener("credsmart:crm_attendance_updated", handleSync);
+    window.addEventListener("credsmart:crm_tasks_updated", handleSync);
+    window.addEventListener("focus", handleSync);
+    return () => {
+      window.removeEventListener("credsmart:crm_staff_updated", handleSync);
+      window.removeEventListener("credsmart:crm_attendance_updated", handleSync);
+      window.removeEventListener("credsmart:crm_tasks_updated", handleSync);
+      window.removeEventListener("focus", handleSync);
+    };
   }, [fetchCRMStats]);
 
   const handleRefresh = () => {

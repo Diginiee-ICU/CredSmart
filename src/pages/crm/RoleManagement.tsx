@@ -1082,6 +1082,9 @@ export default function RoleManagement(): React.ReactElement {
       const nextStaffList = [newStaffEntry, ...staffList.filter((s) => s.id !== newUserId)];
       setStaffList(nextStaffList);
       localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(nextStaffList));
+      try {
+        window.dispatchEvent(new CustomEvent("credsmart:crm_staff_updated"));
+      } catch {}
 
       if (crmRoleIdToAssign) {
         setStaffRolesMap((prev) => ({
