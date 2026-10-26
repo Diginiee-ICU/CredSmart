@@ -1261,6 +1261,75 @@ describe("CRM Multi-Tenant Organization Isolation Verification", () => {
       expect(res.body[0].role_name).toBe("Org A Manager");
       expect(res.body[0].crm_role_id).toBe("role-orgA-123");
     });
+
+    it("strictly rejects attendance recording for user belonging to another organization (403)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // verifyUserInOrg query -> returns empty (user does not belong to active org)
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/attendance",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          user_id: "foreign-user-b",
+          status: "present",
+        },
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("strictly rejects salary profile upsert for user belonging to another organization (403)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // verifyUserInOrg query -> returns empty
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/salary-profiles",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          user_id: "foreign-user-b",
+          base_salary: 50000,
+        },
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
+
+    it("strictly rejects attendance requests for user belonging to another organization (403)", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // verifyUserInOrg query -> returns empty
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/attendance-requests",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          staff_id: "foreign-user-b",
+          reason: "Medical Leave",
+        },
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain("does not belong to this organization");
+    });
   });
 });
 
