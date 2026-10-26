@@ -15,6 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { generateStaffDefaultPassword } from "@/utils/crmStaffUtils";
 
 // ============================================================================
 // Domain Specifications & Pure Contract Helpers (Authoritative Source: PROJECT.md)
@@ -925,6 +926,45 @@ describe("CRM Staff User Provisioning & Instant Role Assignment", () => {
       expect(exportedCredentialsList).toHaveLength(2);
       expect(exportedCredentialsList[0].clipboard).toContain("manish@flagship.in");
       expect(exportedCredentialsList[1].clipboard).toContain("sunita@flagship.in");
+    });
+  });
+
+  // ==========================================================================
+  // Tier 5: Default Password Format & Boundary Compliance ({firstName}123)
+  // ==========================================================================
+  describe("Tier 5: Staff Default Auto-Generated Password Standards", () => {
+    it("derives default password following {firstName}123 convention for single and multi-word names", () => {
+      expect(generateStaffDefaultPassword("Aman")).toBe("aman123");
+      expect(generateStaffDefaultPassword("Aman Sharma")).toBe("aman123");
+      expect(generateStaffDefaultPassword("Rahul Kumar Verma")).toBe("rahul123");
+      expect(generateStaffDefaultPassword("priya")).toBe("priya123");
+    });
+
+    it("pads short first names with '3' to guarantee a minimum length of 6 characters", () => {
+      // "al" + "123" = "al123" (5 chars) -> padded to "al1233" (6 chars)
+      expect(generateStaffDefaultPassword("Al")).toBe("al1233");
+      expect(generateStaffDefaultPassword("Al Smith")).toBe("al1233");
+      expect(generateStaffDefaultPassword("Al").length).toBeGreaterThanOrEqual(6);
+
+      // "a" + "123" = "a123" (4 chars) -> padded to "a12333" (6 chars)
+      expect(generateStaffDefaultPassword("A")).toBe("a12333");
+      expect(generateStaffDefaultPassword("A").length).toBe(6);
+
+      // "Ed" + "123" = "ed123" -> "ed1233"
+      expect(generateStaffDefaultPassword("Ed")).toBe("ed1233");
+    });
+
+    it("gracefully falls back to 'staff123' for empty strings or special characters", () => {
+      expect(generateStaffDefaultPassword("")).toBe("staff123");
+      expect(generateStaffDefaultPassword("   ")).toBe("staff123");
+      expect(generateStaffDefaultPassword("@#$%^&")).toBe("staff123");
+      expect(generateStaffDefaultPassword("!@#")).toBe("staff123");
+    });
+
+    it("sanitizes punctuation and normalizes mixed casing and leading/trailing whitespace", () => {
+      expect(generateStaffDefaultPassword("  aMaN  shArMa  ")).toBe("aman123");
+      expect(generateStaffDefaultPassword("Dr. Jane Doe")).toBe("dr1233");
+      expect(generateStaffDefaultPassword("O'Connor")).toBe("oconnor123");
     });
   });
 });

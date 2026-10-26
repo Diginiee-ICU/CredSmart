@@ -60,4 +60,5 @@ Execute the SWE Light protocol:
 1. Spawn one implementer (`teamwork_preview_implementer`) to execute the changes and run tests.
 2. Run adversarial review rounds (`teamwork_preview_reviewer`) with cumulative open-issues ledger until fully verified.
 3. Establish correctness with tests and type-checking.
-4. Report completion with a structured handoff report upon completion.
+## 2026-10-26T17:41:56Z
+Liveness nudge from parent: Please update progress.md with latest status on Round 1 reviewer progress and subsequent rounds.

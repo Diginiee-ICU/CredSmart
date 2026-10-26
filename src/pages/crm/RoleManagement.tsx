@@ -1170,6 +1170,9 @@ export default function RoleManagement(): React.ReactElement {
       const fallbackStaffList = [newStaffEntry, ...staffList.filter((s) => s.id !== fallbackUserId)];
       setStaffList(fallbackStaffList);
       localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(fallbackStaffList));
+      try {
+        window.dispatchEvent(new CustomEvent("credsmart:crm_staff_updated"));
+      } catch {}
       if (crmRoleIdToAssign) {
         setStaffRolesMap((prev) => ({ ...prev, [fallbackUserId]: crmRoleIdToAssign }));
       }
@@ -3044,7 +3047,12 @@ export default function RoleManagement(): React.ReactElement {
                 <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80">
                   <button
                     type="button"
-                    onClick={() => setPasswordMode("auto")}
+                    onClick={() => {
+                      setPasswordMode("auto");
+                      if (staffFormFullName.trim()) {
+                        setStaffFormAutoPassword(generateStaffDefaultPassword(staffFormFullName.trim()));
+                      }
+                    }}
                     className={cn(
                       "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
                       passwordMode === "auto"

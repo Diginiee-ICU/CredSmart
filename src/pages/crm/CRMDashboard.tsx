@@ -102,6 +102,7 @@ export default function CRMDashboard(): React.ReactElement {
 
     try {
       const activeOrgId = orgId;
+      setDynamicStaff([]);
       const today = new Date().toISOString().split("T")[0];
 
       // 1. Today's attendance: query crm_attendance first for instant reactive sync
@@ -267,34 +268,45 @@ export default function CRMDashboard(): React.ReactElement {
       });
 
       // Asynchronous background hydration from authoritative crmApi endpoints
-      if (typeof crmApi?.getCRMStaff === "function") {
-        crmApi.getCRMStaff(activeOrgId).then((res) => {
-          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-            const serverRoster: ShowcaseStaff[] = [];
-            res.data.forEach((m, idx) => {
-              const rawName = m.full_name || m.name || (m.email ? m.email.split("@")[0] : `Staff ${idx + 1}`);
-              const name = rawName.trim();
-              const sId = String(m.user_id || m.id || `staff-${idx}`);
-              if (name && !serverRoster.some((r) => r.id === sId || r.name.toLowerCase() === name.toLowerCase())) {
-                const parts = name.split(/\s+/);
-                const initials =
-                  parts.length > 1
-                    ? (parts[0][0] + parts[1][0]).toUpperCase()
-                    : name.slice(0, 2).toUpperCase();
-                serverRoster.push({
-                  id: sId,
-                  name,
-                  initials,
-                  bgColor: bgPalette[serverRoster.length % bgPalette.length],
-                });
+      const fetchStaffFn =
+        typeof crmApi?.getCRMStaff === "function"
+          ? crmApi.getCRMStaff
+          : typeof crmApi?.getCRMStaffRoles === "function"
+          ? crmApi.getCRMStaffRoles
+          : null;
+
+      if (fetchStaffFn) {
+        fetchStaffFn(activeOrgId).then((res) => {
+          if (res?.data && Array.isArray(res.data)) {
+            if (res.data.length > 0) {
+              const serverRoster: ShowcaseStaff[] = [];
+              res.data.forEach((m: any, idx: number) => {
+                const rawName = m.full_name || m.name || (m.email ? m.email.split("@")[0] : `Staff ${idx + 1}`);
+                const name = rawName.trim();
+                const sId = String(m.user_id || m.id || m.staff_id || `staff-${idx}`);
+                if (name && !serverRoster.some((r) => r.id === sId || r.name.toLowerCase() === name.toLowerCase())) {
+                  const parts = name.split(/\s+/);
+                  const initials =
+                    parts.length > 1
+                      ? (parts[0][0] + parts[1][0]).toUpperCase()
+                      : name.slice(0, 2).toUpperCase();
+                  serverRoster.push({
+                    id: sId,
+                    name,
+                    initials,
+                    bgColor: bgPalette[serverRoster.length % bgPalette.length],
+                  });
+                }
+              });
+              if (serverRoster.length > 0) {
+                setStats((prev) => ({
+                  ...prev,
+                  staffCount: Math.max(prev.staffCount, serverRoster.length),
+                }));
+                setDynamicStaff(serverRoster);
+              } else if (realStaffRoster.length === 0) {
+                setDynamicStaff([]);
               }
-            });
-            if (serverRoster.length > 0) {
-              setStats((prev) => ({
-                ...prev,
-                staffCount: Math.max(prev.staffCount, serverRoster.length),
-              }));
-              setDynamicStaff(serverRoster);
             } else if (realStaffRoster.length === 0) {
               setDynamicStaff([]);
             }

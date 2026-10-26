@@ -1330,6 +1330,223 @@ describe("CRM Multi-Tenant Organization Isolation Verification", () => {
       expect(res.status).toBe(403);
       expect(res.body.error).toContain("does not belong to this organization");
     });
+
+    it("resolves task assignee display name when full_name is null but name is 'Aman Sharma' in POST /tasks", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // 1. Membership verification
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [{ 1: 1 }] });
+        }
+        // 2. Task insertion
+        if (sql.includes("INSERT INTO staff_tasks")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-aman-101",
+                org_id: "org-cred-A",
+                organization_id: "org-cred-A",
+                title: "Prepare daily audit",
+                description: "",
+                priority: "normal",
+                status: "todo",
+                assigned_to: "user-aman-sharma",
+                assigned_by: "user-admin-1",
+                created_by: "user-admin-1",
+                due_date: null,
+                requires_proof: false,
+                proof_required: false,
+                proof_notes: null,
+                created_at: new Date().toISOString(),
+              }
+            ]
+          });
+        }
+        // 3. User details lookup
+        if (sql.includes("SELECT full_name, name, email, avatar_url FROM users WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [
+              {
+                full_name: null,
+                name: "Aman Sharma",
+                email: "aman@credsmart.com",
+                avatar_url: null,
+              }
+            ]
+          });
+        }
+        // 4. Creator details lookup
+        if (sql.includes("SELECT full_name, name, email FROM users WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [{ full_name: "Admin User", name: "Admin User", email: "admin@credsmart.com" }]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "POST",
+        url: "/tasks",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          title: "Prepare daily audit",
+          assigned_to: "user-aman-sharma",
+        },
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.assignee_id).toBe("user-aman-sharma");
+      expect(res.body.assignee_name).toBe("Aman Sharma");
+    });
+
+    it("resolves task assignee display name when full_name is null but name is 'Aman Sharma' in PATCH /tasks/:id", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        // 1. Existing task lookup
+        if (sql.includes("SELECT * FROM staff_tasks WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-patch-202",
+                org_id: "org-cred-A",
+                title: "Stock counting",
+                status: "todo",
+                assigned_to: null,
+              }
+            ]
+          });
+        }
+        // 2. verifyUserInOrg
+        if (sql.includes("FROM (") && (sql.includes("org_memberships") || sql.includes("crm_staff_assignments"))) {
+          return Promise.resolve({ rows: [{ 1: 1 }] });
+        }
+        // 3. Task update
+        if (sql.includes("UPDATE staff_tasks")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-patch-202",
+                org_id: "org-cred-A",
+                title: "Stock counting",
+                status: "in_progress",
+                assigned_to: "user-aman-sharma",
+                requires_proof: false,
+              }
+            ]
+          });
+        }
+        // 4. User details lookup
+        if (sql.includes("SELECT full_name, name, email, avatar_url FROM users WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [
+              {
+                full_name: null,
+                name: "Aman Sharma",
+                email: "aman@credsmart.com",
+                avatar_url: null,
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "PATCH",
+        url: "/tasks/task-patch-202",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          assigned_to: "user-aman-sharma",
+          status: "in_progress",
+        },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee_id).toBe("user-aman-sharma");
+      expect(res.body.assignee_name).toBe("Aman Sharma");
+      expect(res.body.status).toBe("in_progress");
+    });
+
+    it("strictly returns 'Unassigned' when a task is updated to unassigned in PATCH /tasks/:id", async () => {
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes("SELECT * FROM staff_tasks WHERE id = $1")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-patch-303",
+                org_id: "org-cred-A",
+                title: "General task",
+                status: "todo",
+                assigned_to: "user-previously-assigned",
+              }
+            ]
+          });
+        }
+        if (sql.includes("UPDATE staff_tasks")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "task-patch-303",
+                org_id: "org-cred-A",
+                title: "General task",
+                status: "todo",
+                assigned_to: null,
+                requires_proof: false,
+              }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await dispatch({
+        method: "PATCH",
+        url: "/tasks/task-patch-303",
+        headers: { "x-organization-id": "org-cred-A" },
+        body: {
+          assigned_to: null,
+          assignee_name: "Stale Name From Body",
+        },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee_id).toBeNull();
+      expect(res.body.assignee_name).toBe("Unassigned");
+    });
+
+    it("matches task search in GET /tasks when assignee full_name is null but name matches search query", async () => {
+      let capturedSql = "";
+      let capturedParams: any[] = [];
+      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
+        capturedSql = sql;
+        capturedParams = params;
+        return Promise.resolve({
+          rows: [
+            {
+              id: "task-aman-matched",
+              org_id: "org-cred-A",
+              title: "Daily Register Check",
+              status: "todo",
+              priority: "normal",
+              assigned_to: "user-aman",
+              assignee_id: "user-aman",
+              assignee_name: "Aman Sharma",
+              assignee_email: "aman@credsmart.com",
+            }
+          ]
+        });
+      });
+
+      const res = await dispatch({
+        method: "GET",
+        url: "/tasks?search=Aman",
+        headers: { "x-organization-id": "org-cred-A" },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].assignee_name).toBe("Aman Sharma");
+      expect(capturedSql).toContain("u.name ILIKE");
+      expect(capturedParams).toContain("%Aman%");
+    });
   });
 });
 

@@ -53,12 +53,13 @@ Harden CredSmart CRM across multi-tenant isolation, real staff visibility (elimi
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
 | implementer_r0 | teamwork_preview_implementer | Primary Implementation (R1-R4) | completed | 22601e4a-7c1d-4c1e-927c-e369ca893197 |
-| reviewer_r1 | teamwork_preview_reviewer | Adversarial Review Round 1 | in-progress | dad21d46-7eca-421d-9c16-3f036e6cb00b |
+| reviewer_r1 | teamwork_preview_reviewer | Adversarial Review Round 1 | failed | dad21d46-7eca-421d-9c16-3f036e6cb00b |
+| reviewer_r1_gen2 | teamwork_preview_reviewer | Adversarial Review Round 1 (Replacement) | in-progress | 43c0b506-3228-4a37-9595-f0852292b806 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 2 / 16
-- Pending subagents: dad21d46-7eca-421d-9c16-3f036e6cb00b
+- Spawn count: 3 / 16
+- Pending subagents: 43c0b506-3228-4a37-9595-f0852292b806
 - Predecessor: none
 - Successor: not yet spawned
 

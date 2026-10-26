@@ -239,7 +239,7 @@ export default function Tasks(): React.ReactElement {
         }
       } else {
         // Fallback to cached staff in localStorage
-        const cached = localStorage.getItem(`credsmart_crm_staff_${orgId}`);
+        const cached = typeof window !== "undefined" && window.localStorage ? localStorage.getItem(`credsmart_crm_staff_${orgId}`) : null;
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
@@ -258,7 +258,7 @@ export default function Tasks(): React.ReactElement {
       }
     } catch (err) {
       console.warn("Failed to fetch CRM staff members:", err);
-      const cached = localStorage.getItem(`credsmart_crm_staff_${orgId}`);
+      const cached = typeof window !== "undefined" && window.localStorage ? localStorage.getItem(`credsmart_crm_staff_${orgId}`) : null;
       if (cached) {
         try {
           const parsed = JSON.parse(cached);

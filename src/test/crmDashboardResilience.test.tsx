@@ -73,26 +73,43 @@ vi.mock("@/integrations/supabase/client", () => ({
 const mockOrgState: {
   orgId: string | null;
   org: { id: string; name: string } | null;
+  organizations: Array<{ id: string; name: string }>;
+  switchOrganization: (id: string) => void;
 } = {
   orgId: "org-credsmart-001",
   org: { id: "org-credsmart-001", name: "CredSmart Retail Hub" },
+  organizations: [
+    { id: "org-credsmart-001", name: "CredSmart Retail Hub" },
+    { id: "org-credsmart-002", name: "Branch 2 Superstore" },
+  ],
+  switchOrganization: vi.fn((id: string) => {
+    mockOrgState.orgId = id;
+    mockOrgState.org = mockOrgState.organizations.find((o) => o.id === id) || null;
+  }),
 };
 
 vi.mock("@/hooks/useOrganization", () => ({
   useOrganization: () => ({
     orgId: mockOrgState.orgId,
     org: mockOrgState.org,
+    organizations: mockOrgState.organizations,
+    switchOrganization: (id: string) => mockOrgState.switchOrganization(id),
   }),
 }));
 
 describe("CRMDashboard & RoleManagement Resilience & Shell Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     queryMockState.responses = {};
     queryMockState.globalThrow = false;
     queryMockState.calls = [];
     mockOrgState.orgId = "org-credsmart-001";
     mockOrgState.org = { id: "org-credsmart-001", name: "CredSmart Retail Hub" };
+    mockOrgState.switchOrganization = vi.fn((id: string) => {
+      mockOrgState.orgId = id;
+      mockOrgState.org = mockOrgState.organizations.find((o) => o.id === id) || null;
+    });
   });
 
   describe("1. Basic Rendering & Structure", () => {
@@ -586,6 +603,135 @@ describe("CRMDashboard & RoleManagement Resilience & Shell Tests", () => {
         expect(card).toHaveTextContent("15");
       });
       expect(card).toHaveTextContent("Clocked In Today");
+    });
+  });
+
+  describe("11. Real Staff Visibility, Empty State Purity & Multi-Tenant Isolation", () => {
+    it("renders clean empty state with zero mock staff (Suresh, Pushpa, Rajesh) when organization has 0 staff", async () => {
+      // Mock 0 staff
+      queryMockState.responses = {
+        organization_memberships: { count: 0, error: null },
+      };
+      localStorage.removeItem(`credsmart_crm_staff_${mockOrgState.orgId}`);
+
+      render(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      // Verify empty state text
+      await waitFor(() => {
+        expect(screen.getByText("No staff members provisioned yet.")).toBeInTheDocument();
+        expect(screen.getByText(/to onboard your team\./i)).toBeInTheDocument();
+      });
+
+      // Strict mock elimination: none of the old default demo names should exist
+      const mockNames = ["Suresh", "Pushpa", "Rajesh", "Meenakshi", "Anjali"];
+      mockNames.forEach((name) => {
+        expect(screen.queryByText(name)).toBeNull();
+      });
+    });
+
+    it("renders real staff pills and eliminates mock staff when real staff are provisioned", async () => {
+      // Populate real staff in active org cache
+      const realStaff = [
+        { id: "staff-aman-1", name: "Aman Sharma", role: "salesman" },
+        { id: "staff-priya-2", name: "Priya Patel", role: "cashier" },
+      ];
+      localStorage.setItem(
+        `credsmart_crm_staff_${mockOrgState.orgId}`,
+        JSON.stringify(realStaff)
+      );
+
+      render(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Aman Sharma")).toBeInTheDocument();
+        expect(screen.getByText("Priya Patel")).toBeInTheDocument();
+      });
+
+      // Assert initials
+      expect(screen.getByText("AS")).toBeInTheDocument();
+      expect(screen.getByText("PP")).toBeInTheDocument();
+
+      // Zero demo names
+      const mockNames = ["Suresh", "Pushpa", "Rajesh", "Meenakshi", "Anjali"];
+      mockNames.forEach((name) => {
+        expect(screen.queryByText(name)).toBeNull();
+      });
+    });
+
+    it("dynamically switches between Org A (0 staff) and Org B (real staff) without cross-tenant staff leakage", async () => {
+      // Org A has 0 staff
+      mockOrgState.orgId = "org-credsmart-001";
+      localStorage.removeItem("credsmart_crm_staff_org-credsmart-001");
+
+      // Org B has 1 staff
+      localStorage.setItem(
+        "credsmart_crm_staff_org-credsmart-002",
+        JSON.stringify([{ id: "staff-vikram-b", name: "Vikram Singhania", role: "manager" }])
+      );
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      // Org A shows empty state
+      await waitFor(() => {
+        expect(screen.getByText("No staff members provisioned yet.")).toBeInTheDocument();
+      });
+      expect(screen.queryByText("Vikram Singhania")).toBeNull();
+
+      // Switch to Org B
+      mockOrgState.orgId = "org-credsmart-002";
+      mockOrgState.org = { id: "org-credsmart-002", name: "Branch 2 Superstore" };
+
+      rerender(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Vikram Singhania")).toBeInTheDocument();
+      });
+      expect(screen.queryByText("No staff members provisioned yet.")).toBeNull();
+
+      // Switch back to Org A
+      mockOrgState.orgId = "org-credsmart-001";
+      mockOrgState.org = { id: "org-credsmart-001", name: "CredSmart Retail Hub" };
+
+      rerender(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("No staff members provisioned yet.")).toBeInTheDocument();
+      });
+      expect(screen.queryByText("Vikram Singhania")).toBeNull();
+    });
+
+    it("prepares deep-link URL parameter when searching and clicking + Add Staff", async () => {
+      render(
+        <MemoryRouter>
+          <CRMDashboard />
+        </MemoryRouter>
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search / Add new...");
+      fireEvent.change(searchInput, { target: { value: "Aman" } });
+
+      const addStaffLink = screen.getByRole("link", { name: /\+ Add Staff/i });
+      expect(addStaffLink).toHaveAttribute("href", "/crm/roles?action=add-staff&name=Aman");
     });
   });
 });

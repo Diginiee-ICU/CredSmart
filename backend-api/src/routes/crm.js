@@ -1734,6 +1734,7 @@ router.get('/tasks', async (req, res) => {
         t.title ILIKE $${params.length} OR 
         t.description ILIKE $${params.length} OR 
         u.full_name ILIKE $${params.length} OR
+        u.name ILIKE $${params.length} OR
         u.email ILIKE $${params.length}
       )`;
     }
@@ -2009,10 +2010,11 @@ router.patch('/tasks/:id', async (req, res) => {
     const updatedTask = result.rows[0];
 
     // Fetch assignee name & approver details
-    let assigneeName = req.body.assignee_name || 'Unassigned';
+    let assigneeName = 'Unassigned';
     let assigneeEmail = null;
     let assigneeAvatarUrl = null;
     if (updatedTask.assigned_to) {
+      assigneeName = req.body.assignee_name || 'Unassigned';
       const uRes = await pool.query('SELECT full_name, name, email, avatar_url FROM users WHERE id = $1', [updatedTask.assigned_to]);
       if (uRes.rows.length > 0) {
         assigneeName =
