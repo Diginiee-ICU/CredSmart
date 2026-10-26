@@ -18,6 +18,7 @@ import {
   Store,
   Users,
   Users2,
+  Calendar,
   CalendarCheck,
   CheckSquare,
   Wallet,
@@ -303,7 +304,7 @@ export function AppSidebar({
                       : "bg-transparent border-transparent"
                   )}
                 >
-                  <CalendarCheck className="w-5 h-5 stroke-[2.2]" />
+                  <Calendar className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <span className="text-[11px] tracking-tight">Attendance</span>
               </NavLink>

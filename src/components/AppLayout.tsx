@@ -404,6 +404,10 @@ export default function AppLayout() {
 
   const { activeSuite, isCrm } = useActiveSuite();
   const isCrmSuite = isCrm || location.pathname.startsWith("/crm");
+  const isCrmDashboard =
+    location.pathname === ROUTE_PATHS.crm ||
+    location.pathname === "/crm" ||
+    location.pathname === "/crm/dashboard";
 
   const { title, subtitle } = getPageMeta(location.pathname);
   const isPosRoute =
@@ -475,7 +479,12 @@ export default function AppLayout() {
 
       {/* Global Top Header */}
       {!isPosRoute && (
-        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none">
+        <header
+          className={cn(
+            "pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
+            isCrmDashboard && "hidden md:flex"
+          )}
+        >
 
             {/* LEFT: 28px Brand Mark + Menu Toggle + Org Switcher + Suite Switcher */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
@@ -1033,7 +1042,12 @@ export default function AppLayout() {
               "flex-1 min-w-0 min-h-0 flex flex-col transition-colors duration-200 scrollbar-thin",
               isPosRoute
                 ? "p-0 m-0 h-full border-none bg-slate-50 dark:bg-slate-950 overflow-hidden"
-                : "bg-white/40 dark:bg-slate-950/40 border-t border-slate-200/80 dark:border-slate-800/80 overflow-y-auto",
+                : cn(
+                    "bg-white/40 dark:bg-slate-950/40 overflow-y-auto",
+                    isCrmDashboard
+                      ? "border-t-0 md:border-t md:border-slate-200/80 dark:md:border-slate-800/80"
+                      : "border-t border-slate-200/80 dark:border-slate-800/80"
+                  ),
               !isPosRoute && "pb-28 sm:pb-32 md:pb-0"
             )}
           >

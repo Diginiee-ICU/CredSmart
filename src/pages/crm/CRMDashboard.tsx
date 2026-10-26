@@ -63,11 +63,11 @@ interface ShowcaseStaff {
 }
 
 const DEFAULT_STAFF: ShowcaseStaff[] = [
-  { id: "s1", name: "Suresh", initials: "SU", bgColor: "bg-[#1E88E5]" },
-  { id: "s2", name: "Pushpa", initials: "PS", bgColor: "bg-[#00897B]" },
-  { id: "s3", name: "Rajesh", initials: "RA", bgColor: "bg-[#FB8C00]" },
-  { id: "s4", name: "Meenakshi", initials: "ME", bgColor: "bg-[#8E24AA]" },
-  { id: "s5", name: "Anjali", initials: "AN", bgColor: "bg-[#E53935]" },
+  { id: "s1", name: "Suresh", initials: "SU", bgColor: "bg-[#2563EB]" },
+  { id: "s2", name: "Pushpa", initials: "PS", bgColor: "bg-[#059669]" },
+  { id: "s3", name: "Rajesh", initials: "RA", bgColor: "bg-[#D97706]" },
+  { id: "s4", name: "Meenakshi", initials: "ME", bgColor: "bg-[#7C3AED]" },
+  { id: "s5", name: "Anjali", initials: "AN", bgColor: "bg-[#E11D48]" },
 ];
 
 /**
@@ -313,7 +313,7 @@ export default function CRMDashboard(): React.ReactElement {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - Exact Structural Fidelity to Reference Image
           ========================================================================= */}
-      <div className="block md:hidden px-4 pt-3 space-y-4">
+      <div className="block md:hidden px-4 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] space-y-4 max-w-md mx-auto">
         {/* Top App Bar: CredSmart dropdown | [ POS | ● CRM ] | Refresh */}
         <div className="flex items-center justify-between gap-2">
           {/* Left: CredSmart Brand Dropdown Pill */}
@@ -321,13 +321,11 @@ export default function CRMDashboard(): React.ReactElement {
             <button
               type="button"
               onClick={() => setOrgDropdownOpen((v) => !v)}
-              className="inline-flex items-center gap-1.5 py-1 px-1.5 rounded-lg text-slate-800 dark:text-slate-100 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-1.5 py-1 px-1 rounded-lg text-slate-800 dark:text-slate-100 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:scale-95"
             >
-              <div className="w-6 h-6 rounded-md bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                <Shield className="w-3.5 h-3.5 fill-blue-600/20 stroke-blue-600 dark:stroke-blue-400" />
-              </div>
-              <span>CredSmart</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+              <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[2.2]" />
+              <span className="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight">CredSmart</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 stroke-[2.2]" />
             </button>
 
             {/* Quick Organization Dropdown */}
@@ -361,7 +359,7 @@ export default function CRMDashboard(): React.ReactElement {
           </div>
 
           {/* Center / Right: Dual-Suite Capsule [ POS | ● CRM ] */}
-          <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
+          <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
             <button
               type="button"
               onClick={() => {
@@ -375,12 +373,12 @@ export default function CRMDashboard(): React.ReactElement {
                 }
                 navigate(ROUTE_PATHS.pos);
               }}
-              className="px-3 py-1 rounded-full text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer"
             >
               POS
             </button>
-            <div className="px-3 py-1 rounded-full text-xs font-bold bg-[#0D8A58] text-white flex items-center gap-1.5 shadow-xs cursor-default">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+            <div className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#0D8A58] text-white flex items-center gap-1.5 shadow-xs cursor-default">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
               <span>CRM</span>
             </div>
           </div>
@@ -390,21 +388,21 @@ export default function CRMDashboard(): React.ReactElement {
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer active:scale-95"
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer active:scale-95"
             title="Refresh CRM data"
             aria-label="Refresh CRM data"
           >
-            <RotateCw className={cn("w-3.5 h-3.5", refreshing && "animate-spin text-blue-600")} />
+            <RotateCw className={cn("w-3.5 h-3.5 stroke-[2.2]", refreshing && "animate-spin text-blue-600")} />
           </button>
         </div>
 
         {/* Title & Role Stack Row */}
         <div className="flex items-start justify-between gap-2 pt-1">
           <div>
-            <h1 className="text-2xl font-black text-[#0F172A] dark:text-white tracking-tight leading-none">
+            <h1 className="text-[22px] font-extrabold text-[#0F172A] dark:text-white tracking-tight leading-tight">
               <span className="sr-only">CRM </span>Command Center
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Live Workforce Pulse
             </p>
           </div>
@@ -421,9 +419,9 @@ export default function CRMDashboard(): React.ReactElement {
 
             <Link
               to={ROUTE_PATHS.crmRoles}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold bg-[#0B1536] hover:bg-slate-800 text-white shadow-2xs active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold bg-[#0B1536] hover:bg-slate-900 text-white shadow-2xs active:scale-95 transition-all"
             >
-              <Shield className="w-3.5 h-3.5" />
+              <Shield className="w-3.5 h-3.5 stroke-[2]" />
               <span>Role Mgmt</span>
             </Link>
           </div>
@@ -437,18 +435,21 @@ export default function CRMDashboard(): React.ReactElement {
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] dark:bg-emerald-950/40 text-[#059669] dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <Users className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
                 Present
               </span>
             </div>
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.todayAttendance}/{stats.staffCount}&#8203;
+                {stats.todayAttendance}&#8203;
               </span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="font-mono text-xs text-slate-400">
+                / {stats.staffCount}&#8203;
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
             </div>
           </Link>
 
@@ -458,7 +459,7 @@ export default function CRMDashboard(): React.ReactElement {
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#FEF3C7] dark:bg-amber-950/40 text-[#D97706] dark:text-amber-400 flex items-center justify-center shrink-0">
                 <CheckSquare className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -469,7 +470,7 @@ export default function CRMDashboard(): React.ReactElement {
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
                 {stats.pendingTasks}&#8203;
               </span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
           </Link>
 
@@ -479,7 +480,7 @@ export default function CRMDashboard(): React.ReactElement {
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#FFE4E6] dark:bg-rose-950/40 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
                 <Radio className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -490,7 +491,7 @@ export default function CRMDashboard(): React.ReactElement {
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
                 {stats.unreadBroadcasts}&#8203;
               </span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
           </Link>
 
@@ -500,7 +501,7 @@ export default function CRMDashboard(): React.ReactElement {
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] dark:bg-purple-950/40 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center shrink-0">
                 <Video className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -511,14 +512,14 @@ export default function CRMDashboard(): React.ReactElement {
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
                 {stats.upcomingMeetings}&#8203;
               </span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
           </Link>
         </div>
 
         {/* Section: ADD STAFF / STAFF MEMBERS */}
         <div className="space-y-2.5 pt-1">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
+          <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase">
             ADD STAFF / STAFF MEMBERS
           </div>
 
@@ -546,7 +547,7 @@ export default function CRMDashboard(): React.ReactElement {
                   ? `/crm/roles?action=add-staff&name=${encodeURIComponent(staffSearchQuery.trim())}`
                   : "/crm/roles?action=add-staff"
               }
-              className="h-9 px-3.5 rounded-xl bg-[#0B1536] hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1 shadow-2xs active:scale-95 transition-all shrink-0"
+              className="h-9 px-3.5 rounded-xl bg-[#0B1536] hover:bg-slate-900 text-white text-xs font-semibold flex items-center gap-1 shadow-2xs active:scale-95 transition-all shrink-0"
             >
               <span>+ Add Staff</span>
             </Link>
@@ -568,7 +569,7 @@ export default function CRMDashboard(): React.ReactElement {
                     staff.bgColor
                   )}
                 >
-                  <span className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-bold uppercase">
+                  <span className="w-5.5 h-5.5 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-bold uppercase">
                     {staff.initials}
                   </span>
                   <span className="text-xs font-semibold">{staff.name}</span>
@@ -584,7 +585,7 @@ export default function CRMDashboard(): React.ReactElement {
 
         {/* Section: WORKSPACE TOOLS */}
         <div className="space-y-2.5 pt-1">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
+          <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase">
             WORKSPACE TOOLS
           </div>
 
@@ -595,7 +596,7 @@ export default function CRMDashboard(): React.ReactElement {
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] dark:bg-purple-950/40 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center shrink-0">
                   <Video className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -611,7 +612,7 @@ export default function CRMDashboard(): React.ReactElement {
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[#FFE4E6] dark:bg-rose-950/40 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
                   <Radio className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -627,7 +628,7 @@ export default function CRMDashboard(): React.ReactElement {
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[#DBEAFE] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -643,7 +644,7 @@ export default function CRMDashboard(): React.ReactElement {
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[#CCFBF1] dark:bg-teal-950/40 text-[#0D9488] dark:text-teal-400 flex items-center justify-center shrink-0">
                   <Headset className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -657,7 +658,7 @@ export default function CRMDashboard(): React.ReactElement {
 
         {/* Section: LIVE STATUS */}
         <div className="space-y-2.5 pt-1">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
+          <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase">
             LIVE STATUS
           </div>
 
