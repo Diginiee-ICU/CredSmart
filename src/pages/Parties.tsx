@@ -898,10 +898,11 @@ setSortDirection("asc");
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-blue-600">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-blue-600">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
-              Total Parties
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+              <span className="sm:hidden">Parties</span>
+              <span className="hidden sm:inline">Total Parties</span>
             </span>
             <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0 hidden sm:flex">
               <Users2 className="w-3.5 h-3.5" />
@@ -918,10 +919,11 @@ setSortDirection("asc");
         </div>
 
         {/* Card 2: To Collect (Dr) Emerald */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-emerald-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-emerald-500">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
-              To Collect (Dr)
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
+              <span className="sm:hidden">To Collect</span>
+              <span className="hidden sm:inline">To Collect (Dr)</span>
             </span>
             <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0 hidden sm:flex">
               <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -936,10 +938,11 @@ setSortDirection("asc");
         </div>
 
         {/* Card 3: To Pay (Cr) Rose */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-rose-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-rose-500">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
-              To Pay (Cr)
+            <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+              <span className="sm:hidden">To Pay</span>
+              <span className="hidden sm:inline">To Pay (Cr)</span>
             </span>
             <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 shrink-0 hidden sm:flex">
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -1026,7 +1029,8 @@ setSortDirection("asc");
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span>To Collect (Dr)</span>
+          <span className="sm:hidden">To Collect</span>
+          <span className="hidden sm:inline">To Collect (Dr)</span>
           <span className={cn(
             "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "to_collect" ? "bg-emerald-700/60 text-white" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
@@ -1046,7 +1050,8 @@ setSortDirection("asc");
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span>To Pay (Cr)</span>
+          <span className="sm:hidden">To Pay</span>
+          <span className="hidden sm:inline">To Pay (Cr)</span>
           <span className={cn(
             "px-1.5 py-0.2 rounded text-[11px] font-mono",
             partyTab === "to_pay" ? "bg-rose-700/60 text-white" : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
@@ -1060,69 +1065,49 @@ setSortDirection("asc");
       {/* FILTER & SEARCH BAR - Hairline Container */}
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-2.5 shadow-2xs shrink-0">
-        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
-          {/* Search input */}
-          <div className="relative flex-1 min-w-[180px]">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        {/* Mobile Fast-Access Action Strip (<sm) */}
+        <div className="flex sm:hidden items-center gap-1.5 w-full">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Search by party name, phone, GSTIN..."
+              placeholder="Search parties, phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8.5 text-xs bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-500"
+              className="pl-7 pr-7 h-8.5 text-xs bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 rounded-lg"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Categories Dropdown Filter */}
+          {/* Quick Category / Bulk Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8.5 px-2.5 gap-1.5 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300">
-                <span className="truncate max-w-[85px] sm:max-w-[130px]">
-                  {categoryFilter === "all" ? "Categories" : categoryFilter}
+              <Button variant="outline" size="sm" className="h-8.5 px-2.5 gap-1 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300">
+                <span className="truncate max-w-[70px]">
+                  {categoryFilter === "all" ? "Type" : categoryFilter}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+                <ChevronDown className="w-3 h-3 text-slate-400" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setCategoryFilter("all")}>
-                All Categories
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCategoryFilter("all")}>All Categories</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCategoryFilter("Wholesaler")}>Wholesaler</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCategoryFilter("Retailer")}>Retailer</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCategoryFilter("Distributor")}>Distributor</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCategoryFilter("Manufacturer")}>Manufacturer</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setExcelModalTab("excel"); setShowExcelUploadModal(true); }}>
+                <FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                Bulk Upload Parties
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Import Data from Tally / Excel Button */}
-          <button
-            onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
-            title="Import Full Data from Tally or Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span className="hidden sm:inline">Import Data</span>
-          </button>
-
-          {/* Bulk Upload Parties Button */}
-          <button
-            onClick={() => {
-              setExcelModalTab("excel");
-              setShowExcelUploadModal(true);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
-            title="Bulk Upload Parties from Excel / CSV"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Bulk Parties</span>
-          </button>
 
           {/* Create Party Button */}
           <button
@@ -1133,8 +1118,88 @@ setSortDirection("asc");
             className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Create Party</span>
+            <span>Create</span>
           </button>
+        </div>
+
+        {/* Desktop View: Full Search, Dropdowns, and Import Buttons (sm and above) */}
+        <div className="hidden sm:flex items-center justify-between gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Search input */}
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Search by party name, phone, GSTIN..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8.5 text-xs bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-500"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Categories Dropdown Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8.5 px-2.5 gap-1.5 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300">
+                  <span className="truncate max-w-[85px] sm:max-w-[130px]">
+                    {categoryFilter === "all" ? "Categories" : categoryFilter}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setCategoryFilter("all")}>
+                  All Categories
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCategoryFilter("Wholesaler")}>Wholesaler</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCategoryFilter("Retailer")}>Retailer</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCategoryFilter("Distributor")}>Distributor</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCategoryFilter("Manufacturer")}>Manufacturer</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Import Data from Tally / Excel Button */}
+            <button
+              onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+              title="Import Full Data from Tally or Excel"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Import Data</span>
+            </button>
+
+            {/* Bulk Upload Parties Button */}
+            <button
+              onClick={() => {
+                setExcelModalTab("excel");
+                setShowExcelUploadModal(true);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+              title="Bulk Upload Parties from Excel / CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Bulk Parties</span>
+            </button>
+
+            {/* Create Party Button */}
+            <button
+              onClick={() => {
+                setEditingParty(null);
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Create Party</span>
+            </button>
+          </div>
         </div>
 
         {/* Bulk Action Dropdown */}
@@ -1167,7 +1232,7 @@ setSortDirection("asc");
       </div>
 
       {/* Quick Software Migration Ribbon */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0 py-0.5">
+      <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0 py-0.5">
         <button
           onClick={() => {
             setExcelModalTab("software");
@@ -1308,14 +1373,14 @@ setSortDirection("asc");
                     </div>
                   </div>
 
-                  {/* Mobile Quick Action Strip (Touch Ergonomics ≥44px Target) */}
+                  {/* Mobile Quick Action Strip */}
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60">
                     <div className="flex items-center gap-1.5">
                       {party.phone ? (
                         <>
                           <a
                             href={`tel:${party.phone}`}
-                            className="flex items-center gap-1.5 min-h-[44px] h-11 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-[11px] font-semibold active:scale-95 transition-transform"
+                            className="flex items-center gap-1.5 h-7.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-[11px] font-semibold active:scale-95 transition-transform"
                             title="Call Party"
                           >
                             <Phone className="w-3.5 h-3.5 text-slate-500" />
@@ -1332,7 +1397,7 @@ setSortDirection("asc");
                                 : `Hello ${party.name}, your account on CredSmart is fully settled (₹0.00).`;
                               window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(text)}`, "_blank");
                             }}
-                            className="flex items-center gap-1.5 min-h-[44px] h-11 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold active:scale-95 transition-transform"
+                            className="flex items-center gap-1.5 h-7.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold active:scale-95 transition-transform"
                             title="Chat on WhatsApp"
                           >
                             <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -1350,14 +1415,14 @@ setSortDirection("asc");
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/customers/${party.id}/ledger`)}
-                          className="min-h-[44px] h-11 px-3 flex items-center text-[11px] font-semibold rounded-lg border-slate-200/80 dark:border-slate-700"
+                          className="h-7.5 px-2.5 flex items-center text-[11px] font-semibold rounded-lg border-slate-200/80 dark:border-slate-700"
                         >
                           Ledger
                         </Button>
                       )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="min-w-[44px] min-h-[44px] w-11 h-11 p-0 rounded-lg flex items-center justify-center">
+                          <Button variant="ghost" size="sm" className="w-7.5 h-7.5 p-0 rounded-lg flex items-center justify-center border border-slate-200/80 dark:border-slate-700/60">
                             <MoreVertical className="w-3.5 h-3.5 text-slate-500" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1417,21 +1482,7 @@ setSortDirection("asc");
           )}
         </div>
 
-        {/* Mobile Pagination */}
-        <div className="md:hidden border-t border-slate-100 dark:border-slate-800">
-          <PaginationBar
-            page={partiesPage}
-            totalPages={partiesTotalPages}
-            totalItems={partiesTotalItems}
-            startIndex={partiesStartIndex}
-            endIndex={partiesEndIndex}
-            hasNext={partiesHasNext}
-            hasPrev={partiesHasPrev}
-            onPageChange={setPartiesPage}
-            pageSize={partiesPageSize}
-            onPageSizeChange={setPartiesPageSize}
-          />
-        </div>
+
 
         {/* DESKTOP VIEW: High-Density 36px Data Table (md: and above) */}
         <div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">
@@ -1804,18 +1855,41 @@ setSortDirection("asc");
         </div>
 
         {/* Table Footer summary */}
-        <div className="p-3 sm:px-4 sm:py-2.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/60 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+        <div className="p-2 sm:px-4 sm:py-2.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono">
           <span>
             Showing <strong className="text-slate-900 dark:text-white">{partiesTotalItems === 0 ? 0 : `${partiesStartIndex}–${partiesEndIndex}`}</strong> of{" "}
             {parties.length} parties
           </span>
-          <div className="flex items-center gap-4">
-            <span>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline">
               Selected: <strong className="text-slate-900 dark:text-white">{selectedIds.size}</strong>
             </span>
             <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
-              Net Collectible: ₹ {toCollectTotal.toLocaleString("en-IN")}
+              Net: ₹ {toCollectTotal.toLocaleString("en-IN")}
             </span>
+            {partiesTotalPages > 1 && (
+              <div className="flex md:hidden items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPartiesPage(partiesPage - 1)}
+                  disabled={!partiesHasPrev}
+                  className="w-6.5 h-6.5 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 disabled:opacity-30"
+                  aria-label="Previous Page"
+                >
+                  ‹
+                </button>
+                <span className="text-[11px] font-semibold">{partiesPage}/{partiesTotalPages}</span>
+                <button
+                  type="button"
+                  onClick={() => setPartiesPage(partiesPage + 1)}
+                  disabled={!partiesHasNext}
+                  className="w-6.5 h-6.5 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 disabled:opacity-30"
+                  aria-label="Next Page"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
