@@ -205,9 +205,9 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
         </MemoryRouter>
       );
 
-      expect(screen.getByText("Today's Shift")).toBeInTheDocument();
-      expect(screen.getByText("Current Time")).toBeInTheDocument();
-      expect(screen.getByText(/General Shift • 09:00 AM - 06:00 PM/i)).toBeInTheDocument();
+      expect(screen.getAllByText("Today's Shift")[0]).toBeInTheDocument();
+      expect(screen.getAllByText("Current Time")[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/General Shift • 09:00 AM - 06:00 PM/i)[0]).toBeInTheDocument();
 
       // Since default coords match default HQ (28.6139, 77.2090), within geofence is expected
       await waitFor(() => {
@@ -241,9 +241,9 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
         </MemoryRouter>
       );
 
-      const clockInBtn = screen.getByRole("button", { name: /Clock In Now/i });
-      expect(clockInBtn).toBeInTheDocument();
-      expect(clockInBtn.className).toContain("bg-emerald-600");
+      const clockInBtns = screen.getAllByRole("button", { name: /Clock In Now/i });
+      expect(clockInBtns.length).toBeGreaterThanOrEqual(1);
+      expect(clockInBtns[0].className).toContain("bg-emerald-600");
     });
   });
 
@@ -259,16 +259,16 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
         expect(screen.getByText("Within Geofence ✓")).toBeInTheDocument();
       });
 
-      const clockInBtn = screen.getByRole("button", { name: /Clock In Now/i });
-      fireEvent.click(clockInBtn);
+      const clockInBtns = screen.getAllByRole("button", { name: /Clock In Now/i });
+      fireEvent.click(clockInBtns[0]);
 
       await waitFor(() => {
         // Ticking session timer should appear
-        expect(screen.getByText("Active Work Session")).toBeInTheDocument();
+        expect(screen.getAllByText("Active Work Session")[0]).toBeInTheDocument();
         // Clock Out button in orange styling should be displayed
-        const clockOutBtn = screen.getByRole("button", { name: /Clock Out/i });
-        expect(clockOutBtn).toBeInTheDocument();
-        expect(clockOutBtn.className).toContain("bg-[#FF6A00]");
+        const clockOutBtns = screen.getAllByRole("button", { name: /Clock Out/i });
+        expect(clockOutBtns.length).toBeGreaterThanOrEqual(1);
+        expect(clockOutBtns[0].className).toContain("bg-[#FF6A00]");
       });
 
       // Verify success toast was triggered
@@ -293,8 +293,8 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
         </MemoryRouter>
       );
 
-      const clockInBtn = screen.getByRole("button", { name: /Clock In Now/i });
-      fireEvent.click(clockInBtn);
+      const clockInBtns = screen.getAllByRole("button", { name: /Clock In Now/i });
+      fireEvent.click(clockInBtns[0]);
 
       await waitFor(() => {
         expect(toastMock).toHaveBeenCalledWith(
@@ -341,14 +341,14 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
 
       // Verify Active Work Session is showing initially
       await waitFor(() => {
-        expect(screen.getByText("Active Work Session")).toBeInTheDocument();
+        expect(screen.getAllByText("Active Work Session")[0]).toBeInTheDocument();
       });
 
-      const clockOutBtn = screen.getByRole("button", { name: /Clock Out/i });
-      fireEvent.click(clockOutBtn);
+      const clockOutBtns = screen.getAllByRole("button", { name: /Clock Out/i });
+      fireEvent.click(clockOutBtns[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("Shift Completed for Today")).toBeInTheDocument();
+        expect(screen.getAllByText("Shift Completed for Today")[0]).toBeInTheDocument();
       });
 
       expect(toastMock).toHaveBeenCalledWith(
@@ -398,7 +398,7 @@ describe("Attendance UI & Clock-In Hub (src/pages/crm/Attendance.tsx)", { timeou
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
-        expect(screen.getByText("Downtown Branch")).toBeInTheDocument();
+        expect(screen.getAllByText("Downtown Branch").length).toBeGreaterThanOrEqual(1);
       });
     });
   });

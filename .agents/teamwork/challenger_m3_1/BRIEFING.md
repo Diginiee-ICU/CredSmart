@@ -1,14 +1,19 @@
-# BRIEFING — 2026-10-25T10:47:00Z
+# BRIEFING — 2026-10-26T22:21:00Z
 
 ## Mission
-Empirically verify and stress-test the Milestone 3 refactoring in `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, and `Attendance.tsx` — ensuring complete elimination of nested/boxy card containers on mobile, verifying hairline divide-y containers, touch targets (>=44px), typography (>=11px), desktop view preservation, 19 quarantine files untouched, and running tsc & vite build.
+Empirically verify and stress-test Milestone 3 (R3 - Task Assignment & Synthetic ID Elimination):
+1. Complete elimination of synthetic IDs (`user-${Date.now()}`) and ghost staff persistence in `RoleManagement.tsx`.
+2. Strict assignee UUID validation and synthetic ID filtering in `Tasks.tsx`.
+3. Deterministic optimistic update and rollback logic on failure for task creation and lifecycle transitions in `Tasks.tsx`.
+4. Empty task state handling.
+5. Verification of vitest suites (`src/test/crmTasksView.test.tsx`, `src/test/crmStaffTasksIntegration.test.tsx`, `src/test/crmStaffProvisioningUI.test.tsx`) and `tsc --noEmit`.
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1
 - Original parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Milestone: Milestone 3 (Dashboard, Parties & CRM HR Empiric Verification)
+- Milestone: Milestone 3 (Tasks & Staff Provisioning - R3)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
@@ -19,47 +24,44 @@ Empirically verify and stress-test the Milestone 3 refactoring in `Dashboard.tsx
 - Verify 19 quarantine files remain 100% untouched.
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T10:47:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:21:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/pages/crm/Tasks.tsx`
+  - `src/test/crmTasksView.test.tsx`
+  - `src/test/crmStaffTasksIntegration.test.tsx`
+  - `src/test/crmStaffProvisioningUI.test.tsx`
 - **Interface contracts**:
-  - `ORIGINAL_REQUEST.md` (2026-10-25T08:53:34Z Anti-pattern fix & 2026-10-25T10:11:33Z Mobile mockups)
-  - `.agents/rules/minimal-design-system.md`
-  - Worker 3 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md`
+  - `ORIGINAL_REQUEST.md` (R3 - Task Assignment & Synthetic ID Elimination)
+  - Worker 3 Tasks Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_tasks\handoff.md`
 
 ## Key Decisions Made
-- Confirmed zero modifications to all 19 quarantine files using automated checks and git diffs.
-- Verified elimination of nested boxy cards across all 4 target files.
-- Executed `node node_modules/typescript/bin/tsc --noEmit` -> Exited 0 (0 errors).
-- Executed `node node_modules/vite/bin/vite.js build` -> Exited 0 (`✓ built in 1m 33s`).
-- Authored and executed dedicated empiric test `src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts` (22/22 passed).
+- Executed target Vitest suite (`crmTasksView.test.tsx`, `crmStaffTasksIntegration.test.tsx`, `crmStaffProvisioningUI.test.tsx`): 3 test files, 25 tests passed (100%).
+- Executed additional CRM regression suites (`crmTaskLifecycle.test.ts`, `crmTasksChallengerM3.test.tsx`, `crmStaffProvisioning.test.ts`): 3 test files, 80 tests passed (100%).
+- Executed `tsc --noEmit`: Exited 0 with zero errors.
+- Verified absence of synthetic ID generation and ghost staff caching across `RoleManagement.tsx` and `Tasks.tsx`.
 - Final Verdict: APPROVE.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - H1: Mobile list containers use single clean container with divide-y rather than floating cards -> CONFIRMED.
-  - H2: Touch targets for all interactive actions >= 44px -> CONFIRMED.
-  - H3: No typography below 11px -> CONFIRMED (0 sub-11px occurrences).
-  - H4: Desktop breakpoint views (`md:` and above) preserved with zero regression -> CONFIRMED.
-  - H5: 19 quarantine files remain untouched -> CONFIRMED.
-  - H6: TypeScript compiler passes with 0 errors -> CONFIRMED (`tsc --noEmit` exited 0).
-  - H7: Production Vite build succeeds -> CONFIRMED (`vite build` exited 0).
+  - H1: Synthetic ID generation is completely removed from `RoleManagement.tsx` (success and error paths) -> CONFIRMED.
+  - H2: Assignee list in `Tasks.tsx` filters out any synthetic or non-UUID ids -> CONFIRMED.
+  - H3: Optimistic task creation and status changes rollback cleanly upon API failure/rejection with error toast -> CONFIRMED.
+  - H4: Empty task state displays empty list instead of falling back to mock tasks for normal orgs -> CONFIRMED.
+  - H5: Vitest test suites (25 tests total) pass 100% -> CONFIRMED (25/25 passed).
+  - H6: `tsc --noEmit` produces 0 errors -> CONFIRMED (0 errors).
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.
 
 ## Loaded Skills
-- Source: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
+- Source: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
 - Local copy: In place
-- Core methodology: Master standard for minimal UI tokens, mobile ergonomics, 44px+ touch targets, flat divide-y lists
+- Core methodology: Authoritative CRM RBAC, staff provisioning, permissions gating and data models
 
 ## Artifact Index
 - .agents/teamwork/challenger_m3_1/DISPATCH.md — incoming instructions
 - .agents/teamwork/challenger_m3_1/progress.md — liveness & step tracking
 - .agents/teamwork/challenger_m3_1/handoff.md — final handoff report
-- src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts — dedicated empiric test suite

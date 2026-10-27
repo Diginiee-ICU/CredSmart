@@ -23,6 +23,7 @@ import {
   CRMCard,
   CRMBadge,
   CRMPageHeader,
+  CRMCommandHeader,
   CRMStatCard,
   CRMPermissionGate,
 } from "@/components/crm";
@@ -254,38 +255,36 @@ export default function Meet(): React.ReactElement {
       }
     >
       <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20">
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
-          <div className="max-w-7xl mx-auto">
-            <CRMPageHeader
-              title="CredSmart Meet & Video Huddles"
-              subtitle={`${org?.name ? `${org.name} • ` : ""}Instant team video huddles, shift handovers, and scheduled conference rooms`}
-              breadcrumbs={[
-                { label: "Home", href: "/" },
-                { label: "CRM", href: ROUTE_PATHS.crm },
-                { label: "Meet", href: ROUTE_PATHS.crmMeet },
-              ]}
-              badge={
-                <CRMBadge variant="success" size="sm" dot>
-                  WebRTC Ready
-                </CRMBadge>
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  {canCreate && (
-                    <Button
-                      onClick={() => setIsScheduleOpen(true)}
-                      size="sm"
-                      className="bg-[#6366F1] hover:bg-indigo-600 text-white gap-1.5 text-xs h-9 shadow-xs"
-                    >
-                      <CalendarPlus className="w-3.5 h-3.5" />
-                      <span>Schedule Meeting</span>
-                    </Button>
-                  )}
-                </div>
-              }
-            />
-          </div>
-        </header>
+        <CRMCommandHeader
+          title="CredSmart Meet & Video Huddles"
+          subtitle={`${org?.name ? `${org.name} • ` : ""}Instant team video huddles, shift handovers, and scheduled conference rooms`}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "CRM", href: ROUTE_PATHS.crm },
+            { label: "Meet", href: ROUTE_PATHS.crmMeet },
+          ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
+          badge={
+            <CRMBadge variant="success" size="sm" dot>
+              WebRTC Ready
+            </CRMBadge>
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              {canCreate && (
+                <Button
+                  onClick={() => setIsScheduleOpen(true)}
+                  size="sm"
+                  className="bg-[#6366F1] hover:bg-indigo-600 text-white gap-1.5 text-xs h-9 shadow-xs"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5" />
+                  <span>Schedule Meeting</span>
+                </Button>
+              )}
+            </div>
+          }
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
           {/* Metrics */}

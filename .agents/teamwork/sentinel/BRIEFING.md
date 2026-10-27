@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-26T16:46:00Z
+# BRIEFING — 2026-10-26T19:55:00Z
 
 ## Mission
-Perform a deep recheck and hardening of CredSmart CRM across multi-tenant isolation, real staff visibility (eliminating mock demo staff on the dashboard), human display name preservation, default password generation (name123), and task assignment features, ensuring 100% test passing and zero regressions.
+Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refresh, prevent cross-tenant user leaks, link newly provisioned staff strictly to owner org with custom credentials, fix Salary Management staff visibility, restore Task assignment, enforce strict route lockdown preventing CRM staff from entering POS/Billing, accelerate CRM page load speed, unify CRM Command Center header, and cleanly decouple CRM and POS/Billing data on Ubuntu server PostgreSQL.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -54,6 +54,8 @@ Perform a deep recheck and hardening of CredSmart CRM across multi-tenant isolat
 - Victory Auditor (SWE Tenant Isolation Gen 2): 821cae1a-e032-4e96-b736-ebcc5a0d8bc4 (victory confirmed)
 - Active Orchestrator (SWE CRM Hardening): de9ee5f3-aa5e-4256-bde3-aa61264e04df
 - Victory Auditor (SWE CRM Hardening): [to be spawned on victory claim]
+- Active Orchestrator (CRM Defects Elimination): 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Victory Auditor (CRM Defects Elimination): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -83,19 +85,26 @@ Perform a deep recheck and hardening of CredSmart CRM across multi-tenant isolat
 - Strict Real Staff Visibility: eliminate DEFAULT_STAFF mock data from CRMDashboard.tsx
 - Human display name fallback (users.name if users.full_name is empty) across backend and frontend
 - Default password generation format: {firstName}123 (minimum 6 characters)
+- Eradicate cross-joined rogue memberships in PostgreSQL database
+- Newly provisioned staff bound strictly to provisioning owner org with valid credentials
+- Salary Management populated with authoritative CRM staff roster
+- Real UUID task assignment without synthetic IDs
+- Strict POS/Billing lockdown for CRM staff without explicit POS permissions
+- Sub-500ms CRM page loads with parallel queries and cached endpoints
+- Unified CRMCommandHeader across all CRM pages
 
 ## User Context
-- **Last user request**: Deep recheck and hardening of CredSmart CRM across multi-tenant isolation, real staff visibility (eliminating mock demo staff on the dashboard), human display name preservation, default password generation (name123), and task assignment features, ensuring 100% test passing and zero regressions.
+- **Last user request**: Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refresh, prevent cross-tenant user leaks, link newly provisioned staff strictly to owner org, fix Salary Management staff visibility, restore Task assignment, enforce strict route lockdown on POS/Billing, accelerate CRM page loads, unify CRM Command Center header, cleanly decouple CRM & POS/Billing data on PostgreSQL database.
 - **Pending clarifications**: none
-- **Delivered results**: In progress. Dispatched SWE Light Orchestrator (`teamwork_preview_swe`).
+- **Delivered results**: Dispatched General Project Orchestrator (`teamwork_preview_orchestrator`) with monitoring crons.
 
 ## Project Status
 - **Phase**: in progress
-- **Routing Decision**: SWE Light -> teamwork_preview_swe
-- **Active Orchestrator ID**: de9ee5f3-aa5e-4256-bde3-aa61264e04df
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_crm_hardening
-- **Cron 1 (Reporting)**: task-26 (`*/8 * * * *`)
-- **Cron 2 (Liveness)**: task-28 (`*/10 * * * *`)
+- **Routing Decision**: General -> teamwork_preview_orchestrator
+- **Active Orchestrator ID**: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects
+- **Cron 1 (Reporting)**: task-30 (`*/8 * * * *`)
+- **Cron 2 (Liveness)**: task-32 (`*/10 * * * *`)
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -104,4 +113,4 @@ Perform a deep recheck and hardening of CredSmart CRM across multi-tenant isolat
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\swe_crm_hardening\DISPATCH.md — Dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\DISPATCH.md — Dispatch instructions

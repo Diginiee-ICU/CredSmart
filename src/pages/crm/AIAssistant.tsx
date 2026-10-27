@@ -23,6 +23,7 @@ import {
   CRMCard,
   CRMBadge,
   CRMPageHeader,
+  CRMCommandHeader,
   CRMStatCard,
   CRMPermissionGate,
 } from "@/components/crm";
@@ -215,37 +216,35 @@ export default function AIAssistant(): React.ReactElement {
       }
     >
       <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20">
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
-          <div className="max-w-7xl mx-auto">
-            <CRMPageHeader
-              title="CRM AI Assistant"
-              subtitle={`${org?.name ? `${org.name} • ` : ""}Autonomous retail intelligence, overdue payment reminders, and sales insights`}
-              breadcrumbs={[
-                { label: "Home", href: "/" },
-                { label: "CRM", href: ROUTE_PATHS.crm },
-                { label: "AI Assistant", href: ROUTE_PATHS.crmAiAssistant },
-              ]}
-              badge={
-                <CRMBadge variant="success" size="sm" dot>
-                  Linear Copilot
-                </CRMBadge>
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearChat}
-                    className="h-9 text-xs gap-1.5 border-slate-200 dark:border-slate-800"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Reset Chat</span>
-                  </Button>
-                </div>
-              }
-            />
-          </div>
-        </header>
+        <CRMCommandHeader
+          title="CRM AI Assistant"
+          subtitle={`${org?.name ? `${org.name} • ` : ""}Autonomous retail intelligence, overdue payment reminders, and sales insights`}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "CRM", href: ROUTE_PATHS.crm },
+            { label: "AI Assistant", href: ROUTE_PATHS.crmAiAssistant },
+          ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
+          badge={
+            <CRMBadge variant="success" size="sm" dot>
+              Linear Copilot
+            </CRMBadge>
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearChat}
+                className="h-9 text-xs gap-1.5 border-slate-200 dark:border-slate-800"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                <span>Reset Chat</span>
+              </Button>
+            </div>
+          }
+        />
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
           {/* AI Capabilities Ribbon */}

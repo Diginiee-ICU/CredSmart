@@ -1,30 +1,21 @@
-# DISPATCH: Challenger 1 - Milestone 1 (`SalaryManagement.tsx`)
+## 2026-10-26T20:33:29Z
+You are Challenger 1 (Multi-Tenant Leak & Fallback Stress Challenger) for Milestone M1 of CredSmart CRM Defects Elimination.
 
-## Objective
-Empirically verify correctness, type soundness, production build, and test suite pass rate for Milestone 1 (`SalaryManagement.tsx`).
+Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+Authoritative Request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (MUST read section ## 2026-10-26T19:54:47Z before starting work!)
+Project Scope: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md
+Worker Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md
 
-## Scope & Actions
-- Target File: `src/pages/crm/SalaryManagement.tsx`
-- Run typecheck: `node node_modules/typescript/bin/tsc --noEmit`
-- Run production build: `node node_modules/vite/bin/vite.js build`
-- Run Vitest tests: `node node_modules/vitest/vitest.mjs run src/test/crmSalaryManagement.test.tsx`
-- Stress-test mobile layout rendering & verify desktop view is untouched in `hidden md:block`
-- Verify the 19 quarantine files are untouched
-- Provide clear verdict: APPROVE or REJECT
+Objective:
+Empirically and adversarially challenge multi-tenant user isolation and auth fallback eradication.
+Verify:
+1. `GET /api/profiles` and `GET /api/organization-memberships` without `targetOrg` or `org_id` can NEVER leak users. Assert response is an empty array `[]`.
+2. When a user has 0 memberships, `getUserPrimaryOrgId` returns `null` and does NOT auto-insert them into the organization with the most products.
+3. Querying `/api/crm/staff` with Organization A never returns users from Organization B.
+4. Run empirical stress tests:
+   `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts`
 
-## Output
-Write your report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` and notify orchestrator.
-
-
-## 2026-10-25T11:08:13Z
-You are Challenger 1 for Milestone 1 (`SalaryManagement.tsx`).
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md
-MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z).
-
-Empirically challenge `src/pages/crm/SalaryManagement.tsx`:
-1. Run `node node_modules/typescript/bin/tsc --noEmit`
-2. Run `node node_modules/vite/bin/vite.js build`
-3. Run `node node_modules/vitest/vitest.mjs run src/test/crmSalaryManagement.test.tsx`
-4. Confirm desktop view preservation and verify the 19 quarantine files are untouched.
-Write your report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` with explicit verdict APPROVE or REJECT, and notify orchestrator with send_message.
+Output Requirements:
+- Write challenge report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\challenge.md`.
+- Write handoff report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` with explicit Verdict: APPROVE or REQUEST_CHANGES.
+- Send completion message to orchestrator. Do not edit source files.

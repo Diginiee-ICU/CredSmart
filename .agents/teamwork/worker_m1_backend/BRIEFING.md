@@ -1,74 +1,60 @@
-# BRIEFING — 2026-10-22T00:06:00Z
+# BRIEFING — 2026-10-26T20:33:00Z
 
 ## Mission
-Milestone 1: PostgreSQL Schema & Express Backend Integration for CredSmart Enterprise CRM Staff User Provisioning & Task Management.
+Implement backend multi-tenant isolation, staff provisioning, micro-caching expansion, and database index performance enhancements for CredSmart CRM (Requirements R1, R5, R7).
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend
-- Original parent: c838af97-21de-4616-9188-f0f8dfa904c9
-- Milestone: Milestone 1 — PostgreSQL Schema & Express Backend Integration
+- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone: M1 - Backend Multi-Tenant Isolation & Staff Provisioning
 
 ## 🔒 Key Constraints
-- Multi-tenant isolation: strictly respect org_id / organization_id duality and sync.
-- Password hashing with bcrypt (10 rounds) in backend-api.
-- Zero TypeScript compiler errors (`tsc --noEmit`).
-- Zero `any` types in `src/services/crmApi.ts`.
-- Genuine implementation — no shortcuts, no hardcoded responses, maintain real state.
-- Write ownership: `backend-api/src/routes/crm.js`, `supabase/migrations/20261021180000_create_crm_staff_tasks.sql`, `fix_db.sql`, `backend-api/fix_db.sql`, `src/services/crmApi.ts`.
-- DO NOT touch: `MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, or any billing modals.
+- Exclusive write ownership: `backend-api/fix_db.sql`, `backend-api/src/routes/auth.js`, `backend-api/src/middleware/auth.js`, `backend-api/src/routes/settings.js`, `backend-api/src/routes/crm.js`, `backend-api/src/index.js`, `backend-api/add_indexes.sql`.
+- Do NOT touch frontend files in this milestone.
+- Do NOT cheat. Genuine logic and real state.
+- Keep `fix_db.sql` synchronized with `backend-api/fix_db.sql` for test parity.
+- `cmd /c npx` on Windows.
 
 ## Current Parent
-- Conversation ID: c838af97-21de-4616-9188-f0f8dfa904c9
-- Updated: 2026-10-22T00:06:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T20:33:00Z
 
 ## Task Summary
-- **What to build**:
-  1. Safe idempotent migration `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` and update `fix_db.sql` & `backend-api/fix_db.sql`.
-  2. Implement backend routes in `backend-api/src/routes/crm.js`: `POST /api/crm/staff/provision`, `GET /api/crm/staff` and `/api/crm/staff-roles`, enriched `GET /api/crm/tasks`, `POST /api/crm/tasks`, `PATCH /api/crm/tasks/:id`, `DELETE /api/crm/tasks/:id`.
-  3. Implement frontend API client methods & types in `src/services/crmApi.ts`: `provisionStaffUser`, `getCRMTasks`, `createCRMTask`, `updateCRMTask`, `transitionCRMTaskStatus`, `deleteCRMTask`.
-- **Success criteria**:
-  - Valid SQL migration and fix_db sync.
-  - Express routes handle atomic user creation, password hashing, staff listing, task CRUD, and lifecycle status transitions.
-  - Full TypeScript types with zero `any`.
-  - `cmd /c npx tsc --noEmit` passes with 0 errors.
-  - Existing tests pass without regression.
-- **Interface contracts**: `PROJECT.md` § Interface Contracts
-- **Code layout**: `PROJECT.md` § Code Layout
+- **What to build**: Multi-tenant isolation in auth, middleware, settings, CRM routes; 10s micro-cache expansion to `/rest/v1/*` with domain-segregated invalidation; composite B-Tree indexes.
+- **Success criteria**: All Vitest test suites (`crmTenantIsolation.test.ts`, `fixDbSchema.test.ts`, `crmBackendApiM1.test.ts`) pass cleanly; `tsc --noEmit` clean.
+- **Interface contracts**: `orchestrator_crm_defects/PROJECT.md`
+- **Code layout**: `backend-api/`
 
 ## Key Decisions Made
-- Used `bcryptjs` for 10-round password hashing on user creation.
-- Used an atomic PostgreSQL transaction (`BEGIN ... COMMIT`) to ensure that `users`, `org_memberships`, and CRM role assignments (`crm_staff_assignments` and `crm_staff_roles`) are provisioned simultaneously or rolled back on failure.
-- Aliased `/api/crm/staff-roles` and `/api/crm/staff` to return all employees from `org_memberships` left-joined with CRM roles.
-- Preserved 100% byte-for-byte identity between `fix_db.sql` and `backend-api/fix_db.sql`.
-- Supported full state transition lifecycle in `PATCH /api/crm/tasks/:id`, including proof notes submission, review status, manager approval to done with timestamp and user ID, and manager revision request with review feedback.
+- Removed CROSS JOIN from `backend-api/fix_db.sql` and `fix_db.sql` (lines 130-148); synchronized cross-table memberships with `ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role`.
+- In `auth.js` (`getUserPrimaryOrgId`) and `middleware/auth.js`, replaced `COUNT(*) FROM products DESC` with priority ordering on explicit memberships and `crm_staff_assignments`. Removed fallback auto-inserting user into organization with most products.
+- In `settings.js`, enforced `targetOrg` filtering on `GET /api/profiles` and `/api/organization-memberships` to return `[]` when `targetOrg` is omitted. Included `crm_staff_assignments` in user lookup.
+- In `index.js`, expanded in-memory micro-cache to cover `/rest/v1/*` read endpoints, and implemented domain-segregated cache invalidation (`isCrmPath`) on mutations.
+- In `add_indexes.sql`, added composite B-Tree indexes on `crm_staff_assignments`, `staff_tasks`, `crm_salary_profiles`, `crm_roles`, and `crm_attendance`.
 
 ## Artifact Index
-- `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` — Idempotent migration
-- `fix_db.sql` — Root server target database alignment script
-- `backend-api/fix_db.sql` — Synced backend-api server script
-- `backend-api/src/routes/crm.js` — Express CRM routes
-- `src/services/crmApi.ts` — TypeScript API client with zero `any`
-- `src/test/crmBackendApiM1.test.ts` — 10 unit tests for CRM API client
+- `.agents/teamwork/worker_m1_backend/DISPATCH.md` — Orchestrator dispatch
+- `.agents/teamwork/worker_m1_backend/BRIEFING.md` — Situational awareness
+- `.agents/teamwork/worker_m1_backend/progress.md` — Implementation & heartbeat log
+- `.agents/teamwork/worker_m1_backend/handoff.md` — Final completion report
 
 ## Change Tracker
 - **Files modified**:
-  - `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` (Created migration)
-  - `fix_db.sql` (Added staff_tasks columns, normalization, indexes, and crm_staff_assignments user_id duality)
-  - `backend-api/fix_db.sql` (Kept byte-for-byte identical to root fix_db.sql)
-  - `backend-api/src/routes/crm.js` (Implemented provisioning, staff list left-join, tasks CRUD, status lifecycle transitions)
-  - `src/services/crmApi.ts` (Exported typed methods: provisionStaffUser, getCRMTasks, createCRMTask, updateCRMTask, transitionCRMTaskStatus, deleteCRMTask)
-  - `src/test/crmBackendApiM1.test.ts` (Created client API tests)
-- **Build status**: `npx tsc --noEmit` PASS (0 errors)
+  - `backend-api/fix_db.sql` & `fix_db.sql`: removed rogue CROSS JOIN, enabled ON CONFLICT sync
+  - `backend-api/src/routes/auth.js`: tenant-safe `getUserPrimaryOrgId`
+  - `backend-api/src/middleware/auth.js`: tenant-safe `authenticate` middleware
+  - `backend-api/src/routes/settings.js`: `targetOrg` enforcement on profiles & memberships
+  - `backend-api/src/index.js`: `/rest/v1/*` caching and segregated CRM vs POS invalidation
+  - `backend-api/add_indexes.sql`: CRM composite indexes and ANALYZE
+- **Build status**: PASS (`tsc --noEmit` exited code 0; Vitest 453/453 tests passed)
 - **Pending issues**: none
 
 ## Quality Status
-- **Build/test result**: 482 / 482 tests passed (5 test files)
-- **Lint status**: Clean (tsc --noEmit 0 errors, node -c 0 errors)
-- **Tests added/modified**: `src/test/crmBackendApiM1.test.ts` (10 tests added)
+- **Build/test result**: PASS (453/453 tests)
+- **Lint status**: 0 errors
+- **Tests added/modified**: Verified against `crmTenantIsolation.test.ts`, `fixDbSchema.test.ts`, `crmBackendApiM1.test.ts`
 
 ## Loaded Skills
-- **Source**: .agents/skills/crm-rbac-skill/SKILL.md
-- **Local copy**: .agents/teamwork/worker_m1_backend/skills/crm-rbac-skill/SKILL.md
-- **Core methodology**: RBAC architecture, permission hooks, gating components, schema conventions
+- None loaded explicitly

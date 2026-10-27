@@ -62,26 +62,45 @@ app.use((req, res, next) => {
 });
 
 // High-Speed In-Memory Read Micro-Cache for frequent GET endpoints
-// (TTL = 10 seconds, purged instantly on any mutation POST/PUT/DELETE)
+// (TTL = 10 seconds, purged on mutations with CRM vs POS domain segregation)
 const apiCache = new Map();
 const CACHE_TTL_MS = 10000;
 
+const isCrmPath = (urlPath) => {
+  if (!urlPath) return false;
+  return (
+    urlPath.includes('/api/crm') ||
+    urlPath.includes('/rest/v1/crm_') ||
+    urlPath.includes('/rest/v1/staff_tasks') ||
+    urlPath.includes('/rest/v1/attendance_records') ||
+    urlPath.includes('/rest/v1/salary_profiles') ||
+    urlPath.includes('/rest/v1/customer_tickets')
+  );
+};
+
 app.use((req, res, next) => {
-  // Invalidate cache on mutations
+  // Invalidate cache on mutations with domain segregation (CRM vs POS)
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-    const orgId = req.headers['x-organization-id'] || 'global';
+    const orgId = req.headers['x-organization-id'] || req.body?.organization_id || req.body?.org_id || req.user?.orgId || 'global';
+    const isCrmMutation = isCrmPath(req.originalUrl || req.path);
+    const domainPrefix = isCrmMutation ? ':crm:' : ':billing:';
+
     for (const key of apiCache.keys()) {
-      if (key.startsWith(orgId)) {
+      if (orgId !== 'global' && !key.startsWith(orgId) && !key.startsWith('global:')) {
+        continue;
+      }
+      if (key.includes(domainPrefix)) {
         apiCache.delete(key);
       }
     }
     return next();
   }
 
-  // Cache candidate endpoints
-  if (req.method === 'GET' && req.path.startsWith('/api/')) {
-    const orgId = req.headers['x-organization-id'] || req.query.org_id || req.query.organization_id || 'global';
-    const cacheKey = `${orgId}:${req.originalUrl}`;
+  // Cache candidate endpoints: both /api/ and /rest/v1/ PostgREST passthroughs
+  if (req.method === 'GET' && (req.path.startsWith('/api/') || req.path.startsWith('/rest/v1/'))) {
+    const orgId = req.headers['x-organization-id'] || req.query.org_id || req.query.organization_id || req.user?.orgId || 'global';
+    const domain = isCrmPath(req.originalUrl || req.path) ? 'crm' : 'billing';
+    const cacheKey = `${orgId}:${domain}:${req.originalUrl}`;
     const cached = apiCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {

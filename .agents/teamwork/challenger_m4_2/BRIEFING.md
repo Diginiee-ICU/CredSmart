@@ -1,48 +1,60 @@
-# BRIEFING — 2026-10-17T12:15:00Z
+# BRIEFING — 2026-10-27T04:32:00Z
 
 ## Mission
-Empirically stress-test CRM Phase 2 Milestone 4 Attendance PDF generation & CSV export (multi-page scale, CSV escaping, memory/crash stability).
+Adversarially challenge and stress-test the Milestone 4 strict POS/Billing route lockdown (Requirement R4), deep link interception across routes, role pass-throughs, toast deduplication, and zero infinite loops.
 
 ## 🔒 My Identity
-- Archetype: challenger
+- Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_2
-- Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Milestone: Milestone 4: Attendance Reports & PDF/CSV Export
+- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone: Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4)
 - Instance: 2 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code
-- EMPIRICAL CHALLENGER: Must write and execute tests ourselves; do not trust worker claims without reproduction
-- .agents/teamwork/ holds only metadata — never put source code, tests, or data files here
+- Review-only — do NOT modify implementation code unless a critical fix is authorized by protocol.
+- Must execute verification code ourselves: write generators, oracles, stress harnesses.
+- Do NOT trust worker claims or logs.
+- Strictly adhere to Minimal Design System rules and project layout rules.
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T12:15:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-27T04:32:00Z
 
 ## Review Scope
-- **Files to review**: `src/utils/crmAttendancePdf.ts`, `worker_m4/handoff.md`, `src/pages/crm/Attendance.tsx`
-- **Interface contracts**: ORIGINAL_REQUEST.md (## 2026-10-17T08:52:11Z), orchestrator_crm_phase2/DISPATCH.md
-- **Review criteria**: Multi-page vector PDF generation (50, 100, 150 records, doc.getNumberOfPages() >= 4), CSV escaping with malicious/unusual strings, valid PDF byte output without memory leaks/crashes
-
-## Key Decisions Made
-- Authored dedicated empirical stress test suite: `src/test/crmAttendancePdf.m4_2.stress.test.ts`
-- Verified RFC 4180 parsing with full streaming state-machine parser across commas, double quotes, line breaks, formula injections, Unicode/CJK/Devanagari, and 10KB strings.
-- Verified multi-page vector PDF scaling up to 300 records (50 records -> 2 pages, 100 records -> 4 pages, 150 records -> 5 pages [satisfying >= 4], 300 records -> 9 pages).
-- Verified PDF binary integrity (`%PDF-`, `%%EOF`), memory stability across 10-15 consecutive 100-record runs, and crash immunity under adversarial/corrupt payloads.
-- All 43 attendance PDF/CSV tests across 3 suites and all 351 CRM tests passed with 0 errors. `tsc --noEmit` exited with code 0.
-
-## Artifact Index
-- DISPATCH.md — dispatch message
-- BRIEFING.md — situational awareness
-- progress.md — liveness heartbeat
-- handoff.md — final handoff report
-- `src/test/crmAttendancePdf.m4_2.stress.test.ts` — empirical stress test suite
+- **Files to review**:
+  - `src/components/routing/BillingLockdownGuard.tsx`
+  - `src/App.tsx`
+  - `src/config/routes.ts`
+  - `src/test/crmBillingLockdownGuard.test.tsx`
+- **Interface contracts**:
+  - `ORIGINAL_REQUEST.md` (Forensic Bug 4 / Requirement R4)
+  - `handoff.md` from `worker_m4_lockdown`
+- **Review criteria**:
+  - Deep link interception across `/billing/pos`, `/billing/checkout`, `/billing/parties`, `/billing/sales`, `/billing/dashboard` for pure CRM staff
+  - Store owners, super admins, cashiers, and granular POS permissions pass through
+  - Toast deduplication and zero loop re-triggers
+  - `tsc --noEmit` and Vitest test suite validation
 
 ## Attack Surface
-- **Hypotheses tested**: Multi-page vector layout overflow, CSV injection/corrupt quotes, memory leak under heavy PDF generation, NaN coordinate crashing.
-- **Vulnerabilities found**: None in implementation. Pure vector jsPDF and RFC 4180 escaping in `src/utils/crmAttendancePdf.ts` are fully robust.
-- **Untested angles**: All dispatched challenges empirically tested and passed.
+- **Hypotheses tested**:
+  - H1: Direct deep links to `/billing/pos`, `/billing/checkout`, `/billing/parties`, `/billing/sales`, `/billing/dashboard` successfully block pure CRM staff and redirect to `/crm`.
+  - H2: Legacy routes `/pos`, `/checkout`, `/sales`, `/parties`, `/dashboard` correctly redirect through LegacyRedirect and get trapped by BillingLockdownGuard for CRM staff.
+  - H3: Store owners, super_admins, cashiers, and users with granular `userPermissions.pos: true` pass through to `<Outlet />`.
+  - H4: Rapid navigation/re-render does not cause multiple toasts or infinite navigation loops.
+  - H5: Edge cases: empty user object, null/undefined role, unauthenticated users, permission loading edge cases.
+- **Vulnerabilities found**: [TBD]
+- **Untested angles**: [TBD]
 
 ## Loaded Skills
-- None
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Local copy**: .agents/skills/crm-rbac-skill/SKILL.md
+- **Core methodology**: RBAC architecture, permission checks, CRMPermissionGate, useCRMPermission patterns.
+
+## Key Decisions Made
+- Initializing empirical challenge suite in `src/test/challengerM4_2LockdownStress.test.tsx`.
+
+## Artifact Index
+- `.agents/teamwork/challenger_m4_2/BRIEFING.md` — Situational awareness
+- `.agents/teamwork/challenger_m4_2/progress.md` — Liveness heartbeat
+- `.agents/teamwork/challenger_m4_2/handoff.md` — Final handoff report

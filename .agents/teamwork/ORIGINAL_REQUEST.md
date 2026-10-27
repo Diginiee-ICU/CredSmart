@@ -1466,3 +1466,90 @@ Integrity mode: development
 - [ ] `tsc --noEmit` exits with 0 errors.
 - [ ] All 136 CRM tests pass cleanly without regression.
 - [ ] Zero changes to protected billing and invoice files.
+
+
+## 2026-10-26T19:54:47Z
+
+Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refresh, prevent cross-tenant user leaks, link newly provisioned staff strictly to the owner's organization with custom credentials, fix Salary Management staff visibility, restore Task assignment, enforce strict route lockdown preventing CRM staff from entering POS/Billing, accelerate CRM page load speed, unify the CRM Command Center header across all sub-pages, and cleanly decouple CRM and POS/Billing data on the Ubuntu server PostgreSQL database.
+
+Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+Integrity mode: development
+
+## Forensic Bug Root Cause Analysis
+
+### 1. Staff Vanishing on Refresh & Cross-Tenant User Leaks
+- Cause A (SQL Cross-Join in Migration): In backend-api/fix_db.sql (lines 131–141), a CROSS JOIN between users and organizations was executed (INSERT INTO org_memberships ... FROM users u CROSS JOIN organizations o). This caused every user who registered in the database to be cross-linked as an owner to every organization!
+- Cause B (Global Fallback in Auth & Middleware): In backend-api/src/routes/auth.js (getUserPrimaryOrgId) and backend-api/src/middleware/auth.js (lines 45–53), if a user had no organization header, the system fell back to querying the organization with the most products in the entire database (SELECT id FROM organizations ORDER BY ... DESC LIMIT 1) and auto-inserted the user into that organization!
+- Cause C (Unscoped /api/profiles and /api/organization-memberships): In backend-api/src/routes/settings.js, if targetOrg was not explicitly passed, /api/profiles and /api/organization-memberships executed SELECT * FROM users and returned every user across all tenants.
+- Cause D (Frontend Error Suppression & Synthetic IDs): In src/pages/crm/RoleManagement.tsx (line 1070), const newUserId = res?.data?.user?.id || 'user-' + Date.now(). When the backend rejected the provision or assignment (e.g., due to duplicate email, UUID mismatch, or invalid role), the frontend ignored res.error, generated an in-memory synthetic ID (user-178...), and saved it to localStorage. On browser refresh, the backend returned only real database rows, causing the provisioned staff to vanish completely.
+
+### 2. Salary Management Staff Visibility
+- Cause: SalaryManagement.tsx only renders staff who already possess a record in crm_salary_profiles. When staff are newly added or when crmApi.getCRMStaff returns empty/fails, staffDirectory becomes empty. Consequently, the "Configure Salary" and "Add Staff Profile" dropdowns display zero selectable staff members.
+
+### 3. Task Assignment Failure
+- Cause: In src/pages/crm/Tasks.tsx, tasks were created with synthetic staff IDs (user-178...) from localStorage. The backend POST /api/crm/tasks enforces verifyUserInOrg(cleanAssignee, orgId). Because the synthetic ID does not exist in PostgreSQL, the backend rejected the task creation with 400 Assigned user does not belong to this organization, causing assignment failure and data disappearance on refresh.
+
+### 4. POS/Billing Access Lockdown for CRM Staff
+- Cause: In src/App.tsx, POS/Billing routes (/billing/pos, /billing/checkout, /billing/sales, /billing/items, /billing/parties) are mounted under general <ProtectedRoutes> with zero role gating. RoleProtectedRoute is only applied to managers for reports and settings. Staff users can simply type /billing/pos or click navigation links and access the full billing engine.
+
+### 5. CRM Page Loading Speed
+- Cause: CRM pages perform cascading, un-parallelized HTTP requests over the Cloudflare Tunnel (cloudflared). For example, SalaryManagement.tsx executes 14 sequential API calls on every mount without leveraging TanStack Query cache. In addition, the Express micro-cache only targets /api/ endpoints, leaving Supabase PostgREST passthroughs (/rest/v1/*) completely uncached.
+
+### 6. Inconsistent CRM Header
+- Cause: CRMDashboard.tsx features a dedicated mobile and desktop command center header with live sync badges, organization breadcrumbs, and quick action buttons. Other CRM sub-pages (RoleManagement, SalaryManagement, Tasks, Attendance, Broadcasts, Meet, AIAssistant, Support) each define differing ad-hoc headers without a unified layout wrapper.
+
+### 7. CRM vs. POS/Billing Data Coupling
+- Cause: Both domains currently share the generic org_memberships table for role determination, and cache invalidation flushes both POS inventory and CRM staff simultaneously. CRM staff roles and POS store roles must be cleanly segregated in queries and middleware.
+
+## Requirements
+
+### R1. Multi-Tenant User Isolation & Staff Provisioning
+- Cleanse database memberships: Eradicate cross-joined rogue memberships so that each organization only contains its legitimate owner and explicitly provisioned staff.
+- Ensure POST /api/crm/staff/provision saves user credentials (email, password_hash, full_name, phone) and creates an authoritative link in crm_staff_assignments and crm_staff_roles scoped strictly to org_id.
+- Ensure newly provisioned staff can log in using their credentials and are strictly bound to the provisioning owner's organization.
+- Prevent GET /api/crm/staff, GET /api/profiles, and GET /api/organization-memberships from ever leaking users across different organizations.
+
+### R2. Salary & Payroll Staff Synchronization
+- In SalaryManagement.tsx, populate the staff directory directly from authoritative CRM staff for the active organization.
+- Display a comprehensive roster showing both configured and unconfigured staff members, enabling 1-click salary profile creation.
+
+### R3. Reliable Task Assignment
+- Ensure POST /api/crm/tasks accepts valid UUIDs of real provisioned staff in the active organization.
+- Update src/pages/crm/Tasks.tsx to handle task assignment with immediate optimistic updates and persistent database synchronization.
+
+### R4. POS/Billing Strict Access Lockdown
+- Implement a route guard preventing CRM staff from navigating to /billing/*, /pos, /checkout, or billing pages.
+- Restrict POS/Billing exclusively to the Store Owner, Super Admin, or staff explicitly granted POS billing access permissions in their custom CRM role.
+- If a CRM staff user without POS permission accesses a billing URL, redirect them to /crm with an unauthorized alert.
+
+### R5. Lightning-Fast CRM Page Loading
+- Eliminate cascading roundtrips: bundle CRM initial load queries or execute them concurrently with Promise.all / React Query.
+- Expand backend in-memory micro-cache (10s TTL) to cover /rest/v1/* read requests.
+- Add database B-Tree composite indexes on crm_staff_assignments(org_id, user_id), staff_tasks(org_id, status), and crm_salary_profiles(org_id, staff_id).
+
+### R6. Unified CRM Command Center Header
+- Extract the CRM Command Center header from CRMDashboard.tsx into a reusable CRMCommandHeader component.
+- Apply this unified header across all CRM pages (RoleManagement, SalaryManagement, Tasks, Attendance, Broadcasts, Meet, AIAssistant, Support).
+
+### R7. CRM and POS/Billing Domain Data Separation
+- Segregate CRM staff assignments and permissions from POS store roles.
+- Ensure modifications within CRM (roles, staff, payroll, tasks) operate independently from POS/Billing operational records (sales invoices, products, stock).
+
+## Acceptance Criteria
+
+### Security & Multi-Tenancy
+- [ ] No cross-organization user leaks: A newly signed-up user sees zero staff initially.
+- [ ] Provisioned staff can successfully authenticate with the owner-assigned email and password.
+- [ ] On browser refresh, newly created custom roles and assigned staff remain visible and intact.
+
+### Salary & Tasks
+- [ ] Salary Management displays all provisioned staff in the organization with options to set basic pay and allowances.
+- [ ] Tasks can be assigned to any staff member in the organization, and the assigned task persists across page reloads.
+
+### Access Control
+- [ ] CRM staff without explicit POS permissions cannot access /billing/pos, /billing/checkout, or /billing/sales.
+- [ ] Store owners retain unrestricted access to both POS/Billing and CRM.
+
+### Performance & UI Consistency
+- [ ] CRM pages load in under 500ms using parallel queries and cached endpoints.
+- [ ] All CRM sub-pages render the unified Command Center header matching CRMDashboard.tsx.

@@ -25,6 +25,7 @@ import {
   CRMCard,
   CRMBadge,
   CRMPageHeader,
+  CRMCommandHeader,
   CRMStatCard,
   CRMPermissionGate,
 } from "@/components/crm";
@@ -306,39 +307,37 @@ export default function Broadcasts(): React.ReactElement {
       }
     >
       <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20">
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
-          <div className="max-w-7xl mx-auto">
-            <CRMPageHeader
-              title="Live Broadcasts & Circulars"
-              subtitle={`${org?.name ? `${org.name} • ` : ""}Publish urgent notices, operational policies, and company announcements`}
-              breadcrumbs={[
-                { label: "Home", href: "/" },
-                { label: "CRM", href: ROUTE_PATHS.crm },
-                { label: "Broadcasts", href: ROUTE_PATHS.crmBroadcasts },
-              ]}
-              badge={
-                <div className="flex items-center gap-1.5">
-                  <CRMBadge variant="info" size="sm">Phase 4 Active</CRMBadge>
-                  <CRMBadge variant="success" size="sm" dot>
-                    Push Alerts Ready
-                  </CRMBadge>
-                </div>
-              }
-              actions={
-                canSend && (
-                  <Button
-                    onClick={() => setIsComposeOpen(true)}
-                    size="sm"
-                    className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Publish Broadcast</span>
-                  </Button>
-                )
-              }
-            />
-          </div>
-        </header>
+        <CRMCommandHeader
+          title="Live Broadcasts & Circulars"
+          subtitle={`${org?.name ? `${org.name} • ` : ""}Publish urgent notices, operational policies, and company announcements`}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "CRM", href: ROUTE_PATHS.crm },
+            { label: "Broadcasts", href: ROUTE_PATHS.crmBroadcasts },
+          ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
+          badge={
+            <div className="flex items-center gap-1.5">
+              <CRMBadge variant="info" size="sm">Phase 4 Active</CRMBadge>
+              <CRMBadge variant="success" size="sm" dot>
+                Push Alerts Ready
+              </CRMBadge>
+            </div>
+          }
+          actions={
+            canSend && (
+              <Button
+                onClick={() => setIsComposeOpen(true)}
+                size="sm"
+                className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Publish Broadcast</span>
+              </Button>
+            )
+          }
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
           {/* Metrics */}

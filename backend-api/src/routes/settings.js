@@ -130,6 +130,11 @@ const getMembershipsHandler = async (req, res) => {
     const { user_id, organization_id, org_id } = req.query;
     const targetOrg = organization_id || org_id || req.orgId;
 
+    // Enforce targetOrg filtering. If missing or undefined, return empty array to prevent cross-tenant leaks.
+    if (!targetOrg) {
+      return res.json([]);
+    }
+
     let rows = [];
     let queryErr = null;
 
@@ -145,27 +150,35 @@ const getMembershipsHandler = async (req, res) => {
                u.phone, u.avatar_url
         FROM org_memberships m
         LEFT JOIN users u ON u.id = m.user_id
-        WHERE 1=1
+        WHERE (m.org_id = $1 OR m.organization_id = $1)
       `;
-      const params = [];
+      const params = [targetOrg];
 
       if (user_id) {
         params.push(user_id);
         query += ` AND m.user_id = $${params.length}`;
       }
-      if (targetOrg) {
-        params.push(targetOrg);
-        try {
-          const testRes = await pool.query(query + ` AND (m.org_id = $${params.length} OR m.organization_id = $${params.length}) ORDER BY m.created_at ASC`, params);
-          rows = testRes.rows;
-        } catch (_colErr) {
-          const testRes = await pool.query(query + ` AND m.org_id = $${params.length} ORDER BY m.created_at ASC`, params);
-          rows = testRes.rows;
-        }
-      } else {
-        query += ' ORDER BY m.created_at ASC';
-        const res1 = await pool.query(query, params);
-        rows = res1.rows;
+      query += ' ORDER BY m.created_at ASC';
+      try {
+        const testRes = await pool.query(query, params);
+        rows = testRes.rows;
+      } catch (_colErr) {
+        const fallbackQuery = `
+          SELECT m.*,
+                 m.org_id AS org_id,
+                 m.org_id AS organization_id,
+                 u.email,
+                 COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+                 COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
+                 u.phone, u.avatar_url
+          FROM org_memberships m
+          LEFT JOIN users u ON u.id = m.user_id
+          WHERE m.org_id = $1
+          ${user_id ? 'AND m.user_id = $2' : ''}
+          ORDER BY m.created_at ASC
+        `;
+        const testRes = await pool.query(fallbackQuery, params);
+        rows = testRes.rows;
       }
     } catch (err1) {
       queryErr = err1;
@@ -181,16 +194,12 @@ const getMembershipsHandler = async (req, res) => {
                 u.phone, u.avatar_url
           FROM organization_memberships m
           LEFT JOIN users u ON u.id = m.user_id
-          WHERE 1=1
+          WHERE (m.organization_id = $1 OR m.org_id = $1)
         `;
-        const params2 = [];
+        const params2 = [targetOrg];
         if (user_id) {
           params2.push(user_id);
           query2 += ` AND m.user_id = $${params2.length}`;
-        }
-        if (targetOrg) {
-          params2.push(targetOrg);
-          query2 += ` AND m.organization_id = $${params2.length}`;
         }
         query2 += ' ORDER BY m.created_at ASC';
         const res2 = await pool.query(query2, params2);
@@ -295,6 +304,12 @@ router.get('/profiles', async (req, res) => {
   try {
     const { ids, search, limit } = req.query;
     const targetOrg = req.query.organization_id || req.query.org_id || req.orgId;
+
+    // Enforce targetOrg filtering. If neither targetOrg nor specific ids are provided, return empty array to prevent tenant data leaks.
+    if (!targetOrg && !ids) {
+      return res.json([]);
+    }
+
     let query = "SELECT id, email, full_name, COALESCE(NULLIF(TRIM(full_name), ''), NULLIF(TRIM(name), ''), split_part(email, '@', 1)) as name, phone, avatar_url FROM users WHERE 1=1";
     const params = [];
 
@@ -313,6 +328,8 @@ router.get('/profiles', async (req, res) => {
         SELECT user_id FROM org_memberships WHERE org_id = $${params.length} OR organization_id = $${params.length}
         UNION
         SELECT user_id FROM organization_memberships WHERE organization_id = $${params.length} OR org_id = $${params.length}
+        UNION
+        SELECT COALESCE(user_id, staff_id) AS user_id FROM crm_staff_assignments WHERE org_id = $${params.length} OR organization_id = $${params.length}
       )`;
     }
 

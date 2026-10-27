@@ -11,5 +11,6 @@ export * from "./CRMStatCard";
 export * from "./CRMPermissionGate";
 export * from "./CRMRolePill";
 export * from "./CRMTeamTreeView";
+export * from "./CRMCommandHeader";
 
 export { CRM_BRAND_COLORS, type CRMBrandColor } from "./CRMCard";

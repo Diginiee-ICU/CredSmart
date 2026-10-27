@@ -26,6 +26,7 @@ import {
   CRMCard,
   CRMBadge,
   CRMPageHeader,
+  CRMCommandHeader,
   CRMStatCard,
   CRMDataTable,
   type CRMColumnDef,
@@ -494,34 +495,32 @@ export default function Support(): React.ReactElement {
       }
     >
       <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 pb-32 sm:pb-20">
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
-          <div className="max-w-7xl mx-auto">
-            <CRMPageHeader
-              title="Customer & Internal Support Desk"
-              subtitle={`${org?.name ? `${org.name} • ` : ""}Omnichannel customer tickets, resolution SLA tracking, and internal escalation queue`}
-              breadcrumbs={[
-                { label: "Home", href: "/" },
-                { label: "CRM", href: ROUTE_PATHS.crm },
-                { label: "Support", href: ROUTE_PATHS.crmSupport },
-              ]}
-              badge={
-                <CRMBadge variant="success" size="sm" dot>
-                  SLA Live
-                </CRMBadge>
-              }
-              actions={
-                <Button
-                  onClick={() => setIsCreateOpen(true)}
-                  size="sm"
-                  className="bg-[#0EA5E9] hover:bg-sky-600 text-white gap-1.5 text-xs h-9 shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Open Ticket</span>
-                </Button>
-              }
-            />
-          </div>
-        </header>
+        <CRMCommandHeader
+          title="Customer & Internal Support Desk"
+          subtitle={`${org?.name ? `${org.name} • ` : ""}Omnichannel customer tickets, resolution SLA tracking, and internal escalation queue`}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "CRM", href: ROUTE_PATHS.crm },
+            { label: "Support", href: ROUTE_PATHS.crmSupport },
+          ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
+          badge={
+            <CRMBadge variant="success" size="sm" dot>
+              SLA Live
+            </CRMBadge>
+          }
+          actions={
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              size="sm"
+              className="bg-[#0EA5E9] hover:bg-sky-600 text-white gap-1.5 text-xs h-9 shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Open Ticket</span>
+            </Button>
+          }
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
           {/* Metrics */}

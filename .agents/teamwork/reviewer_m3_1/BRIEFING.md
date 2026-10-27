@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-25T10:38:00Z
+# BRIEFING — 2026-10-26T22:15:00Z
 
 ## Mission
-Independent quality review and adversarial challenge of Milestone 3: Dashboard, Parties & CRM HR Modernization in `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, and `src/pages/crm/Attendance.tsx` (Elimination of nested/boxy cards on mobile, clean divide-y containers, >=44px touch targets, >=11px typography, desktop view preservation, 19 quarantine files untouched, and clean tsc/vite builds).
+Independent quality review and adversarial challenge of Milestone 3: Tasks & Staff Provisioning (R3) in `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` (Elimination of synthetic IDs on provisioning failure, assignee UUID validation and filtering, deterministic error rollback on task mutations, clean empty state handling for zero-task orgs, zero tsc errors, all tests passing).
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -18,67 +18,58 @@ Independent quality review and adversarial challenge of Milestone 3: Dashboard, 
 - Redesign Parent ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Mobile Card Redesign Milestone: Milestone 3 (Dashboard, Parties & CRM HR Modernization Review)
 - Mobile Card Redesign Parent ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Current Review Milestone: Milestone 3 (Tasks & Staff Provisioning - R3)
+- Current Parent ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Enforce CRM design system components and color tokens
 - Enforce integrity checks (no facade or dummy implementations, no hardcoded cheating)
-- Run independent verification (tsc --noEmit, vite build)
+- Run independent verification (tsc --noEmit, vite build / vitest)
 - Provide self-contained handoff.md report with 5 components
 - Adversarially stress-test form validation, calculation accuracy, responsive layouts, Indian currency formatting
 - Adversarially test task state machine transitions, offline localStorage fallback, and real staff assignment
 - Enforce Minimal & Fast-Access Design System rules (proportions, 46x46px center CTA, 44px touch targets, royal blue accent, zero bloated buttons)
 - Enforce Protected Boundaries (zero edits to 19 quarantined invoice/billing files)
+- Verify synthetic ID elimination, failure toasts, assignee UUID filtering, clean empty state handling
+- Zero regression on billing & invoice quarantine files
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T10:38:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:15:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
-  - `worker_m3/handoff.md`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/pages/crm/Tasks.tsx`
+  - `.agents/teamwork/worker_m3_tasks/handoff.md`
 - **Interface contracts**: `ORIGINAL_REQUEST.md`, `minimal-design-system.md`
 - **Review criteria**:
-  1. Elimination of boxy cards on mobile. Replaced with clean `divide-y divide-slate-100 dark:divide-slate-800/60` containers.
-  2. List items rendered as flat rows without individual borders or drop shadows.
-  3. Touch targets: `min-h-[44px]` (or `min-h-[56px]`) on interactive rows and action buttons.
-  4. Typography: No font class below `text-[11px]`.
-  5. Desktop layouts (`hidden md:...`, `hidden sm:...`, `CRMDataTable`) 100% untouched.
-  6. Zero edits to 19 protected invoice quarantine files.
-  7. Full compilation & build pass (`tsc --noEmit` and `vite build`).
+  1. Synthetic ID (`user-${Date.now()}`) elimination on provisioning error/failure in `RoleManagement.tsx`.
+  2. Destructive failure toasts and form reset without ghost staff persisting to state or localStorage.
+  3. Assignee UUID format validation and synthetic ID filtering in `Tasks.tsx`.
+  4. Clean empty state handling (`setTasks([])`) when backend returns 0 tasks.
+  5. Deterministic state rollback on task mutations (`handleCreateTask`, `handleMoveStatus`, `handleApproveTask`, `handleSubmitProof`, `handleSubmitRevision`).
+  6. Independent verification passing: `npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx` (25/25 passed) and `npx tsc --noEmit` (0 errors).
 
 ## Key Decisions Made
-- Verified `Dashboard.tsx`: Recent activity transaction rows refactored into a single container with `divide-y divide-slate-100 dark:divide-slate-800/60`, flat rows `px-3.5 py-3 min-h-[56px]`, typography >= 11px, desktop layout untouched.
-- Verified `Parties.tsx`: Mobile party directory refactored into flush flat rows inside `px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60`, action buttons (Call, WhatsApp, Ledger, More) >= 44px, typography >= 11px, desktop table untouched.
-- Verified `SalaryManagement.tsx`: Tabs 1, 2, and 3 refactored into `rounded-xl border ... divide-y` containers with flat `p-3.5` rows, action buttons upgraded to `min-h-[44px] h-11`, desktop `CRMDataTable` untouched.
-- Verified `Attendance.tsx`: Tab 4 regularisation requests refactored into `rounded-xl border ... divide-y` container with flat `px-3.5 py-3` rows, Approve and Reject buttons upgraded to `min-h-[44px] h-11`, desktop layout untouched.
-- Audited 19 quarantined files: 100% untouched.
-- Ran `tsc --noEmit`: Exited 0 with 0 errors.
-- Ran `vite build`: Exited 0, built successfully in 1m 46s.
-- Confirmed ZERO integrity violations.
+- Audited `src/pages/crm/RoleManagement.tsx`: verified lines 1069-1081 & 1159-1175 cleanly eliminate synthetic ID fallbacks and show error toasts on rejection.
+- Audited `src/pages/crm/Tasks.tsx`: verified `UUID_REGEX`, `isSyntheticStaffId`, `isValidAssigneeId`, dropdown filtering, clean empty state, and optimistic state rollbacks.
+- Executed `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`: 3 passed test files, 25 passed tests.
+- Executed `cmd /c npx tsc --noEmit`: 0 TypeScript compiler errors.
+- Audited for integrity violations: ZERO detected.
 - Issued verdict: APPROVE.
 
-## Artifact Index
-- `.agents/teamwork/reviewer_m3_1/BRIEFING.md` — Persistent briefing
-- `.agents/teamwork/reviewer_m3_1/DISPATCH.md` — Dispatch logs
-- `.agents/teamwork/reviewer_m3_1/progress.md` — Heartbeat
-- `.agents/teamwork/reviewer_m3_1/handoff.md` — Reviewer & Adversarial Critic final report
-
 ## Review Checklist
-- **Items reviewed**: `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, `src/pages/crm/Attendance.tsx`, `worker_m3/handoff.md`
+- **Items reviewed**: `src/pages/crm/RoleManagement.tsx`, `src/pages/crm/Tasks.tsx`, `worker_m3_tasks/handoff.md`, `src/test/crmTasksView.test.tsx`, `src/test/crmStaffTasksIntegration.test.tsx`, `src/test/crmStaffProvisioningUI.test.tsx`
 - **Verdict**: APPROVE
 - **Unverified claims**: None.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Boxy card regressions on mobile → Eliminated across all 4 target files.
-  2. Touch target accessibility on mobile controls → All interactive rows and buttons meet `min-h-[44px]` or `min-h-[56px]`.
-  3. Desktop view corruption or layout bleed → Verified desktop wrappers and tables are 100% intact.
-  4. Micro-font degradation (< 11px) → Audited classes; smallest font is `text-[11px]`.
-  5. Quarantine file alteration → 0 of 19 files modified.
+  1. Ghost staff generation upon provisioning failure → Eliminated in `RoleManagement.tsx`.
+  2. Assignee dropdown pollution by synthetic/unvalidated IDs → Screened out via `isValidAssigneeId`.
+  3. UI freeze on 0 tasks → `setTasks([])` and clean empty states render smoothly.
+  4. Network disconnection during task lifecycle mutations → State cleanly rolls back to previousTask with destructive error toast.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.

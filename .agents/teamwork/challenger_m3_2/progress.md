@@ -1,26 +1,24 @@
 # Progress: challenger_m3_2
 
-**Milestone**: Milestone 3: Dashboard, Parties & CRM HR Empiric Verification  
+**Milestone**: Milestone 3: Tasks & Staff Provisioning - R3 (Synthetic ID & Rollback Stress Challenge)  
 **Agent**: Challenger 2 (`challenger_m3_2`)  
 **Role**: Empirical Challenger  
-**Last visited**: 2026-10-25T10:45:00Z  
+**Last visited**: 2026-10-26T22:31:00Z  
 
 ## Status
-All empirical verifications, static code analyses, Vitest challenger test harnesses (25/25 passed), tsc checks, and production Vite builds passed with 100% success rate. Handoff report completed. Reporting APPROVE verdict to parent.
+All adversarial stress tests written and executed in `src/test/crmTasksSyntheticRollbackChallenger.test.tsx` (14/14 tests passed, 100%). TypeScript compilation verified cleanly (`tsc --noEmit` exit code 0). 5-component handoff report completed with verdict APPROVE. Verdict reported to parent orchestrator.
 
 ## Subtasks
-- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, PROJECT.md, and minimal-design-system.md
-- [x] Read Worker M3 Handoff Report (`worker_m3/handoff.md`)
+- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, worker_m3_tasks/handoff.md
 - [x] Update BRIEFING.md and progress.md
-- [x] Inspect git diffs for all 4 target files:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
-- [x] Verify 19 Quarantine files are 100% untouched
-- [x] Author adversarial test suite `src/test/milestone3ContainerModernization.challenger.test.ts`
-- [x] Execute Vitest empirical test suite: 25/25 passed (100%)
-- [x] Run `node node_modules/typescript/bin/tsc --noEmit`: Exit code 0 (0 errors)
-- [x] Run `node node_modules/vite/bin/vite.js build`: Exit code 0 (`✓ built in 1m 43s`)
-- [x] Write 5-component handoff report (`handoff.md`) with verdict APPROVE
+- [x] Inspect `src/pages/crm/Tasks.tsx` and `src/pages/crm/RoleManagement.tsx` for synthetic ID handling, rollback logic, and empty states
+- [x] Design adversarial stress tests covering:
+  - 1. Synthetic ID rejection (`user-123456`, `user-${Date.now()}`) and strict UUID acceptance
+  - 2. Deterministic rollback on task creation failure (optimistic task removed, destructive toast called)
+  - 3. Deterministic rollback on lifecycle status transition failure (status reverted to original, destructive toast called)
+  - 4. Clean empty state handling (`[]`) when backend returns 0 tasks
+- [x] Author adversarial test suite `src/test/crmTasksSyntheticRollbackChallenger.test.tsx`
+- [x] Execute Vitest on the new challenger test suite: 14/14 passed (100%)
+- [x] Run `cmd /c npx tsc --noEmit`: Exit code 0 (0 errors)
+- [x] Write 5-component handoff report (`handoff.md`) with explicit verdict APPROVE
 - [x] Send verdict to parent via `send_message`

@@ -1,56 +1,34 @@
-# Dispatch Directive: Forensic Auditor — Milestone 1 Integrity Audit
+## 2026-10-26T20:33:31Z
 
-## Mission
-Perform comprehensive forensic integrity analysis of the Milestone 1 implementation:
-1. Static analysis: Verify authentic implementations in `tailwind.config.ts`, `src/index.css`, `button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx`.
-2. Anti-Cheating & Fake Implementation Detection: Verify there are no dummy facades, no hardcoded test outputs, no mock bypasses.
-3. Protected File Inventory Lockdown: Independently audit git status / file modification history to confirm that NONE of the 19 protected invoice files were touched (`git status --porcelain src/components/invoices/ src/components/SalesInvoiceModal.tsx src/utils/downloadExactInvoice.ts`).
-4. Type safety and build validation: Run `cmd /c npx tsc --noEmit` and check for any `any` types or suppressed lint errors.
+You are the Forensic Integrity Auditor for Milestone M1 of CredSmart CRM Defects Elimination.
 
-## Mandatory Verdict
-Your handoff report MUST conclude with a clear binary verdict:
-- `VERDICT: CLEAN` or `VERDICT: INTEGRITY VIOLATION` (with detailed evidence).
-Remember: The orchestrator enforces ZERO TOLERANCE for cheating. A violation is a non-negotiable binary veto.
+Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
+Authoritative Request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (MUST read section ## 2026-10-26T19:54:47Z before starting work!)
+Project Scope: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md
+Worker Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md
 
-## References to Read
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-24T18:51:21Z`)
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md`
+Integrity Audit Objective:
+Perform rigorous forensic static and code-level integrity analysis of all changes made by Worker M1:
+- `backend-api/fix_db.sql` & root `fix_db.sql`
+- `backend-api/src/routes/auth.js`
+- `backend-api/src/middleware/auth.js`
+- `backend-api/src/routes/settings.js`
+- `backend-api/src/routes/crm.js`
+- `backend-api/src/index.js`
+- `backend-api/add_indexes.sql`
 
-## Expected Output
-Write `handoff.md` in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md`. Send message when done.
+Check for:
+1. Zero hardcoded test values, mock return strings, or artificial bypasses.
+2. Genuine PostgreSQL SQL syntax and index statements.
+3. Genuine bcrypt password hashing and real database queries.
+4. Genuine in-memory Map micro-cache and path segregation logic.
+5. Genuine error handling (returning `[]` or `null` rather than dummy data).
 
-## 2026-10-24T19:19:49Z
-Sender: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-Priority: MESSAGE_PRIORITY_HIGH
-Content:
-You are the Forensic Auditor for Milestone 1 of the CredSmart Minimal & Fast-Access Redesign project.
+Run integrity verification commands:
+`cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`
+`cmd /c npx tsc --noEmit`
 
-Your dedicated working directory is:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1`
-
-Read your dispatch directive:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\DISPATCH.md`
-
-Read the authoritative user request:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-24T18:51:21Z`)
-
-Read the Worker's handoff report:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md`
-
-Read the design rules and master project document:
-- `.agents/rules/minimal-design-system.md`
-- `PROJECT.md`
-
-Your tasks:
-Perform forensic integrity verification:
-1. Static analysis: Verify authentic implementations in `tailwind.config.ts`, `src/index.css`, `button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx`. Check that changes are real, comprehensive, and not stubbed.
-2. Anti-Cheating & Fake Implementation Detection: Verify there are no dummy facades, no hardcoded test outputs, no mock bypasses.
-3. Protected File Inventory Lockdown: Independently audit git status / file modification history to confirm that NONE of the 19 protected invoice files were touched (`git status --porcelain src/components/invoices/ src/components/SalesInvoiceModal.tsx src/utils/downloadExactInvoice.ts`).
-4. Type safety and build validation: Run `cmd /c npx tsc --noEmit` and check for any `any` types or suppressed lint errors.
-5. Provide your authoritative binary verdict: `VERDICT: CLEAN` or `VERDICT: INTEGRITY VIOLATION` (with full evidence).
-
-Write your handoff report to:
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md`
-When complete, send a message to the orchestrator with your verdict.
+Output Requirements:
+- Write full audit evidence report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\audit.md`.
+- Write handoff report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md` with explicit Verdict: CLEAN or INTEGRITY VIOLATION.
+- Send completion message to orchestrator. Do not edit source files.

@@ -1,93 +1,70 @@
-# BRIEFING — 2026-10-25T11:24:00Z
+# BRIEFING — 2026-10-26T20:39:00Z
 
 ## Mission
-Independently review and adversarially challenge Milestone 1 changes in `src/pages/crm/SalaryManagement.tsx`: verify Mockup 1 mobile requirements, ergonomics, touch targets, typography, desktop preservation (`hidden md:block`), ensure 19 quarantine files are untouched, run tsc and vitest suites, and issue an objective gate verdict.
+Objective review and adversarial challenge of Milestone M1 changes in backend-api (Micro-caching, domain cache invalidation, staff provisioning, B-Tree indexes, and tests).
 
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
-- Original parent: c838af97-21de-4616-9188-f0f8dfa904c9
-- Milestone: M1 (PostgreSQL Schema & Express Backend Integration)
-- Instance: 2 of 2
-- [2026-10-24T19:21:00Z] Current Parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- [2026-10-24T19:21:00Z] Current Milestone: Milestone 1 (Minimal Design Tokens & Base Primitives - CredSmart Minimal & Fast-Access Redesign)
-- [2026-10-24T19:21:00Z] Instance: Reviewer 2 of 2
-- [2026-10-25T09:24:24Z] Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- [2026-10-25T09:24:24Z] Current Milestone: Milestone 1 (CRM Roles & Tasks Modernization)
-- [2026-10-25T09:24:24Z] Instance: Reviewer 2 of 2
-- [2026-10-25T11:08:13Z] Current Parent: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- [2026-10-25T11:08:13Z] Current Milestone: Milestone 1 (SalaryManagement.tsx Redesign)
-- [2026-10-25T11:08:13Z] Instance: Reviewer 2 of 2
+- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone: M1
+- Instance: 2 of 2 (Reviewer 2)
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code.
-- Zero tolerance for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated logs, self-certifying shortcuts).
-- Explicit gate verdict: APPROVE or REQUEST_CHANGES.
-- Check idempotency: IF NOT EXISTS for tables, columns, indexes, policies, triggers.
-- Verify byte-for-byte parity of fix_db.sql and backend-api/fix_db.sql.
-- Verify dual organization columns (org_id, organization_id) and trigger trg_sync_org_ids.
-- Verify normalization of legacy 'pending' -> 'todo' and 'medium' -> 'normal'.
-- [2026-10-24T19:21:00Z] M1 Redesign Constraints:
-  - Button sizing: Standard action (34px / h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs), Table action (28px / h-7 px-2.5 rounded-md text-[11px] font-medium), Micro icon (30px / w-7.5 h-7.5 rounded-md), Center mobile CTA (46px / 46x46px rounded-xl). No oversized buttons.
-  - Card padding: p-3.5, border-border/80, shadow-xs, no heavy 3D glass reflections or liquid glass.
-  - Badge: text-[11px] font-semibold font-mono tracking-tight, semantic status tokens.
-  - Table: TableHead h-8.5 px-3, TableCell py-2 px-3 (38px-42px row height).
-  - Dialog: rounded-xl sm:rounded-2xl, backdrop-blur-xs, no heavy glass.
-  - Tailwind spacing: '7.5' (30px), '8.5' (34px), '11.5' (46px), '13' (52px).
-  - Strict Quarantine: All 19 invoice creation and document lifecycle files must have ZERO modifications.
-- [2026-10-25T09:24:24Z] M1 Roles & Tasks Constraints:
-  - Eliminate nested boxy cards on mobile in RoleManagement and Tasks.
-  - Clean divide-y containers (divide-y divide-slate-100 dark:divide-slate-800/60).
-  - Minimum touch targets: >= 44px (min-h-[44px]).
-  - Zero sub-11px fonts.
-  - Desktop views (sm: / md:) 100% preserved.
-  - All 19 quarantine files 100% untouched.
-  - Verification: tsc --noEmit and vite build.
-- [2026-10-25T11:08:13Z] M1 SalaryManagement Constraints:
-  - Verify Mockup 1 mobile requirements: Header ("Payroll Engine", subtitle, + New Profile Royal Blue, export button), 2x2 stat badges, segmented tabs, empty state card with vector illustration, quick actions footer.
-  - Verify ergonomics, touch targets (>=44px), typography (no sub-11px fonts), button sizes (34px / 28px / 30px).
-  - Verify desktop preservation (`hidden md:block`).
-  - Verify 19 quarantine files are untouched.
-  - Run verification (`tsc --noEmit`, Vitest suites).
+- Review-only — do NOT modify implementation code
+- Check for integrity violations: hardcoded outputs, dummy implementations, shortcuts, fake logs
+- If integrity violations found, verdict MUST be REQUEST_CHANGES with Critical finding
+- Files for content delivery, Messages for coordination
+- Handoff report must follow 5-component protocol
 
 ## Current Parent
-- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Updated: 2026-10-25T11:08:13Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T20:34:00Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/SalaryManagement.tsx`
-- **Quarantine check**: 19 protected billing & invoice files
-- **Review criteria**: Mockup 1 fidelity, mobile ergonomics, 44px touch targets, >=11px font hierarchy, button sizes, desktop preservation, zero business logic regressions, zero integrity violations
+- **Files to review**:
+  - `backend-api/src/index.js`
+  - `backend-api/src/routes/crm.js`
+  - `backend-api/add_indexes.sql`
+  - `src/test/crmBackendApiM1.test.ts`
+- **Reference documents**:
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-26T19:54:47Z`)
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md`
+  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md`
+- **Review criteria**:
+  - Correctness & completeness of in-memory micro-caching on `/rest/v1/*`
+  - Isolation of CRM vs POS cache invalidation (`isCrmPath`)
+  - Correctness of `POST /api/crm/staff/provision` (password hashing, min 6 chars, bindings to staff assignments and staff roles)
+  - Composite B-Tree indexes in `backend-api/add_indexes.sql`
+  - Test suites passing (`vitest run src/test/crmBackendApiM1.test.ts`, `tsc --noEmit`)
+  - Adversarial robustness & edge case safety
+
+## Key Decisions Made
+- Completed objective review and adversarial stress-testing.
+- Issued APPROVE verdict for Milestone M1 backend changes.
+- Documented findings in `review.md` and `handoff.md`.
+
+## Artifact Index
+- `review.md` — Detailed review and challenge findings
+- `handoff.md` — 5-component handoff report with explicit verdict
+- `progress.md` — Liveness tracking
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/pages/crm/SalaryManagement.tsx`: Mockup 1 mobile layout implemented, desktop preserved in `hidden md:block`, 2x2 stat badges, segmented tabs, empty state illustration card, flat divide-y list rows, quick actions footer.
-  - 19 Quarantine files checked: 0 modified (verified via git diff).
-  - `tsc --noEmit`: PASS (exit code 0, 0 errors).
-  - `vite build`: PASS (`✓ built in 2m 32s`, exit code 0).
-  - Vitest test suites (4 files, 115 tests): PASS (100% pass rate).
+  - `backend-api/src/index.js` (Micro-cache covering `/rest/v1/*`, `isCrmPath` invalidation)
+  - `backend-api/src/routes/crm.js` (`POST /api/crm/staff/provision`, password hashing, multi-tenant binding)
+  - `backend-api/add_indexes.sql` (Composite indexes for CRM tables)
+  - `src/test/crmBackendApiM1.test.ts` (Client API suite)
 - **Verdict**: APPROVE
-- **Unverified claims**: None
+- **Unverified claims**: None. All claims verified through source inspection and test runs.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Breakpoint collision between desktop (`hidden md:block`) and mobile (`block md:hidden`): cleanly partitioned.
-  - Drawer accessibility on mobile vs desktop: both `<Sheet>` components mounted outside both containers, fully accessible.
-  - Empty state vs populated list state on mobile: tested both branches cleanly.
-  - Validation in profile drawer: tested invalid staffId, negative salary, out-of-range percentages.
-  - Windows CPU contention during concurrent test/build: identified and verified standalone execution passes 100%.
-- **Vulnerabilities found**: None
-- **Untested angles**: None
-
-## Key Decisions Made
-- Verified complete fidelity to Mockup 1 and design system tokens.
-- Verified 100% test pass rate (115/115 tests across 4 suites).
-- Confirmed zero modifications to quarantine files.
-- Issued verdict: APPROVE.
-
-## Artifact Index
-- `DISPATCH.md` — Inbound assignments
-- `BRIEFING.md` — Working state and memory
-- `progress.md` — Liveness heartbeat
-- `handoff.md` — Review and challenge verdict report
+  - Cache memory growth under high parameter cardinality (Low risk, LRU cap recommended).
+  - Short names (< 3 chars) password generation (Passed, padded to min 6 chars).
+  - Cross-tenant role assignment tampering (Passed, blocked by tenant verification).
+  - Mutation failure cache state (Passed, cache flush safe).
+  - Cross-tenant password overwrite (Passed, existing passwords preserved).
+- **Vulnerabilities found**: None blocking.
+- **Untested angles**: Direct live PostgreSQL execution of `add_indexes.sql` on Docker container (pending deployment step).

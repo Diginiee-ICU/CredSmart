@@ -141,14 +141,19 @@ export interface MockDatabaseStore {
   staff: Array<{ id: string; name: string; email: string; roleName: string }>;
 }
 
-export const mockDbStore: MockDatabaseStore = {
-  salaryProfiles: [],
-  payrollRuns: [],
-  payslips: [],
-  adjustments: [],
-  attendance: [],
-  staff: [],
-};
+const { mockDbStore } = vi.hoisted(() => {
+  const store = {
+    salaryProfiles: [] as any[],
+    payrollRuns: [] as any[],
+    payslips: [] as any[],
+    adjustments: [] as any[],
+    attendance: [] as any[],
+    staff: [] as any[],
+  };
+  return { mockDbStore: store };
+});
+
+export { mockDbStore };
 
 export const resetMockDbStore = () => {
   mockDbStore.staff = [
@@ -339,6 +344,7 @@ export const createSupabaseQueryBuilder = (table: string) => {
     _error: Error | null;
     select: (fields?: string) => Builder;
     eq: (col: string, val: unknown) => Builder;
+    or: (filters: string) => Builder;
     in: (col: string, vals: unknown[]) => Builder;
     order: (col: string, opts?: { ascending?: boolean }) => Builder;
     single: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
@@ -355,6 +361,22 @@ export const createSupabaseQueryBuilder = (table: string) => {
     select: () => builder,
     eq: (col: string, val: unknown) => {
       builder._data = builder._data.filter((item) => item[col] === val);
+      return builder;
+    },
+    or: (filters: string) => {
+      const parts = filters.split(",");
+      builder._data = builder._data.filter((item) => {
+        const hasOrgCols = "org_id" in item || "organization_id" in item;
+        if (!hasOrgCols) return true;
+        return parts.some((p) => {
+          const match = p.trim().match(/^([^.]+)\.eq\.(.*)$/);
+          if (match) {
+            const [, col, val] = match;
+            return String(item[col]) === String(val);
+          }
+          return false;
+        });
+      });
       return builder;
     },
     in: (col: string, vals: unknown[]) => {
@@ -443,6 +465,38 @@ export const createSupabaseQueryBuilder = (table: string) => {
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: vi.fn().mockImplementation((table: string) => createSupabaseQueryBuilder(table)),
+  },
+}));
+
+vi.mock("@/services/crmApi", async () => {
+  const actual = await vi.importActual<typeof import("@/services/crmApi")>("@/services/crmApi");
+  return {
+    ...actual,
+    crmApi: {
+      ...actual.crmApi,
+      getCRMStaff: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.staff, error: null })),
+      getCRMSalaryProfiles: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.salaryProfiles, error: null })),
+      getCRMPayrollRuns: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.payrollRuns, error: null })),
+      getCRMPayslips: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.payslips, error: null })),
+      getCRMSalaryAdjustments: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.adjustments, error: null })),
+      getCRMAttendance: vi.fn().mockImplementation(() => Promise.resolve({ data: mockDbStore.attendance, error: null })),
+      upsertCRMSalaryProfile: vi.fn().mockImplementation((payload: any) => {
+        const idx = mockDbStore.salaryProfiles.findIndex((p: any) => p.staff_id === payload.staff_id || p.id === payload.id);
+        if (idx >= 0) {
+          mockDbStore.salaryProfiles[idx] = { ...mockDbStore.salaryProfiles[idx], ...payload };
+        } else {
+          mockDbStore.salaryProfiles.push({ ...payload, id: payload.id || `profile-${Date.now()}` });
+        }
+        return Promise.resolve({ data: payload, error: null });
+      }),
+    },
+  };
+});
+
+vi.mock("@/services/settingsApi", () => ({
+  settingsApi: {
+    getMemberships: vi.fn().mockImplementation(() => Promise.resolve({ data: [], error: null })),
+    getProfiles: vi.fn().mockImplementation(() => Promise.resolve({ data: [], error: null })),
   },
 }));
 

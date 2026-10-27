@@ -26,13 +26,14 @@ const authenticate = async (req, res, next) => {
         const memberRes = await pool.query(
           `SELECT COALESCE(m.org_id, m.organization_id) AS org_id
            FROM (
-             SELECT org_id, organization_id, user_id FROM org_memberships WHERE user_id = $1
+             SELECT org_id, organization_id, user_id, created_at, 1 AS priority FROM org_memberships WHERE user_id = $1
              UNION
-             SELECT organization_id as org_id, organization_id, user_id FROM organization_memberships WHERE user_id = $1
+             SELECT organization_id as org_id, organization_id, user_id, created_at, 1 AS priority FROM organization_memberships WHERE user_id = $1
+             UNION
+             SELECT org_id, organization_id, COALESCE(user_id, staff_id) AS user_id, created_at, 2 AS priority FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1)
            ) m
-           ORDER BY (
-             SELECT COUNT(*) FROM products p WHERE p.org_id = m.org_id OR p.organization_id = m.org_id
-           ) DESC
+           WHERE COALESCE(m.org_id, m.organization_id) IS NOT NULL
+           ORDER BY m.priority ASC, m.created_at ASC
            LIMIT 1`,
           [decoded.id]
         );
@@ -40,17 +41,7 @@ const authenticate = async (req, res, next) => {
           req.orgId = memberRes.rows[0].org_id;
         }
       } catch (e) {
-        // Fallback: try querying organization directly with most data
-        try {
-          const directOrg = await pool.query(
-            `SELECT id FROM organizations
-             ORDER BY (
-               SELECT COUNT(*) FROM products p WHERE p.org_id = organizations.id OR p.organization_id = organizations.id
-             ) DESC, created_at ASC
-             LIMIT 1`
-          );
-          if (directOrg.rows.length > 0) req.orgId = directOrg.rows[0].id;
-        } catch (_ignored) {}
+        // Do not fall back to foreign organizations!
       }
     }
 

@@ -17,16 +17,14 @@ const getUserPrimaryOrgId = async (userId) => {
   try {
     const orgRes = await pool.query(
       `SELECT COALESCE(m.org_id, m.organization_id) AS org_id FROM (
-         SELECT org_id, organization_id, user_id, created_at FROM org_memberships WHERE user_id = $1
+         SELECT org_id, organization_id, user_id, created_at, 1 AS priority FROM org_memberships WHERE user_id = $1
          UNION
-         SELECT organization_id AS org_id, organization_id, user_id, created_at FROM organization_memberships WHERE user_id = $1
+         SELECT organization_id AS org_id, organization_id, user_id, created_at, 1 AS priority FROM organization_memberships WHERE user_id = $1
+         UNION
+         SELECT org_id, organization_id, COALESCE(user_id, staff_id) AS user_id, created_at, 2 AS priority FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1)
        ) m
-       WHERE m.org_id IS NOT NULL
-       ORDER BY (
-         SELECT COUNT(*) FROM products p WHERE p.org_id = m.org_id OR p.organization_id = m.org_id
-       ) DESC, (
-         SELECT COUNT(*) FROM sales s WHERE s.org_id = m.org_id OR s.organization_id = m.org_id
-       ) DESC, m.created_at ASC
+       WHERE COALESCE(m.org_id, m.organization_id) IS NOT NULL
+       ORDER BY m.priority ASC, m.created_at ASC
        LIMIT 1`,
       [userId]
     );
@@ -39,28 +37,14 @@ const getUserPrimaryOrgId = async (userId) => {
       );
       if (fallbackRes.rows.length > 0) return fallbackRes.rows[0].org_id;
     } catch (_ignored) {}
-  }
-
-  // Fallback: If user has no membership, find the primary organization with data and auto-link
-  try {
-    const primaryOrg = await pool.query(
-      `SELECT id FROM organizations
-       ORDER BY (
-         SELECT COUNT(*) FROM products p WHERE p.org_id = organizations.id OR p.organization_id = organizations.id
-       ) DESC, created_at ASC
-       LIMIT 1`
-    );
-    if (primaryOrg.rows.length > 0 && primaryOrg.rows[0].id) {
-      const pId = primaryOrg.rows[0].id;
-      await pool.query(
-        `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
-         VALUES ($1, $2, $2, 'owner')
-         ON CONFLICT (user_id, org_id) DO NOTHING`,
-        [userId, pId]
+    try {
+      const staffRes = await pool.query(
+        `SELECT COALESCE(org_id, organization_id) AS org_id FROM crm_staff_assignments WHERE user_id = $1 OR staff_id = $1 LIMIT 1`,
+        [userId]
       );
-      return pId;
-    }
-  } catch (_pErr) {}
+      if (staffRes.rows.length > 0) return staffRes.rows[0].org_id;
+    } catch (_ignored) {}
+  }
 
   return null;
 };

@@ -1,16 +1,23 @@
-# Progress — auditor_m1
+# Progress — Forensic Integrity Auditor M1
 
-**Last visited**: 2026-10-24T19:29:00Z  
-**Current State**: Milestone 1 Forensic Audit Complete — Verdict: CLEAN
+Last visited: 2026-10-26T20:41:30Z
+Status: Completed
 
-## Steps
-- [x] Step 1: Dispatch recorded and Briefing updated with current mission and append-only constraints
-- [x] Step 2: Read ORIGINAL_REQUEST.md (2026-10-24T18:51:21Z), PROJECT.md, and minimal-design-system.md
-- [x] Step 3: Check Protected File Inventory (`git status --porcelain`) — All 19 invoice files 100% untouched
-- [x] Step 4: Static code analysis of modified files: `tailwind.config.ts`, `src/index.css`, `button.tsx`, `card.tsx`, `badge.tsx`, `table.tsx`, `dialog.tsx` — Real, comprehensive implementations
-- [x] Step 5: Anti-cheating & facade scan — 0 facades, 0 hardcoded test outputs, 0 mock bypasses, 0 `any` types, 0 `@ts-ignore` suppressions
-- [x] Step 6: Empirical typecheck & lint execution (`cmd /c npx tsc --noEmit` -> code 0, ESLint -> code 0)
-- [x] Step 7: Empirical unit test execution (`vitest` 107/107 tests passed across `crmComponents.test.tsx`, `designTokensM1.challenger.test.ts`, `componentPrimitivesAdversarial.challenger.test.tsx`)
-- [x] Step 8: Empirical production build (`npm run build` -> code 0, 3662 modules transformed)
-- [x] Step 9: Phase 2 Mode-Specific Flagging under Development Mode (CLEAN)
-- [x] Step 10: Authored comprehensive handoff report in `.agents/teamwork/auditor_m1/handoff.md` and notified orchestrator
+## Tasks
+- [x] Initialized DISPATCH.md, BRIEFING.md, and progress.md
+- [x] Read and inspect ORIGINAL_REQUEST.md (specifically 2026-10-26T19:54:47Z), PROJECT.md, and worker_m1_backend/handoff.md
+- [x] Forensic static code inspection:
+  - [x] backend-api/fix_db.sql & fix_db.sql (100% parity, zero CROSS JOINs)
+  - [x] backend-api/add_indexes.sql (composite B-Tree indexes + ANALYZE)
+  - [x] backend-api/src/routes/auth.js (product-count sort & fallback removed, real bcrypt)
+  - [x] backend-api/src/middleware/auth.js (sanitized catch block, zero largest-org fallback)
+  - [x] backend-api/src/routes/settings.js (unscoped leaks blocked, returns [])
+  - [x] backend-api/src/routes/crm.js (verifyUserInOrg, verifyRoleInOrg, staff provisioning, task scoping)
+  - [x] backend-api/src/index.js (Map micro-cache, isCrmPath domain segregation, 10s TTL, PostgREST /rest/v1/* coverage)
+- [x] Run automated verification tests:
+  - [x] `vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`: 453/453 tests passed
+  - [x] `vitest run src/test/crmCacheAndProvisioningChallenger.test.ts`: 26/26 tests passed
+  - [x] `npx tsc --noEmit`: 0 errors
+- [x] Adversarial stress test & edge case verification: Clean
+- [x] Generate audit.md and handoff.md with explicit Verdict: CLEAN
+- [x] Send completion message to orchestrator

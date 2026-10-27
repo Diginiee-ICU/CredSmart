@@ -1,20 +1,30 @@
-## 2026-10-17T12:02:18Z
+# Task Assignment: Milestone 4 Challenger 1 — Route Lockdown Empiric Verification
 
-You are challenger_m4_1 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+## Objective
+Empirically verify the correctness, route invariants, and test coverage for Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4):
+1. Run target test suites:
+   `cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmBillingLockdownGuard.test.tsx`
+2. Run TypeScript compiler:
+   `cmd /c npx tsc --noEmit`
+3. Verify that 100% of tests pass and 0 errors are produced.
+
+## Output
+Write your report to:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_1\handoff.md`
+Send your verdict (`APPROVE` or `FAIL`) via `send_message` to the orchestrator.
+
+
+## 2026-10-26T22:59:56Z
+You are Challenger 1 for Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_1
+Read instructions in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_1\DISPATCH.md
+Read the user request in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the worker handoff in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4_lockdown\handoff.md
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
-Also read worker_m4's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md.
+Run empirical test verifications:
+`cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmBillingLockdownGuard.test.tsx`
+`cmd /c npx tsc --noEmit`
+Verify all 97 tests pass and zero TypeScript compiler errors occur.
 
-Challenge Tasks:
-Empirically stress-test monthly metrics calculation in `src/utils/crmAttendancePdf.ts`:
-1. Author and execute empirical stress tests on `calculateMonthlyAttendanceMetrics`:
-   - Empty arrays, null/undefined fields, zero duration records.
-   - Large month datasets (e.g. 31 days with mixed present, absent, half_day, on_leave).
-   - High overtime accumulation and rounding precision (`totalWorkHours`, `totalOvertimeHours`).
-   - Verification method breakdown (`geo_verified`, `manual`, `regularized`).
-2. Run: `cmd /c npx tsc --noEmit` and `npm.cmd test -- src/test/crmAttendancePdf.test.ts --run`.
-3. Output your verdict: CONFIRMED or ISSUES_FOUND.
-
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_1\handoff.md and report your verdict via send_message.
+Write your report to: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m4_1\handoff.md
+Send your verdict (APPROVE or FAIL) via send_message to the orchestrator.

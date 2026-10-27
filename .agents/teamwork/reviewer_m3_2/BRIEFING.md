@@ -1,7 +1,8 @@
-# BRIEFING — 2026-10-25T10:46:00Z
+# BRIEFING — 2026-10-26T22:36:00Z
 
 ## Mission
-Independently review and adversarially challenge Milestone 3 (Dashboard, Parties & CRM HR Modernization) refactoring across `src/pages/Dashboard.tsx`, `src/pages/Parties.tsx`, `src/pages/crm/SalaryManagement.tsx`, and `src/pages/crm/Attendance.tsx`. Verify elimination of boxy cards on mobile, replacement with clean divide-y containers, 44px touch targets, >=11px fonts, desktop preservation, 19 quarantine files 100% untouched, clean typescript compilation and vite build, and absence of integrity violations.
+Review and adversarially challenge Milestone 3 (Tasks & Staff Provisioning - R3) in `src/pages/crm/Tasks.tsx`.
+Verify optimistic task creation (temporary ID generation, server UUID replacement upon API success, rollback and destructive toast on API failure/rejection), and deterministic error rollbacks on failure across all task lifecycle transitions (`handleMoveStatus`, `handleApproveTask`, `handleSubmitProof`, `handleSubmitRevision`). Run test commands and compiler check, verify absence of integrity violations, and provide formal verdict.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -18,6 +19,8 @@ Independently review and adversarially challenge Milestone 3 (Dashboard, Parties
 - Parent (Current - M3 Mobile Ergonomics): 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Milestone (Current - M3 Card Container Modernization): Milestone 3: Dashboard, Parties & CRM HR Modernization (Eliminating Nested Boxy Cards)
 - Parent (Current - M3 Card Container Modernization): 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Milestone (Current - M3 Tasks R3): Milestone 3 (Tasks & Staff Provisioning - R3) Optimistic Updates & Error Rollbacks Review
+- Parent (Current - M3 Tasks R3): 9b1188fd-78cb-4433-afbb-88547ac33d9e
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -39,37 +42,36 @@ Independently review and adversarially challenge Milestone 3 (Dashboard, Parties
 - Verify typography: no font class below text-[11px]
 - Verify desktop preservation (hidden md:..., hidden sm:..., CRMDataTable)
 - Verify 19 quarantine files 100% untouched
+- Verify optimistic creation, server UUID replacement, and deterministic error rollbacks on failure for all task transitions (handleMoveStatus, handleApproveTask, handleSubmitProof, handleSubmitRevision) in src/pages/crm/Tasks.tsx
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T10:46:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:36:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
-- **Quarantine verification (19 files)**: Verified 100% untouched via git status and git diff.
+- **Files reviewed**:
+  - `src/pages/crm/Tasks.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/test/crmTasksView.test.tsx`
+  - `src/test/crmStaffTasksIntegration.test.tsx`
+  - `src/test/crmStaffProvisioningUI.test.tsx`
 - **Review criteria**:
-  1. Elimination of nested/boxy cards on mobile views: VERIFIED
-  2. Single clean outer container with `divide-y divide-slate-100 dark:divide-slate-800/60`: VERIFIED
-  3. Interactive elements and rows satisfy `min-h-[44px]` (or `min-h-[56px]`): VERIFIED
-  4. Typography adheres to minimal design system (no sub-11px font sizes): VERIFIED
-  5. Desktop views (`hidden md:...`, `hidden sm:...`, `CRMDataTable`): VERIFIED 100% untouched
-  6. All 19 quarantine files: VERIFIED 100% untouched
-  7. TypeScript compilation passes (`tsc --noEmit`): VERIFIED code 0
-  8. Production Vite build passes (`vite build`): VERIFIED code 0 (`✓ built in 1m 48s`)
-  9. Zero integrity violations or dummy facades: VERIFIED
+  - Optimistic task creation with tempId and server UUID replacement: VERIFIED (lines 515–595)
+  - Error rollback on create failure with destructive toast: VERIFIED (lines 569–606)
+  - Deterministic error rollback on `handleMoveStatus` failure: VERIFIED (lines 425–446)
+  - Deterministic error rollback on `handleApproveTask` failure: VERIFIED (lines 478–499)
+  - Deterministic error rollback on `handleSubmitProof` failure: VERIFIED (lines 653–677)
+  - Deterministic error rollback on `handleSubmitRevision` failure: VERIFIED (lines 728–752)
+  - TypeScript compilation: VERIFIED (`tsc --noEmit` exited code 0)
+  - Zero integrity violations or hardcoded test bypasses: VERIFIED
 
 ## Key Decisions Made
-- Executed `node node_modules/typescript/bin/tsc --noEmit` -> 0 errors.
-- Executed `node node_modules/vite/bin/vite.js build` -> code 0 (`✓ built in 1m 48s`).
-- Executed `cmd /c npx vitest run src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts` -> 22/22 passing.
-- Executed `cmd /c npx vitest run src/test/mobileDashboardRedesign.test.tsx src/test/crmSalaryManagement.test.tsx` -> 39/39 passing.
-- Scanned all 4 files for sub-11px classes (`text-[(?:[0-9]|10)px]`) -> 0 matches.
-- Audited git diff against 457ca2b~1 -> only the 4 assigned page files were modified.
-- Verdict: APPROVE.
+- Executed `cmd /c npx tsc --noEmit` -> Code 0, 0 errors.
+- Executed `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx` -> 18/18 passed in 27.26s.
+- Executed `cmd /c npx vitest run src/test/crmStaffProvisioningUI.test.tsx` -> 7/7 passed in 61.39s.
+- Total 25/25 tests verified passing across the 3 target suites.
+- Verified deterministic state rollback and destructive toast dispatch for all 5 asynchronous task mutators.
+- Final Verdict: APPROVE.
 
 ## Artifact Index
 - `DISPATCH.md` — Received dispatch instructions
@@ -79,19 +81,19 @@ Independently review and adversarially challenge Milestone 3 (Dashboard, Parties
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
-  - 19 Quarantine files
+  - `src/pages/crm/Tasks.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
 - **Verdict**: APPROVE
 - **Unverified claims**: None
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Touch targets: `min-h-[56px]` and `min-h-[44px] h-11` verified across all rows and buttons.
-  - Typography: Strict adherence to >=11px verified.
-  - Breakpoint isolation: Desktop tables and sections unaffected.
-  - Integrity violation check: No hardcoded outputs or facade bypasses found.
+  - Async failure rollback in `handleCreateTask`: Reverts temp task from state, fires event, shows destructive toast. Verified.
+  - Async failure rollback in `handleMoveStatus`: Reverts to previous task snapshot, fires event, shows destructive toast. Verified.
+  - Async failure rollback in `handleApproveTask`: Reverts to previous task snapshot, fires event, shows destructive toast. Verified.
+  - Async failure rollback in `handleSubmitProof`: Reverts to previous task snapshot, fires event, shows destructive toast. Verified.
+  - Async failure rollback in `handleSubmitRevision`: Reverts to previous task snapshot, fires event, shows destructive toast. Verified.
+  - UUID replacement: Maps temporary ID to confirmed server ID upon successful creation. Verified.
+  - Synthetic staff ID elimination: Rejects synthetic `user-*` IDs and requires valid UUIDs. Verified.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.

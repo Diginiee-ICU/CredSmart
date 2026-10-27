@@ -1,8 +1,7 @@
-# BRIEFING — 2026-10-25T10:45:00Z
+# BRIEFING — 2026-10-26T22:05:00Z
 
 ## Mission
-Adversarially challenge and empirically verify Milestone 3 (Dashboard, Parties, and CRM HR List Container Modernization):
-Stress-test mobile divide-y list containers, responsive classes, touch targets (>=44px), typography (>=11px), desktop view parity, quarantine integrity, and execute empirical test harnesses, tsc, and vite build.
+Adversarially stress-test and empirically verify Milestone 3 (Tasks & Staff Provisioning - R3): synthetic ID rejection, strict UUID acceptance, deterministic creation & lifecycle transition rollbacks with destructive toast, clean empty states for 0 tasks, Vitest 100% pass rate, and tsc --noEmit clean build.
 
 ## 🔒 My Identity
 - Archetype: challenger (empirical challenger)
@@ -23,6 +22,9 @@ Stress-test mobile divide-y list containers, responsive classes, touch targets (
 - Current Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
 - Current Milestone: CredSmart Mobile List Item Container Modernization - Milestone 3: Dashboard, Parties & CRM HR Empiric Verification
 - Current Instance: Challenger 2 (Empirical Challenger)
+- Milestone 3 Tasks Parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone 3 Tasks Milestone: Milestone 3 (Tasks & Staff Provisioning - R3)
+- Milestone 3 Tasks Instance: Challenger 2 (Synthetic ID & Rollback Stress Challenge)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
@@ -43,53 +45,48 @@ Stress-test mobile divide-y list containers, responsive classes, touch targets (
 - Redesign M3 Strict Quarantine of all 19 invoice creation and document lifecycle files in PROJECT.md
 - Modernization M3 Quarantine: 19 protected files strictly untouched
 - M3 Verdict: APPROVE or FAIL
+- Challenger 2 M3 Tasks Scope: Write and execute adversarial stress test suite for Milestone 3 (R3)
+- Test suite verifying: rejection of synthetic IDs, strict UUID acceptance, deterministic rollback on task creation failure, deterministic rollback on lifecycle status transition failure, clean empty state for 0 tasks
+- Run Vitest on new test suite and run cmd /c npx tsc --noEmit
+- Final Verdict: APPROVE or FAIL
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T10:45:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:05:00Z
 
 ## Review Scope
-- **Files reviewed**:
-  - `src/pages/Dashboard.tsx`
-  - `src/pages/Parties.tsx`
-  - `src/pages/crm/SalaryManagement.tsx`
-  - `src/pages/crm/Attendance.tsx`
+- **Files to review**:
+  - `src/pages/crm/Tasks.tsx`
+  - `src/pages/crm/RoleManagement.tsx`
+  - `src/services/crmApi.ts`
 - **Interface contracts**:
-  - `PROJECT.md` (Milestone 3)
-  - `ORIGINAL_REQUEST.md` (Section `## 2026-10-25T08:53:34Z`)
-  - `.agents/rules/minimal-design-system.md`
+  - `DISPATCH.md` (Milestone 3 Challenger 2)
+  - `ORIGINAL_REQUEST.md` (Section `## 2026-10-26T19:54:47Z`)
+  - `worker_m3_tasks/handoff.md`
 - **Review criteria**:
-  - Elimination of floating bordered cards inside mobile list containers
-  - Hairline `divide-y divide-slate-100 dark:divide-slate-800/60` containers
-  - Minimum 44px touch targets on interactive rows and controls
-  - Typography >= 11px
-  - 100% preservation of desktop views and tables
-  - Quarantine check of all 19 protected invoice/core files
-  - Full TypeScript and Vite build passes
+  - Rejection of synthetic IDs (`user-123456`, `user-${Date.now()}`) and strict UUID acceptance
+  - Deterministic rollback in `Tasks.tsx` when task creation fails (optimistic task removed, destructive toast called)
+  - Deterministic rollback in `Tasks.tsx` when lifecycle status transitions fail (status reverted to original, destructive toast called)
+  - Empty organization rendering clean empty state (`[]`)
+  - 100% test pass rate and `npx tsc --noEmit` exit code 0
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - 19 Quarantine files untouched: Confirmed via git diff 457ca2b~1..HEAD and fs.existsSync (19/19 intact).
-  - Floating card container anti-pattern eliminated in mobile lists: Confirmed across Dashboard.tsx (line 901), Parties.tsx (line 1199), SalaryManagement.tsx (lines 1455, 1743, 1913), and Attendance.tsx (line 2273).
-  - Touch targets >= 44px: Confirmed on Dashboard row (min-h-[56px]), Parties Call, WhatsApp, Ledger (h-11 min-h-[44px]) and More menu (w-11 h-11), SalaryManagement buttons (h-11 min-h-[44px]), Attendance buttons (h-11 min-h-[44px]).
-  - Zero sub-11px font sizes: Regex audit confirmed 0 occurrences of text-[0-10px] in all 4 files.
-  - Desktop parity: Confirmed desktop tables and hidden md:/hidden sm: wrappers preserved.
-  - Production build: `tsc --noEmit` exited 0; `vite build` succeeded in 1m 43s with code 0.
-- **Vulnerabilities found**: None. Modernization meets all acceptance criteria.
-- **Untested angles**: Legacy tally import XML parser (out of scope, pre-existing).
-
-## Loaded Skills
-- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
-- **Core methodology**: Full-stack minimalist UI/UX tokens, typography hierarchy, neutral surface color architecture, fast-access desktop productivity layouts, native-feeling touch-first mobile ergonomics (44px targets, bottom sheets, safe areas).
+  - Synthetic IDs (`user-123456`, `user-${Date.now()}`, `task-101`) rejection & RFC4122 UUID acceptance: Confirmed via unit and component integration tests.
+  - Deterministic state rollback on task creation failure (server error response & network timeout exception): Confirmed optimistic task removed and destructive toast fired.
+  - Deterministic state rollback on lifecycle transitions (`todo -> in_progress`, `in_progress -> review`, `review -> done`, `review -> in_progress`) on server errors and network exceptions: Confirmed tasks revert to previous state and destructive toast fired.
+  - Clean empty state rendering (`[]`) for 0-task organizations: Confirmed Kanban columns render 'No tasks', counters show 0, Table shows empty message, and `INITIAL_TASKS` are never displayed.
+- **Vulnerabilities found**: None. All edge cases, rollbacks, and synthetic ID defenses hold firmly.
+- **Untested angles**: None within Milestone 3 scope.
 
 ## Key Decisions Made
-- Authored empirical test suite `src/test/milestone3ContainerModernization.challenger.test.ts` (25/25 passed).
-- Confirmed TypeScript compilation code 0.
-- Confirmed Vite production build code 0.
-- Final verdict: APPROVE.
+- Authored adversarial stress test suite `src/test/crmTasksSyntheticRollbackChallenger.test.tsx` (14/14 passed, 100%).
+- Confirmed `cmd /c npx tsc --noEmit` exits with code 0 (0 errors).
+- Completed 5-component handoff report (`handoff.md`) with explicit verdict: APPROVE.
 
 ## Artifact Index
 - `BRIEFING.md` — persistent working memory
 - `progress.md` — liveness heartbeat
 - `DISPATCH.md` — orchestrator instruction log
 - `handoff.md` — final 5-component handoff report
+- `src/test/crmTasksSyntheticRollbackChallenger.test.tsx` — adversarial stress test suite

@@ -112,11 +112,8 @@ CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON org_memberships FOR E
 INSERT INTO org_memberships (id, user_id, org_id, organization_id, role, created_at)
 SELECT gen_random_uuid(), om.user_id, COALESCE(om.org_id, om.organization_id), COALESCE(om.organization_id, om.org_id), om.role::text, om.created_at
 FROM organization_memberships om
-WHERE NOT EXISTS (
-  SELECT 1 FROM org_memberships m
-  WHERE m.user_id = om.user_id
-  AND (m.org_id = COALESCE(om.org_id, om.organization_id) OR m.organization_id = COALESCE(om.organization_id, om.org_id))
-);
+WHERE COALESCE(om.org_id, om.organization_id) IS NOT NULL
+ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;
 
 INSERT INTO organization_memberships (id, user_id, organization_id, org_id, role, created_at)
 SELECT gen_random_uuid(), m.user_id, COALESCE(m.organization_id, m.org_id), COALESCE(m.org_id, m.organization_id), m.role::text, m.created_at
@@ -125,25 +122,6 @@ WHERE NOT EXISTS (
   SELECT 1 FROM organization_memberships om
   WHERE om.user_id = m.user_id
   AND (om.organization_id = COALESCE(m.organization_id, m.org_id) OR om.org_id = COALESCE(m.org_id, m.organization_id))
-);
-
--- Guarantee that all registered users have access to all business organizations so old data is always visible
-INSERT INTO org_memberships (user_id, org_id, organization_id, role)
-SELECT u.id, o.id, o.id, 'owner'
-FROM users u
-CROSS JOIN organizations o
-WHERE NOT EXISTS (
-  SELECT 1 FROM org_memberships m
-  WHERE m.user_id = u.id AND (m.org_id = o.id OR m.organization_id = o.id)
-);
-
-INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
-SELECT u.id, o.id, o.id, 'owner'
-FROM users u
-CROSS JOIN organizations o
-WHERE NOT EXISTS (
-  SELECT 1 FROM organization_memberships om
-  WHERE om.user_id = u.id AND (om.organization_id = o.id OR om.org_id = o.id)
 );
 
 -- ============================================================================

@@ -62,6 +62,15 @@ CREATE INDEX IF NOT EXISTS idx_godowns_organization_id ON godowns(organization_i
 CREATE INDEX IF NOT EXISTS idx_bank_accounts_org_id ON bank_accounts(org_id);
 CREATE INDEX IF NOT EXISTS idx_bank_accounts_organization_id ON bank_accounts(organization_id);
 
+-- 10. CRM Performance Composite Indexes
+CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_org_user ON crm_staff_assignments(org_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_organization_user ON crm_staff_assignments(organization_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_org_status ON staff_tasks(org_id, status);
+CREATE INDEX IF NOT EXISTS idx_staff_tasks_organization_status ON staff_tasks(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_org_staff ON crm_salary_profiles(org_id, staff_id);
+CREATE INDEX IF NOT EXISTS idx_crm_roles_org_id ON crm_roles(org_id);
+CREATE INDEX IF NOT EXISTS idx_crm_attendance_org_date ON crm_attendance(org_id, date);
+
 COMMIT;
 
 -- Recompute Planner Statistics for instant index path selection
@@ -75,3 +84,9 @@ ANALYZE purchase_invoices;
 ANALYZE product_batches;
 ANALYZE org_memberships;
 ANALYZE organization_memberships;
+ANALYZE crm_staff_assignments;
+ANALYZE staff_tasks;
+ANALYZE crm_salary_profiles;
+ANALYZE crm_roles;
+ANALYZE crm_attendance;
+

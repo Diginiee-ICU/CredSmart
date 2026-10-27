@@ -1,18 +1,47 @@
-## 2026-10-17T12:02:17Z
-You are reviewer_m4_1 for CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+# Task Assignment: Milestone 4 Reviewer 1 — BillingLockdownGuard & App.tsx Review
+
+## Objective
+Review the implementation of Milestone 4 (Strict POS/Billing Access Lockdown & Route Guard - Requirement R4):
+- Inspect `src/components/routing/BillingLockdownGuard.tsx`:
+  - Verify auth, organization, and CRM permission checks.
+  - Verify allowed store roles list and permission flags (`pos`, `sales`, `checkout`, `billing`).
+  - Verify unauthorized CRM staff blocking: destructive toast alert and `<Navigate to={ROUTE_PATHS.crm} replace />`.
+  - Verify loading state handling (`<SleekRouteLoader />`) and toast latching (`useRef` to prevent infinite re-triggers).
+- Inspect `src/App.tsx`:
+  - Verify wrapping of POS & Billing routes inside `<Route element={<BillingLockdownGuard />}>`.
+  - Verify `RoleProtectedRoute` function body remains intact (`return <Navigate to={ROUTE_PATHS.checkout} replace />;`).
+  - Verify route ordering: `<ProtectedRoutes>` < `<Attendance>` < `<RoleProtectedRoute>`.
+  - Verify all 36 legacy redirect routes remain declared.
+
+## Relevant Files
+- `src/components/routing/BillingLockdownGuard.tsx`
+- `src/App.tsx`
+- `src/test/crmBillingLockdownGuard.test.tsx`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4_lockdown\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
+
+## Verification Requirements
+1. Run `cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmBillingLockdownGuard.test.tsx`.
+2. Run `cmd /c npx tsc --noEmit`.
+
+## Output
+Write your handoff report to:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1\handoff.md`
+Send your verdict (`APPROVE` or `REQUEST_CHANGES`) via `send_message` to the orchestrator.
+
+## 2026-10-26T22:59:51Z
+From: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+You are Reviewer 1 for Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1
+Read instructions in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1\DISPATCH.md
+Read the user request in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the worker handoff in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4_lockdown\handoff.md
 
-MANDATORY: Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically section ## 2026-10-17T08:52:11Z).
-Also read DISPATCH.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase2\DISPATCH.md.
-Also read worker_m4's handoff at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4\handoff.md.
+Inspect `src/components/routing/BillingLockdownGuard.tsx` and `src/App.tsx`.
+Verify authorization logic, store roles list, permission flags, unauthorized staff redirect to `/crm` with destructive toast, SleekRouteLoader loading state, toast latching, and AST preservation.
+Run verification commands:
+`cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmBillingLockdownGuard.test.tsx`
+`cmd /c npx tsc --noEmit`
 
-Review Tasks:
-1. Inspect `src/utils/crmAttendancePdf.ts`:
-   - Verify pure vector `jsPDF` usage without importing `jspdf-autotable`.
-   - Verify CredSmart CRM brand tokens (Navy `#0F172A`, Orange `#FF6A00`, Emerald `#10B981`, Slate `#64748B`, Light Slate `#F1F5F9`).
-   - Verify executive header banner, KPI cards, table row heights, and multi-page pagination logic with continuation headers.
-   - Verify `calculateMonthlyAttendanceMetrics` and defensive handling.
-2. Run TypeScript strict typecheck: `cmd /c npx tsc --noEmit`.
-3. Output your verdict: APPROVE or REQUEST_CHANGES.
-
-Write your report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1\handoff.md and report your verdict via send_message.
+Write your handoff report to: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m4_1\handoff.md
+Send your verdict (APPROVE or REQUEST_CHANGES) via send_message to the orchestrator.

@@ -1,44 +1,28 @@
-# DISPATCH: Reviewer 1 - Milestone 1 (`SalaryManagement.tsx`)
+## 2026-10-26T20:33:28Z
+You are Reviewer 1 (Security, Tenancy Isolation & Database) for Milestone M1 of CredSmart CRM Defects Elimination.
 
-## Objective
-Review the implementation of Milestone 1 in `src/pages/crm/SalaryManagement.tsx` against Mockup 1 specifications in `ORIGINAL_REQUEST.md` (lines 1324-1331) and design system rules in `minimal-design-system.md`.
+Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
+Authoritative Request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (MUST read section ## 2026-10-26T19:54:47Z before starting work!)
+Project Scope: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md
+Worker Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md
 
-## Target File
-`src/pages/crm/SalaryManagement.tsx`
+Review Objective:
+Examine changes made by Worker M1 in:
+- `backend-api/fix_db.sql` and root `fix_db.sql`
+- `backend-api/src/routes/auth.js`
+- `backend-api/src/middleware/auth.js`
+- `backend-api/src/routes/settings.js`
 
-## Reference Documents
-1. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
-2. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
-3. `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\handoff.md`
+Verify:
+1. Complete removal of lines 130–148 in `fix_db.sql` (rogue CROSS JOIN inserting owner rows across all orgs). Verify both files are 100% byte-for-byte identical.
+2. `getUserPrimaryOrgId` in `auth.js` has no product-count ordering and no fallback auto-inserting the user into the largest organization.
+3. Catch block in `middleware/auth.js` has no fallback selecting the organization with the most products.
+4. `GET /api/profiles` and `GET /api/organization-memberships` in `settings.js` enforce `targetOrg` filtering and return `[]` when omitted, preventing cross-tenant leaks.
+5. Run verification tests:
+   `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts`
+   `cmd /c npx tsc --noEmit`
 
-## Review Scope
-- Check that Mockup 1 layout is fully implemented on mobile (`block md:hidden`):
-  * Header: "Payroll Engine", subtitle, Royal Blue `+ New Profile` CTA, export `[ ⎋ ]`
-  * 2x2 Stat Badges: Compact horizontal pill badges with subtle colored icons & chevrons
-  * Segmented Tab Bar: Inset pill switcher
-  * Empty State Card: Clean white card with illustration, prompt, and CTA
-  * Minimal flat list rows with standard sizing (no bloated `h-11` buttons)
-  * Dual bottom quick action pills (`View Past Runs`, `Pay Settings`)
-- Check that desktop layout is 100% preserved in `hidden md:block`
-- Verify the 19 quarantine files are untouched
-- Run verification: `node node_modules/typescript/bin/tsc --noEmit` and Vitest suites
-- Provide clear verdict: APPROVE or REQUEST_CHANGES
-
-## Output
-Write your review report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` and notify orchestrator.
-
-
-## 2026-10-25T11:08:12Z
-You are Reviewer 1 for Milestone 1 (`SalaryManagement.tsx`).
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
-Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\DISPATCH.md
-MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z).
-Read the design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
-Read the worker's handoff report at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_salary\handoff.md.
-
-Examine `src/pages/crm/SalaryManagement.tsx`:
-1. Check Mockup 1 mobile requirements (Header, 2x2 stat badges, segmented tabs, empty state card, divide-y rows, bottom quick actions).
-2. Check desktop preservation (`hidden md:block`).
-3. Verify the 19 quarantine files are untouched.
-4. Run verification (`tsc --noEmit`, Vitest suites).
-Write your review report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit verdict APPROVE or REQUEST_CHANGES, and notify orchestrator with send_message.
+Output Requirements:
+- Write review report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\review.md`.
+- Write handoff report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit Verdict: APPROVE or REQUEST_CHANGES.
+- Send completion message to orchestrator. Do not edit source files.

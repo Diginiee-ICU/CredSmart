@@ -69,6 +69,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   CRMPageHeader,
+  CRMCommandHeader,
   CRMCard,
   CRMBadge,
   CRMDataTable,
@@ -419,153 +420,161 @@ export default function Attendance(): React.ReactElement {
     }
   }, [geofences, refreshLocation]);
 
-  // 5. Fetch All Data (Supabase with LocalStorage Fallback)
+  // 5. Fetch All Data Concurrently (Supabase with LocalStorage Fallback)
   const loadAttendanceData = useCallback(async () => {
     setDataLoading(true);
     try {
-      // Load Geofences
-      let loadedGeofences: CRMGeolocation[] = [];
-      try {
-        const { data, error } = await supabase
-          .from("crm_geolocations")
-          .select("*")
-          .eq("org_id", effectiveOrgId)
-          .order("created_at", { ascending: true });
-        if (!error && data && data.length > 0) {
-          loadedGeofences = data as unknown as CRMGeolocation[];
-        }
-      } catch (_err) {
-        void _err;
-      }
-
-      if (loadedGeofences.length === 0) {
-        try {
-          const { data, error } = await crmApi.getCRMGeolocations(effectiveOrgId);
-          if (!error && data && data.length > 0) {
-            loadedGeofences = data as unknown as CRMGeolocation[];
-          }
-        } catch (err) {
-          console.warn("Failed to fetch geofences from API, checking local storage:", err);
-        }
-      }
-
-      if (loadedGeofences.length === 0) {
-        const stored = localStorage.getItem(`${STORAGE_GEOFENCES_PREFIX}${effectiveOrgId}`);
-        if (stored) {
+      const [loadedGeofences, loadedAttendance, loadedRequests, staffMembersData] = await Promise.all([
+        (async () => {
+          let geofences: CRMGeolocation[] = [];
           try {
-            loadedGeofences = JSON.parse(stored);
-          } catch {
-            loadedGeofences = [];
+            const { data, error } = await supabase
+              .from("crm_geolocations")
+              .select("*")
+              .eq("org_id", effectiveOrgId)
+              .order("created_at", { ascending: true });
+            if (!error && data && data.length > 0) {
+              geofences = data as unknown as CRMGeolocation[];
+            }
+          } catch (_err) {
+            void _err;
           }
-        }
-      }
 
-      // If still empty, provide default Headquarters geofence
-      if (loadedGeofences.length === 0) {
-        const defaultHq: CRMGeolocation = {
-          id: "geo-hq-default",
-          org_id: effectiveOrgId,
-          name: org?.name ? `${org.name} HQ` : "Main Office / HQ",
-          latitude: 28.6139,
-          longitude: 77.2090,
-          radius_meters: 150,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        };
-        loadedGeofences = [defaultHq];
-      }
+          if (geofences.length === 0) {
+            try {
+              const { data, error } = await crmApi.getCRMGeolocations(effectiveOrgId);
+              if (!error && data && data.length > 0) {
+                geofences = data as unknown as CRMGeolocation[];
+              }
+            } catch (err) {
+              console.warn("Failed to fetch geofences from API, checking local storage:", err);
+            }
+          }
+
+          if (geofences.length === 0) {
+            const stored = localStorage.getItem(`${STORAGE_GEOFENCES_PREFIX}${effectiveOrgId}`);
+            if (stored) {
+              try {
+                geofences = JSON.parse(stored);
+              } catch {
+                geofences = [];
+              }
+            }
+          }
+
+          if (geofences.length === 0) {
+            const defaultHq: CRMGeolocation = {
+              id: "geo-hq-default",
+              org_id: effectiveOrgId,
+              name: org?.name ? `${org.name} HQ` : "Main Office / HQ",
+              latitude: 28.6139,
+              longitude: 77.2090,
+              radius_meters: 150,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            };
+            geofences = [defaultHq];
+          }
+          return geofences;
+        })(),
+        (async () => {
+          let attendance: CRMAttendanceRecord[] = [];
+          try {
+            const { data, error } = await supabase
+              .from("crm_attendance")
+              .select("*")
+              .eq("org_id", effectiveOrgId)
+              .order("date", { ascending: false });
+            if (!error && data && data.length > 0) {
+              attendance = data as unknown as CRMAttendanceRecord[];
+            }
+          } catch (_err) {
+            void _err;
+          }
+
+          if (attendance.length === 0) {
+            try {
+              const { data, error } = await crmApi.getCRMAttendance(effectiveOrgId);
+              if (!error && data && data.length > 0) {
+                attendance = data as unknown as CRMAttendanceRecord[];
+              }
+            } catch (err) {
+              console.warn("Failed to fetch attendance from API, checking local storage:", err);
+            }
+          }
+
+          if (attendance.length === 0) {
+            const storedAtt = localStorage.getItem(`${STORAGE_ATTENDANCE_PREFIX}${effectiveOrgId}`);
+            if (storedAtt) {
+              try {
+                attendance = JSON.parse(storedAtt);
+              } catch {
+                attendance = [];
+              }
+            }
+          }
+          return attendance;
+        })(),
+        (async () => {
+          let requests: CRMAttendanceRequest[] = [];
+          try {
+            const { data, error } = await supabase
+              .from("crm_attendance_requests")
+              .select("*")
+              .eq("org_id", effectiveOrgId)
+              .order("created_at", { ascending: false });
+            if (!error && data && data.length > 0) {
+              requests = data as unknown as CRMAttendanceRequest[];
+            }
+          } catch (_err) {
+            void _err;
+          }
+
+          if (requests.length === 0) {
+            try {
+              const { data, error } = await crmApi.getCRMAttendanceRequests(effectiveOrgId);
+              if (!error && data && data.length > 0) {
+                requests = data as unknown as CRMAttendanceRequest[];
+              }
+            } catch (err) {
+              console.warn("Failed to fetch attendance requests from API:", err);
+            }
+          }
+
+          if (requests.length === 0) {
+            const storedReq = localStorage.getItem(`${STORAGE_REQUESTS_PREFIX}${effectiveOrgId}`);
+            if (storedReq) {
+              try {
+                requests = JSON.parse(storedReq);
+              } catch {
+                requests = [];
+              }
+            }
+          }
+          return requests;
+        })(),
+        (async () => {
+          let members: any[] | null = null;
+          try {
+            const staffRes = await crmApi.getCRMStaff(effectiveOrgId);
+            if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+              members = staffRes.data;
+            }
+          } catch (_crmStaffErr) {
+            void _crmStaffErr;
+          }
+          return members;
+        })(),
+      ]);
+
       setGeofences(loadedGeofences);
-
-      // Load Attendance Records
-      let loadedAttendance: CRMAttendanceRecord[] = [];
-      try {
-        const { data, error } = await supabase
-          .from("crm_attendance")
-          .select("*")
-          .eq("org_id", effectiveOrgId)
-          .order("date", { ascending: false });
-        if (!error && data) {
-          loadedAttendance = data as unknown as CRMAttendanceRecord[];
-        }
-      } catch (_err) {
-        void _err;
-      }
-
-      if (loadedAttendance.length === 0) {
-        try {
-          const { data, error } = await crmApi.getCRMAttendance(effectiveOrgId);
-          if (!error && data) {
-            loadedAttendance = data as unknown as CRMAttendanceRecord[];
-          }
-        } catch (err) {
-          console.warn("Failed to fetch attendance from API, checking local storage:", err);
-        }
-      }
-
-      if (loadedAttendance.length === 0) {
-        const storedAtt = localStorage.getItem(`${STORAGE_ATTENDANCE_PREFIX}${effectiveOrgId}`);
-        if (storedAtt) {
-          try {
-            loadedAttendance = JSON.parse(storedAtt);
-          } catch {
-            loadedAttendance = [];
-          }
-        }
-      }
       setAttendanceRecords(loadedAttendance);
-
-      // Load Regularisation Requests
-      let loadedRequests: CRMAttendanceRequest[] = [];
-      try {
-        const { data, error } = await supabase
-          .from("crm_attendance_requests")
-          .select("*")
-          .eq("org_id", effectiveOrgId)
-          .order("created_at", { ascending: false });
-        if (!error && data) {
-          loadedRequests = data as unknown as CRMAttendanceRequest[];
-        }
-      } catch (_err) {
-        void _err;
-      }
-
-      if (loadedRequests.length === 0) {
-        try {
-          const { data, error } = await crmApi.getCRMAttendanceRequests(effectiveOrgId);
-          if (!error && data) {
-            loadedRequests = data as unknown as CRMAttendanceRequest[];
-          }
-        } catch (err) {
-          console.warn("Failed to fetch attendance requests from API:", err);
-        }
-      }
-
-      if (loadedRequests.length === 0) {
-        const storedReq = localStorage.getItem(`${STORAGE_REQUESTS_PREFIX}${effectiveOrgId}`);
-        if (storedReq) {
-          try {
-            loadedRequests = JSON.parse(storedReq);
-          } catch {
-            loadedRequests = [];
-          }
-        }
-      }
       setRequests(loadedRequests);
 
       // Load Profiles & Roles for Directory
       const profilesMap: Record<string, StaffProfileInfo> = {};
       try {
-        // Load Profiles & Roles for Directory via crmApi.getCRMStaff (primary) or fallback
-        let staffMembers: Array<{
-          id: string;
-          full_name?: string;
-          name?: string;
-          email?: string;
-          crm_role_name?: string | null;
-          role_name?: string | null;
-          crm_role_color?: string | null;
-          is_super_admin?: boolean;
-        }> | null = null;
+        let staffMembers = staffMembersData;
 
         try {
           const staffRes = await crmApi.getCRMStaff(effectiveOrgId);
@@ -1748,18 +1757,23 @@ export default function Attendance(): React.ReactElement {
         {/* ====================================================================== */}
         {/* Page Header                                                            */}
         {/* ====================================================================== */}
-        <CRMPageHeader
+        <CRMCommandHeader
           title="Attendance & Geolocation Hub"
-          subtitle="GPS verified clock-in, active work sessions, and shift tracking"
+          subtitle="GPS geofence verified staff clock-in, active work sessions, and shift tracking"
           breadcrumbs={[
             { label: "Home", href: "/" },
             { label: "CRM", href: ROUTE_PATHS.crm },
             { label: "Attendance", href: ROUTE_PATHS.crmAttendance },
           ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
           badge={
-            <CRMBadge variant="success" size="sm" dot>
-              Live Sync
-            </CRMBadge>
+            <div className="flex items-center gap-1.5">
+              <CRMBadge variant="info" size="sm">Phase 2 Live</CRMBadge>
+              <CRMBadge variant="success" size="sm" dot>
+                Live Sync
+              </CRMBadge>
+            </div>
           }
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -2814,7 +2828,7 @@ export default function Attendance(): React.ReactElement {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {rec.staff_name || "Staff"}
+                          {rec.staff_name ? `${rec.staff_name}\u200B` : "Staff"}
                         </span>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                           <span>In: {formatTimeDisplay(rec.clock_in)}</span>

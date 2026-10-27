@@ -1,32 +1,26 @@
-# Progress Log — worker_m1_backend
+# Implementation Progress — Worker M1 (Backend Multi-Tenant Isolation & Staff Provisioning)
 
-**Last visited**: 2026-10-22T00:05:00Z
-**Milestone**: M1: PostgreSQL Schema & Express Backend Integration
+**Last visited**: 2026-10-26T20:32:00Z  
+**Worker**: `worker_m1_backend`  
+**Milestone**: M1 (Requirements R1, R5, R7)
 
-## Status
-- [x] Initial survey and codebase investigation
-- [x] BRIEFING.md and DISPATCH.md setup
-- [x] Step 1: Create `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` and update `fix_db.sql` & `backend-api/fix_db.sql` (verified 100% byte-for-byte parity, 398/398 tests pass in `fixDbSchema.test.ts`)
-- [x] Step 2: Implement backend routes in `backend-api/src/routes/crm.js`:
-  - `POST /api/crm/staff/provision` (atomic PostgreSQL transaction, bcrypt 10 rounds, `users`, `org_memberships`, `crm_staff_assignments`, `crm_staff_roles`)
-  - `GET /api/crm/staff` and `GET /api/crm/staff-roles` (aliased, multi-tenant left-join from `org_memberships`)
-  - `POST /api/crm/staff` and `POST /api/crm/staff-roles` (dual table synchronization)
-  - `DELETE /api/crm/staff/:id` and `DELETE /api/crm/staff-roles/:id`
-  - `GET /api/crm/tasks` (enriched with users join, status/priority normalization, status/priority/assigned_to/search filters)
-  - `POST /api/crm/tasks` (proof requirements, priority, due date, enriched return)
-  - `PATCH /api/crm/tasks/:id` (lifecycle transitions: `todo` -> `in_progress` -> `review` with proof -> `done` with approval metadata, revision request with review feedback)
-  - `DELETE /api/crm/tasks/:id` (tenant-scoped deletion)
-- [x] Step 3: Implement frontend API client methods in `src/services/crmApi.ts`:
-  - Typed interfaces: `CRMTaskStatus`, `CRMTaskPriority`, `CRMTask`, `CRMTaskFilters`, `CreateCRMTaskPayload`, `ProvisionStaffPayload`, `ProvisionStaffResponse`
-  - Typed functions: `provisionStaffUser`, `getCRMTasks`, `createCRMTask`, `updateCRMTask`, `transitionCRMTaskStatus`, `deleteCRMTask`
-  - Zero `any` types
-  - Added to `crmApi` central namespace
-- [x] Step 4: Verification:
-  - `cmd /c npx tsc --noEmit` exited code 0
-  - `src/test/fixDbSchema.test.ts` (398 tests passed)
-  - `src/test/crmStaffProvisioning.test.ts` (29 tests passed)
-  - `src/test/crmTaskLifecycle.test.ts` (33 tests passed)
-  - `src/test/crmBackendApiM1.test.ts` (10 tests passed)
-  - `src/test/crmStaffTasksIntegration.test.tsx` (12 tests passed)
-  - Total: 482 tests passed across 5 suites with 0 failures
-- [x] Step 5: Handoff report and communication to parent
+---
+
+## 1. Baseline Test Run
+- Command: `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`
+- Result: 2 passed, 1 failed (452 passed, 1 failed in fixDbSchema test 4.2).
+
+---
+
+## 2. Implementation Execution
+- [x] Step 1: Fixed `backend-api/fix_db.sql` and `fix_db.sql`: removed rogue CROSS JOIN (lines 130-148), aligned cross-table membership sync with `ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role`.
+- [x] Step 2: Fixed `backend-api/src/routes/auth.js`: in `getUserPrimaryOrgId`, included `crm_staff_assignments`, removed product-count ordering (`COUNT(*) FROM products DESC`), removed auto-insert fallback into largest organization (now returns `null` if no explicit membership exists).
+- [x] Step 3: Fixed `backend-api/src/middleware/auth.js`: in `authenticate` middleware, removed product-count ordering, removed catch block fallback selecting organization with most products, included `crm_staff_assignments`.
+- [x] Step 4: Fixed `backend-api/src/routes/settings.js`: in `getMembershipsHandler` (`/api/organization-memberships`) and `GET /api/profiles`, enforced `targetOrg` filtering so missing/undefined `targetOrg` immediately returns an empty array `[]` instead of running `WHERE 1=1` and leaking users across tenants. Included `crm_staff_assignments` in profile lookups.
+- [x] Step 5: Verified `backend-api/src/routes/crm.js`: staff provisioning password derivation `{cleanName}123` with bcrypt hash, strict scoping in `crm_staff_assignments` and `crm_staff_roles`, strict tenant scoping in `GET /api/crm/staff`.
+- [x] Step 6: Fixed `backend-api/src/index.js`: expanded 10-second micro-cache (`CACHE_TTL_MS = 10000`) to cover `/rest/v1/*` read requests in addition to `/api/`; segregated CRM vs POS cache keys on mutation so POS operations do not invalidate CRM cache and vice versa.
+- [x] Step 7: Fixed `backend-api/add_indexes.sql`: added composite B-Tree indexes for `crm_staff_assignments(org_id, user_id)`, `staff_tasks(org_id, status)`, `crm_salary_profiles(org_id, staff_id)`, `crm_roles(org_id)`, `crm_attendance(org_id, date)`, and updated `ANALYZE` commands.
+- [x] Step 8: Full verification:
+  - `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`: 3 files passed, 453/453 tests passed!
+  - `cmd /c npx tsc --noEmit`: exited with code 0 (zero errors).
+  - Zero frontend files touched.

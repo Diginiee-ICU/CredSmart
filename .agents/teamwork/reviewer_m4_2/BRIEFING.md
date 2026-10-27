@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-17T12:17:00Z
+# BRIEFING — 2026-10-26T22:59:53Z
 
 ## Mission
-Independent review & adversarial critique of CRM Phase 2 Milestone 4: Attendance Reports & PDF/CSV Export.
+Independent review & adversarial critique of Milestone 4: Strict POS/Billing Route Lockdown & Route Guard (Requirement R4).
 
 ## 🔒 My Identity
 - Archetype: reviewer_and_critic
@@ -10,34 +10,39 @@ Independent review & adversarial critique of CRM Phase 2 Milestone 4: Attendance
 - Original parent: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
 - Milestone: CRM Phase 2 Milestone 4
 - Instance: 2 of 2
+- Current Milestone: Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4)
+- New parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Integrity violations check: facades, dummy implementations, hardcoded values, shortcuts
 - Adversarial challenge: stress-test assumptions, failure modes, counter-examples
 - Verify build & test execution independently
+- Enforce Minimal Design System rules
+- Review route hierarchy & legacy redirect preservation
 
 ## Current Parent
-- Conversation ID: 1beca3ca-d4b2-4508-99a0-6c9d39936bfb
-- Updated: 2026-10-17T12:17:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:59:53Z
 
 ## Review Scope
 - **Files to review**:
-  - `src/utils/crmAttendancePdf.ts`
-  - `src/pages/crm/Attendance.tsx`
-  - `src/test/crmAttendancePdf.test.ts`
-  - `src/test/crmAttendance.test.tsx`
-  - `worker_m4`'s handoff and changes
-- **Interface contracts**: ORIGINAL_REQUEST.md (## 2026-10-17T08:52:11Z), DISPATCH.md
-- **Review criteria**: Correctness, RFC 4180 CSV compliance, PDF layout & styling with jsPDF, UI export buttons wiring with filtered logs, test coverage, zero regressions, integrity check
+  - `src/App.tsx`
+  - `src/components/routing/BillingLockdownGuard.tsx`
+  - `src/test/crmBillingLockdownGuard.test.tsx`
+  - `src/test/challengerM1_2DecoupleAudit.test.ts`
+  - `src/test/crmAttendanceRouteWiringChallenge.test.tsx`
+- **Interface contracts**: ORIGINAL_REQUEST.md (Requirement R4), DISPATCH.md
+- **Review criteria**:
+  - Route nesting: `<AppLayout>` contains CRM routes, `<BillingLockdownGuard>` contains POS/Billing routes and `<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />`
+  - AST preservation: `RoleProtectedRoute` verbatim line `return <Navigate to={ROUTE_PATHS.checkout} replace />;`
+  - Index ordering: `ProtectedRoutes` < `crmAttendance` < `BillingLockdownGuard` < `RoleProtectedRoute`
+  - All 36 legacy redirect routes intact
+  - Minimal Design System compliance in `BillingLockdownGuard.tsx` (SleekRouteLoader tokens, destructive toast, zero performance regression)
+  - Integrity check: no facade, no hardcoded cheating, genuine verification
 
 ## Key Decisions Made
-- Completed independent code review of `src/utils/crmAttendancePdf.ts` and `src/pages/crm/Attendance.tsx`.
-- Verified pure vector jsPDF implementation (no disallowed jspdf-autotable dependency).
-- Verified RFC 4180 CSV escaping, CRLF, and UTF-8 BOM encoding.
-- Verified dual-level UI wiring (page header and table card header actions) with filtered log export support.
-- Executed all 3 mandated test suites plus TypeScript compiler check (`tsc --noEmit`); confirmed 351/351 tests pass with zero regressions.
-- Issued verdict: APPROVE.
+- [In progress: Initializing review]
 
 ## Artifact Index
 - DISPATCH.md — Incoming instructions
@@ -46,21 +51,11 @@ Independent review & adversarial critique of CRM Phase 2 Milestone 4: Attendance
 - handoff.md — Final review and critique report
 
 ## Review Checklist
-- **Items reviewed**:
-  - `src/utils/crmAttendancePdf.ts`: monthly metrics math, vector jsPDF drawing, multi-page pagination, RFC 4180 CSV generation
-  - `src/pages/crm/Attendance.tsx`: page header & table header export buttons, filteredLogs fallback, toast alerts
-  - `src/test/crmAttendancePdf.test.ts`: 19 tests passing (100%)
-  - `src/test/crmAttendance.test.tsx`: 16 tests passing (100%)
-  - `npm.cmd test -- crm --run`: 19 test files, 351 tests passing (100%)
-  - `npx tsc --noEmit`: 0 compiler errors
-- **Verdict**: APPROVE
-- **Unverified claims**: None; all empirical claims independently executed and verified.
+- **Items reviewed**: [Pending]
+- **Verdict**: PENDING
+- **Unverified claims**: [Pending]
 
 ## Attack Surface
-- **Hypotheses tested**:
-  - Empty record set handling in PDF and CSV -> Handled cleanly without null exceptions.
-  - Large dataset pagination (>45 and >75 records) -> Correctly creates 2 and 3+ pages with continuation headers and dynamic "Page X of Y" footers.
-  - CSV injection / special characters (commas, quotes, newlines) -> Fully compliant with RFC 4180 quoting and quote doubling (`""`).
-  - Filtered log state propagation -> Table header export directly supplies `filteredLogs` to export engine.
-- **Vulnerabilities found**: None.
-- **Untested angles**: Direct hardware printer spooling (out of scope for unit/headless environment; standard jsPDF `doc.save` is utilized).
+- **Hypotheses tested**: [Pending]
+- **Vulnerabilities found**: [Pending]
+- **Untested angles**: [Pending]

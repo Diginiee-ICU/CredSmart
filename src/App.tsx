@@ -12,6 +12,7 @@ import { ProductsProvider } from "@/context/ProductsContext";
 import { NetworkInvoicesProvider } from "@/hooks/useNetworkInvoices";
 import { ROUTE_PATHS, MANAGER_ROLES, isRouteAllowedForRole, resolvePostLoginRoute } from "@/config/routes";
 import { LegacyRedirect } from "@/components/routing/LegacyRedirect";
+import { BillingLockdownGuard } from "@/components/routing/BillingLockdownGuard";
 import ScrollToTop from "@/components/ScrollToTop";
 import { NativePlatformBridge } from "@/components/native/NativePlatformBridge";
 import { isNativePlatform } from "@/services/nativeCapacitor";
@@ -269,49 +270,52 @@ const App = () => (
                         <Route path="/crm/ai" element={<AIAssistant />} />
                         <Route path={ROUTE_PATHS.crmSupport} element={<Support />} />
 
-                        {/* Dedicated POS & Billing Portal: All authenticated roles */}
-                        <Route path="/billing" element={<BillingIndexRedirect />} />
-                        <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
-                        <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
-                        <Route path={ROUTE_PATHS.storefront} element={<StorefrontManager />} />
-                        <Route path={ROUTE_PATHS.parties} element={<Parties />} />
-                        <Route path={ROUTE_PATHS.items} element={<Items />} />
-                        <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />
-                        <Route path={ROUTE_PATHS.godown} element={<Godown />} />
-                        <Route path={ROUTE_PATHS.customers} element={<Customers />} />
-                        <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
-                        <Route path={ROUTE_PATHS.tallyImport} element={<TallyImport />} />
-                        <Route path={ROUTE_PATHS.sales} element={<Sales />} />
-                        <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
-                        <Route path={ROUTE_PATHS.ewayBill} element={<EwayBillDashboard />} />
+                        {/* Dedicated POS & Billing Portal protected by BillingLockdownGuard */}
+                        <Route element={<BillingLockdownGuard />}>
+                          <Route path="/billing" element={<BillingIndexRedirect />} />
+                          <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
+                          <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />
+                          <Route path={ROUTE_PATHS.storefront} element={<StorefrontManager />} />
+                          <Route path={ROUTE_PATHS.parties} element={<Parties />} />
+                          <Route path={ROUTE_PATHS.items} element={<Items />} />
+                          <Route path={ROUTE_PATHS.inventory} element={<Inventory />} />
+                          <Route path={ROUTE_PATHS.godown} element={<Godown />} />
+                          <Route path={ROUTE_PATHS.customers} element={<Customers />} />
+                          <Route path={ROUTE_PATHS.customerLedger} element={<CustomerLedger />} />
+                          <Route path={ROUTE_PATHS.tallyImport} element={<TallyImport />} />
+                          <Route path={ROUTE_PATHS.sales} element={<Sales />} />
+                          <Route path={ROUTE_PATHS.salesHistory} element={<Sales />} />
+                          <Route path={ROUTE_PATHS.ewayBill} element={<EwayBillDashboard />} />
 
-                        {/* Restricted to Managers & Owners & Super Admin */}
-                        <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>
-                          <Route path={ROUTE_PATHS.dashboard} element={<Dashboard />} />
-                          <Route path={ROUTE_PATHS.purchases} element={<Purchases />} />
-                          <Route path={ROUTE_PATHS.discovery} element={<VendorDiscovery />} />
-                          <Route path={ROUTE_PATHS.suppliers} element={<Suppliers />} />
-                          <Route path={ROUTE_PATHS.purchaseReturns} element={<PurchaseReturns />} />
-                          <Route path={ROUTE_PATHS.analytics} element={<Analytics />} />
-                          <Route path={ROUTE_PATHS.reports} element={<Reports />} />
-                          <Route path={ROUTE_PATHS.cashBank} element={<CashAndBank />} />
-                          <Route path={ROUTE_PATHS.eInvoicing} element={<EInvoicing />} />
-                          <Route path={ROUTE_PATHS.automatedBills} element={<AutomatedBills />} />
-                          <Route path={ROUTE_PATHS.expenses} element={<Expenses />} />
-                          <Route path={ROUTE_PATHS.barcode} element={<BarcodeGenerator />} />
-                          <Route path={ROUTE_PATHS.settings} element={<BusinessSettings />} />
-                          <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
-                          <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
-                          <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
-                          <Route path={ROUTE_PATHS.settingsReminders} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
-                          <Route path={ROUTE_PATHS.settingsCaSharing} element={<Navigate to={ROUTE_PATHS.reports} replace />} />
-                          <Route path={ROUTE_PATHS.settingsPricing} element={<Navigate to={ROUTE_PATHS.pricing} replace />} />
-                          <Route path={ROUTE_PATHS.settingsRefer} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
-                          <Route path={ROUTE_PATHS.settingsHelp} element={<Navigate to={ROUTE_PATHS.faq} replace />} />
-                          <Route path={ROUTE_PATHS.staff} element={<Staff />} />
-                          <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                          {/* Restricted to Managers & Owners & Super Admin */}
+                          <Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>
+                            <Route path={ROUTE_PATHS.dashboard} element={<Dashboard />} />
+                            <Route path={ROUTE_PATHS.purchases} element={<Purchases />} />
+                            <Route path={ROUTE_PATHS.discovery} element={<VendorDiscovery />} />
+                            <Route path={ROUTE_PATHS.suppliers} element={<Suppliers />} />
+                            <Route path={ROUTE_PATHS.purchaseReturns} element={<PurchaseReturns />} />
+                            <Route path={ROUTE_PATHS.analytics} element={<Analytics />} />
+                            <Route path={ROUTE_PATHS.reports} element={<Reports />} />
+                            <Route path={ROUTE_PATHS.cashBank} element={<CashAndBank />} />
+                            <Route path={ROUTE_PATHS.eInvoicing} element={<EInvoicing />} />
+                            <Route path={ROUTE_PATHS.automatedBills} element={<AutomatedBills />} />
+                            <Route path={ROUTE_PATHS.expenses} element={<Expenses />} />
+                            <Route path={ROUTE_PATHS.barcode} element={<BarcodeGenerator />} />
+                            <Route path={ROUTE_PATHS.settings} element={<BusinessSettings />} />
+                            <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
+                            <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
+                            <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
+                            <Route path={ROUTE_PATHS.settingsReminders} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
+                            <Route path={ROUTE_PATHS.settingsCaSharing} element={<Navigate to={ROUTE_PATHS.reports} replace />} />
+                            <Route path={ROUTE_PATHS.settingsPricing} element={<Navigate to={ROUTE_PATHS.pricing} replace />} />
+                            <Route path={ROUTE_PATHS.settingsRefer} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
+                            <Route path={ROUTE_PATHS.settingsHelp} element={<Navigate to={ROUTE_PATHS.faq} replace />} />
+                            <Route path={ROUTE_PATHS.staff} element={<Staff />} />
+                            <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                          </Route>
                         </Route>
                       </Route>
+                    </Route>
 
                       {/* 36 Universal Legacy Redirects with Parameter & Query Preservation */}
                       <Route path="/dashboard" element={<LegacyRedirect to="/billing/dashboard" />} />
@@ -350,11 +354,10 @@ const App = () => (
                       <Route path="/settings/help" element={<LegacyRedirect to="/faq" />} />
                       <Route path="/staff" element={<LegacyRedirect to="/billing/staff" />} />
                       <Route path="/activity-log" element={<LegacyRedirect to="/billing/activity-log" />} />
-                    </Route>
 
-                    {/* Global 404 Catch-All */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                      {/* Global 404 Catch-All */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
                 </AppRouter>
               </ProductsProvider>
             </NetworkInvoicesProvider>

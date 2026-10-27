@@ -1,71 +1,69 @@
-# BRIEFING — 2026-10-25T11:15:00Z
+# BRIEFING — 2026-10-26T20:42:00Z
 
 ## Mission
-Independently challenge and stress-test Milestone 1 implementation in `src/pages/crm/SalaryManagement.tsx` (Mockup 1 mobile requirements): empty vs populated profiles logic, tabs, typecheck, Vitest suites, and verify 19 quarantine files remain 100% untouched.
+Adversarially challenge micro-caching, domain segregation, and staff provisioning implementation in M1 backend.
 
 ## 🔒 My Identity
-- Archetype: challenger
+- Archetype: critic / specialist (Challenger 2)
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2
-- Original parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Milestone: milestone_1
+- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone: M1
 - Instance: 2 of 2
-- Redesign Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62 (Milestone 1 — CRM Roles & Tasks Modernization)
-- Current Parent: 9b37b911-3daf-458a-8cd7-5e836d72b751 (CRM Mobile Mockup Redesign — Milestone 1 SalaryManagement)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Write metadata only to working directory `.agents/teamwork/challenger_m1_2`
-- Gate verdict must be explicitly APPROVE or FAIL
-- Strict zero-regression policy across existing features and test suites
-- 19 Quarantine files must remain 100% untouched
-- Must run verification code empirically; never trust unverified claims
-- Verify touch targets: `min-h-[44px]` on interactive rows, switches, buttons
-- Verify typography: no font class below `text-[11px]`
-- Verify responsive integrity (mobile divide-y list vs desktop grid/board)
-- Independent stress testing of empty vs populated salary profiles logic
-- Verification of 1:1 visual match to Mockup 1 (Payroll Engine)
+- Run verification tests empirically ourselves; do not trust worker claims without reproducing
+- Output challenge.md and handoff.md with explicit Verdict (APPROVE or REQUEST_CHANGES)
+- Communicate via send_message to orchestrator (9b1188fd-78cb-4433-afbb-88547ac33d9e)
 
 ## Current Parent
-- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Updated: 2026-10-25T11:15:00Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T20:42:00Z
 
 ## Review Scope
-- **Files to review**: `src/pages/crm/SalaryManagement.tsx`
-- **Interface contracts**: `ORIGINAL_REQUEST.md` (R1: lines 1324-1331), `minimal-design-system.md`, `DISPATCH.md`
+- **Files reviewed**:
+  - `backend-api/src/index.js` (Express micro-cache, `isCrmPath`, domain segregation invalidation)
+  - `backend-api/src/routes/crm.js` (Staff provisioning password derivation, bcrypt, `crm_staff_assignments` scoping)
+  - `src/utils/crmStaffUtils.ts` (Password derivation & validation parity)
+  - `src/test/crmBackendApiM1.test.ts` (M1 backend API tests)
+  - `src/test/crmCacheAndProvisioningChallenger.test.ts` (Empirical challenger test oracle)
+- **Interface contracts**:
+  - `ORIGINAL_REQUEST.md` (section `## 2026-10-26T19:54:47Z`)
+  - `PROJECT.md` (Features 2 & 3, M1 Scope)
 - **Review criteria**:
-  1. Header: "Payroll Engine", subtitle "Staff compensation & payroll runs", primary action `+ New Profile` (Royal Blue) + export icon `[ ⎋ ]`.
-  2. 2x2 Stat Badges: Active Profiles, Current Month, Pending Advances, Available Payslips.
-  3. Segmented Tab Bar: Inset pill switcher.
-  4. Empty vs Populated profiles logic: Clean empty card with vector illustration + CTA vs flat divide-y list rows.
-  5. Quick actions footer: `[ 📋 View Past Runs ]` and `[ ⚙️ Pay Settings ]`.
-  6. Desktop view preserved under `hidden md:block`.
-  7. Quarantine integrity: 19 protected files untouched.
-  8. Typecheck (`tsc --noEmit`) and Vitest test suites.
-
-## Key Decisions Made
-- [Pending initial empirical analysis]
-
-## Artifact Index
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\handoff.md` — Final Handoff Report
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\progress.md` — Liveness & progress heartbeat
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_2\DISPATCH.md` — Dispatch log
+  - Micro-cache covers `/rest/v1/*` read requests.
+  - Invalidation logic isolates CRM vs POS mutations.
+  - Staff provisioning password derivation `{cleanName}123` (min 6 chars), bcrypt hash, org_id isolation.
+  - Test suite passes cleanly, `tsc --noEmit` passes.
 
 ## Attack Surface
-- **Hypotheses to test**:
-  1. Does `SalaryManagement.tsx` render the empty state card correctly when `salaryProfiles` is empty?
-  2. Does `SalaryManagement.tsx` switch to flat list rows when `salaryProfiles` has items?
-  3. Are all 4 stat badges rendered with correct icons, labels, currency formatting, and tab click handlers?
-  4. Does the mobile view properly hide on desktop (`block md:hidden`), and is desktop view preserved (`hidden md:block`)?
-  5. Do the quick action buttons `View Past Runs` and `Pay Settings` trigger the expected tab change and drawer open?
-  6. Are any bloated buttons (`h-11`, `h-12`) present on mobile?
-  7. Are there any sub-11px typography violations?
-  8. Are any of the 19 quarantine files modified?
-  9. Does `tsc --noEmit` pass with 0 errors?
-  10. Does `vitest run src/test/crmSalaryManagement.test.tsx` pass?
-- **Vulnerabilities found**: [TBD]
-- **Untested angles**: [TBD]
+- **Hypotheses tested**:
+  1. Does in-memory micro-cache intercept PostgREST `/rest/v1/*` read requests? -> CONFIRMED (Pass).
+  2. Does repeating a GET on `/rest/v1/*` within 10s hit cache with `X-Cache: HIT`? -> CONFIRMED (Pass).
+  3. Does a mutation on a CRM endpoint purge ONLY CRM keys while leaving POS keys intact? -> CONFIRMED (Pass).
+  4. Does a mutation on a POS endpoint purge ONLY POS keys while leaving CRM keys intact? -> CONFIRMED (Pass).
+  5. Does password derivation guarantee minimum 6 characters for edge-case names? -> CONFIRMED (Pass).
+  6. Does `crm_staff_assignments` link strictly to `org_id` and prevent foreign tenant role leakage? -> CONFIRMED (Pass).
+- **Vulnerabilities found**:
+  - String prefix matching in `key.startsWith(orgId)` without trailing colon `${orgId}:` could theoretically match overlapping prefixes like `org-1` vs `org-10`. Mitigated in production because tenant IDs are 36-character UUIDs.
+- **Untested angles**:
+  - Redis distributed cache fallback for multi-replica clustering (future scaling, currently single-instance Express micro-cache).
 
 ## Loaded Skills
-- Source: `.agents/skills/credsmart-minimal-design-system/SKILL.md`
-- Core methodology: Minimal tokens, button proportions, neutral canvas, screen-fitted density, zero regression.
+- Source: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- Local copy: None
+- Core methodology: Authoritative CRM RBAC architecture and permissions
+
+## Key Decisions Made
+- Authored dedicated adversarial oracle in `src/test/crmCacheAndProvisioningChallenger.test.ts` with 26 rigorous tests covering cache TTL, domain segregation, prefix boundaries, password derivation, bcrypt, and org scoping.
+- Empirically ran all tests (`crmBackendApiM1.test.ts`, `crmCacheAndProvisioningChallenger.test.ts`, `crmTenantIsolation.test.ts`, `fixDbSchema.test.ts`) and `tsc --noEmit` with 100% pass rate.
+- Approved Milestone M1.
+
+## Artifact Index
+- DISPATCH.md — Initial dispatch message
+- BRIEFING.md — Working memory & attack surface
+- progress.md — Liveness heartbeat
+- challenge.md — Adversarial challenge report
+- handoff.md — Verification handoff report with Verdict: APPROVE
+- src/test/crmCacheAndProvisioningChallenger.test.ts — Adversarial test suite

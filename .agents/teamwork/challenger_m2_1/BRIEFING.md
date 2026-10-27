@@ -1,82 +1,62 @@
-# BRIEFING — 2026-10-25T09:53:00Z
+# BRIEFING — 2026-10-26T21:30:00Z
 
 ## Mission
-Empirically stress-test Milestone 2 Core Billing & Inventory mobile modernization in `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, and `src/pages/Items.tsx`. Verify elimination of box-in-box anti-patterns, adoption of hairline `divide-y` list rows, minimum 44px touch targets, >=11px typography, zero quarantine regressions, and clean build.
+Empirically and adversarially challenge unconfigured staff visibility and 1-click salary profile creation in CredSmart CRM Salary Management (Milestone M2).
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1
-- Original parent: 73ee3452-ffda-43b4-83da-c3ca2006c47f
-- Milestone: m2
-- Instance: 1 of 1
-- Current parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Active Milestone: Milestone 2 (CredSmart Minimal & Fast-Access Redesign — Desktop Shell & Productivity Layouts)
-- Dispatched Parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Dispatched Milestone: Milestone 2 (Core Billing & Inventory Empiric Verification — Sales, Purchases, Items)
+- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Milestone: M2 - Unconfigured Staff & 1-Click Profile Creation
+- Instance: 1 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Do NOT fix findings yourself — report any failures as findings
-- `.agents/teamwork/` must contain only metadata — no source or test files in teamwork directory
-- Render explicit gate verdict: APPROVE or REJECT / REQUEST_CHANGES
-- Use send_message to communicate results back to caller (73ee3452-ffda-43b4-83da-c3ca2006c47f)
-- Milestone 2 adversarial challenges: modals, form validation, password entropy, edge cases
-- Use send_message to communicate results back to parent (c838af97-21de-4616-9188-f0f8dfa904c9)
-- Milestone 2 Fast-Access Redesign: Empirically stress-test desktop header height (52px / h-13), 28px brand mark, org switcher pill, centered ⌘K trigger, Royal Blue split button, Live Sync dot, 3D tilt/watermark elimination, SuiteSwitcher neutral styling, ARIA compliance, and POS workbench viewport containment.
-- Use send_message to communicate results back to parent (3044c8ce-523a-4157-917d-31b6f5d55c6a)
-- Milestone 2 Core Billing & Inventory: Empirically verify Sales.tsx, Purchases.tsx, Items.tsx; touch targets >=44px, typography >=11px, divide-y hairline containers, tsc and vite build, 19 quarantine files untouched.
-- Use send_message to communicate results back to parent (24d614cb-853d-49d4-9ac2-cf0090c93a62)
+- Run verification code directly: `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx`
+- Must empirically reproduce any bug before claiming it
+- Produce challenge.md and handoff.md (with explicit APPROVE or REQUEST_CHANGES verdict)
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T09:46:22Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T21:30:00Z
 
 ## Review Scope
-- **Files to review**: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`
-- **Interface contracts**: `.agents/rules/minimal-design-system.md`, `ORIGINAL_REQUEST.md` (2026-10-25T08:53:34Z), `worker_m2/handoff.md`
+- **Files reviewed**:
+  - `src/pages/crm/SalaryManagement.tsx`
+  - `src/test/crmSalaryManagement.test.tsx`
+  - Worker handoff: `.agents/teamwork/worker_m2_salary/handoff.md`
+- **Interface contracts**:
+  - `.agents/teamwork/ORIGINAL_REQUEST.md` (section ## 2026-10-26T19:54:47Z)
+  - `.agents/teamwork/orchestrator_crm_defects/PROJECT.md`
 - **Review criteria**:
-  1. Box-in-box anti-pattern eliminated on mobile (`px-0`, `divide-y divide-slate-100 dark:divide-slate-800/60`, flat `px-3.5 py-3` list rows).
-  2. Outer double border removed from table/stream wrappers.
-  3. Minimum touch targets >= 44px (`min-h-[44px] min-w-[44px]` or `w-11 h-11`).
-  4. Typography >= 11px (no `text-[10px]` or below).
-  5. Desktop views preserved 100% on `md:` breakpoints.
-  6. 19 quarantine files 100% untouched.
-  7. TypeScript compiles clean (`tsc --noEmit`).
-  8. Vite production build succeeds (`vite build`).
-  9. Automated test suites pass.
-
-## Key Decisions Made
-- Authored empirical test suite at `src/test/coreBillingInventoryMobileModernization.challenger.test.ts` (19 tests).
-- Ran verification commands:
-  - `node node_modules/typescript/bin/tsc --noEmit` -> 0 errors (Exit 0)
-  - `node node_modules/vite/bin/vite.js build` -> Built clean in 1m 15s (Exit 0)
-  - `node node_modules/vitest/vitest.mjs run src/test/coreBillingInventoryMobileModernization.challenger.test.ts` -> 19/19 passed
-  - `node node_modules/vitest/vitest.mjs run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx` -> 41/41 passed
-- Verified quarantine status: 19/19 files untouched.
-- Rendered Verdict: APPROVE.
-
-## Artifact Index
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\BRIEFING.md — Persistent context & state
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\progress.md — Liveness & progress tracking
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\handoff.md — Final handoff report & gate verdict
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\src\test\coreBillingInventoryMobileModernization.challenger.test.ts — Empirical stress test oracle
+  - Visibility of unconfigured staff from staffDirectory with amber "Not Configured" badge: VERIFIED (PASS)
+  - 1-click "Configure Salary" button pre-populating drawer: VERIFIED (PASS)
+  - Saving profile creates record and moves staff to configured roster immediately: VERIFIED (PASS)
+  - Edge cases (missing email, missing role, dynamic reload via credsmart:crm_staff_updated): VERIFIED (PASS)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Outer container box border eliminated in Purchases.tsx and Items.tsx: PASSED.
-  2. Mobile card stream containers use `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`: PASSED.
-  3. Mobile list items use flat `px-3.5 py-3` rows without individual borders or floating cards: PASSED.
-  4. Touch targets on action buttons meet >= 44px in Sales, Purchases, and Items: PASSED.
-  5. Purchases.tsx h-8.5 height regression fixed to w-11 h-11: PASSED.
-  6. Sub-11px typography eliminated across all 3 pages: PASSED.
-  7. Desktop tables and toolbars preserved with full parity: PASSED.
-  8. 19 protected quarantine files untouched: PASSED.
-  9. Production build and type checks pass with 0 errors: PASSED.
-- **Vulnerabilities found**: None. All specifications empirically verified.
-- **Untested angles**: None.
+  - Unconfigured staff visibility and Amber badge presence -> Confirmed PASS
+  - 1-click button correctly opening drawer and pre-selecting staff ID and role -> Confirmed PASS
+  - Immediate state transition upon save without page reload -> Confirmed PASS
+  - Complete hiding of section when all staff are configured -> Confirmed PASS
+  - Missing email and role fallback safety -> Confirmed PASS
+  - Dynamic reload on window event -> Confirmed PASS
+- **Vulnerabilities found**: None. Implementation is robust and handles all boundary conditions gracefully.
+- **Untested angles**: None within M2 scope.
 
 ## Loaded Skills
-- Source: .agents/skills/credsmart-minimal-design-system/SKILL.md
-- Local copy: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m2_1\skills\credsmart-minimal-design-system.md
-- Core methodology: Touch targets >=44px, divide-y flat rows, screen-fitted viewports, neutral surface architecture.
+- Source: None specified directly in dispatch
+
+## Key Decisions Made
+- Executed comprehensive adversarial suite and verified all 6 edge-case scenarios passed.
+- Executed full test suites (`crmSalaryManagement.test.tsx`, `crmSalaryTypes.test.ts`, `crmPayrollUtils.test.ts`) and TypeScript compilation (`tsc --noEmit`).
+- Issued final APPROVE verdict.
+
+## Artifact Index
+- `.agents/teamwork/challenger_m2_1/DISPATCH.md` — Inbound instructions
+- `.agents/teamwork/challenger_m2_1/BRIEFING.md` — Persistent working memory
+- `.agents/teamwork/challenger_m2_1/progress.md` — Liveness & progress tracker
+- `.agents/teamwork/challenger_m2_1/challenge.md` — Adversarial stress-test report
+- `.agents/teamwork/challenger_m2_1/handoff.md` — Final handoff report (Verdict: APPROVE)

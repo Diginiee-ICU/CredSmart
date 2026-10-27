@@ -59,7 +59,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CRMRolePill, CRMTeamTreeView } from "@/components/crm";
+import { CRMRolePill, CRMTeamTreeView, CRMCommandHeader, CRMBadge } from "@/components/crm";
 import {
   Dialog,
   DialogContent,
@@ -370,9 +370,22 @@ export default function RoleManagement(): React.ReactElement {
     setLoading(true);
 
     try {
-      // 1. Fetch CRM Roles
-      const { data: dbRoles, error: rolesErr } = await crmApi.getCRMRoles(orgId);
+      // 1. Fetch CRM Roles and Staff Members concurrently in parallel
+      const [rolesRes, staffRes] = await Promise.all([
+        crmApi.getCRMRoles(orgId).catch((err) => ({ data: null, error: err })),
+        (async () => {
+          if (typeof crmApi?.getCRMStaff === "function") {
+            try {
+              return await crmApi.getCRMStaff(orgId);
+            } catch (err) {
+              return null;
+            }
+          }
+          return null;
+        })(),
+      ]);
 
+      const { data: dbRoles, error: rolesErr } = rolesRes || {};
       if (rolesErr) console.warn("RoleManagement: crm_roles notice:", rolesErr.message);
 
       let resolvedRoles: CRMRole[] = (Array.isArray(dbRoles) ? [...dbRoles] : []).sort((a, b) =>
@@ -442,38 +455,35 @@ export default function RoleManagement(): React.ReactElement {
         console.warn("Failed reading cached hierarchy:", e);
       }
 
-      // Try primary roster endpoint: crmApi.getCRMStaff
+      // Consume pre-fetched staffRes from parallel fetch
       try {
-        if (typeof crmApi?.getCRMStaff === "function") {
-          const staffRes = await crmApi.getCRMStaff(orgId);
-          if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
-            staffListBuilt = staffRes.data.map((m) => {
-              const sId = String(m.user_id || m.id || m.staff_id || "");
-              const assignedManager =
-                loadedHierarchy[sId] ||
-                (m.store_role !== "store_owner" && m.store_role !== "super_admin" && m.role !== "store_owner"
-                  ? (user?.id ?? null)
-                  : null);
+        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+          staffListBuilt = staffRes.data.map((m) => {
+            const sId = String(m.user_id || m.id || m.staff_id || "");
+            const assignedManager =
+              loadedHierarchy[sId] ||
+              (m.store_role !== "store_owner" && m.store_role !== "super_admin" && m.role !== "store_owner"
+                ? (user?.id ?? null)
+                : null);
 
-              const effectiveCrmRole = m.crm_role_id || m.role_id || undefined;
-              if (effectiveCrmRole) {
-                assignmentMap[sId] = effectiveCrmRole;
-              }
+            const effectiveCrmRole = m.crm_role_id || m.role_id || undefined;
+            if (effectiveCrmRole) {
+              assignmentMap[sId] = effectiveCrmRole;
+            }
 
-              return {
-                id: sId,
-                membershipId: String(m.membership_id || `mem-${sId}`),
-                name: m.full_name || m.name || (m.email ? m.email.split("@")[0] : `User (${sId.slice(0, 8)})`),
-                role: (m.store_role || m.role || "staff") as StoreRole,
-                crmRoleId: effectiveCrmRole,
-                email: m.email || undefined,
-                phone: m.phone || undefined,
-                parentId: assignedManager,
-                createdBy: assignedManager,
-                assignedBy: assignedManager,
-              };
-            }).filter((s) => Boolean(s.id));
-          }
+            return {
+              id: sId,
+              membershipId: String(m.membership_id || `mem-${sId}`),
+              name: m.full_name || m.name || (m.email ? m.email.split("@")[0] : `User (${sId.slice(0, 8)})`),
+              role: (m.store_role || m.role || "staff") as StoreRole,
+              crmRoleId: effectiveCrmRole,
+              email: m.email || undefined,
+              phone: m.phone || undefined,
+              parentId: assignedManager,
+              createdBy: assignedManager,
+              assignedBy: assignedManager,
+            };
+          }).filter((s) => Boolean(s.id));
         }
       } catch (staffErr) {
         console.warn("RoleManagement: getCRMStaff notice:", staffErr);
@@ -1066,8 +1076,22 @@ export default function RoleManagement(): React.ReactElement {
 
       const res = await crmApi.provisionStaffUser(payload, orgId);
 
+      if (res?.error || !res?.data?.user?.id) {
+        toast({
+          title: "Provisioning Failed",
+          description: res?.error || "Failed to provision staff member. Please verify details and try again.",
+          variant: "destructive",
+        });
+        setStaffFormFullName("");
+        setStaffFormEmail("");
+        setStaffFormPhone("");
+        setStaffFormAutoPassword("");
+        setStaffFormCustomPassword("");
+        return;
+      }
+
       const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
-      const newUserId = res?.data?.user?.id || `user-${Date.now()}`;
+      const newUserId = res.data.user.id;
 
       // Update hierarchy
       if (effectiveManagerId) {
@@ -1079,7 +1103,7 @@ export default function RoleManagement(): React.ReactElement {
       // In-memory instant roster hydration
       const newStaffEntry: StaffMember = {
         id: newUserId,
-        membershipId: `mem-${Date.now()}`,
+        membershipId: res.data.user.id,
         name: payload.full_name,
         role: payload.store_role,
         crmRoleId: crmRoleIdToAssign || undefined,
@@ -1144,55 +1168,20 @@ export default function RoleManagement(): React.ReactElement {
       await refreshPermissions();
     } catch (err) {
       console.error("Provision staff error:", err);
-      // Fallback: still hydrate locally and display credentials modal so user is not blocked
-      const fallbackUserId = `user-${Date.now()}`;
-      const assignedRole = roles.find((r) => r.id === crmRoleIdToAssign);
-
-      if (effectiveManagerId) {
-        const updatedHierarchy = { ...hierarchyMap, [fallbackUserId]: effectiveManagerId };
-        setHierarchyMap(updatedHierarchy);
-        localStorage.setItem(`credsmart_crm_team_hierarchy_${orgId}`, JSON.stringify(updatedHierarchy));
-      }
-
-      const newStaffEntry: StaffMember = {
-        id: fallbackUserId,
-        membershipId: `mem-${Date.now()}`,
-        name: staffFormFullName.trim(),
-        role: staffFormStoreRole,
-        crmRoleId: crmRoleIdToAssign || undefined,
-        assignedAt: new Date().toISOString(),
-        email: staffFormEmail.trim().toLowerCase(),
-        phone: staffFormPhone.trim(),
-        parentId: effectiveManagerId,
-        createdBy: effectiveManagerId,
-        assignedBy: effectiveManagerId,
-      };
-      const fallbackStaffList = [newStaffEntry, ...staffList.filter((s) => s.id !== fallbackUserId)];
-      setStaffList(fallbackStaffList);
-      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(fallbackStaffList));
-      try {
-        window.dispatchEvent(new CustomEvent("credsmart:crm_staff_updated"));
-      } catch {}
-      if (crmRoleIdToAssign) {
-        setStaffRolesMap((prev) => ({ ...prev, [fallbackUserId]: crmRoleIdToAssign }));
-      }
-
-      setAddStaffModalOpen(false);
-      setProvisionedCredentials({
-        fullName: staffFormFullName.trim(),
-        email: staffFormEmail.trim().toLowerCase(),
-        password: effectivePassword,
-        storeRole: staffFormStoreRole,
-        crmRoleName: assignedRole?.name || "No CRM Access",
-        crmRoleColor: assignedRole?.color || "#64748B",
-        orgName: org?.name || "CredSmart Store",
-      });
-      setCredentialsModalOpen(true);
-
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to provision staff. Network error or server unreachable.";
       toast({
-        title: "Staff Provisioned Locally",
-        description: `Staff member "${staffFormFullName.trim()}" provisioned successfully!`,
+        title: "Provisioning Error",
+        description: errorMessage,
+        variant: "destructive",
       });
+      setStaffFormFullName("");
+      setStaffFormEmail("");
+      setStaffFormPhone("");
+      setStaffFormAutoPassword("");
+      setStaffFormCustomPassword("");
     } finally {
       setSubmittingStaff(false);
     }
@@ -1454,74 +1443,65 @@ export default function RoleManagement(): React.ReactElement {
       {/* DESKTOP VIEW (>= 768px): Preserved 100% Byte-for-Byte */}
       {/* ================================================================== */}
       <div className="hidden md:block">
-        {/* Top Banner / Breadcrumb */}
-        <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-5 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to={ROUTE_PATHS.crm}
-              className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs transition-colors shrink-0"
-              title="Back to CRM Command Center"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  RBAC Foundation
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Live
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                  Zero Hard-coded Roles
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight mt-1">
-                CRM Role &amp; Permission Manager
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Configure user roles, permissions, and organization team hierarchy.
-              </p>
+        <CRMCommandHeader
+          title="CRM Role & Permission Manager"
+          subtitle="Configure user roles, permissions, and organization team hierarchy."
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "CRM", href: ROUTE_PATHS.crm },
+            { label: "Role Management", href: ROUTE_PATHS.crmRoles },
+          ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
+          badge={
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                RBAC Foundation
+              </span>
+              <CRMBadge variant="success" size="sm" dot>
+                Live
+              </CRMBadge>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                Zero Hard-coded Roles
+              </span>
             </div>
-          </div>
+          }
+          actions={
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <Button
+                onClick={loadData}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+                <span>Refresh</span>
+              </Button>
 
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <Button
-              onClick={loadData}
-              variant="outline"
-              size="sm"
-              disabled={loading}
-              className="rounded-xl border-slate-200 text-xs font-semibold gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-              <span>Refresh</span>
-            </Button>
+              <Button
+                onClick={() => openAddStaffModal()}
+                disabled={!isSuperAdminOrOwner}
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
+              >
+                <UserPlus className="w-4 h-4 text-blue-600" />
+                <span>Add Staff User</span>
+              </Button>
 
-            <Button
-              onClick={() => openAddStaffModal()}
-              disabled={!isSuperAdminOrOwner}
-              variant="outline"
-              size="sm"
-              className="rounded-xl border-slate-300 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs sm:text-sm shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
-            >
-              <UserPlus className="w-4 h-4 text-blue-600" />
-              <span>Add Staff User</span>
-            </Button>
-
-            <Button
-              onClick={openCreateRoleModal}
-              disabled={!isSuperAdminOrOwner}
-              className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Custom Role</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+              <Button
+                onClick={openCreateRoleModal}
+                disabled={!isSuperAdminOrOwner}
+                className="rounded-xl text-xs sm:text-sm font-semibold bg-[#1D4ED8] hover:bg-blue-700 text-white shadow-xs gap-1.5 min-h-[44px] sm:min-h-[36px] touch-manipulation"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Custom Role</span>
+              </Button>
+            </div>
+          }
+        />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-5 sm:space-y-6">

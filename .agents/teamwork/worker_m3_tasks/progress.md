@@ -1,34 +1,24 @@
-# Progress: Milestone 3 — Enterprise Task Management
+# Progress Log — Worker M3 (Tasks & Staff Synthetic ID Elimination)
 
-Last visited: 2026-10-21T19:49:00Z
+Last visited: 2026-10-27T03:30:00Z
 
-## Status
-Completed
+## Status: COMPLETE — 100% Passed Tests and 0 TypeScript Errors
 
-## Steps Completed
-- [x] Initial dispatch & original request analysis
-- [x] Codebase exploration of `Tasks.tsx`, `crmApi.ts`, and backend API
-- [x] Initial test execution: `crmStaffTasksIntegration.test.tsx` (12/12 pass), `crmTaskLifecycle.test.ts` (33/33 pass)
-- [x] BRIEFING.md established
-- [x] Implemented full-stack Enterprise Task Management in `src/pages/crm/Tasks.tsx`
-  - [x] Live backend API integration with `crmApi.getCRMTasks(orgId)` on mount and refresh
-  - [x] `localStorage` key `credsmart_crm_tasks_${orgId}` fallback and sync
-  - [x] Organization staff retrieval via `crmApi.getCRMStaffRoles(orgId)` / `getCRMStaff(orgId)`
-  - [x] Dual Assignee selector (dropdown with store role & CRM role badges + compatible text input)
-  - [x] Task creation with title (min 3 chars), description, priority, due date, proof required, and assignee
-  - [x] Interactive Kanban Board (4 columns with count pills, priority badges, proof badges, overdue highlights)
-  - [x] Interactive Table View (columns: Task, Priority, Status, Assignee, Due Date, Proof Required, Actions)
-  - [x] Proof Submission Modal requiring non-empty `proof_notes`
-  - [x] Manager Revision Request Dialog requiring non-empty `review_feedback` and displaying amber callout on card in `in_progress`
-  - [x] Manager Approval workflow setting `completed_at` and `approved_by`
-  - [x] Real-time KPI metrics calculation (Total, In Progress, Pending Review, Completed, Completion Rate %, Overdue count)
-- [x] Added unit & integration test suite in `src/test/crmTasksView.test.tsx` (6/6 pass)
-- [x] Ran vitest test suites:
-  - `src/test/crmTaskLifecycle.test.ts` (33/33 pass)
-  - `src/test/crmStaffTasksIntegration.test.tsx` (12/12 pass)
-  - `src/test/crmTasksView.test.tsx` (6/6 pass)
-  - `src/test/crmStaffProvisioning.test.ts` (29/29 pass)
-- [x] Full TypeScript check (`cmd /c npx tsc --noEmit`) exited with 0 errors
-- [x] Verified protected invoice files remain 100% untouched
-- [x] BRIEFING.md and progress.md updated
-- [x] Handoff report prepared in `handoff.md`
+### Completed Work:
+1. `src/pages/crm/RoleManagement.tsx`:
+   - Eliminated synthetic ID generation (`user-${Date.now()}` and fallback synthetic IDs in catch).
+   - Added validation check `if (res?.error || !res?.data?.user?.id)` with destructive toast notification, form reset, and zero ghost staff addition to state or localStorage.
+   - Catch block now displays destructive toast and resets form without generating synthetic fallback staff.
+2. `src/pages/crm/Tasks.tsx`:
+   - Added UUID validation and synthetic ID filtering (`isValidAssigneeId`, `isSyntheticStaffId`, `UUID_REGEX`).
+   - Staff loading cascade in `loadData`: Prioritizes `crmApi.getCRMStaffRoles(orgId)`, falling back to `crmApi.getCRMStaff(orgId)` only if roles are empty, and local cache fallback, with every member strictly validated for non-synthetic IDs.
+   - Handled empty state `[]` from `crmApi.getCRMTasks`: properly sets `tasks = []` and persists to `localStorage`, while preserving demo tasks for `org-tasks-e2e-202`.
+   - Implemented optimistic insert with temp ID in `handleCreateTask`, with deterministic error rollback upon API error or network exception, replacing temp ID with real UUID on success.
+   - Implemented deterministic error rollback across all lifecycle transitions (`handleMoveStatus`, `handleApproveTask`, `handleSubmitProof`, `handleSubmitRevision`) restoring exact previous task state and firing destructive error toast.
+   - Gated assignee selection and text input with `isValidAssigneeId`.
+3. Verification:
+   - Vitest: 3 test files, 25 tests passed:
+     - `src/test/crmTasksView.test.tsx` (6 passed)
+     - `src/test/crmStaffTasksIntegration.test.tsx` (12 passed)
+     - `src/test/crmStaffProvisioningUI.test.tsx` (7 passed)
+   - TypeScript: `npx tsc --noEmit` exited with code 0 (0 errors).

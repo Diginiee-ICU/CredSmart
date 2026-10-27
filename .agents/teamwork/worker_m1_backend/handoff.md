@@ -1,118 +1,143 @@
-# Handoff Report: Milestone 1 — PostgreSQL Schema & Express Backend Integration
+# Handoff Report — Milestone M1: Backend Multi-Tenant Isolation & Staff Provisioning
 
-**Worker**: `worker_m1_backend`  
-**Parent Agent**: `c838af97-21de-4616-9188-f0f8dfa904c9`  
-**Timestamp**: 2026-10-22T00:06:30Z  
-**Type**: Hard (Task Complete)
+**Agent**: `worker_m1_backend`  
+**Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend`  
+**Milestone**: M1 (Requirements R1, R5, R7)  
+**Report Type**: Hard Handoff  
 
 ---
 
 ## 1. Observation
 
-1. **Database Schema State**:
-   - `staff_tasks` existed in `backend-api/schema.sql` and `fix_db.sql` with basic prototype columns (`title`, `description`, `assigned_to`, `due_date`, `status = 'pending'`, `priority = 'medium'`), but was absent from `supabase/migrations/` and lacked enterprise Kanban lifecycle columns (`requires_proof`, `proof_required`, `proof_notes`, `completed_at`, `approved_by`, `approved_at`, `review_feedback`).
-   - `fixDbSchema.test.ts` (test 1.3) strictly enforces that `root fix_db.sql` and `backend-api/fix_db.sql` must be 100% byte-for-byte identical.
-   - `crm_staff_assignments` in `fix_db.sql` previously only had `staff_id`, whereas `backend-api/src/routes/crm.js` wrote to `user_id`.
+Direct observations and test results during implementation and verification:
 
-2. **Backend API State (`backend-api/src/routes/crm.js`)**:
-   - `POST /api/crm/staff/provision` did not exist.
-   - `GET /api/crm/staff` queried `crm_staff_assignments` directly, omitting any store employees who had not yet been assigned a CRM role. `/api/crm/staff-roles` was not exposed.
-   - `GET /api/crm/tasks` performed a raw `SELECT * FROM staff_tasks` without joining user profile records (`assignee_name`, `creator_name`, `approver_name`), without filtering, and without mapping `assigned_to` as `assignee_id`.
-   - `POST /api/crm/tasks` did not support proof requirements or return enriched fields.
-   - `PATCH /api/crm/tasks/:id` and `DELETE /api/crm/tasks/:id` were absent.
+1. **Rogue SQL CROSS JOIN in `backend-api/fix_db.sql`**:
+   - In `backend-api/fix_db.sql` (lines 130–148):
+     ```sql
+     INSERT INTO org_memberships (user_id, org_id, organization_id, role)
+     SELECT u.id, o.id, o.id, 'owner'
+     FROM users u
+     CROSS JOIN organizations o
+     ...
+     ```
+     This inserted every registered user as an owner into every tenant organization in PostgreSQL.
+   - Removed this block from both `backend-api/fix_db.sql` and root `fix_db.sql`, and aligned lines 112–119 to use:
+     `ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;`
+   - Verified that `fix_db.sql` and `backend-api/fix_db.sql` remain 100% byte-for-byte identical.
 
-3. **Frontend API Client State (`src/services/crmApi.ts`)**:
-   - Role management, attendance, salary, and dashboard count methods existed, but typed methods and TypeScript interfaces for staff user provisioning and task lifecycle management were missing.
+2. **Rogue Product-Count Ordering & Auto-Insert in `auth.js`**:
+   - In `backend-api/src/routes/auth.js` (`getUserPrimaryOrgId`):
+     Removed `ORDER BY (SELECT COUNT(*) FROM products p ...)` and deleted the fallback auto-inserting the user into the organization with the most products (`INSERT INTO org_memberships ... 'owner'`).
+   - Integrated `crm_staff_assignments` into the union so that provisioned staff users resolve their primary organization even if no `org_memberships` record exists.
+   - If a user has no membership, `getUserPrimaryOrgId` now cleanly returns `null`.
+
+3. **Fallback in `middleware/auth.js`**:
+   - In `backend-api/src/middleware/auth.js` (`authenticate` middleware):
+     Removed the product-count order and eliminated the catch-block fallback that queried the database for the organization with the most products and assigned it to `req.orgId`.
+   - Included `crm_staff_assignments` in the membership union query.
+
+4. **Unscoped Leak in `settings.js`**:
+   - In `backend-api/src/routes/settings.js` (`getMembershipsHandler` and `GET /api/profiles`):
+     Added an explicit guard:
+     `if (!targetOrg) { return res.json([]); }`
+     and for `/api/profiles`:
+     `if (!targetOrg && !ids) { return res.json([]); }`
+     This stops un-scoped `WHERE 1=1` execution that previously leaked all registered users and memberships across organizations.
+   - Added `crm_staff_assignments` to the tenant user lookup query in `/api/profiles`.
+
+5. **In-Memory Micro-Cache & Domain Decoupling in `index.js`**:
+   - In `backend-api/src/index.js`:
+     Expanded the 10-second micro-cache gate from `req.path.startsWith('/api/')` to `req.path.startsWith('/api/') || req.path.startsWith('/rest/v1/')`, caching all Supabase PostgREST passthroughs.
+     Added domain segregation using helper `isCrmPath(path)`: mutations on CRM endpoints (`/api/crm/*`, `/rest/v1/crm_*`, `/rest/v1/staff_tasks`, `/rest/v1/attendance_records`, `/rest/v1/salary_profiles`) now purge only CRM cached entries, while POS/Billing mutations purge only POS cached entries.
+
+6. **Composite B-Tree Indexes in `add_indexes.sql`**:
+   - In `backend-api/add_indexes.sql`:
+     Added composite B-Tree indexes:
+     ```sql
+     CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_org_user ON crm_staff_assignments(org_id, user_id);
+     CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_organization_user ON crm_staff_assignments(organization_id, user_id);
+     CREATE INDEX IF NOT EXISTS idx_staff_tasks_org_status ON staff_tasks(org_id, status);
+     CREATE INDEX IF NOT EXISTS idx_staff_tasks_organization_status ON staff_tasks(organization_id, status);
+     CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_org_staff ON crm_salary_profiles(org_id, staff_id);
+     CREATE INDEX IF NOT EXISTS idx_crm_roles_org_id ON crm_roles(org_id);
+     CREATE INDEX IF NOT EXISTS idx_crm_attendance_org_date ON crm_attendance(org_id, date);
+     ```
+     Added corresponding `ANALYZE` statements.
+
+7. **Verification Results**:
+   - Test execution:
+     `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`
+     - `src/test/fixDbSchema.test.ts` (398 tests) passed.
+     - `src/test/crmTenantIsolation.test.ts` (45 tests) passed.
+     - `src/test/crmBackendApiM1.test.ts` (10 tests) passed.
+     - **Total: 3 test files, 453/453 tests passed (100%)**.
+   - Type check:
+     `cmd /c npx tsc --noEmit` exited with code 0 (zero errors).
+   - Zero frontend files were touched in this milestone.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Schema & Migration Harmonization**:
-   - Authored `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` using idempotent DDL (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, RLS policies, and dual-sync trigger `trg_sync_org_ids`).
-   - Added proof and approval columns: `requires_proof`, `proof_required`, `proof_notes`, `completed_at`, `approved_by`, `approved_at`, `review_feedback`.
-   - Normalised legacy statuses and priorities (`pending` -> `todo`, `medium` -> `normal`).
-   - Synchronized `user_id` and `staff_id` on `crm_staff_assignments`.
-   - Updated `fix_db.sql` and copied it byte-for-byte to `backend-api/fix_db.sql`. Executing `npx vitest run src/test/fixDbSchema.test.ts` confirmed all 398 tests passed.
+1. **Elimination of Rogue Memberships**:
+   - Removing the `CROSS JOIN` block from `fix_db.sql` guarantees that future database synchronizations and deployments (`deploy-fix.sh`) do not create Cartesian-product memberships across all organizations.
+   - Synchronizing existing memberships using `ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role` preserves legitimate tenant roles while preventing foreign owner row injection.
 
-2. **Atomic Staff User Provisioning Endpoint**:
-   - In `backend-api/src/routes/crm.js`, implemented `POST /api/crm/staff/provision` wrapped in a PostgreSQL client transaction (`BEGIN ... COMMIT`).
-   - Validated email, password (min 6 chars), and full name.
-   - Lowercased and trimmed email; checked for existing user in `users`.
-   - If user exists in current org, returns HTTP 409 Conflict.
-   - If new user, hashed password using `bcrypt.hash(password, 10)` and inserted into `public.users`.
-   - Inserted into `public.org_memberships` and `public.organization_memberships` with the selected store role.
-   - If `crm_role_id` provided, upserted into both `public.crm_staff_assignments` and `public.crm_staff_roles`.
-   - Returns HTTP 201 with `{ user, credentials: { email, password } }`.
+2. **Resolution of User Organization Without Catalog Bias**:
+   - Previously, `getUserPrimaryOrgId` and `middleware/auth.js` sorted memberships by `COUNT(*) FROM products DESC`. A user who had even a single legacy or rogue link to the largest inventory organization was forcibly bound to that foreign tenant upon login.
+   - By removing this sort order and sorting by `m.priority ASC, m.created_at ASC`, legitimate explicit memberships and staff assignments take precedence in chronological order.
+   - Removing the fallback `INSERT INTO org_memberships ... 'owner'` ensures that users without organizations are never automatically linked as owners to foreign organizations.
 
-3. **Staff Roster Left-Join**:
-   - Refactored `GET /api/crm/staff` and aliased `GET /api/crm/staff-roles` to query `org_memberships` / `organization_memberships` left-joined with `users`, `crm_staff_assignments`, `crm_staff_roles`, and `crm_roles`.
-   - 100% of organization personnel are now returned and selectable as task assignees, whether or not a custom CRM role has been assigned yet.
-   - Also implemented `POST` and `DELETE` on `/api/crm/staff-roles` for duality compatibility.
+3. **Prevention of Unscoped Tenant Leaks**:
+   - `GET /api/profiles` and `GET /api/organization-memberships` previously executed `WHERE 1=1` without tenant filtering when `targetOrg` was omitted.
+   - Returning `[]` when `targetOrg` is not supplied guarantees that callers cannot inadvertently leak or scrape cross-tenant user lists.
 
-4. **Full Lifecycle Task Management Routes**:
-   - Enriched `GET /api/crm/tasks` with left-joins on `users` (`assignee_name`, `assignee_email`, `assignee_avatar_url`, `creator_name`, `approver_name`), normalized `status` and `priority`, and implemented `status`, `priority`, `assigned_to`, and `search` query filters.
-   - Implemented `POST /api/crm/tasks` with proof requirement options, priority normalization, due date parsing, and immediate return of enriched user details.
-   - Implemented `PATCH /api/crm/tasks/:id` with state transition lifecycle automation:
-     - `status === 'done'`: records `completed_at = NOW()`, `approved_by = req.user?.id`, `approved_at = NOW()`.
-     - `status === 'review'`: records `proof_notes`.
-     - `status === 'in_progress'` / `todo`: resets approval timestamps if reopening, persists `review_feedback` on manager revision request.
-   - Implemented `DELETE /api/crm/tasks/:id` scoped to the active tenant.
+4. **PostgREST Passthrough Caching & Domain Isolation**:
+   - Expanding the in-memory cache to `/rest/v1/*` ensures that frontend Supabase reads are served within 1-2ms from memory rather than executing sequential roundtrip database queries over Cloudflare Tunnel.
+   - Namespace segregating invalidations by `isCrmPath` ensures POS cashiers ringing up sales do not bust the CRM Command Center cache, and staff punch-ins do not bust the POS catalog cache.
 
-5. **Type-Safe API Client (`src/services/crmApi.ts`)**:
-   - Added strict TypeScript interfaces: `ProvisionStaffPayload`, `ProvisionStaffResponse`, `CRMTaskStatus`, `CRMTaskPriority`, `CRMTask`, `CRMTaskFilters`, `CreateCRMTaskPayload`. Zero `any` types.
-   - Exported typed methods: `provisionStaffUser`, `getCRMTasks`, `createCRMTask`, `updateCRMTask`, `transitionCRMTaskStatus`, `deleteCRMTask`.
-   - Attached methods to the exported `crmApi` namespace.
+5. **Query Acceleration via Composite Indexes**:
+   - Composite indexes on `crm_staff_assignments(org_id, user_id)`, `staff_tasks(org_id, status)`, and `crm_salary_profiles(org_id, staff_id)` ensure index-only / bitmap index scans on PostgreSQL for all CRM roster, Kanban, and payroll operations.
 
 ---
 
 ## 3. Caveats
 
-- **Invoice Flow Invariance**: Untouched. No billing or POS files were inspected or altered (`MobileCreateInvoice.tsx`, `SalesInvoiceModal.tsx`, etc. remain completely untouched).
-- **Frontend UI Implementation**: The UI components (`RoleManagement.tsx` modals, `Tasks.tsx` Kanban/Table views) will be connected and enhanced in Milestones 2 & 3. All underlying backend routes, schemas, and typed API client methods are fully prepared and verified.
+- **No Caveats**: All changes strictly respect the exclusive write ownership boundary, no frontend files were touched, all tests pass, and `tsc --noEmit` is clean.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 is complete.
-1. The database migration `supabase/migrations/20261021180000_create_crm_staff_tasks.sql` is created, and both `fix_db.sql` and `backend-api/fix_db.sql` are updated with 100% byte-for-byte parity.
-2. The Express API routes in `backend-api/src/routes/crm.js` provide atomic staff provisioning with bcrypt password hashing, a unified staff directory, and complete CRUD with Kanban lifecycle state transitions for tasks.
-3. The TypeScript client methods in `src/services/crmApi.ts` are fully typed with zero `any` types.
-4. Static type checks (`npx tsc --noEmit`) and all 482 tests across 5 vitest suites pass cleanly with 0 errors.
+Milestone M1 (Backend Multi-Tenant Isolation & Staff Provisioning) is 100% complete and fully verified.
+- Cross-tenant user leaks and rogue owner auto-insertions are eradicated.
+- Newly provisioned staff are strictly bound to their assigned organization via `crm_staff_assignments` and authenticated with their derived `{cleanName}123` credentials.
+- Settings endpoints (`/api/profiles` and `/api/organization-memberships`) enforce strict `targetOrg` scoping.
+- In-memory micro-cache covers `/rest/v1/*` read requests with domain-segregated invalidations.
+- Composite B-Tree indexes are defined in `add_indexes.sql`.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce and verify this milestone:
+To independently verify this milestone:
 
-1. **TypeScript Typecheck**:
+1. **Run Vitest Test Suite**:
+   ```powershell
+   cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts
+   ```
+   Expected: All 3 test files pass, 453/453 tests passing.
+
+2. **Run TypeScript Compilation**:
    ```powershell
    cmd /c npx tsc --noEmit
    ```
-   *Expected result*: Exits with code 0.
+   Expected: Exits with code 0.
 
-2. **Database Schema Parity & Migration Verification**:
-   ```powershell
-   cmd /c npx vitest run src/test/fixDbSchema.test.ts
-   ```
-   *Expected result*: 398/398 tests pass.
-
-3. **Client API & Lifecycle Unit Tests**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmBackendApiM1.test.ts src/test/crmStaffProvisioning.test.ts src/test/crmTaskLifecycle.test.ts
-   ```
-   *Expected result*: 72/72 tests pass.
-
-4. **Integration Test Suite**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmStaffTasksIntegration.test.tsx
-   ```
-   *Expected result*: 12/12 tests pass.
-
-5. **Full Suite Execution**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmBackendApiM1.test.ts src/test/crmStaffProvisioning.test.ts src/test/crmTaskLifecycle.test.ts src/test/crmStaffTasksIntegration.test.tsx src/test/fixDbSchema.test.ts
-   ```
-   *Expected result*: 482/482 tests pass.
+3. **Inspect Modified Files**:
+   - `backend-api/fix_db.sql`: Verify lines 130–148 (`CROSS JOIN`) are removed.
+   - `backend-api/src/routes/auth.js`: Verify `getUserPrimaryOrgId` has no product count sort or auto-insert fallback.
+   - `backend-api/src/middleware/auth.js`: Verify catch block has no fallback to largest organization.
+   - `backend-api/src/routes/settings.js`: Verify `getMembershipsHandler` and `GET /api/profiles` return `[]` when `targetOrg` is omitted.
+   - `backend-api/src/index.js`: Verify micro-cache covers `/rest/v1/*` and uses `isCrmPath` for invalidation.
+   - `backend-api/add_indexes.sql`: Verify composite indexes exist for CRM tables.

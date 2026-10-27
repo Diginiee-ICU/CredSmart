@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-24T20:30:00Z
+# BRIEFING — 2026-10-27T04:05:00Z
 
 ## Mission
-Perform an uncompromising, binary forensic integrity audit of Milestone 3: Mobile Ergonomics & Native-Touch Layouts (`AppSidebar.tsx`, `CreateItemModal.tsx`, `CreatePartyModal.tsx`, `mobileErgonomicsChallenger.test.ts`).
+Perform an uncompromising, binary forensic integrity audit of Milestone 3: Tasks & Staff Provisioning (R3) in `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`.
 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
@@ -13,6 +13,8 @@ Perform an uncompromising, binary forensic integrity audit of Milestone 3: Mobil
 - Target: Milestone 3 (Full-Stack Enterprise Task Management)
 - Current parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
 - Target: Milestone 3 (Mobile Ergonomics & Native-Touch Layouts)
+- Current parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Target: Milestone 3 (Tasks & Staff Provisioning - R3)
 
 ## 🔒 Key Constraints
 - Audit-only — do NOT modify implementation code
@@ -21,37 +23,42 @@ Perform an uncompromising, binary forensic integrity audit of Milestone 3: Mobil
 - Verify empirical compilation, test execution, and static forensic checks
 - Verify Create Invoice flows are completely untouched
 - Zero lines modified in any of the 19 quarantined protected files
-- Verify zero cheats, facades, or dummy implementations in AppSidebar.tsx, CreateItemModal.tsx, CreatePartyModal.tsx, mobileErgonomicsChallenger.test.ts
-- Execute tsc and vitest empirically
+- Verify zero synthetic ID generation (`user-${Date.now()}`) in `handleCreateStaffUser` / `handleProvisionStaff`
+- Verify authentic UUID regex validation for assignees in `Tasks.tsx`
+- Verify genuine deterministic state rollback logic in task creation and lifecycle updates
+- Verify clean empty state handling
+- Execute `tsc --noEmit` and Vitest suites empirically
 
 ## Current Parent
-- Conversation ID: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Updated: 2026-10-24T20:22:02Z
+- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
+- Updated: 2026-10-26T22:03:41Z
 
 ## Audit Scope
-- **Work product**: Milestone 3 Mobile Ergonomics (`src/components/AppSidebar.tsx`, `src/components/items/CreateItemModal.tsx`, `src/components/parties/CreatePartyModal.tsx`, `src/test/mobileErgonomicsChallenger.test.ts`)
+- **Work product**: Milestone 3 Tasks & Staff Provisioning (`src/pages/crm/RoleManagement.tsx`, `src/pages/crm/Tasks.tsx`)
 - **Quarantined protected files**: 19 files strictly locked against modifications
-- **Profile loaded**: General Project (Mobile Ergonomics & Native-Touch Layouts)
+- **Profile loaded**: General Project (Integrity Forensics)
 - **Audit type**: forensic integrity check
 
 ## Audit Progress
-- **Phase**: reporting
+- **Phase**: completed
 - **Checks completed**:
-  - Received dispatch and updated DISPATCH.md
-  - Read ORIGINAL_REQUEST.md (## 2026-10-24T18:51:21Z), PROJECT.md, minimal-design-system.md, worker_m3 handoff.md
-  - Phase 1: Verified `git diff HEAD -- <file>` on all 19 quarantined protected files: 19/19 untouched (0 diff lines)
-  - Phase 2: Static cheat analysis on modified files: zero skipped tests, zero dummy assertions, zero NODE_ENV bypasses, zero ESLint errors
-  - Phase 3: Executed TypeScript compiler (`npx tsc --noEmit`): Exit code 0
-  - Phase 3: Executed Vitest suites (`mobileErgonomicsChallenger.test.ts`, `mobileTouchErgonomicsRemediation.test.ts`, `billingLifecycleEngine.test.ts`): 43/43 tests passed (100%)
-  - Phase 4: Formulated binary verdict: VERDICT: CLEAN
+  - Appended dispatch message to `DISPATCH.md`
+  - Read `ORIGINAL_REQUEST.md` (Integrity mode: development) and worker handoff
+  - Verified elimination of synthetic ID generation in `RoleManagement.tsx` (`handleProvisionStaff` lines 1050-1175): early returns on error, form reset, zero ghost staff created or saved to localStorage
+  - Verified authentic UUID regex validation (`UUID_REGEX`) and `isSyntheticStaffId` rejection in `Tasks.tsx`
+  - Verified genuine deterministic rollback logic in `handleCreateTask`, `handleMoveStatus`, `handleApproveTask`, `handleSubmitProof`, and `handleSubmitRevision` with destructive error toasts
+  - Verified clean empty state handling in `Tasks.tsx` (`setTasks([])` and `localStorage.setItem(storageKey, "[]")` on empty server response)
+  - Verified 19/19 quarantined protected billing/invoicing files remain untouched (0 diff lines via `git diff HEAD`)
+  - Executed `cmd /c npx tsc --noEmit`: exited with code 0 (zero errors)
+  - Executed `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`: 3/3 passed, 25/25 tests passed (100%)
 - **Checks remaining**: None
-- **Findings so far**: CLEAN — No integrity violations detected
+- **Findings so far**: CLEAN — All forensic checks passed with zero integrity violations
 
 ## Key Decisions Made
-- Confirmed zero modifications across all 19 quarantined protected invoice files.
-- Verified authentic bottom-sheet drawer UX implementation in CreateItemModal and CreatePartyModal.
-- Verified Tab 5 destination is Parties with Users2 and 46x46px center elevated CTA in AppSidebar.tsx.
-- Rendered binary verdict: VERDICT: CLEAN.
+- Confirmed zero modifications across all 19 quarantined protected billing/invoice files.
+- Verified deterministic state rollback and server UUID reconciliation in task lifecycle.
+- Confirmed total elimination of synthetic IDs in staff provisioning.
+- Binary verdict: **CLEAN**.
 
 ## Artifact Index
 - `DISPATCH.md` — Dispatch prompt and history
@@ -59,19 +66,17 @@ Perform an uncompromising, binary forensic integrity audit of Milestone 3: Mobil
 - `progress.md` — Liveness & status tracking
 - `handoff.md` — Forensic audit report
 - `verify_protected.cjs` — Audit verification script for 19 protected files
-- `scan_cheats.cjs` — Static cheat and facade scanner
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Protected billing files modified: Disproven. All 19 files have 0 diff lines.
-  - Skeuomorphic or rainbow remnants in dock: Disproven. Unified Royal Blue tokens verified.
-  - Fake/mocked drawer implementations: Disproven. Authentic bottom sheets with drag handle and sticky footer confirmed.
-  - Softened or bypassed test assertions: Disproven. Zero skipped tests, zero dummy assertions.
-  - TypeScript or Vitest regressions: Disproven. `tsc --noEmit` exited 0; 43/43 tests passed.
+  - Synthetic user ID (`user-${Date.now()}`) injected on provisioning failure: Disproven. Code raises destructive toast, resets form, and returns early without touching state or localStorage.
+  - Non-UUID or synthetic IDs accepted as assignees: Disproven. `isValidAssigneeId` and `isSyntheticStaffId` strictly filter them out.
+  - Unhandled state divergence on network/API failure: Disproven. Every optimistic mutation in `Tasks.tsx` captures pre-state and restores it on error.
+  - Protected billing/invoice files modified: Disproven. All 19 files have 0 diff lines against HEAD.
+  - TypeScript or Vitest test failures: Disproven. `tsc --noEmit` exited code 0, all 25 tests passed.
 - **Vulnerabilities found**: None.
 - **Untested angles**: None within Milestone 3 scope.
 
 ## Loaded Skills
-- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
-- **Local copy**: None required
-- **Core methodology**: Full-stack minimalist UI tokens, mobile ergonomics, 100% desktop-mobile divergence, zero regression
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md
+- **Core methodology**: RBAC permissions matrix, custom role assignment, tenant-isolated operations

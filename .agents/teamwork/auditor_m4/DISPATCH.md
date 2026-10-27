@@ -1,64 +1,46 @@
-# Dispatch Assignment: Forensic Auditor M4 (Final Project Forensic Integrity Audit)
+# Task Assignment: Milestone 4 Forensic Integrity Audit (Auditor M4)
 
-## Mission
-Conduct a comprehensive, uncompromising forensic integrity audit across the entire codebase for the Mobile List Item Container Modernization project.
+## Objective
+Perform an exhaustive forensic integrity audit of Milestone 4 changes:
+- `src/components/routing/BillingLockdownGuard.tsx`
+- `src/App.tsx`
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4`
+## Mandatory Integrity Forensics
+1. Verify genuine route guarding:
+   - Verify `BillingLockdownGuard.tsx` implements authentic authorization checks via hooks (`useAuth`, `useOrganization`, `useCRMPermission`).
+   - Check that there are no dummy passes, mock bypasses, or hardcoded user emails.
+   - Check that unauthorized users genuinely receive destructive alert toast and are redirected to `ROUTE_PATHS.crm`.
+2. Verify AST preservation in `src/App.tsx`:
+   - Check that `RoleProtectedRoute` function implementation was NOT modified.
+   - Check that `return <Navigate to={ROUTE_PATHS.checkout} replace />;` remains verbatim.
+   - Check route ordering: `<ProtectedRoutes>` < `<Attendance>` < `<RoleProtectedRoute>`.
+   - Check all 36 legacy redirect routes remain declared.
+3. Verify quarantine files non-tampering:
+   - Run `node verify_protected.cjs` or `git diff HEAD` across all 19 protected billing/invoicing files. Must be 100% untouched (0 diff lines).
+4. Run compiler and tests:
+   - Run `cmd /c npx vitest run src/test/challengerM1_2DecoupleAudit.test.ts src/test/crmAttendanceRouteWiringChallenge.test.tsx src/test/crmBillingLockdownGuard.test.tsx`
+   - Run `cmd /c npx tsc --noEmit`
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Design Rules: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+## Output
+Write your report to:
+`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\handoff.md`
+Send your verdict (`CLEAN` or `INTEGRITY VIOLATION`) via `send_message` to the orchestrator.
 
-## 19 Protected Quarantine Files — MUST REMAIN 100% UNTOUCHED
-1. `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-2. `src/components/invoices/mobile/AddItemModal.tsx`
-3. `src/components/invoices/mobile/SelectPartyModal.tsx`
-4. `src/components/invoices/mobile/EditItemModal.tsx`
-5. `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-6. `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
-7. `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
-8. `src/components/invoices/mobile/CreatePartyModal.tsx`
-9. `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
-10. `src/components/items/mobile/CreateNewItemModal.tsx`
-11. `src/components/SalesInvoiceModal.tsx`
-12. `src/components/PurchaseInvoiceModal.tsx`
-13. `src/components/invoices/AddItemsToBillModal.tsx`
-14. `src/components/invoices/InvoiceFitView.tsx`
-15. `src/components/invoices/UnifiedInvoiceRenderer.tsx`
-16. `src/utils/downloadExactInvoice.ts`
-17. `src/utils/whatsappPdfShare.ts`
-18. `src/utils/invoiceThemeLoader.ts`
-19. `src/services/documentsService.ts`
-
-## Integrity Forensic Checks
-1. Hardcoded Output Check:
-   Examine git diff across all 9 target files (`RoleManagement.tsx`, `Tasks.tsx`, `Sales.tsx`, `Purchases.tsx`, `Items.tsx`, `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, `Attendance.tsx`). Ensure there are NO hardcoded test mocks, dummy facades, or artificial shortcuts.
-2. Quarantine Boundary Check:
-   Verify git status and git diff to prove that none of the 19 quarantine files were touched.
-3. Genuine Logic & Data Binding:
-   Verify that all event handlers, onClick callbacks, state hooks, and data bindings were preserved without bypasses.
-4. Design System Compliance:
-   Verify strict adherence to minimal design rules (no sub-11px fonts, min 44px touch targets, clean divide-y hairlines).
-5. Build & Compilation Verification:
-   Verify that `node node_modules/typescript/bin/tsc --noEmit` and `node node_modules/vite/bin/vite.js build` pass cleanly with exit code 0.
-
-Write your verdict (`CLEAN` or `INTEGRITY VIOLATION`) to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\handoff.md` and notify parent orchestrator via send_message.
-
-
-## 2026-10-25T10:50:45Z
-You are Forensic Auditor M4 for the Mobile List Item Container Modernization project.
+## 2026-10-26T23:00:00Z
+You are Forensic Auditor for Milestone 4 (Strict POS/Billing Route Lockdown - Requirement R4).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read the project architecture: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md
-Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read instructions in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\DISPATCH.md
+Read the user request in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the worker handoff in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m4_lockdown\handoff.md
 
-Execute all forensic integrity checks:
-1. Check git diff across all 9 target files for hardcoded outputs, dummy mocks, or facades.
-2. Check git status to confirm all 19 quarantine files are 100% untouched.
-3. Check genuine event handlers and data flow.
-4. Verify tsc --noEmit and vite build pass cleanly.
+Perform full forensic integrity audit on:
+- `src/components/routing/BillingLockdownGuard.tsx`
+- `src/App.tsx`
+Verify:
+1. Authentic hook usage (`useAuth`, `useOrganization`, `useCRMPermission`). Zero hardcoded user bypasses or mock facades.
+2. Strict preservation of `RoleProtectedRoute` function body (`return <Navigate to={ROUTE_PATHS.checkout} replace />;`) and route ordering.
+3. Verification that all 19 quarantined protected files have 0 diff lines (`node verify_protected.cjs`).
+4. Execution of Vitest tests and `npx tsc --noEmit`.
 
-Write your verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\handoff.md and notify parent orchestrator via send_message.
+Write your report to: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m4\handoff.md
+Send your verdict (CLEAN or INTEGRITY VIOLATION) via send_message to the orchestrator.

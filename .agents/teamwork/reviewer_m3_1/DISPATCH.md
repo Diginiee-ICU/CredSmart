@@ -1,50 +1,38 @@
-# Dispatch Assignment: Reviewer 1 (Milestone 3 — Dashboard, Parties & CRM HR Modernization)
+# Task Assignment: Milestone 3 Review (Reviewer 1) — Synthetic ID Elimination & Empty State
 
-## Mission
-Independently review the Milestone 3 changes in:
-1. `src/pages/Dashboard.tsx`
-2. `src/pages/Parties.tsx`
-3. `src/pages/crm/SalaryManagement.tsx`
-4. `src/pages/crm/Attendance.tsx`
+## Objective
+Review the implementation in `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` against Requirement R3:
+- Elimination of synthetic IDs (`user-${Date.now()}` and fallback objects) on provisioning failure or error catch in `RoleManagement.tsx`. Verify failure toasts and reset without ghost staff.
+- Strict UUID format validation for task assignees in `Tasks.tsx`. Verify synthetic IDs are filtered out from assignee dropdowns.
+- Clean handling of empty task lists (`setTasks([])`) when an organization has 0 tasks returned from backend.
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1`
+## Relevant Files to Inspect
+- `src/pages/crm/RoleManagement.tsx`
+- `src/pages/crm/Tasks.tsx`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_tasks\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Worker 3 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md`
-- Minimal Design System: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`
+## Verification Requirements
+1. Run `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`.
+2. Run `cmd /c npx tsc --noEmit`.
+3. Verify zero synthetic ID leaks, zero TypeScript errors.
 
-## 19 Protected Quarantine Files — NEVER MODIFY:
-- Verify all 19 quarantine files are 100% untouched.
+## Output
+Write your findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md` with explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+Send a completion message back with your verdict.
 
-## Review Tasks
-1. Verify anti-pattern elimination in all 4 files:
-   - Floating card containers removed on mobile.
-   - Replaced with clean `divide-y divide-slate-100 dark:divide-slate-800/60` containers.
-   - List items rendered as flat rows without individual borders or drop shadows.
-2. Verify touch targets: `min-h-[44px]` (or `min-h-[56px]`) on interactive rows and buttons.
-3. Verify typography: No font class below `text-[11px]`.
-4. Verify desktop layouts (`hidden md:...`, `hidden sm:...`, `CRMDataTable`) are 100% untouched.
-5. Run compiler & build:
-   - `node node_modules/typescript/bin/tsc --noEmit`
-   - `node node_modules/vite/bin/vite.js build`
-6. Write verdict (`APPROVE` or `REQUEST_CHANGES`) to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md` and notify parent.
-
-
-## 2026-10-25T10:29:26Z
-You are Reviewer 1 for Milestone 3 (Dashboard, Parties & CRM HR Modernization).
+## 2026-10-26T22:03:38Z
+You are Reviewer 1 for Milestone 3 (Tasks & Staff Provisioning - R3).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read Worker 3 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md
-Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your instructions in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\DISPATCH.md
+Read the user request in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the worker handoff in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_tasks\handoff.md
 
-Independently review the changes in Dashboard.tsx, Parties.tsx, SalaryManagement.tsx, and Attendance.tsx.
-Verify the elimination of boxy cards on mobile, clean divide-y containers, 44px touch targets, >=11px fonts, desktop preservation, and that all 19 quarantine files are untouched.
-Run:
-- node node_modules/typescript/bin/tsc --noEmit
-- node node_modules/vite/bin/vite.js build
+Inspect `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx`.
+Verify synthetic ID elimination, failure toasts, assignee UUID filtering, clean empty state handling.
+Run verification commands:
+`cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`
+`cmd /c npx tsc --noEmit`
 
-Write your review verdict (APPROVE or REQUEST_CHANGES) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md and notify the parent orchestrator via send_message.
+Write your handoff report to: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m3_1\handoff.md
+Send your verdict (APPROVE or REQUEST_CHANGES) via send_message to the orchestrator.

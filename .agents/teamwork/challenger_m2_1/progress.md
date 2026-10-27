@@ -1,20 +1,23 @@
-# Progress
+# Progress — challenger_m2_1
 
-Last visited: 2026-10-25T09:52:30Z
-Current Status: Empirical stress tests executed (19/19 passing in coreBillingInventoryMobileModernization.challenger.test.ts), tsc compiler clean (0 errors), Vite production build clean (1m 15s, exit 0), regression suites running.
+Last visited: 2026-10-26T21:30:00Z
 
-## Steps
-- [x] Step 1: Append new dispatch message to DISPATCH.md and initialize state
-- [x] Step 2: Read ORIGINAL_REQUEST.md, minimal-design-system.md, worker_m2/handoff.md
-- [x] Step 3: Investigate code changes across:
-  - `src/pages/Sales.tsx` (verified compliant: unbordered outer container, px-0 divide-y stream, flat px-3.5 py-3 rows, >=44px buttons, preserved desktop table)
-  - `src/pages/Purchases.tsx` (verified compliant: outer box border removed, divide-y stream container, flat rows, w-11 h-11 >=44px buttons)
-  - `src/pages/Items.tsx` (verified compliant: outer box border removed, divide-y stream container, flat rows, >=44px adjust and options buttons)
-- [x] Step 4: Verify 19 quarantine files remain 100% untouched
-- [x] Step 5: Author and execute empirical adversarial test suite `src/test/coreBillingInventoryMobileModernization.challenger.test.ts` (19/19 passed)
-- [x] Step 6: Run verification commands:
-  - `node node_modules/typescript/bin/tsc --noEmit` (0 errors, code 0)
-  - `node node_modules/vite/bin/vite.js build` (✓ built in 1m 15s, exit 0)
-  - `node node_modules/vitest/vitest.mjs run src/test/billingLifecycleEngine.test.ts src/test/MobileInvoiceSuccessView.test.tsx` (in progress)
-- [ ] Step 7: Update BRIEFING.md and write `handoff.md` with verdict: APPROVE
-- [ ] Step 8: Notify orchestrator parent via `send_message`
+## Status
+- [x] Initialized DISPATCH.md, BRIEFING.md, and progress.md
+- [x] Read ORIGINAL_REQUEST.md (## 2026-10-26T19:54:47Z), PROJECT.md, and worker_m2_salary/handoff.md
+- [x] Inspect source code in `src/pages/crm/SalaryManagement.tsx`
+- [x] Inspect test code in `src/test/crmSalaryManagement.test.tsx`
+- [x] Run vitest suite to empirically verify worker's results (26/26 passed in 36.2s)
+- [x] Run regression test suites (`crmSalaryTypes.test.ts`, `crmPayrollUtils.test.ts` - 68/68 passed)
+- [x] Run `tsc --noEmit` (0 errors)
+- [x] Created adversarial empirical test suite testing:
+  - T1: Amber "Not Configured" badge and unconfigured count for staff without salary profile (PASS)
+  - T2: 1-click "Configure Salary" opens drawer with staff ID, name, role pre-selected and default values (PASS)
+  - T3: Saving creates profile and immediately moves staff from unconfigured to configured roster (PASS)
+  - T4: Section disappearance when all staff are configured (PASS)
+  - T5: Fallbacks for missing email and missing role (PASS)
+  - T6: Dynamic re-hydration upon `credsmart:crm_staff_updated` event (PASS)
+- [x] Cleaned up temporary test file
+- [x] Compiled `challenge.md`
+- [x] Compiled `handoff.md` with explicit Verdict: **APPROVE**
+- [ ] Send message to orchestrator

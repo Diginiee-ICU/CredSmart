@@ -1,179 +1,99 @@
-# Handoff Report: Challenger 1 (Milestone 3 — Dashboard, Parties & CRM HR Empiric Verification)
+# Challenger 1 Handoff Report: Milestone 3 — Tasks & Staff Provisioning (Requirement R3)
+
+**Verdict**: **APPROVE**
 
 ## 1. Observation
 
-Direct empiric verification was executed across the four target files, quarantine files, and full build pipelines:
-- `src/pages/Dashboard.tsx`
-- `src/pages/Parties.tsx`
-- `src/pages/crm/SalaryManagement.tsx`
-- `src/pages/crm/Attendance.tsx`
+### Implementation Inspection
+1. **`src/pages/crm/RoleManagement.tsx`**:
+   - Lines 1069–1081: When `crmApi.provisionStaffUser` returns an error or when `res?.data?.user?.id` is missing, an explicit destructive error toast is displayed (`Provisioning Failed`), input state is reset, and the handler exits early.
+   - Lines 1159–1177: In the `catch (err)` block, an explicit destructive toast is displayed (`Provisioning Error`), input fields are reset, and the handler terminates without mutating `staffList` or writing ghost users to localStorage.
+   - Comprehensive regex search for synthetic ID generators (`Date.now()` / `user-`) yielded 0 instances in `RoleManagement.tsx`.
 
-### 1.1 Quarantine Isolation Verification
-- **Observation**: Checked git diff status for all 19 protected files against base:
-  ```powershell
-  & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff bfe5dcd HEAD -- src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx src/components/invoices/mobile/MobileInvoiceSuccessView.tsx src/components/invoices/mobile/MobileBillPreviewModal.tsx src/components/invoices/mobile/MobileInvoiceFitViewer.tsx src/components/invoices/mobile/CreatePartyModal.tsx src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx src/components/items/mobile/CreateNewItemModal.tsx src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/AddItemsToBillModal.tsx src/components/invoices/InvoiceFitView.tsx src/components/invoices/UnifiedInvoiceRenderer.tsx src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
-  ```
-  Result: Empty output (exit code 0). Zero changes were introduced to any of the 19 quarantine files.
+2. **`src/pages/crm/Tasks.tsx`**:
+   - Lines 143–162: Exported `UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i`, `isSyntheticStaffId()`, and `isValidAssigneeId()`.
+   - Lines 258–296: In `loadData()`, candidate staff members from both `crmApi.getCRMStaffRoles` / `crmApi.getCRMStaff` and the localStorage cache are strictly filtered using `isValidAssigneeId(s.id)`. Any synthetic or invalid ID is excluded from the assignee list.
+   - Lines 350–357: When `crmApi.getCRMTasks` returns an empty array `[]` (`res.data && res.data.length === 0`), `setTasks([])` and `localStorage.setItem(storageKey, "[]")` are cleanly applied for non-fixture organizations.
+   - Lines 401–447 (`handleMoveStatus`): Captures `previousTask`. Applies optimistic state change. If `crmApi.transitionCRMTaskStatus` returns `res.error` or throws, rolls back state cleanly to `previousTask`, fires `credsmart:crm_tasks_updated`, and displays a destructive error toast.
+   - Lines 449–500 (`handleApproveTask`): Captures `previousTask`. Applies optimistic "done" state. On failure or error, reverts state to `previousTask`, notifies via custom event, and displays a destructive error toast.
+   - Lines 502–607 (`handleCreateTask`): Assigns temporary `tempId`. Checks `isValidAssigneeId(newAssigneeId)`. Inserts optimistic task. If backend returns an error or network throws, removes temporary task (`setTasks(prev => prev.filter(t => t.id !== tempId))`), notifies via event, and displays a destructive toast. On success, replaces `tempId` with the authoritative server UUID.
+   - Lines 609–678 (`handleSubmitProof`): Captures `previousTask`. Reverts state to `previousTask` on failure with destructive toast.
+   - Lines 685–745 (`handleSubmitRevision`): Captures `previousTask`. Reverts state to `previousTask` on failure with destructive toast.
 
-### 1.2 Anti-Pattern Elimination & Container Structure
-1. `src/pages/Dashboard.tsx` (Lines 901-917):
-   - Outer container:
-     ```tsx
-     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-     ```
-   - Row element:
-     ```tsx
-     <div
-       key={txn.id}
-       onClick={() => navigate(ROUTE_PATHS.sales)}
-       className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
-     >
-     ```
-   - Verbatim check: Standalone border and shadow-2xs on individual rows were eliminated. Item touch target is `min-h-[56px]`.
-
-2. `src/pages/Parties.tsx` (Lines 1199, 1231-1365):
-   - Outer container:
-     ```tsx
-     <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin">
-     ```
-   - Row element:
-     ```tsx
-     <div
-       key={party.id}
-       className={cn(
-         "px-3.5 py-3 transition-colors bg-white dark:bg-slate-900 space-y-2.5",
-         isSelected
-           ? "bg-blue-50/40 dark:bg-blue-950/30"
-           : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
-       )}
-     >
-     ```
-   - Touch targets for interactive elements:
-     - Phone: `min-h-[44px] h-11 px-3`
-     - WhatsApp: `min-h-[44px] h-11 px-3`
-     - Ledger: `min-h-[44px] h-11 px-3`
-     - MoreVertical dropdown trigger: `min-w-[44px] min-h-[44px] w-11 h-11 p-0 rounded-lg`
-
-3. `src/pages/crm/SalaryManagement.tsx`:
-   - Tab 1 (Salary Profiles) lines 1455-1492:
-     ```tsx
-     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-       ...
-       <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-       ...
-       <Button ... className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700">
-     ```
-   - Tab 2 (Payroll Run) lines 1746-1798:
-     ```tsx
-     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-       ...
-       <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-     ```
-   - Tab 3 (Advances & Deductions) lines 1916-1965:
-     ```tsx
-     <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-       ...
-       <div key={a.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-       ...
-       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 rounded-lg">
-       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 rounded-lg">
-     ```
-
-4. `src/pages/crm/Attendance.tsx` (Lines 2273-2335):
-   - Tab 4 (Regularisation Requests):
-     ```tsx
-     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
-       ...
-       <div key={req.id} className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-       ...
-       <Button ... className="min-h-[44px] h-11 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1 rounded-lg">
-       <Button ... className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1 rounded-lg">
-     ```
-
-### 1.3 Typography Hierarchy Check
-- Automated regex audit for sub-11px font sizes (`text-\[(?:[0-9]|10)px\]`):
-  - `src/pages/Dashboard.tsx`: 0 matches found.
-  - `src/pages/Parties.tsx`: 0 matches found.
-  - `src/pages/crm/SalaryManagement.tsx`: 0 matches found.
-  - `src/pages/crm/Attendance.tsx`: 0 matches found.
-
-### 1.4 Desktop Breakpoint Parity
-- `Dashboard.tsx`: Preserves `hidden md:flex flex-col space-y-4` holding the 4 KPI cards, real-time spline chart, and `LATEST INVOICES & TRANSACTIONS` table.
-- `Parties.tsx`: Preserves `hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin` 36px data table with sticky header.
-- `SalaryManagement.tsx`: Preserves `hidden sm:block` with `CRMDataTable` instances for all salary profiles, calculated previews, and adjustments.
-- `Attendance.tsx`: Preserves `CRMDataTable` logs and the telemetry shift management cards.
-
-### 1.5 TypeScript Compilation & Vite Production Build
-1. TypeScript Static Typecheck:
-   ```powershell
-   node node_modules/typescript/bin/tsc --noEmit
+### Verification Commands & Exact Empirical Results
+1. **Target Vitest Test Suites**:
+   ```bash
+   cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx
    ```
-   Output: Exited with code 0. Zero errors.
-2. Vite Production Build:
-   ```powershell
-   node node_modules/vite/bin/vite.js build
+   Output:
    ```
-   Output: `✓ 3662 modules transformed. ✓ built in 1m 33s`. Exited with code 0.
-3. Empiric Automated Challenger Test Suite:
-   ```powershell
-   cmd /c npx vitest run src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts
-   ```
-   Output: `✓ src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts (22 tests) 250ms. Test Files 1 passed (1). Tests 22 passed (22)`.
+   ✓ src/test/crmTasksView.test.tsx (6 tests)
+   ✓ src/test/crmStaffTasksIntegration.test.tsx (12 tests)
+   ✓ src/test/crmStaffProvisioningUI.test.tsx (7 tests)
 
----
+   Test Files  3 passed (3)
+        Tests  25 passed (25)
+     Duration  78.36s
+   ```
+
+2. **TypeScript Compiler Check**:
+   ```bash
+   cmd /c npx tsc --noEmit
+   ```
+   Output:
+   ```
+   Exit code: 0
+   Stdout: (empty)
+   Stderr: (empty)
+   ```
+
+3. **Additional Regression Test Suites**:
+   ```bash
+   cmd /c npx vitest run src/test/crmTaskLifecycle.test.ts src/test/crmTasksChallengerM3.test.tsx src/test/crmStaffProvisioning.test.ts
+   ```
+   Output:
+   ```
+   Test Files  3 passed (3)
+        Tests  80 passed (80)
+     Duration  54.62s
+   ```
 
 ## 2. Logic Chain
-
-1. **Premise 1**: The anti-pattern specification in `ORIGINAL_REQUEST.md` (2026-10-25T08:53:34Z) and the minimal design system require removing per-row floating borders and shadows (`rounded-xl border shadow-2xs`) inside nested containers, replacing them with a single clean container using `divide-y divide-slate-100 dark:divide-slate-800/60` and flat `px-3.5 py-3` rows.
-2. **Premise 2**: Direct inspection of `Dashboard.tsx` confirms that the recent activity list now uses a single `overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60` wrapper with flat `px-3.5 py-3 min-h-[56px]` items.
-3. **Premise 3**: Direct inspection of `Parties.tsx` confirms that the outer padding (`p-2.5 space-y-2.5`) was removed in favor of `px-0 divide-y divide-slate-100 dark:divide-slate-800/60`, and all rows are flat with `min-h-[44px] h-11` or `44x44px` interactive buttons.
-4. **Premise 4**: Direct inspection of `SalaryManagement.tsx` confirms that all 3 tabs (Salary Profiles, Payroll Run, Advances & Deductions) now use `divide-y` containers with flat rows, eliminating the floating `<CRMCard>` wrappers, and all action triggers comply with `min-h-[44px] h-11`.
-5. **Premise 5**: Direct inspection of `Attendance.tsx` confirms that Tab 4 regularisation requests are contained in a single `divide-y` wrapper with flat rows and `min-h-[44px] h-11` Approve/Reject buttons.
-6. **Premise 6**: Grep and regex inspection confirm 0 instances of sub-11px font sizes across all 4 files.
-7. **Premise 7**: Both TypeScript compiler (`tsc --noEmit`) and Vite production bundler (`vite build`) complete cleanly with 0 errors.
-8. **Premise 8**: Git diff and automated test suite confirm 100% untouched status across all 19 quarantined billing/invoice files.
-9. **Conclusion**: Milestone 3 refactoring passes all functional, visual, architectural, and production criteria without regression.
-
----
+1. **Ghost Staff Elimination**:
+   - In `RoleManagement.tsx`, synthetic fallbacks on failure were the direct root cause of "ghost staff" remaining in localStorage and corrupting subsequent task assignments.
+   - By eliminating fallback ID creation and enforcing an early return with error toast, invalid staff members are never saved into memory or storage.
+2. **Assignee UUID Enforcemnt**:
+   - In `Tasks.tsx`, filtering all staff options through `isValidAssigneeId` ensures that only valid, non-synthetic UUIDs can be selected as assignees or sent to `POST /api/crm/tasks`.
+3. **Optimistic Mutation Integrity**:
+   - Optimistic updates provide responsive UI, but previously left the UI in a corrupted state if the backend rejected the request.
+   - Capturing `previousTask` (or `tempId` for creations) and restoring it deterministically upon `res.error` or catch guarantees UI consistency with the database.
+4. **Clean Zero-Task State**:
+   - Guarding empty task arrays from defaulting to `INITIAL_TASKS` allows newly created or cleared organizations to accurately display an empty tasks board.
 
 ## 3. Caveats
-
-- **No Caveats**: All 4 assigned target files were empirically verified; no regressions, no type errors, and zero changes to protected quarantine files were detected.
-
----
+- No caveats. The implementation was validated against target unit/integration suites (25 tests), extended regression suites (80 tests), and the TypeScript type checker with zero errors.
 
 ## 4. Conclusion
+Milestone 3 requirements (R3 — Reliable Task Assignment & Synthetic ID Elimination) are verified and meet all production criteria:
+- Synthetic ID generation (`user-${Date.now()}`) and ghost staff persistence are completely eliminated.
+- Assignee selection strictly filters out invalid/synthetic IDs.
+- Deterministic error rollbacks and destructive feedback are active across all task lifecycle mutations.
+- All 25 target tests passed, 80 regression tests passed, and TypeScript compiles with 0 errors.
 
 **Verdict: APPROVE**
 
-Milestone 3 successfully eliminates the box-in-box anti-pattern across `Dashboard.tsx`, `Parties.tsx`, `SalaryManagement.tsx`, and `Attendance.tsx`. All mobile interactive targets satisfy `>= 44px`, all typography satisfies `>= 11px`, desktop views are completely preserved, and production builds (`tsc` + `vite build`) pass with exit code 0.
-
----
-
 ## 5. Verification Method
-
-To independently verify this verdict:
-
-1. **Run the dedicated Empiric Challenger Test Suite**:
-   ```powershell
-   cmd /c npx vitest run src/test/m3DashboardPartiesCrmHrEmpiric.challenger.test.ts
+To reproduce these findings independently:
+1. Run target Vitest suites:
+   ```bash
+   cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx
    ```
-   Asserts 22 test cases validating container structure, touch targets, typography, desktop view retention, and quarantine preservation. Must pass with 22/22 (100%).
-
-2. **Run TypeScript Compiler**:
-   ```powershell
-   node node_modules/typescript/bin/tsc --noEmit
+   Expected: 3 passed files, 25 passed tests.
+2. Run TypeScript compiler check:
+   ```bash
+   cmd /c npx tsc --noEmit
    ```
-   Must exit with code 0.
-
-3. **Run Vite Production Build**:
-   ```powershell
-   node node_modules/vite/bin/vite.js build
-   ```
-   Must output `✓ built` with exit code 0.
-
-4. **Verify Quarantine Integrity via Git**:
-   ```powershell
-   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff bfe5dcd HEAD -- src/components/invoices/mobile/ src/components/items/mobile/ src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/ src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
-   ```
-   Must return 0 diffs.
+   Expected: Exit code 0, no diagnostic output.
+3. Review implementation lines:
+   - `src/pages/crm/RoleManagement.tsx` (lines 1069–1081, 1159–1177)
+   - `src/pages/crm/Tasks.tsx` (lines 143–162, 258–296, 350–357, 401–745)

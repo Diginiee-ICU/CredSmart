@@ -1,23 +1,18 @@
-# Progress — reviewer_m1_1
+# Progress — Reviewer M1 (reviewer_m1_1)
 
-Last visited: 2026-10-25T11:23:00Z
+**Last visited**: 2026-10-26T20:40:00Z  
+**Status**: COMPLETED  
+**Verdict**: APPROVE  
 
-- [x] Initialized DISPATCH.md with current directive (2026-10-25T11:08:12Z)
-- [x] Read ORIGINAL_REQUEST.md (specifically ## 2026-10-25T10:11:33Z), worker_m1_salary/handoff.md, minimal-design-system.md
-- [x] Inspected implementation in `src/pages/crm/SalaryManagement.tsx`:
-  - [x] Mockup 1 Header ("Payroll Engine", subtitle, Royal Blue `+ New Profile` CTA, export `[ ⎋ ]`)
-  - [x] 2x2 Stat Badges (Active Profiles, Current Month, Pending Advances, Available Payslips)
-  - [x] Segmented Tab Bar (Inset pill switcher)
-  - [x] Empty State Card (Vector pod, title, prompt, CTA)
-  - [x] Flat divide-y list rows (`divide-y divide-slate-100`, refined `h-7` buttons, no `h-11`)
-  - [x] Bottom Quick Actions Footer (`[ 📋 View Past Runs ]`, `[ ⚙️ Pay Settings ]`)
-  - [x] Desktop Preservation (`hidden md:block` containing entire desktop layout 100% intact)
-- [x] Checked Protected Files invariance (all 19 invoice quarantine files audited, 0 modified)
-- [x] Ran independent verification command: `node node_modules/typescript/bin/tsc --noEmit` (Exited with code 0)
-- [x] Ran independent verification command: `node node_modules/vite/bin/vite.js build` (Exited with code 0, built in 3m)
-- [x] Ran automated Vitest suites: `crmPayrollUtils.test.ts`, `crmGeoUtils.test.ts`, `crmPermissionGate.test.tsx`, `crmSalaryManagement.test.tsx` (115/115 passed)
-- [x] Adversarial testing of mobile layouts, touch targets, and typography (All passed)
-- [x] Checked for integrity violations (Zero dummy implementations, zero hardcoded cheats)
-- [x] Updated BRIEFING.md
-- [x] Authored handoff.md with clear verdict: APPROVE
-- [x] Sent completion message to parent orchestrator via send_message
+## Completed Steps
+- [x] Initialized DISPATCH.md and BRIEFING.md.
+- [x] Inspected `ORIGINAL_REQUEST.md`, `PROJECT.md`, and Worker M1 `handoff.md`.
+- [x] Verified complete eradication of rogue `CROSS JOIN` in `fix_db.sql` and confirmed 100% byte-for-byte identity between `fix_db.sql` and `backend-api/fix_db.sql` (SHA-256: `1eb14c86decd3b808566d3d8c4519cdac4bef459d9cc5b1fa671a3ff4eaefa01`).
+- [x] Verified `getUserPrimaryOrgId` in `auth.js` has no product-count sort and no fallback auto-insert into foreign organizations.
+- [x] Verified catch block in `middleware/auth.js` has no fallback to largest organization.
+- [x] Verified `GET /api/profiles` and `GET /api/organization-memberships` in `settings.js` enforce `targetOrg` filtering and return `[]` when omitted.
+- [x] Verified zero integrity violations across all modified files.
+- [x] Executed independent tests: `npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts` (453/453 passed, 100%).
+- [x] Executed typecheck: `npx tsc --noEmit` (0 errors).
+- [x] Conducted adversarial stress testing and documented 2 non-blocking edge cases with concrete mitigations for M6.
+- [x] Generated `review.md` and `handoff.md` with explicit Verdict: APPROVE.

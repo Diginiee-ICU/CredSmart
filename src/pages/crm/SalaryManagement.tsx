@@ -53,6 +53,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   CRMPageHeader,
+  CRMCommandHeader,
   CRMCard,
   CRMBadge,
   CRMDataTable,
@@ -262,7 +263,33 @@ export default function SalaryManagement(): React.ReactElement {
         setAdjustments([]);
       }
       setAttendanceRecords([]);
-      setStaffDirectory({});
+      try {
+        const cachedStaff = localStorage.getItem(`credsmart_crm_staff_${effectiveOrgId}`);
+        if (cachedStaff) {
+          const parsed = JSON.parse(cachedStaff);
+          if (Array.isArray(parsed)) {
+            const map: Record<string, StaffDirectoryMember> = {};
+            parsed.forEach((s: any) => {
+              const id = String(s.id || s.user_id || s.staff_id || "");
+              if (id) {
+                map[id] = {
+                  id,
+                  name: String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member")),
+                  email: String(s.email || ""),
+                  roleName: String(s.crm_role_name || s.role_name || s.roleName || s.role || s.store_role || "Staff"),
+                };
+              }
+            });
+            setStaffDirectory(map);
+          } else {
+            setStaffDirectory({});
+          }
+        } else {
+          setStaffDirectory({});
+        }
+      } catch {
+        setStaffDirectory({});
+      }
     }
     loadedOrgRef.current = effectiveOrgId;
   }, [effectiveOrgId]);
@@ -301,52 +328,190 @@ export default function SalaryManagement(): React.ReactElement {
   const loadSalaryData = useCallback(async () => {
     setDataLoading(true);
     try {
-      // 1. Fetch Staff Directory via crmApi.getCRMStaff (primary) or fallbacks
-      const dirMap: Record<string, StaffDirectoryMember> = {};
-      let staffData: Record<string, unknown>[] | null = null;
-
-      try {
-        const staffRes = await crmApi.getCRMStaff(effectiveOrgId);
-        if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
-          staffData = staffRes.data as unknown as Record<string, unknown>[];
-        }
-      } catch {}
-
-      if (!staffData) {
-        try {
-          let memberUserIds: string[] = [];
-          const { data: memberRows } = await supabase
-            .from("organization_memberships")
-            .select("user_id")
-            .eq("organization_id", effectiveOrgId);
-          if (memberRows && memberRows.length > 0) {
-            memberUserIds = memberRows.map((m: any) => m.user_id).filter(Boolean);
-          } else {
-            const memRes = await settingsApi.getMemberships(effectiveOrgId);
-            if (memRes.data && Array.isArray(memRes.data)) {
-              memberUserIds = memRes.data.map((m: any) => m.user_id).filter(Boolean);
+      // 1. Fetch all datasets in parallel for lightning-fast CRM loading
+      const [
+        staffRes,
+        profilesResult,
+        runsResult,
+        slipsResult,
+        adjsResult,
+        attData,
+      ] = await Promise.all([
+        crmApi.getCRMStaff(effectiveOrgId).catch(() => null),
+        (async () => {
+          let profiles: CrmSalaryProfile[] | null = null;
+          let profErr: any = null;
+          try {
+            const query = supabase.from("crm_salary_profiles").select("*");
+            const filtered = typeof (query as any).or === "function"
+              ? (query as any).or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
+              : (query as any).eq("org_id", effectiveOrgId);
+            const ordered = typeof (filtered as any).order === "function"
+              ? (filtered as any).order("created_at", { ascending: false })
+              : filtered;
+            const { data, error } = await ordered;
+            if (!error && data) {
+              profiles = data as unknown as CrmSalaryProfile[];
+            } else if (error) {
+              profErr = error;
             }
+          } catch (err: any) {
+            profErr = err;
           }
 
-          if (memberUserIds.length > 0) {
-            const { data: profs } = await supabase
-              .from("profiles")
-              .select("*")
-              .in("id", memberUserIds);
-            if (profs && Array.isArray(profs) && profs.length > 0) {
-              staffData = profs as Record<string, unknown>[];
-            } else {
-              const res = await settingsApi.getProfiles({ ids: memberUserIds });
-              if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-                staffData = res.data as Record<string, unknown>[];
+          if (!profiles && !profErr) {
+            try {
+              const res = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
+              if (res?.data) {
+                profiles = res.data;
+                profErr = null;
+              } else if (res?.error) {
+                profErr = res.error;
               }
+            } catch (err: any) {
+              profErr = err;
             }
           }
-        } catch {}
-      }
+          return { profiles, profErr };
+        })(),
+        (async () => {
+          let runs: CrmPayrollRun[] | null = null;
+          let runsErr: any = null;
+          try {
+            const query = supabase.from("crm_payroll_runs").select("*");
+            const filtered = typeof (query as any).or === "function"
+              ? (query as any).or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
+              : (query as any).eq("org_id", effectiveOrgId);
+            const ordered = typeof (filtered as any).order === "function"
+              ? (filtered as any).order("month_year", { ascending: false })
+              : filtered;
+            const { data, error } = await ordered;
+            if (!error && data) {
+              runs = data as unknown as CrmPayrollRun[];
+            } else if (error) {
+              runsErr = error;
+            }
+          } catch (err: any) {
+            runsErr = err;
+          }
 
-      if (staffData && staffData.length > 0) {
-        staffData.forEach((s: Record<string, unknown>) => {
+          if (!runs && !runsErr) {
+            try {
+              const res = await crmApi.getCRMPayrollRuns(effectiveOrgId);
+              if (res?.data) {
+                runs = res.data;
+                runsErr = null;
+              } else if (res?.error) {
+                runsErr = res.error;
+              }
+            } catch (err: any) {
+              runsErr = err;
+            }
+          }
+          return { runs, runsErr };
+        })(),
+        (async () => {
+          let slips: CrmPayslip[] | null = null;
+          let slipsErr: any = null;
+          try {
+            const query = supabase.from("crm_payslips").select("*");
+            const filtered = typeof (query as any).or === "function"
+              ? (query as any).or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
+              : (query as any).eq("org_id", effectiveOrgId);
+            const ordered = typeof (filtered as any).order === "function"
+              ? (filtered as any).order("month_year", { ascending: false })
+              : filtered;
+            const { data, error } = await ordered;
+            if (!error && data) {
+              slips = data as unknown as CrmPayslip[];
+            } else if (error) {
+              slipsErr = error;
+            }
+          } catch (err: any) {
+            slipsErr = err;
+          }
+
+          if (!slips && !slipsErr) {
+            try {
+              const res = await crmApi.getCRMPayslips(effectiveOrgId);
+              if (res?.data) {
+                slips = res.data;
+                slipsErr = null;
+              } else if (res?.error) {
+                slipsErr = res.error;
+              }
+            } catch (err: any) {
+              slipsErr = err;
+            }
+          }
+          return { slips, slipsErr };
+        })(),
+        (async () => {
+          let adjs: CrmSalaryAdjustment[] | null = null;
+          let adjErr: any = null;
+          try {
+            const query = supabase.from("crm_salary_adjustments").select("*");
+            const filtered = typeof (query as any).or === "function"
+              ? (query as any).or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
+              : (query as any).eq("org_id", effectiveOrgId);
+            const ordered = typeof (filtered as any).order === "function"
+              ? (filtered as any).order("created_at", { ascending: false })
+              : filtered;
+            const { data, error } = await ordered;
+            if (!error && data) {
+              adjs = data as unknown as CrmSalaryAdjustment[];
+            } else if (error) {
+              adjErr = error;
+            }
+          } catch (err: any) {
+            adjErr = err;
+          }
+
+          if (!adjs && !adjErr) {
+            try {
+              const res = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
+              if (res?.data) {
+                adjs = res.data;
+                adjErr = null;
+              } else if (res?.error) {
+                adjErr = res.error;
+              }
+            } catch (err: any) {
+              adjErr = err;
+            }
+          }
+          return { adjs, adjErr };
+        })(),
+        (async () => {
+          let att: CrmAttendanceRecord[] | null = null;
+          try {
+            const query = supabase.from("crm_attendance").select("*");
+            const filtered = typeof (query as any).or === "function"
+              ? (query as any).or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
+              : (query as any).eq("org_id", effectiveOrgId);
+            const ordered = typeof (filtered as any).order === "function"
+              ? (filtered as any).order("date", { ascending: false })
+              : filtered;
+            const { data, error } = await ordered;
+            if (!error && data) {
+              att = data as unknown as CrmAttendanceRecord[];
+            }
+          } catch {}
+
+          if (!att) {
+            try {
+              const res = await crmApi.getCRMAttendance(effectiveOrgId);
+              if (res?.data) att = res.data as CrmAttendanceRecord[];
+            } catch {}
+          }
+          return att;
+        })(),
+      ]);
+
+      const dirMap: Record<string, StaffDirectoryMember> = {};
+
+      if (staffRes?.data && Array.isArray(staffRes.data) && staffRes.data.length > 0) {
+        (staffRes.data as unknown as Record<string, unknown>[]).forEach((s) => {
           const id = String(s.id || s.user_id || s.staff_id || "");
           const name = String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member"));
           const email = String(s.email || "");
@@ -355,39 +520,68 @@ export default function SalaryManagement(): React.ReactElement {
             dirMap[id] = { id, name, email, roleName };
           }
         });
-        setStaffDirectory(dirMap);
       }
 
-      // 2. Fetch Salary Profiles strictly scoped to organization
-      let profiles: CrmSalaryProfile[] | null = null;
-      let profErr: any = null;
+      // Fallback 1: localStorage credsmart_crm_staff_${effectiveOrgId}
+      if (typeof window !== "undefined") {
+        try {
+          const cachedRaw = localStorage.getItem(`credsmart_crm_staff_${effectiveOrgId}`);
+          if (cachedRaw) {
+            const cachedList = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedList)) {
+              cachedList.forEach((s: Record<string, unknown>) => {
+                const id = String(s.id || s.user_id || s.staff_id || "");
+                if (id && !dirMap[id]) {
+                  const name = String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member"));
+                  const email = String(s.email || "");
+                  const roleName = String(s.crm_role_name || s.role_name || s.roleName || s.role || s.store_role || "Staff");
+                  dirMap[id] = { id, name, email, roleName };
+                }
+              });
+            }
+          }
+        } catch {}
+      }
+
+      // Fallback 2: settingsApi.getMemberships (enrich user fields directly without querying profiles)
       try {
-        const { data, error } = await supabase
-          .from("crm_salary_profiles")
-          .select("*")
-          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
-          .order("created_at", { ascending: false });
-        if (!error && data) {
-          profiles = data as unknown as CrmSalaryProfile[];
-        } else if (error) {
-          profErr = error;
+        const memRes = await settingsApi.getMemberships(effectiveOrgId);
+        if (memRes?.data && Array.isArray(memRes.data) && memRes.data.length > 0) {
+          memRes.data.forEach((m: any) => {
+            const userObj = m.user || m.profile || {};
+            const id = String(m.user_id || userObj.id || m.id || "");
+            if (id && !dirMap[id]) {
+              const name = String(userObj.full_name || userObj.name || m.full_name || m.name || (userObj.email ? String(userObj.email).split("@")[0] : "Team Member"));
+              const email = String(userObj.email || m.email || "");
+              const roleName = String(m.role_name || m.role || userObj.role || "Staff");
+              dirMap[id] = { id, name, email, roleName };
+            }
+          });
         }
       } catch {}
 
-      if (!profiles && !profErr) {
+      // Fallback 3: PostgREST / mock profiles table
+      if (Object.keys(dirMap).length === 0) {
         try {
-          const res = await crmApi.getCRMSalaryProfiles(effectiveOrgId);
-          if (res.data) {
-            profiles = res.data;
-            profErr = null;
-          } else if (res.error) {
-            profErr = res.error;
+          const { data: profs } = await supabase.from("profiles").select("*");
+          if (profs && Array.isArray(profs) && profs.length > 0) {
+            (profs as Record<string, unknown>[]).forEach((s) => {
+              const id = String(s.id || s.user_id || s.staff_id || "");
+              if (id && !dirMap[id]) {
+                const name = String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member"));
+                const email = String(s.email || "");
+                const roleName = String(s.crm_role_name || s.role_name || s.roleName || s.role || s.store_role || "Staff");
+                dirMap[id] = { id, name, email, roleName };
+              }
+            });
           }
-        } catch (err: any) {
-          profErr = err;
-        }
+        } catch {}
       }
 
+      setStaffDirectory(dirMap);
+
+      // 2. Consume Parallel Salary Profiles
+      const { profiles, profErr } = profilesResult;
       if (profErr) {
         toast({
           title: "Error Loading Salary Profiles",
@@ -397,44 +591,16 @@ export default function SalaryManagement(): React.ReactElement {
       } else if (profiles) {
         const enriched = (profiles as CrmSalaryProfile[]).map((p) => ({
           ...p,
-          staff_name: p.staff_name || dirMap[p.staff_id]?.name || "Staff Member",
-          staff_email: p.staff_email || dirMap[p.staff_id]?.email || "",
-          staff_role: p.staff_role || dirMap[p.staff_id]?.roleName || "Staff",
+          staff_name: dirMap[p.staff_id]?.name || p.staff_name || "Staff Member",
+          staff_email: dirMap[p.staff_id]?.email || p.staff_email || "",
+          staff_role: dirMap[p.staff_id]?.roleName || p.staff_role || "Staff",
         }));
         setSalaryProfiles(enriched);
         localStorage.setItem(`${STORAGE_PROFILES_PREFIX}${effectiveOrgId}`, JSON.stringify(enriched));
       }
 
-      // 3. Fetch Payroll Runs strictly scoped to organization
-      let runs: CrmPayrollRun[] | null = null;
-      let runsErr: any = null;
-      try {
-        const { data, error } = await supabase
-          .from("crm_payroll_runs")
-          .select("*")
-          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
-          .order("month_year", { ascending: false });
-        if (!error && data) {
-          runs = data as unknown as CrmPayrollRun[];
-        } else if (error) {
-          runsErr = error;
-        }
-      } catch {}
-
-      if (!runs && !runsErr) {
-        try {
-          const res = await crmApi.getCRMPayrollRuns(effectiveOrgId);
-          if (res.data) {
-            runs = res.data;
-            runsErr = null;
-          } else if (res.error) {
-            runsErr = res.error;
-          }
-        } catch (err: any) {
-          runsErr = err;
-        }
-      }
-
+      // 3. Consume Parallel Payroll Runs
+      const { runs, runsErr } = runsResult;
       if (runsErr) {
         toast({
           title: "Error Loading Payroll Runs",
@@ -446,36 +612,8 @@ export default function SalaryManagement(): React.ReactElement {
         localStorage.setItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`, JSON.stringify(runs));
       }
 
-      // 4. Fetch Payslips strictly scoped to organization
-      let slips: CrmPayslip[] | null = null;
-      let slipsErr: any = null;
-      try {
-        const { data, error } = await supabase
-          .from("crm_payslips")
-          .select("*")
-          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
-          .order("month_year", { ascending: false });
-        if (!error && data) {
-          slips = data as unknown as CrmPayslip[];
-        } else if (error) {
-          slipsErr = error;
-        }
-      } catch {}
-
-      if (!slips && !slipsErr) {
-        try {
-          const res = await crmApi.getCRMPayslips(effectiveOrgId);
-          if (res.data) {
-            slips = res.data;
-            slipsErr = null;
-          } else if (res.error) {
-            slipsErr = res.error;
-          }
-        } catch (err: any) {
-          slipsErr = err;
-        }
-      }
-
+      // 4. Consume Parallel Payslips
+      const { slips, slipsErr } = slipsResult;
       if (slipsErr) {
         toast({
           title: "Error Loading Payslips",
@@ -485,44 +623,16 @@ export default function SalaryManagement(): React.ReactElement {
       } else if (slips) {
         const enrichedSlips = (slips as CrmPayslip[]).map((s) => ({
           ...s,
-          staff_name: s.staff_name || dirMap[s.staff_id]?.name || "Staff Member",
-          staff_email: s.staff_email || dirMap[s.staff_id]?.email || "",
-          staff_role: s.staff_role || dirMap[s.staff_id]?.roleName || "Staff",
+          staff_name: dirMap[s.staff_id]?.name || s.staff_name || "Staff Member",
+          staff_email: dirMap[s.staff_id]?.email || s.staff_email || "",
+          staff_role: dirMap[s.staff_id]?.roleName || s.staff_role || "Staff",
         }));
         setPayslips(enrichedSlips);
         localStorage.setItem(`${STORAGE_PAYSLIPS_PREFIX}${effectiveOrgId}`, JSON.stringify(enrichedSlips));
       }
 
-      // 5. Fetch Salary Adjustments strictly scoped to organization
-      let adjs: CrmSalaryAdjustment[] | null = null;
-      let adjErr: any = null;
-      try {
-        const { data, error } = await supabase
-          .from("crm_salary_adjustments")
-          .select("*")
-          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`)
-          .order("created_at", { ascending: false });
-        if (!error && data) {
-          adjs = data as unknown as CrmSalaryAdjustment[];
-        } else if (error) {
-          adjErr = error;
-        }
-      } catch {}
-
-      if (!adjs && !adjErr) {
-        try {
-          const res = await crmApi.getCRMSalaryAdjustments(effectiveOrgId);
-          if (res.data) {
-            adjs = res.data;
-            adjErr = null;
-          } else if (res.error) {
-            adjErr = res.error;
-          }
-        } catch (err: any) {
-          adjErr = err;
-        }
-      }
-
+      // 5. Consume Parallel Salary Adjustments
+      const { adjs, adjErr } = adjsResult;
       if (adjErr) {
         toast({
           title: "Error Loading Adjustments",
@@ -532,30 +642,13 @@ export default function SalaryManagement(): React.ReactElement {
       } else if (adjs) {
         const enrichedAdjs = (adjs as CrmSalaryAdjustment[]).map((a) => ({
           ...a,
-          staff_name: a.staff_name || dirMap[a.staff_id]?.name || "Staff Member",
+          staff_name: dirMap[a.staff_id]?.name || a.staff_name || "Staff Member",
         }));
         setAdjustments(enrichedAdjs);
         localStorage.setItem(`${STORAGE_ADJUSTMENTS_PREFIX}${effectiveOrgId}`, JSON.stringify(enrichedAdjs));
       }
 
-      // 6. Fetch Attendance Records strictly scoped to organization
-      let attData: CrmAttendanceRecord[] | null = null;
-      try {
-        const { data, error } = await supabase
-          .from("crm_attendance")
-          .select("*")
-          .or(`organization_id.eq.${effectiveOrgId},org_id.eq.${effectiveOrgId}`);
-        if (!error && data) {
-          attData = data as unknown as CrmAttendanceRecord[];
-        }
-      } catch {}
-
-      if (!attData) {
-        try {
-          const res = await crmApi.getCRMAttendance(effectiveOrgId);
-          if (res.data) attData = res.data as CrmAttendanceRecord[];
-        } catch {}
-      }
+      // 6. Consume Parallel Attendance Records
       if (attData) {
         setAttendanceRecords(attData);
       }
@@ -574,6 +667,17 @@ export default function SalaryManagement(): React.ReactElement {
 
   useEffect(() => {
     loadSalaryData();
+  }, [loadSalaryData]);
+
+  // Dynamic reload when staff updated in Role Management
+  useEffect(() => {
+    const handleStaffUpdated = () => {
+      loadSalaryData();
+    };
+    window.addEventListener("credsmart:crm_staff_updated", handleStaffUpdated);
+    return () => {
+      window.removeEventListener("credsmart:crm_staff_updated", handleStaffUpdated);
+    };
   }, [loadSalaryData]);
 
   const handleRefresh = async () => {
@@ -653,6 +757,20 @@ export default function SalaryManagement(): React.ReactElement {
     setFormPfPercent(String(profile.pf_deduction_percent ?? "0"));
     setFormEsiPercent(String(profile.esi_deduction_percent ?? "0"));
     setFormIsActive(profile.is_active ?? true);
+    setIsProfileDrawerOpen(true);
+  };
+
+  const openConfigureForStaff = (staff: StaffDirectoryMember) => {
+    setProfileDrawerMode("create");
+    setEditingProfileId(null);
+    setFormStaffId(staff.id);
+    setFormSalaryType("monthly");
+    setFormBaseAmount("");
+    setFormAllowedLeaves("2");
+    setFormOvertimeRate("0");
+    setFormPfPercent("0");
+    setFormEsiPercent("0");
+    setFormIsActive(true);
     setIsProfileDrawerOpen(true);
   };
 
@@ -1253,7 +1371,7 @@ export default function SalaryManagement(): React.ReactElement {
           {/* ================================================================== */}
           {/* CRM Page Header                                                    */}
           {/* ================================================================== */}
-        <CRMPageHeader
+        <CRMCommandHeader
           title="Salary Management & Payroll Engine"
           subtitle="Staff compensation, monthly payroll runs, advances, and payslips"
           breadcrumbs={[
@@ -1261,6 +1379,8 @@ export default function SalaryManagement(): React.ReactElement {
             { label: "CRM", href: ROUTE_PATHS.crm },
             { label: "Salary & Payroll", href: ROUTE_PATHS.crmSalary },
           ]}
+          showBack={true}
+          backTo={ROUTE_PATHS.crm}
           badge={
             <div className="flex items-center gap-1.5">
               <CRMBadge variant="info" size="sm">Phase 3 Live</CRMBadge>
@@ -1428,151 +1548,254 @@ export default function SalaryManagement(): React.ReactElement {
         {/* TAB 1: Salary Profiles                                             */}
         {/* ================================================================== */}
         {activeTab === "profiles" && (
-          <div className="space-y-4">
-            {/* Desktop Table View */}
-            <div className="hidden sm:block">
-              <CRMDataTable<CrmSalaryProfile>
-                data={salaryProfiles}
-                columns={[
-                  {
-                    key: "staff_name",
-                    header: "Staff Member",
-                    sortable: true,
-                    accessor: (p) => (
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#0F172A] dark:text-white">{p.staff_name}</span>
-                        <span className="text-[11px] text-slate-400">{p.staff_email}</span>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: "staff_role",
-                    header: "Role",
-                    accessor: (p) => <CRMRolePill name={p.staff_role || "Staff"} color="#1D4ED8" />,
-                  },
-                  {
-                    key: "salary_type",
-                    header: "Type",
-                    sortable: true,
-                    accessor: (p) => {
-                      const variantMap: Record<SalaryType, "info" | "orange" | "success"> = {
-                        monthly: "info",
-                        daily: "orange",
-                        hourly: "success",
-                      };
-                      return (
-                        <CRMBadge variant={variantMap[p.salary_type] || "info"} size="sm">
-                          {p.salary_type.toUpperCase()}
-                        </CRMBadge>
-                      );
+          <div className="space-y-6">
+            {/* Configured Profiles Section */}
+            <div className="space-y-4">
+              {/* Desktop Table View */}
+              <div className="hidden sm:block">
+                <CRMDataTable<CrmSalaryProfile>
+                  data={salaryProfiles}
+                  columns={[
+                    {
+                      key: "staff_name",
+                      header: "Staff Member",
+                      sortable: true,
+                      accessor: (p) => {
+                        const name = staffDirectory[p.staff_id]?.name || p.staff_name || "Staff Member";
+                        const email = staffDirectory[p.staff_id]?.email || p.staff_email || "";
+                        return (
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[#0F172A] dark:text-white">{name}</span>
+                            {email && <span className="text-[11px] text-slate-400">{email}</span>}
+                          </div>
+                        );
+                      },
                     },
-                  },
-                  {
-                    key: "base_amount",
-                    header: "Base Wage",
-                    sortable: true,
-                    accessor: (p) => (
-                      <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">
-                        {formatIndianCurrency(p.base_amount)}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: "allowed_leaves_per_month",
-                    header: "Paid Leaves",
-                    accessor: (p) => `${p.allowed_leaves_per_month} days/mo`,
-                  },
-                  {
-                    key: "hourly_overtime_rate",
-                    header: "Overtime Rate",
-                    accessor: (p) =>
-                      p.hourly_overtime_rate
-                        ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr`
-                        : "None",
-                  },
-                  {
-                    key: "deductions",
-                    header: "PF / ESI %",
-                    accessor: (p) =>
-                      `PF: ${p.pf_deduction_percent || 0}% | ESI: ${p.esi_deduction_percent || 0}%`,
-                  },
-                  {
-                    key: "is_active",
-                    header: "Status",
-                    accessor: (p) =>
-                      p.is_active ? (
-                        <CRMBadge variant="success" size="sm" dot>
-                          Active
-                        </CRMBadge>
-                      ) : (
-                        <CRMBadge variant="neutral" size="sm">
-                          Inactive
-                        </CRMBadge>
+                    {
+                      key: "staff_role",
+                      header: "Role",
+                      accessor: (p) => (
+                        <CRMRolePill
+                          name={staffDirectory[p.staff_id]?.roleName || p.staff_role || "Staff"}
+                          color="#1D4ED8"
+                        />
                       ),
-                  },
-                  {
-                    key: "actions",
-                    header: "Actions",
-                    accessor: (p) => (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditProfileDrawer(p)}
-                        className="h-7 text-xs font-semibold text-[#1D4ED8] hover:text-blue-800"
-                      >
-                        Configure
-                      </Button>
-                    ),
-                  },
-                ]}
-                searchPlaceholder="Search staff name or email..."
-                pageSize={10}
-                emptyMessage="No salary profiles configured yet."
-              />
+                    },
+                    {
+                      key: "salary_type",
+                      header: "Type",
+                      sortable: true,
+                      accessor: (p) => {
+                        const variantMap: Record<SalaryType, "info" | "orange" | "success"> = {
+                          monthly: "info",
+                          daily: "orange",
+                          hourly: "success",
+                        };
+                        return (
+                          <CRMBadge variant={variantMap[p.salary_type] || "info"} size="sm">
+                            {p.salary_type.toUpperCase()}
+                          </CRMBadge>
+                        );
+                      },
+                    },
+                    {
+                      key: "base_amount",
+                      header: "Base Wage",
+                      sortable: true,
+                      accessor: (p) => (
+                        <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">
+                          {formatIndianCurrency(p.base_amount)}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: "allowed_leaves_per_month",
+                      header: "Paid Leaves",
+                      accessor: (p) => `${p.allowed_leaves_per_month} days/mo`,
+                    },
+                    {
+                      key: "hourly_overtime_rate",
+                      header: "Overtime Rate",
+                      accessor: (p) =>
+                        p.hourly_overtime_rate
+                          ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr`
+                          : "None",
+                    },
+                    {
+                      key: "deductions",
+                      header: "PF / ESI %",
+                      accessor: (p) =>
+                        `PF: ${p.pf_deduction_percent || 0}% | ESI: ${p.esi_deduction_percent || 0}%`,
+                    },
+                    {
+                      key: "is_active",
+                      header: "Status",
+                      accessor: (p) =>
+                        p.is_active ? (
+                          <CRMBadge variant="success" size="sm" dot>
+                            Active
+                          </CRMBadge>
+                        ) : (
+                          <CRMBadge variant="neutral" size="sm">
+                            Inactive
+                          </CRMBadge>
+                        ),
+                    },
+                    {
+                      key: "actions",
+                      header: "Actions",
+                      accessor: (p) => (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditProfileDrawer(p)}
+                          className="h-7 text-xs font-semibold text-[#1D4ED8] hover:text-blue-800"
+                        >
+                          Configure
+                        </Button>
+                      ),
+                    },
+                  ]}
+                  searchPlaceholder="Search staff name or email..."
+                  pageSize={10}
+                  emptyMessage="No salary profiles configured yet."
+                />
+              </div>
+
+              {/* Mobile Cards View (375px) */}
+              <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                {salaryProfiles.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">
+                    No salary profiles configured yet.
+                  </div>
+                ) : (
+                  salaryProfiles.map((p) => {
+                    const name = staffDirectory[p.staff_id]?.name || p.staff_name || "Staff Member";
+                    const email = staffDirectory[p.staff_id]?.email || p.staff_email || "";
+                    return (
+                      <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">{name}</h4>
+                            {email && <p className="text-xs text-slate-400">{email}</p>}
+                          </div>
+                          <CRMBadge variant={p.is_active ? "success" : "neutral"} size="sm" dot={p.is_active}>
+                            {p.salary_type.toUpperCase()}
+                          </CRMBadge>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                          <div>
+                            <span className="text-slate-400">Base Wage:</span>
+                            <p className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">{formatIndianCurrency(p.base_amount)}</p>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Overtime:</span>
+                            <p className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                              {p.hourly_overtime_rate ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr` : "None"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditProfileDrawer(p)}
+                          className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
+                        >
+                          Configure Profile
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
-            {/* Mobile Cards View (375px) */}
-            <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-              {salaryProfiles.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-500">
-                  No salary profiles configured yet.
-                </div>
-              ) : (
-                salaryProfiles.map((p) => (
-                  <div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{p.staff_name}</h4>
-                        <p className="text-xs text-slate-400">{p.staff_email}</p>
-                      </div>
-                      <CRMBadge variant={p.is_active ? "success" : "neutral"} size="sm" dot={p.is_active}>
-                        {p.salary_type.toUpperCase()}
-                      </CRMBadge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                      <div>
-                        <span className="text-slate-400">Base Wage:</span>
-                        <p className="font-mono tabular-nums font-bold text-slate-900 dark:text-white">{formatIndianCurrency(p.base_amount)}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Overtime:</span>
-                        <p className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                          {p.hourly_overtime_rate ? `${formatIndianCurrency(p.hourly_overtime_rate)}/hr` : "None"}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditProfileDrawer(p)}
-                      className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"
-                    >
-                      Configure Profile
-                    </Button>
+            {/* Unconfigured Staff Section */}
+            {unconfiguredStaff.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Staff Without Salary Profile
+                    </h3>
+                    <CRMBadge variant="warning" size="sm">
+                      {unconfiguredStaff.length} Unconfigured
+                    </CRMBadge>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+
+                {/* Desktop Unconfigured Table */}
+                <div className="hidden sm:block rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                        <th className="py-2.5 px-3.5">Staff Member</th>
+                        <th className="py-2.5 px-3.5">Assigned Role</th>
+                        <th className="py-2.5 px-3.5">Status</th>
+                        <th className="py-2.5 px-3.5 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                      {unconfiguredStaff.map((staff) => (
+                        <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="py-2.5 px-3.5">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-900 dark:text-white">{staff.name}</span>
+                              <span className="text-[11px] text-slate-400">{staff.email || "No email"}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3.5">
+                            <CRMRolePill name={staff.roleName || "Staff"} color="#1D4ED8" />
+                          </td>
+                          <td className="py-2.5 px-3.5">
+                            <CRMBadge variant="warning" size="sm" dot>
+                              Not Configured
+                            </CRMBadge>
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right">
+                            <Button
+                              size="sm"
+                              onClick={() => openConfigureForStaff(staff)}
+                              className="h-7.5 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs active:scale-[0.98] transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Configure Salary
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Unconfigured Cards */}
+                <div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {unconfiguredStaff.map((staff) => (
+                    <div key={staff.id} className="p-3.5 space-y-2.5">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm">{staff.name}</h4>
+                          <p className="text-xs text-slate-400">{staff.email || "No email"}</p>
+                        </div>
+                        <CRMBadge variant="warning" size="sm" dot>
+                          Not Configured
+                        </CRMBadge>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <CRMRolePill name={staff.roleName || "Staff"} color="#1D4ED8" />
+                        <Button
+                          size="sm"
+                          onClick={() => openConfigureForStaff(staff)}
+                          className="h-8.5 px-3 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs"
+                        >
+                          Configure Salary
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

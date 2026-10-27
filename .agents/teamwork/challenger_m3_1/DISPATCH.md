@@ -1,49 +1,38 @@
-# Dispatch Assignment: Challenger 1 (Milestone 3 — Dashboard, Parties & CRM HR Empiric Verification)
+# Task Assignment: Milestone 3 Challenger 1 — Test Suite & TypeCheck Validation
 
-## Mission
-Empirically verify the Milestone 3 changes in:
-1. `src/pages/Dashboard.tsx`
-2. `src/pages/Parties.tsx`
-3. `src/pages/crm/SalaryManagement.tsx`
-4. `src/pages/crm/Attendance.tsx`
+## Objective
+Empirically verify the functionality and test coverage for Milestone 3 (R3 - Task Assignment & Synthetic ID Elimination):
+1. Run Vitest suites covering Tasks and Staff Provisioning:
+   `cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`
+2. Run TypeScript compiler:
+   `cmd /c npx tsc --noEmit`
+3. Verify that 100% of tests pass and 0 errors are produced.
 
-Stress-test responsive classes, container hierarchy, touch targets, and verify zero regressions.
+## Relevant Files
+- `src/pages/crm/RoleManagement.tsx`
+- `src/pages/crm/Tasks.tsx`
+- `src/test/crmTasksView.test.tsx`
+- `src/test/crmStaffTasksIntegration.test.tsx`
+- `src/test/crmStaffProvisioningUI.test.tsx`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_tasks\handoff.md`
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md`
 
-## Working Directory
-`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1`
+## Output
+Write report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md` with explicit verdict: `APPROVE` or `FAIL`.
+Send a completion message back with your verdict.
 
-## Mandatory Reference Documents
-- Original Request: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (MUST READ)
-- Project Architecture: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_cards\PROJECT.md`
-- Worker 3 Handoff: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md`
-
-## 19 Protected Quarantine Files:
-- Verify all 19 quarantine files are 100% untouched.
-
-## Challenge Tasks
-1. Inspect code diffs for all 4 files.
-2. Verify touch targets: `min-h-[44px]` on all action buttons and interactive rows.
-3. Verify typography: No font class below `text-[11px]`.
-4. Verify responsive integrity:
-   - On mobile: No floating card borders, no individual shadows. Uses `divide-y divide-slate-100 dark:divide-slate-800/60`.
-   - On desktop: Desktop table and CRM views preserved with 100% parity.
-5. Verify build integrity:
-   - Run `node node_modules/typescript/bin/tsc --noEmit`
-   - Run `node node_modules/vite/bin/vite.js build`
-6. Write your report and verdict (`APPROVE` or `FAIL`) to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md`.
-7. Notify parent via `send_message`.
-
-
-## 2026-10-25T10:29:27Z
-Sender: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-Content:
-You are Challenger 1 for Milestone 3 (Dashboard, Parties & CRM HR Empiric Verification).
+## 2026-10-26T22:03:39Z
+You are Challenger 1 for Milestone 3 (Tasks & Staff Provisioning - R3).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1
-Read your dispatch: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\DISPATCH.md
-Read the original request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-Read Worker 3 handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3\handoff.md
-Read the minimal design system: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md
+Read your instructions in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\DISPATCH.md
+Read the user request in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the worker handoff in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m3_tasks\handoff.md
 
-Empirically verify the Milestone 3 changes in Dashboard.tsx, Parties.tsx, SalaryManagement.tsx, and Attendance.tsx.
-Check responsive behavior, touch targets (>=44px), typography (>=11px), run tsc and vite build.
-Write your verdict (APPROVE or FAIL) to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md and notify parent via send_message.
+Run empirical test verifications:
+`cmd /c npx vitest run src/test/crmTasksView.test.tsx src/test/crmStaffTasksIntegration.test.tsx src/test/crmStaffProvisioningUI.test.tsx`
+`cmd /c npx tsc --noEmit`
+Verify all 25 tests pass and zero TypeScript compiler errors occur.
+
+Write your report to: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m3_1\handoff.md
+Send your verdict (APPROVE or FAIL) via send_message to the orchestrator.
+
