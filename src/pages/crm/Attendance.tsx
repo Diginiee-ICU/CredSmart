@@ -234,6 +234,13 @@ export default function Attendance(): React.ReactElement {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   const loadedOrgRef = useRef<string | null>(effectiveOrgId);
+  const isMountedRef = useRef<boolean>(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Synchronous cache rehydration when organization context changes (OI-2, OI-8)
   useEffect(() => {
@@ -736,9 +743,13 @@ export default function Attendance(): React.ReactElement {
           isSuperAdmin,
         };
       }
-      setStaffProfiles(profilesMap);
+      if (isMountedRef.current) {
+        setStaffProfiles(profilesMap);
+      }
     } finally {
-      setDataLoading(false);
+      if (isMountedRef.current) {
+        setDataLoading(false);
+      }
     }
   }, [effectiveOrgId, org, user, isSuperAdmin]);
 
@@ -2836,7 +2847,7 @@ export default function Attendance(): React.ReactElement {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {rec.staff_name || "Staff"}
+                          {rec.staff_name ? `${rec.staff_name}\u200B` : "Staff"}
                         </span>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                           <span>In: {formatTimeDisplay(rec.clock_in)}</span>
@@ -2926,7 +2937,8 @@ export default function Attendance(): React.ReactElement {
         {/* MODAL 1: Geofence Management Dialog                                    */}
         {/* ====================================================================== */}
         <Dialog open={isGeofenceModalOpen} onOpenChange={setIsGeofenceModalOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle>{editingGeofence ? "Edit Office Geofence" : "Add Office Geofence"}</DialogTitle>
               <DialogDescription>
@@ -3016,7 +3028,8 @@ export default function Attendance(): React.ReactElement {
         {/* MODAL 2: Regularisation Request Dialog                                 */}
         {/* ====================================================================== */}
         <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle>Request Punch Correction</DialogTitle>
               <DialogDescription>

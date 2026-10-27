@@ -111,8 +111,8 @@ Place the official CredSmart platform shield logo permanently in the universal c
 - **Routing Decision**: General -> teamwork_preview_orchestrator
 - **Active Orchestrator ID**: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
 - **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_ergonomics
-- **Cron 1 (Reporting)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-30 (`*/8 * * * *`)
-- **Cron 2 (Liveness)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-32 (`*/10 * * * *`)
+- **Cron 1 (Reporting)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-310 (`*/8 * * * *`)
+- **Cron 2 (Liveness)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-312 (`*/10 * * * *`)
 
 ## Victory Audit Status
 - **Triggered**: no

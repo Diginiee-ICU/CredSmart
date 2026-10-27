@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Play,
   CalendarPlus,
+  MessageCircle,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useCRMPermission } from "@/hooks/useCRMPermission";
@@ -206,6 +207,12 @@ export default function Meet(): React.ReactElement {
     });
   };
 
+  const shareViaWhatsApp = (title: string, roomCode: string) => {
+    const fullUrl = `https://meet.credsmart.online/room/${roomCode}`;
+    const text = encodeURIComponent(`Join CredSmart Video Huddle: ${title}\nRoom Link: ${fullUrl}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
   const handleScheduleMeeting = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) {
@@ -352,16 +359,27 @@ export default function Meet(): React.ReactElement {
                     variant="outline"
                     size="sm"
                     onClick={() => copyRoomLink(instantRoomCode)}
-                    className="h-9 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300"
+                    className="h-9 min-h-[44px] sm:min-h-0 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300"
                   >
                     {copiedCode === instantRoomCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedCode === instantRoomCode ? "Copied!" : "Copy Link"}</span>
                   </Button>
 
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => shareViaWhatsApp("Instant Team Huddle", instantRoomCode)}
+                    className="h-9 min-h-[44px] sm:min-h-0 text-xs gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300"
+                    title="Share via WhatsApp"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>WhatsApp</span>
+                  </Button>
+
+                  <Button
                     size="sm"
                     onClick={() => handleLaunchRoom(instantRoomCode)}
-                    className="h-9 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
+                    className="h-9 min-h-[44px] sm:min-h-0 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs"
                   >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>Join Room Now</span>
@@ -442,22 +460,32 @@ export default function Meet(): React.ReactElement {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copyRoomLink(m.room_code)}
-                          className="h-8 text-xs text-slate-500 hover:text-indigo-600"
+                          className="h-8 w-8 sm:w-auto min-h-[44px] sm:min-h-0 text-xs text-slate-500 hover:text-indigo-600 p-0 sm:px-2"
                           title="Copy meeting link"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </Button>
 
                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => shareViaWhatsApp(m.title, m.room_code)}
+                          className="h-8 w-8 sm:w-auto min-h-[44px] sm:min-h-0 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 p-0 sm:px-2"
+                          title="Share via WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </Button>
+
+                        <Button
                           size="sm"
                           onClick={() => handleLaunchRoom(m.room_code)}
                           className={cn(
-                            "h-8 text-xs font-semibold gap-1.5",
+                            "h-8 min-h-[44px] sm:min-h-0 text-xs font-semibold gap-1.5 px-3",
                             isLive
                               ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                               : "bg-[#1D4ED8] hover:bg-blue-700 text-white"
@@ -477,7 +505,8 @@ export default function Meet(): React.ReactElement {
 
         {/* Modal: Schedule Meeting */}
         <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle className="text-base font-bold">Schedule Team Huddle</DialogTitle>
               <DialogDescription className="text-xs">
@@ -573,16 +602,16 @@ export default function Meet(): React.ReactElement {
                 </div>
               </div>
 
-              <DialogFooter className="pt-2">
+              <DialogFooter className="pt-2 flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsScheduleOpen(false)}
-                  className="text-xs h-9"
+                  className="text-xs h-9 min-h-[44px] sm:min-h-0 w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                <Button type="submit" className="text-xs h-9 min-h-[44px] sm:min-h-0 w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
                   Schedule Huddle
                 </Button>
               </DialogFooter>
