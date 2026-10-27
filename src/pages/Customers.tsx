@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  Building2,
   ShieldCheck,
   KeyRound,
   FileSpreadsheet,

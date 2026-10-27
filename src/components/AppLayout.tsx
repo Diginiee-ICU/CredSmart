@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Bell,
   Sparkles,
+  Building2,
   ShoppingCart,
   Package,
   PackagePlus,

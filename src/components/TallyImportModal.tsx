@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import {
   X,
+  Search,
   Upload,
   FileSpreadsheet,
   CheckCircle2,
