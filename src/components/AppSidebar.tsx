@@ -283,7 +283,7 @@ export function AppSidebar({
                 >
                   <LayoutGrid className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Command</span>
+                <span className="text-xs font-medium tracking-tight">Command</span>
               </NavLink>
 
               {/* CRM Tab 2: Attendance */}
@@ -306,7 +306,7 @@ export function AppSidebar({
                 >
                   <Calendar className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Attendance</span>
+                <span className="text-xs font-medium tracking-tight">Attendance</span>
               </NavLink>
 
               {/* CRM Tab 3: Center Elevated Punch / Task Button */}
@@ -324,7 +324,7 @@ export function AppSidebar({
                 </div>
                 <span
                   className={cn(
-                    "text-[11px] mt-1 font-bold tracking-tight",
+                    "text-xs mt-1 font-bold tracking-tight",
                     isCrmTasksActive
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-600 dark:text-slate-300"
@@ -354,7 +354,7 @@ export function AppSidebar({
                 >
                   <Wallet className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Payroll</span>
+                <span className="text-xs font-medium tracking-tight">Payroll</span>
               </NavLink>
 
               {/* CRM Tab 5: Roles & RBAC */}
@@ -377,7 +377,7 @@ export function AppSidebar({
                 >
                   <Shield className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Roles</span>
+                <span className="text-xs font-medium tracking-tight">Roles</span>
               </NavLink>
             </>
           ) : (
@@ -403,7 +403,7 @@ export function AppSidebar({
                 >
                   <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Home</span>
+                <span className="text-xs font-medium tracking-tight">Home</span>
               </NavLink>
 
               {/* POS & Billing Tab 2: Sales */}
@@ -426,7 +426,7 @@ export function AppSidebar({
                 >
                   <Receipt className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Sales</span>
+                <span className="text-xs font-medium tracking-tight">Sales</span>
               </NavLink>
 
               {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
@@ -444,7 +444,7 @@ export function AppSidebar({
                 </div>
                 <span
                   className={cn(
-                    "text-[11px] mt-1 font-bold tracking-tight",
+                    "text-xs mt-1 font-bold tracking-tight",
                     isPosActive
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-600 dark:text-slate-300"
@@ -474,7 +474,7 @@ export function AppSidebar({
                 >
                   <Package className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Items</span>
+                <span className="text-xs font-medium tracking-tight">Items</span>
               </NavLink>
 
               {/* POS & Billing Tab 5: Parties */}
@@ -497,7 +497,7 @@ export function AppSidebar({
                 >
                   <Users2 className="w-5 h-5 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] tracking-tight">Parties</span>
+                <span className="text-xs font-medium tracking-tight">Parties</span>
               </NavLink>
             </>
           )}

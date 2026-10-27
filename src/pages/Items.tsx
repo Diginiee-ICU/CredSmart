@@ -984,7 +984,7 @@ return (
             type="button"
             onClick={() => setCategoryFilter("all")}
             className={cn(
-              "h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border",
+              "h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border",
               categoryFilter === "all"
                 ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1001,7 +1001,7 @@ return (
                 type="button"
                 onClick={() => setCategoryFilter(isSelected ? "all" : cat)}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border flex items-center gap-1",
+                  "h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border flex items-center gap-1",
                   isSelected
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                     : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1010,7 +1010,7 @@ return (
                 <span>{cat}</span>
                 {count > 0 && (
                   <span className={cn(
-                    "text-[11px] px-1 rounded-full font-mono",
+                    "text-xs px-1 rounded-full font-mono",
                     isSelected ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                   )}>
                     {count}
