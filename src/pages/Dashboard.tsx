@@ -692,7 +692,7 @@ export default function Dashboard() {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - Clean High-Density Retail Minimal (Stripe / Shopify POS)
           ========================================================================= */}
-      <div className="block md:hidden space-y-3.5 pb-24 pt-1">
+      <div className="block md:hidden space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-1">
         {/* Dynamic Store Greeting & Live Sync Status */}
         <div className="flex items-center justify-between gap-3 px-0.5">
           <div className="min-w-0">
@@ -780,45 +780,45 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowSalesInvoiceModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Sale Bill</span>
+              <span>Sale Bill</span>
             </button>
 
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.checkout)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ POS Billing</span>
+              <span>POS Billing</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowCreateItemModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span>+ Item</span>
+              <span>Add Item</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowCreatePartyModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>+ Customer</span>
+              <span>Add Customer</span>
             </button>
 
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
-              <span className="text-xs leading-none">📊</span>
+              <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Day Book</span>
             </button>
           </div>
@@ -835,7 +835,7 @@ export default function Dashboard() {
             {/* Card 1: TO COLLECT */}
             <div
               onClick={() => navigate(ROUTE_PATHS.parties)}
-              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700 min-h-[82px]"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
               <div className="flex items-center justify-between mb-1">
@@ -852,17 +852,12 @@ export default function Dashboard() {
               >
                 ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
-              <div className="mt-1">
-                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
-                  Receivable
-                </span>
-              </div>
             </div>
 
             {/* Card 2: TO PAY */}
             <div
               onClick={() => navigate(ROUTE_PATHS.purchases)}
-              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700 min-h-[82px]"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
               <div className="flex items-center justify-between mb-1">
@@ -879,17 +874,12 @@ export default function Dashboard() {
               >
                 ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
-              <div className="mt-1">
-                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono">
-                  Payable
-                </span>
-              </div>
             </div>
 
             {/* Card 3: CASH & BANK */}
             <div
               onClick={() => navigate(ROUTE_PATHS.cashBank)}
-              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700 min-h-[82px]"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
               <div className="flex items-center justify-between mb-1">
@@ -906,17 +896,12 @@ export default function Dashboard() {
               >
                 ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
-              <div className="mt-1">
-                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono">
-                  Liquidity
-                </span>
-              </div>
             </div>
 
             {/* Card 4: TODAY'S SALES */}
             <div
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700"
+              className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden group flex flex-col justify-between touch-manipulation hover:border-slate-300 dark:hover:border-slate-700 min-h-[82px]"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-teal-500" />
               <div className="flex items-center justify-between mb-1">
@@ -932,11 +917,6 @@ export default function Dashboard() {
                 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
                 ₹ <span className="tabular-nums font-bold">{todaySalesTotal.toLocaleString("en-IN")}</span>
-              </div>
-              <div className="mt-1">
-                <span className="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
-                  {todaySalesCount} Bill{todaySalesCount === 1 ? "" : "s"}
-                </span>
               </div>
             </div>
           </div>
