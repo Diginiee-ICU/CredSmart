@@ -773,14 +773,14 @@ export default function Dashboard() {
 
         {/* HORIZONTAL SWIPEABLE QUICK ACTION STRIP (PLACED DIRECTLY BENEATH HEADER) */}
         <div className="space-y-1.5">
-          <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
+          <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
             QUICK ACTIONS
           </span>
           <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-0.5 px-0.5 touch-pan-x">
             <button
               type="button"
               onClick={() => setShowSalesInvoiceModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Sale Bill</span>
@@ -789,7 +789,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.checkout)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>POS Billing</span>
@@ -798,7 +798,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowCreateItemModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span>Add Item</span>
@@ -807,7 +807,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowCreatePartyModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
               <span>Add Customer</span>
@@ -816,7 +816,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Day Book</span>
@@ -826,7 +826,7 @@ export default function Dashboard() {
 
         {/* HIGH-DENSITY 2x2 FINANCIAL METRIC GRID (CLEAN MODERN STRIPE / SQUARE RETAIL) */}
         <div>
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold tracking-wider uppercase mb-2 px-0.5">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-mono font-bold tracking-wider uppercase mb-2 px-0.5">
             <span>FINANCIAL OVERVIEW</span>
             <span>{lastUpdate || formatCurrentTime()}</span>
           </div>
@@ -839,7 +839,7 @@ export default function Dashboard() {
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-black tracking-wider text-blue-600 dark:text-blue-400 font-mono">
+                <span className="text-xs font-bold tracking-wider text-blue-600 dark:text-blue-400 font-mono">
                   TO COLLECT
                 </span>
                 <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -848,7 +848,7 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${toCollect.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
                 ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
@@ -861,7 +861,7 @@ export default function Dashboard() {
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-black tracking-wider text-orange-600 dark:text-orange-400 font-mono">
+                <span className="text-xs font-bold tracking-wider text-orange-600 dark:text-orange-400 font-mono">
                   TO PAY
                 </span>
                 <div className="w-5 h-5 rounded-full bg-orange-50 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 dark:text-orange-400">
@@ -870,7 +870,7 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${toPay.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
                 ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
@@ -883,7 +883,7 @@ export default function Dashboard() {
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-black tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                <span className="text-xs font-bold tracking-wider text-amber-600 dark:text-amber-400 font-mono">
                   CASH &amp; BANK
                 </span>
                 <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -892,7 +892,7 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${cashBankBalance.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
                 ₹ <span className="tabular-nums font-bold">{cashBankBalance.toLocaleString("en-IN")}</span>
               </div>
@@ -905,7 +905,7 @@ export default function Dashboard() {
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-teal-500" />
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-black tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+                <span className="text-xs font-bold tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
                   TODAY&apos;S SALES
                 </span>
                 <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -914,7 +914,7 @@ export default function Dashboard() {
               </div>
               <div
                 title={`₹ ${todaySalesTotal.toLocaleString("en-IN")}`}
-                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate my-0.5"
               >
                 ₹ <span className="tabular-nums font-bold">{todaySalesTotal.toLocaleString("en-IN")}</span>
               </div>
@@ -925,7 +925,7 @@ export default function Dashboard() {
         {/* RECENT ACTIVITY LIST */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-bold tracking-wider uppercase px-0.5">
-            <span className="text-slate-500 dark:text-slate-400 text-[11px]">RECENT ACTIVITY</span>
+            <span className="text-slate-500 dark:text-slate-400 text-xs">RECENT ACTIVITY</span>
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.sales)}
@@ -960,14 +960,14 @@ export default function Dashboard() {
                     className="px-3.5 py-3 min-h-[56px] flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 active:bg-slate-100/70 dark:active:bg-slate-800/60 transition-colors cursor-pointer touch-manipulation"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center justify-center shrink-0 font-mono">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0 font-mono">
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                           {displayName}
                         </p>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono mt-0.5">
                           <span>{txn.txnNo}</span>
                           <span>•</span>
                           <span>{txn.date}</span>
@@ -976,12 +976,12 @@ export default function Dashboard() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                      <div className="text-sm font-bold text-slate-900 dark:text-white font-mono">
                         ₹ <span className="tabular-nums font-bold">{Number(txn.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                       </div>
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md mt-0.5 border",
+                          "inline-flex items-center gap-1 text-xs font-bold font-mono px-2 py-0.5 rounded-md mt-0.5 border",
                           txn.status === "PAID"
                             ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
                             : txn.status === "PENDING"

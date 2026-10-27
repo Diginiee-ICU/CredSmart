@@ -663,10 +663,10 @@ return (
       <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
         <div className="min-w-[105px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500" />
-          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
             Stock Value
           </span>
-          <p className="text-xs font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
+          <p className="text-sm font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
             ₹{totalStockValue.toLocaleString("en-IN")}
           </p>
         </div>
@@ -681,30 +681,30 @@ return (
           )}
         >
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-amber-500" />
-          <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
             Low Stock
           </span>
-          <p className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
+          <p className="text-sm font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
             {lowStockCount} SKUs
           </p>
         </div>
 
         <div className="min-w-[95px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />
-          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
             Catalog
           </span>
-          <p className="text-xs font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
+          <p className="text-sm font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
             {totalItemsCount} SKUs
           </p>
         </div>
 
         <div className="min-w-[100px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-rose-500" />
-          <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
+          <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
             Zero Stock
           </span>
-          <p className="text-xs font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
+          <p className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
             {outOfStockCount} SKUs
           </p>
         </div>
@@ -1135,13 +1135,13 @@ return (
                             setEditingItem(item);
                             setShowCreateModal(true);
                           }}
-                          className="font-bold text-xs text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors truncate"
+                          className="font-bold text-sm text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors truncate"
                         >
                           {item.name}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono mt-0.5">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono mt-0.5">
                           {item.brand && <span>{item.brand} ·</span>}
-                          <span className="bg-slate-100 dark:bg-slate-800 px-1 rounded border border-slate-200/60 dark:border-slate-700/60">
+                          <span className="bg-slate-100 dark:bg-slate-800 px-1 rounded border border-slate-200/60 dark:border-slate-700/60 text-xs">
                             {item.category}
                           </span>
                         </div>
@@ -1150,17 +1150,17 @@ return (
 
                     <div className="shrink-0">
                       {isZero ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                           0 Stock
                         </span>
                       ) : isLow ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                           {item.currentStock} {item.unit}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           {item.currentStock} {item.unit}
                         </span>
@@ -1171,20 +1171,20 @@ return (
                   {/* Middle Line: Pricing & Stock figures in Tabular Num */}
                   <div className="flex items-center justify-between text-xs font-mono py-1 border-t border-b border-slate-100 dark:border-slate-800/60">
                     <div>
-                      <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-sans">Selling Price</span>
-                      <span className="font-bold tabular-nums text-slate-900 dark:text-white text-xs">
+                      <span className="text-xs text-slate-400 uppercase tracking-wider block font-sans">Selling Price</span>
+                      <span className="font-bold tabular-nums text-slate-900 dark:text-white text-sm">
                         ₹ {(Number(item.sellingPrice) || 0).toLocaleString("en-IN")}
                       </span>
                       {Number(item.mrp || 0) > Number(item.sellingPrice || 0) && (
-                        <span className="text-[11px] text-slate-400 line-through ml-1 tabular-nums">
+                        <span className="text-xs text-slate-400 line-through ml-1 tabular-nums">
                           ₹{Number(item.mrp || 0).toLocaleString("en-IN")}
                         </span>
                       )}
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-sans">Cost Price</span>
-                      <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400 text-xs">
+                      <span className="text-xs text-slate-400 uppercase tracking-wider block font-sans">Cost Price</span>
+                      <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400 text-sm">
                         ₹ {(Number(item.purchasePrice) || 0).toLocaleString("en-IN")}
                       </span>
                     </div>
@@ -1192,14 +1192,14 @@ return (
 
                   {/* Bottom Line: SKU / Barcode + Adjust & More Actions (≥44px touch targets) */}
                   <div className="flex items-center justify-between gap-2 pt-0.5">
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono truncate min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono truncate min-w-0">
                       {item.sku && (
-                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 truncate font-semibold">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 truncate font-semibold text-xs">
                           {item.sku}
                         </span>
                       )}
                       {item.barcode && (
-                        <span className="text-indigo-600 dark:text-indigo-400 truncate flex items-center gap-0.5">
+                        <span className="text-indigo-600 dark:text-indigo-400 truncate flex items-center gap-0.5 text-xs">
                           <QrCode className="w-2.5 h-2.5" />
                           {item.barcode}
                         </span>
