@@ -21,24 +21,26 @@ import { MobileAppStartingCards } from "@/components/mobile/MobileAppStartingCar
 // Direct page imports for core business operations (instantaneous 0ms rendering)
 import Dashboard from "@/pages/Dashboard";
 import POSBilling from "@/pages/POSBilling";
-import Analytics from "@/pages/Analytics";
-import Purchases from "@/pages/Purchases";
 import Parties from "@/pages/Parties";
 import Items from "@/pages/Items";
-import Suppliers from "@/pages/Suppliers";
 import Sales from "@/pages/Sales";
-import Customers from "@/pages/Customers";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 import CRMDashboard from "@/pages/crm/CRMDashboard";
 import RoleManagement from "@/pages/crm/RoleManagement";
 import Attendance from "@/pages/crm/Attendance";
-import SalaryManagement from "@/pages/crm/SalaryManagement";
-import Tasks from "@/pages/crm/Tasks";
-import Broadcasts from "@/pages/crm/Broadcasts";
-import Meet from "@/pages/crm/Meet";
-import AIAssistant from "@/pages/crm/AIAssistant";
-import Support from "@/pages/crm/Support";
+
+// Lazy-loaded secondary operations & sub-systems (drastically reduces initial JS bundle & parse time)
+const Analytics = React.lazy(() => import("@/pages/Analytics"));
+const Purchases = React.lazy(() => import("@/pages/Purchases"));
+const Suppliers = React.lazy(() => import("@/pages/Suppliers"));
+const Customers = React.lazy(() => import("@/pages/Customers"));
+const SalaryManagement = React.lazy(() => import("@/pages/crm/SalaryManagement"));
+const Tasks = React.lazy(() => import("@/pages/crm/Tasks"));
+const Broadcasts = React.lazy(() => import("@/pages/crm/Broadcasts"));
+const Meet = React.lazy(() => import("@/pages/crm/Meet"));
+const AIAssistant = React.lazy(() => import("@/pages/crm/AIAssistant"));
+const Support = React.lazy(() => import("@/pages/crm/Support"));
 
 // Lazy-loaded secondary pages & public marketing routes (drastically reduces initial JS bundle & parse time)
 const BusinessSettings = React.lazy(() => import("@/pages/BusinessSettings"));

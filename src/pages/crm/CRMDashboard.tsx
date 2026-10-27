@@ -152,52 +152,67 @@ export default function CRMDashboard(): React.ReactElement {
       }
       setStats((prev) => ({ ...prev, todayAttendance: attendance }));
 
-      // 2. Staff count & live staff records: query organization_memberships & profiles directly
+      // 2. Staff count: query organization_memberships directly
       let staff = 1;
-      const liveSupabaseStaff: ShowcaseStaff[] = [];
+      let memberRows: any[] = [];
       try {
-        const { data: memberRows, count, error: memErr } = await supabase
+        const { count, error, data } = await supabase
           .from("organization_memberships")
           .select("id, user_id, role, created_at", { count: "exact" })
           .eq("organization_id", activeOrgId);
-
-        if (!memErr) {
-          const num = typeof count === "number" ? count : Array.isArray(memberRows) ? memberRows.length : 0;
-          if (num > 0) staff = Math.max(1, num);
-          if (Array.isArray(memberRows) && memberRows.length > 0) {
-            const userIds = memberRows.map((m) => m.user_id).filter(Boolean);
-            if (userIds.length > 0) {
-              try {
-                const { data: profileRows } = await supabase
-                  .from("profiles")
-                  .select("id, full_name, name, email")
-                  .in("id", userIds);
-
-                if (Array.isArray(profileRows)) {
-                  profileRows.forEach((p) => {
-                    const rawName = p.full_name || p.name || (p.email ? p.email.split("@")[0] : "");
-                    const name = String(rawName).trim();
-                    if (name) {
-                      const parts = name.split(/\s+/);
-                      const initials =
-                        parts.length > 1
-                          ? (parts[0][0] + parts[1][0]).toUpperCase()
-                          : name.slice(0, 2).toUpperCase();
-                      liveSupabaseStaff.push({
-                        id: p.id,
-                        name,
-                        initials,
-                        bgColor: bgPalette[liveSupabaseStaff.length % bgPalette.length],
-                      });
-                    }
-                  });
-                }
-              } catch {}
-            }
-          }
+        if (!error) {
+          const num = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+          staff = Math.max(1, num);
+          if (Array.isArray(data)) memberRows = data;
         }
       } catch {
         staff = 1;
+      }
+      setStats((prev) => ({ ...prev, staffCount: staff }));
+
+      // 3. Pending tasks: query crm_tasks
+      let tasks = 0;
+      try {
+        const { count, error, data } = await supabase
+          .from("crm_tasks")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .neq("status", "done");
+        if (!error) {
+          tasks = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+        }
+      } catch {
+        tasks = 0;
+      }
+
+      // 4. Broadcasts: query crm_broadcasts
+      let broadcasts = 0;
+      try {
+        const { count, error, data } = await supabase
+          .from("crm_broadcasts")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .eq("is_active", true);
+        if (!error) {
+          broadcasts = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+        }
+      } catch {
+        broadcasts = 0;
+      }
+
+      // 5. Meetings: query crm_meetings
+      let meetings = 0;
+      try {
+        const { count, error, data } = await supabase
+          .from("crm_meetings")
+          .select("id", { count: "exact" })
+          .eq("org_id", activeOrgId)
+          .gte("scheduled_at", new Date().toISOString());
+        if (!error) {
+          meetings = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
+        }
+      } catch {
+        meetings = 0;
       }
 
       // Check localStorage cached staff roster (hydrated instantly when staff is provisioned)
@@ -228,6 +243,40 @@ export default function CRMDashboard(): React.ReactElement {
           }
         }
       } catch {}
+
+      const liveSupabaseStaff: ShowcaseStaff[] = [];
+      if (memberRows.length > 0) {
+        const userIds = memberRows.map((m) => m.user_id).filter(Boolean);
+        if (userIds.length > 0) {
+          try {
+            const profQuery = supabase.from("profiles").select("id, full_name, name, email");
+            const { data: profileRows } =
+              typeof (profQuery as any)?.in === "function"
+                ? await (profQuery as any).in("id", userIds)
+                : await profQuery;
+
+            if (Array.isArray(profileRows)) {
+              profileRows.forEach((p) => {
+                const rawName = p.full_name || p.name || (p.email ? p.email.split("@")[0] : "");
+                const name = String(rawName).trim();
+                if (name) {
+                  const parts = name.split(/\s+/);
+                  const initials =
+                    parts.length > 1
+                      ? (parts[0][0] + parts[1][0]).toUpperCase()
+                      : name.slice(0, 2).toUpperCase();
+                  liveSupabaseStaff.push({
+                    id: p.id,
+                    name,
+                    initials,
+                    bgColor: bgPalette[liveSupabaseStaff.length % bgPalette.length],
+                  });
+                }
+              });
+            }
+          } catch {}
+        }
+      }
 
       // Merge live Supabase staff records into realStaffRoster
       liveSupabaseStaff.forEach((s) => {
@@ -341,6 +390,7 @@ export default function CRMDashboard(): React.ReactElement {
                   return merged;
                 });
               }
+            }
           }
         }).catch(() => {});
       }
@@ -664,7 +714,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
           </Link>
 
-          {/* Card 3: Broadcasts */}
+          {/* Card 3: Notices */}
           <Link
             to={ROUTE_PATHS.crmBroadcasts}
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
@@ -674,7 +724,7 @@ export default function CRMDashboard(): React.ReactElement {
                 <Radio className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Broadcasts
+                Notices
               </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
@@ -800,7 +850,7 @@ export default function CRMDashboard(): React.ReactElement {
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
-                    Salary & Payroll
+                    Payroll & Slips
                   </span>
                   <span className="text-[11px] text-slate-400 truncate block">
                     Disbursals
@@ -842,10 +892,10 @@ export default function CRMDashboard(): React.ReactElement {
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
-                    Broadcasts
+                    Announcements
                   </span>
                   <span className="text-[11px] text-slate-400 truncate block">
-                    Announcements
+                    Broadcasts
                   </span>
                 </div>
               </div>
@@ -884,7 +934,7 @@ export default function CRMDashboard(): React.ReactElement {
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
-                    Support Desk
+                    Help Desk
                   </span>
                   <span className="text-[11px] text-slate-400 truncate block">
                     Tickets & SLA

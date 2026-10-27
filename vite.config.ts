@@ -33,22 +33,26 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: "esnext",
-    chunkSizeWarningLimit: 1200,
+    cssMinify: true,
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-query": ["@tanstack/react-query"],
-          "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-lucide": ["lucide-react"],
-          "vendor-ui": [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-select",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-tooltip",
-          ],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("xlsx")) return "vendor-xlsx";
+            if (id.includes("jspdf") || id.includes("html2canvas")) return "vendor-pdf";
+            if (id.includes("recharts") || id.includes("d3-") || id.includes("victory")) return "vendor-charts";
+            if (id.includes("html5-qrcode") || id.includes("react-barcode") || id.includes("qrcode.react")) return "vendor-scanner";
+            if (id.includes("@dnd-kit")) return "vendor-dnd";
+            if (id.includes("@neondatabase") || id.includes("@libsql")) return "vendor-db";
+            if (id.includes("date-fns")) return "vendor-date";
+            if (id.includes("lucide-react")) return "vendor-lucide";
+            if (id.includes("@tanstack/react-query")) return "vendor-query";
+            if (id.includes("@supabase/")) return "vendor-supabase";
+            if (id.includes("@radix-ui")) return "vendor-ui";
+            if (id.includes("react-router-dom") || id.includes("react-dom") || id.includes("react/") || id.includes("scheduler")) return "vendor-react";
+          }
         },
       },
     },
