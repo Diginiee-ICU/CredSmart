@@ -42,16 +42,6 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("node_modules")) {
             if (id.includes("xlsx")) return "vendor-xlsx";
             if (id.includes("jspdf") || id.includes("html2canvas")) return "vendor-pdf";
-            if (id.includes("recharts") || id.includes("d3-") || id.includes("victory")) return "vendor-charts";
-            if (id.includes("html5-qrcode") || id.includes("react-barcode") || id.includes("qrcode.react")) return "vendor-scanner";
-            if (id.includes("@dnd-kit")) return "vendor-dnd";
-            if (id.includes("@neondatabase") || id.includes("@libsql")) return "vendor-db";
-            if (id.includes("date-fns")) return "vendor-date";
-            if (id.includes("lucide-react")) return "vendor-lucide";
-            if (id.includes("@tanstack/react-query")) return "vendor-query";
-            if (id.includes("@supabase/")) return "vendor-supabase";
-            if (id.includes("@radix-ui")) return "vendor-ui";
-            if (id.includes("react-router-dom") || id.includes("react-dom") || id.includes("react/") || id.includes("scheduler")) return "vendor-react";
           }
         },
       },
