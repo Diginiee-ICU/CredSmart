@@ -1,70 +1,61 @@
-# BRIEFING — 2026-10-26T20:39:00Z
+# BRIEFING — 2026-10-27T03:26:00Z
 
 ## Mission
-Objective review and adversarial challenge of Milestone M1 changes in backend-api (Micro-caching, domain cache invalidation, staff provisioning, B-Tree indexes, and tests).
+Review desktop preservation and mobile ergonomics for Milestone 1 (Universal Header Dual Lockup) in CredSmart, run independent tests, adversarial analysis, and issue verdict.
 
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2
-- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
-- Milestone: M1
-- Instance: 2 of 2 (Reviewer 2)
+- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Milestone: Milestone 1 (Universal Header Dual Lockup)
+- Instance: 2 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations: hardcoded outputs, dummy implementations, shortcuts, fake logs
-- If integrity violations found, verdict MUST be REQUEST_CHANGES with Critical finding
-- Files for content delivery, Messages for coordination
-- Handoff report must follow 5-component protocol
+- Enforce integrity check: no fake tests, hardcoded facings, facade implementations
+- Check 100% desktop preservation (⌘K, split action button, desktop suite switcher, profile, theme toggle, notifications)
+- Check mobile touch targets & ergonomics (< 768px) and max-width boundary overflow prevention
+- Check zero regressions to existing desktop shell tests
 
 ## Current Parent
-- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
-- Updated: 2026-10-26T20:34:00Z
+- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Updated: 2026-10-27T03:26:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `backend-api/src/index.js`
-  - `backend-api/src/routes/crm.js`
-  - `backend-api/add_indexes.sql`
-  - `src/test/crmBackendApiM1.test.ts`
-- **Reference documents**:
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-26T19:54:47Z`)
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md`
-  - `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md`
-- **Review criteria**:
-  - Correctness & completeness of in-memory micro-caching on `/rest/v1/*`
-  - Isolation of CRM vs POS cache invalidation (`isCrmPath`)
-  - Correctness of `POST /api/crm/staff/provision` (password hashing, min 6 chars, bindings to staff assignments and staff roles)
-  - Composite B-Tree indexes in `backend-api/add_indexes.sql`
-  - Test suites passing (`vitest run src/test/crmBackendApiM1.test.ts`, `tsc --noEmit`)
-  - Adversarial robustness & edge case safety
-
-## Key Decisions Made
-- Completed objective review and adversarial stress-testing.
-- Issued APPROVE verdict for Milestone M1 backend changes.
-- Documented findings in `review.md` and `handoff.md`.
-
-## Artifact Index
-- `review.md` — Detailed review and challenge findings
-- `handoff.md` — 5-component handoff report with explicit verdict
-- `progress.md` — Liveness tracking
+  - `src/components/AppLayout.tsx`
+  - `src/test/universalHeaderDualLockup.test.tsx`
+  - `src/test/desktopShellMilestone2.challenger.test.tsx`
+- **Interface contracts**: PROJECT.md, minimal-design-system.md
+- **Review criteria**: Desktop preservation, mobile touch ergonomics, zero regression, integrity, test veracity
 
 ## Review Checklist
 - **Items reviewed**:
-  - `backend-api/src/index.js` (Micro-cache covering `/rest/v1/*`, `isCrmPath` invalidation)
-  - `backend-api/src/routes/crm.js` (`POST /api/crm/staff/provision`, password hashing, multi-tenant binding)
-  - `backend-api/add_indexes.sql` (Composite indexes for CRM tables)
-  - `src/test/crmBackendApiM1.test.ts` (Client API suite)
+  - `src/components/AppLayout.tsx` (lines 470–970: dual lockup header, desktop command palette, split button, suite switcher, notifications, profile)
+  - `src/test/universalHeaderDualLockup.test.tsx` (12 test cases)
+  - `src/test/desktopShellMilestone2.challenger.test.tsx` (19 test cases)
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims verified through source inspection and test runs.
+- **Unverified claims**: None. All claims independently verified via automated test runs and compiler checks.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Cache memory growth under high parameter cardinality (Low risk, LRU cap recommended).
-  - Short names (< 3 chars) password generation (Passed, padded to min 6 chars).
-  - Cross-tenant role assignment tampering (Passed, blocked by tenant verification).
-  - Mutation failure cache state (Passed, cache flush safe).
-  - Cross-tenant password overwrite (Passed, existing passwords preserved).
-- **Vulnerabilities found**: None blocking.
-- **Untested angles**: Direct live PostgreSQL execution of `add_indexes.sql` on Docker container (pending deployment step).
+  1. Long tenant store name overflow scenario -> Mitigated via `max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]` and `truncate`.
+  2. Missing/broken tenant store logo -> Handled gracefully with fallback `<Building2 />` icon.
+  3. Null/undefined organization state -> Handled gracefully with fallback "My Business" and null checks.
+  4. 360px viewport horizontal overflow -> Pixel budget verified: 275px total consumed, 65px buffer on 340px net width.
+  5. Suite switching contextual divergence -> Verified: Logo NavLink and action buttons adapt to Billing vs CRM suite seamlessly.
+  6. Integrity check -> Zero hardcoded facade implementations or mock shortcuts in production source.
+- **Vulnerabilities found**: None. Header implementation is robust, adheres strictly to design system tokens and viewport boundaries.
+- **Untested angles**: Hardware-specific device notches with unusual safe area insets > 40px (mitigated via standard CSS `env(safe-area-inset-top)`).
+
+## Key Decisions Made
+- Confirmed full desktop layout preservation on >= 768px.
+- Confirmed mobile touch accessibility of store switcher trigger.
+- Confirmed zero regression across existing desktop challenger tests and TypeScript compilation.
+- Issued verdict: APPROVE.
+
+## Artifact Index
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\DISPATCH.md` — Dispatch log
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\BRIEFING.md` — Situational awareness
+- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2\handoff.md` — Comprehensive Review & Handoff Report

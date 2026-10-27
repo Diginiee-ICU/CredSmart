@@ -1,20 +1,13 @@
-# Progress — Challenger 2 (M2)
+# Progress - Challenger 2 (Milestone 2 Desktop POS Preservation)
 
-- Last visited: 2026-10-26T21:36:00Z
-- Status: COMPLETE
-- Completed:
-  - Initialized DISPATCH.md and BRIEFING.md
-  - Read ORIGINAL_REQUEST.md, PROJECT.md, and worker_m2_salary/handoff.md
-  - Inspected `src/pages/crm/SalaryManagement.tsx` and `src/test/crmSalaryManagement.test.tsx`
-  - Ran baseline verification commands:
-    - `cmd /c npx vitest run src/test/crmSalaryManagement.test.tsx` (26/26 passed)
-    - `cmd /c npx tsc --noEmit` (0 errors)
-  - Authored empirical adversarial stress suite: `src/test/crmSalaryStaffHydrationChallenger.test.tsx` (12 tests)
-  - Executed challenger suite: 12/12 passed
-  - Verified:
-    1. Multi-tier staff directory hydration fallbacks (crmApi -> localStorage -> settingsApi -> profiles)
-    2. Dynamic reload upon `credsmart:crm_staff_updated` CustomEvent
-    3. PostgREST `.or()` vs `.eq("org_id", effectiveOrgId)` query builder resilience
-    4. 1-click salary configuration workflow and state transitions
-  - Authored challenge report `challenge.md`
-  - Authored handoff report `handoff.md` with explicit Verdict: APPROVE
+- Last visited: 2026-10-27T04:36:30Z
+- Status: Verification Complete
+- Verdict: APPROVE
+- Verified Commands:
+  * `cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx` (19/19 PASSED)
+  * `cmd /c npx vitest run src/test/posBillingWorkbenchAdversarial.challenger.test.tsx` (10/10 PASSED)
+  * `cmd /c npx vitest run src/test/posBillingRemediation.test.tsx` (5/5 PASSED)
+  * `cmd /c npx vitest run src/test/desktopPosPreservation.challenger.test.tsx` (6/6 PASSED)
+  * `cmd /c npx vitest run src/test/mobilePosTerminal.test.tsx` (17/17 PASSED)
+  * `cmd /c npx tsc --noEmit` (0 errors)
+- Next Step: Write `handoff.md` and send completion message to orchestrator.

@@ -96,6 +96,8 @@ import {
   triggerHapticDelete,
 } from "@/utils/soundAndHaptics";
 import { notifyStockUpdated } from "@/services/stockService";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePOSTerminal } from "@/components/pos/MobilePOSTerminal";
 
 // --- Types ---
 
@@ -2222,11 +2224,52 @@ export default function POSBilling() {
     }
   };
 
+  const isMobileHook = useIsMobile();
+  const isMobile = isMobileHook || (typeof window !== "undefined" && window.innerWidth < 768);
+
   return (
     <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden relative select-none">
       {/* ========================================================================= */}
-      {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
+      {/* DEDICATED SINGLE-COLUMN MOBILE POS TERMINAL (< 768px) */}
       {/* ========================================================================= */}
+      {isMobile ? (
+        <MobilePOSTerminal
+          products={activePartyProducts}
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          currentTab={currentTab}
+          updateCurrentTab={updateCurrentTab}
+          onAddProduct={handleAddProduct}
+          onRemoveItem={handleRemoveCartItem}
+          grandTotal={grandTotal}
+          subTotal={subTotal}
+          taxAmount={taxAmount}
+          itemDiscountsTotal={itemDiscountsTotal}
+          billDiscountAmount={billDiscountAmount}
+          totalItemsCount={totalItemsCount}
+          receivedNum={receivedNum}
+          changeDue={changeDue}
+          balanceRemaining={balanceRemaining}
+          onSaveBill={handleSaveBill}
+          isProcessingSave={isProcessingSave}
+          onExitPOS={handleExitPOS}
+          onOpenCustomerModal={() => setShowCustomerModal(true)}
+          onOpenSettingsModal={() => setShowSettingsModal(true)}
+          onOpenReturnModal={() => setShowReturnModal(true)}
+          onOpenCameraScanner={() => setShowCameraScannerModal(true)}
+          isListening={isListening}
+          onToggleVoice={toggleVoiceRecognition}
+          org={org}
+          settings={settings}
+        />
+      ) : (
+        <div className="flex flex-1 flex-col min-h-0 w-full h-full overflow-hidden">
+          {/* ========================================================================= */}
+          {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
+          {/* ========================================================================= */}
       <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
         {/* Left: Exit POS & Terminal Identity */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -3542,6 +3585,8 @@ export default function POSBilling() {
           </div>
         </div>
       </div>
+    </div>
+  )}
 
       {/* ========================================================================= */}
       {/* 4. MODALS AND DIALOGS (HIGH-END FINTECH POLISHED) */}

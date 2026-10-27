@@ -1,210 +1,113 @@
-# Forensic Audit Report: Milestone 1 (CRM Roles & Tasks Modernization)
+# Forensic Audit & Handoff Report: Milestone 1 — Universal Header Dual Lockup
 
-**Work Product**: `src/pages/crm/RoleManagement.tsx`, `src/pages/crm/Tasks.tsx`  
-**Profile**: General Project (Integrity Forensics)  
-**Integrity Mode**: Development Mode (as defined in `ORIGINAL_REQUEST.md:1120`, `ORIGINAL_REQUEST.md:1220`)  
-**Auditor**: Forensic Auditor (`auditor_m1_1`)  
+**Auditor Agent**: Forensic Integrity Auditor M1 (`auditor_m1_1`)  
+**Parent / Recipient**: Orchestrator (`d2d7b35b-d1d5-45b5-9a65-d7a02d968987`)  
+**Timestamp**: 2026-10-27T03:27:00Z  
+**Type**: Hard Handoff  
+
+---
+
+## Forensic Audit Report
+
+**Work Product**:
+- `src/components/AppLayout.tsx`
+- `src/test/universalHeaderDualLockup.test.tsx`
+- `src/test/desktopShellMilestone2.challenger.test.tsx`
+
+**Profile**: General Project (Integrity Mode: `development` per `ORIGINAL_REQUEST.md:1569`)  
 **Verdict**: **CLEAN**
+
+---
+
+### Phase Results
+
+| Check | Target | Status | Details |
+|---|---|:---:|---|
+| **Hardcoded Test Results** | `universalHeaderDualLockup.test.tsx`, `desktopShellMilestone2.challenger.test.tsx` | **PASS** | No hardcoded `expect(true).toBe(true)` or tautological shortcuts. Tests evaluate real regexes against component source and real DOM outputs rendered by `@testing-library/react`. |
+| **Facade Implementations** | `src/components/AppLayout.tsx` | **PASS** | Zero dummy facades or stub returns. Fully functional JSX rendering platform mark, hairline divider, responsive dropdown with real store switcher items, active organization checkmark, and modal triggers. |
+| **Fabricated Verification Outputs** | Workspace / Test suite | **PASS** | Tests were independently executed directly against Vite/Vitest runtime with fresh runs producing live execution output. No pre-populated logs. |
+| **Self-Certifying Tests / Mock Cheats** | Test harnesses | **PASS** | Real `<AppLayout />` component is imported and mounted. Only external heavy sub-modals (e.g. `UniversalQuickCreateModal`, `SalesInvoiceModal`) and React Router context are mocked to ensure unit isolation; the universal command bar under audit is 100% genuine unmocked DOM. |
+| **Mobile Pixel Budget & Overflow Math** | `AppLayout.tsx` | **PASS** | On 360px viewport: Left lockup max 139px + Right controls max 138px = 277px total out of 340px net width, leaving >60px buffer. Zero horizontal scroll or wrapping. |
+| **Challenger Assertion Integrity** | `desktopShellMilestone2.challenger.test.tsx` | **PASS** | Edits accurately updated lines 55–70 to match permanent `/favicon.png` platform mark and responsive store switcher trigger without removing or weakening any desktop shell assertions. All 19 tests pass cleanly. |
+| **TypeScript Compilation** | Whole repository (`tsc --noEmit`) | **PASS** | Exited with return code 0, zero errors. |
 
 ---
 
 ## 1. Observation
 
-### 1.1 Quarantine Enforcement (19 Files)
-- Inspected the 19 protected quarantine files specified in `ORIGINAL_REQUEST.md:1283` and `DISPATCH.md`:
-  1. `src/components/invoices/mobile/MobileCreateInvoice.tsx`
-  2. `src/components/invoices/mobile/AddItemModal.tsx`
-  3. `src/components/invoices/mobile/SelectPartyModal.tsx`
-  4. `src/components/invoices/mobile/EditItemModal.tsx`
-  5. `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
-  6. `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
-  7. `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
-  8. `src/components/invoices/mobile/CreatePartyModal.tsx`
-  9. `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
-  10. `src/components/items/mobile/CreateNewItemModal.tsx`
-  11. `src/components/SalesInvoiceModal.tsx`
-  12. `src/components/PurchaseInvoiceModal.tsx`
-  13. `src/components/invoices/AddItemsToBillModal.tsx`
-  14. `src/components/invoices/InvoiceFitView.tsx`
-  15. `src/components/invoices/UnifiedInvoiceRenderer.tsx`
-  16. `src/utils/downloadExactInvoice.ts`
-  17. `src/utils/whatsappPdfShare.ts`
-  18. `src/utils/invoiceThemeLoader.ts`
-  19. `src/services/documentsService.ts`
-- **Tool Verification**:
-  Executed `& "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff --name-only <19 files>`.
-  Result: Empty output (exit code 0). Not a single quarantine file was modified.
-- **Git Scope**:
-  `git status --porcelain` confirms only two files in `src/` are modified:
-  `M src/pages/crm/RoleManagement.tsx`
-  `M src/pages/crm/Tasks.tsx`
+1. **Static Implementation in `src/components/AppLayout.tsx` (lines 481–536)**:
+   - Platform brand mark: Unconditionally renders `/favicon.png` inside `w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs` paired with `CredSmart` styled wordmark (`hidden sm:inline font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans`).
+   - Hairline divider: `h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1`.
+   - Tenant Store Switcher Trigger: `flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]`.
+   - Store Icon/Logo: Conditionally renders `org?.logo_url` as an `<img />` when present, or fallback `<Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />`.
+   - Store Name: Displays `<span className="truncate text-[11px] sm:text-xs font-semibold">{org?.name || "My Business"}</span>`.
+   - Header Height: `pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13`. 3rem = 48px mobile height; `md:h-13` = 52px desktop command bar.
+   - Suppression of Desktop Clutter: Sidebar menu toggle arrow (`hidden sm:flex`) and SuiteSwitcher (`hidden sm:inline-flex`) are safely hidden on mobile viewports.
 
-### 1.2 `src/pages/crm/RoleManagement.tsx` Forensic Analysis
-- **Lines Audited**: 1712–1748.
-- **Diff Observed**:
-  ```diff
-  @@ -1710,7 +1710,7 @@ export default function RoleManagement(): React.ReactElement {
-                       </div>
-   
-                       {isExpanded && (
-  -                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
-  +                      <div className="divide-y divide-slate-100 dark:divide-slate-800/60 sm:divide-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 pt-1 rounded-xl sm:rounded-none overflow-hidden sm:overflow-visible">
-                           {mod.actions.map((act) => {
-                             const key = `${mod.id}:${act.id}`;
-                             const isAllowed = selectedRole.is_super_admin ? true : Boolean(matrixState[key]);
-  @@ -1720,18 +1720,18 @@ export default function RoleManagement(): React.ReactElement {
-                                 key={act.id}
-                                 onClick={() => !selectedRole.is_super_admin && handleToggleAction(mod.id, act.id)}
-                                 className={cn(
-  -                                "rounded-xl border p-3 flex items-center justify-between gap-3 transition-colors",
-  +                                "px-3.5 py-3 flex items-center justify-between gap-3 min-h-[44px] transition-colors sm:rounded-xl sm:border sm:p-3",
-                                   selectedRole.is_super_admin
-  -                                  ? "bg-slate-50/70 border-slate-200/80 cursor-default"
-  -                                  : "bg-white border-slate-200 hover:border-slate-300 cursor-pointer",
-  -                                isAllowed && "border-blue-200 bg-blue-50/20"
-  +                                  ? "bg-slate-50/70 dark:bg-slate-800/40 sm:border-slate-200/80 cursor-default"
-  +                                  : "bg-white dark:bg-slate-900 sm:border-slate-200 hover:border-slate-300 cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
-  +                                isAllowed && "bg-blue-50/25 dark:bg-blue-950/20 sm:border-blue-200"
-                                 )}
-                               >
-                                 <div className="space-y-0.5">
-  -                                <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-  +                                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                                     {act.label}
-                                   </span>
-  -                                <p className="text-[11px] text-slate-500 leading-tight">
-  +                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                                     {act.description}
-                                   </p>
-                                 </div>
-  ```
-- **Integrity Findings**:
-  - Replaces nested floating cards with clean flat rows inside a `divide-y divide-slate-100 dark:divide-slate-800/60` container on mobile screens (< `sm:`).
-  - Preserves 2-3 column bordered grid on desktop (`sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-3 sm:rounded-xl sm:border sm:p-3`).
-  - Strict preservation of all business logic: `handleToggleAction(mod.id, act.id)`, `selectedRole.is_super_admin`, `isSuperAdminOrOwner`, and `matrixState[key]` bindings are 100% intact.
-  - Zero hardcoded mock states, zero dummy values, zero facade implementations.
-  - Ergonomics: provides `min-h-[44px]` touch targets on interactive rows.
-  - Typography: `text-xs font-semibold` (12px) and `text-[11px]` (11px). Zero sub-11px violations.
-
-### 1.3 `src/pages/crm/Tasks.tsx` Forensic Analysis
-- **Lines Audited**: 873–902.
-- **Diff Observed**:
-  ```diff
-  @@ -873,9 +873,9 @@ export default function Tasks(): React.ReactElement {
-                   return (
-                     <div
-                       key={col.status}
-  -                    className="flex flex-col rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3 min-h-[380px]"
-  +                    className="flex flex-col rounded-xl md:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-3 min-h-0 md:min-h-[380px]"
-                     >
-  -                    <div className="flex items-center justify-between pb-3 px-1">
-  +                    <div className="flex items-center justify-between pb-2.5 md:pb-3 px-1">
-                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
-                           {col.label}
-                         </span>
-  @@ -884,9 +884,9 @@ export default function Tasks(): React.ReactElement {
-                         </span>
-                       </div>
-   
-  -                    <div className="space-y-2.5 flex-1">
-  +                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 md:divide-y-0 md:space-y-2.5 flex-1 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-xl md:rounded-none border border-slate-200/80 dark:border-slate-800 md:border-0 overflow-hidden md:overflow-visible">
-                         {colTasks.length === 0 ? (
-  -                        <div className="h-28 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center text-xs text-slate-400">
-  +                        <div className="py-6 md:h-28 text-center md:flex md:items-center md:justify-center md:rounded-xl md:border md:border-dashed md:border-slate-200 md:dark:border-slate-800 text-xs text-slate-400">
-                             No tasks
-                           </div>
-                         ) : (
-  @@ -898,7 +898,7 @@ export default function Tasks(): React.ReactElement {
-                             return (
-                               <div
-                                 key={task.id}
-  -                              className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all space-y-2.5"
-  +                              className="px-3.5 py-3 md:p-3.5 space-y-2 md:space-y-2.5 bg-white dark:bg-slate-900 md:rounded-xl md:border md:border-slate-200/80 md:dark:border-slate-800 md:shadow-2xs hover:shadow-xs transition-all"
-                               >
-  ```
-- **Integrity Findings**:
-  - Eliminates nested "card-in-a-card" anti-pattern inside Kanban columns on mobile (< `md:`), grouping task items into a single container with `divide-y divide-slate-100 dark:divide-slate-800/60` flat rows.
-  - Fully preserves desktop 4-column Kanban layout with individual cards on monitor viewports (`md:divide-y-0 md:space-y-2.5 md:rounded-xl md:border md:shadow-2xs md:min-h-[380px]`).
-  - Zero alteration to task cards' internal content, priority badges, tags, assignee initials, due dates, proof badges, or action handlers (`handleMoveStatus`, `handleApproveTask`, `handleOpenRevision`).
-  - Zero mock or placeholder logic.
-
-### 1.4 Independent Compiler & Build Execution
-- **TypeScript Compiler Check**:
-  Command: `node node_modules/typescript/bin/tsc --noEmit`
-  Result: Exit code 0 (zero errors).
-- **Vite Production Build**:
-  Command: `node node_modules/vite/bin/vite.js build`
-  Result:
-  ```
-  vite v5.4.21 building for production...
-  transforming...
-  ✓ 3662 modules transformed.
-  rendering chunks...
-  dist/index.html                        8.31 kB │ gzip:     2.69 kB
-  dist/assets/index-B5IPkreH.css       275.30 kB │ gzip:    39.66 kB
-  dist/assets/web-9CnMkc5k.js            0.84 kB │ gzip:     0.40 kB
-  dist/assets/web-BLQgwFM4.js            0.90 kB │ gzip:     0.45 kB
-  dist/assets/web-Cp9cnwx-.js            1.15 kB │ gzip:     0.55 kB
-  dist/assets/purify.es-BnINGy_Y.js     28.93 kB │ gzip:    11.14 kB
-  dist/assets/index.es-D0ZWwbJv.js     150.92 kB │ gzip:    51.65 kB
-  dist/assets/index-DsjFW-ds.js      4,853.32 kB │ gzip: 1,235.21 kB
-  ✓ built in 2m 43s
-  ```
-  Result: Exit code 0. Clean production bundle.
+2. **Empirical Test Suite Execution Results**:
+   - `cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx`
+     - Command Result: Code 0
+     - Summary: `✓ src/test/universalHeaderDualLockup.test.tsx (12 tests) 1095ms`
+   - `cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx`
+     - Command Result: Code 0
+     - Summary: `✓ src/test/desktopShellMilestone2.challenger.test.tsx (19 tests) 689ms`
+   - Combined execution:
+     - Command: `cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx src/test/desktopShellMilestone2.challenger.test.tsx`
+     - Output: `Test Files 2 passed (2), Tests 31 passed (31) 2.27s`
+   - Mobile Ergonomics AppLayout test:
+     - Command: `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts -t "AppLayout"`
+     - Output: `Test Files 1 passed (1), Tests 2 passed | 15 skipped (17)`
+   - TypeScript Check:
+     - Command: `cmd /c npx tsc --noEmit`
+     - Output: Code 0, zero diagnostics.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Quarantine Compliance**:
-   Observation 1.1 proves that none of the 19 quarantine files were touched. The git diff across all 19 paths is empty.
-2. **Authenticity of UI Refactoring**:
-   Observations 1.2 and 1.3 prove that the modifications in `RoleManagement.tsx` and `Tasks.tsx` strictly address the "card-inside-a-card" anti-pattern specified in `ORIGINAL_REQUEST.md:1220`. The implementation uses authentic responsive Tailwind classes (`divide-y divide-slate-100 dark:divide-slate-800/60 sm:divide-y-0 md:divide-y-0`) without introducing any dummy components, mock objects, or bypassed routines.
-3. **Behavioral & Event Preservation**:
-   Observations 1.2 and 1.3 show that all function pointers, event handlers (`onClick`, `onCheckedChange`), permissions checks (`isSuperAdminOrOwner`), and state subscriptions remain unmodified.
-4. **Design System & Typography Compliance**:
-   Both refactored sections maintain minimum 44px touch targets (`min-h-[44px]`), font sizes strictly `>= 11px`, and correct neutral canvas colors with full dark mode support.
-5. **Static & Build Integrity**:
-   Observation 1.4 confirms that the complete project compiles with zero TypeScript errors and builds cleanly for production.
+1. **Specification Compliance**:
+   - `ORIGINAL_REQUEST.md` (lines 1575–1583) and `PROJECT.md` (lines 4–7) require a dual-lockup architecture with permanent platform mark (`/favicon.png` + `CredSmart`), 1px hairline divider, adjacent active store switcher, 48px mobile height, and 52px desktop height.
+   - Observation 1 confirms exact match in `src/components/AppLayout.tsx`.
+
+2. **Decoupling Integrity**:
+   - Previously, configuring an organization logo erased the CredSmart shield and replaced it with the store logo.
+   - In the new implementation, the platform shield is unconditionally rendered, and the store logo/icon is relegated to the adjacent store switcher pill. Observation 1 verifies complete structural decoupling.
+
+3. **Responsive Ergonomics & Mobile Pixel Budget**:
+   - Net width on 360px screen with `px-2.5` padding = 340px.
+   - Left lockup: 28px (shield) + 6px (gap) + 5px (divider) + 100px (store pill) = 139px.
+   - Right controls: 30px (search) + 30px (plus action) + 30px (bell) + 30px (profile) + 18px (gaps) = 138px.
+   - Total width = 277px, leaving a 63px buffer.
+   - Unwanted elements (`SuiteSwitcher`, `Sidebar toggle arrow`, desktop `⌘K` bar) are hidden via Tailwind breakpoints (`hidden sm:flex`, `hidden sm:inline-flex`, `hidden md:flex`).
+   - Thus, horizontal wrapping and overflow are mathematically impossible.
+
+4. **Test Realism & Authenticity**:
+   - `universalHeaderDualLockup.test.tsx` mounts `<AppLayout />` in real DOM with varying organization configurations (`with logo`, `without logo`, `null org`, `CRM mode`).
+   - All tests assert real attributes (`src="/favicon.png"`, `src="https://cdn.example.com/apex-logo.png"`, `Building2` icon count, text nodes).
+   - `desktopShellMilestone2.challenger.test.tsx` retains all 19 desktop productivity assertions.
+   - All 31 tests pass cleanly with 0 TypeScript compilation errors.
 
 ---
 
 ## 3. Caveats
 
-- **No caveats.** The audit was exhaustive across git status, diff inspection, quarantine verification, TypeScript compiler validation, and Vite production build.
+- **POS Fullscreen Bypass**: As specified in `PROJECT.md`, routes `/pos` and `/checkout` bypass `AppLayout`'s universal command bar via `!isPosRoute` to allow dedicated POS workbench/terminal rendering. This is intentional and properly preserved.
+- **Other Milestones**: Unrelated failures in `src/test/mobileErgonomicsChallenger.test.ts` outside `AppLayout` (e.g. `pages/Purchases.tsx`) belong to Milestone 4 and do not affect Milestone 1.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 work product meets all integrity standards:
-- Changes in `src/pages/crm/RoleManagement.tsx` and `src/pages/crm/Tasks.tsx` are 100% genuine UI refactorings.
-- Zero mock code, dummy functions, or hardcoded strings were introduced.
-- All 19 quarantine files remain 100% untouched.
-- TypeScript compilation and Vite production build passed with exit code 0.
-
-**Verdict: CLEAN**
+Milestone 1 is verified as **CLEAN**. There are zero integrity violations, no dummy facades, no hardcoded cheating, and no regressions to desktop workflows. The implementation satisfies all acceptance criteria of `ORIGINAL_REQUEST.md` and `PROJECT.md`.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce this forensic verification:
-
-1. **Verify 19 Quarantine Files are Untouched**:
-   ```powershell
-   & "C:\Users\bishn\AppData\Local\GitHubDesktop\app-3.6.7\resources\app\git\cmd\git.exe" diff --name-only src/components/invoices/mobile/MobileCreateInvoice.tsx src/components/invoices/mobile/AddItemModal.tsx src/components/invoices/mobile/SelectPartyModal.tsx src/components/invoices/mobile/EditItemModal.tsx src/components/invoices/mobile/MobileInvoiceSuccessView.tsx src/components/invoices/mobile/MobileBillPreviewModal.tsx src/components/invoices/mobile/MobileInvoiceFitViewer.tsx src/components/invoices/mobile/CreatePartyModal.tsx src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx src/components/items/mobile/CreateNewItemModal.tsx src/components/SalesInvoiceModal.tsx src/components/PurchaseInvoiceModal.tsx src/components/invoices/AddItemsToBillModal.tsx src/components/invoices/InvoiceFitView.tsx src/components/invoices/UnifiedInvoiceRenderer.tsx src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts
-   ```
-   *Expected Result*: Empty output.
-
-2. **Verify TypeScript Compilation**:
-   ```powershell
-   node node_modules/typescript/bin/tsc --noEmit
-   ```
-   *Expected Result*: Exits with code 0 (zero errors).
-
-3. **Verify Vite Production Build**:
-   ```powershell
-   node node_modules/vite/bin/vite.js build
-   ```
-   *Expected Result*: `✓ built in ...` with exit code 0.
+To independently verify this audit:
+```bash
+cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx src/test/desktopShellMilestone2.challenger.test.tsx
+cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts -t "AppLayout"
+cmd /c npx tsc --noEmit
+```
+All commands must exit with code 0 and 31 passed tests.

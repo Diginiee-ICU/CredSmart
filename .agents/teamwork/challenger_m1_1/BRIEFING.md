@@ -1,65 +1,51 @@
-# BRIEFING — 2026-10-26T20:43:00Z
+# BRIEFING — 2026-10-27T03:28:30Z
 
 ## Mission
-Empirically and adversarially challenge multi-tenant user isolation, auth fallback eradication, and staff provisioning for Milestone M1.
+Adversarial empirical stress-testing and verification of Milestone 1 Universal Header Dual Lockup across viewports and edge cases.
 
 ## 🔒 My Identity
 - Archetype: challenger
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-- Original parent: 9b1188fd-78cb-4433-afbb-88547ac33d9e
-- Milestone: M1
+- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Milestone: Milestone 1 (Universal Header Dual Lockup)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Must write and execute verification tests empirically
-- Strict multi-tenant isolation verification
-- Zero regression across CRM and Billing
+- Must run verification code directly (empirical evidence required)
+- Never trust unverified claims
 
 ## Current Parent
-- Conversation ID: 9b1188fd-78cb-4433-afbb-88547ac33d9e
-- Updated: not yet
+- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Updated: 2026-10-27T03:20:16Z
 
 ## Review Scope
-- **Files to review**:
-  - `backend-api/fix_db.sql`
-  - `backend-api/src/routes/auth.js`
-  - `backend-api/src/middleware/auth.js`
-  - `backend-api/src/routes/settings.js`
-  - `backend-api/src/routes/crm.js`
-  - `backend-api/src/index.js`
-  - `backend-api/add_indexes.sql`
-  - `src/test/crmTenantIsolation.test.ts`
-  - `src/test/fixDbSchema.test.ts`
-  - `src/test/crmBackendApiM1.test.ts`
-  - `src/test/m1AdversarialChallenge.test.ts`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (## 2026-10-26T19:54:47Z)
-- **Review criteria**: Multi-tenant leak eradication, fallback elimination, isolation correctness
+- **Files reviewed**: src/components/AppLayout.tsx, src/test/universalHeaderDualLockup.test.tsx, src/test/desktopShellMilestone2.challenger.test.tsx, src/test/universalHeaderAdversarialStress.test.tsx
+- **Interface contracts**: PROJECT.md, minimal-design-system.md
+- **Review criteria**: Dual lockup visual hierarchy, truncate/overflow safety, responsiveness (320px-1024px), edge cases (100+ char org name, null/missing logo, special chars)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Does `GET /api/profiles` or `GET /api/organization-memberships` leak users when unscoped? (Empirically verified: strictly returns `[]`).
-  2. Does `getUserPrimaryOrgId` auto-insert into largest org or order by product count? (Empirically verified: returns `null`, zero auto-insert queries).
-  3. Does `GET /api/crm/staff` leak Org B users into Org A? (Empirically verified: strictly isolated).
-  4. Does `authenticate` middleware fall back to foreign organizations? (Empirically verified: `req.orgId` remains undefined).
-  5. Can POS mutations purge CRM cache or vice versa? (Empirically verified: `isCrmPath` segregates cache keys).
-- **Vulnerabilities found**: None. All attack vectors mitigated by worker's implementation.
-- **Untested angles**: Production PostgreSQL cluster live load (simulated via Vitest test harnesses).
+  1. Extremely long org name (100+ W's) causes flex container to wrap or blow out on 320px screen -> Disproven (handled via `max-w-[100px]`, `truncate`, and `overflow-hidden`).
+  2. Malicious XSS strings in org name compromise DOM -> Disproven (safely escaped by React).
+  3. Missing / null org or logo crashes component -> Disproven (handled via `org?.name || "My Business"` and Building2 SVG fallback).
+  4. 320px screen overflows horizontal bounds -> Disproven (max mobile occupied width is 279px, leaving 21px cushion in 300px net container).
+- **Vulnerabilities found**: None in Milestone 1 implementation. (Note: `title={org?.name}` is duplicated on both store pill and profile button, which is valid and expected behavior).
+- **Untested angles**: None within Milestone 1 scope.
 
 ## Loaded Skills
-- **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\crm-rbac-skill\SKILL.md`
-- **Local copy**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\crm-rbac-skill.md`
-- **Core methodology**: Role-Based Access Control, multi-tenant isolation, Supabase RLS, and strict authorization contracts across CRM.
+- None specified in dispatch
 
 ## Key Decisions Made
-- Authored dedicated adversarial stress harness `src/test/m1AdversarialChallenge.test.ts` covering 12 targeted attack scenarios.
-- Executed all 4 test suites (465/465 passing) and `tsc --noEmit` (0 errors).
-- Issued Verdict: APPROVE.
+- Authored adversarial stress test suite `src/test/universalHeaderAdversarialStress.test.tsx` (18 tests).
+- Verified 49/49 passing tests across all Milestone 1 suites.
+- TypeScript compiler passes with 0 errors.
+- Issue verdict: APPROVE.
 
 ## Artifact Index
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\DISPATCH.md` — Initial dispatch message
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\crm-rbac-skill.md` — Local copy of crm-rbac-skill
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\progress.md` — Liveness heartbeat
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\challenge.md` — Adversarial Challenge Report
-- `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md` — Handoff Report (APPROVE)
+- DISPATCH.md — incoming dispatch instructions
+- BRIEFING.md — persistent state and identity
+- progress.md — liveness heartbeat
+- handoff.md — final 5-component report
+- src/test/universalHeaderAdversarialStress.test.tsx — empirical adversarial stress harness

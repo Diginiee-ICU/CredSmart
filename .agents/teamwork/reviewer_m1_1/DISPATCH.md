@@ -1,28 +1,24 @@
-## 2026-10-26T20:33:28Z
-You are Reviewer 1 (Security, Tenancy Isolation & Database) for Milestone M1 of CredSmart CRM Defects Elimination.
+## 2026-10-27T03:20:15Z
+You are Reviewer 1 for Milestone 1 (Universal Header Dual Lockup).
+Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
+Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (last section ## 2026-10-27T02:39:33Z).
+Read PROJECT.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md.
+Read Worker M1's handoff report in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md.
 
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
-Authoritative Request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (MUST read section ## 2026-10-26T19:54:47Z before starting work!)
-Project Scope: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md
-Worker Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md
-
-Review Objective:
-Examine changes made by Worker M1 in:
-- `backend-api/fix_db.sql` and root `fix_db.sql`
-- `backend-api/src/routes/auth.js`
-- `backend-api/src/middleware/auth.js`
-- `backend-api/src/routes/settings.js`
-
-Verify:
-1. Complete removal of lines 130–148 in `fix_db.sql` (rogue CROSS JOIN inserting owner rows across all orgs). Verify both files are 100% byte-for-byte identical.
-2. `getUserPrimaryOrgId` in `auth.js` has no product-count ordering and no fallback auto-inserting the user into the largest organization.
-3. Catch block in `middleware/auth.js` has no fallback selecting the organization with the most products.
-4. `GET /api/profiles` and `GET /api/organization-memberships` in `settings.js` enforce `targetOrg` filtering and return `[]` when omitted, preventing cross-tenant leaks.
-5. Run verification tests:
-   `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts`
-   `cmd /c npx tsc --noEmit`
-
-Output Requirements:
-- Write review report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\review.md`.
-- Write handoff report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md` with explicit Verdict: APPROVE or REQUEST_CHANGES.
-- Send completion message to orchestrator. Do not edit source files.
+TASK:
+1. Objectively and adversarially review the changes in:
+   - src/components/AppLayout.tsx
+   - src/test/universalHeaderDualLockup.test.tsx
+   - src/test/desktopShellMilestone2.challenger.test.tsx
+2. Verify:
+   - Far Left platform mark unconditionally renders /favicon.png in styled container paired with styled 'CredSmart' wordmark (hidden sm:inline).
+   - Tenant store branding is decoupled and placed in an adjacent Store Switcher trigger pill separated by a 1px hairline divider.
+   - Mobile height is strictly 48px (h-12) and desktop height is 52px (md:h-13).
+   - Zero horizontal overflow on 360px-430px screens.
+3. Run verification commands:
+   - cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx
+   - cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx
+   - cmd /c npx tsc --noEmit
+4. Write your verdict (APPROVE or REQUEST_CHANGES) with clear evidence in:
+   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1\handoff.md
+5. Send completion message via send_message to orchestrator (conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987).

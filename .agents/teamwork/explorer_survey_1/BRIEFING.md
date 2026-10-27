@@ -1,51 +1,50 @@
-# BRIEFING — 2026-10-25T10:29:00Z
+# BRIEFING — 2026-10-27T03:00:00Z
 
 ## Mission
-Deep survey and structural mapping of `src/pages/crm/SalaryManagement.tsx` and `src/pages/crm/RoleManagement.tsx` against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager) specifications, producing an actionable blueprint for the worker while preserving all state, handlers, queries, and desktop views.
+Thoroughly investigate Universal Header Architecture across CredSmart app: platform brand mark, tenant store switcher, desktop command bar vs mobile header ergonomics, and layout preservation.
 
 ## 🔒 My Identity
-- Archetype: explorer
-- Roles: investigator, synthesizer
+- Archetype: Explorer
+- Roles: Read-only investigation, architectural analysis, synthesis, structured reporting
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1
-- Original parent: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Milestone: survey_crm_roles_and_tasks
-- Parent (CRM Mobile Redesign): 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Milestone (CRM Mobile Redesign): survey_salary_and_roles_mockups
+- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Milestone: Universal Header Architecture Survey
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement
-- Never modify or suggest modifying any of the 19 protected quarantine files
-- Document exact line numbers, existing classes, proposed minimal divide-y replacements, touch targets (>=44px), and font sizes (>=11px)
-- Desktop view preservation (zero regressions)
-- Mobile redesign fidelity against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager)
-- Master design system rules (minimal-design-system.md)
-- Preserve all state, Supabase queries, and action handlers without dropping functionality
+- Read-only investigation — do NOT modify application source code
+- Adhere strictly to CredSmart Minimal & Fast-Access Design System Rules
+- Enforce desktop command bar (52px / h-13) and mobile header (48px / h-12) divergence
+- 100% desktop preservation on >= 768px, zero regression across business workflows
 
 ## Current Parent
-- Conversation ID: 9b37b911-3daf-458a-8cd7-5e836d72b751
-- Updated: 2026-10-25T10:17:14Z
+- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Updated: 2026-10-27T02:46:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/pages/crm/SalaryManagement.tsx` (all 2,374 lines analyzed, mapped state, drawers, tabs, gaps)
-  - `src/pages/crm/RoleManagement.tsx` (all 2,777 lines analyzed, mapped modules, state, matrix, avatars)
-  - `ORIGINAL_REQUEST.md` (lines 1150-1373, R1 & R2 mockup specifications)
-  - System baseline: `tsc --noEmit` clean (code 0), `vite build` clean (code 0)
-  - 19 protected quarantine files: 100% verified untouched and isolated
+  - `src/components/AppLayout.tsx`: Analyzed universal command bar lines 482–964.
+  - `public/favicon.png`: Verified as official platform shield asset (169,112 bytes).
+  - `src/components/public/CredSmartLogo.tsx`: Contains `CredSmartShieldIcon`.
+  - `src/components/AppSidebar.tsx`: Verified mobile bottom dock vs desktop 3D popover.
+  - `src/components/SuiteSwitcher.tsx`: Verified suite toggle behavior and desktop/mobile responsiveness.
+  - `src/pages/crm/CRMDashboard.tsx`: Identified redundant mobile header due to `isCrmDashboard && "hidden md:flex"`.
+  - `src/test/desktopShellMilestone2.challenger.test.tsx` and `src/test/mobileErgonomicsChallenger.test.ts`.
 - **Key findings**:
-  - Full blueprint designed for `SalaryManagement.tsx`: Mockup 1 header "Payroll Engine", Royal Blue `+ New Profile`, `[ ⎋ ]` export button, 2x2 stat badges, inset segmented tabs, illustration empty state card, divide-y rows without `h-11`, and dual quick action pills.
-  - Full blueprint designed for `RoleManagement.tsx`: Mockup 2 header "Role Manager", horizontal action chips, Active Role card with quick stats, 2-column checkbox chips in module accordion, and horizontal colored avatar stream in Staff Assignments.
-  - Complete preservation of desktop views via `<div className="hidden md:block">` with zero logic changes.
-- **Unexplored areas**:
-  - Implementation execution (ready for worker assignment).
+  - Current brand mark in `AppLayout.tsx` replaces CredSmart shield with tenant store logo (`org.logo_url`) or generic `Sparkles` icon, erasing platform brand identity.
+  - Organization switcher pill is hidden on mobile (`hidden sm:flex`).
+  - Mobile header viewport math calculated: Shield (28px) + Divider (1px) + Store Pill (~75px) + 4 Action Buttons (120px) + Spacing = 250px on 360px viewport -> 90px buffer, 0 overflow.
+  - Legacy test `desktopShellMilestone2.challenger.test.tsx` asserts `bg-blue-600` and `<Sparkles` from Milestone 2 placeholder, which must be aligned when updating to `/favicon.png`.
+- **Unexplored areas**: None for Survey 1. Complete architectural analysis delivered.
 
 ## Key Decisions Made
-- Fully documented the implementation blueprint and JSX templates in `analysis.md` and `handoff.md`.
-- Enforced `md:` breakpoint (768px) for desktop/mobile separation across both pages.
+- Confirmed `/favicon.png` as definitive platform shield mark.
+- Formulated exact JSX before/after patch for `AppLayout.tsx`.
+- Recommended removing `isCrmDashboard && "hidden md:flex"` so universal header stays permanent across all routes.
+- Documented pixel budget confirming zero horizontal overflow on 360px screens.
 
 ## Artifact Index
-- `DISPATCH.md` — Incoming dispatch messages
-- `BRIEFING.md` — Situational awareness
-- `progress.md` — Liveness and progress heartbeat
-- `analysis.md` — In-depth architectural analysis and JSX blueprints
-- `handoff.md` — Authoritative 5-component survey report
+- `.agents/teamwork/explorer_survey_1/DISPATCH.md` — Incoming dispatch log
+- `.agents/teamwork/explorer_survey_1/BRIEFING.md` — Working memory & identity
+- `.agents/teamwork/explorer_survey_1/progress.md` — Liveness & heartbeat
+- `.agents/teamwork/explorer_survey_1/analysis.md` — Detailed technical findings
+- `.agents/teamwork/explorer_survey_1/handoff.md` — Formal 5-component handoff report

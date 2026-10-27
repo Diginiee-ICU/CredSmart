@@ -1,37 +1,30 @@
-# DISPATCH: Survey Explorer 3 - Shared Design Tokens, Quarantine Files & Verification Architecture
-
-## Objective
-Analyze shared design components (`src/components/crm/`), design system rules (`c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`), the 19 protected invoice quarantine files, and build/test commands.
-
-## Scope & Boundaries
-- DO NOT write or edit source code.
-- Analyze:
-  1. The 19 protected quarantine files: list them, confirm their status, verify that none of them are imported or altered by CRM modules.
-  2. The shared CRM component library in `src/components/crm/` (`CRMCard`, `CRMBadge`, `CRMDataTable`, `CRMPageHeader`, `CRMStatCard`, `CRMPermissionGate`, `CRMRolePill`). Check if any new primitives or styles are needed for the 2x2 stat badges, segmented tab bars, radar indicators, and pill action buttons.
-  3. Design system constraints from `minimal-design-system.md` (button heights: 34px standard, 28px sm, 30px icon, 46px mobile cta; typography: Inter sans, IBM Plex Mono for numbers/currency; neutral palette `#F8FAFC` / `#090D16` / `#2563EB` royal blue / `#10B981` emerald / `#FF6A00` or `#F59E0B` amber-orange; no sub-11px micro-fonts; no bloated buttons).
-  4. Build & verification setup: inspect package.json, TypeScript config, test commands, and confirm how `tsc --noEmit` and `vite build` are executed.
-
-## Output
-Write your comprehensive findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`.
-Include:
-- Quarantine verification status of all 19 files
-- CRM shared components inventory & reusable mobile design patterns
-- Design system token compliance matrix
-- Verification and build pipeline instructions
-
-
-## 2026-10-25T10:17:15Z
-[Message] sender=9b37b911-3daf-458a-8cd7-5e836d72b751 priority=MESSAGE_PRIORITY_HIGH
-You are Survey Explorer 3 for the CredSmart CRM Mobile Redesign.
+## 2026-10-27T02:45:53Z
+You are an Explorer subagent (Explorer Survey 3: CRM Suite & Billing Ledger Ergonomics).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3
-Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\DISPATCH.md
-MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z and background sections).
-Read the master design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the last section ## 2026-10-27T02:39:33Z).
+Read user rules in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
 
-Analyze in detail:
-1. Verify the 19 protected invoice quarantine files and confirm none are touched.
-2. Shared CRM components in `src/components/crm/` and check what reusable patterns/tokens are needed for 2x2 stat badges, tabs, radar indicators, and pill buttons.
-3. Design system constraints from `minimal-design-system.md`.
-4. Verification pipeline commands (`tsc --noEmit`, `vite build`, Vitest suites).
-Maintain liveness in your `progress.md` and write your complete handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md`.
-When done, notify the orchestrator with send_message.
+TASK:
+1. Thoroughly investigate all 9 CRM routes and the POS/Billing Ledger pages:
+   - CRM routes: /crm, /crm/dashboard, /crm/roles, /crm/attendance, /crm/salary, /crm/tasks, /crm/meet, /crm/broadcasts, /crm/ai, /crm/support (in src/pages/crm/* and src/components/crm/*).
+   - Billing & Ledger pages: /sales (Sales.tsx), /purchases (Purchases.tsx), /customers (Customers.tsx), /suppliers (Suppliers.tsx), /inventory (Inventory.tsx), /godown (Godown.tsx), /items (Items.tsx), /reports (Reports.tsx), /cash-and-bank (CashAndBank.tsx).
+2. For CRM:
+   - Identify horizontal overflow, table layouts, and poor mobile ergonomics on 360px–430px viewports.
+   - Detail mobile specifications for:
+     a) CRM Command Centre (/crm, /crm/dashboard): mobile header & quick tools grid, zero horizontal scrollbar.
+     b) Task Management (/crm/tasks): dedicated mobile card view, 1-tap status transitions, priority pills, bottom-sheet task creation.
+     c) Salary & Payroll (/crm/salary): replace desktop wide table on mobile with high-density staff payroll cards showing net pay, advance balance, 1-tap payslip.
+     d) Role Management (/crm/roles): staff provisioning form & role assignment matrix in touch-friendly full-height bottom drawer with 44px tap targets.
+     e) Meet, Broadcasts, AI Assistant, Support: bottom-anchored inputs, thumb-reachable action buttons, zero edge clipping.
+3. For Billing & Ledgers:
+   - Sales & Purchases: Dense transaction cards (party name, invoice number, date, amount, status badge) with swipeable/quick actions (print, WhatsApp share, edit/view).
+   - Parties (Customers, Suppliers): 4-5 cards per viewport with 1-tap call/WhatsApp buttons, credit balance indicators, quick ledger drawers.
+   - Inventory & Godowns: Compact catalog cards with thumbnail, SKU, stock quantity pill, selling price, quick stock adjustment button.
+   - Reports: Summary reports in mobile-optimized metric cards and collapsible category accordions.
+   - Cash & Bank: Responsive account cards and clean ledger transaction stream.
+4. Verify 100% desktop preservation on >= 768px for all affected pages.
+5. Document your complete findings in:
+   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\analysis.md
+6. Write a self-contained handoff report in:
+   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_3\handoff.md
+7. Send a completion message via send_message to the orchestrator (conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987).

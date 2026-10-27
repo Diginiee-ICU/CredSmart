@@ -1,51 +1,22 @@
-# DISPATCH: Survey Explorer 2 - Attendance & Tasks
-
-## Objective
-Analyze `src/pages/crm/Attendance.tsx` and `src/pages/crm/Tasks.tsx` in depth.
-Compare current implementation with Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) specifications from `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (section `## 2026-10-25T10:11:33Z`).
-
-## Scope & Boundaries
-- DO NOT write or edit source code.
-- Analyze:
-  1. Current layout structure (where are `block md:hidden` vs `hidden md:block` or responsive classes).
-  2. State management, hooks, geolocation calculations, timer, Supabase queries, and action handlers that must be preserved.
-  3. Exact visual requirements for Mockup 3 (Attendance Hub):
-     - Header, badge `🟢 Live Sync`, `[ ⎋ ]`, subtitle, `[ 📍 Geofences ]` button
-     - 2x2 Stat Badges: `Present 0 >`, `Geo-Verified 0 >`, `Regularised 0 >`, `Geofences 1 >`
-     - Segmented Tabs: `[ My Clock-In ]`, `[ Team Logs (0) ]`, `[ Locations ]`
-     - Shift Card: "Today's Shift • General", date pill `Sun, Oct 25`, left orange hairline accent (`border-l-4 border-orange-500`), large digital clock (`02:45:48 PM`), radar geofence widget on the right, status badge `⚠️ Outside Geofence`, location label `📍 Nearest: HQ (Radius: 150m)`, GPS accuracy pill, and full-width Emerald CTA `[ ✓ Clock In Now ]`
-     - Quick Links: Dual pill buttons (`[ 📋 View Team Logs ]`, `[ ✏️ Request Correction ]`)
-  4. Exact visual requirements for Mockup 4 (Task Workflows):
-     - Header, filter icon `[ ☰ ]`, subtitle
-     - Status Filter Chips: `[ 🟢 Active Workflows ]`, `[ 🔴 Overdue ]`, primary CTA `[ + Create Task ]` (Amber/Orange)
-     - 2x2 Stat Badges: `Total Tasks 4`, `In Progress 1`, `Pending Review 1`, `Completed 1`
-     - Search & Priority Bar: `🔍 Search tasks or assignees...`, dropdown `All Priorities ⌵`
-     - High-Density Task Stream: Status Emoji Tags (`📌 TO DO`, `⚡ IN PROGRESS`, `🔍 UNDER REVIEW`, `✅ COMPLETED`), Priority Pill (`Urgent`, `High`, `Normal`, `Low`), bold task title, assignee avatar chip, and contextual action CTA (`Start Job →`, `Submit Proof`, `Approve ✓`)
-  5. Verification that the 19 protected quarantine files are not touched.
-
-## Output
-Write your comprehensive findings to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md`.
-Include:
-- Executive Summary
-- Current Attendance.tsx analysis & mobile gap
-- Current Tasks.tsx analysis & mobile gap
-- Implementation strategy for R3 (Attendance) and R4 (Tasks)
-- Preservation checklist (geolocation engine, timer, task state mutations, desktop views)
-
-
-## 2026-10-25T10:17:14Z
-From parent:
-You are Survey Explorer 2 for the CredSmart CRM Mobile Redesign.
+## 2026-10-27T02:45:53Z
+You are an Explorer subagent (Explorer Survey 2: POS Billing Terminal).
 Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2
-Read your dispatch instructions at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\DISPATCH.md
-MANDATORY: Read the authoritative user request at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the latest section ## 2026-10-25T10:11:33Z and background sections).
-Read the master design rules at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the last section ## 2026-10-27T02:39:33Z).
+Read user rules in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
 
-Analyze in detail:
-1. `src/pages/crm/Attendance.tsx`
-2. `src/pages/crm/Tasks.tsx`
-
-Compare their current implementations against Mockup 3 (Attendance Hub) and Mockup 4 (Task Workflows) specifications in ORIGINAL_REQUEST.md.
-Document how to structure the mobile view (`block md:hidden`) vs desktop view (`hidden md:block`), how all state, geolocation engines, timer logic, Supabase queries, and action handlers are preserved, and provide an exact blueprint for the worker.
-Maintain liveness in your `progress.md` and write your complete handoff report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md`.
-When done, notify the orchestrator with send_message.
+TASK:
+1. Thoroughly investigate the POS Billing Terminal architecture:
+   - Examine src/pages/POS.tsx, src/pages/Checkout.tsx, and all components under src/components/pos/* (e.g. catalog, cart, barcode scanner, checkout dialogs).
+   - Analyze the current 2-column desktop workbench layout (catalog left, cart right, fixed checkout bar).
+   - Inspect how mobile viewports (< 768px) currently render POS and identify all pain points (squished columns, overflow, unusable cart/checkout).
+   - Design the dedicated Single-Column Mobile POS Terminal on < 768px while ensuring 100% desktop preservation on >= 768px:
+     a) Sticky top bar: Back to dashboard button, quick barcode scan button, and product search input.
+     b) Horizontal category chips (All, Grocery, Snacks, etc.) with 1-tap filtering.
+     c) Scrollable high-density product cards (4-5 visible per scroll) with item name, price, stock badge, and 1-tap + / - quantity stepper.
+     d) Floating Bottom Cart Dock (fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]) displaying total item count, grand total (₹), and prominent "Review Cart & Checkout" CTA.
+     e) 1-Tap Checkout Bottom Drawer: Slide-up bottom sheet drawer for customer details, payment method selection (Cash, UPI/QR, Card, Credit), and "Generate Bill & Print" CTA.
+2. Document your complete findings with file paths, existing component tree, proposed mobile components, state sharing, and implementation plan in:
+   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\analysis.md
+3. Write a self-contained handoff report in:
+   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_2\handoff.md
+4. Send a completion message via send_message to the orchestrator (conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987).

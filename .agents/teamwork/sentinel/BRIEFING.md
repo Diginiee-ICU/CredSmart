@@ -1,7 +1,7 @@
-# BRIEFING — 2026-10-26T19:55:00Z
+# BRIEFING — 2026-10-27T02:45:00Z
 
 ## Mission
-Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refresh, prevent cross-tenant user leaks, link newly provisioned staff strictly to owner org with custom credentials, fix Salary Management staff visibility, restore Task assignment, enforce strict route lockdown preventing CRM staff from entering POS/Billing, accelerate CRM page load speed, unify CRM Command Center header, and cleanly decouple CRM and POS/Billing data on Ubuntu server PostgreSQL.
+Place the official CredSmart platform shield logo permanently in the universal command bar alongside tenant branding, and deliver dedicated touch-first mobile ergonomics across all CRM and POS & Billing pages without altering desktop workflows.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -56,6 +56,8 @@ Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refr
 - Victory Auditor (SWE CRM Hardening): [to be spawned on victory claim]
 - Active Orchestrator (CRM Defects Elimination): 9b1188fd-78cb-4433-afbb-88547ac33d9e
 - Victory Auditor (CRM Defects Elimination): [to be spawned on victory claim]
+- Active Orchestrator (Mobile Ergonomics): d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Victory Auditor (Mobile Ergonomics): [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -92,19 +94,25 @@ Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refr
 - Strict POS/Billing lockdown for CRM staff without explicit POS permissions
 - Sub-500ms CRM page loads with parallel queries and cached endpoints
 - Unified CRMCommandHeader across all CRM pages
+- Permanent CredSmart platform shield logo in universal command bar alongside tenant branding
+- Strict 52px desktop / 48px mobile universal header height with 0 horizontal overflow on 360px viewport
+- Dedicated Single-Column Mobile POS Terminal (< 768px) with category chips, product cards, floating bottom cart dock, and 1-tap checkout drawer
+- Comprehensive mobile card layouts for all 9 CRM routes with swipeable status and 44x44px touch targets
+- Dense transaction cards (4-5 items per viewport) for Sales, Purchases, Parties, Inventory, Reports, Cash & Bank
+- 100% desktop workflow preservation with zero regressions to calculations, database, or API routes
 
 ## User Context
-- **Last user request**: Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refresh, prevent cross-tenant user leaks, link newly provisioned staff strictly to owner org, fix Salary Management staff visibility, restore Task assignment, enforce strict route lockdown on POS/Billing, accelerate CRM page loads, unify CRM Command Center header, cleanly decouple CRM & POS/Billing data on PostgreSQL database.
+- **Last user request**: Place official CredSmart platform shield logo permanently in universal command bar alongside tenant branding, and deliver dedicated touch-first mobile ergonomics across all CRM and POS & Billing pages without altering desktop workflows.
 - **Pending clarifications**: none
 - **Delivered results**: Dispatched General Project Orchestrator (`teamwork_preview_orchestrator`) with monitoring crons.
 
 ## Project Status
 - **Phase**: in progress
 - **Routing Decision**: General -> teamwork_preview_orchestrator
-- **Active Orchestrator ID**: 9b1188fd-78cb-4433-afbb-88547ac33d9e
-- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects
-- **Cron 1 (Reporting)**: task-30 (`*/8 * * * *`)
-- **Cron 2 (Liveness)**: task-32 (`*/10 * * * *`)
+- **Active Orchestrator ID**: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- **Working Directory**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_ergonomics
+- **Cron 1 (Reporting)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-30 (`*/8 * * * *`)
+- **Cron 2 (Liveness)**: 708b3a4f-8887-401f-9a2a-e81fad49c398/task-32 (`*/10 * * * *`)
 
 ## Victory Audit Status
 - **Triggered**: no
@@ -113,4 +121,4 @@ Eliminate critical CRM defects across CredSmart: resolve staff vanishing on refr
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Original verbatim user request
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\DISPATCH.md — Dispatch instructions
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_mobile_ergonomics\DISPATCH.md — Dispatch instructions

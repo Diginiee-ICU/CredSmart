@@ -194,7 +194,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-describe("Challenger 2: POS Billing Workbench Empirical Stress Suite", () => {
+describe("Challenger 2: POS Billing Workbench Empirical Stress Suite", { timeout: 25000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();

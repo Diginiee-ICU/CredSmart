@@ -52,20 +52,20 @@ describe("Challenger 1 — Milestone 2 Desktop Shell & Productivity Layouts Empi
       expect(appLayoutSource).not.toMatch(/h-24/);
     });
 
-    it("verifies compact 28px brand mark (w-7 h-7) with Sparkles icon and Inter CredSmart wordmark", () => {
-      // 28px container: w-7 h-7 rounded-lg bg-blue-600
-      expect(appLayoutSource).toMatch(/w-7\s+h-7\s+rounded-lg\s+bg-blue-600/);
+    it("verifies permanent CredSmart platform shield mark (/favicon.png) and Inter CredSmart wordmark", () => {
+      // Shield logo container: w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80
+      expect(appLayoutSource).toMatch(/w-7\s+h-7\s+sm:w-7\.5\s+sm:h-7\.5\s+rounded-lg\s+border\s+border-slate-200\/80/);
 
-      // Sparkles icon inside brand mark
-      expect(appLayoutSource).toMatch(/<Sparkles[^>]*w-3\.5\s+h-3\.5/);
+      // Favicon shield mark
+      expect(appLayoutSource).toMatch(/\/favicon\.png/);
 
       // Inter typography wordmark
       expect(appLayoutSource).toMatch(/CredSmart<\/span>/);
     });
 
     it("verifies dedicated left Organization Switcher dropdown pill exists with compact styling", () => {
-      // Switcher pill trigger: h-8 px-2.5 rounded-lg border border-slate-200/80 bg-slate-50
-      expect(appLayoutSource).toMatch(/h-8\s+px-2\.5\s+rounded-lg\s+border\s+border-slate-200\/80/);
+      // Switcher pill trigger: h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80
+      expect(appLayoutSource).toMatch(/h-7\s+sm:h-8\s+px-1\.5\s+sm:px-2\.5\s+rounded-lg\s+border\s+border-slate-200\/80/);
       expect(appLayoutSource).toMatch(/org\?\.name\s*\|\|\s*"My Business"/);
     });
 

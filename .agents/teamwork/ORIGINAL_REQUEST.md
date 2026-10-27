@@ -1553,3 +1553,82 @@ Integrity mode: development
 ### Performance & UI Consistency
 - [ ] CRM pages load in under 500ms using parallel queries and cached endpoints.
 - [ ] All CRM sub-pages render the unified Command Center header matching CRMDashboard.tsx.
+
+
+## 2026-10-27T02:39:33Z
+
+# Teamwork Project Prompt — Universal Header Logo Architecture & Full CRM/POS Mobile Ergonomics
+
+> Status: Launched  
+> Goal: Execute multi-agent team across Universal Header and complete Mobile View overhaul  
+> Requested team: Full multi-agent teamwork system  
+
+Execute complete implementation for placing the official CredSmart platform shield logo permanently in the universal command bar alongside the tenant's store branding, and delivering dedicated touch-first mobile ergonomics across all pages of CRM and POS & Billing without altering desktop workflows.
+
+Working directory: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart`  
+Integrity mode: `development`
+
+---
+
+## 1. Requirements
+
+### R1. Permanent CredSmart Logo & Tenant Store Dual Lockup in Universal Header
+1. **Brand Architecture**:
+   - Far Left: Permanent CredSmart platform mark using `/favicon.png` or `CredSmartShieldIcon` (`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs`) paired with the styled `CredSmart` wordmark (`hidden sm:inline font-bold text-sm tracking-tight text-slate-900 dark:text-white`).
+   - Tenant Business Selector: Immediately adjacent (separated by a subtle 1px hairline divider `border-slate-200 dark:border-slate-800`), render the active Store Switcher dropdown pill displaying the tenant's store logo (`org?.logo_url` or `<Building2 />`) and `{org?.name}`.
+2. **Mobile Header Viewport (< 768px)**:
+   - Enforce a strict 48px slim header height (`h-12`).
+   - Compact 28x28px CredSmart Shield Logo paired with the compact active store pill.
+   - Search trigger, notification center bell, quick-create action button, and profile trigger fit cleanly with zero horizontal overflow or wrapping on standard 360px–430px screens.
+
+### R2. Touch-First Mobile POS Billing Terminal (`/pos`, `/checkout`)
+1. On viewports < 768px, replace the 2-column squished desktop workbench with a dedicated **Single-Column Mobile POS Terminal**:
+   - Sticky top bar: Back to dashboard button, quick barcode scan button, and product search input.
+   - Horizontal category chips (All, Grocery, Snacks, etc.) with 1-tap filtering.
+   - Scrollable high-density product cards (4-5 visible per scroll) with clear item name, price, stock badge, and 1-tap `+` / `-` quantity stepper.
+   - Floating Bottom Cart Dock (`fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]`): Displays total item count, grand total (₹), and a prominent "Review Cart & Checkout" CTA.
+   - 1-Tap Checkout Bottom Drawer: Slide-up drawer for customer details, payment method selection (Cash, UPI/QR, Card, Credit), and "Generate Bill & Print" CTA.
+
+### R3. Comprehensive Mobile CRM Suite Ergonomics (All CRM Pages)
+1. **CRM Command Centre (`/crm`, `/crm/dashboard`)**: Polish the mobile header and quick tools grid so that stats cards, roster list, and workspace shortcuts fit standard 360px–430px viewports with zero horizontal scrolling.
+2. **Task Management (`/crm/tasks`)**: Implement dedicated mobile card view with swipeable task status (To Do / In Progress / Completed), priority pills, and a bottom-sheet task creation drawer.
+3. **Salary & Payroll (`/crm/salary`)**: Replace the wide horizontal desktop `<table` on mobile with high-density staff payroll cards showing net pay, advance balance, and 1-tap payslip generation.
+4. **Role Management (`/crm/roles`)**: Ensure the staff provisioning form and role assignment matrix open in a touch-friendly full-height bottom drawer on mobile with large 44px tap targets.
+5. **Meet, Broadcasts, AI Assistant, Support**: Ensure clean mobile-first layout with bottom-anchored inputs, thumb-reachable action buttons, and zero edge clipping.
+
+### R4. Complete Mobile POS & Billing Ledger & Inventory Pages
+1. **Sales & Purchases (`/sales`, `/purchases`)**: On mobile (< 768px), display dense transaction cards (party name, invoice number, date, amount, status badge) with swipeable quick actions (print, WhatsApp share, edit/view).
+2. **Parties (`/customers`, `/suppliers`)**: Provide 4-5 cards per mobile viewport with 1-tap call and WhatsApp buttons, credit balance indicators, and quick ledger drawers.
+3. **Inventory & Godowns (`/inventory`, `/godown`, `/items`)**: Provide compact catalog cards with thumbnail, SKU, stock quantity pill, selling price, and quick stock adjustment button.
+4. **Reports (`/reports`)**: Format summary reports into mobile-optimized metric cards and collapsible category accordions.
+5. **Cash & Bank (`/cash-and-bank`)**: Responsive account cards and clean ledger transaction stream.
+
+### R5. Desktop View 100% Preservation (Zero Regression)
+1. All desktop layouts (>= 768px) must remain 100% pixel-perfect and functionally identical.
+2. Under no circumstance may any Supabase subscriptions, database schemas, calculation engines, or API routes be altered.
+
+---
+
+## 2. Acceptance Criteria
+
+### Universal Header
+- [ ] CredSmart shield icon and brand mark are permanently visible on the top-left across all desktop and mobile views.
+- [ ] Tenant store logo (`org?.logo_url`) and name are displayed inside the adjacent organization switcher pill.
+- [ ] Header height is strictly 52px on desktop and 48px on mobile with zero horizontal overflow on a 360px viewport.
+
+### Mobile POS Billing
+- [ ] Navigating to `/pos` on mobile (< 768px) presents the single-column touch terminal with category chips, product cards, floating bottom cart bar, and checkout drawer.
+- [ ] Mobile POS cart summary and checkout CTA are fixed at the bottom with proper `safe-area-inset-bottom`.
+
+### Mobile CRM Suite
+- [ ] All 9 CRM routes (`/crm`, `/crm/roles`, `/crm/attendance`, `/crm/salary`, `/crm/tasks`, `/crm/meet`, `/crm/broadcasts`, `/crm/ai`, `/crm/support`) render with zero horizontal scrollbar on a 375px mobile screen.
+- [ ] Salary management on mobile renders cards instead of overflowing desktop table rows.
+- [ ] Task management on mobile allows 1-tap status transitions and thumb-accessible task creation.
+
+### Mobile POS & Billing Data Pages
+- [ ] Sales, Purchases, Customers, Suppliers, and Inventory lists display dense responsive cards on mobile (4-5 items per viewport).
+- [ ] All touch targets meet or exceed 44x44px ergonomic standards.
+
+### Verification
+- [ ] Automated Vitest suite covers mobile responsive branching and header brand lockup.
+- [ ] Full production build (`npm run build`) completes with zero errors.

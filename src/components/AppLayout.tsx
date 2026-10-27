@@ -487,65 +487,51 @@ export default function AppLayout() {
           )}
         >
 
-            {/* LEFT: 28px Brand Mark + Menu Toggle + Org Switcher + Suite Switcher */}
+            {/* LEFT: Permanent CredSmart Shield Mark + Divider + Active Store Switcher Pill + Desktop Menu Controls */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
-              {/* Compact 28px Brand Mark & Wordmark with Org Logo Support */}
+              {/* Permanent CredSmart Platform Brand Mark */}
               <NavLink
                 to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
                 title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
-                className="flex items-center gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
               >
-                {org?.logo_url ? (
-                  <div className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-0.5 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                    <img
-                      src={org.logo_url}
-                      alt={org.name || "Business Logo"}
-                      className="w-full h-full object-contain rounded-md"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">
-                    <Sparkles className="w-3.5 h-3.5 fill-white/20 stroke-white" />
-                  </div>
-                )}
+                <div className="w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                  <img
+                    src="/favicon.png"
+                    alt="CredSmart Shield"
+                    className="w-full h-full object-contain select-none"
+                    loading="eager"
+                  />
+                </div>
                 <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
-                  {org?.name ? org.name : "CredSmart"}
+                  CredSmart
                 </span>
               </NavLink>
 
-              {/* Sidebar Menu Toggle Arrow */}
-              <button
-                type="button"
-                onClick={() => setSidebarOpen((v) => !v)}
-                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={sidebarOpen}
-                title={sidebarOpen ? "Close Menu" : "Open Menu"}
-                className={cn(
-                  "flex items-center justify-center w-7.5 h-7.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors select-none shadow-2xs shrink-0 active:scale-95",
-                  sidebarOpen
-                    ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400"
-                    : "bg-slate-50 dark:bg-slate-800/70 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 stroke-[2] transition-transform duration-200",
-                    sidebarOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
-                  )}
-                />
-              </button>
+              {/* 1px Hairline Divider */}
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" aria-hidden="true" />
 
-              {/* Dedicated Organization Switcher Dropdown Pill */}
+              {/* Dedicated Tenant Business Selector Dropdown Pill (Mobile & Desktop) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="hidden sm:flex h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none"
+                    className="flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]"
                     title={org?.name || "Select Business"}
                   >
-                    <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span className="max-w-[110px] lg:max-w-[140px] truncate">{org?.name || "My Business"}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                    {org?.logo_url ? (
+                      <img
+                        src={org.logo_url}
+                        alt={org?.name || "Store Logo"}
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded object-contain shrink-0 border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                    ) : (
+                      <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    )}
+                    <span className="truncate text-[11px] sm:text-xs font-semibold">
+                      {org?.name || "My Business"}
+                    </span>
+                    <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
@@ -605,13 +591,37 @@ export default function AppLayout() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Sidebar Menu Toggle Arrow — Desktop only */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((v) => !v)}
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={sidebarOpen}
+                title={sidebarOpen ? "Close Menu" : "Open Menu"}
+                className={cn(
+                  "hidden sm:flex items-center justify-center w-7.5 h-7.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors select-none shadow-2xs shrink-0 active:scale-95",
+                  sidebarOpen
+                    ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400"
+                    : "bg-slate-50 dark:bg-slate-800/70 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 stroke-[2] transition-transform duration-200",
+                    sidebarOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
+                  )}
+                />
+              </button>
+
               {/* Top-Level Interactive Suite Switcher */}
               {userRole !== "cashier" && (
-                <SuiteSwitcher
-                  onSuiteChange={(newSuite) => {
-                    navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
-                  }}
-                />
+                <div className="hidden sm:inline-flex">
+                  <SuiteSwitcher
+                    onSuiteChange={(newSuite) => {
+                      navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
+                    }}
+                  />
+                </div>
               )}
             </div>
 

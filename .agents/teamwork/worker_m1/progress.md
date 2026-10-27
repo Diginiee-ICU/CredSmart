@@ -1,17 +1,20 @@
-# Progress Log — worker_m1
+# Progress — Worker Milestone 1: Universal Header Dual Lockup
 
-**Last visited**: 2026-10-25T09:25:00Z  
-**Status**: COMPLETE — Milestone 1: CRM Roles & Tasks Modernization (`RoleManagement.tsx`, `Tasks.tsx`).
+Last visited: 2026-10-27T03:18:00Z
+Status: Completed
 
 ## Milestones & Checklist
-- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, PROJECT.md, explorer_survey_1/handoff.md, minimal-design-system.md
-- [x] Update BRIEFING.md and progress.md
-- [x] Inspect lines in `src/pages/crm/RoleManagement.tsx`
-- [x] Inspect lines in `src/pages/crm/Tasks.tsx`
-- [x] Implement mobile flat row modernization in `src/pages/crm/RoleManagement.tsx`
-- [x] Implement mobile flat row modernization in `src/pages/crm/Tasks.tsx`
-- [x] Run `node node_modules/typescript/bin/tsc --noEmit` and confirm 0 errors (exited code 0)
-- [x] Run `node node_modules/vite/bin/vite.js build` and confirm successful build (✓ built in 55.00s)
-- [x] Run `git status` to verify strictly only the 2 target files were modified and zero quarantine files were touched
-- [x] Author handoff report `handoff.md`
-- [x] Send completion message to parent orchestrator via `send_message`
+- [x] Initialized DISPATCH.md and BRIEFING.md
+- [x] Read ORIGINAL_REQUEST.md, explorer findings, and AppLayout.tsx
+- [x] Examine desktopShellMilestone2.challenger.test.tsx and mobileErgonomicsChallenger.test.ts
+- [x] Implement dual lockup in AppLayout.tsx
+  - Permanent CredSmart platform shield using `/favicon.png` in 28x28px/30x30px container
+  - Styled `CredSmart` wordmark (`hidden sm:inline`)
+  - 1px hairline divider (`h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1`)
+  - Responsive Tenant Store Switcher trigger pill displaying store logo/Building2 fallback and name/My Business fallback
+  - Desktop-only sidebar toggle (`hidden sm:flex`) and suite switcher (`hidden sm:inline-flex`)
+  - Strict 48px mobile height (`h-[calc(3rem+env(safe-area-inset-top,0px))]`) and 52px desktop height (`md:h-13`)
+- [x] Update desktopShellMilestone2.challenger.test.tsx to assert permanent /favicon.png shield mark & responsive trigger
+- [x] Create universalHeaderDualLockup.test.tsx with comprehensive static and empirical DOM tests
+- [x] Run vitest test suite & tsc --noEmit (all passed!)
+- [ ] Write handoff.md and send completion message to orchestrator

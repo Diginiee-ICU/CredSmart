@@ -1,14 +1,16 @@
-# Progress — Challenger 2 (Cache Segregation & Staff Provisioning)
+# Progress — Challenger 2 (Milestone 1)
 
-Last visited: 2026-10-26T20:42:30Z
+Last visited: 2026-10-27T03:29:30Z
 
 ## Status
-- [x] Initialized workspace and briefing
-- [x] Inspect ORIGINAL_REQUEST.md, PROJECT.md, and worker handoff.md
-- [x] Inspect implementation code (proxy/cache in index.js and staff provisioning in crm.js)
-- [x] Run empirical test command: `npx vitest run src/test/crmBackendApiM1.test.ts` (10/10 passed)
-- [x] Run empirical type check: `npx tsc --noEmit` (0 errors)
-- [x] Author and run adversarial stress oracle: `src/test/crmCacheAndProvisioningChallenger.test.ts` (26/26 passed)
-- [x] Adversarially stress-test cache segregation, TTL, headers, invalidation domains, password derivation edge cases, org isolation
-- [x] Synthesize findings in `challenge.md` and `handoff.md`
-- [ ] Send handoff message to orchestrator
+- [x] Initialized DISPATCH.md and BRIEFING.md
+- [x] Read context: ORIGINAL_REQUEST.md, PROJECT.md, worker_m1/handoff.md
+- [x] Inspect AppLayout.tsx changes and implementation
+- [x] Run required test suites and TypeScript checks:
+  - `src/test/desktopShellMilestone2.challenger.test.tsx` (19/19 passed)
+  - `src/test/universalHeaderDualLockup.test.tsx` (12/12 passed)
+  - `tsc --noEmit` (0 errors)
+- [x] Adversarial stress test on desktop preservation, hotkeys, and layout shift:
+  - Created `src/test/desktopAppLayoutAdversarialPreservation.challenger.test.tsx` (14/14 passed)
+- [x] Write handoff report with verdict: APPROVE
+- [ ] Send completion message to orchestrator

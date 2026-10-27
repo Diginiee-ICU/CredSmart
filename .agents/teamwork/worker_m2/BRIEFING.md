@@ -1,76 +1,94 @@
-# BRIEFING — 2026-10-25T09:44:00Z
+# BRIEFING — 2026-10-27T03:53:00Z
 
 ## Mission
-Modernize mobile list item containers across the core billing and inventory modules (`Sales.tsx`, `Purchases.tsx`, `Items.tsx`) by eliminating nested double borders and floating cards, replacing them with flat rows in clean divide-y containers while strictly preserving desktop views and quarantine files.
+Build and wire high-performance mobile POS billing terminal components (< 768px / < lg) for CredSmart with zero desktop regressions, full minimal design tokens compliance, and 100% test pass rate.
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m2
-- Original parent: 3044c8ce-523a-4157-917d-31b6f5d55c6a
-- Milestone: Milestone 2 — Screen-Fitted Desktop Shell & Productivity Layouts
-- Milestone: Milestone 2 — Core Billing & Inventory Modernization (2026-10-25)
-- Parent Orchestrator: 24d614cb-853d-49d4-9ac2-cf0090c93a62
+- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Milestone: Milestone 2 (Mobile POS Billing Terminal)
 
 ## 🔒 Key Constraints
-- DO NOT CHEAT: Genuine implementation, no hardcoded test results, no dummy facade.
-- Exclusively own and edit ONLY: `src/components/AppLayout.tsx`, `src/components/SuiteSwitcher.tsx`, `src/pages/POSBilling.tsx`.
-- STRICT EXCLUSION: DO NOT touch any of the 19 invoice files.
-- Desktop command header height exact 52px (`h-13`), 28px brand mark, visible Org Switcher, segmented Suite Switcher, central Command Palette (`⌘K`), Royal Blue split `+ New Invoice`, Live Sync dot.
-- Remove 3D perspective distortion and floating bottom-right watermark.
-- Monochromatic POS ribbon (`border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700`) with monospace badges.
-- Split POS right panel into 3 regions: Fixed Top Total, Scrollable Middle Body, Fixed Bottom Action Dock (Print [F6], Save [F7], WA).
-- Ensure 0 TypeScript errors (`cmd /c npx tsc --noEmit`), pass vitest suite, 0 eslint errors.
-- Milestone 2 (Core Billing & Inventory Modernization):
-  - Exclusive write ownership: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`.
-  - NEVER touch or modify any of the 19 quarantine files.
-  - Zero double borders on mobile outer wrappers.
-  - Mobile stream containers must use flat divide-y (`divide-y divide-slate-100 dark:divide-slate-800/60`).
-  - Mobile list rows must be flat `px-3.5 py-3` (zero individual border, zero rounded-xl, zero shadow-2xs).
-  - Touch targets must be >= 44px (`min-h-[44px]`).
-  - All typography >= 11px.
-  - 100% desktop invariance (`hidden md:...` completely preserved).
-  - Verify `tsc --noEmit` exits 0, `vite build` exits 0, `git status` verifies only assigned files modified.
+- EXCLUSIVE WRITE OWNERSHIP:
+  * src/pages/POS.tsx
+  * src/components/pos/MobilePOSTerminal.tsx
+  * src/components/pos/MobileProductCard.tsx
+  * src/components/pos/MobileCartDock.tsx
+  * src/components/pos/MobileCheckoutDrawer.tsx
+  * src/pages/POSBilling.tsx
+  * src/test/mobilePosTerminal.test.tsx
+- No modifying files outside exclusive write ownership.
+- Preserve 100% of the desktop 2-column workbench (`hidden lg:flex` / `lg:block`).
+- DO NOT alter desktop hotkeys, 3-region right panel, 9-column cart table, or comments expected by desktop shell challenger tests.
+- Strictly adhere to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md`.
+- No cheating, no hardcoded results, no dummy implementations.
 
 ## Current Parent
-- Conversation ID: 24d614cb-853d-49d4-9ac2-cf0090c93a62
-- Updated: 2026-10-25T09:44:00Z
+- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
+- Updated: not yet
 
 ## Task Summary
-- **What to build**: Modernize mobile view list item containers in `Purchases.tsx` and `Items.tsx`, and verify `Sales.tsx`.
-- **Success criteria**: Flat divide-y mobile list rows, zero nested double borders, >=44px touch targets, zero desktop regressions, `tsc --noEmit` exits 0, `vite build` exits 0.
-- **Interface contracts**: `orchestrator_mobile_cards/PROJECT.md`, `explorer_survey_2/handoff.md`, `minimal-design-system.md`.
-- **Code layout**: `src/pages/Sales.tsx`, `src/pages/Purchases.tsx`, `src/pages/Items.tsx`.
+- **What to build**: Mobile POS Billing Terminal for < 768px:
+  * `src/pages/POS.tsx` (re-exporting POSBilling mirroring Checkout.tsx)
+  * `src/components/pos/MobileProductCard.tsx` (high-density touch card with 1-tap stepper)
+  * `src/components/pos/MobileCartDock.tsx` (floating bottom dock with item count, total & CTA)
+  * `src/components/pos/MobileCheckoutDrawer.tsx` (slide-up bottom sheet drawer with customer, cart review, payment modes, and save/print CTAs)
+  * `src/components/pos/MobilePOSTerminal.tsx` (single-column mobile terminal with sticky header, category chips carousel, product stream, cart dock, and checkout drawer)
+  * Wire into `src/pages/POSBilling.tsx` sharing unified state with desktop workbench
+  * Unit/Integration test suite `src/test/mobilePosTerminal.test.tsx`
+- **Success criteria**:
+  * All tests pass: `mobilePosTerminal.test.tsx` (17/17), `desktopShellMilestone2.challenger.test.tsx` (19/19), `posBillingWorkbenchAdversarial.challenger.test.tsx` (10/10), `posBillingRemediation.test.tsx` (5/5)
+  * `tsc --noEmit` succeeds with 0 errors
+- **Interface contracts**: PROJECT.md, Explorer 2 analysis & handoff
+- **Code layout**: src/pages/, src/components/pos/, src/test/
 
 ## Key Decisions Made
-- `src/pages/Sales.tsx`: Verified line 940 (outer wrapper has no double border), line 942 (stream container is divide-y), lines 965-973 (flat rows with px-3.5 py-3), and lines 984, 1034-1065 (touch targets >= 44px). Left 100% intact as reference gold standard.
-- `src/pages/Purchases.tsx`:
-  - Outer wrapper (line 864): Replaced boxed container `rounded-xl border border-slate-200/80 dark:border-slate-800 ... shadow-2xs` with unbordered `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`.
-  - Mobile stream container (line 866): Replaced `p-2.5 pb-24 space-y-2.5` with flat hairline stream `px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60`.
-  - Mobile item row (lines 897-905): Replaced floating box `p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]` with flat row `px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2` (selected: `bg-amber-50/30 dark:bg-amber-950/20`, hover: `hover:bg-slate-50/50 dark:hover:bg-slate-800/30`).
-  - Action buttons (lines 958, 966, 1029, 1038): Refined `w-11 h-8.5 min-w-[44px] min-h-[44px]` to `w-11 h-11 min-w-[44px] min-h-[44px]` ensuring standard 44x44px touch target ergonomics.
-- `src/pages/Items.tsx`:
-  - Outer wrapper (line 1019): Replaced boxed container `border border-slate-200/80 dark:border-slate-800 rounded-xl ... shadow-2xs` with unbordered `flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden`.
-  - Mobile stream container (line 1021): Replaced `p-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] space-y-2` with flat hairline stream `px-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] divide-y divide-slate-100 dark:divide-slate-800/60`.
-  - Mobile item row (lines 1054-1060): Replaced floating box `p-3 rounded-xl border ... shadow-2xs active:scale-[0.99]` with flat row `px-3.5 py-3 transition-all bg-white dark:bg-slate-900 space-y-2` (selected: `bg-blue-50/30 dark:bg-blue-950/20`, hover: `hover:bg-slate-50/50 dark:hover:bg-slate-800/30`).
+- Used responsive conditional branching in `src/pages/POSBilling.tsx`: `isMobile ? <MobilePOSTerminal ... /> : <div className="flex flex-1 flex-col ...">{/* Desktop Workbench */}</div>`
+- Reused live reactive POS state (cart items, customers, totals, products, category, discounts) to ensure 100% parity between mobile and desktop with zero sync latency
+- Passed `activePartyProducts` to `MobilePOSTerminal` so party-custom pricing and restricted inventory rules seamlessly apply on mobile
+- Designed `MobileProductCard` with 4-5 items per viewport density (~72px-80px), 1-tap `+ Add` / stepper with semantic stock badges
+- Designed `MobileCartDock` with fixed bottom safe area inset padding (`pb-[max(0.625rem,env(safe-area-inset-bottom))]`)
+- Designed `MobileCheckoutDrawer` as a slide-up bottom sheet drawer with cart review, customer details, 1-tap payment modes (Cash, UPI QR, Card, Credit, Split), quick cash chips, and Save/Print CTAs
 
 ## Artifact Index
-- `.agents/teamwork/worker_m2/DISPATCH.md` — Dispatch assignment and logs
-- `.agents/teamwork/worker_m2/BRIEFING.md` — Working memory and status
-- `.agents/teamwork/worker_m2/progress.md` — Heartbeat and step tracking
-- `.agents/teamwork/worker_m2/handoff.md` — 5-component handoff report
+- DISPATCH.md — Initial orchestrator assignment
+- progress.md — Liveness heartbeat & task tracking
+- handoff.md — Final self-contained handoff report
+- src/pages/POS.tsx — Route alias re-exporting POSBilling
+- src/components/pos/MobileProductCard.tsx — High-density product card with stepper
+- src/components/pos/MobileCartDock.tsx — Floating bottom cart bar
+- src/components/pos/MobileCheckoutDrawer.tsx — Slide-up checkout bottom sheet drawer
+- src/components/pos/MobilePOSTerminal.tsx — Single-column mobile POS container
+- src/pages/POSBilling.tsx — Main terminal wired with MobilePOSTerminal for < 768px
+- src/test/mobilePosTerminal.test.tsx — Comprehensive 17-test verification suite
 
 ## Change Tracker
 - **Files modified**:
-  - `src/pages/Purchases.tsx`: Modernized mobile wrapper, stream container to divide-y, item rows to flat rows, and action button touch targets to 44x44px.
-  - `src/pages/Items.tsx`: Modernized mobile wrapper, stream container to divide-y, and item rows to flat rows.
-- **Build status**: Pass (`tsc --noEmit` -> 0 errors, `vite build` -> ✓ built in 32.87s)
+  * `src/pages/POS.tsx`: Created clean re-export of POSBilling mirroring Checkout.tsx
+  * `src/components/pos/MobileProductCard.tsx`: Created high-density touch card with 1-tap stepper
+  * `src/components/pos/MobileCartDock.tsx`: Created floating bottom dock with units, grand total, and checkout CTA
+  * `src/components/pos/MobileCheckoutDrawer.tsx`: Created slide-up bottom sheet drawer
+  * `src/components/pos/MobilePOSTerminal.tsx`: Created single-column mobile POS layout
+  * `src/pages/POSBilling.tsx`: Integrated MobilePOSTerminal on mobile (< 768px) while wrapping desktop workbench intact
+  * `src/test/mobilePosTerminal.test.tsx`: Authored full test suite
+- **Build status**: PASS (tsc --noEmit exits 0)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (41/41 vitest tests in `billingLifecycleEngine.test.ts` & `MobileInvoiceSuccessView.test.tsx`)
-- **Lint status**: Clean
-- **Tests added/modified**: Verified against existing test suite
+- **Build/test result**: PASS (51/51 tests passing across 4 suites)
+  * `mobilePosTerminal.test.tsx`: 17 passed
+  * `desktopShellMilestone2.challenger.test.tsx`: 19 passed
+  * `posBillingWorkbenchAdversarial.challenger.test.tsx`: 10 passed
+  * `posBillingRemediation.test.tsx`: 5 passed
+- **Lint status**: 0 TypeScript errors
+- **Tests added/modified**: 17 new tests in `src/test/mobilePosTerminal.test.tsx`
 
 ## Loaded Skills
-- `credsmart-minimal-design-system`: Minimal & fast-access tokens, screen-fitted viewports, mobile list modernization.
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\mobile-erp-redesign\SKILL.md
+- **Local copy**: Local methodology applied
+- **Core methodology**: Touch-first ergonomics, compact cards (4-5 per screen), bottom dock CTA, mobile drawers, 100% desktop preservation.
+- **Source**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md
+- **Local copy**: Local methodology applied
+- **Core methodology**: Minimalist design tokens, compact controls (h-8.5 action buttons, h-7 small buttons), IBM Plex Mono for numbers/currency, neutral slate palette.

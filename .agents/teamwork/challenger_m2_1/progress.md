@@ -1,23 +1,16 @@
-# Progress — challenger_m2_1
+# Progress Log - Challenger 1 (Milestone 2)
 
-Last visited: 2026-10-26T21:30:00Z
+Last visited: 2026-10-27T04:24:30Z
 
 ## Status
-- [x] Initialized DISPATCH.md, BRIEFING.md, and progress.md
-- [x] Read ORIGINAL_REQUEST.md (## 2026-10-26T19:54:47Z), PROJECT.md, and worker_m2_salary/handoff.md
-- [x] Inspect source code in `src/pages/crm/SalaryManagement.tsx`
-- [x] Inspect test code in `src/test/crmSalaryManagement.test.tsx`
-- [x] Run vitest suite to empirically verify worker's results (26/26 passed in 36.2s)
-- [x] Run regression test suites (`crmSalaryTypes.test.ts`, `crmPayrollUtils.test.ts` - 68/68 passed)
-- [x] Run `tsc --noEmit` (0 errors)
-- [x] Created adversarial empirical test suite testing:
-  - T1: Amber "Not Configured" badge and unconfigured count for staff without salary profile (PASS)
-  - T2: 1-click "Configure Salary" opens drawer with staff ID, name, role pre-selected and default values (PASS)
-  - T3: Saving creates profile and immediately moves staff from unconfigured to configured roster (PASS)
-  - T4: Section disappearance when all staff are configured (PASS)
-  - T5: Fallbacks for missing email and missing role (PASS)
-  - T6: Dynamic re-hydration upon `credsmart:crm_staff_updated` event (PASS)
-- [x] Cleaned up temporary test file
-- [x] Compiled `challenge.md`
-- [x] Compiled `handoff.md` with explicit Verdict: **APPROVE**
-- [ ] Send message to orchestrator
+- [x] Initial setup (DISPATCH.md, BRIEFING.md, progress.md)
+- [x] Inspect Worker M2 handoff, ORIGINAL_REQUEST.md, PROJECT.md
+- [x] Inspect Mobile POS implementation code & tests (`src/components/pos/*`, `src/pages/POSBilling.tsx`, `src/pages/POS.tsx`)
+- [x] Run baseline test suite (`cmd /c npx vitest run src/test/mobilePosTerminal.test.tsx`) -> 17/17 passed
+- [x] Create and run adversarial stress harness (`src/test/mobilePosTerminalAdversarial.challenger.test.tsx`) -> 5/5 passed
+- [x] Run desktop shell regression suite (`src/test/desktopShellMilestone2.challenger.test.tsx`) -> 19/19 passed
+- [x] Run POS remediation suite (`src/test/posBillingRemediation.test.tsx`) -> 5/5 passed
+- [x] Run TypeScript strict typecheck (`cmd /c npx tsc --noEmit`) -> exited with code 0
+- [x] Stress-test edge cases & empirical verification (category filtering, steppers, drawer, safe area insets, payment modes)
+- [ ] Write handoff report with verdict (APPROVE) in `handoff.md`
+- [ ] Send completion message to orchestrator

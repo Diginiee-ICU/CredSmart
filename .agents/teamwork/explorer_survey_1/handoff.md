@@ -1,148 +1,158 @@
-# Comprehensive Handoff Report: Survey of SalaryManagement & RoleManagement for CRM Mobile Redesign
+# Handoff Report: Universal Header Architecture (Survey 1)
 
-**Agent**: Survey Explorer 1  
-**Folder**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1`  
-**Parent Agent**: Project Orchestrator (`9b37b911-3daf-458a-8cd7-5e836d72b751`)  
-**Mission**: Deep analysis and implementation blueprint for `SalaryManagement.tsx` and `RoleManagement.tsx` against Mockup 1 (Payroll Engine) and Mockup 2 (Role Manager).
+**Agent**: Explorer Survey 1 (Universal Header Architecture)  
+**Parent / Recipient**: Orchestrator (`d2d7b35b-d1d5-45b5-9a65-d7a02d968987`)  
+**Date**: 2026-10-27  
+**Type**: Hard Handoff (Investigation & Architecture Survey Complete)  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Baseline Build & Tool Verification
-- **TypeScript Compilation Command**:
-  ```bash
-  node node_modules/typescript/bin/tsc --noEmit
-  ```
-  *Result*: Exited with code 0 (clean baseline, zero compilation errors).
-- **Vite Production Build Command**:
-  ```bash
-  node node_modules/vite/bin/vite.js build
-  ```
-  *Result*: Exited with code 0 (`✓ built in 1m 22s`).
-- **Protected Quarantine Files Verification**:
-  Verified all 19 protected invoice files listed in `ORIGINAL_REQUEST.md` (e.g., `MobileCreateInvoice.tsx`, `AddItemModal.tsx`, `documentsService.ts`, etc.) are untouched and neither imported nor modified in `src/pages/crm/SalaryManagement.tsx` or `src/pages/crm/RoleManagement.tsx`.
-
-### 1.2 Observations in `src/pages/crm/SalaryManagement.tsx` (Total 2,374 lines)
-1. **Entry Point & Gating**:
-   - Lines 154–164: Hook initialization (`useAuth`, `useOrganization`, `useCRMPermission("salary", "view")`).
-   - Line 1167: `<CRMPermissionGate module="salary" action="view" fallback={<SalaryAccessRestrictedFallback />}>`.
-2. **Desktop Layout Mixture**:
-   - Lines 1176–1228: Desktop `CRMPageHeader` with full breadcrumbs, Phase 3 live badge, and action buttons (`Refresh`, `Add New Profile`, `Record Advance`). No mobile-specific variant exists.
-   - Lines 1240–1270: `<div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">` rendering 4 large `CRMStatCard` components.
-   - Lines 1275–1345: Standard horizontal tab list with text and icons (`profiles`, `payroll`, `adjustments`, `payslips`).
-   - Lines 1353 & 1455: Tab 1 divides desktop and mobile with `hidden sm:block` (lines 1353–1452) and `block sm:hidden` (lines 1455–1495).
-   - Lines 1456–1460: Current empty state for salary profiles:
+1. **Header Location & Current Implementation**:
+   - The universal command bar is implemented in `src/components/AppLayout.tsx:482-964` inside a `<header>` tag.
+   - Current header height declaration (`src/components/AppLayout.tsx:484-487`):
      ```tsx
-     {salaryProfiles.length === 0 ? (
-       <div className="p-8 text-center text-xs text-slate-500">
-         No salary profiles configured yet.
-       </div>
-     ) : ...}
+     <header
+       className={cn(
+         "pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
+         isCrmDashboard && "hidden md:flex"
+       )}
+     >
      ```
-   - Lines 1488, 1949, 1957: Button sizing violation on mobile rows: `className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg ..."` (`h-11` violates the standard action button height of `h-8.5` / 34px).
-   - Lines 1502–1801 (Tab 2: Payroll Run): Contains month input, summary KPI bar (lines 1593–1610), desktop preview table (line 1613), and mobile cards (line 1746).
-   - Lines 1806–1969 (Tab 3: Advances & Deductions): Desktop table (line 1809) and mobile cards (line 1916).
-   - Lines 1974–2070 (Tab 4: My Payslips): Responsive card grid (`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5`).
-   - Lines 2080–2369: Two slide-over drawers: `Create/Edit Salary Profile` (lines 2080–2249) and `Record Advance/Adjustment` (lines 2254–2369).
+   - `isCrmDashboard && "hidden md:flex"` hides the universal header on `/crm` mobile viewports.
+   - `!isPosRoute` suppresses the header on `/pos` and `/checkout`, delegating to `POSBilling.tsx:2230` which provides its own full-screen terminal command bar.
 
-### 1.3 Observations in `src/pages/crm/RoleManagement.tsx` (Total 2,777 lines)
-1. **Entry Point & Permissions**:
-   - Lines 262–270: Hook initialization (`useAuth`, `useOrganization`, `useCRMPermission`).
-   - Line 268: `isSuperAdminOrOwner = hookIsSuperAdmin || userRole === "store_owner" || userRole === "super_admin" || userRole === "admin"`.
-2. **Current Layout Structure**:
-   - Lines 1373–1442: Top banner with `ArrowLeft` link, `RBAC Foundation` badge, title `"CRM Role & Permission Manager"`, and three action buttons (`Refresh`, `Add Staff User`, `Create Custom Role`).
-   - Lines 1462–1596: Section 1 ("Configured CRM Roles"): Renders all roles in a 1-to-3 column responsive grid of large cards. On mobile, this creates a long, tall vertical stack of role cards.
-   - Lines 1599–1755: Section 2 ("Granular Module Permissions Matrix"):
-     - Lines 1665–1753: Iterates over `CRM_MODULES` (`attendance`, `salary`, `tasks`, `meetings`, `broadcasts`, `ai_assistant`, `support` — total 14 actions).
-     - Lines 1713–1748: In expanded module state, mobile renders full-width switch rows (`px-3.5 py-3 flex items-center justify-between gap-3 min-h-[44px]`), resulting in 14 individual switch rows.
-   - Lines 1760–1960: Section 3 ("Staff CRM Role Assignments"):
-     - Lines 1777–1804: Segmented view mode toggle (`List View` / `Team Tree View`).
-     - Lines 1806–1826: Search bar and `Add Staff` button.
-     - Lines 1831–1955: Vertical staff list rows with `<Select>` role dropdown and promote/demote button.
-     - No horizontal avatar stream exists currently.
-   - Lines 2000–2775: Dialog modals: `Create/Edit Role` (lines 2000–2200), `Add Staff User` (lines 2200–2500), `Credentials Confirmation` (lines 2500–2650), `Delete Role Confirmation` (lines 2650–2775).
+2. **Current Brand & Store Identity Coupling Defect**:
+   - In `src/components/AppLayout.tsx:493-514`:
+     ```tsx
+     <NavLink
+       to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
+       title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
+       className="flex items-center gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
+     >
+       {org?.logo_url ? (
+         <div className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-0.5 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+           <img
+             src={org.logo_url}
+             alt={org.name || "Business Logo"}
+             className="w-full h-full object-contain rounded-md"
+           />
+         </div>
+       ) : (
+         <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">
+           <Sparkles className="w-3.5 h-3.5 fill-white/20 stroke-white" />
+         </div>
+       )}
+       <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
+         {org?.name ? org.name : "CredSmart"}
+       </span>
+     </NavLink>
+     ```
+   - When an organization has a logo (`org.logo_url`) or custom name (`org.name`), the CredSmart platform brand mark is entirely replaced by the store logo/name.
+   - If no organization logo exists, a generic blue box with a Lucide `Sparkles` icon is displayed instead of the official CredSmart shield mark.
 
-### 1.4 Mockup Specifications in `ORIGINAL_REQUEST.md` (lines 1324–1338)
-- **Mockup 1 (Payroll Engine - `SalaryManagement.tsx`)**:
-  - Header: Large bold `"Payroll Engine"`, subtitle `"Staff compensation & payroll runs"`, primary action `+ New Profile` (Royal Blue) + export icon button `[ ⎋ ]`.
-  - 2x2 Stat Badges: Compact horizontal pill badges with subtle colored icon containers (`Active Profiles: 0 >`, `Current Month: ₹0.00`, `Pending Advances: ₹0.00 >`, `Available Payslips: ...`).
-  - Segmented Tab Bar: Inset pill switcher (`Salary Profiles (0)`, `Payroll Run`, `Advances & Deductions`).
-  - Empty State Card: Clean white card (`rounded-2xl border border-slate-200/80 shadow-xs text-center p-8`) with vector illustration, `"No salary profiles configured yet."`, and helper prompt.
-  - Quick Actions Footer: Dual white pill buttons (`[ 📋 View Past Runs ]` and `[ ⚙️ Pay Settings ]`).
-- **Mockup 2 (Role Manager - `RoleManagement.tsx`)**:
-  - Header: `"Role Manager"`, subtitle `"Configure user permissions & teams"`, horizontal action chips (`[ ← ]`, `[ 🛡 RBAC Foundation ]`, `[ + Custom Role ]` (Royal Blue), `[ 👤+ Add User ]`).
-  - Active Role & Quick Stats Card: Crown icon `Super Admin`, `👑 Full Access` badge, `🔑 14 / 14 Actions • 👥 1 Staff`.
-  - Granular Module Permissions Matrix: Grouped accordion card with hairline row dividers (`divide-y divide-slate-100`). Each module header shows an icon, title, counter pill (e.g. `2 / 2 Enabled`), and expand chevron. Expanded state renders a clean **2-column grid of compact checkbox chips** (`[ ☑ View self and team daily records ]`, `[ ☑ Edit clock-in & approvals ]`).
-  - Staff Role Assignments: Segmented toggle (`List View` / `Team Tree View`), search input with `[ + Add ]` button, and **horizontal colored avatar stream** (`Suresh`, `Pushpa`, `Rahul`, etc.).
+3. **Store Switcher Dropdown Current State**:
+   - In `src/components/AppLayout.tsx:540-549`:
+     ```tsx
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+         <button
+           type="button"
+           className="hidden sm:flex h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none"
+           title={org?.name || "Select Business"}
+         >
+           <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+           <span className="max-w-[110px] lg:max-w-[140px] truncate">{org?.name || "My Business"}</span>
+           <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+         </button>
+       </DropdownMenuTrigger>
+     ```
+   - The Store Switcher pill is hardcoded with `hidden sm:flex`, rendering it invisible on mobile screens.
+   - It is located after the sidebar toggle arrow (`setSidebarOpen`), separating it from the primary brand lockup.
+
+4. **Brand Asset Verification**:
+   - `public/favicon.png` (169,112 bytes) is the definitive CredSmart platform shield asset.
+   - `src/components/public/CredSmartLogo.tsx:11-23` wraps `/favicon.png` as `CredSmartShieldIcon`:
+     ```tsx
+     export function CredSmartShieldIcon({ size = 36, className }: { size?: number; className?: string }) {
+       return (
+         <img
+           src="/favicon.png"
+           alt="CredSmart Shield Logo"
+           width={size}
+           height={size}
+           className={cn("shrink-0 object-contain drop-shadow-md select-none", className)}
+           style={{ width: size, height: size }}
+           loading="eager"
+         />
+       );
+     }
+     ```
+
+5. **Existing Automated Test Assertions**:
+   - `src/test/desktopShellMilestone2.challenger.test.tsx:55-64` asserts:
+     ```tsx
+     expect(appLayoutSource).toMatch(/w-7\s+h-7\s+rounded-lg\s+bg-blue-600/);
+     expect(appLayoutSource).toMatch(/<Sparkles[^>]*w-3\.5\s+h-3\.5/);
+     expect(appLayoutSource).toMatch(/CredSmart<\/span>/);
+     ```
+   - `src/test/mobileErgonomicsChallenger.test.ts:186-207` asserts `flex flex-col h-screen w-full overflow-hidden` and `calc(6rem + env(safe-area-inset-bottom, 0px))`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Step 1: Baseline Preservation Guarantee**
-   - Observations 1.1 and 1.2 demonstrate that both pages contain mature desktop layouts, data loading mechanisms, and modal forms.
-   - Wrapping the existing desktop layout inside `<div className="hidden md:block ...">` ensures that desktop users (viewports >= 768px) experience **zero visual or functional regression**.
-   - Preserving all existing hooks, Supabase queries, and state variables (`salaryProfiles`, `payrollRuns`, `roles`, `matrixState`, etc.) means the business logic remains single-sourced.
+1. **Observation 2 & 4** show that the top-left mark currently renders the tenant's store logo or a generic Sparkles placeholder.  
+   → **Inference 1**: To satisfy Requirement R1, the platform mark must be permanently decoupled from `org.logo_url`. The container must unconditionally render `/favicon.png` inside `w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs` paired with `<span className="hidden sm:inline font-bold text-sm tracking-tight text-slate-900 dark:text-white">CredSmart</span>`.
 
-2. **Step 2: Resolving the SalaryManagement Mobile Gap (Mockup 1)**
-   - In `SalaryManagement.tsx`, adding `<div className="block md:hidden pb-24 px-3.5 pt-3 space-y-3.5">`:
-     - The mobile header introduces the bold title `"Payroll Engine"`, `"Staff compensation & payroll runs"`, the Royal Blue `+ New Profile` CTA (`openCreateProfileDrawer`), and the `[ ⎋ ]` export button (`handleRefresh`), satisfying Mockup 1 specification.
-     - The 2x2 stat badges map directly to `activeProfilesCount`, `currentRun?.total_payout`, `totalPendingAdvanceAmount`, and `myPayslips.length`, arranged as compact horizontal pills with colored icon containers and right chevrons that switch `activeTab`.
-     - The segmented pill switcher toggles `activeTab` between `profiles`, `payroll`, and `adjustments`.
-     - When `salaryProfiles.length === 0`, Tab 1 renders the white empty state card with circular vector icon and `+ Add First Profile` CTA.
-     - When `salaryProfiles.length > 0`, it renders minimal `divide-y` rows without oversized `h-11` buttons, fixing the design system violation.
-     - The bottom quick actions render dual pill buttons `[ 📋 View Past Runs ]` (triggers `setActiveTab("payroll")`) and `[ ⚙️ Pay Settings ]`.
+2. **Observation 3** shows that the Store Switcher dropdown pill is placed after the sidebar menu toggle and hidden on mobile via `hidden sm:flex`.  
+   → **Inference 2**: The Store Switcher pill must be moved immediately adjacent to the platform mark, separated by a 1px hairline divider (`border-slate-200 dark:border-slate-800`), and its trigger must be updated to support mobile screens (`flex h-7 sm:h-8 px-1.5 sm:px-2.5 max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]`). It must display `org?.logo_url` (or `<Building2 />`) and `{org?.name || "My Business"}`.
 
-3. **Step 3: Resolving the RoleManagement Mobile Gap (Mockup 2)**
-   - In `RoleManagement.tsx`, adding `<div className="block md:hidden pb-24 px-3 pt-2.5 space-y-3.5 bg-slate-50/50 min-h-screen">`:
-     - The mobile header renders `"Role Manager"`, subtitle `"Configure user permissions & teams"`, and horizontal action chips: back arrow `[ ← ]`, soft badge `[ 🛡 RBAC Foundation ]`, Royal Blue `[ + Custom Role ]` (`openCreateRoleModal`), and `[ 👤+ Add User ]` (`openAddStaffModal`), satisfying Mockup 2 specification.
-     - Above the permissions matrix, a horizontal role selector pill bar allows switching between roles, while the **Active Role Card** displays the role's icon, crown badge (if Super Admin), `14 / 14 Actions`, and staff count.
-     - The Granular Permissions Matrix accordion transforms the expanded module from 14 full-width switch rows into a **2-column grid of compact checkbox chips** (`grid grid-cols-2 gap-1.5` with `Checkbox` and `handleToggleAction(mod.id, act.id)`), reducing scroll depth by ~60% and matching Mockup 2.
-     - The Staff Role Assignments section adds the **horizontal colored avatar stream** showing staff initials in colored circular badges (`w-10 h-10 rounded-full font-bold text-white relative`), with crown emojis on Super Admins, followed by list rows with role select and promote/demote buttons.
+3. **Observation 1 & Mobile Math**:  
+   On a 360px viewport:
+   - Available width after 10px margins (`px-2.5`): 340px.
+   - Left Dual Lockup (Shield 28px + gap 4px + Divider 1px + gap 4px + Compact Store Pill 75px): 112px.
+   - Right Control Group (Search 30px + Action(+) 30px + Bell 30px + Profile 30px + 3 gaps of 6px): 138px.
+   - Total width: 112px + 138px = 250px.
+   - Remaining buffer: 340px - 250px = 90px.  
+   → **Inference 3**: Enforcing `hidden sm:flex` on the sidebar chevron and `hidden sm:inline-flex` on SuiteSwitcher guarantees zero horizontal overflow, zero wrapping, and zero horizontal scrollbar on screens from 360px to 430px, while mobile navigation is provided by the bottom thumb dock (`AppSidebar.tsx:258-505`).
 
-4. **Step 4: Design System & Quarantine Integrity**
-   - Observation 1.1 proves that none of the 19 quarantine files are touched.
-   - Sizing tokens comply with minimal-design-system.md: `h-8.5 px-3 rounded-lg text-xs font-semibold` standard CTA, `h-7 px-2.5 rounded-md text-[11px]` small button, zero `h-11` bloated buttons, `'Inter'` text with no sub-11px fonts, `'IBM Plex Mono'` with `tabular-nums` for currency figures, and Royal Blue `bg-blue-600` accent.
+4. **Observation 1 (`isCrmDashboard && "hidden md:flex"`)**:  
+   → **Inference 4**: Removing this condition allows the universal header to render uniformly on `/crm` mobile, eliminating the need for the redundant mobile header in `CRMDashboard.tsx:472-517`.
+
+5. **Observation 5 (`desktopShellMilestone2.challenger.test.tsx`)**:  
+   → **Inference 5**: Replacing `<Sparkles>` and `bg-blue-600` with the permanent `/favicon.png` shield mark requires updating lines 55–64 of `desktopShellMilestone2.challenger.test.tsx` to prevent false-positive test regressions.
 
 ---
 
 ## 3. Caveats
 
-1. **Quarantine Isolation**: Absolutely zero edits may be made to any of the 19 invoice quarantine files.
-2. **Offline LocalStorage Resilience**: Both pages maintain `localStorage` caching prefixes (`credsmart_crm_salary_profiles_`, `credsmart_crm_roles_`, etc.). These cache reads and writes must remain intact.
-3. **Responsive Breakpoint Standard**: The app standardizes on `md` (768px) for desktop vs mobile divergence. Do not use `sm` for the root container divergence.
-4. **No caveats** regarding business logic or database schema changes — all mutations utilize existing Supabase services and React hooks.
+1. **POS Billing Route Preservation**: The `/checkout` and `/pos` routes intentionally bypass `AppLayout.tsx`'s header via `!isPosRoute` and render their own specialized terminal header in `POSBilling.tsx:2230`. This is intentional and preserved.
+2. **Legacy Challenger Test Dependencies**: `desktopShellMilestone2.challenger.test.tsx` statically audits `AppLayout.tsx` for `bg-blue-600` and `<Sparkles`. When the implementer updates to the permanent CredSmart shield mark, this test file will need its assertion adjusted to match the new permanent brand mark.
+3. **No Code Written**: Per the read-only Explorer role, no application source files or tests were modified during this investigation.
 
 ---
 
 ## 4. Conclusion
 
-Both `SalaryManagement.tsx` and `RoleManagement.tsx` are fully understood, syntactically clean, and ready for surgical mobile redesign by the Worker agent. The implementation blueprint provides:
-- Exact JSX layouts for Mockup 1 (`SalaryManagement.tsx`) and Mockup 2 (`RoleManagement.tsx`).
-- Complete preservation of desktop views via `hidden md:block`.
-- Seamless binding of all existing state variables, hooks, drawer controllers, and action handlers.
-- Total compliance with CredSmart minimal design tokens and 19-file quarantine isolation.
+The Universal Header architecture is completely mapped, verified, and ready for surgical implementation:
+1. `src/components/AppLayout.tsx` lines 482–565 must be updated with the Dual Lockup: permanent CredSmart Shield Mark (`/favicon.png`) on the far left, followed by a 1px hairline divider, followed immediately by the responsive active Store Switcher dropdown pill.
+2. Desktop viewports (>= 768px) maintain the 52px command bar height (`md:h-13`), centered `⌘K` command palette, Royal Blue split button, and desktop suite switcher with 100% preservation.
+3. Mobile viewports (< 768px) enforce strict 48px height (`h-12`), 28x28px shield logo, compact store pill, and compact 30x30px right-hand controls with 90px of clearance on 360px viewports (zero horizontal overflow).
 
 ---
 
 ## 5. Verification Method
 
-To independently verify the worker's implementation:
-1. **TypeScript Typecheck**:
-   ```powershell
-   node node_modules/typescript/bin/tsc --noEmit
-   ```
-   *Expected*: Exit code 0, zero errors.
-2. **Vite Production Bundler**:
-   ```powershell
-   node node_modules/vite/bin/vite.js build
-   ```
-   *Expected*: Complete with `✓ built` and zero syntax or import errors.
-3. **Quarantine File Audit**:
-   Verify that the 19 files listed in `ORIGINAL_REQUEST.md` have unchanged modification timestamps and zero git diffs.
-4. **Desktop Layout Spot-Check**:
-   In desktop viewports (>= 768px), inspect that `CRMPageHeader`, `CRMStatCard`, desktop tables (`CRMDataTable`), and action buttons render without alteration.
-5. **Mobile Viewport Inspection (< 768px)**:
-   - In `SalaryManagement.tsx`: Check for "Payroll Engine" header, `+ New Profile` Royal Blue button, `[ ⎋ ]` export button, 2x2 stat badges, segmented tab bar, empty state illustration card, and dual quick action pills at bottom.
-   - In `RoleManagement.tsx`: Check for "Role Manager" header, horizontal action chips, Active Role card with quick stats, 2-column checkbox chips in module accordion, and horizontal colored avatar stream in Staff Assignments.
+To independently verify the architecture and recommendations:
+1. **Source Code Inspection**:
+   - Inspect `src/components/AppLayout.tsx:482-606` to verify current brand replacement flaw and `hidden sm:flex` store switcher.
+   - Inspect `public/favicon.png` and `src/components/public/CredSmartLogo.tsx:11-23` to confirm the platform shield mark.
+2. **Analysis Report**:
+   - Review complete architectural specification, before/after code snippets, and pixel budget math in:
+     `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\analysis.md`.
+3. **Automated Vitest Execution**:
+   - Run: `cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx`
+   - Run: `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts`
+   - Run: `cmd /c npx tsc --noEmit`
