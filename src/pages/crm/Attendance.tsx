@@ -749,7 +749,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist attendance changes locally and in Supabase
   const persistAttendance = useCallback(
     async (updatedRecords: CRMAttendanceRecord[]) => {
-      if (loadedOrgRef.current !== effectiveOrgId) return;
+      loadedOrgRef.current = effectiveOrgId;
       setAttendanceRecords(updatedRecords);
       try {
         localStorage.setItem(
@@ -766,7 +766,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist geofences locally and in Supabase
   const persistGeofences = useCallback(
     async (updatedGeofences: CRMGeolocation[]) => {
-      if (loadedOrgRef.current !== effectiveOrgId) return;
+      loadedOrgRef.current = effectiveOrgId;
       setGeofences(updatedGeofences);
       try {
         localStorage.setItem(
@@ -783,7 +783,7 @@ export default function Attendance(): React.ReactElement {
   // Helper to persist requests locally
   const persistRequests = useCallback(
     async (updatedRequests: CRMAttendanceRequest[]) => {
-      if (loadedOrgRef.current !== effectiveOrgId) return;
+      loadedOrgRef.current = effectiveOrgId;
       setRequests(updatedRequests);
       try {
         localStorage.setItem(
@@ -1124,6 +1124,11 @@ export default function Attendance(): React.ReactElement {
         is_active: geofenceForm.is_active,
       };
 
+      const nextGeos = geofences.map((g) => (g.id === updated.id ? updated : g));
+      setGeofences(nextGeos);
+      persistGeofences(nextGeos);
+      toast({ title: "Location Updated", description: `${updated.name} has been updated.` });
+
       try {
         await crmApi.updateCRMGeolocation(
           updated.id,
@@ -1139,10 +1144,6 @@ export default function Attendance(): React.ReactElement {
       } catch (err) {
         console.warn("API geofence update failed:", err);
       }
-
-      const nextGeos = geofences.map((g) => (g.id === updated.id ? updated : g));
-      await persistGeofences(nextGeos);
-      toast({ title: "Location Updated", description: `${updated.name} has been updated.` });
     } else {
       // Create new
       const newGeo: CRMGeolocation = {
@@ -1155,6 +1156,11 @@ export default function Attendance(): React.ReactElement {
         is_active: geofenceForm.is_active,
         created_at: nowIso,
       };
+
+      const nextGeos = [...geofences, newGeo];
+      setGeofences(nextGeos);
+      persistGeofences(nextGeos);
+      toast({ title: "Location Added ✓", description: `${newGeo.name} registered as an active geofence.` });
 
       try {
         await supabase.from("crm_geolocations").insert({
@@ -1186,10 +1192,6 @@ export default function Attendance(): React.ReactElement {
       } catch (err) {
         console.warn("API geofence insert failed:", err);
       }
-
-      const nextGeos = [...geofences, newGeo];
-      await persistGeofences(nextGeos);
-      toast({ title: "Location Added ✓", description: `${newGeo.name} registered as an active geofence.` });
     }
 
     setIsGeofenceModalOpen(false);
@@ -1323,6 +1325,14 @@ export default function Attendance(): React.ReactElement {
       updated_at: nowIso,
     };
 
+    const nextRequests = requests.map((r) => (r.id === req.id ? updatedRequest : r));
+    setRequests(nextRequests);
+    persistRequests(nextRequests);
+    toast({
+      title: decision === "approved" ? "Request Approved ✓" : "Request Rejected",
+      description: `Attendance correction for ${req.date} has been marked as ${decision}.`,
+    });
+
     // If approved, update or insert into attendance
     if (decision === "approved" && req.requested_clock_in && req.requested_clock_out) {
       const inTime = new Date(req.requested_clock_in).getTime();
@@ -1361,7 +1371,8 @@ export default function Attendance(): React.ReactElement {
       const filtered = attendanceRecords.filter(
         (a) => !(a.staff_id === req.staff_id && a.date === req.date)
       );
-      await persistAttendance([updatedAttendance, ...filtered]);
+      setAttendanceRecords([updatedAttendance, ...filtered]);
+      persistAttendance([updatedAttendance, ...filtered]);
 
       try {
         await supabase
@@ -1409,9 +1420,6 @@ export default function Attendance(): React.ReactElement {
         console.warn("API upsert on regularise approval failed:", err);
       }
     }
-
-    const nextRequests = requests.map((r) => (r.id === req.id ? updatedRequest : r));
-    await persistRequests(nextRequests);
 
     try {
       await supabase
@@ -2828,7 +2836,7 @@ export default function Attendance(): React.ReactElement {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {rec.staff_name ? `${rec.staff_name}\u200B` : "Staff"}
+                          {rec.staff_name || "Staff"}
                         </span>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                           <span>In: {formatTimeDisplay(rec.clock_in)}</span>

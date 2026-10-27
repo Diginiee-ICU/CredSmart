@@ -469,7 +469,7 @@ export default function CRMDashboard(): React.ReactElement {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - Exact Structural Fidelity to Reference Image
           ========================================================================= */}
-      <div className="block md:hidden px-4 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] space-y-4 max-w-md mx-auto">
+      <div className="block md:hidden px-3.5 pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))] space-y-3.5 max-w-md mx-auto w-full overflow-hidden">
         {/* Top App Bar: CredSmart dropdown | [ POS | ● CRM ] | Refresh */}
         <div className="flex items-center justify-between gap-2">
           {/* Left: CredSmart Brand Dropdown Pill */}
@@ -553,32 +553,31 @@ export default function CRMDashboard(): React.ReactElement {
         </div>
 
         {/* Title & Role Stack Row */}
-        <div className="flex items-start justify-between gap-2 pt-1">
-          <div>
-            <h1 className="text-[22px] font-extrabold text-[#0F172A] dark:text-white tracking-tight leading-tight">
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-[22px] font-extrabold text-[#0F172A] dark:text-white tracking-tight leading-tight truncate">
               <span className="sr-only">CRM </span>Command Center
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">
               Live Workforce Pulse
             </p>
           </div>
 
-          <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link
               to="/crm/roles?view=tree"
-              className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors"
+              className="h-8 px-2.5 rounded-lg text-xs font-semibold border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors shadow-2xs active:scale-95"
             >
-              <span>[</span>
-              <Crown className="w-3.5 h-3.5 stroke-[2] text-slate-700 dark:text-slate-300" />
-              <span>Org Tree ]</span>
+              <Crown className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden xs:inline">Tree</span>
             </Link>
 
             <Link
               to={ROUTE_PATHS.crmRoles}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold bg-[#0B1536] hover:bg-slate-900 text-white shadow-2xs active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-[#0B1536] hover:bg-slate-900 text-white shadow-2xs active:scale-95 transition-all"
             >
               <Shield className="w-3.5 h-3.5 stroke-[2]" />
-              <span>Role Mgmt</span>
+              <span>Roles</span>
             </Link>
           </div>
         </div>
@@ -600,10 +599,10 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.todayAttendance}&#8203;
+                {stats.todayAttendance}
               </span>
               <span className="font-mono text-xs text-slate-400">
-                / {stats.staffCount}&#8203;
+                / {stats.staffCount}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
             </div>
@@ -624,7 +623,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.pendingTasks}&#8203;
+                {stats.pendingTasks}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -640,12 +639,12 @@ export default function CRMDashboard(): React.ReactElement {
                 <Radio className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                Broadcasts&#8203;
+                Broadcasts
               </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.unreadBroadcasts}&#8203;
+                {stats.unreadBroadcasts}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -666,7 +665,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.upcomingMeetings}&#8203;
+                {stats.upcomingMeetings}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -754,69 +753,131 @@ export default function CRMDashboard(): React.ReactElement {
             WORKSPACE TOOLS
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Tool 1: Team Meet */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Tool 1: Salary & Payroll */}
+            <Link
+              to={ROUTE_PATHS.crmSalary}
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-[#FF6A00] flex items-center justify-center shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    Salary & Payroll
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Disbursals
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </Link>
+
+            {/* Tool 2: Team Meet */}
             <Link
               to={ROUTE_PATHS.crmMeet}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] dark:bg-purple-950/40 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#EDE9FE] dark:bg-purple-950/40 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center shrink-0">
                   <Video className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                  Team Meet
-                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    Team Meet
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Video Huddles
+                  </span>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
             </Link>
 
-            {/* Tool 2: Broadcasts */}
+            {/* Tool 3: Broadcasts */}
             <Link
               to={ROUTE_PATHS.crmBroadcasts}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#FFE4E6] dark:bg-rose-950/40 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#FFE4E6] dark:bg-rose-950/40 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
                   <Radio className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                  Broadcasts{"\u200B"}
-                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    Broadcasts
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Announcements
+                  </span>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
             </Link>
 
-            {/* Tool 3: AI Assistant */}
+            {/* Tool 4: AI Assistant */}
             <Link
               to={ROUTE_PATHS.crmAiAssistant}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#DBEAFE] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#DBEAFE] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                  AI Assistant
-                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    AI Assistant
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Copilot
+                  </span>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
             </Link>
 
-            {/* Tool 4: Support Desk */}
+            {/* Tool 5: Support Desk */}
             <Link
               to={ROUTE_PATHS.crmSupport}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99]"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#CCFBF1] dark:bg-teal-950/40 text-[#0D9488] dark:text-teal-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#CCFBF1] dark:bg-teal-950/40 text-[#0D9488] dark:text-teal-400 flex items-center justify-center shrink-0">
                   <Headset className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                  Support {"\u200B"}Desk
-                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    Support Desk
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Tickets & SLA
+                  </span>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+            </Link>
+
+            {/* Tool 6: Role Management */}
+            <Link
+              to={ROUTE_PATHS.crmRoles}
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all active:scale-[0.99] min-w-0"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                    Role Matrix
+                  </span>
+                  <span className="text-[11px] text-slate-400 truncate block">
+                    Permissions
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
             </Link>
           </div>
         </div>

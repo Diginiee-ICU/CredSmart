@@ -2736,49 +2736,105 @@ export default function SalaryManagement(): React.ReactElement {
                   (hasGeneratedPreview
                     ? previewPayslips.map((p) => ({
                         id: p.staffId,
+                        staffId: p.staffId,
                         name: staffDirectory[p.staffId]?.name || p.staffId,
                         email: staffDirectory[p.staffId]?.email || "",
                         gross: p.grossSalary,
                         net: p.netSalary,
                         deductions: p.lopDeduction + p.pfDeduction + p.esiDeduction + p.advanceDeduction,
                         present: p.presentDays,
+                        raw: p,
                       }))
                     : currentMonthPayslips.map((s) => ({
                         id: s.id,
+                        staffId: s.staff_id,
                         name: s.staff_name || "Staff Member",
                         email: s.staff_email || "",
                         gross: Number(s.gross_salary || 0),
                         net: Number(s.net_salary || 0),
                         deductions: Number(s.lop_deduction || 0) + Number(s.pf_deduction || 0) + Number(s.esi_deduction || 0) + Number(s.advance_deduction || 0),
                         present: s.present_days,
+                        raw: s,
                       }))
-                  ).map((item) => (
-                    <div key={item.id} className="p-3 space-y-1.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{item.name}</h4>
-                          <p className="text-[11px] text-slate-400 truncate">{item.email}</p>
+                  ).map((item) => {
+                    const staffAdvance = adjustments
+                      .filter((a) => (a.staff_id === item.staffId || a.staff_name === item.name) && a.type === "advance" && a.status === "approved")
+                      .reduce((sum, a) => sum + Number(a.amount || 0), 0);
+
+                    return (
+                      <div key={item.id} className="p-3 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">{item.name}</h4>
+                            <p className="text-[11px] text-slate-400 truncate">{item.email}</p>
+                          </div>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded text-xs border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                            {formatIndianCurrency(item.net)}
+                          </span>
                         </div>
-                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded text-xs border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
-                          {formatIndianCurrency(item.net)}
-                        </span>
+                        <div className="grid grid-cols-3 gap-2 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                          <div>
+                            <span className="text-slate-400">Gross: </span>
+                            <span className="font-mono font-semibold text-slate-900 dark:text-white">{formatIndianCurrency(item.gross)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Ded: </span>
+                            <span className="font-mono text-rose-600 font-semibold">{formatIndianCurrency(item.deductions)}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-slate-400">Present: </span>
+                            <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.present}d</span>
+                          </div>
+                        </div>
+                        <div className="pt-1.5 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/60">
+                          {staffAdvance > 0 ? (
+                            <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60 font-mono">
+                              Advance Due: {formatIndianCurrency(staffAdvance)}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">No advance due</span>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const slipPayload: CrmPayslip = item.raw && "payment_status" in item.raw
+                                ? (item.raw as CrmPayslip)
+                                : {
+                                    id: item.id,
+                                    org_id: orgId || "",
+                                    payroll_run_id: currentRun?.id || "preview",
+                                    staff_id: item.staffId,
+                                    staff_name: item.name,
+                                    staff_email: item.email,
+                                    month_year: targetMonthYear,
+                                    salary_type: "monthly",
+                                    gross_salary: item.gross,
+                                    net_salary: item.net,
+                                    lop_deduction: 0,
+                                    pf_deduction: 0,
+                                    esi_deduction: 0,
+                                    advance_deduction: 0,
+                                    overtime_amount: 0,
+                                    bonus_amount: 0,
+                                    present_days: item.present,
+                                    total_days_in_month: 30,
+                                    working_days_in_month: 26,
+                                    payment_status: "paid",
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString(),
+                                  };
+                              handleDownloadPayslip(slipPayload);
+                            }}
+                            className="min-h-[44px] h-11 px-3 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700 hover:border-blue-600 hover:text-blue-600 flex items-center gap-1.5 shrink-0 active:scale-95"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download Payslip</span>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                        <div>
-                          <span className="text-slate-400">Gross: </span>
-                          <span className="font-mono font-semibold text-slate-900 dark:text-white">{formatIndianCurrency(item.gross)}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400">Ded: </span>
-                          <span className="font-mono text-rose-600 font-semibold">{formatIndianCurrency(item.deductions)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-slate-400">Present: </span>
-                          <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.present}d</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

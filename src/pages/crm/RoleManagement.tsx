@@ -1735,7 +1735,7 @@ export default function RoleManagement(): React.ReactElement {
                   <div key={mod.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
                     <div
                       onClick={() => toggleModuleAccordion(mod.id)}
-                      className="flex items-center justify-between gap-2 p-1.5 -mx-1.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer select-none"
+                      className="flex items-center justify-between gap-2 p-2 sm:p-1.5 -mx-1.5 rounded-xl hover:bg-slate-50 min-h-[44px] transition-colors cursor-pointer select-none"
                     >
                       <div>
                         <div className="flex items-center gap-2">
@@ -2408,7 +2408,7 @@ export default function RoleManagement(): React.ReactElement {
                         {staff.name.split(" ")[0]}
                       </span>
                       <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-full">
-                        {assignedRole?.name ? assignedRole.name + "\u200B" : "No CRM"}
+                        {assignedRole?.name || "No CRM"}
                       </span>
                     </div>
                   );
@@ -2446,7 +2446,7 @@ export default function RoleManagement(): React.ReactElement {
                               {staff.name}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                              {assignedRole?.name ? assignedRole.name + "\u200B" : "No CRM Access"}
+                              {assignedRole?.name || "No CRM Access"}
                             </span>
                           </div>
                         </div>
@@ -2534,7 +2534,8 @@ export default function RoleManagement(): React.ReactElement {
       {/* MODAL: CREATE / EDIT CUSTOM ROLE */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               {editingRole ? `Edit Role: ${editingRole.name}` : "Create Custom CRM Role"}
@@ -2817,7 +2818,8 @@ export default function RoleManagement(): React.ReactElement {
       {/* MODAL: DELETE ROLE CONFIRMATION */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-rose-600" />
@@ -2854,7 +2856,8 @@ export default function RoleManagement(): React.ReactElement {
       {/* MODAL: ADD STAFF USER */}
       {/* ───────────────────────────────────────────────────────────── */}
       <Dialog open={addStaffModalOpen} onOpenChange={setAddStaffModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-lg max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
           <DialogHeader>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">

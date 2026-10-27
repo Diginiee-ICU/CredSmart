@@ -184,6 +184,7 @@ export default function Tasks(): React.ReactElement {
 
   const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [mobileStatusTab, setMobileStatusTab] = useState<"all" | TaskStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1099,180 +1100,376 @@ export default function Tasks(): React.ReactElement {
 
           {/* View Container */}
           {viewMode === "kanban" ? (
-            /* Kanban Board */
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-              {(
-                [
-                  { status: "todo", label: "To Do", color: "border-slate-300 bg-slate-50/50" },
-                  { status: "in_progress", label: "In Progress", color: "border-blue-300 bg-blue-50/30" },
-                  { status: "review", label: "Under Review", color: "border-amber-300 bg-amber-50/30" },
-                  { status: "done", label: "Completed", color: "border-emerald-300 bg-emerald-50/30" },
-                ] as const
-              ).map((col) => {
-                const colTasks = filteredTasks.filter((t) => t.status === col.status);
-                return (
-                  <div
-                    key={col.status}
-                    className="flex flex-col rounded-xl md:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-3 min-h-0 md:min-h-[380px]"
-                  >
-                    <div className="flex items-center justify-between pb-2.5 md:pb-3 px-1">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
-                        {col.label}
-                      </span>
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold font-mono bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {colTasks.length}
-                      </span>
-                    </div>
+            <>
+              {/* Desktop Kanban Board */}
+              <div className="hidden md:grid md:grid-cols-4 gap-4 items-start">
+                {(
+                  [
+                    { status: "todo", label: "To Do", color: "border-slate-300 bg-slate-50/50" },
+                    { status: "in_progress", label: "In Progress", color: "border-blue-300 bg-blue-50/30" },
+                    { status: "review", label: "Under Review", color: "border-amber-300 bg-amber-50/30" },
+                    { status: "done", label: "Completed", color: "border-emerald-300 bg-emerald-50/30" },
+                  ] as const
+                ).map((col) => {
+                  const colTasks = filteredTasks.filter((t) => t.status === col.status);
+                  return (
+                    <div
+                      key={col.status}
+                      className="flex flex-col rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-3 min-h-[380px]"
+                    >
+                      <div className="flex items-center justify-between pb-3 px-1">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
+                          {col.label}
+                        </span>
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold font-mono bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {colTasks.length}
+                        </span>
+                      </div>
 
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 md:divide-y-0 md:space-y-2.5 flex-1 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-xl md:rounded-none border border-slate-200/80 dark:border-slate-800 md:border-0 overflow-hidden md:overflow-visible">
-                      {colTasks.length === 0 ? (
-                        <div className="py-6 md:h-28 text-center md:flex md:items-center md:justify-center md:rounded-xl md:border md:border-dashed md:border-slate-200 md:dark:border-slate-800 text-xs text-slate-400">
-                          No tasks
-                        </div>
-                      ) : (
-                        colTasks.map((task) => {
-                          const isOverdue =
-                            task.status !== "done" &&
-                            Boolean(task.due_date && task.due_date < todayStr);
+                      <div className="space-y-2.5 flex-1 overflow-visible">
+                        {colTasks.length === 0 ? (
+                          <div className="h-28 text-center flex items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400">
+                            No tasks
+                          </div>
+                        ) : (
+                          colTasks.map((task) => {
+                            const isOverdue =
+                              task.status !== "done" &&
+                              Boolean(task.due_date && task.due_date < todayStr);
 
-                          return (
-                            <div
-                              key={task.id}
-                              className="px-3.5 py-3 md:p-3.5 space-y-2 md:space-y-2.5 bg-white dark:bg-slate-900 md:rounded-xl md:border md:border-slate-200/80 md:dark:border-slate-800 md:shadow-2xs hover:shadow-xs transition-all"
-                            >
-                              <div className="flex items-start justify-between gap-1.5">
-                                <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
-                                  {task.title}
-                                </h4>
-                                {getPriorityBadge(task.priority)}
-                              </div>
-
-                              {task.description && (
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                  {task.description}
-                                </p>
-                              )}
-
-                              {/* Proof Required Badge */}
-                              {task.requires_proof && (
-                                <div className="flex items-center gap-1">
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
-                                    <FileCheck className="w-3 h-3 text-indigo-500" />
-                                    Requires Proof
-                                  </span>
+                            return (
+                              <div
+                                key={task.id}
+                                className="p-3.5 space-y-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all"
+                              >
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                                    {task.title}
+                                  </h4>
+                                  {getPriorityBadge(task.priority)}
                                 </div>
-                              )}
 
-                              {/* Revision Feedback Alert Banner */}
-                              {task.review_feedback && task.status === "in_progress" && (
-                                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
-                                  <div className="flex items-center gap-1 font-semibold">
-                                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                                    <span>Revision Requested:</span>
+                                {task.description && (
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                    {task.description}
+                                  </p>
+                                )}
+
+                                {/* Proof Required Badge */}
+                                {task.requires_proof && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                      <FileCheck className="w-3 h-3 text-indigo-500" />
+                                      Requires Proof
+                                    </span>
                                   </div>
-                                  <p className="leading-snug">{task.review_feedback}</p>
-                                </div>
-                              )}
+                                )}
 
-                              {/* Submitted Proof Notes Display */}
-                              {task.proof_notes && (
-                                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
-                                  <span className="font-semibold text-slate-700 dark:text-slate-200 text-[11px] uppercase tracking-wider block">
-                                    Submitted Proof:
-                                  </span>
-                                  <p className="leading-snug line-clamp-3">{task.proof_notes}</p>
-                                </div>
-                              )}
-
-                              {/* Completed Timestamp & Approver */}
-                              {task.status === "done" && (
-                                <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
-                                  <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-                                  <span>
-                                    Completed
-                                    {task.completed_at ? ` ${new Date(task.completed_at).toLocaleDateString()}` : ""}
-                                    {task.approver_name ? ` • Approved by ${task.approver_name}` : ""}
-                                  </span>
-                                </div>
-                              )}
-
-                              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                                <div className="flex items-center gap-1.5 truncate max-w-[120px]">
-                                  <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                                    {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : "U"}
+                                {/* Revision Feedback Alert Banner */}
+                                {task.review_feedback && task.status === "in_progress" && (
+                                  <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
+                                    <div className="flex items-center gap-1 font-semibold">
+                                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                                      <span>Revision Requested:</span>
+                                    </div>
+                                    <p className="leading-snug">{task.review_feedback}</p>
                                   </div>
-                                  <span className="font-medium truncate">{task.assignee_name}</span>
+                                )}
+
+                                {/* Submitted Proof Notes Display */}
+                                {task.proof_notes && (
+                                  <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-[11px] uppercase tracking-wider block">
+                                      Submitted Proof:
+                                    </span>
+                                    <p className="leading-snug line-clamp-3">{task.proof_notes}</p>
+                                  </div>
+                                )}
+
+                                {/* Completed Timestamp & Approver */}
+                                {task.status === "done" && (
+                                  <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                                    <span>
+                                      Completed
+                                      {task.completed_at ? ` ${new Date(task.completed_at).toLocaleDateString()}` : ""}
+                                      {task.approver_name ? ` • Approved by ${task.approver_name}` : ""}
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+                                  <div className="flex items-center gap-1.5 truncate max-w-[120px]">
+                                    <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                      {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : "U"}
+                                    </div>
+                                    <span className="font-medium truncate">{task.assignee_name}</span>
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      "flex items-center gap-1 font-mono tabular-nums text-[11px]",
+                                      isOverdue ? "text-rose-600 font-bold" : "text-slate-400"
+                                    )}
+                                  >
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{task.due_date || "—"}</span>
+                                  </div>
                                 </div>
-                                <div
-                                  className={cn(
-                                    "flex items-center gap-1 font-mono tabular-nums text-[11px]",
-                                    isOverdue ? "text-rose-600 font-bold" : "text-slate-400"
+
+                                {/* Card action buttons */}
+                                <div className="pt-1 flex items-center justify-end gap-1.5 flex-wrap">
+                                  {task.status === "todo" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleMoveStatus(task.id, "in_progress")}
+                                      className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-blue-600 hover:bg-blue-50 font-semibold"
+                                    >
+                                      Start Job →
+                                    </Button>
                                   )}
-                                >
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{task.due_date || "—"}</span>
+                                  {task.status === "in_progress" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (task.requires_proof) {
+                                          setActiveTaskForProof(task);
+                                          setProofText("");
+                                        } else {
+                                          handleMoveStatus(task.id, "review");
+                                        }
+                                      }}
+                                      className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-semibold"
+                                    >
+                                      Submit Proof
+                                    </Button>
+                                  )}
+                                  {task.status === "review" && canApprove && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleOpenRevision(task)}
+                                        className="min-h-[44px] h-11 px-2.5 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-medium"
+                                      >
+                                        Request Revision
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleApproveTask(task.id)}
+                                        className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-emerald-600 hover:bg-emerald-50 font-bold"
+                                      >
+                                        Approve ✓
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
-
-                              {/* Card action buttons */}
-                              <div className="pt-1 flex items-center justify-end gap-1.5 flex-wrap">
-                                {task.status === "todo" && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleMoveStatus(task.id, "in_progress")}
-                                    className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-blue-600 hover:bg-blue-50 font-semibold"
-                                  >
-                                    Start Job →
-                                  </Button>
-                                )}
-                                {task.status === "in_progress" && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      if (task.requires_proof) {
-                                        setActiveTaskForProof(task);
-                                        setProofText("");
-                                      } else {
-                                        handleMoveStatus(task.id, "review");
-                                      }
-                                    }}
-                                    className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-semibold"
-                                  >
-                                    Submit Proof
-                                  </Button>
-                                )}
-                                {task.status === "review" && canApprove && (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleOpenRevision(task)}
-                                      className="min-h-[44px] h-11 px-2.5 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-medium"
-                                    >
-                                      Request Revision
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleApproveTask(task.id)}
-                                      className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-emerald-600 hover:bg-emerald-50 font-bold"
-                                    >
-                                      Approve ✓
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+
+              {/* Mobile View with Segmented Status Tabs */}
+              <div className="block md:hidden space-y-3">
+                {/* Horizontal Segmented Status Filter Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
+                  {[
+                    { id: "all", label: "All", count: filteredTasks.length },
+                    { id: "todo", label: "To Do", count: filteredTasks.filter((t) => t.status === "todo").length },
+                    { id: "in_progress", label: "In Progress", count: filteredTasks.filter((t) => t.status === "in_progress").length },
+                    { id: "review", label: "Review", count: filteredTasks.filter((t) => t.status === "review").length },
+                    { id: "done", label: "Done", count: filteredTasks.filter((t) => t.status === "done").length },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setMobileStatusTab(tab.id as any)}
+                      className={cn(
+                        "min-h-[44px] px-3.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all active:scale-95",
+                        mobileStatusTab === tab.id
+                          ? "bg-[#0B1536] text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50"
+                      )}
+                    >
+                      <span>{tab.label}</span>
+                      <span
+                        className={cn(
+                          "text-[11px] font-mono font-bold px-1.5 py-0.2 rounded-full",
+                          mobileStatusTab === tab.id
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                        )}
+                      >
+                        {tab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mobile Tasks List */}
+                <div className="space-y-2.5">
+                  {(() => {
+                    const mobileTasks =
+                      mobileStatusTab === "all"
+                        ? filteredTasks
+                        : filteredTasks.filter((t) => t.status === mobileStatusTab);
+
+                    if (mobileTasks.length === 0) {
+                      return (
+                        <div className="py-10 text-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400">
+                          No tasks in this category
+                        </div>
+                      );
+                    }
+
+                    return mobileTasks.map((task) => {
+                      const isOverdue =
+                        task.status !== "done" &&
+                        Boolean(task.due_date && task.due_date < todayStr);
+
+                      return (
+                        <div
+                          key={task.id}
+                          className="p-3.5 space-y-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs"
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                              {task.title}
+                            </h4>
+                            {getPriorityBadge(task.priority)}
+                          </div>
+
+                          {task.description && (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                              {task.description}
+                            </p>
+                          )}
+
+                          {/* Proof Required Badge */}
+                          {task.requires_proof && (
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                <FileCheck className="w-3 h-3 text-indigo-500" />
+                                Requires Proof
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Revision Feedback Alert Banner */}
+                          {task.review_feedback && task.status === "in_progress" && (
+                            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
+                              <div className="flex items-center gap-1 font-semibold">
+                                <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                                <span>Revision Requested:</span>
+                              </div>
+                              <p className="leading-snug">{task.review_feedback}</p>
+                            </div>
+                          )}
+
+                          {/* Submitted Proof Notes Display */}
+                          {task.proof_notes && (
+                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                              <span className="font-semibold text-slate-700 dark:text-slate-200 text-[11px] uppercase tracking-wider block">
+                                Submitted Proof:
+                              </span>
+                              <p className="leading-snug line-clamp-3">{task.proof_notes}</p>
+                            </div>
+                          )}
+
+                          {/* Completed Timestamp & Approver */}
+                          {task.status === "done" && (
+                            <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span>
+                                Completed
+                                {task.completed_at ? ` ${new Date(task.completed_at).toLocaleDateString()}` : ""}
+                                {task.approver_name ? ` • Approved by ${task.approver_name}` : ""}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+                            <div className="flex items-center gap-1.5 truncate max-w-[120px]">
+                              <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : "U"}
+                              </div>
+                              <span className="font-medium truncate">{task.assignee_name}</span>
+                            </div>
+                            <div
+                              className={cn(
+                                "flex items-center gap-1 font-mono tabular-nums text-[11px]",
+                                isOverdue ? "text-rose-600 font-bold" : "text-slate-400"
+                              )}
+                            >
+                              <Calendar className="w-3 h-3" />
+                              <span>{task.due_date || "—"}</span>
+                            </div>
+                          </div>
+
+                          {/* Card action buttons with 44px hit bounds */}
+                          <div className="pt-1 flex items-center justify-end gap-1.5 flex-wrap">
+                            {task.status === "todo" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleMoveStatus(task.id, "in_progress")}
+                                className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-blue-600 hover:bg-blue-50 font-semibold active:scale-95"
+                              >
+                                Start Job →
+                              </Button>
+                            )}
+                            {task.status === "in_progress" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (task.requires_proof) {
+                                    setActiveTaskForProof(task);
+                                    setProofText("");
+                                  } else {
+                                    handleMoveStatus(task.id, "review");
+                                  }
+                                }}
+                                className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-semibold active:scale-95"
+                              >
+                                Submit Proof
+                              </Button>
+                            )}
+                            {task.status === "review" && canApprove && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenRevision(task)}
+                                  className="min-h-[44px] h-11 px-2.5 flex items-center text-[11px] text-amber-600 hover:bg-amber-50 font-medium active:scale-95"
+                                >
+                                  Request Revision
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleApproveTask(task.id)}
+                                  className="min-h-[44px] h-11 px-3 flex items-center text-[11px] text-emerald-600 hover:bg-emerald-50 font-bold active:scale-95"
+                                >
+                                  Approve ✓
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </>
           ) : (
             /* Table View */
             <CRMCard variant="default" className="shadow-2xs">
@@ -1289,7 +1486,8 @@ export default function Tasks(): React.ReactElement {
 
         {/* Modal: Create Task Dialog */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle className="text-base font-bold">Create Store Task</DialogTitle>
               <DialogDescription className="text-xs">
@@ -1463,7 +1661,8 @@ export default function Tasks(): React.ReactElement {
 
         {/* Modal: Proof Submission */}
         <Dialog open={Boolean(activeTaskForProof)} onOpenChange={(open) => !open && setActiveTaskForProof(null)}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle className="text-base font-bold">Submit Proof of Work</DialogTitle>
               <DialogDescription className="text-xs">
@@ -1502,7 +1701,8 @@ export default function Tasks(): React.ReactElement {
 
         {/* Modal: Manager Revision Request */}
         <Dialog open={Boolean(activeTaskForRevision)} onOpenChange={(open) => !open && setActiveTaskForRevision(null)}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-full fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 rounded-t-2xl sm:rounded-2xl sm:relative sm:max-w-md max-h-[92dvh] overflow-y-auto p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
             <DialogHeader>
               <DialogTitle className="text-base font-bold">Request Revision</DialogTitle>
               <DialogDescription className="text-xs">
