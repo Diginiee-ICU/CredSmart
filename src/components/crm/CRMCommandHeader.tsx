@@ -93,14 +93,14 @@ export function CRMCommandHeader({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {showBack && (
-              <button
-                type="button"
-                onClick={() => navigate(backTo)}
+              <Link
+                to={backTo}
                 className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors shrink-0 active:scale-[0.98] cursor-pointer"
                 aria-label="Go back"
+                title="Back to CRM Command Center"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
+              </Link>
             )}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

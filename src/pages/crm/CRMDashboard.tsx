@@ -75,7 +75,38 @@ export default function CRMDashboard(): React.ReactElement {
   const [refreshing, setRefreshing] = useState(false);
   const [staffSearchQuery, setStaffSearchQuery] = useState("");
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const [dynamicStaff, setDynamicStaff] = useState<ShowcaseStaff[]>([]);
+  const [dynamicStaff, setDynamicStaff] = useState<ShowcaseStaff[]>(() => {
+    if (typeof window === "undefined" || !orgId) return [];
+    try {
+      const cachedRaw = localStorage.getItem(`credsmart_crm_staff_${orgId}`);
+      if (cachedRaw) {
+        const cachedStaff = JSON.parse(cachedRaw);
+        if (Array.isArray(cachedStaff) && cachedStaff.length > 0) {
+          const bgPalette = ["bg-[#2563EB]", "bg-[#059669]", "bg-[#D97706]", "bg-[#7C3AED]", "bg-[#E11D48]"];
+          const initialRoster: ShowcaseStaff[] = [];
+          cachedStaff.forEach((cs: any, idx: number) => {
+            const name = String(cs.name || cs.full_name || "").trim();
+            const sId = String(cs.id || `cached-${idx}`);
+            if (name && !initialRoster.some((r) => r.id === sId || r.name.toLowerCase() === name.toLowerCase())) {
+              const parts = name.split(/\s+/);
+              const initials =
+                parts.length > 1
+                  ? (parts[0][0] + parts[1][0]).toUpperCase()
+                  : name.slice(0, 2).toUpperCase();
+              initialRoster.push({
+                id: sId,
+                name,
+                initials,
+                bgColor: bgPalette[initialRoster.length % bgPalette.length],
+              });
+            }
+          });
+          return initialRoster;
+        }
+      }
+    } catch {}
+    return [];
+  });
 
   const [stats, setStats] = useState<CRMStats>({
     staffCount: 1,
@@ -102,8 +133,8 @@ export default function CRMDashboard(): React.ReactElement {
 
     try {
       const activeOrgId = orgId;
-      setDynamicStaff([]);
       const today = new Date().toISOString().split("T")[0];
+      const bgPalette = ["bg-[#2563EB]", "bg-[#059669]", "bg-[#D97706]", "bg-[#7C3AED]", "bg-[#E11D48]"];
 
       // 1. Today's attendance: query crm_attendance first for instant reactive sync
       let attendance = 0;
@@ -121,70 +152,56 @@ export default function CRMDashboard(): React.ReactElement {
       }
       setStats((prev) => ({ ...prev, todayAttendance: attendance }));
 
-      // 2. Staff count: query organization_memberships directly
+      // 2. Staff count & live staff records: query organization_memberships & profiles directly
       let staff = 1;
+      const liveSupabaseStaff: ShowcaseStaff[] = [];
       try {
-        const { count, error, data } = await supabase
+        const { data: memberRows, count, error: memErr } = await supabase
           .from("organization_memberships")
-          .select("id", { count: "exact" })
+          .select("id, user_id, role, created_at", { count: "exact" })
           .eq("organization_id", activeOrgId);
-        if (!error) {
-          const num = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
-          staff = Math.max(1, num);
+
+        if (!memErr) {
+          const num = typeof count === "number" ? count : Array.isArray(memberRows) ? memberRows.length : 0;
+          if (num > 0) staff = Math.max(1, num);
+          if (Array.isArray(memberRows) && memberRows.length > 0) {
+            const userIds = memberRows.map((m) => m.user_id).filter(Boolean);
+            if (userIds.length > 0) {
+              try {
+                const { data: profileRows } = await supabase
+                  .from("profiles")
+                  .select("id, full_name, name, email")
+                  .in("id", userIds);
+
+                if (Array.isArray(profileRows)) {
+                  profileRows.forEach((p) => {
+                    const rawName = p.full_name || p.name || (p.email ? p.email.split("@")[0] : "");
+                    const name = String(rawName).trim();
+                    if (name) {
+                      const parts = name.split(/\s+/);
+                      const initials =
+                        parts.length > 1
+                          ? (parts[0][0] + parts[1][0]).toUpperCase()
+                          : name.slice(0, 2).toUpperCase();
+                      liveSupabaseStaff.push({
+                        id: p.id,
+                        name,
+                        initials,
+                        bgColor: bgPalette[liveSupabaseStaff.length % bgPalette.length],
+                      });
+                    }
+                  });
+                }
+              } catch {}
+            }
+          }
         }
       } catch {
         staff = 1;
       }
-      setStats((prev) => ({ ...prev, staffCount: staff }));
-
-      // 3. Pending tasks: query crm_tasks
-      let tasks = 0;
-      try {
-        const { count, error, data } = await supabase
-          .from("crm_tasks")
-          .select("id", { count: "exact" })
-          .eq("org_id", activeOrgId)
-          .neq("status", "done");
-        if (!error) {
-          tasks = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
-        }
-      } catch {
-        tasks = 0;
-      }
-
-      // 4. Broadcasts: query crm_broadcasts
-      let broadcasts = 0;
-      try {
-        const { count, error, data } = await supabase
-          .from("crm_broadcasts")
-          .select("id", { count: "exact" })
-          .eq("org_id", activeOrgId)
-          .eq("is_active", true);
-        if (!error) {
-          broadcasts = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
-        }
-      } catch {
-        broadcasts = 0;
-      }
-
-      // 5. Meetings: query crm_meetings
-      let meetings = 0;
-      try {
-        const { count, error, data } = await supabase
-          .from("crm_meetings")
-          .select("id", { count: "exact" })
-          .eq("org_id", activeOrgId)
-          .gte("scheduled_at", new Date().toISOString());
-        if (!error) {
-          meetings = typeof count === "number" ? count : Array.isArray(data) ? data.length : 0;
-        }
-      } catch {
-        meetings = 0;
-      }
 
       // Check localStorage cached staff roster (hydrated instantly when staff is provisioned)
       const realStaffRoster: ShowcaseStaff[] = [];
-      const bgPalette = ["bg-[#2563EB]", "bg-[#059669]", "bg-[#D97706]", "bg-[#7C3AED]", "bg-[#E11D48]"];
 
       try {
         const cachedRaw = localStorage.getItem(`credsmart_crm_staff_${activeOrgId}`);
@@ -212,12 +229,23 @@ export default function CRMDashboard(): React.ReactElement {
         }
       } catch {}
 
+      // Merge live Supabase staff records into realStaffRoster
+      liveSupabaseStaff.forEach((s) => {
+        if (!realStaffRoster.some((r) => r.id === s.id || r.name.toLowerCase() === s.name.toLowerCase())) {
+          realStaffRoster.push(s);
+        }
+      });
+
       if (realStaffRoster.length > 0) {
         staff = Math.max(staff, realStaffRoster.length);
         setDynamicStaff(realStaffRoster);
+        try {
+          localStorage.setItem(`credsmart_crm_staff_${activeOrgId}`, JSON.stringify(realStaffRoster));
+        } catch {}
       } else {
         setDynamicStaff([]);
       }
+      setStats((prev) => ({ ...prev, staffCount: staff }));
 
       // Fallback to localStorage for sub-metrics if Supabase returned 0
       if (tasks === 0) {
@@ -303,13 +331,16 @@ export default function CRMDashboard(): React.ReactElement {
                   ...prev,
                   staffCount: Math.max(prev.staffCount, serverRoster.length),
                 }));
-                setDynamicStaff(serverRoster);
-              } else if (realStaffRoster.length === 0) {
-                setDynamicStaff([]);
+                setDynamicStaff((prev) => {
+                  const merged = [...prev];
+                  serverRoster.forEach((sr) => {
+                    if (!merged.some((r) => r.id === sr.id || r.name.toLowerCase() === sr.name.toLowerCase())) {
+                      merged.push(sr);
+                    }
+                  });
+                  return merged;
+                });
               }
-            } else if (realStaffRoster.length === 0) {
-              setDynamicStaff([]);
-            }
           }
         }).catch(() => {});
       }
