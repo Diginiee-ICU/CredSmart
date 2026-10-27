@@ -776,11 +776,11 @@ export default function Dashboard() {
           <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 px-0.5">
             QUICK ACTIONS
           </span>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-0.5 px-0.5 touch-pan-x">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-none select-none -mx-3 px-3 pr-8 touch-pan-x">
             <button
               type="button"
               onClick={() => setShowSalesInvoiceModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Sale Bill</span>
@@ -789,7 +789,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.checkout)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <ShoppingCart className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>POS Billing</span>
@@ -798,7 +798,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowCreateItemModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Package className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span>Add Item</span>
@@ -807,7 +807,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowCreatePartyModal(true)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <Users2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
               <span>Add Customer</span>
@@ -816,7 +816,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate(ROUTE_PATHS.sales)}
-              className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shrink-0 shadow-2xs active:scale-[0.98] transition-all cursor-pointer touch-manipulation"
             >
               <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Day Book</span>
@@ -1008,6 +1008,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Bottom clearance spacer ensuring recent activity is never buried behind bottom dock */}
+        <div className="h-20 w-full shrink-0 pointer-events-none select-none" aria-hidden="true" />
       </div>
 
       {/* =========================================================================

@@ -660,53 +660,34 @@ return (
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}
       {/* Mobile Compact Swipeable KPI Mini Strip (Mobile Only) */}
-      <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
-        <div className="min-w-[105px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500" />
-          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
-            Stock Value
-          </span>
-          <p className="text-sm font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
-            ₹{totalStockValue.toLocaleString("en-IN")}
-          </p>
+      <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none shrink-0 -mx-3 px-3 pr-6 touch-pan-x">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 text-xs shadow-2xs">
+          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono uppercase">Value:</span>
+          <span className="font-bold text-slate-900 dark:text-white font-mono tabular-nums">₹{totalStockValue.toLocaleString("en-IN")}</span>
         </div>
 
-        <div
+        <button
+          type="button"
           onClick={() => setLowStockOnly((prev) => !prev)}
           className={cn(
-            "min-w-[100px] flex-1 px-2.5 py-1.5 rounded-xl border select-none cursor-pointer transition-all relative overflow-hidden shadow-2xs shrink-0",
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border shrink-0 text-xs shadow-2xs transition-all active:scale-95 cursor-pointer",
             lowStockOnly
-              ? "ring-1.5 ring-amber-500/50 bg-amber-50/50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700/60"
-              : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
+              ? "bg-amber-500 text-white border-amber-600"
+              : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400"
           )}
         >
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-amber-500" />
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono truncate block">
-            Low Stock
-          </span>
-          <p className="text-sm font-bold text-amber-600 dark:text-amber-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
-            {lowStockCount} SKUs
-          </p>
+          <span className="text-[11px] font-bold font-mono uppercase">Low Stock:</span>
+          <span className="font-bold font-mono tabular-nums">{lowStockCount}</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 text-xs shadow-2xs">
+          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 font-mono uppercase">Catalog:</span>
+          <span className="font-bold text-slate-900 dark:text-white font-mono tabular-nums">{totalItemsCount}</span>
         </div>
 
-        <div className="min-w-[95px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />
-          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
-            Catalog
-          </span>
-          <p className="text-sm font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
-            {totalItemsCount} SKUs
-          </p>
-        </div>
-
-        <div className="min-w-[100px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-rose-500" />
-          <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
-            Zero Stock
-          </span>
-          <p className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums tracking-tight truncate mt-0.5">
-            {outOfStockCount} SKUs
-          </p>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 text-xs shadow-2xs">
+          <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 font-mono uppercase">Zero Stock:</span>
+          <span className="font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums">{outOfStockCount}</span>
         </div>
       </div>
 
@@ -1255,6 +1236,8 @@ return (
               );
             })
           )}
+          {/* Mobile Bottom Clearance Spacer */}
+          <div className="h-20 w-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
         </div>
 
         {/* DESKTOP VIEW: High-Density Data Table (Visible on md: and above) */}

@@ -86,7 +86,7 @@ export function PaginationBar({
             value={String(pageSize)}
             onValueChange={(v) => onPageSizeChange(Number(v))}
           >
-            <SelectTrigger className="h-7 w-[82px] text-xs border-border/60 bg-background">
+            <SelectTrigger className="h-7 min-w-[94px] w-auto px-2 text-xs border-border/60 bg-background">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

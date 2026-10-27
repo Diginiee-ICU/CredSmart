@@ -710,11 +710,144 @@ setSortDirection("asc");
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2.5 overflow-hidden bg-slate-50/40 dark:bg-slate-950/40">
-      {/* ------------------------------------------------------------- */}
-      {/* HEADER: Parties Directory, [Reconcile], [SharedLedger], [Reports], [Settings], [Keyboard] */}
-      {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden bg-slate-50/40 dark:bg-slate-950/40">
+      {/* ============================================================= */}
+      {/* 1. MOBILE FAST-ACCESS CONTROL STRIP (<sm: 2 High-Density Rows) */}
+      {/* ============================================================= */}
+      {/* Mobile Row 1: Title + Compact Direct KPI Filter Pills */}
+      <div className="flex sm:hidden items-center justify-between gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="p-1.5 rounded-lg bg-slate-900 text-white dark:bg-slate-800 dark:text-blue-400 shrink-0 shadow-2xs">
+            <Users2 className="w-3.5 h-3.5" />
+          </div>
+          <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white truncate">
+            Parties
+          </h1>
+          <span className="px-1.5 py-0.2 rounded text-[11px] font-mono font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shrink-0">
+            {parties.length}
+          </span>
+        </div>
+
+        {/* Compact KPI Pills: To Collect & To Pay (No (Dr)/(Cr) overflow) */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none shrink-0">
+          <button
+            type="button"
+            onClick={() => setPartyTab((prev) => (prev === "to_collect" ? "all" : "to_collect"))}
+            className={cn(
+              "flex items-center gap-1 px-2 py-0.5 rounded-lg border text-xs font-mono font-semibold transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer",
+              partyTab === "to_collect"
+                ? "bg-emerald-600 text-white border-emerald-600 font-bold"
+                : "bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60"
+            )}
+            title="Filter To Collect"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <span>Collect:</span>
+            <span className="font-bold tabular-nums">₹{toCollectTotal.toLocaleString("en-IN")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPartyTab((prev) => (prev === "to_pay" ? "all" : "to_pay"))}
+            className={cn(
+              "flex items-center gap-1 px-2 py-0.5 rounded-lg border text-xs font-mono font-semibold transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer",
+              partyTab === "to_pay"
+                ? "bg-rose-600 text-white border-rose-600 font-bold"
+                : "bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60"
+            )}
+            title="Filter To Pay"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+            <span>Pay:</span>
+            <span className="font-bold tabular-nums">₹{toPayTotal.toLocaleString("en-IN")}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Row 2: Search + Filter Dropdown + Single Action CTA */}
+      <div className="flex sm:hidden items-center gap-1.5 w-full shrink-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Input
+            placeholder="Search parties..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-7 pr-7 h-8 text-xs bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 rounded-lg shadow-2xs"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5"
+              title="Clear search"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2 gap-1 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300 shadow-2xs"
+            >
+              <span>
+                {partyTab === "all"
+                  ? "All"
+                  : partyTab === "customer"
+                  ? "Cust"
+                  : partyTab === "supplier"
+                  ? "Supp"
+                  : partyTab === "to_collect"
+                  ? "Collect"
+                  : "Pay"}
+              </span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setPartyTab("all")}>All Parties ({parties.length})</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPartyTab("customer")}>
+              Customers ({parties.filter((p) => p.partyType === "customer" || p.partyType === "both").length})
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPartyTab("supplier")}>
+              Suppliers ({parties.filter((p) => p.partyType === "supplier" || p.partyType === "both").length})
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setPartyTab("to_collect")}>
+              To Collect ({parties.filter((p) => p.balance > 0).length})
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPartyTab("to_pay")}>
+              To Pay ({parties.filter((p) => p.balance < 0).length})
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => { setExcelModalTab("excel"); setShowExcelUploadModal(true); }}>
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+              Bulk Upload Parties
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEditingParty(null);
+            setShowCreateModal(true);
+          }}
+          className="flex items-center gap-1 h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>Party</span>
+        </button>
+      </div>
+
+      {/* ============================================================= */}
+      {/* 2. DESKTOP & TABLET CONTROLS (sm: and above) */}
+      {/* ============================================================= */}
+      {/* Desktop Header */}
+      <div className="hidden sm:flex sm:items-center justify-between gap-2 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-slate-900 text-white dark:bg-slate-800 dark:text-blue-400 border border-slate-800 dark:border-slate-700 shadow-2xs">
@@ -728,25 +861,9 @@ setSortDirection("asc");
                 </span>
               </div>
               <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                Customer & Supplier ledgers, directional balance tracking, and real-time reconciliation
+                Customer &amp; Supplier ledgers, directional balance tracking, and real-time reconciliation
               </p>
             </div>
-          </div>
-
-          {/* Quick mobile reconcile badge */}
-          <div className="flex sm:hidden items-center gap-1.5">
-            <Button
-              onClick={() => {
-                handleRunAudit();
-                setShowReconciliationModal(true);
-              }}
-              variant="outline"
-              size="sm"
-              className="h-7.5 gap-1 text-[11px] font-bold border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 rounded-lg active:scale-95 shadow-2xs"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="font-mono">{auditResult?.integrityScore ?? 100}%</span>
-            </Button>
           </div>
         </div>
 
@@ -793,7 +910,7 @@ setSortDirection("asc");
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-xs">Party Reports & Audits</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs">Party Reports &amp; Audits</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
@@ -803,7 +920,7 @@ setSortDirection("asc");
                 className="text-xs cursor-pointer text-emerald-600 dark:text-emerald-400 font-semibold"
               >
                 <ShieldCheck className="w-3.5 h-3.5 mr-2" />
-                Ledger Integrity Audit & Hub
+                Ledger Integrity Audit &amp; Hub
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -859,7 +976,7 @@ setSortDirection("asc");
                 }}
                 className="text-xs cursor-pointer"
               >
-                Aging Analysis & Overdue Days
+                Aging Analysis &amp; Overdue Days
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleBulkExport} className="text-xs cursor-pointer">
@@ -893,25 +1010,22 @@ setSortDirection("asc");
         </div>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* METRIC CARDS: Total Parties, To Collect (Dr), To Pay (Cr) */}
-      {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
+      {/* METRIC CARDS: Total Parties, To Collect (Dr), To Pay (Cr) (Desktop) */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-3 shrink-0">
         {/* Card 1: All Parties */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-blue-600">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-blue-600">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
-              <span className="sm:hidden">Parties</span>
-              <span className="hidden sm:inline">Total Parties</span>
+              Total Parties
             </span>
-            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0 hidden sm:flex">
+            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0 flex">
               <Users2 className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight mt-0.5">
+          <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight mt-0.5">
             {totalPartiesCount}
           </p>
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
             <span>{parties.filter((p) => p.partyType === "customer").length} Cust</span>
             <span>·</span>
             <span>{parties.filter((p) => p.partyType === "supplier").length} Supp</span>
@@ -919,48 +1033,44 @@ setSortDirection("asc");
         </div>
 
         {/* Card 2: To Collect (Dr) Emerald */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-emerald-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-emerald-500">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono truncate block">
-              <span className="sm:hidden">To Collect</span>
-              <span className="hidden sm:inline">To Collect (Dr)</span>
+              To Collect (Dr)
             </span>
-            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0 hidden sm:flex">
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shrink-0 flex">
               <ArrowDownLeft className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight truncate mt-0.5">
+          <p className="text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight truncate mt-0.5">
             ₹ {toCollectTotal.toLocaleString("en-IN")}
           </p>
-          <p className="hidden sm:block text-xs text-emerald-700/80 dark:text-emerald-400/80 font-mono mt-0.5">
+          <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-mono mt-0.5">
             From {parties.filter((p) => p.balance > 0).length} customer ledgers
           </p>
         </div>
 
         {/* Card 3: To Pay (Cr) Rose */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-rose-500">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-2xs relative overflow-hidden select-none border-t-2 border-t-rose-500">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
-              <span className="sm:hidden">To Pay</span>
-              <span className="hidden sm:inline">To Pay (Cr)</span>
+              To Pay (Cr)
             </span>
-            <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 shrink-0 hidden sm:flex">
+            <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 shrink-0 flex">
               <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-lg sm:text-2xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
+          <p className="text-2xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight truncate mt-0.5">
             ₹ {toPayTotal.toLocaleString("en-IN")}
           </p>
-          <p className="hidden sm:block text-xs text-rose-700/80 dark:text-rose-400/80 font-mono mt-0.5">
+          <p className="text-xs text-rose-700/80 dark:text-rose-400/80 font-mono mt-0.5">
             To {parties.filter((p) => p.balance < 0).length} supplier bills
           </p>
         </div>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* CATEGORY TABS & QUICK FILTERS BAR (Requirement 3) */}
-      {/* ------------------------------------------------------------- */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 shrink-0">
+      {/* CATEGORY TABS BAR (Desktop) */}
+      <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 shrink-0">
         <button
           type="button"
           onClick={() => setPartyTab("all")}
@@ -1029,8 +1139,7 @@ setSortDirection("asc");
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="sm:hidden">To Collect</span>
-          <span className="hidden sm:inline">To Collect (Dr)</span>
+          <span>To Collect (Dr)</span>
           <span className={cn(
             "px-1.5 py-0.2 rounded text-xs font-mono",
             partyTab === "to_collect" ? "bg-emerald-700/60 text-white" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
@@ -1050,8 +1159,7 @@ setSortDirection("asc");
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span className="sm:hidden">To Pay</span>
-          <span className="hidden sm:inline">To Pay (Cr)</span>
+          <span>To Pay (Cr)</span>
           <span className={cn(
             "px-1.5 py-0.2 rounded text-xs font-mono",
             partyTab === "to_pay" ? "bg-rose-700/60 text-white" : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
@@ -1061,73 +1169,13 @@ setSortDirection("asc");
         </button>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* FILTER & SEARCH BAR - Hairline Container */}
-      {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-2.5 shadow-2xs shrink-0">
-        {/* Mobile Fast-Access Action Strip (<sm) */}
-        <div className="flex sm:hidden items-center gap-1.5 w-full">
-          <div className="relative flex-1 min-w-0">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input
-              placeholder="Search parties, phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-7 pr-7 h-8.5 text-xs bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 rounded-lg"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Quick Category / Bulk Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8.5 px-2.5 gap-1 text-xs justify-between font-semibold border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 rounded-lg shrink-0 text-slate-700 dark:text-slate-300">
-                <span className="truncate max-w-[70px]">
-                  {categoryFilter === "all" ? "Type" : categoryFilter}
-                </span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setCategoryFilter("all")}>All Categories</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter("Wholesaler")}>Wholesaler</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter("Retailer")}>Retailer</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter("Distributor")}>Distributor</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter("Manufacturer")}>Manufacturer</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => { setExcelModalTab("excel"); setShowExcelUploadModal(true); }}>
-                <FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-emerald-600" />
-                Bulk Upload Parties
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Create Party Button */}
-          <button
-            onClick={() => {
-              setEditingParty(null);
-              setShowCreateModal(true);
-            }}
-            className="flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Create</span>
-          </button>
-        </div>
-
-        {/* Desktop View: Full Search, Dropdowns, and Import Buttons (sm and above) */}
-        <div className="hidden sm:flex items-center justify-between gap-2 flex-1 min-w-0">
+      {/* FILTER & SEARCH BAR (Desktop) */}
+      <div className="hidden sm:flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-2.5 shadow-2xs shrink-0">
+        <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {/* Search input */}
             <div className="relative flex-1 min-w-[180px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="Search by party name, phone, GSTIN..."
                 value={search}
@@ -1136,8 +1184,10 @@ setSortDirection("asc");
               />
               {search && (
                 <button
+                  type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5"
+                  title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -1167,6 +1217,7 @@ setSortDirection("asc");
 
             {/* Import Data from Tally / Excel Button */}
             <button
+              type="button"
               onClick={() => navigate(ROUTE_PATHS.tallyImport)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 font-semibold text-xs shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
               title="Import Full Data from Tally or Excel"
@@ -1177,6 +1228,7 @@ setSortDirection("asc");
 
             {/* Bulk Upload Parties Button */}
             <button
+              type="button"
               onClick={() => {
                 setExcelModalTab("excel");
                 setShowExcelUploadModal(true);
@@ -1190,6 +1242,7 @@ setSortDirection("asc");
 
             {/* Create Party Button */}
             <button
+              type="button"
               onClick={() => {
                 setEditingParty(null);
                 setShowCreateModal(true);
@@ -1480,6 +1533,8 @@ setSortDirection("asc");
               );
             })
           )}
+          {/* Mobile Bottom Clearance Spacer */}
+          <div className="h-20 w-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
         </div>
 
 
