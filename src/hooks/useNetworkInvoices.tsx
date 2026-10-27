@@ -229,6 +229,13 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
     const handleNetworkUpdate = (e?: Event) => {
       const customEvent = e as CustomEvent<{ type?: string; payload?: any }>;
       if (customEvent?.detail?.type === "INVOICE_CREATED") {
+        const netInv = customEvent.detail.payload?.networkInvoice;
+        const curOrg = orgRef.current;
+        if (netInv && curOrg && netInv.senderOrgId === curOrg.id) {
+          // Current user is the SENDER of this invoice - do NOT process as incoming!
+          loadData();
+          return;
+        }
         handleIncomingInvoiceEvent(
           customEvent.detail.payload?.networkInvoice,
           customEvent.detail.payload?.notification
@@ -249,6 +256,12 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         channel = new BroadcastChannel("credsmart_network_channel");
         channel.onmessage = (msg) => {
           if (msg?.data?.type === "INVOICE_CREATED") {
+            const netInv = msg.data.payload?.networkInvoice;
+            const curOrg = orgRef.current;
+            if (netInv && curOrg && netInv.senderOrgId === curOrg.id) {
+              loadData();
+              return;
+            }
             handleIncomingInvoiceEvent(
               msg.data.payload?.networkInvoice,
               msg.data.payload?.notification
@@ -269,6 +282,11 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
           b2bChannel
             .on("broadcast", { event: "INVOICE_CREATED" }, (eventPayload) => {
               const payload = eventPayload?.payload;
+              const netInv = payload?.networkInvoice;
+              const curOrg = orgRef.current;
+              if (netInv && curOrg && netInv.senderOrgId === curOrg.id) {
+                return;
+              }
               handleIncomingInvoiceEvent(payload?.networkInvoice, payload?.notification);
             })
             .on("broadcast", { event: "INVOICE_APPROVED" }, () => {

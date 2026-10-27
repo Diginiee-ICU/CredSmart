@@ -488,17 +488,27 @@ export default function AppLayout() {
 
             {/* LEFT: 28px Brand Mark + Menu Toggle + Org Switcher + Suite Switcher */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
-              {/* Compact 28px Brand Mark & Wordmark */}
+              {/* Compact 28px Brand Mark & Wordmark with Org Logo Support */}
               <NavLink
                 to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
                 title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
                 className="flex items-center gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
               >
-                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">
-                  <Sparkles className="w-3.5 h-3.5 fill-white/20 stroke-white" />
-                </div>
+                {org?.logo_url ? (
+                  <div className="w-7 h-7 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-0.5 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                    <img
+                      src={org.logo_url}
+                      alt={org.name || "Business Logo"}
+                      className="w-full h-full object-contain rounded-md"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform group-hover:scale-105">
+                    <Sparkles className="w-3.5 h-3.5 fill-white/20 stroke-white" />
+                  </div>
+                )}
                 <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
-                  CredSmart
+                  {org?.name ? org.name : "CredSmart"}
                 </span>
               </NavLink>
 
@@ -532,6 +542,7 @@ export default function AppLayout() {
                     className="hidden sm:flex h-8 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none"
                     title={org?.name || "Select Business"}
                   >
+                    <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span className="max-w-[110px] lg:max-w-[140px] truncate">{org?.name || "My Business"}</span>
                     <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                   </button>
@@ -554,15 +565,28 @@ export default function AppLayout() {
                             toast.success(`Switched to "${bizName}"`);
                           }}
                           className={cn(
-                            "flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer",
+                            "flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer gap-2",
                             isActive
                               ? "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 font-bold border border-blue-200 dark:border-blue-800/60"
                               : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                           )}
                         >
-                          <div className="min-w-0 pr-2">
-                            <p className="truncate text-xs font-semibold">{bizName}</p>
-                            <p className="text-[11px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            {business.logo_url ? (
+                              <img
+                                src={business.logo_url}
+                                alt={bizName}
+                                className="w-5 h-5 rounded-md object-contain border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                                <Building2 className="w-3 h-3 text-slate-500" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold">{bizName}</p>
+                              <p className="text-[11px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
+                            </div>
                           </div>
                           {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
                         </DropdownMenuItem>

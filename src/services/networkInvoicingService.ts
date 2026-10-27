@@ -238,6 +238,17 @@ export function isNotificationForOrg(
   userPhone?: string
 ): boolean {
   if (!orgId || !n) return false;
+
+  // STRICT MULTI-TENANT ISOLATION:
+  // If this notification was sent by this organization, and it's an inward recipient notification,
+  // it MUST NEVER be delivered or displayed to this organization as an inward bill!
+  const isSender =
+    (typeof n.data?.senderOrgId === "string" && n.data.senderOrgId === orgId) ||
+    (typeof (n as any).senderOrgId === "string" && (n as any).senderOrgId === orgId);
+  if (isSender && (n.category === "inward" || n.type?.startsWith("sale_invoice_"))) {
+    return false;
+  }
+
   if (n.recipientOrgId === orgId) return true;
 
   const hasRecipientOrgId = typeof n.recipientOrgId === "string" && n.recipientOrgId.length > 0;
@@ -366,6 +377,7 @@ export const networkInvoicingService = {
     email?: string;
     gstin?: string;
     name?: string;
+    excludeOrgId?: string;
   }): Promise<ConnectedOrgInfo | null> {
     const cleanPhone = normalizePhoneNumber(criteria.phone);
     const cleanGstin = (criteria.gstin || "").toUpperCase().trim();
@@ -402,6 +414,7 @@ export const networkInvoicingService = {
         }
 
         for (const o of localOrgList) {
+          if (!o?.id || (criteria.excludeOrgId && o.id === criteria.excludeOrgId)) continue;
           if (criteria.orgId && o.id === criteria.orgId) {
             return {
               id: o.id,
@@ -475,12 +488,12 @@ export const networkInvoicingService = {
         const canQueryName = cleanName && cleanName.length >= 3;
         if (canQueryPhone || canQueryName) {
           const { data } = await settingsApi.getStorefrontSettings(canQueryPhone ? cleanPhone : cleanName);
-          if (data && data.organization_id) return data;
+          if (data && data.organization_id && data.organization_id !== criteria.excludeOrgId) return data;
         }
         return null;
       });
 
-      if (sfResult && sfResult.organization_id) {
+      if (sfResult && sfResult.organization_id && sfResult.organization_id !== criteria.excludeOrgId) {
         return {
           id: sfResult.organization_id,
           name: sfResult.store_name,
@@ -496,38 +509,39 @@ export const networkInvoicingService = {
     // 3. Query organizations via settingsApi (with safe timeout)
     try {
       const dbResult = await safeDbCall(async () => {
-        if (criteria.orgId) {
+        if (criteria.orgId && criteria.orgId !== criteria.excludeOrgId) {
           try {
             const { data } = await settingsApi.getOrganizationById(criteria.orgId);
-            if (data && data.id) return data;
+            if (data && data.id && data.id !== criteria.excludeOrgId) return data;
           } catch {
             return null;
           }
         }
         const { data: orgs } = await settingsApi.getUserOrganizations();
         if (orgs && orgs.length > 0) {
+          const validOrgs = criteria.excludeOrgId ? orgs.filter(o => o.id !== criteria.excludeOrgId) : orgs;
           if (cleanGstin) {
-            const match = orgs.find((o) => o.gstin?.toLowerCase() === cleanGstin.toLowerCase());
+            const match = validOrgs.find((o) => o.gstin?.toLowerCase() === cleanGstin.toLowerCase());
             if (match) return match;
           }
           if (cleanPhone) {
             const digits10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
-            const match = orgs.find((o) => o.phone?.includes(digits10));
+            const match = validOrgs.find((o) => o.phone?.includes(digits10));
             if (match) return match;
           }
           if (cleanEmail) {
-            const match = orgs.find((o) => o.email?.toLowerCase() === cleanEmail.toLowerCase());
+            const match = validOrgs.find((o) => o.email?.toLowerCase() === cleanEmail.toLowerCase());
             if (match) return match;
           }
           if (cleanName && cleanName.length >= 3) {
-            const match = orgs.find((o) => o.name?.toLowerCase().includes(cleanName.toLowerCase()));
+            const match = validOrgs.find((o) => o.name?.toLowerCase().includes(cleanName.toLowerCase()));
             if (match) return match;
           }
         }
         return null;
       });
 
-      if (dbResult) {
+      if (dbResult && dbResult.id !== criteria.excludeOrgId) {
         return {
           id: dbResult.id,
           name: dbResult.name,
@@ -547,7 +561,7 @@ export const networkInvoicingService = {
     try {
       const orgQueryRes = await safeDbCall(async () => {
         const clauses: string[] = [];
-        if (criteria.orgId && isUuid(criteria.orgId)) {
+        if (criteria.orgId && isUuid(criteria.orgId) && criteria.orgId !== criteria.excludeOrgId) {
           clauses.push(`id.eq.${criteria.orgId}`);
         }
         if (cleanGstin && cleanGstin.length >= 15) {
@@ -565,16 +579,23 @@ export const networkInvoicingService = {
         }
         if (clauses.length === 0) return null;
 
-        return supabase
+        let query = supabase
           .from("organizations")
           .select("id, name, phone, email, gstin, address, business_type")
-          .or(clauses.join(","))
-          .limit(1)
-          .maybeSingle();
+          .or(clauses.join(","));
+
+        if (criteria.excludeOrgId && isUuid(criteria.excludeOrgId)) {
+          query = query.neq("id", criteria.excludeOrgId);
+        }
+
+        return query.limit(1).maybeSingle();
       });
 
       if (orgQueryRes?.data) {
         const found = orgQueryRes.data as any;
+        if (criteria.excludeOrgId && found.id === criteria.excludeOrgId) {
+          return null;
+        }
         return {
           id: found.id,
           name: found.name,
@@ -691,6 +712,7 @@ export const networkInvoicingService = {
       email: salesDoc.partyEmail,
       gstin: salesDoc.partyGstin,
       name: salesDoc.partyName,
+      excludeOrgId: senderOrg.id,
     });
 
     const recipientOrgId = connectedRecipient?.id || undefined;
@@ -862,9 +884,9 @@ export const networkInvoicingService = {
       return res;
     });
 
-    const existingNotifs = this.getLocalNotifications();
-    existingNotifs.unshift(notification);
-    this.saveLocalNotifications(existingNotifs);
+    // NOTE: Inward recipient notification is persisted remotely in Supabase/PostgreSQL
+    // with recipient_org_id = targetRecipientOrgId. We strictly do NOT save it to the
+    // sender's local storage so the sender does not see an inward purchase notification on themselves.
 
     // 4. Trigger Broadcast and Custom DOM events for real-time reactivity across tabs and devices
     dispatchNetworkEvents("INVOICE_CREATED", { networkInvoice, notification });
@@ -1142,7 +1164,20 @@ export const networkInvoicingService = {
   ): Promise<NetworkNotification[]> {
     if (!orgId) return [];
 
-    const localNotifs = this.getLocalNotifications();
+    const rawLocalNotifs = this.getLocalNotifications();
+    // Prune any legacy inward notifications where sender was this org
+    const localNotifs = rawLocalNotifs.filter((n) => {
+      const isSender =
+        (typeof n.data?.senderOrgId === "string" && n.data.senderOrgId === orgId) ||
+        (typeof (n as any).senderOrgId === "string" && (n as any).senderOrgId === orgId);
+      if (isSender && (n.category === "inward" || n.type?.startsWith("sale_invoice_"))) {
+        return false;
+      }
+      return true;
+    });
+    if (localNotifs.length !== rawLocalNotifs.length) {
+      this.saveLocalNotifications(localNotifs);
+    }
     const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
     const cleanGstin = (orgGstin || "").toUpperCase().trim();
 

@@ -235,32 +235,110 @@ export default function Dashboard() {
         }))
       );
 
-      let collectSum = 0;
-      let paySum = 0;
-
-      if (creditData && creditData.length > 0) {
-        creditData.forEach((txn) => {
-          if (txn.party_type === "customer") {
-            collectSum += txn.type === "credit" ? txn.amount : -txn.amount;
-          } else if (txn.party_type === "supplier") {
-            paySum += txn.type === "credit" ? txn.amount : -txn.amount;
-          }
-        });
+      // 2. Fetch purchase documents in parallel to calculate total payables accurately
+      let pDocs: BusinessDocument[] = [];
+      try {
+        pDocs = (await documentsService.fetchPurchaseDocuments(orgId, "purchase_invoice")) || [];
+        setPurchaseDocs(
+          pDocs.map((d) => ({
+            id: d.id,
+            grandTotal: Number(d.grandTotal || 0),
+            date: d.date || d.created_at,
+          }))
+        );
+      } catch (pErr) {
+        console.warn("Could not load purchase docs:", pErr);
       }
 
-      setToCollect(Math.max(0, collectSum));
-      setToPay(Math.max(0, paySum));
+      // 3. Calculate Accurate "TO COLLECT" (Customer Receivables by ledger)
+      const customerBalanceMap: Record<string, number> = {};
+      (creditData || []).forEach((c) => {
+        if (c.party_type === "customer" && c.party_id) {
+          const amt = Number(c.amount) || 0;
+          const cur = customerBalanceMap[c.party_id] || 0;
+          customerBalanceMap[c.party_id] = c.type === "credit" ? cur + amt : cur - amt;
+        }
+      });
+      let collectSum = Object.values(customerBalanceMap)
+        .filter((bal) => bal > 0)
+        .reduce((acc, bal) => acc + bal, 0);
 
-      const allSalesList = (salesData || []).map((s) => ({
+      // Add unlinked unpaid customer sales invoices if any
+      try {
+        const salesDocs = documentsService.getLocalDocuments(orgId, "sales_invoice");
+        salesDocs.forEach((d) => {
+          if (d.status !== "paid" && Number(d.balanceDue || 0) > 0 && !d.partyId) {
+            collectSum += Number(d.balanceDue);
+          }
+        });
+      } catch { /* empty */ }
+
+      // 4. Calculate Accurate "TO PAY" (Supplier Payables by ledger + Unpaid Purchase Bills)
+      const supplierBalanceMap: Record<string, number> = {};
+      (creditData || []).forEach((c) => {
+        if (c.party_type === "supplier" && c.party_id) {
+          const amt = Number(c.amount) || 0;
+          const cur = supplierBalanceMap[c.party_id] || 0;
+          supplierBalanceMap[c.party_id] = c.type === "credit" ? cur + amt : cur - amt;
+        }
+      });
+      let paySum = Object.values(supplierBalanceMap)
+        .filter((bal) => bal > 0)
+        .reduce((acc, bal) => acc + bal, 0);
+
+      pDocs.forEach((d) => {
+        if (d.status !== "paid") {
+          const unpaid = Number(d.balanceDue !== undefined ? d.balanceDue : (d.grandTotal - (d.paidAmount || 0)));
+          if (unpaid > 0) {
+            paySum += unpaid;
+          }
+        }
+      });
+
+      setToCollect(Math.max(0, Math.round(collectSum)));
+      setToPay(Math.max(0, Math.round(paySum)));
+
+      // 5. Calculate Reconciled "CASH & BANK" Balance
+      let cashInHand = 0;
+      let bankTotal = 0;
+      let unlinkedBal = 0;
+      try {
+        const storedCash = localStorage.getItem(`credsmart_cash_in_hand_${orgId}`);
+        if (storedCash) cashInHand = parseFloat(storedCash) || 0;
+
+        const storedUnlinked = localStorage.getItem(`credsmart_unlinked_balance_${orgId}`);
+        if (storedUnlinked) unlinkedBal = parseFloat(storedUnlinked) || 0;
+
+        const storedAccounts = localStorage.getItem(`credsmart_bank_accounts_${orgId}`);
+        if (storedAccounts) {
+          const accs = JSON.parse(storedAccounts);
+          if (Array.isArray(accs)) {
+            bankTotal = accs.reduce((sum: number, acc: any) => sum + Number(acc.balance || 0), 0);
+          }
+        }
+      } catch { /* empty */ }
+      setCashBankBalance(Math.max(0, cashInHand + bankTotal + unlinkedBal));
+
+      // 6. Calculate Strict "TOTAL SALES (MTD)" (1st of Current Month to Now)
+      const now = new Date();
+      const startOfMonthTimestamp = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const confirmedSales = (salesData || []).filter((s) => s.status !== "void" && s.status !== "cancelled");
+
+      const allSalesList = confirmedSales.map((s) => ({
         id: s.id,
-        total: Number(s.total || 0),
+        total: Number(s.total || s.total_amount || 0),
         created_at: s.created_at,
       }));
       setSalesHistory(allSalesList);
 
-      const totalSalesRevenue = allSalesList.reduce((acc, s) => acc + (s.total || 0), 0);
-      setCashBankBalance(totalSalesRevenue > 0 ? totalSalesRevenue : 0);
-      setTotalMtdSales(totalSalesRevenue > 0 ? totalSalesRevenue : 0);
+      const mtdSalesRevenue = confirmedSales
+        .filter((s) => {
+          const ts = s.created_at ? new Date(s.created_at).getTime() : 0;
+          return ts >= startOfMonthTimestamp;
+        })
+        .reduce((acc, s) => acc + Number(s.total || s.total_amount || 0), 0);
+
+      setTotalMtdSales(Math.max(0, mtdSalesRevenue));
 
       // Latest 10 for table
       const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => {  
@@ -291,20 +369,6 @@ export default function Dashboard() {
       });
 
       setLatestTransactions(rows);
-
-      // 3. Fetch purchase documents
-      try {
-        const pDocs = await documentsService.fetchPurchaseDocuments(orgId, "purchase_invoice");
-        setPurchaseDocs(
-          (pDocs || []).map((d) => ({
-            id: d.id,
-            grandTotal: Number(d.grandTotal || 0),
-            date: d.date || d.created_at,
-          }))
-        );
-      } catch (pErr) {
-        console.warn("Could not load purchase docs for chart:", pErr);
-      }
 
       setLastUpdate(formatCurrentTime());
     } catch (err) {

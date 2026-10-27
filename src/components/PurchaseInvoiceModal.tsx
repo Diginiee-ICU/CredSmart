@@ -1719,11 +1719,23 @@ export function PurchaseInvoiceModal({
                 size="sm"
                 disabled={saving}
                 onClick={() => handleSave(false, true)}
-                className="h-8 px-2.5 sm:px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1.5"
+                className="h-8.5 px-2.5 sm:px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer flex items-center gap-1.5"
                 title="Save & New"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Save &amp; New</span>
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                disabled={saving}
+                onClick={() => handleSave(true, false)}
+                className="h-8.5 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-2xs cursor-pointer flex items-center gap-1.5 active:scale-[0.98] transition-all"
+                title="Generate Bill"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Generate Bill</span>
               </Button>
             </div>
           </div>
@@ -3003,25 +3015,40 @@ export function PurchaseInvoiceModal({
             </div>
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* MOBILE BOTTOM ACTION BAR */}
+            {/* STICKY BOTTOM ACTION BAR (Zero Scroll Viewport Access) */}
             {/* ───────────────────────────────────────────────────────────── */}
-            <div className="lg:hidden shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2.5 flex items-center justify-between gap-3 pb-[env(safe-area-inset-bottom)] z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3 pb-[max(0.625rem,env(safe-area-inset-bottom))] z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.03)]">
               <div className="flex flex-col">
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grand Total</span>
-                <span className="text-sm font-black font-mono text-slate-900 dark:text-white">
+                <span className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-white">
                   ₹ {totals.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={saving}
-                onClick={() => handleSave(true, false)}
-                className="h-9 px-4 text-xs font-bold rounded-lg bg-primary text-primary-foreground shadow-2xs gap-1.5 flex items-center shrink-0 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Save &amp; Print
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => handleSave(false, true)}
+                  className="h-8.5 px-3 text-xs font-semibold border-slate-300 dark:border-slate-700 rounded-lg shadow-2xs cursor-pointer hidden sm:flex items-center gap-1.5"
+                  title="Save & New"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save &amp; New</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => handleSave(true, false)}
+                  className="h-8.5 px-3.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-2xs gap-1.5 flex items-center shrink-0 cursor-pointer active:scale-[0.98] transition-all"
+                  title="Generate Bill"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Generate Bill</span>
+                </Button>
+              </div>
             </div>
             </>
           )}

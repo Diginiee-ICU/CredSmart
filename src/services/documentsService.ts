@@ -802,21 +802,29 @@ export const documentsService = {
               if (newSupp?.id) resolvedSupplierId = newSupp.id;
             }
 
-            if (resolvedSupplierId) {
-              const { data: piData, error: piErr } = await invoicesApi.createPurchaseInvoice(
-                {
-                  organization_id: orgId,
-                  supplier_id: resolvedSupplierId,
-                  invoice_number: doc.documentNumber,
-                  total_amount: doc.grandTotal,
-                  status: doc.status === "paid" ? "received" : "sent",
-                  notes: doc.notes || null,
-                  created_by: userId,
-                },
-                orgId
-              );
+            const { data: piData, error: piErr } = await invoicesApi.createPurchaseInvoice(
+              {
+                organization_id: orgId,
+                supplier_id: resolvedSupplierId || undefined,
+                supplier_name: doc.partyName || "Supplier",
+                supplier_gstin: doc.partyGstin || "",
+                invoice_number: doc.documentNumber,
+                purchase_date: doc.docDate || new Date().toISOString().split("T")[0],
+                subtotal: doc.subtotal,
+                discount_amount: doc.discountTotal || 0,
+                tax_amount: doc.taxTotal || 0,
+                total_amount: doc.grandTotal,
+                paid_amount: doc.paidAmount || 0,
+                payment_method: doc.paymentMethod || "cash",
+                payment_status: doc.status === "paid" ? "paid" : (doc.paidAmount && doc.paidAmount > 0 ? "partial" : "unpaid"),
+                status: doc.status === "paid" ? "received" : "sent",
+                notes: doc.notes || null,
+                created_by: userId,
+              },
+              orgId
+            );
 
-              if (!piErr && piData?.id) {
+            if (!piErr && piData?.id) {
                 const newId = piData.id;
                 doc.id = newId;
                 const cur = this.getLocalDocuments(orgId, docType);
@@ -868,7 +876,6 @@ export const documentsService = {
                   }
                 }
               }
-            }
           } catch (err) {
             console.warn("Supabase purchase invoice save fallback to local storage:", err);
           }

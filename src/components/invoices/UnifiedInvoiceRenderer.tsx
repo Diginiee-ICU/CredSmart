@@ -309,6 +309,55 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
       balance: resolvedPartyInfo?.balance,
     };
 
+    // For purchase vouchers (Purchase Invoice, Debit Note, Purchase Order), the Seller/Biller (FROM)
+    // is the Vendor/Supplier (safeParty), and the Buyer/Consignee (BILL TO) is our Store (safeStore).
+    // For sales vouchers, FROM is our Store and BILL TO is the Customer.
+    const sellerParty = isPurchase
+      ? {
+          name: safeParty.name,
+          phone: safeParty.phone,
+          email: safeParty.email,
+          address: safeParty.address,
+          state: safeParty.state,
+          stateCode: safeParty.stateCode,
+          gstin: safeParty.gstin,
+          pan: safeParty.pan,
+        }
+      : {
+          name: safeStore.name,
+          phone: safeStore.phone,
+          email: safeStore.email,
+          address: safeStore.address,
+          state: safeStore.state,
+          stateCode: safeStore.stateCode,
+          gstin: safeStore.gstin,
+          pan: safeStore.pan,
+        };
+
+    const buyerParty = isPurchase
+      ? {
+          name: safeStore.name,
+          phone: safeStore.phone,
+          email: safeStore.email,
+          address: safeStore.address,
+          state: safeStore.state,
+          stateCode: safeStore.stateCode,
+          gstin: safeStore.gstin,
+          pan: safeStore.pan,
+          balance: undefined,
+        }
+      : {
+          name: safeParty.name,
+          phone: safeParty.phone,
+          email: safeParty.email,
+          address: safeParty.address,
+          state: safeParty.state,
+          stateCode: safeParty.stateCode,
+          gstin: safeParty.gstin,
+          pan: safeParty.pan,
+          balance: safeParty.balance,
+        };
+
     const safeShipping = {
       name: shippingInfo?.name || safeParty.name,
       phone: shippingInfo?.phone || safeParty.phone,
@@ -476,10 +525,10 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
         >
           {/* Header */}
           <div className="text-center pb-2 mb-2 border-b border-dashed border-neutral-400">
-            <h2 className="font-bold text-sm sm:text-base uppercase tracking-wider">{safeStore.name}</h2>
-            {safeStore.address && <p className="text-[10px] text-neutral-600 mt-0.5">{safeStore.address}</p>}
-            {safeStore.phone && <p className="text-[10px] text-neutral-600">Tel: {safeStore.phone}</p>}
-            {safeStore.gstin && <p className="text-[10px] font-bold text-neutral-800">GSTIN: {safeStore.gstin}</p>}
+            <h2 className="font-bold text-sm sm:text-base uppercase tracking-wider">{sellerParty.name}</h2>
+            {sellerParty.address && <p className="text-[10px] text-neutral-600 mt-0.5">{sellerParty.address}</p>}
+            {sellerParty.phone && <p className="text-[10px] text-neutral-600">Tel: {sellerParty.phone}</p>}
+            {sellerParty.gstin && <p className="text-[10px] font-bold text-neutral-800">GSTIN: {sellerParty.gstin}</p>}
 
             <div className="mt-1.5 font-bold uppercase tracking-wide text-[11px] bg-neutral-100 py-0.5 px-2 rounded">
               {docTitle}
@@ -504,13 +553,13 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             {/* Billed To */}
             <div className="pt-1 mt-1 border-t border-dotted border-neutral-300">
               <span className="text-[10px] text-neutral-500 font-bold uppercase">
-                {isPurchase ? "Supplier:" : "Customer:"}
+                {isPurchase ? "Buyer:" : "Customer:"}
               </span>
               <p className="font-bold text-[11px] text-neutral-900 truncate">
-                {safeParty.name}
+                {buyerParty.name}
               </p>
-              {safeParty.phone && <p className="text-[10px] text-neutral-600">Ph: {safeParty.phone}</p>}
-              {safeParty.gstin && <p className="text-[10px] text-neutral-600">GSTIN: {safeParty.gstin}</p>}
+              {buyerParty.phone && <p className="text-[10px] text-neutral-600">Ph: {buyerParty.phone}</p>}
+              {buyerParty.gstin && <p className="text-[10px] text-neutral-600">GSTIN: {buyerParty.gstin}</p>}
             </div>
           </div>
 
@@ -678,26 +727,28 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
         {/* Dual Equal-Width Party Pods (FROM & BILL TO) */}
         <div className="grid grid-cols-2 border border-slate-200 divide-x divide-slate-200 text-[10px] mb-4">
-          {/* Left Pod: FROM (Seller) */}
+          {/* Left Pod: FROM (Seller / Biller) */}
           <div className="flex flex-col justify-between">
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
-                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">FROM</span>
+                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">
+                  {isPurchase ? "FROM (SUPPLIER / VENDOR)" : "FROM"}
+                </span>
               </div>
               <div className="p-3 space-y-1 text-[9.5px]">
                 <h2 className="text-[11.5px] font-black text-slate-900 uppercase tracking-tight">
-                  {safeStore.name}
+                  {sellerParty.name}
                 </h2>
-                {safeStore.address && (
-                  <p className="text-slate-600 leading-snug">{safeStore.address}</p>
+                {sellerParty.address && (
+                  <p className="text-slate-600 leading-snug">{sellerParty.address}</p>
                 )}
                 <div className="text-slate-700 flex flex-wrap gap-x-3">
-                  {safeStore.phone && <span>Phone: <strong className="font-semibold text-slate-900">{safeStore.phone}</strong></span>}
-                  {safeStore.email && <span>Email: <strong className="font-semibold text-slate-900">{safeStore.email}</strong></span>}
+                  {sellerParty.phone && <span>Phone: <strong className="font-semibold text-slate-900">{sellerParty.phone}</strong></span>}
+                  {sellerParty.email && <span>Email: <strong className="font-semibold text-slate-900">{sellerParty.email}</strong></span>}
                 </div>
                 <div className="text-slate-800 font-mono flex flex-wrap gap-x-3">
-                  {safeStore.gstin && <span>GSTIN: <strong className="text-slate-900">{safeStore.gstin}</strong></span>}
-                  {safeStore.pan && <span>PAN: <strong className="text-slate-900">{safeStore.pan}</strong></span>}
+                  {sellerParty.gstin && <span>GSTIN: <strong className="text-slate-900">{sellerParty.gstin}</strong></span>}
+                  {sellerParty.pan && <span>PAN: <strong className="text-slate-900">{sellerParty.pan}</strong></span>}
                 </div>
               </div>
             </div>
@@ -706,42 +757,44 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             </div>
           </div>
 
-          {/* Right Pod: BILL TO (Buyer) */}
+          {/* Right Pod: BILL TO (Buyer / Purchaser) */}
           <div className="flex flex-col justify-between">
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200 flex items-center justify-between">
-                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">BILL TO</span>
-                {activeSettings.showPartyBalance && safeParty.balance !== undefined && safeParty.balance !== null && (
+                <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">
+                  {isPurchase ? "BILL TO (BUYER / PURCHASER)" : "BILL TO"}
+                </span>
+                {activeSettings.showPartyBalance && buyerParty.balance !== undefined && buyerParty.balance !== null && (
                   <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
-                    Bal: ₹{Number(safeParty.balance).toFixed(2)}
+                    Bal: ₹{Number(buyerParty.balance).toFixed(2)}
                   </span>
                 )}
               </div>
               <div className="p-3 space-y-1 text-[9.5px]">
                 <p className="text-[11.5px] font-black text-slate-900 uppercase tracking-tight">
-                  {safeParty.name}
+                  {buyerParty.name}
                 </p>
-                {safeParty.address && (
-                  <p className="text-slate-600 leading-snug">{safeParty.address}</p>
+                {buyerParty.address && (
+                  <p className="text-slate-600 leading-snug">{buyerParty.address}</p>
                 )}
-                {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== safeParty.address && (
+                {propBillingAddress && propBillingAddress.trim() !== "" && propBillingAddress !== buyerParty.address && (
                   <p className="text-[8px] text-slate-500">
                     Billing: {propBillingAddress}{propBillingPincode ? ` - ${propBillingPincode}` : ""}
                   </p>
                 )}
                 <div className="text-slate-700 flex flex-wrap gap-x-3">
-                  {safeParty.phone && <span>Contact: <strong className="font-semibold text-slate-900">{safeParty.phone}</strong></span>}
-                  {safeParty.gstin && <span className="font-mono">GSTIN: <strong className="text-slate-900">{safeParty.gstin}</strong></span>}
+                  {buyerParty.phone && <span>Contact: <strong className="font-semibold text-slate-900">{buyerParty.phone}</strong></span>}
+                  {buyerParty.gstin && <span className="font-mono">GSTIN: <strong className="text-slate-900">{buyerParty.gstin}</strong></span>}
                 </div>
               </div>
             </div>
             <div className="border-t border-slate-200 px-3 py-1.5 text-[9.5px] text-slate-700 bg-white">
-              {safeParty.name === "Walk-in Customer" ? (
+              {buyerParty.name === "Walk-in Customer" ? (
                 <span>Attn: <strong className="font-semibold text-slate-900">{notes && notes.trim() !== "" ? notes : "Counter Sale"}</strong></span>
               ) : notes && notes.trim() !== "" ? (
-                <span>Customer: <strong className="font-semibold text-slate-900">{notes}</strong></span>
+                <span>{isPurchase ? "Purchaser" : "Customer"}: <strong className="font-semibold text-slate-900">{notes}</strong></span>
               ) : (
-                <span>Customer: <strong className="font-semibold text-slate-900">{safeParty.name}</strong></span>
+                <span>{isPurchase ? "Purchaser" : "Customer"}: <strong className="font-semibold text-slate-900">{buyerParty.name}</strong></span>
               )}
             </div>
           </div>
