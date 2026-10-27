@@ -382,6 +382,20 @@ export default function Dashboard() {
 
       setLatestTransactions(rows);
 
+      // Cache metrics for instant 0ms hydration on return visits
+      try {
+        sessionStorage.setItem(
+          `credsmart_cached_dashboard_${orgId}`,
+          JSON.stringify({
+            toCollect: Math.max(0, Math.round(collectSum)),
+            toPay: Math.max(0, Math.round(paySum)),
+            cashBankBalance: Math.max(0, cashInHand + bankTotal + unlinkedBal),
+            totalMtdSales: Math.max(0, mtdSalesRevenue),
+            latestTransactions: rows,
+          })
+        );
+      } catch { /* empty */ }
+
       setLastUpdate(formatCurrentTime());
     } catch (err) {
       console.error("fetchDashboardData error:", err);
