@@ -1592,15 +1592,15 @@ return (
         </div>
 
         {/* Table Footer Summary */}
-        <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="p-2 sm:p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-center justify-between gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
           <span>
             Showing <strong className="text-slate-900 dark:text-white font-mono">{totalItems === 0 ? 0 : `${startIndex}–${endIndex}`}</strong> of{" "}
             <strong className="text-slate-900 dark:text-white font-mono">{items.length}</strong> products
           </span>
-          <div className="flex items-center gap-4 font-mono">
+          <div className="flex items-center gap-3 font-mono">
             <span>Selected: <strong className="text-slate-900 dark:text-white">{selectedIds.size}</strong></span>
-            <span className="text-slate-900 dark:text-white font-bold">
-              Total Stock Valuation: ₹ {totalStockValue.toLocaleString("en-IN")}
+            <span className="hidden sm:inline text-slate-900 dark:text-white font-bold">
+              Valuation: ₹ {totalStockValue.toLocaleString("en-IN")}
             </span>
           </div>
         </div>
