@@ -117,7 +117,24 @@ const ProductsContext = createContext<ProductsContextValue | undefined>(undefine
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const { org, orgId } = useOrganization();
-  const [products, setProducts] = useState<ProductCatalogOption[]>([]);
+  const effectiveOrg =
+    orgId ||
+    org?.id ||
+    (typeof window !== "undefined" ? localStorage.getItem("credsmart_active_org_id") : undefined) ||
+    "";
+  const [products, setProducts] = useState<ProductCatalogOption[]>(() => {
+    if (!effectiveOrg) return [];
+    try {
+      const raw = localStorage.getItem(`credsmart_cached_products_${effectiveOrg}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeProduct);
+        }
+      }
+    } catch { /* empty */ }
+    return [];
+  });
   const [loading, setLoading] = useState(false);
 
   const refreshProducts = useCallback(async (customOrgId?: string) => {

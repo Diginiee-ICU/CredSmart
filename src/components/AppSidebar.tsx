@@ -519,7 +519,7 @@ export function AppSidebar({
             ref={panelRef}
             className={cn(
               // Centered full-width Mega Menu below header
-              "fixed top-[3.75rem] sm:top-[5.5rem] md:top-[6rem] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-7xl mx-auto z-[200]",
+              "fixed top-[calc(3.75rem+env(safe-area-inset-top,0px))] sm:top-[calc(4rem+env(safe-area-inset-top,0px))] md:top-15 left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-7xl mx-auto z-[200]",
               // Dimensions
               "max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-7rem)] flex flex-col",
               // 3D Glass Surface Architecture - LIGHT THEME

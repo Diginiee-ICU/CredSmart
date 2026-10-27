@@ -125,8 +125,45 @@ export default function Items() {
   const { orgId, loading: orgLoading } = useOrganization();
   const { user } = useAuth();
 
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Keep local view in-sync for filtering/sorting UI when products update
+
+  const [items, setItems] = useState<InventoryItem[]>(() => {
+    if (!products || products.length === 0) return [];
+    return products.map((p: any) => {
+      const sPrice = p.sellingPrice ?? p.selling_price ?? p.mrp ?? 0;
+      const pPrice = p.purchasePrice ?? p.purchase_price ?? 0;
+      const stock = p.currentStock ?? p.stock ?? 0;
+      const minAlert = p.minStockAlert ?? 5;
+      const altUnitVal = p.altUnit || p.tags?.alt_unit || null;
+      const altConvVal = p.altUnitConversion ?? p.tags?.alt_unit_conversion ?? null;
+      const imgUrl = p.imageUrl || p.image_url || p.tags?.image_url || p.tags?.imageUrl || null;
+      return {
+        id: p.id,
+        name: p.name || "Item",
+        sku: p.sku || "",
+        barcode: p.barcode || null,
+        category: p.category || "General",
+        brand: p.brand || null,
+        unit: p.unit || "PCS",
+        altUnit: altUnitVal,
+        altUnitConversion: altConvVal ? Number(altConvVal) : null,
+        imageUrl: imgUrl,
+        tags: p.tags || null,
+        sellingPrice: sPrice,
+        purchasePrice: pPrice,
+        mrp: p.mrp ?? sPrice,
+        gstRate: (p.gstRate || p.tax_rate || 18) as GSTRate,
+        hsnCode: p.hsnCode || (p.tags as any)?.hsn_code || (p.tags as any)?.hsn || "",
+        currentStock: stock,
+        openingStock: stock,
+        minStockAlert: minAlert,
+        isLowStock: stock <= minAlert,
+        batches: p.product_batches || [],
+        created_at: p.created_at || new Date().toISOString(),
+      };
+    });
+  });
+  const [loading, setLoading] = useState(() => !(products && products.length > 0));
 
   // Search & Filters
   const [search, setSearch] = useState("");
@@ -152,8 +189,7 @@ export default function Items() {
   const [adjustQty, setAdjustQty] = useState("");
   const [adjustType, setAdjustType] = useState<"add" | "reduce">("add");
 
-  // Products are served by the shared ProductsContext. Keep a local view in-sync for filtering/sorting UI
-  const { products, refreshProducts, addOrUpdateProduct } = useProducts();
+  // Keep local view in-sync for filtering/sorting UI when products update
 
   useEffect(() => {
     // Map and hydrate products into local `items` for the page UI
@@ -654,8 +690,8 @@ export default function Items() {
   setSortDirection("asc");
     }
   };
-return (
-    <div className="h-full flex flex-col p-3 sm:p-4 space-y-3 overflow-hidden font-sans bg-slate-50/50 dark:bg-slate-950/50">
+  return (
+    <div className="h-full w-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden font-sans bg-slate-50/50 dark:bg-slate-950/50">
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}

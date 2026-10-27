@@ -74,7 +74,7 @@ function SuiteSwitcherView({
       role="group"
       aria-label="Suite Switcher"
       className={cn(
-        "inline-flex items-center gap-0.5 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-lg border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0",
+        "inline-flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0",
         className
       )}
     >
@@ -93,7 +93,7 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer touch-manipulation h-7 sm:h-7.5 select-none",
+          "px-2.5 sm:px-3 py-1 text-xs sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer touch-manipulation h-8 sm:h-8.5 select-none",
           effectiveSuite === "billing"
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
             : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
@@ -104,7 +104,7 @@ function SuiteSwitcherView({
         {effectiveSuite === "billing" && (
           <span
             data-testid="active-suite-badge-billing"
-            className="text-[11px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
+            className="text-[11px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
           >
             Active
           </span>
@@ -126,7 +126,7 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer touch-manipulation h-7 sm:h-7.5 select-none",
+          "px-2.5 sm:px-3 py-1 text-xs sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer touch-manipulation h-8 sm:h-8.5 select-none",
           effectiveSuite === "crm"
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
             : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
@@ -136,7 +136,7 @@ function SuiteSwitcherView({
         {effectiveSuite === "crm" && (
           <span
             data-testid="active-suite-badge-crm"
-            className="text-[11px] font-mono font-medium px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
+            className="text-[11px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hidden sm:inline-block"
           >
             Active
           </span>
