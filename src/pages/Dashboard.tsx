@@ -74,12 +74,22 @@ export default function Dashboard() {
   const { org, orgId } = useOrganization();
   const { toast } = useToast();
 
-  const [toCollect, setToCollect] = useState(0);
-  const [toPay, setToPay] = useState(0);
-  const [cashBankBalance, setCashBankBalance] = useState(0);
-  const [totalMtdSales, setTotalMtdSales] = useState(0);
-  const [latestTransactions, setLatestTransactions] = useState<TransactionRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedDashboard = useMemo(() => {
+    if (!orgId) return null;
+    try {
+      const saved = sessionStorage.getItem(`credsmart_cached_dashboard_${orgId}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }, [orgId]);
+
+  const [toCollect, setToCollect] = useState<number>(() => cachedDashboard?.toCollect ?? 0);
+  const [toPay, setToPay] = useState<number>(() => cachedDashboard?.toPay ?? 0);
+  const [cashBankBalance, setCashBankBalance] = useState<number>(() => cachedDashboard?.cashBankBalance ?? 0);
+  const [totalMtdSales, setTotalMtdSales] = useState<number>(() => cachedDashboard?.totalMtdSales ?? 0);
+  const [latestTransactions, setLatestTransactions] = useState<TransactionRow[]>(() => cachedDashboard?.latestTransactions ?? []);
+  const [loading, setLoading] = useState<boolean>(() => !cachedDashboard);
   const [lastUpdate, setLastUpdate] = useState<string>("");
   const [chartTimeframe, setChartTimeframe] = useState("This Month");
   const [dismissedMobileTallyBanner, setDismissedMobileTallyBanner] = useState<boolean>(() => {
@@ -214,7 +224,9 @@ export default function Dashboard() {
       return;
     }
 
-    setLoading(true);
+    if (!latestTransactions.length && !cachedDashboard) {
+      setLoading(true);
+    }
     try {
       // 1. Fetch Credit Transactions & Sales concurrently in parallel
       const [creditRes, salesRes] = await Promise.all([
