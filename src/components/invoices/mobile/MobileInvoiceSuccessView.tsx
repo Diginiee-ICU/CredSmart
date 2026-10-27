@@ -126,19 +126,27 @@ export function MobileInvoiceSuccessView({
   };
 
   const handleWhatsAppShare = () => {
+    const isPurchase = invoice.docType === "purchase_invoice" || invoice.docType === "debit_note";
     const store = storeInfo?.name || "CredSmart Store";
-    const customer = invoice.partyName || "Valued Customer";
+    const customer = invoice.partyName || (isPurchase ? "Supplier" : "Valued Customer");
     const total = `₹${invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
-    const message = 
-      `🧾 *${store.toUpperCase()} - TAX INVOICE*\n\n` +
-      `Hello *${customer}*,\n` +
-      `Here is your invoice summary:\n` +
-      `• *Invoice No:* #${invoice.documentNumber}\n` +
-      `• *Date:* ${invoice.docDate}\n` +
-      `• *Total Amount:* ${total}\n` +
-      `• *Status:* ${invoice.status.toUpperCase()}\n\n` +
-      `Thank you for your business!`;
+    const message = isPurchase
+      ? `🧾 *PURCHASE BILL RECORDED*\n\n` +
+        `Supplier: *${customer}*\n` +
+        `Bill No: *#${invoice.documentNumber}*\n` +
+        `Date: ${invoice.docDate}\n` +
+        `Total Amount: ${total}\n` +
+        `Recorded For: *${store}*\n\n` +
+        `Thank you for your business!`
+      : `🧾 *${store.toUpperCase()} - TAX INVOICE*\n\n` +
+        `Hello *${customer}*,\n` +
+        `Here is your invoice summary:\n` +
+        `• *Invoice No:* #${invoice.documentNumber}\n` +
+        `• *Date:* ${invoice.docDate}\n` +
+        `• *Total Amount:* ${total}\n` +
+        `• *Status:* ${invoice.status.toUpperCase()}\n\n` +
+        `Thank you for your business!`;
 
     const rawPhone = invoice.partyPhone ? invoice.partyPhone.replace(/\D/g, "") : "";
     const phoneParam = rawPhone.length >= 10 ? (rawPhone.length === 10 ? `91${rawPhone}` : rawPhone) : "";
@@ -208,8 +216,14 @@ export function MobileInvoiceSuccessView({
 
         <div className="flex justify-between items-end">
           <div className="flex flex-col gap-0.5">
-            <span className="text-[15px] font-bold text-slate-900">{invoice.partyName || "Cash Sale"}</span>
-            <span className="text-[13px] text-slate-500">Invoice #{invoice.documentNumber}</span>
+            <span className="text-[15px] font-bold text-slate-900">
+              {invoice.docType === "purchase_invoice" || invoice.docType === "debit_note"
+                ? `Supplier: ${invoice.partyName || "Supplier"}`
+                : (invoice.partyName || "Cash Sale")}
+            </span>
+            <span className="text-[13px] text-slate-500">
+              {invoice.docType === "purchase_invoice" ? `Purchase Bill #${invoice.documentNumber}` : `Invoice #${invoice.documentNumber}`}
+            </span>
           </div>
           {invoice.status === "paid" && (
             <div className="flex items-center gap-1">
@@ -305,10 +319,11 @@ export function MobileInvoiceSuccessView({
                 gstin: storeInfo?.gstin || "",
               }}
               partyInfo={{
-                name: invoice.partyName || "Cash Sale",
+                name: invoice.partyName || (invoice.docType === "purchase_invoice" ? "Supplier" : "Cash Sale"),
                 phone: invoice.partyPhone,
                 address: invoice.partyAddress,
                 gstin: invoice.partyGstin,
+                type: invoice.docType === "purchase_invoice" || invoice.docType === "debit_note" ? "supplier" : "customer",
               }}
               items={(invoice.items || []).map((it) => ({
                 name: it.productName,

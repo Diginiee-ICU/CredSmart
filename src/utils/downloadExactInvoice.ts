@@ -212,13 +212,16 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
             pdf.addImage(imgData, "PNG", 0, 0, pageWidthMm, imgHeightMm, undefined, "FAST");
           }
 
+          const isPurchase = docType === "purchase_invoice" || docType === "debit_note";
+          const docLabel = isPurchase ? "Purchase Bill" : (payload.isEstimate ? "Estimate" : "Invoice");
+          const filePrefix = isPurchase ? "PurchaseBill" : (payload.isEstimate ? "Estimate" : "Invoice");
           const safeInvoiceNumber = (payload.invoiceNumber || "invoice").replace(/[/\\:*?"<>|]/g, "-");
-          pdf.save(`Invoice-${safeInvoiceNumber}.pdf`);
+          pdf.save(`${filePrefix}-${safeInvoiceNumber}.pdf`);
 
           if (!payload.silent) {
             toast({
-              title: "✅ Invoice Downloaded",
-              description: `Invoice-${safeInvoiceNumber}.pdf saved successfully.`,
+              title: `✅ ${docLabel} Downloaded`,
+              description: `${filePrefix}-${safeInvoiceNumber}.pdf saved successfully.`,
             });
           }
         } catch (err) {

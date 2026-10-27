@@ -183,6 +183,11 @@ export function isInvoiceForOrg(
   userPhone?: string
 ): boolean {
   if (!orgId) return false;
+
+  // STRICT MULTI-TENANT ISOLATION:
+  // The creator/sender organization can NEVER be the recipient of their own outward sales invoice!
+  if (inv.senderOrgId && inv.senderOrgId === orgId) return false;
+
   if (inv.recipientOrgId === orgId) return true;
 
   const cleanPhone = normalizePhoneNumber(orgPhone) || normalizePhoneNumber(userPhone);
@@ -242,9 +247,11 @@ export function isNotificationForOrg(
   // STRICT MULTI-TENANT ISOLATION:
   // If this notification was sent by this organization, and it's an inward recipient notification,
   // it MUST NEVER be delivered or displayed to this organization as an inward bill!
-  const isSender =
-    (typeof n.data?.senderOrgId === "string" && n.data.senderOrgId === orgId) ||
-    (typeof (n as any).senderOrgId === "string" && (n as any).senderOrgId === orgId);
+  const rawSenderOrgId =
+    (typeof n.data?.senderOrgId === "string" ? n.data.senderOrgId : undefined) ||
+    (typeof (n as any).senderOrgId === "string" ? (n as any).senderOrgId : undefined) ||
+    (typeof n.data === "string" ? (() => { try { return JSON.parse(n.data)?.senderOrgId; } catch { return undefined; } })() : undefined);
+  const isSender = typeof rawSenderOrgId === "string" && rawSenderOrgId === orgId;
   if (isSender && (n.category === "inward" || n.type?.startsWith("sale_invoice_"))) {
     return false;
   }
@@ -479,6 +486,37 @@ export const networkInvoicingService = {
       } catch (err) {
         console.warn("Local org lookup notice:", err);
       }
+    }
+
+    // 1b. Query Supabase RPC lookup_network_organization (bypasses RLS to discover platform merchants safely)
+    try {
+      const rpcResult = await safeDbCall(async () => {
+        const { data, error } = await supabase.rpc("lookup_network_organization" as any, {
+          p_query: cleanName.length >= 3 ? cleanName : null,
+          p_phone: cleanPhone.length >= 10 ? cleanPhone : null,
+          p_gstin: cleanGstin.length >= 10 ? cleanGstin : null,
+          p_exclude_org_id: criteria.excludeOrgId && isUuid(criteria.excludeOrgId) ? criteria.excludeOrgId : null,
+        });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data[0];
+        }
+        return null;
+      });
+
+      if (rpcResult && rpcResult.id && rpcResult.id !== criteria.excludeOrgId) {
+        return {
+          id: rpcResult.id,
+          name: rpcResult.name,
+          phone: rpcResult.phone || undefined,
+          email: rpcResult.email || undefined,
+          gstin: rpcResult.gstin || undefined,
+          address: rpcResult.address || undefined,
+          businessType: rpcResult.business_type || undefined,
+          isRegisteredOnPlatform: true,
+        };
+      }
+    } catch (rpcErr) {
+      console.warn("RPC network organization lookup notice:", rpcErr);
     }
 
     // 2. Query storefront_settings (public platform directory of all registered stores)
@@ -828,11 +866,11 @@ export const networkInvoicingService = {
       recipientGstin: salesDoc.partyGstin || connectedRecipient?.gstin || undefined,
       type: "sale_invoice_received",
       category: "inward",
-      title: `Sale was Created by ${senderOrg.name} on your name`,
-      message: `${senderOrg.name} has created Sales Invoice #${salesDoc.documentNumber} for ₹${salesDoc.grandTotal.toLocaleString(
+      title: `New Inward Bill from ${senderOrg.name}`,
+      message: `${senderOrg.name} has sent you Inward Bill #${salesDoc.documentNumber} for ₹${salesDoc.grandTotal.toLocaleString(
         "en-IN",
         { minimumFractionDigits: 2 }
-      )} on your name. Review items, taxes and click Approve to add directly into your Purchases.`,
+      )}. Review items, taxes and click Approve to add directly into your Purchases.`,
       status: "unread",
       actionStatus: "pending",
       networkInvoiceId: networkInvoice.id,
@@ -1043,9 +1081,10 @@ export const networkInvoicingService = {
   ): Promise<NetworkInvoice[]> {
     const all = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
     return all.filter((inv) => {
+      // STRICT MULTI-TENANT ISOLATION:
+      // The creator/sender organization can NEVER have their own outward sales invoice as a pending inward bill!
+      if (inv.senderOrgId === orgId) return false;
       const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
-      // Allow inward review if explicitly addressed to this recipient even if created within same org
-      if (inv.senderOrgId === orgId && !isRecipient) return false;
       return isRecipient && inv.status === "pending";
     });
   },
@@ -1167,9 +1206,11 @@ export const networkInvoicingService = {
     const rawLocalNotifs = this.getLocalNotifications();
     // Prune any legacy inward notifications where sender was this org
     const localNotifs = rawLocalNotifs.filter((n) => {
-      const isSender =
-        (typeof n.data?.senderOrgId === "string" && n.data.senderOrgId === orgId) ||
-        (typeof (n as any).senderOrgId === "string" && (n as any).senderOrgId === orgId);
+      const rawSenderOrgId =
+        (typeof n.data?.senderOrgId === "string" ? n.data.senderOrgId : undefined) ||
+        (typeof (n as any).senderOrgId === "string" ? (n as any).senderOrgId : undefined) ||
+        (typeof n.data === "string" ? (() => { try { return JSON.parse(n.data)?.senderOrgId; } catch { return undefined; } })() : undefined);
+      const isSender = typeof rawSenderOrgId === "string" && rawSenderOrgId === orgId;
       if (isSender && (n.category === "inward" || n.type?.startsWith("sale_invoice_"))) {
         return false;
       }
@@ -1270,6 +1311,7 @@ export const networkInvoicingService = {
     try {
       const allInvoices = await this.getInvoicesForOrg(orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
       for (const inv of allInvoices) {
+        if (inv.senderOrgId === orgId) continue; // NEVER synthesize inward notifications for sender!
         const isRecipient = isInvoiceForOrg(inv, orgId, orgPhone, orgGstin, orgName, userName, userEmail, userPhone);
         if (isRecipient && inv.senderOrgId !== orgId) {
           const alreadyHasNotif = matched.some(
@@ -1284,8 +1326,8 @@ export const networkInvoicingService = {
               recipientGstin: inv.recipientGstin,
               type: "sale_invoice_received",
               category: "inward",
-              title: `Sale was Created by ${inv.senderOrgName} on your name`,
-              message: `${inv.senderOrgName} has created Sales Invoice #${inv.invoiceNumber} for ₹${Number(inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })} on your name. Review items, taxes and click Approve to add directly into your Purchases.`,
+              title: `New Inward Bill from ${inv.senderOrgName}`,
+              message: `${inv.senderOrgName} has sent you Inward Bill #${inv.invoiceNumber} for ₹${Number(inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}. Review items, taxes and click Approve to add directly into your Purchases.`,
               status: inv.status === "pending" ? "unread" : "read",
               actionStatus: inv.status,
               networkInvoiceId: inv.id,

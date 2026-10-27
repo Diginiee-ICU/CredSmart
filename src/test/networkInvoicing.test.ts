@@ -152,7 +152,7 @@ describe("B2B Network Invoicing & Auto-Purchase Sync Engine", () => {
       );
       expect(notifsForB.length).toBe(1);
       expect(notifsForB[0].recipientPhone).toBe("9123456789");
-      expect(notifsForB[0].title).toContain("Sale was Created by Person A Wholesale Supplies on your name");
+      expect(notifsForB[0].title).toContain("New Inward Bill from Person A Wholesale Supplies");
       expect(notifsForB[0].actionStatus).toBe("pending");
     });
   });

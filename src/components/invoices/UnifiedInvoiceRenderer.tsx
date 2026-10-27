@@ -538,7 +538,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           {/* Meta Info */}
           <div className="text-[10.5px] pb-2 mb-2 border-b border-dashed border-neutral-400 space-y-0.5">
             <div className="flex justify-between">
-              <span>Invoice No:</span>
+              <span>{isPurchase ? "Bill No:" : "Invoice No:"}</span>
               <strong className="font-bold">{invoiceNumber}</strong>
             </div>
             <div className="flex justify-between">
@@ -553,7 +553,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             {/* Billed To */}
             <div className="pt-1 mt-1 border-t border-dotted border-neutral-300">
               <span className="text-[10px] text-neutral-500 font-bold uppercase">
-                {isPurchase ? "Buyer:" : "Customer:"}
+                {isPurchase ? "Bill To (Buyer):" : "Customer:"}
               </span>
               <p className="font-bold text-[11px] text-neutral-900 truncate">
                 {buyerParty.name}
@@ -706,11 +706,11 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
 
           <div className="text-right flex flex-col items-end space-y-1.5">
             <div>
-              <span className="text-[10px] font-bold text-slate-700 block">Invoice No.</span>
+              <span className="text-[10px] font-bold text-slate-700 block">{isPurchase ? "Bill No." : "Invoice No."}</span>
               <span className="text-[10.5px] font-bold text-slate-900 font-mono block">{invoiceNumber}</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-700 block">Invoice Date</span>
+              <span className="text-[10px] font-bold text-slate-700 block">{isPurchase ? "Bill Date" : "Invoice Date"}</span>
               <span className="text-[10.5px] font-semibold text-slate-900 block">{formattedDate}{formattedTime ? ` ${formattedTime}` : ""}</span>
             </div>
             {dueDate && (
@@ -732,7 +732,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
                 <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">
-                  {isPurchase ? "FROM (SUPPLIER / VENDOR)" : "FROM"}
+                  {isPurchase ? "FROM / BILLER (SUPPLIER / VENDOR)" : "FROM (SELLER)"}
                 </span>
               </div>
               <div className="p-3 space-y-1 text-[9.5px]">
@@ -762,7 +762,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200 flex items-center justify-between">
                 <span className="text-[10.5px] font-bold tracking-wider text-[#0284c7] uppercase">
-                  {isPurchase ? "BILL TO (BUYER / PURCHASER)" : "BILL TO"}
+                  {isPurchase ? "BILL TO (BUYER / MY COMPANY)" : "BILL TO (CUSTOMER)"}
                 </span>
                 {activeSettings.showPartyBalance && buyerParty.balance !== undefined && buyerParty.balance !== null && (
                   <span className="text-[8px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
@@ -1070,11 +1070,18 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
                 <span className="text-[10px] font-bold tracking-wider text-[#0284c7] uppercase">
-                  BANK ACCOUNT DETAILS
+                  {isPurchase ? "PAYMENT / SETTLEMENT DETAILS" : "BANK ACCOUNT DETAILS"}
                 </span>
               </div>
               <div className="p-3 space-y-0.5 text-[9.5px] text-slate-700">
-                {selectedBank ? (
+                {isPurchase ? (
+                  <>
+                    <p>Payment Mode: <strong className="text-slate-900 font-semibold">{paymentMethod}</strong></p>
+                    <p>Payment Status: <strong className="text-slate-900 font-semibold capitalize">{totals?.balanceDue && totals.balanceDue > 0 ? (totals.paidAmount && totals.paidAmount > 0 ? "Partially Paid" : "Unpaid / Credit") : "Fully Settled / Paid"}</strong></p>
+                    {totals?.paidAmount !== undefined && <p>Amount Settled: <strong className="font-mono text-slate-900 font-semibold">₹{Number(totals.paidAmount).toFixed(2)}</strong></p>}
+                    {totals?.balanceDue !== undefined && totals.balanceDue > 0 && <p className="text-rose-600 font-semibold">Balance Payable: <strong className="font-mono">₹{Number(totals.balanceDue).toFixed(2)}</strong></p>}
+                  </>
+                ) : selectedBank ? (
                   <>
                     <p>Bank: <strong className="text-slate-900 font-semibold">{selectedBank.bankName || "Federal Bank"}</strong></p>
                     <p>A/C No.: <strong className="font-mono text-slate-900 font-semibold">{selectedBank.accountNumber}</strong></p>
@@ -1094,11 +1101,11 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
             <div>
               <div className="bg-[#e8f4fd] px-3 py-1.5 border-b border-slate-200">
                 <span className="text-[10px] font-bold tracking-wider text-[#0284c7] uppercase">
-                  AUTHORISED SIGNATORY
+                  {isPurchase ? "RECEIVED & VERIFIED BY" : "AUTHORISED SIGNATORY"}
                 </span>
               </div>
               <div className="p-3 flex flex-col justify-end items-center min-h-[75px]">
-                {activeSettings.signatureDataUrl ? (
+                {activeSettings.signatureDataUrl && !isPurchase ? (
                   <img
                     src={activeSettings.signatureDataUrl}
                     alt="Authorized Signature"
@@ -1106,7 +1113,9 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
                   />
                 ) : null}
                 <div className="w-36 border-b border-slate-300 mb-1" />
-                <p className="text-[9px] text-slate-500 font-medium">Signature</p>
+                <p className="text-[9px] text-slate-500 font-medium">
+                  {isPurchase ? `For ${safeStore.name}` : "Signature"}
+                </p>
               </div>
             </div>
           </div>

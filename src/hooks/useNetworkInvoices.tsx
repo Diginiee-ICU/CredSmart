@@ -163,8 +163,8 @@ export function NetworkInvoicesProvider({ children }: { children: ReactNode }) {
         playChimeAndVibrate();
 
         // Show real-time actionable toast notification
-        toast.info(`⚡ New Sales Invoice on your name!`, {
-          description: `${networkInvoice.senderOrgName} has created Sales Invoice #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on your name.`,
+        toast.info(`⚡ New Inward Bill from ${networkInvoice.senderOrgName}`, {
+          description: `${networkInvoice.senderOrgName} has sent you Inward Bill #${networkInvoice.invoiceNumber} for ₹${Number(networkInvoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Review and approve to add into Purchases.`,
           duration: 9000,
           action: {
             label: "Review & Inward",

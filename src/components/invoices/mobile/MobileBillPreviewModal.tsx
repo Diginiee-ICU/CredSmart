@@ -222,7 +222,7 @@ export function MobileBillPreviewModal({
             <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-medium">
               <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
               <span>
-                Review all details before issuing this bill to <strong>{partyName || "Walk-in Customer"}</strong>.
+                {docType === "purchase_invoice" || docType === "debit_note" ? "Review all details for Purchase Bill from " : "Review all details before issuing this bill to "}<strong>{partyName || (docType === "purchase_invoice" ? "Supplier" : "Walk-in Customer")}</strong>.
               </span>
             </div>
           </div>
@@ -256,7 +256,8 @@ export function MobileBillPreviewModal({
                   upi_id: storeInfo?.upi_id,
                 }}
                 partyInfo={{
-                  name: partyName || "Walk-in Customer",
+                  name: partyName || (docType === "purchase_invoice" ? "Supplier" : "Walk-in Customer"),
+                  type: docType === "purchase_invoice" || docType === "debit_note" ? "supplier" : "customer",
                   phone: partyPhone,
                   address: partyAddress,
                   gstin: partyGstin,

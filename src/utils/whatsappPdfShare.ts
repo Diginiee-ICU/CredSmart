@@ -104,7 +104,11 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
 
   const cleanStore = payload.storeName || "CredSmart Business";
   const cleanCustomer = payload.customerName || "Valued Customer";
-  const docTitle = payload.isEstimate ? "ESTIMATE / QUOTATION" : "TAX INVOICE";
+  const isPurchase = payload.docType === "purchase_invoice" || payload.docType === "debit_note";
+  const billerName = isPurchase ? cleanCustomer : cleanStore;
+  const billToName = isPurchase ? cleanStore : cleanCustomer;
+  const docTitle = isPurchase ? "PURCHASE INVOICE / BILL" : (payload.isEstimate ? "ESTIMATE / QUOTATION" : "TAX INVOICE");
+  const billToLabel = isPurchase ? "Billed To (Buyer / My Company):" : "Billed To:";
 
   // Header Box
   doc.setFillColor(15, 23, 42); // slate-900
@@ -113,22 +117,22 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text(cleanStore, 14, 12);
+  doc.text(billerName, 14, 12);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(docTitle, 14, 19);
-  doc.text(`Invoice #: ${payload.invoiceNumber} | Date: ${payload.date || new Date().toLocaleDateString("en-IN")}`, 14, 24);
+  doc.text(`${isPurchase ? "Bill" : "Invoice"} #: ${payload.invoiceNumber} | Date: ${payload.date || new Date().toLocaleDateString("en-IN")}`, 14, 24);
 
   // Customer Section
   doc.setTextColor(30, 41, 59);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("Billed To:", 14, 38);
+  doc.text(billToLabel, 14, 38);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(cleanCustomer, 14, 44);
+  doc.text(billToName, 14, 44);
   if (payload.customerPhone) {
     doc.text(`Phone: ${payload.customerPhone}`, 14, 49);
   }
@@ -208,9 +212,11 @@ export async function downloadInvoicePdf(
       blob = target;
       filename = optionalFilename || "Invoice.pdf";
     } else {
+      const isPurchase = target.docType === "purchase_invoice" || target.docType === "debit_note";
+      const filePrefix = isPurchase ? "PurchaseBill" : (target.isEstimate ? "Estimate" : "Invoice");
       filename =
         optionalFilename ||
-        `Invoice_${(target.invoiceNumber || "DOC").replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
+        `${filePrefix}_${(target.invoiceNumber || "DOC").replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
       blob = await generateInvoicePdfBlob(target);
     }
 
@@ -244,12 +250,16 @@ import { playSuccessChime, triggerHapticSuccess } from "./soundAndHaptics";
  * while ensuring the original A4 PDF is saved to the user's phone/device in the same action.
  */
 export async function shareInvoicePdfToWhatsApp(payload: InvoiceSharePayload): Promise<void> {
-  const filename = `Invoice_${payload.invoiceNumber.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
+  const isPurchase = payload.docType === "purchase_invoice" || payload.docType === "debit_note";
+  const filePrefix = isPurchase ? "PurchaseBill" : (payload.isEstimate ? "Estimate" : "Invoice");
+  const filename = `${filePrefix}_${payload.invoiceNumber.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf`;
   const cleanCustomer = payload.customerName || "Valued Customer";
   const cleanStore = payload.storeName || "CredSmart Store";
-  const docType = payload.isEstimate ? "Estimate" : "Tax Invoice";
+  const docType = isPurchase ? "Purchase Bill" : (payload.isEstimate ? "Estimate" : "Tax Invoice");
 
-  const messageText = `🧾 *${cleanStore.toUpperCase()}* - ${docType.toUpperCase()}\n\nHello *${cleanCustomer}*,\nHere is your *${docType} #${payload.invoiceNumber}* for *₹${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*.\n\n📄 *An original A4 Tax Invoice PDF has been generated and attached for your records.*\n\nThank you for choosing ${cleanStore}!`;
+  const messageText = isPurchase
+    ? `🧾 *PURCHASE BILL RECORDED*\n\nSupplier: *${cleanCustomer}*\nBill No: *#${payload.invoiceNumber}*\nTotal: *₹${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*\nRecorded For: *${cleanStore}*\n\n📄 *An original A4 Purchase Invoice PDF has been generated and attached for your records.*`
+    : `🧾 *${cleanStore.toUpperCase()}* - ${docType.toUpperCase()}\n\nHello *${cleanCustomer}*,\nHere is your *${docType} #${payload.invoiceNumber}* for *₹${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}*.\n\n📄 *An original A4 Tax Invoice PDF has been generated and attached for your records.*\n\nThank you for choosing ${cleanStore}!`;
 
   const rawPhone = payload.customerPhone ? payload.customerPhone.replace(/\D/g, "") : "";
   const phoneParam = rawPhone.length >= 10 ? `91${rawPhone.slice(-10)}` : "";

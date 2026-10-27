@@ -8,6 +8,7 @@ import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/util
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
 import { shareInvoicePdfToWhatsApp, downloadInvoicePdf } from "@/utils/whatsappPdfShare";
+import { downloadExactInvoicePdf } from "@/utils/downloadExactInvoice";
 import { cn } from "@/lib/utils";
 
 export interface ReceiptData {
@@ -315,6 +316,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       storePhone: storePhone || undefined,
       totalAmount: data.total,
       date: formattedDate,
+      docType: data.docType,
       isEstimate: data.isEstimate,
       customElement: receiptRef.current,
       elementId: "receipt-printable-area",
@@ -328,6 +330,57 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   };
 
   const handleDownload = async () => {
+    if (layout === "a4" || layout === "a4_detailed") {
+      await downloadExactInvoicePdf({
+        invoiceNumber: data.invoiceNumber,
+        referenceNumber: data.referenceNumber,
+        docType: data.docType,
+        date: data.date,
+        dueDate: data.dueDate,
+        customerName: data.customerName || undefined,
+        customerPhone: data.customerPhone || undefined,
+        customerEmail: data.partyEmail || undefined,
+        customerAddress: data.partyAddress || undefined,
+        customerGstin: data.partyGstin || undefined,
+        partyBalance: data.partyBalance || undefined,
+        storeName: storeName,
+        storePhone: storePhone || undefined,
+        storeEmail: storeEmail || undefined,
+        storeAddress: storeAddress || undefined,
+        storeGstin: gstin || undefined,
+        storePan: pan || undefined,
+        storeLogoUrl: storeLogoUrl || undefined,
+        totalAmount: data.total,
+        subtotal: data.subtotal,
+        discountAmount: data.discountAmount,
+        tax: data.tax,
+        roundOff: data.roundOff,
+        paymentMethod: data.paymentMethod,
+        notes: data.notes,
+        terms: data.terms,
+        layout: layout,
+        showHsnSummary: layout === "a4_detailed",
+        items: data.items.map((it) => {
+          const itemData = it as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+          return {
+            name: itemData.product?.name || itemData.name || "Item",
+            quantity: it.quantity,
+            rate: itemData.batch?.mrp || itemData.rate || itemData.unitPrice || 0,
+            total: (itemData.batch?.mrp || itemData.rate || itemData.unitPrice || 0) * it.quantity,
+            hsn: itemData.product?.hsn || itemData.product?.hsnCode || itemData.hsn,
+            taxRate: itemData.product?.gstRate || itemData.taxRate || 0,
+            unit: itemData.unit || itemData.product?.unit || "PCS",
+            altUnit: itemData.altUnit,
+            altQty: itemData.altQty,
+            altUnitConversion: itemData.altUnitConversion,
+            batchNo: itemData.batch?.batchNumber || itemData.batchNumber,
+            expDate: itemData.batch?.expiryDate || itemData.expiryDate,
+          };
+        }),
+      });
+      return;
+    }
+
     await downloadInvoicePdf({
       invoiceNumber: data.invoiceNumber,
       customerName: data.customerName || undefined,
@@ -336,6 +389,7 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       storePhone: storePhone || undefined,
       totalAmount: data.total,
       date: formattedDate,
+      docType: data.docType,
       isEstimate: data.isEstimate,
       customElement: receiptRef.current,
       elementId: "receipt-printable-area",
@@ -373,12 +427,12 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
             </div>
             <div className="min-w-0">
               <h2 className="font-bold text-white text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 truncate">
-                <span className="truncate">{data.isEstimate ? "Estimate Generated" : "Bill Saved Successfully"}</span>
+                <span className="truncate">{data.isEstimate ? "Estimate Generated" : data.docType === "purchase_invoice" ? "Purchase Bill Saved" : "Bill Saved Successfully"}</span>
                 <span className="text-[11px] sm:text-[11px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-500/30 shrink-0">
                   ₹{data.total.toLocaleString("en-IN")}
                 </span>
               </h2>
-              <p className="text-[11px] sm:text-[11px] text-slate-400 font-mono truncate">Invoice #{data.invoiceNumber}</p>
+              <p className="text-[11px] sm:text-[11px] text-slate-400 font-mono truncate">{data.docType === "purchase_invoice" ? "Purchase Bill #" : "Invoice #"}{data.invoiceNumber}</p>
             </div>
           </div>
 

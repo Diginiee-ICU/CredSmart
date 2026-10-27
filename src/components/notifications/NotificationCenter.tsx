@@ -403,7 +403,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                                 <span className="truncate">{inv.senderOrgName}</span>
                               </div>
                               <p className="text-[11px] text-muted-foreground mt-0.5">
-                                created a sale on your business name
+                                sent an inward bill waiting for your approval
                               </p>
                               <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted-foreground flex-wrap font-sans">
                                 <span className="font-mono font-bold text-foreground bg-muted/80 px-1.5 py-0.5 rounded border border-border/70">
@@ -818,7 +818,7 @@ export function NotificationCenter({ open, onOpenChange }: NotificationCenterPro
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs sm:text-sm font-bold text-foreground leading-tight truncate">
-                                  Sale was Created by <span className="text-primary font-black">{inv.senderOrgName}</span> on your name
+                                  New Inward Bill from <span className="text-primary font-black">{inv.senderOrgName}</span>
                                 </p>
                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground flex-wrap font-sans">
                                   <span className="font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded-md border border-border/70">

@@ -1250,47 +1250,50 @@ export function PurchaseInvoiceModal({
       onSaved(saved);
 
       if (andPrint) {
+        // 1. Immediately trigger high-fidelity A4 / chosen layout Purchase Bill generation & download
+        downloadExactInvoicePdf({
+          invoiceNumber: saved.documentNumber,
+          referenceNumber: saved.referenceNumber,
+          docType: saved.docType as any,
+          date: saved.docDate,
+          dueDate: saved.dueDate,
+          customerName: saved.partyName,
+          customerPhone: saved.partyPhone,
+          customerAddress: saved.partyAddress,
+          customerGstin: saved.partyGstin,
+          storeName: org?.name || "CredSmart Store",
+          storePhone: org?.phone,
+          storeEmail: org?.email,
+          storeAddress: org?.address,
+          storeGstin: org?.gstin,
+          totalAmount: saved.grandTotal,
+          subtotal: saved.subtotal,
+          discountAmount: saved.discountTotal ?? 0,
+          tax: saved.taxTotal ?? 0,
+          roundOff: saved.roundOff ?? 0,
+          paymentMethod: saved.paymentMethod,
+          notes: saved.notes,
+          terms: saved.terms,
+          layout: previewLayout,
+          items: saved.items.map((it) => ({
+            name: it.productName,
+            quantity: it.quantity,
+            unit: it.unit || "PCS",
+            altUnit: it.altUnit,
+            altQty: it.altQty,
+            altUnitConversion: it.altUnitConversion,
+            rate: it.rate,
+            total: it.lineTotal,
+            hsn: it.hsn,
+            taxRate: it.taxRate,
+            batchNo: it.batchNumber,
+            expDate: it.expiryDate,
+          })),
+        });
+
+        // 2. Also trigger receipt / print modal if supported
         if (onPrintRequest) {
           onPrintRequest(saved);
-        } else {
-          downloadExactInvoicePdf({
-            invoiceNumber: saved.documentNumber,
-            referenceNumber: saved.referenceNumber,
-            docType: saved.docType as any,
-            date: saved.docDate,
-            dueDate: saved.dueDate,
-            customerName: saved.partyName,
-            customerPhone: saved.partyPhone,
-            customerAddress: saved.partyAddress,
-            customerGstin: saved.partyGstin,
-            storeName: org?.name || "CredSmart Store",
-            storePhone: org?.phone,
-            storeEmail: org?.email,
-            storeAddress: org?.address,
-            storeGstin: org?.gstin,
-            totalAmount: saved.grandTotal,
-            subtotal: saved.subtotal,
-            discountAmount: saved.discountTotal ?? 0,
-            tax: saved.taxTotal ?? 0,
-            roundOff: saved.roundOff ?? 0,
-            paymentMethod: saved.paymentMethod,
-            notes: saved.notes,
-            terms: saved.terms,
-            items: saved.items.map((it) => ({
-              name: it.productName,
-              quantity: it.quantity,
-              unit: it.unit || "PCS",
-              altUnit: it.altUnit,
-              altQty: it.altQty,
-              altUnitConversion: it.altUnitConversion,
-              rate: it.rate,
-              total: it.lineTotal,
-              hsn: it.hsn,
-              taxRate: it.taxRate,
-              batchNo: it.batchNumber,
-              expDate: it.expiryDate,
-            })),
-          });
         }
       }
 
@@ -1781,6 +1784,7 @@ export function PurchaseInvoiceModal({
                   address: partyAddress,
                   gstin: partyGstin,
                   state: placeOfSupply,
+                  type: "supplier",
                 }}
                 items={recalculatedItems
                   .filter((it) => (it.productName && it.productName.trim() !== "") || Number(it.rate) > 0 || Number(it.lineTotal) > 0)
