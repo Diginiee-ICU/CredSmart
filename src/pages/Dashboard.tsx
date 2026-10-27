@@ -1084,7 +1084,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+              <div className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{toCollect.toLocaleString("en-IN")}</span>
               </div>
             </div>
@@ -1109,7 +1109,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+              <div className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
                 ₹ <span className="tabular-nums font-bold">{toPay.toLocaleString("en-IN")}</span>
               </div>
             </div>
