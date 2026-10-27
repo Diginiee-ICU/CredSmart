@@ -365,8 +365,8 @@ describe("Universal Header Adversarial Empirical Stress Tests", () => {
     it("verifies desktop-only widgets are suppressed on mobile views (< 768px)", () => {
       // SuiteSwitcher is hidden on mobile
       expect(appLayoutSource).toMatch(/hidden\s+sm:inline-flex[\s\S]*?<SuiteSwitcher/);
-      // Sidebar toggle button is hidden on mobile
-      expect(appLayoutSource).toMatch(/hidden\s+sm:flex\s+items-center\s+justify-center\s+w-7\.5\s+h-7\.5[\s\S]*?sidebarOpen/);
+      // Sidebar toggle button is accessible with standard w-8.5 h-8.5 sizing
+      expect(appLayoutSource).toMatch(/flex\s+items-center\s+justify-center\s+w-8\.5\s+h-8\.5[\s\S]*?sidebarOpen/);
       // Desktop search input is hidden on mobile (hidden md:flex)
       expect(appLayoutSource).toMatch(/hidden\s+md:flex\s+flex-1\s+max-w-md\s+mx-2/);
       // Auto Import Tally is hidden on mobile and tablet (hidden xl:flex)

@@ -288,9 +288,6 @@ export default function CRMDashboard(): React.ReactElement {
       if (realStaffRoster.length > 0) {
         staff = Math.max(staff, realStaffRoster.length);
         setDynamicStaff(realStaffRoster);
-        try {
-          localStorage.setItem(`credsmart_crm_staff_${activeOrgId}`, JSON.stringify(realStaffRoster));
-        } catch {}
       } else {
         setDynamicStaff([]);
       }

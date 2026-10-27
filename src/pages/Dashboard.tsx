@@ -714,11 +714,11 @@ export default function Dashboard() {
   }, [chartData]);
 
     return (
-    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto p-3 sm:p-5 lg:p-6 space-y-4 font-sans select-none scrollbar-thin">
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto p-2.5 sm:p-5 lg:p-6 space-y-3 sm:space-y-4 font-sans select-none scrollbar-thin">
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - Clean High-Density Retail Minimal (Stripe / Shopify POS)
           ========================================================================= */}
-      <div className="block md:hidden space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-1 max-w-md mx-auto w-full">
+      <div className="block md:hidden space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-2.5 max-w-md mx-auto w-full">
         {/* Dynamic Store Greeting & Live Sync Status */}
         <div className="flex items-center justify-between gap-3 px-0.5">
           <div className="min-w-0">

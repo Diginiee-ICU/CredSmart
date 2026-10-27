@@ -302,7 +302,7 @@ describe("Challenger 2: AppLayout Desktop Preservation & Hotkeys Adversarial Sui
       expect(desktopBell).toBeDefined();
       expect(mobileBell).toBeDefined();
       expect(desktopBell?.className).toContain("w-8.5 h-8.5");
-      expect(mobileBell?.className).toContain("w-7.5 h-7.5");
+      expect(mobileBell?.className).toContain("w-8.5 h-8.5");
     });
 
     it("renders desktop profile trigger avatar with uppercase store initial", () => {

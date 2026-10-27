@@ -958,7 +958,7 @@ export default function Sales() {
         {/* Transactions Table Card / Mobile Card Stream Container */}
         <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
           {/* MOBILE VIEW: Touch Transaction Cards (Visible on screens < md) */}
-          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-36 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
+          <div className="block md:hidden flex-1 min-h-0 overflow-y-auto px-0 pb-28 divide-y divide-slate-100 dark:divide-slate-800/60 scrollbar-thin overscroll-y-contain">
             {filteredDocuments.length === 0 ? (
               <div className="py-12 text-center space-y-2.5">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mx-auto">
@@ -993,7 +993,7 @@ export default function Sales() {
                     {/* Line 1: Invoice Number + Status Badge + Grand Total */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 text-slate-900 dark:text-white truncate">
+                        <span className="font-mono font-bold text-xs sm:text-sm bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 text-slate-900 dark:text-white truncate">
                           {doc.documentNumber}
                         </span>
                         {/* Micro-dot Status Pill with >=44px touch target */}
@@ -1005,7 +1005,7 @@ export default function Sales() {
                         >
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono border",
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold font-mono border",
                               doc.status === "paid" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60",
                               doc.status === "partial" && "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60",
                               doc.status === "unpaid" && "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",
@@ -1029,7 +1029,7 @@ export default function Sales() {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-sm sm:text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                        <span className="text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                           ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -1038,8 +1038,8 @@ export default function Sales() {
                     {/* Line 2: Customer Name + Date + Quick Actions */}
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{doc.partyName}</p>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        <p className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">{doc.partyName}</p>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           <span>{doc.docDate}</span>
                           <span>•</span>
                           <span className={doc.status === "unpaid" ? "text-rose-600 font-semibold" : ""}>{calculateDueInText(doc)}</span>
@@ -1286,19 +1286,19 @@ export default function Sales() {
                             className="rounded border-slate-300 dark:border-slate-700 text-slate-900 focus:ring-slate-900 cursor-pointer"
                           />
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-300 text-xs whitespace-nowrap">
+                        <td className="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-300 text-xs sm:text-sm whitespace-nowrap">
                           {doc.docDate}
                         </td>
                         <td className="py-2.5 px-3">
-                          <span className="font-mono font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs whitespace-nowrap">
+                          <span className="font-mono font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs sm:text-sm whitespace-nowrap">
                             {doc.documentNumber}
                           </span>
                         </td>
                         <td className="py-2.5 px-3">
                           <div>
-                            <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{doc.partyName}</span>
+                            <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{doc.partyName}</span>
                             {doc.partyPhone && (
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                 {doc.partyPhone}
                               </p>
                             )}
@@ -1307,12 +1307,12 @@ export default function Sales() {
                         <td className="py-2.5 px-3 whitespace-nowrap">
                           {activeTab === "sales_return" || activeTab === "credit_note" ? (
                             <div className="space-y-0.5">
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
                                 <RotateCcw className="w-3 h-3 shrink-0" />
                                 <span className="truncate max-w-[140px]">{doc.returnReason || "Sales Return"}</span>
                               </span>
                               {doc.originalInvoiceNumber && (
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                   Ref: {doc.originalInvoiceNumber}
                                 </p>
                               )}
@@ -1320,7 +1320,7 @@ export default function Sales() {
                           ) : (
                             <span
                               className={cn(
-                                "text-xs font-semibold",
+                                "text-xs sm:text-sm font-semibold",
                                 doc.status === "paid"
                                   ? "text-emerald-600 dark:text-emerald-400"
                                   : calculateDueInText(doc).includes("Overdue")
@@ -1332,7 +1332,7 @@ export default function Sales() {
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 font-mono tabular-nums font-bold text-slate-900 dark:text-white text-xs sm:text-sm whitespace-nowrap">
+                        <td className="py-2.5 px-3 font-mono tabular-nums font-bold text-slate-900 dark:text-white text-sm sm:text-base whitespace-nowrap">
                           ₹ {Number(doc.grandTotal ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="py-2.5 px-3 whitespace-nowrap">

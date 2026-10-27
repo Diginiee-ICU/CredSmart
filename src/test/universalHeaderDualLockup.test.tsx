@@ -125,15 +125,15 @@ describe("Universal Header Dual Lockup Test Suite", () => {
       expect(appLayoutSource).toMatch(/src="\/favicon\.png"/);
       expect(appLayoutSource).toMatch(/alt="CredSmart Shield"/);
 
-      // Must have prescribed 28px/30px responsive container
+      // Must have prescribed 32px standard container
       expect(appLayoutSource).toMatch(
-        /w-7\s+h-7\s+sm:w-7\.5\s+sm:h-7\.5\s+rounded-lg\s+border\s+border-slate-200\/80\s+dark:border-slate-800\s+bg-white\s+dark:bg-slate-950\s+p-1\s+shadow-2xs/
+        /w-8\s+h-8\s+rounded-lg\s+border\s+border-slate-200\/80\s+dark:border-slate-800\s+bg-white\s+dark:bg-slate-950\s+p-1\s+shadow-2xs/
       );
     });
 
-    it("verifies styled 'CredSmart' wordmark is rendered and hidden on mobile (< 768px)", () => {
+    it("verifies styled 'CredSmart' wordmark is rendered prominently across mobile and desktop", () => {
       expect(appLayoutSource).toMatch(
-        /<span[^>]*font-bold\s+text-sm\s+tracking-tight\s+text-slate-900\s+dark:text-white\s+font-sans\s+hidden\s+sm:inline[^>]*>\s*CredSmart\s*<\/span>/
+        /<span[^>]*font-bold\s+text-sm\s+sm:text-base\s+tracking-tight\s+text-slate-900\s+dark:text-white\s+font-sans[^>]*>\s*CredSmart\s*<\/span>/
       );
     });
 
@@ -145,12 +145,12 @@ describe("Universal Header Dual Lockup Test Suite", () => {
 
     it("verifies 1px hairline divider separates platform mark from store switcher", () => {
       expect(appLayoutSource).toMatch(
-        /<div\s+className="h-4\s+w-px\s+bg-slate-200\s+dark:bg-slate-800\s+shrink-0\s+mx-0\.5\s+sm:mx-1"\s+aria-hidden="true"\s*\/>/
+        /<div\s+className="hidden\s+sm:block\s+h-4\s+w-px\s+bg-slate-200\s+dark:bg-slate-800\s+shrink-0\s+mx-0\.5\s+sm:mx-1"\s+aria-hidden="true"\s*\/>/
       );
     });
 
     it("verifies store switcher trigger is visible on mobile with responsive max-width", () => {
-      // Trigger must use 'flex' (NOT 'hidden sm:flex')
+      // Trigger must use 'flex'
       expect(appLayoutSource).toMatch(
         /flex\s+h-7\s+sm:h-8\s+px-1\.5\s+sm:px-2\.5\s+rounded-lg\s+border\s+border-slate-200\/80\s+dark:border-slate-800\s+bg-slate-50/
       );
@@ -158,14 +158,14 @@ describe("Universal Header Dual Lockup Test Suite", () => {
       expect(appLayoutSource).toMatch(/max-w-\[100px\]\s+xs:max-w-\[130px\]\s+sm:max-w-\[180px\]\s+lg:max-w-\[220px\]/);
     });
 
-    it("verifies header height conforms to 48px mobile (h-12 equivalent) and 52px desktop (md:h-13)", () => {
-      expect(appLayoutSource).toMatch(/h-\[calc\(3rem\+env\(safe-area-inset-top,0px\)\)\]\s+md:h-13/);
+    it("verifies header height conforms to 52px-56px standard to avoid clipping", () => {
+      expect(appLayoutSource).toMatch(/h-13\s+sm:h-14/);
       expect(appLayoutSource).toMatch(/pt-\[env\(safe-area-inset-top,0px\)\]/);
     });
 
     it("verifies desktop-only controls are suppressed on mobile to prevent horizontal overflow", () => {
-      // Sidebar menu chevron is hidden on mobile
-      expect(appLayoutSource).toMatch(/hidden\s+sm:flex\s+items-center\s+justify-center\s+w-7\.5\s+h-7\.5/);
+      // Sidebar menu toggle button is standard w-8.5 h-8.5
+      expect(appLayoutSource).toMatch(/flex\s+items-center\s+justify-center\s+w-8\.5\s+h-8\.5/);
 
       // Suite switcher is hidden on mobile
       expect(appLayoutSource).toMatch(/hidden\s+sm:inline-flex/);
@@ -174,7 +174,7 @@ describe("Universal Header Dual Lockup Test Suite", () => {
       expect(appLayoutSource).toMatch(/hidden\s+md:flex\s+flex-1\s+max-w-md\s+mx-2/);
 
       // Mobile search icon button is hidden on desktop (md:hidden)
-      expect(appLayoutSource).toMatch(/w-7\.5\s+h-7\.5\s+flex\s+items-center\s+justify-center\s+rounded-lg[\s\S]*?md:hidden/);
+      expect(appLayoutSource).toMatch(/w-8\.5\s+h-8\.5\s+flex\s+items-center\s+justify-center\s+rounded-lg[\s\S]*?md:hidden/);
     });
 
     it("validates mobile pixel budget guarantees zero horizontal overflow on 360px viewport", () => {

@@ -27,10 +27,10 @@ import Sales from "@/pages/Sales";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 import CRMDashboard from "@/pages/crm/CRMDashboard";
-import RoleManagement from "@/pages/crm/RoleManagement";
-import Attendance from "@/pages/crm/Attendance";
 
 // Lazy-loaded secondary operations & sub-systems (drastically reduces initial JS bundle & parse time)
+const RoleManagement = React.lazy(() => import("@/pages/crm/RoleManagement"));
+const Attendance = React.lazy(() => import("@/pages/crm/Attendance"));
 const Analytics = React.lazy(() => import("@/pages/Analytics"));
 const Purchases = React.lazy(() => import("@/pages/Purchases"));
 const Suppliers = React.lazy(() => import("@/pages/Suppliers"));

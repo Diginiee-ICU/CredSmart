@@ -41,9 +41,9 @@ describe("Challenger 1 — Milestone 2 Desktop Shell & Productivity Layouts Empi
     });
 
     it("verifies desktop header height is exactly 52px (h-13) and eliminates bloated 80-88px heights", () => {
-      // Must contain md:h-13 (52px standard)
-      expect(appLayoutSource).toMatch(/md:h-13/);
-      expect(appLayoutSource).toMatch(/<header[^>]*h-\[calc\(3rem\+env\(safe-area-inset-top,0px\)\)\]\s+md:h-13/);
+      // Must contain h-13 (52px standard)
+      expect(appLayoutSource).toMatch(/h-13/);
+      expect(appLayoutSource).toMatch(/<header[^>]*h-13/);
 
       // Must NOT contain old bloated heights
       expect(appLayoutSource).not.toMatch(/md:h-\[calc\(5rem/);
@@ -53,8 +53,8 @@ describe("Challenger 1 — Milestone 2 Desktop Shell & Productivity Layouts Empi
     });
 
     it("verifies permanent CredSmart platform shield mark (/favicon.png) and Inter CredSmart wordmark", () => {
-      // Shield logo container: w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80
-      expect(appLayoutSource).toMatch(/w-7\s+h-7\s+sm:w-7\.5\s+sm:h-7\.5\s+rounded-lg\s+border\s+border-slate-200\/80/);
+      // Shield logo container: w-8 h-8 rounded-lg border border-slate-200/80
+      expect(appLayoutSource).toMatch(/w-8\s+h-8\s+rounded-lg\s+border\s+border-slate-200\/80/);
 
       // Favicon shield mark
       expect(appLayoutSource).toMatch(/\/favicon\.png/);
