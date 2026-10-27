@@ -1214,7 +1214,7 @@ return (
                           setAdjustQty("5");
                           setAdjustType("add");
                         }}
-                        className="min-h-[44px] h-11 px-3 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer min-w-[70px] justify-center"
+                        className="h-7.5 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer justify-center"
                       >
                         <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                         <span>Adjust</span>
@@ -1224,7 +1224,7 @@ return (
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 active:scale-[0.98] transition-all cursor-pointer"
+                            className="w-7.5 h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 active:scale-[0.98] transition-all cursor-pointer"
                           >
                             <MoreVertical className="w-3.5 h-3.5" />
                           </button>
