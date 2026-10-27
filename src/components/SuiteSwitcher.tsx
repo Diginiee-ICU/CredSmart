@@ -99,8 +99,8 @@ function SuiteSwitcherView({
             : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
         )}
       >
-        <span className="hidden sm:inline">POS & Billing</span>
-        <span className="sm:hidden font-bold">POS</span>
+        <span className="hidden sm:inline">POS &amp; Billing</span>
+        <span className="sm:hidden font-bold">Billing</span>
         {effectiveSuite === "billing" && (
           <span
             data-testid="active-suite-badge-billing"

@@ -487,7 +487,7 @@ export default function AppLayout() {
           )}
         >
 
-            {/* LEFT: Permanent CredSmart Shield Mark + Divider + Active Store Switcher Pill + Desktop Menu Controls */}
+            {/* LEFT: Permanent CredSmart Brand Mark + Desktop Menu Controls */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
               {/* Permanent CredSmart Platform Brand Mark */}
               <NavLink
@@ -498,98 +498,15 @@ export default function AppLayout() {
                 <div className="w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
                   <img
                     src="/favicon.png"
-                    alt="CredSmart Shield"
+                    alt="CredSmart Logo"
                     className="w-full h-full object-contain select-none"
                     loading="eager"
                   />
                 </div>
-                <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
+                <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden xs:inline sm:inline">
                   CredSmart
                 </span>
               </NavLink>
-
-              {/* 1px Hairline Divider */}
-              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" aria-hidden="true" />
-
-              {/* Dedicated Tenant Business Selector Dropdown Pill (Mobile & Desktop) */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]"
-                    title={org?.name || "Select Business"}
-                  >
-                    {org?.logo_url ? (
-                      <img
-                        src={org.logo_url}
-                        alt={org?.name || "Store Logo"}
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded object-contain shrink-0 border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-900"
-                      />
-                    ) : (
-                      <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    )}
-                    <span className="truncate text-[11px] sm:text-xs font-semibold">
-                      {org?.name || "My Business"}
-                    </span>
-                    <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 shrink-0" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
-                  <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-1 pb-1">
-                    <span>YOUR BUSINESSES</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold font-mono">{(organizations || []).length} Store(s)</span>
-                  </DropdownMenuLabel>
-                  <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
-                    {(organizations || []).filter(Boolean).map((business) => {
-                      if (!business) return null;
-                      const isActive = business.id === orgId;
-                      const bizName = business.name || "Store";
-                      return (
-                        <DropdownMenuItem
-                          key={business.id}
-                          onSelect={() => {
-                            if (business.id) switchOrganization(business.id);
-                            toast.success(`Switched to "${bizName}"`);
-                          }}
-                          className={cn(
-                            "flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer gap-2",
-                            isActive
-                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 font-bold border border-blue-200 dark:border-blue-800/60"
-                              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                          )}
-                        >
-                          <div className="flex items-center gap-2 min-w-0 pr-2">
-                            {business.logo_url ? (
-                              <img
-                                src={business.logo_url}
-                                alt={bizName}
-                                className="w-5 h-5 rounded-md object-contain border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                                <Building2 className="w-3 h-3 text-slate-500" />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-semibold">{bizName}</p>
-                              <p className="text-[11px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
-                            </div>
-                          </div>
-                          {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </div>
-                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                  <DropdownMenuItem
-                    onSelect={() => setCreateBusinessModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Business / Branch</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
 
               {/* Sidebar Menu Toggle Arrow — Desktop only */}
               <button
@@ -615,7 +532,7 @@ export default function AppLayout() {
 
               {/* Top-Level Interactive Suite Switcher */}
               {userRole !== "cashier" && (
-                <div className="hidden sm:inline-flex">
+                <div className="inline-flex">
                   <SuiteSwitcher
                     onSuiteChange={(newSuite) => {
                       navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
