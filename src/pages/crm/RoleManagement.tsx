@@ -1101,10 +1101,11 @@ export default function RoleManagement(): React.ReactElement {
       };
 
       let newUserId: string | null = null;
+      let provisionRes: any = null;
       try {
-        const res = await crmApi.provisionStaffUser(payload, orgId);
-        if (res?.data?.user?.id) {
-          newUserId = res.data.user.id;
+        provisionRes = await crmApi.provisionStaffUser(payload, orgId);
+        if (provisionRes?.data?.user?.id) {
+          newUserId = provisionRes.data.user.id;
         }
       } catch (err) {
         console.warn("crmApi.provisionStaffUser notice:", err);
@@ -1125,7 +1126,7 @@ export default function RoleManagement(): React.ReactElement {
       // In-memory instant roster hydration
       const newStaffEntry: StaffMember = {
         id: newUserId,
-        membershipId: res.data.user.id,
+        membershipId: provisionRes?.data?.user?.id || newUserId,
         name: payload.full_name,
         role: payload.store_role,
         crmRoleId: crmRoleIdToAssign || undefined,
