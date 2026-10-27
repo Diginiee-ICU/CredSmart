@@ -101,8 +101,25 @@ export default function Parties() {
   const { orgId, org, loading: orgLoading } = useOrganization();
   const { user } = useAuth();
 
-  const [parties, setParties] = useState<Party[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [parties, setParties] = useState<Party[]>(() => {
+    if (!orgId) return [];
+    try {
+      const saved = sessionStorage.getItem(`credsmart_cached_parties_${orgId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* empty */ }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (!orgId) return false;
+    try {
+      const saved = sessionStorage.getItem(`credsmart_cached_parties_${orgId}`);
+      if (saved && JSON.parse(saved)?.length > 0) return false;
+    } catch { /* empty */ }
+    return true;
+  });
 
   // Search & Filter
   const [search, setSearch] = useState("");
@@ -140,7 +157,11 @@ export default function Parties() {
       return;
     }
 
-    setLoading(true);
+    // Only show full loading spinner if no parties are currently displayed
+    setParties((prev) => {
+      if (!prev || prev.length === 0) setLoading(true);
+      return prev;
+    });
     try {
       // 1. Fetch Customers, Suppliers & Credit Transactions in parallel (3x speedup)
       const [
