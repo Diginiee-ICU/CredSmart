@@ -1001,7 +1001,7 @@ export default function Items() {
             type="button"
             onClick={() => setCategoryFilter("all")}
             className={cn(
-              "h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border",
+              "h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border",
               categoryFilter === "all"
                 ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1018,7 +1018,7 @@ export default function Items() {
                 type="button"
                 onClick={() => setCategoryFilter(isSelected ? "all" : cat)}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border flex items-center gap-1",
+                  "h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer active:scale-95 border flex items-center gap-1",
                   isSelected
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                     : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1027,7 +1027,7 @@ export default function Items() {
                 <span>{cat}</span>
                 {count > 0 && (
                   <span className={cn(
-                    "text-xs px-1 rounded-full font-mono",
+                    "text-[11px] px-1 rounded-full font-mono",
                     isSelected ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                   )}>
                     {count}
@@ -1231,7 +1231,7 @@ export default function Items() {
                           setAdjustQty("5");
                           setAdjustType("add");
                         }}
-                        className="h-7.5 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer justify-center"
+                        className="min-h-[44px] h-11 px-3 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer justify-center"
                       >
                         <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                         <span>Adjust</span>
@@ -1241,7 +1241,7 @@ export default function Items() {
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="w-7.5 h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 active:scale-[0.98] transition-all cursor-pointer"
+                            className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 active:scale-[0.98] transition-all cursor-pointer"
                           >
                             <MoreVertical className="w-3.5 h-3.5" />
                           </button>
