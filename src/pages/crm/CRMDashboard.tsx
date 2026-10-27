@@ -69,7 +69,7 @@ interface ShowcaseStaff {
  */
 export default function CRMDashboard(): React.ReactElement {
   const navigate = useNavigate();
-  const { orgId, org, organizations, switchOrganization } = useOrganization();
+  const { orgId, org, organizations, switchOrganization, userRole } = useOrganization();
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -518,6 +518,7 @@ export default function CRMDashboard(): React.ReactElement {
           <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
             <button
               type="button"
+              data-testid="crm-mobile-suite-billing"
               onClick={() => {
                 try {
                   localStorage.setItem(ACTIVE_SUITE_STORAGE_KEY, "billing");
@@ -527,9 +528,12 @@ export default function CRMDashboard(): React.ReactElement {
                 } catch {
                   // ignore
                 }
-                navigate(ROUTE_PATHS.pos);
+                const targetPath = userRole === "cashier" ? ROUTE_PATHS.pos : ROUTE_PATHS.dashboard;
+                navigate(targetPath);
               }}
               className="px-2.5 py-1 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer"
+              title="Switch to Billing Home"
+              aria-label="Switch to Billing Home"
             >
               POS
             </button>

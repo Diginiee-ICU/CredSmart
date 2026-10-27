@@ -18,53 +18,18 @@ import { NativePlatformBridge } from "@/components/native/NativePlatformBridge";
 import { isNativePlatform } from "@/services/nativeCapacitor";
 import { MobileAppStartingCards } from "@/components/mobile/MobileAppStartingCards";
 
-// Direct page imports for rock-solid zero-delay rendering
+// Direct page imports for core business operations (instantaneous 0ms rendering)
 import Dashboard from "@/pages/Dashboard";
 import POSBilling from "@/pages/POSBilling";
 import Analytics from "@/pages/Analytics";
-import BusinessSettings from "@/pages/BusinessSettings";
-import InvoiceSettings from "@/pages/InvoiceSettings";
-import PrintSettings from "@/pages/PrintSettings";
-import Reports from "@/pages/Reports";
 import Purchases from "@/pages/Purchases";
-import VendorDiscovery from "@/pages/VendorDiscovery";
-import Inventory from "@/pages/Inventory";
 import Parties from "@/pages/Parties";
 import Items from "@/pages/Items";
-import Godown from "@/pages/Godown";
-import Staff from "@/pages/Staff";
 import Suppliers from "@/pages/Suppliers";
-import PurchaseReturns from "@/pages/PurchaseReturns";
 import Sales from "@/pages/Sales";
 import Customers from "@/pages/Customers";
-import CustomerLedger from "@/pages/CustomerLedger";
 import Auth from "@/pages/Auth";
-import ActivityLog from "@/pages/ActivityLog";
 import NotFound from "@/pages/NotFound";
-import Expenses from "@/pages/Expenses";
-import CashAndBank from "@/pages/CashAndBank";
-import EInvoicing from "@/pages/EInvoicing";
-import EwayBillDashboard from "@/pages/EwayBillDashboard";
-import AutomatedBills from "@/pages/AutomatedBills";
-import BarcodeGenerator from "@/pages/BarcodeGenerator";
-import Landing from "@/pages/Landing";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
-import Features from "@/pages/public/Features";
-import Pricing from "@/pages/public/Pricing";
-import GstBillingGuide from "@/pages/public/GstBillingGuide";
-import CompareVyapar from "@/pages/public/CompareVyapar";
-import CompareMyBillBook from "@/pages/public/CompareMyBillBook";
-import CompareTally from "@/pages/public/CompareTally";
-import TallyImport from "@/pages/TallyImport";
-import BarcodeGuide from "@/pages/public/BarcodeGuide";
-import EInvoicingGuide from "@/pages/public/EInvoicingGuide";
-import About from "@/pages/public/About";
-import Contact from "@/pages/public/Contact";
-import Security from "@/pages/public/Security";
-import FaqPage from "@/pages/public/FaqPage";
-import StorefrontManager from "@/pages/StorefrontManager";
-import PublicStorefront from "@/pages/public/PublicStorefront";
 import CRMDashboard from "@/pages/crm/CRMDashboard";
 import RoleManagement from "@/pages/crm/RoleManagement";
 import Attendance from "@/pages/crm/Attendance";
@@ -74,6 +39,43 @@ import Broadcasts from "@/pages/crm/Broadcasts";
 import Meet from "@/pages/crm/Meet";
 import AIAssistant from "@/pages/crm/AIAssistant";
 import Support from "@/pages/crm/Support";
+
+// Lazy-loaded secondary pages & public marketing routes (drastically reduces initial JS bundle & parse time)
+const BusinessSettings = React.lazy(() => import("@/pages/BusinessSettings"));
+const InvoiceSettings = React.lazy(() => import("@/pages/InvoiceSettings"));
+const PrintSettings = React.lazy(() => import("@/pages/PrintSettings"));
+const Reports = React.lazy(() => import("@/pages/Reports"));
+const VendorDiscovery = React.lazy(() => import("@/pages/VendorDiscovery"));
+const Inventory = React.lazy(() => import("@/pages/Inventory"));
+const Godown = React.lazy(() => import("@/pages/Godown"));
+const Staff = React.lazy(() => import("@/pages/Staff"));
+const PurchaseReturns = React.lazy(() => import("@/pages/PurchaseReturns"));
+const CustomerLedger = React.lazy(() => import("@/pages/CustomerLedger"));
+const ActivityLog = React.lazy(() => import("@/pages/ActivityLog"));
+const Expenses = React.lazy(() => import("@/pages/Expenses"));
+const CashAndBank = React.lazy(() => import("@/pages/CashAndBank"));
+const EInvoicing = React.lazy(() => import("@/pages/EInvoicing"));
+const EwayBillDashboard = React.lazy(() => import("@/pages/EwayBillDashboard"));
+const AutomatedBills = React.lazy(() => import("@/pages/AutomatedBills"));
+const BarcodeGenerator = React.lazy(() => import("@/pages/BarcodeGenerator"));
+const Landing = React.lazy(() => import("@/pages/Landing"));
+const PrivacyPolicy = React.lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsOfService = React.lazy(() => import("@/pages/TermsOfService"));
+const Features = React.lazy(() => import("@/pages/public/Features"));
+const Pricing = React.lazy(() => import("@/pages/public/Pricing"));
+const GstBillingGuide = React.lazy(() => import("@/pages/public/GstBillingGuide"));
+const CompareVyapar = React.lazy(() => import("@/pages/public/CompareVyapar"));
+const CompareMyBillBook = React.lazy(() => import("@/pages/public/CompareMyBillBook"));
+const CompareTally = React.lazy(() => import("@/pages/public/CompareTally"));
+const TallyImport = React.lazy(() => import("@/pages/TallyImport"));
+const BarcodeGuide = React.lazy(() => import("@/pages/public/BarcodeGuide"));
+const EInvoicingGuide = React.lazy(() => import("@/pages/public/EInvoicingGuide"));
+const About = React.lazy(() => import("@/pages/public/About"));
+const Contact = React.lazy(() => import("@/pages/public/Contact"));
+const Security = React.lazy(() => import("@/pages/public/Security"));
+const FaqPage = React.lazy(() => import("@/pages/public/FaqPage"));
+const StorefrontManager = React.lazy(() => import("@/pages/StorefrontManager"));
+const PublicStorefront = React.lazy(() => import("@/pages/public/PublicStorefront"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -231,7 +233,8 @@ const App = () => (
                 <NativePlatformBridge />
                 <AppRouter>
                   <ScrollToTop />
-                  <Routes>
+                  <React.Suspense fallback={<SleekRouteLoader />}>
+                    <Routes>
                     {/* Public & Mobile App Routes */}
                     <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                     <Route path="/app" element={<AppEntryRoute />} />
@@ -358,6 +361,7 @@ const App = () => (
                       {/* Global 404 Catch-All */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                  </React.Suspense>
                 </AppRouter>
               </ProductsProvider>
             </NetworkInvoicesProvider>

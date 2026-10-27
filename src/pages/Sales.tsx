@@ -782,6 +782,8 @@ export default function Sales() {
             <div className="mt-2 text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
               ₹ {Number(metrics.paidAmount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
+          </div>
+
           {/* Receivables */}
           <div
             onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
