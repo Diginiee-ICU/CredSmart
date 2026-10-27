@@ -1282,7 +1282,7 @@ export default function Tasks(): React.ReactElement {
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                   {[
                     { id: "all", label: "All", count: filteredTasks.length },
-                    { id: "todo", label: "To Do", count: filteredTasks.filter((t) => t.status === "todo").length },
+                    { id: "todo", label: "To-Do", count: filteredTasks.filter((t) => t.status === "todo").length },
                     { id: "in_progress", label: "In Progress", count: filteredTasks.filter((t) => t.status === "in_progress").length },
                     { id: "review", label: "Review", count: filteredTasks.filter((t) => t.status === "review").length },
                     { id: "done", label: "Done", count: filteredTasks.filter((t) => t.status === "done").length },

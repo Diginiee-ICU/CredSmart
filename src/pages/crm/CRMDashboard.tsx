@@ -684,10 +684,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.todayAttendance}
-              </span>
-              <span className="font-mono text-xs text-slate-400">
-                / {stats.staffCount}
+                {stats.todayAttendance} / {stats.staffCount}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
             </div>
@@ -708,7 +705,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.pendingTasks}
+                {stats.pendingTasks} due
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -729,7 +726,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.unreadBroadcasts}
+                {stats.unreadBroadcasts} new
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -750,7 +747,7 @@ export default function CRMDashboard(): React.ReactElement {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="font-bold font-mono text-xs text-slate-900 dark:text-white">
-                {stats.upcomingMeetings}
+                {stats.upcomingMeetings} live
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </div>
@@ -895,7 +892,7 @@ export default function CRMDashboard(): React.ReactElement {
                     Announcements
                   </span>
                   <span className="text-[11px] text-slate-400 truncate block">
-                    Broadcasts
+                    Store Notices
                   </span>
                 </div>
               </div>
