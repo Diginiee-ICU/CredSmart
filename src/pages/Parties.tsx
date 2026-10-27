@@ -295,6 +295,9 @@ export default function Parties() {
 
       const finalParties = mergedParties.length === 0 ? DEFAULT_SAMPLE_PARTIES : mergedParties;
       setParties(finalParties);
+      try {
+        sessionStorage.setItem(`credsmart_cached_parties_${orgId}`, JSON.stringify(finalParties));
+      } catch { /* empty */ }
 
       // Perform Automated Ledger Reconciliation Audit
       const audit = performFullLedgerReconciliation({
@@ -731,7 +734,7 @@ setSortDirection("asc");
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden bg-slate-50/40 dark:bg-slate-950/40">
+    <div className="h-full w-full min-h-0 flex flex-col p-2.5 sm:p-4 space-y-2 sm:space-y-2.5 overflow-hidden bg-slate-50/40 dark:bg-slate-950/40">
       {/* ============================================================= */}
       {/* 1. MOBILE FAST-ACCESS CONTROL STRIP (<sm: 2 High-Density Rows) */}
       {/* ============================================================= */}
