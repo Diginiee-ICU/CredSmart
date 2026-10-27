@@ -659,12 +659,12 @@ return (
       {/* ------------------------------------------------------------- */}
       {/* METRIC CARDS: Stock Value (₹), Low Stock count, Total Items, Out of Stock */}
       {/* ------------------------------------------------------------- */}
-      {/* Mobile Compact 4-Col KPI Mini Strip (Mobile Only) */}
-      <div className="grid grid-cols-4 sm:hidden gap-1.5 shrink-0">
-        <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
+      {/* Mobile Compact Swipeable KPI Mini Strip (Mobile Only) */}
+      <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
+        <div className="min-w-[105px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500" />
           <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono truncate block">
-            Valuation
+            Stock Value
           </span>
           <p className="text-xs font-bold text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate mt-0.5">
             ₹{totalStockValue.toLocaleString("en-IN")}
@@ -674,7 +674,7 @@ return (
         <div
           onClick={() => setLowStockOnly((prev) => !prev)}
           className={cn(
-            "p-2 rounded-xl border select-none text-center cursor-pointer transition-all relative overflow-hidden shadow-2xs",
+            "min-w-[100px] flex-1 px-2.5 py-1.5 rounded-xl border select-none cursor-pointer transition-all relative overflow-hidden shadow-2xs shrink-0",
             lowStockOnly
               ? "ring-1.5 ring-amber-500/50 bg-amber-50/50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700/60"
               : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
@@ -689,7 +689,7 @@ return (
           </p>
         </div>
 
-        <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
+        <div className="min-w-[95px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />
           <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono truncate block">
             Catalog
@@ -699,7 +699,7 @@ return (
           </p>
         </div>
 
-        <div className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none text-center relative overflow-hidden shadow-2xs">
+        <div className="min-w-[100px] flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 select-none relative overflow-hidden shadow-2xs shrink-0">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-rose-500" />
           <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider font-mono truncate block">
             Zero Stock
@@ -801,22 +801,22 @@ return (
       {/* ------------------------------------------------------------- */}
       {/* FILTER & SEARCH BAR - Stripe / Linear Hairline Container */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs shrink-0">
-        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
-          {/* Search input with clear X button */}
-          <div className="relative flex-1 min-w-[160px]">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs shrink-0">
+        {/* Mobile View: High-density 1-Row Fast-Access Strip (<sm) */}
+        <div className="flex sm:hidden items-center gap-1.5 w-full">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <Input
-              placeholder="Search by Name, SKU, Barcode, HSN..."
+              placeholder="Search items, SKU..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-8 h-8.5 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 dark:focus-visible:ring-white"
+              className="pl-7 pr-7 h-8.5 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5 rounded transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5 rounded"
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -824,54 +824,13 @@ return (
             )}
           </div>
 
-          {/* Category filter */}
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-8.5 w-[125px] sm:w-[150px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {DEFAULT_CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Stock status filter */}
-          <Select value={lowStockOnly ? "LOW" : "ALL"} onValueChange={(v) => setLowStockOnly(v === "LOW")}>
-            <SelectTrigger className="h-8.5 w-[110px] sm:w-[130px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
-              <SelectValue placeholder="Stock Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Stock</SelectItem>
-              <SelectItem value="LOW">Low Stock</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={() => navigate(ROUTE_PATHS.barcode)}
-            className="flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
-            title="Scan or generate barcodes"
+            className="w-8.5 h-8.5 flex items-center justify-center rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
+            title="Scan barcode"
           >
             <QrCode className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Barcode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-            className="flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-amber-50 hover:bg-amber-100/70 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
-            title="Import Data from Tally or Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span className="hidden sm:inline">Import Data</span>
-            <span className="sm:hidden">Import</span>
           </button>
 
           <button
@@ -880,11 +839,98 @@ return (
               setEditingItem(null);
               setShowCreateModal(true);
             }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Item</span>
           </button>
+        </div>
+
+        {/* Desktop View: Unified Search, Selects, & Actions (sm and above) */}
+        <div className="hidden sm:flex items-center justify-between gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Search input with clear X button */}
+            <div className="relative flex-1 min-w-[160px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Input
+                placeholder="Search by Name, SKU, Barcode, HSN..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 pr-8 h-8.5 text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 dark:focus-visible:ring-white"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5 rounded transition-colors"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Category filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-8.5 w-[135px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {DEFAULT_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Stock status filter */}
+            <Select value={lowStockOnly ? "LOW" : "ALL"} onValueChange={(v) => setLowStockOnly(v === "LOW")}>
+              <SelectTrigger className="h-8.5 w-[120px] text-xs bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/90 dark:border-slate-700/80 rounded-lg">
+                <SelectValue placeholder="Stock Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Stock</SelectItem>
+                <SelectItem value="LOW">Low Stock</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.barcode)}
+              className="flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
+              title="Scan or generate barcodes"
+            >
+              <QrCode className="w-3.5 h-3.5 text-slate-500" />
+              <span>Barcode</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+              className="flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-amber-50 hover:bg-amber-100/70 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
+              title="Import Data from Tally or Excel"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Import Data</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingItem(null);
+                setShowCreateModal(true);
+              }}
+              className="flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Add Item</span>
+            </button>
+          </div>
         </div>
 
         {/* Selected Items Bulk Floating Banner */}
