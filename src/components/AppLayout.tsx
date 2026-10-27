@@ -484,146 +484,230 @@ export default function AppLayout() {
       {!isPosRoute && (
         <header
           className={cn(
-            "pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] md:h-14 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
+            "pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
             isCrmDashboard && "hidden md:flex"
           )}
         >
-          {/* LEFT: Menu Access Trigger + Permanent CredSmart Brand Mark + Suite Switcher */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
-            {/* Menu Access Trigger Button (Visible on ALL devices: Mobile, Tablet & Desktop) */}
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((v) => !v)}
-              aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={sidebarOpen}
-              title={sidebarOpen ? "Close Menu" : "Open Menu"}
-              className={cn(
-                "flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl font-medium cursor-pointer border transition-all select-none shadow-2xs shrink-0 active:scale-95 touch-manipulation",
-                sidebarOpen
-                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                  : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-200"
-              )}
-            >
-              {sidebarOpen ? (
-                <X className="w-5 h-5 stroke-[2.2]" />
-              ) : (
-                <Menu className="w-5 h-5 stroke-[2.2]" />
-              )}
-            </button>
-
-            {/* Permanent CredSmart Platform Brand Mark */}
-            <NavLink
-              to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
-              title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
-              className="flex items-center gap-2 rounded-xl py-1 shrink-0 select-none cursor-pointer group"
-            >
-              <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                <img
-                  src="/favicon.png"
-                  alt="CredSmart Shield"
-                  className="w-full h-full object-contain select-none"
-                  loading="eager"
-                />
-              </div>
-              <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white font-sans inline shrink-0">
-                CredSmart
-              </span>
-            </NavLink>
-
-            {/* Top-Level Interactive Suite Switcher */}
-            {userRole !== "cashier" && (
-              <div className="inline-flex shrink-0">
-                <SuiteSwitcher
-                  onSuiteChange={(newSuite) => {
-                    navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* CENTER: Command Palette Trigger (Available md: and above) */}
-          <div className="hidden md:flex flex-1 max-w-md mx-3">
-            <button
-              type="button"
-              onClick={() => setOpenCommand(true)}
-              className="w-full h-9 px-3.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-between shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <Search className="w-4 h-4 text-slate-400" />
-                <span className="text-xs sm:text-sm">Search or ⌘K...</span>
-              </div>
-              <kbd className="text-xs font-mono px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>
-            </button>
-          </div>
-
-          {/* RIGHT: Live Sync + Auto Import + Split Button + Notifications + Profile */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
-            {/* Mobile search */}
-            <button
-              type="button"
-              onClick={() => setOpenCommand(true)}
-              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 md:hidden cursor-pointer shrink-0 active:scale-95 shadow-2xs"
-              title="Search"
-              aria-label="Search"
-            >
-              <Search className="w-4.5 h-4.5 stroke-[2.2]" />
-            </button>
-
-            {/* Auto Import Tally button — Visible only in POS & Billing suite */}
-            {!isCrmSuite && (
-              <button
-                type="button"
-                onClick={() => navigate(ROUTE_PATHS.tallyImport)}
-                className="hidden xl:flex items-center gap-1.5 h-9 px-3 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
-                title="Auto Search Tally Folder & Import All Data"
+            {/* LEFT: Permanent CredSmart Shield Mark + Divider + Active Store Switcher Pill + Desktop Menu Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
+              {/* Permanent CredSmart Platform Brand Mark */}
+              <NavLink
+                to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
+                title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
               >
-                <Search className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.2]" />
-                <span>Auto Import Tally</span>
-              </button>
-            )}
+                <div className="w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                  <img
+                    src="/favicon.png"
+                    alt="CredSmart Shield"
+                    className="w-full h-full object-contain select-none"
+                    loading="eager"
+                  />
+                </div>
+                <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">
+                  CredSmart
+                </span>
+              </NavLink>
 
-            {/* Live Sync Status Pill */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Sync</span>
-            </div>
+              {/* 1px Hairline Divider */}
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" aria-hidden="true" />
 
-            {/* Action Split Button — Royal Blue Standard Action */}
-            {!isCrmSuite ? (
-              /* Billing Suite: New Invoice split button */
-              <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
-                {/* On Mobile: Single compact plus button */}
+              {/* Dedicated Tenant Business Selector Dropdown Pill (Mobile & Desktop) */}
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex sm:hidden items-center justify-center w-8.5 h-8.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 cursor-pointer active:scale-95 transition-all"
-                    title="New Invoice & Creation Options"
-                    aria-label="New Invoice & Creation Options"
+                    className="flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]"
+                    title={org?.name || "Select Business"}
                   >
-                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                    {org?.logo_url ? (
+                      <img
+                        src={org.logo_url}
+                        alt={org?.name || "Store Logo"}
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded object-contain shrink-0 border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                    ) : (
+                      <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    )}
+                    <span className="truncate text-[11px] sm:text-xs font-semibold">
+                      {org?.name || "My Business"}
+                    </span>
+                    <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
-                {/* On Desktop: Royal Blue split button */}
-                <div className="hidden sm:flex items-center h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden transition-colors">
-                  <button
-                    type="button"
-                    onClick={() => setSalesInvoiceModalOpen(true)}
-                    className="flex items-center gap-1.5 h-full px-3.5 text-white text-xs sm:text-sm font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+                <DropdownMenuContent align="start" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
+                  <DropdownMenuLabel className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-2 pt-1 pb-1">
+                    <span>YOUR BUSINESSES</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold font-mono">{(organizations || []).length} Store(s)</span>
+                  </DropdownMenuLabel>
+                  <div className="space-y-1 my-1 max-h-48 overflow-y-auto scrollbar-thin">
+                    {(organizations || []).filter(Boolean).map((business) => {
+                      if (!business) return null;
+                      const isActive = business.id === orgId;
+                      const bizName = business.name || "Store";
+                      return (
+                        <DropdownMenuItem
+                          key={business.id}
+                          onSelect={() => {
+                            if (business.id) switchOrganization(business.id);
+                            toast.success(`Switched to "${bizName}"`);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer gap-2",
+                            isActive
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 font-bold border border-blue-200 dark:border-blue-800/60"
+                              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            {business.logo_url ? (
+                              <img
+                                src={business.logo_url}
+                                alt={bizName}
+                                className="w-5 h-5 rounded-md object-contain border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                                <Building2 className="w-3 h-3 text-slate-500" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold">{bizName}</p>
+                              <p className="text-[11px] text-slate-400 font-mono truncate">{business.business_type || "Retail"}</p>
+                            </div>
+                          </div>
+                          {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
+                  <DropdownMenuItem
+                    onSelect={() => setCreateBusinessModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>New Invoice</span>
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Business / Branch</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Sidebar Menu Toggle Arrow — Desktop only */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((v) => !v)}
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={sidebarOpen}
+                title={sidebarOpen ? "Close Menu" : "Open Menu"}
+                className={cn(
+                  "hidden sm:flex items-center justify-center w-7.5 h-7.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors select-none shadow-2xs shrink-0 active:scale-95",
+                  sidebarOpen
+                    ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400"
+                    : "bg-slate-50 dark:bg-slate-800/70 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 stroke-[2] transition-transform duration-200",
+                    sidebarOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
+                  )}
+                />
+              </button>
+
+              {/* Top-Level Interactive Suite Switcher */}
+              {userRole !== "cashier" && (
+                <div className="hidden sm:inline-flex">
+                  <SuiteSwitcher
+                    onSuiteChange={(newSuite) => {
+                      navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* CENTER: Command Palette Trigger (Available md: and above) */}
+            <div className="hidden md:flex flex-1 max-w-md mx-2">
+              <button
+                type="button"
+                onClick={() => setOpenCommand(true)}
+                className="w-full h-8.5 px-3 rounded-lg bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Search or ⌘K...</span>
+                </div>
+                <kbd className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>
+              </button>
+            </div>
+
+            {/* RIGHT: Live Sync + Auto Import + Split Button + Notifications + Profile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+              {/* Mobile search */}
+              <button
+                type="button"
+                onClick={() => setOpenCommand(true)}
+                className="w-7.5 h-7.5 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 md:hidden cursor-pointer shrink-0 active:scale-95 shadow-2xs"
+                title="Search"
+                aria-label="Search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+
+              {/* Auto Import Tally button — Visible only in POS & Billing suite */}
+              {!isCrmSuite && (
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTE_PATHS.tallyImport)}
+                  className="hidden xl:flex items-center gap-1.5 h-8.5 px-2.5 rounded-lg border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
+                  title="Auto Search Tally Folder & Import All Data"
+                >
+                  <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2]" />
+                  <span>Auto Import Tally</span>
+                </button>
+              )}
+
+              {/* Live Sync Status Pill */}
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Sync</span>
+              </div>
+
+              {/* Action Split Button — Royal Blue Standard Action */}
+              {!isCrmSuite ? (
+                /* Billing Suite: New Invoice split button */
+                <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
+                  {/* On Mobile: Single compact plus button */}
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center justify-center h-full px-2 border-l border-blue-500 hover:bg-blue-800 text-white transition-colors cursor-pointer"
-                      aria-label="More creation options"
+                      className="flex sm:hidden items-center justify-center w-7.5 h-7.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 cursor-pointer active:scale-95 transition-all"
+                      title="New Invoice & Creation Options"
+                      aria-label="New Invoice & Creation Options"
                     >
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   </DropdownMenuTrigger>
-                </div>
+                  {/* On Desktop: Royal Blue split button */}
+                  <div className="hidden sm:flex items-center h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setSalesInvoiceModalOpen(true)}
+                      className="flex items-center gap-1.5 h-full px-3 text-white text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>New Invoice</span>
+                    </button>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center h-full px-1.5 border-l border-blue-500 hover:bg-blue-800 text-white transition-colors cursor-pointer"
+                        aria-label="More creation options"
+                      >
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                  </div>
                 <DropdownMenuContent align="end" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
                   <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
                     <button
@@ -762,62 +846,62 @@ export default function AppLayout() {
               </DropdownMenu>
             )}
 
-            {/* Bell (Desktop & Tablet) */}
-            <button
-              type="button"
-              onClick={() => setNotifOpen(true)}
-              className={cn(
-                "w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/80 dark:border-slate-800 cursor-pointer shrink-0 shadow-2xs",
-                pendingCount > 0
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700"
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
-              )}
-              title="Notifications"
-              aria-label="Notifications"
-            >
-              <Bell className="w-5 h-5 stroke-[2]" />
-              {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-amber-500 text-xs font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
-              {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-blue-600 text-xs font-bold text-white flex items-center justify-center">{unreadCount}</span>}
-            </button>
+              {/* Bell (Desktop & Tablet) */}
+              <button
+                type="button"
+                onClick={() => setNotifOpen(true)}
+                className={cn(
+                  "w-8.5 h-8.5 rounded-lg transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/80 dark:border-slate-800 cursor-pointer shrink-0 shadow-2xs",
+                  pendingCount > 0
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/80 dark:bg-slate-800/80"
+                )}
+                title="Notifications"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[10px] font-black text-white flex items-center justify-center animate-pulse">{pendingCount}</span>}
+                {!pendingCount && unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[10px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+              </button>
 
-            {/* Bell (Dedicated Mobile View) */}
-            <button
-              type="button"
-              onClick={() => setNotifOpen(true)}
-              className={cn(
-                "w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-xl transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
-                pendingCount > 0
-                  ? "border-amber-400/80 bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                  : unreadCount > 0
-                  ? "border-blue-400/70 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                  : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/90 dark:bg-slate-800/90"
-              )}
-              title="Notifications & Alerts"
-              aria-label={`Notifications${pendingCount > 0 ? ` (${pendingCount} actions required)` : unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-            >
-              <Bell className="w-4.5 h-4.5 stroke-[2.2]" />
-              {pendingCount > 0 ? (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-amber-500 text-xs font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
-                  {pendingCount > 9 ? "9+" : pendingCount}
-                </span>
-              ) : unreadCount > 0 ? (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-blue-600 text-xs font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              ) : null}
-            </button>
+              {/* Bell (Dedicated Mobile View) */}
+              <button
+                type="button"
+                onClick={() => setNotifOpen(true)}
+                className={cn(
+                  "w-7.5 h-7.5 rounded-lg transition-all relative flex sm:hidden items-center justify-center border cursor-pointer shrink-0 shadow-2xs active:scale-90 select-none",
+                  pendingCount > 0
+                    ? "border-amber-400/80 bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : unreadCount > 0
+                    ? "border-blue-400/70 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                    : "border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white/90 dark:bg-slate-800/90"
+                )}
+                title="Notifications & Alerts"
+                aria-label={`Notifications${pendingCount > 0 ? ` (${pendingCount} actions required)` : unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+              >
+                <Bell className="w-4 h-4" />
+                {pendingCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-amber-500 text-[9px] font-black font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900 animate-pulse">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                ) : unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-blue-600 text-[9px] font-bold font-mono text-white flex items-center justify-center shadow-xs ring-1 ring-white dark:ring-slate-900">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
+              </button>
 
-            {/* Profile dropdown */}
-            <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-sm font-bold shadow-2xs hover:opacity-90 transition-opacity cursor-pointer shrink-0 active:scale-95"
-                  title={org?.name || "Account"}
-                >
-                  {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
-                </button>
-              </DropdownMenuTrigger>
+              {/* Profile dropdown */}
+              <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold shadow-2xs hover:opacity-90 transition-opacity cursor-pointer shrink-0 active:scale-95"
+                    title={org?.name || "Account"}
+                  >
+                    {org?.name ? org.name.charAt(0).toUpperCase() : "C"}
+                  </button>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-2 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <div className="flex items-center justify-between">
@@ -991,18 +1075,27 @@ export default function AppLayout() {
         <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
           <main
             className={cn(
-              "flex-1 min-w-0 min-h-0 flex flex-col transition-colors duration-200 overflow-hidden",
+              "flex-1 min-w-0 min-h-0 flex flex-col transition-colors duration-200 scrollbar-thin",
               isPosRoute
-                ? "p-0 m-0 h-full border-none bg-slate-50 dark:bg-slate-950"
+                ? "p-0 m-0 h-full border-none bg-slate-50 dark:bg-slate-950 overflow-hidden"
                 : cn(
-                    "bg-white/40 dark:bg-slate-950/40",
+                    "bg-white/40 dark:bg-slate-950/40 overflow-y-auto",
                     isCrmDashboard
                       ? "border-t-0 md:border-t md:border-slate-200/80 dark:md:border-slate-800/80"
                       : "border-t border-slate-200/80 dark:border-slate-800/80"
-                  )
+                  ),
+              !isPosRoute && "pb-28 sm:pb-32 md:pb-0"
             )}
           >
             <Outlet />
+            {/* Mobile Bottom Dock Clearance Spacer */}
+            {!isPosRoute && (
+              <div
+                className="block md:hidden shrink-0 w-full pointer-events-none select-none"
+                style={{ height: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}
+                aria-hidden="true"
+              />
+            )}
           </main>
         </div>
 
