@@ -718,7 +718,7 @@ export default function Dashboard() {
       {/* =========================================================================
           1. MOBILE VIEW ONLY (< 768px) - Clean High-Density Retail Minimal (Stripe / Shopify POS)
           ========================================================================= */}
-      <div className="block md:hidden space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-1">
+      <div className="block md:hidden space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-1 max-w-md mx-auto w-full">
         {/* Dynamic Store Greeting & Live Sync Status */}
         <div className="flex items-center justify-between gap-3 px-0.5">
           <div className="min-w-0">
