@@ -57,12 +57,26 @@ elif [ -f "./add_indexes.sql" ]; then
     INDEX_SOURCE="./add_indexes.sql"
 fi
 
+CLEAN_MEMBERSHIP_SOURCE=""
+if [ -f "$SCRIPT_DIR/clean_cross_memberships.sql" ]; then
+    CLEAN_MEMBERSHIP_SOURCE="$SCRIPT_DIR/clean_cross_memberships.sql"
+elif [ -f "$API_DIR/clean_cross_memberships.sql" ]; then
+    CLEAN_MEMBERSHIP_SOURCE="$API_DIR/clean_cross_memberships.sql"
+elif [ -f "$SERVER_DIR/clean_cross_memberships.sql" ]; then
+    CLEAN_MEMBERSHIP_SOURCE="$SERVER_DIR/clean_cross_memberships.sql"
+elif [ -f "./clean_cross_memberships.sql" ]; then
+    CLEAN_MEMBERSHIP_SOURCE="./clean_cross_memberships.sql"
+fi
+
 # Sync to SERVER_DIR so both locations are updated with the latest version
 if [ -n "$SQL_SOURCE" ] && [ "$SQL_SOURCE" != "$SERVER_DIR/fix_db.sql" ]; then
     cp "$SQL_SOURCE" "$SERVER_DIR/fix_db.sql" 2>/dev/null || true
 fi
 if [ -n "$INDEX_SOURCE" ] && [ "$INDEX_SOURCE" != "$SERVER_DIR/add_indexes.sql" ]; then
     cp "$INDEX_SOURCE" "$SERVER_DIR/add_indexes.sql" 2>/dev/null || true
+fi
+if [ -n "$CLEAN_MEMBERSHIP_SOURCE" ] && [ "$CLEAN_MEMBERSHIP_SOURCE" != "$SERVER_DIR/clean_cross_memberships.sql" ]; then
+    cp "$CLEAN_MEMBERSHIP_SOURCE" "$SERVER_DIR/clean_cross_memberships.sql" 2>/dev/null || true
 fi
 
 echo "Step 1: Applying Master Database Alignment (fix_db.sql)..."
@@ -79,6 +93,14 @@ if [ -n "$INDEX_SOURCE" ] && [ -f "$INDEX_SOURCE" ]; then
     echo "✅ add_indexes.sql applied"
 else
     echo "⚠️ add_indexes.sql not found!"
+fi
+
+echo "Step 2b: Applying Cross-Tenant Membership Cleanup (clean_cross_memberships.sql)..."
+if [ -n "$CLEAN_MEMBERSHIP_SOURCE" ] && [ -f "$CLEAN_MEMBERSHIP_SOURCE" ]; then
+    docker exec -i "$PG_CONTAINER" psql -U postgres -d "$DB_NAME" < "$CLEAN_MEMBERSHIP_SOURCE"
+    echo "✅ clean_cross_memberships.sql successfully applied"
+else
+    echo "ℹ️ clean_cross_memberships.sql not found (skipped)"
 fi
 
 echo "Step 3: Rebuilding & Restarting backend container..."
