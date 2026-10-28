@@ -484,7 +484,7 @@ export default function AppLayout() {
       {!isPosRoute && (
         <header
           className={cn(
-            "pt-[env(safe-area-inset-top,0px)] h-13 sm:h-14 min-h-[3.25rem] sm:min-h-[3.5rem] shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
+            "pt-[env(safe-area-inset-top,0px)] min-h-[calc(3.25rem+env(safe-area-inset-top,0px))] h-13 sm:h-14 shrink-0 sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 px-2.5 sm:px-4 shadow-2xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md select-none",
             isCrmDashboard && "hidden md:flex"
           )}
         >
@@ -521,7 +521,7 @@ export default function AppLayout() {
                     loading="eager"
                   />
                 </div>
-                <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-sans shrink-0">
+                <span className="hidden xs:inline font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-sans shrink-0">
                   CredSmart
                 </span>
               </NavLink>
@@ -613,7 +613,7 @@ export default function AppLayout() {
 
               {/* Top-Level Interactive Suite Switcher */}
               {userRole !== "cashier" && (
-                <div className="hidden sm:inline-flex">
+                <div className="flex items-center shrink-0">
                   <SuiteSwitcher
                     onSuiteChange={(newSuite) => {
                       navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);

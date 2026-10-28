@@ -74,7 +74,7 @@ function SuiteSwitcherView({
       role="group"
       aria-label="Suite Switcher"
       className={cn(
-        "inline-flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0",
+        "inline-flex items-center gap-0.5 sm:gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0",
         className
       )}
     >
@@ -93,12 +93,15 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2.5 sm:px-3 py-1 text-xs sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer touch-manipulation h-8 sm:h-8.5 select-none",
+          "px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation h-7.5 sm:h-8.5 select-none active:scale-[0.98]",
           effectiveSuite === "billing"
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
             : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
         )}
       >
+        {effectiveSuite === "billing" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 sm:hidden shrink-0" />
+        )}
         <span className="hidden sm:inline">POS &amp; Billing</span>
         <span className="sm:hidden font-bold">Billing</span>
         {effectiveSuite === "billing" && (
@@ -126,12 +129,15 @@ function SuiteSwitcherView({
           }
         }}
         className={cn(
-          "px-2.5 sm:px-3 py-1 text-xs sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer touch-manipulation h-8 sm:h-8.5 select-none",
+          "px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation h-7.5 sm:h-8.5 select-none active:scale-[0.98]",
           effectiveSuite === "crm"
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
             : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
         )}
       >
+        {effectiveSuite === "crm" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 sm:hidden shrink-0" />
+        )}
         <span>CRM</span>
         {effectiveSuite === "crm" && (
           <span
