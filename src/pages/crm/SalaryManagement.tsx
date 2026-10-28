@@ -560,23 +560,8 @@ export default function SalaryManagement(): React.ReactElement {
         }
       } catch {}
 
-      // Fallback 3: PostgREST / mock profiles table
-      if (Object.keys(dirMap).length === 0) {
-        try {
-          const { data: profs } = await supabase.from("profiles").select("*");
-          if (profs && Array.isArray(profs) && profs.length > 0) {
-            (profs as Record<string, unknown>[]).forEach((s) => {
-              const id = String(s.id || s.user_id || s.staff_id || "");
-              if (id && !dirMap[id]) {
-                const name = String(s.full_name || s.name || (s.email ? String(s.email).split("@")[0] : "Team Member"));
-                const email = String(s.email || "");
-                const roleName = String(s.crm_role_name || s.role_name || s.roleName || s.role || s.store_role || "Staff");
-                dirMap[id] = { id, name, email, roleName };
-              }
-            });
-          }
-        } catch {}
-      }
+      // Fallback 3: Strict tenant boundary enforcement - never query global profiles table without tenant filter
+      // If no staff members belong to this organization, dirMap stays empty to prevent cross-tenant leaks.
 
       setStaffDirectory(dirMap);
 

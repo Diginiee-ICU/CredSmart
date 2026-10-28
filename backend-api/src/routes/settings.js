@@ -20,26 +20,29 @@ router.get('/organizations', async (req, res) => {
     let result;
     try {
       result = await pool.query(
-        `SELECT o.*, COALESCE(m.role, 'owner') as user_role
+        `SELECT DISTINCT ON (o.id) o.*, COALESCE(m.role, CASE WHEN o.owner_id = $1 THEN 'owner' ELSE 'member' END) as user_role
          FROM organizations o
-         LEFT JOIN (
-           SELECT org_id, user_id, role FROM org_memberships
+         JOIN (
+           SELECT org_id, user_id, role FROM org_memberships WHERE user_id = $1
            UNION
-           SELECT organization_id as org_id, user_id, role FROM organization_memberships
-         ) m ON (m.org_id = o.id) AND m.user_id = $1
-         ORDER BY o.created_at ASC`,
+           SELECT organization_id as org_id, user_id, role FROM organization_memberships WHERE user_id = $1
+           UNION
+           SELECT id as org_id, owner_id as user_id, 'owner' as role FROM organizations WHERE owner_id = $1
+         ) m ON (m.org_id = o.id)
+         ORDER BY o.id, o.created_at ASC`,
         [req.user.id]
       );
     } catch (_unionErr) {
       result = await pool.query(
-        `SELECT o.*, COALESCE(m.role, 'owner') as user_role
+        `SELECT DISTINCT ON (o.id) o.*, COALESCE(m.role, CASE WHEN o.owner_id = $1 THEN 'owner' ELSE 'member' END) as user_role
          FROM organizations o
-         LEFT JOIN org_memberships m ON (m.org_id = o.id) AND m.user_id = $1
-         ORDER BY o.created_at ASC`,
+         JOIN org_memberships m ON (m.org_id = o.id)
+         WHERE m.user_id = $1 OR o.owner_id = $1
+         ORDER BY o.id, o.created_at ASC`,
         [req.user.id]
       );
     }
-    return res.json(result.rows);
+    return res.json(result.rows || []);
   } catch (err) {
     console.error('Get organizations error:', err);
     return res.status(500).json({ error: err.message });
@@ -128,10 +131,16 @@ router.put('/organizations/:id', async (req, res) => {
 const getMembershipsHandler = async (req, res) => {
   try {
     const { user_id, organization_id, org_id } = req.query;
-    const targetOrg = organization_id || org_id || req.orgId;
+    const rawTargetOrg = organization_id || org_id || req.orgId;
+    const targetOrg = (rawTargetOrg && rawTargetOrg !== 'undefined' && rawTargetOrg !== 'null' && String(rawTargetOrg).trim()) 
+      ? String(rawTargetOrg).trim() 
+      : null;
+    const targetUser = (user_id && user_id !== 'undefined' && user_id !== 'null' && String(user_id).trim()) 
+      ? String(user_id).trim() 
+      : null;
 
-    // Enforce targetOrg filtering. If missing or undefined, return empty array to prevent cross-tenant leaks.
-    if (!targetOrg) {
+    // Strict tenant isolation: require either a target organization or target user
+    if (!targetOrg && !targetUser) {
       return res.json([]);
     }
 
@@ -150,36 +159,26 @@ const getMembershipsHandler = async (req, res) => {
                u.phone, u.avatar_url
         FROM org_memberships m
         LEFT JOIN users u ON u.id = m.user_id
-        WHERE (m.org_id = $1 OR m.organization_id = $1)
+        LEFT JOIN organizations o ON o.id = m.org_id
+        WHERE 1=1
       `;
-      const params = [targetOrg];
+      const params = [];
 
-      if (user_id) {
-        params.push(user_id);
+      if (targetOrg) {
+        params.push(targetOrg);
+        query += ` AND (m.org_id = $${params.length} OR m.organization_id = $${params.length})`;
+        // Filter out rogue cross-tenant rows
+        query += ` AND (o.owner_id = m.user_id OR m.invited_by IS NOT NULL OR m.role != 'owner' OR o.id IS NULL)`;
+      }
+
+      if (targetUser) {
+        params.push(targetUser);
         query += ` AND m.user_id = $${params.length}`;
       }
+
       query += ' ORDER BY m.created_at ASC';
-      try {
-        const testRes = await pool.query(query, params);
-        rows = testRes.rows;
-      } catch (_colErr) {
-        const fallbackQuery = `
-          SELECT m.*,
-                 m.org_id AS org_id,
-                 m.org_id AS organization_id,
-                 u.email,
-                 COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
-                 COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
-                 u.phone, u.avatar_url
-          FROM org_memberships m
-          LEFT JOIN users u ON u.id = m.user_id
-          WHERE m.org_id = $1
-          ${user_id ? 'AND m.user_id = $2' : ''}
-          ORDER BY m.created_at ASC
-        `;
-        const testRes = await pool.query(fallbackQuery, params);
-        rows = testRes.rows;
-      }
+      const testRes = await pool.query(query, params);
+      rows = testRes.rows;
     } catch (err1) {
       queryErr = err1;
       // Fallback: try organization_memberships
@@ -189,18 +188,27 @@ const getMembershipsHandler = async (req, res) => {
                  COALESCE(m.org_id, m.organization_id) AS org_id,
                  COALESCE(m.organization_id, m.org_id) AS organization_id,
                  u.email,
-                COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
-                COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
-                u.phone, u.avatar_url
+                 COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1)) AS full_name,
+                 COALESCE(NULLIF(TRIM(u.name), ''), NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) AS name,
+                 u.phone, u.avatar_url
           FROM organization_memberships m
           LEFT JOIN users u ON u.id = m.user_id
-          WHERE (m.organization_id = $1 OR m.org_id = $1)
+          LEFT JOIN organizations o ON o.id = COALESCE(m.organization_id, m.org_id)
+          WHERE 1=1
         `;
-        const params2 = [targetOrg];
-        if (user_id) {
-          params2.push(user_id);
+        const params2 = [];
+
+        if (targetOrg) {
+          params2.push(targetOrg);
+          query2 += ` AND (m.organization_id = $${params2.length} OR m.org_id = $${params2.length})`;
+          query2 += ` AND (o.owner_id = m.user_id OR m.invited_by IS NOT NULL OR m.role != 'owner' OR o.id IS NULL)`;
+        }
+
+        if (targetUser) {
+          params2.push(targetUser);
           query2 += ` AND m.user_id = $${params2.length}`;
         }
+
         query2 += ' ORDER BY m.created_at ASC';
         const res2 = await pool.query(query2, params2);
         rows = res2.rows;

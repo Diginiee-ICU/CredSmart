@@ -249,11 +249,14 @@ export default function CRMDashboard(): React.ReactElement {
         const userIds = memberRows.map((m) => m.user_id).filter(Boolean);
         if (userIds.length > 0) {
           try {
-            const profQuery = supabase.from("profiles").select("id, full_name, name, email");
-            const { data: profileRows } =
-              typeof (profQuery as any)?.in === "function"
-                ? await (profQuery as any).in("id", userIds)
-                : await profQuery;
+            let profileRows: Array<{ id: string; full_name?: string | null; name?: string | null; email?: string | null }> | null = null;
+            try {
+              const res = await supabase.from("profiles").select("id, full_name, name, email").in("id", userIds);
+              profileRows = res.data;
+            } catch {
+              const res2 = await settingsApi.getProfiles({ ids: userIds });
+              profileRows = res2.data as any;
+            }
 
             if (Array.isArray(profileRows)) {
               profileRows.forEach((p) => {

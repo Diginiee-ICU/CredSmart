@@ -27,6 +27,11 @@ const resolveOrgId = (req) => {
 };
 
 /**
+ * Validates standard UUIDv4 format to protect against PostgreSQL 22P02 syntax errors.
+ */
+const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || '').trim());
+
+/**
  * Verifies that a user is an active member of the specified organization.
  * Prevents cross-organization user references in tasks, attendance, and payroll.
  * Supports org_memberships, organization_memberships, and crm_staff_assignments.
@@ -96,6 +101,7 @@ const verifyUserInOrg = async (userId, orgId) => {
  */
 const verifyRoleInOrg = async (roleId, orgId) => {
   if (!roleId || !orgId) return false;
+  if (!isUuid(roleId) || !isUuid(orgId)) return false;
   try {
     const res = await pool.query(
       `SELECT id FROM crm_roles WHERE id = $1 AND (org_id = $2 OR organization_id = $2) LIMIT 1`,
@@ -115,30 +121,50 @@ router.get('/roles', async (req, res) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.json([]);
 
-    const result = await pool.query(
-      `SELECT r.*,
-              COALESCE(
-                json_agg(p.permission) FILTER (WHERE p.permission IS NOT NULL),
-                '[]'
-              ) as permissions
-       FROM crm_roles r
-       LEFT JOIN crm_role_permissions p ON p.role_id = r.id
-       WHERE (r.org_id = $1 OR r.organization_id = $1)
-       GROUP BY r.id
-       ORDER BY r.created_at ASC`,
-      [orgId]
-    ).catch(async (err) => {
-      if (err.code === '42P01') {
-        return { rows: [] };
-      }
-      const simpleRes = await pool.query(
-        `SELECT * FROM crm_roles WHERE org_id = $1 OR organization_id = $1 ORDER BY created_at ASC`,
+    let rows = [];
+    try {
+      const result = await pool.query(
+        `SELECT r.*,
+                COALESCE(
+                  json_agg(p.permission) FILTER (WHERE p.permission IS NOT NULL),
+                  '[]'
+                ) as permissions
+         FROM crm_roles r
+         LEFT JOIN crm_role_permissions p ON p.role_id = r.id
+         WHERE (r.org_id = $1 OR r.organization_id = $1)
+         GROUP BY r.id
+         ORDER BY r.created_at ASC`,
         [orgId]
-      ).catch(() => ({ rows: [] }));
-      return simpleRes;
-    });
+      );
+      rows = result.rows || [];
+    } catch (_err) {
+      try {
+        const simpleRes = await pool.query(
+          `SELECT * FROM crm_roles WHERE org_id = $1 OR organization_id = $1 ORDER BY created_at ASC`,
+          [orgId]
+        );
+        rows = simpleRes.rows || [];
+      } catch (_simpleErr) {
+        rows = [];
+      }
+    }
 
-    return res.json(result.rows || []);
+    // Auto-seed Super Admin role if none exists for this tenant
+    if (rows.length === 0 && isUuid(orgId)) {
+      try {
+        const seedRes = await pool.query(
+          `INSERT INTO crm_roles (org_id, organization_id, name, description, color, icon, is_super_admin)
+           VALUES ($1, $1, 'Super Admin', 'Full administrative access across all CRM modules', '#1D4ED8', 'Crown', true)
+           RETURNING *`,
+          [orgId]
+        );
+        if (seedRes.rows && seedRes.rows.length > 0) {
+          rows = [seedRes.rows[0]];
+        }
+      } catch (_seedErr) {}
+    }
+
+    return res.json(rows);
   } catch (err) {
     console.warn('GET /crm/roles notice:', err.message);
     return res.json([]);
@@ -328,27 +354,56 @@ router.post('/roles', async (req, res) => {
     if (!orgId) return res.status(400).json({ error: 'Organization context is required' });
 
     const { name, description = '', color = '#1D4ED8', icon = 'Shield', is_super_admin = false, permissions = [] } = req.body;
-    if (!name) return res.status(400).json({ error: 'Role name is required' });
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Role name is required' });
 
     await client.query('BEGIN');
     const roleRes = await client.query(
       `INSERT INTO crm_roles (org_id, organization_id, name, description, color, icon, is_super_admin)
        VALUES ($1, $1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [orgId, name, description, color, icon, Boolean(is_super_admin)]
+      [orgId, name.trim(), description, color, icon, Boolean(is_super_admin)]
     );
     const role = roleRes.rows[0];
 
-    for (const perm of permissions) {
-      await client.query(
-        `INSERT INTO crm_role_permissions (role_id, permission) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-        [role.id, perm]
-      );
+    if (Array.isArray(permissions) && permissions.length > 0) {
+      for (const perm of permissions) {
+        if (typeof perm === 'string') {
+          const parts = perm.split(':');
+          const mod = parts[0] || 'general';
+          const act = parts[1] || 'view';
+          try {
+            await client.query(
+              `INSERT INTO crm_permissions (role_id, module, action, allowed)
+               VALUES ($1, $2, $3, true)
+               ON CONFLICT (role_id, module, action) DO UPDATE SET allowed = true`,
+              [role.id, mod, act]
+            );
+          } catch {}
+          try {
+            await client.query(
+              `INSERT INTO crm_role_permissions (role_id, permission) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+              [role.id, perm]
+            );
+          } catch {}
+        } else if (typeof perm === 'object' && perm !== null) {
+          const mod = perm.module || 'general';
+          const act = perm.action || 'view';
+          const allowed = perm.allowed !== false;
+          try {
+            await client.query(
+              `INSERT INTO crm_permissions (role_id, module, action, allowed)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT (role_id, module, action) DO UPDATE SET allowed = EXCLUDED.allowed`,
+              [role.id, mod, act, allowed]
+            );
+          } catch {}
+        }
+      }
     }
     await client.query('COMMIT');
     return res.status(201).json({ ...role, permissions });
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => {});
     return res.status(500).json({ error: err.message });
   } finally {
     client.release();
@@ -587,18 +642,23 @@ router.post('/staff/provision', async (req, res) => {
     // 3. Assign CRM Role strictly scoped to this organization if provided
     let assignedRole = null;
     if (crm_role_id) {
-      let roleCheck = await client.query(
-        `SELECT id, name, color, icon FROM crm_roles WHERE id = $1 AND (org_id = $2 OR organization_id = $2)`,
-        [crm_role_id, orgId]
-      );
+      const cleanRoleId = String(crm_role_id).trim();
+      let roleCheck = { rows: [] };
+
+      if (isUuid(cleanRoleId)) {
+        roleCheck = await client.query(
+          `SELECT id, name, color, icon FROM crm_roles WHERE id = $1 AND (org_id = $2 OR organization_id = $2)`,
+          [cleanRoleId, orgId]
+        );
+      }
 
       // If not found by literal ID, check if a Super Admin role exists in DB for this org, or auto-seed it
       if (roleCheck.rows.length === 0) {
         const isDefaultSuper =
-          crm_role_id === 'super-admin-default' ||
-          crm_role_id === 'role-super-admin' ||
-          crm_role_id === 'super_admin' ||
-          crm_role_id.toLowerCase().includes('super');
+          cleanRoleId === 'super-admin-default' ||
+          cleanRoleId === 'role-super-admin' ||
+          cleanRoleId === 'super_admin' ||
+          cleanRoleId.toLowerCase().includes('super');
 
         if (isDefaultSuper) {
           const existingSuper = await client.query(
@@ -618,6 +678,29 @@ router.post('/staff/provision', async (req, res) => {
             );
             roleCheck = seededRole;
           }
+        } else {
+          // Check by name if preset ID like 'role-crm-manager' or 'role-staff-associate'
+          let presetName = null;
+          if (cleanRoleId === 'role-crm-manager') presetName = 'CRM Manager';
+          else if (cleanRoleId === 'role-staff-associate') presetName = 'Staff Associate';
+
+          if (presetName) {
+            const existingByName = await client.query(
+              `SELECT id, name, color, icon FROM crm_roles WHERE (org_id = $1 OR organization_id = $1) AND LOWER(name) = LOWER($2) LIMIT 1`,
+              [orgId, presetName]
+            );
+            if (existingByName.rows.length > 0) {
+              roleCheck = existingByName;
+            } else {
+              const seededPreset = await client.query(
+                `INSERT INTO crm_roles (org_id, organization_id, name, description, color, icon, is_super_admin)
+                 VALUES ($1, $1, $2, 'Assigned CRM staff role', '#4F46E5', 'Shield', false)
+                 RETURNING id, name, color, icon`,
+                [orgId, presetName]
+              );
+              roleCheck = seededPreset;
+            }
+          }
         }
       }
 
@@ -627,13 +710,6 @@ router.post('/staff/provision', async (req, res) => {
 
         // Sync to crm_staff_assignments scoped firmly to orgId
         try {
-          await client.query(
-            `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
-             VALUES ($1, $1, $2, $2, $3, $4)
-             ON CONFLICT (user_id, org_id) DO UPDATE SET role_id = EXCLUDED.role_id`,
-            [orgId, userId, effectiveRoleId, req.user?.id || null]
-          );
-        } catch (confErr) {
           const upd = await client.query(
             `UPDATE crm_staff_assignments SET role_id = $1 WHERE (user_id = $2 OR staff_id = $2) AND (org_id = $3 OR organization_id = $3)`,
             [effectiveRoleId, userId, orgId]
@@ -643,17 +719,28 @@ router.post('/staff/provision', async (req, res) => {
               `INSERT INTO crm_staff_assignments (org_id, organization_id, user_id, staff_id, role_id, assigned_by)
                VALUES ($1, $1, $2, $2, $3, $4)`,
               [orgId, userId, effectiveRoleId, req.user?.id || null]
-            ).catch(() => {});
+            );
           }
+        } catch (confErr) {
+          console.warn('crm_staff_assignments upsert notice:', confErr.message);
         }
 
         // Sync to crm_staff_roles
-        await client.query(
-          `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by)
-           VALUES ($1, $2, $3)
-           ON CONFLICT DO NOTHING`,
-          [userId, effectiveRoleId, req.user?.id || null]
-        ).catch(() => {});
+        try {
+          await client.query(
+            `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (staff_id, role_id) DO UPDATE SET assigned_by = EXCLUDED.assigned_by`,
+            [userId, effectiveRoleId, req.user?.id || null]
+          );
+        } catch (_srErr) {
+          try {
+            await client.query(
+              `INSERT INTO crm_staff_roles (staff_id, role_id, assigned_by) VALUES ($1, $2, $3)`,
+              [userId, effectiveRoleId, req.user?.id || null]
+            );
+          } catch {}
+        }
       }
     }
 
@@ -715,16 +802,23 @@ const getStaffHandler = async (req, res) => {
         COALESCE(sa_role.color, sr_role.color) AS crm_role_color,
         COALESCE(sa_role.icon, sr_role.icon) AS crm_role_icon,
         COALESCE(sa_role.is_super_admin, sr_role.is_super_admin, false) AS is_super_admin,
-        COALESCE(sa.created_at, sr_role.assigned_at, m.created_at) AS assigned_at
+        COALESCE(sa.created_at, m.created_at) AS assigned_at
       FROM (
-        SELECT id, user_id, org_id, role, created_at FROM org_memberships
-        WHERE org_id = $1
+        SELECT om.id, om.user_id, om.org_id, om.role, om.created_at 
+        FROM org_memberships om
+        JOIN organizations o ON o.id = om.org_id
+        WHERE om.org_id = $1
+          AND (o.owner_id = om.user_id OR om.invited_by IS NOT NULL OR om.role != 'owner')
         UNION
-        SELECT id, user_id, organization_id AS org_id, role, created_at FROM organization_memberships
-        WHERE organization_id = $1
+        SELECT om2.id, om2.user_id, COALESCE(om2.organization_id, om2.org_id) AS org_id, om2.role, om2.created_at 
+        FROM organization_memberships om2
+        JOIN organizations o ON o.id = COALESCE(om2.organization_id, om2.org_id)
+        WHERE (om2.organization_id = $1 OR om2.org_id = $1)
+          AND (o.owner_id = om2.user_id OR om2.invited_by IS NOT NULL OR om2.role != 'owner')
         UNION
-        SELECT id, COALESCE(user_id, staff_id) AS user_id, COALESCE(org_id, organization_id) AS org_id, 'staff' AS role, created_at FROM crm_staff_assignments
-        WHERE org_id = $1 OR organization_id = $1
+        SELECT sa_sub.id, COALESCE(sa_sub.user_id, sa_sub.staff_id) AS user_id, COALESCE(sa_sub.org_id, sa_sub.organization_id) AS org_id, 'staff' AS role, sa_sub.created_at 
+        FROM crm_staff_assignments sa_sub
+        WHERE (sa_sub.org_id = $1 OR sa_sub.organization_id = $1)
       ) m
       JOIN users u ON u.id = m.user_id
       LEFT JOIN crm_staff_assignments sa 
@@ -732,7 +826,7 @@ const getStaffHandler = async (req, res) => {
       LEFT JOIN crm_roles sa_role
         ON sa_role.id = sa.role_id AND (sa_role.org_id = $1 OR sa_role.organization_id = $1)
       LEFT JOIN (
-        SELECT sr.staff_id, sr.assigned_at, r.id AS role_id, r.name, r.color, r.icon, r.is_super_admin
+        SELECT sr.staff_id, r.id AS role_id, r.name, r.color, r.icon, r.is_super_admin
         FROM crm_staff_roles sr
         JOIN crm_roles r ON r.id = sr.role_id AND (r.org_id = $1 OR r.organization_id = $1)
       ) sr_role ON sr_role.staff_id = u.id

@@ -603,13 +603,41 @@ export default function RoleManagement(): React.ReactElement {
         });
       }
 
-      setStaffList(mergedStaffList);
+      // Restore cached staff roles assignments so local role assignments are never lost on refresh
+      try {
+        const cachedStaffRoles = localStorage.getItem(`credsmart_crm_staff_roles_${orgId}`);
+        if (cachedStaffRoles) {
+          const parsedSR = JSON.parse(cachedStaffRoles);
+          if (Array.isArray(parsedSR)) {
+            parsedSR.forEach((sr: any) => {
+              const sId = String(sr.staff_id || "");
+              const rId = String(sr.role_id || "");
+              if (sId && rId && !assignmentMap[sId]) {
+                assignmentMap[sId] = rId;
+              }
+            });
+          }
+        }
+      } catch {}
+
+      // Ensure every staff member has their assigned role mapped
+      const enrichedStaffList = mergedStaffList.map((s) => ({
+        ...s,
+        crmRoleId: s.crmRoleId || assignmentMap[s.id] || undefined,
+      }));
+
+      setStaffList(enrichedStaffList);
       setStaffRolesMap(assignmentMap);
 
       localStorage.setItem(`credsmart_crm_roles_${orgId}`, JSON.stringify(resolvedRoles));
       localStorage.setItem(`credsmart_crm_permissions_${orgId}`, JSON.stringify(permsData));
-      localStorage.setItem(`credsmart_crm_staff_roles_${orgId}`, JSON.stringify(staffRolesData ?? []));
-      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(mergedStaffList));
+      localStorage.setItem(
+        `credsmart_crm_staff_roles_${orgId}`,
+        JSON.stringify(
+          Object.entries(assignmentMap).map(([staff_id, role_id]) => ({ staff_id, role_id }))
+        )
+      );
+      localStorage.setItem(`credsmart_crm_staff_${orgId}`, JSON.stringify(enrichedStaffList));
     } catch (err) {
       console.error("RoleManagement: Error loading data:", err);
       toast({
@@ -1104,16 +1132,36 @@ export default function RoleManagement(): React.ReactElement {
       let provisionRes: any = null;
       try {
         provisionRes = await crmApi.provisionStaffUser(payload, orgId);
+        if (provisionRes?.error) {
+          toast({
+            title: "Provisioning Failed",
+            description: provisionRes.error.message || "Failed to provision staff on server.",
+            variant: "destructive",
+          });
+          setSubmittingStaff(false);
+          return;
+        }
         if (provisionRes?.data?.user?.id) {
           newUserId = provisionRes.data.user.id;
         }
-      } catch (err) {
-        console.warn("crmApi.provisionStaffUser notice:", err);
+      } catch (err: any) {
+        toast({
+          title: "Provisioning Error",
+          description: err.message || "Failed to provision staff. Network error or server unreachable.",
+          variant: "destructive",
+        });
+        setSubmittingStaff(false);
+        return;
       }
 
-      // Resilient local provisioning fallback so newly added staff is never lost
       if (!newUserId) {
-        newUserId = `staff-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        toast({
+          title: "Provisioning Error",
+          description: "Server did not return a valid user ID. Please try again.",
+          variant: "destructive",
+        });
+        setSubmittingStaff(false);
+        return;
       }
 
       // Update hierarchy
@@ -1123,13 +1171,15 @@ export default function RoleManagement(): React.ReactElement {
         localStorage.setItem(`credsmart_crm_team_hierarchy_${orgId}`, JSON.stringify(updatedHierarchy));
       }
 
+      const assignedCrmRoleId = provisionRes?.data?.user?.crm_role_id || crmRoleIdToAssign || undefined;
+
       // In-memory instant roster hydration
       const newStaffEntry: StaffMember = {
         id: newUserId,
         membershipId: provisionRes?.data?.user?.id || newUserId,
         name: payload.full_name,
         role: payload.store_role,
-        crmRoleId: crmRoleIdToAssign || undefined,
+        crmRoleId: assignedCrmRoleId,
         assignedAt: new Date().toISOString(),
         email: payload.email,
         phone: payload.phone,
@@ -1145,17 +1195,17 @@ export default function RoleManagement(): React.ReactElement {
         window.dispatchEvent(new CustomEvent("credsmart:crm_staff_updated"));
       } catch {}
 
-      if (crmRoleIdToAssign) {
+      if (assignedCrmRoleId) {
         setStaffRolesMap((prev) => ({
           ...prev,
-          [newUserId]: crmRoleIdToAssign,
+          [newUserId]: assignedCrmRoleId,
         }));
       }
 
       // Update localStorage cache
       const updatedRolesMap = {
         ...staffRolesMap,
-        ...(crmRoleIdToAssign ? { [newUserId]: crmRoleIdToAssign } : {}),
+        ...(assignedCrmRoleId ? { [newUserId]: assignedCrmRoleId } : {}),
       };
       localStorage.setItem(
         `credsmart_crm_staff_roles_${orgId}`,
@@ -1172,13 +1222,15 @@ export default function RoleManagement(): React.ReactElement {
       // Close Add Staff modal and open Credentials Confirmation modal
       setAddStaffModalOpen(false);
 
+      const assignedRole = roles.find((r) => r.id === assignedCrmRoleId);
+
       setProvisionedCredentials({
         fullName: payload.full_name,
         email: payload.email,
         password: effectivePassword,
         storeRole: payload.store_role,
-        crmRoleName: assignedRole?.name || "No CRM Access",
-        crmRoleColor: assignedRole?.color || "#64748B",
+        crmRoleName: provisionRes?.data?.user?.crm_role_name || assignedRole?.name || "No CRM Access",
+        crmRoleColor: provisionRes?.data?.user?.crm_role_color || assignedRole?.color || "#64748B",
         orgName: org?.name || "CredSmart Store",
       });
       setCredentialsModalOpen(true);
