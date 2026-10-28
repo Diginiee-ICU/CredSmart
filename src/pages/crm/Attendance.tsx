@@ -431,6 +431,11 @@ export default function Attendance(): React.ReactElement {
   const loadAttendanceData = useCallback(async () => {
     setDataLoading(true);
     try {
+      if (!orgId || orgId === "default_org") {
+        setDataLoading(false);
+        return;
+      }
+
       const [loadedGeofences, loadedAttendance, loadedRequests, staffMembersData] = await Promise.all([
         (async () => {
           let geofences: CRMGeolocation[] = [];

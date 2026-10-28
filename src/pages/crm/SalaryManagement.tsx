@@ -328,6 +328,11 @@ export default function SalaryManagement(): React.ReactElement {
   const loadSalaryData = useCallback(async () => {
     setDataLoading(true);
     try {
+      if (!orgId || orgId === "default_org") {
+        setDataLoading(false);
+        return;
+      }
+
       // 1. Fetch all datasets in parallel for lightning-fast CRM loading
       const [
         staffRes,
@@ -568,11 +573,16 @@ export default function SalaryManagement(): React.ReactElement {
       // 2. Consume Parallel Salary Profiles
       const { profiles, profErr } = profilesResult;
       if (profErr) {
-        toast({
-          title: "Error Loading Salary Profiles",
-          description: profErr.message || "Failed to load profiles.",
-          variant: "destructive",
-        });
+        const isSyntaxErr =
+          String(profErr?.message || "").includes("invalid input syntax") ||
+          String(profErr?.message || "").includes("default_org");
+        if (!isSyntaxErr) {
+          toast({
+            title: "Error Loading Salary Profiles",
+            description: profErr.message || "Failed to load profiles.",
+            variant: "destructive",
+          });
+        }
       } else if (profiles) {
         const enriched = (profiles as CrmSalaryProfile[]).map((p) => ({
           ...p,
@@ -587,11 +597,16 @@ export default function SalaryManagement(): React.ReactElement {
       // 3. Consume Parallel Payroll Runs
       const { runs, runsErr } = runsResult;
       if (runsErr) {
-        toast({
-          title: "Error Loading Payroll Runs",
-          description: runsErr.message || "Failed to load payroll runs.",
-          variant: "destructive",
-        });
+        const isSyntaxErr =
+          String(runsErr?.message || "").includes("invalid input syntax") ||
+          String(runsErr?.message || "").includes("default_org");
+        if (!isSyntaxErr) {
+          toast({
+            title: "Error Loading Payroll Runs",
+            description: runsErr.message || "Failed to load payroll runs.",
+            variant: "destructive",
+          });
+        }
       } else if (runs) {
         setPayrollRuns(runs as CrmPayrollRun[]);
         localStorage.setItem(`${STORAGE_RUNS_PREFIX}${effectiveOrgId}`, JSON.stringify(runs));
@@ -600,11 +615,16 @@ export default function SalaryManagement(): React.ReactElement {
       // 4. Consume Parallel Payslips
       const { slips, slipsErr } = slipsResult;
       if (slipsErr) {
-        toast({
-          title: "Error Loading Payslips",
-          description: slipsErr.message || "Failed to load payslips.",
-          variant: "destructive",
-        });
+        const isSyntaxErr =
+          String(slipsErr?.message || "").includes("invalid input syntax") ||
+          String(slipsErr?.message || "").includes("default_org");
+        if (!isSyntaxErr) {
+          toast({
+            title: "Error Loading Payslips",
+            description: slipsErr.message || "Failed to load payslips.",
+            variant: "destructive",
+          });
+        }
       } else if (slips) {
         const enrichedSlips = (slips as CrmPayslip[]).map((s) => ({
           ...s,
@@ -619,11 +639,16 @@ export default function SalaryManagement(): React.ReactElement {
       // 5. Consume Parallel Salary Adjustments
       const { adjs, adjErr } = adjsResult;
       if (adjErr) {
-        toast({
-          title: "Error Loading Adjustments",
-          description: adjErr.message || "Failed to load adjustments.",
-          variant: "destructive",
-        });
+        const isSyntaxErr =
+          String(adjErr?.message || "").includes("invalid input syntax") ||
+          String(adjErr?.message || "").includes("default_org");
+        if (!isSyntaxErr) {
+          toast({
+            title: "Error Loading Adjustments",
+            description: adjErr.message || "Failed to load adjustments.",
+            variant: "destructive",
+          });
+        }
       } else if (adjs) {
         const enrichedAdjs = (adjs as CrmSalaryAdjustment[]).map((a) => ({
           ...a,
